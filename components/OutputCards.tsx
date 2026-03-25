@@ -43,6 +43,115 @@ import {
   getCMPEarningsTable,
 } from "@/lib/predator-data";
 
+function extractRunwayPasteReady(shotText: string): string {
+  const m = shotText.match(/═══ PASTE-READY I2V PROMPT[^═]*═══\s*\n([\s\S]*?)(?:\n─── SHOT BREAKDOWN|$)/);
+  if (m?.[1]) return m[1].trim();
+  const f = shotText.match(/Paste-ready I2V prompt:\s*\n([\s\S]*?)(?:\nCamera motion:|$)/);
+  if (f?.[1]) return f[1].trim();
+  return extractMotionOnlyPrompt(shotText);
+}
+
+function extractKlingPromptBody(shotText: string): string {
+  const m = shotText.match(/═══ KLING 3\.0 (?:MULTI-SHOT )?PROMPT[^═]*═══\s*\n([\s\S]*?)(?:\nKling settings|$)/);
+  if (m?.[1]) return m[1].trim();
+  const f = shotText.match(/(?:Scene|Shot):[\s\S]*?(?:Extra:.*|Style:.*)/);
+  if (f?.[0]) return f[0].trim();
+  return shotText;
+}
+
+function extractKlingAudioPrompt(shotText: string): string {
+  const m = shotText.match(/Audio:\s*(.*?)(?:\n|$)/);
+  return m?.[1]?.trim() ?? "";
+}
+
+// === NEW: Engine Specs Panel ===
+
+export function EngineSpecsPanel() {
+  const [open, setOpen] = useState(false);
+  return (
+    <div className="rounded-xl border border-gray-200 bg-gray-50 p-4 shadow-sm">
+      <div className="flex flex-wrap items-center justify-between gap-2">
+        <div className="flex flex-wrap items-center gap-2">
+          <span className="text-sm font-bold text-gray-900">⚙️ Engine Specs (Official 2026)</span>
+          <span className="rounded bg-green-100 px-2 py-0.5 text-xs font-bold text-green-700">Runway Gen-4.5</span>
+          <span className="rounded bg-blue-100 px-2 py-0.5 text-xs font-bold text-blue-700">Kling 3.0</span>
+        </div>
+        <button onClick={() => setOpen((o) => !o)} className="rounded-lg border border-gray-300 bg-white px-3 py-1.5 text-xs font-semibold text-gray-700 hover:bg-gray-50 active:scale-95" type="button">{open ? "Hide ▲" : "Show ▼"}</button>
+      </div>
+      {open && (
+        <div className="mt-3 grid gap-3 md:grid-cols-2">
+          <div className="rounded-xl border border-green-200 bg-green-50 p-3">
+            <p className="mb-2 text-xs font-extrabold text-green-900">🟢 Runway Gen-4.5 (Official)</p>
+            <div className="space-y-1.5 text-xs text-green-800">
+              <p><span className="font-bold">FPS:</span> 24 or 25 only</p>
+              <p><span className="font-bold">Duration:</span> 2–10 seconds</p>
+              <p><span className="font-bold">Output:</span> 720p (built-in 4K upscale)</p>
+              <p><span className="font-bold">I2V Rule:</span> MOTION-ONLY. Image carries identity.</p>
+              <p><span className="font-bold">Negative Prompts:</span> ❌ NOT supported</p>
+              <p><span className="font-bold">Structure:</span> [Camera] [subject] [action] in [env]</p>
+              <p><span className="font-bold">Chaining:</span> Extract last frame → I2V input</p>
+            </div>
+          </div>
+          <div className="rounded-xl border border-blue-200 bg-blue-50 p-3">
+            <p className="mb-2 text-xs font-extrabold text-blue-900">🔵 Kling 3.0 (Official)</p>
+            <div className="space-y-1.5 text-xs text-blue-800">
+              <p><span className="font-bold">Resolution:</span> Native 4K (3840×2160)</p>
+              <p><span className="font-bold">FPS:</span> Up to 60fps</p>
+              <p><span className="font-bold">Duration:</span> 3–15 seconds</p>
+              <p><span className="font-bold">Multi-shot:</span> Up to 6 shots per prompt</p>
+              <p><span className="font-bold">Native Audio:</span> ✅ Dialogue, ambient, SFX</p>
+              <p><span className="font-bold">Negative Prompts:</span> ✅ Supported + recommended</p>
+              <p><span className="font-bold">Motion Intensity:</span> 0.1–1.0</p>
+              <p><span className="font-bold">Identity Lock:</span> Elements 3.0 (Bind Subject)</p>
+              <p><span className="font-bold">Frame Control:</span> Start + End frame</p>
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+// === NEW: Pro Shot Card (Copy FULL / Copy BODY / Audio) ===
+
+function ProShotCard({ engine, index, shot, onCopy }: { engine: "runway" | "kling"; index: number; shot: string; onCopy: (t: string) => void }) {
+  const isRunway = engine === "runway";
+  const pasteReady = isRunway ? extractRunwayPasteReady(shot) : extractKlingPromptBody(shot);
+  const audioPrompt = !isRunway ? extractKlingAudioPrompt(shot) : "";
+  const miMatch = shot.match(/Motion intensity:\s*([\d.]+)/);
+  const motionIntensity = miMatch ? parseFloat(miMatch[1]) : null;
+  const borderColor = isRunway ? "border-green-200" : "border-blue-200";
+  const btnColor = isRunway ? "bg-green-700 hover:bg-green-800" : "bg-blue-700 hover:bg-blue-800";
+  const engineLabel = isRunway ? "Runway" : "Kling";
+
+  return (
+    <div className={`rounded-xl border ${borderColor} bg-white p-3`}>
+      <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
+        <div className="flex flex-wrap items-center gap-2">
+          <div className="text-xs font-extrabold text-gray-900">🎬 {engineLabel} Shot {index + 1}</div>
+          {motionIntensity !== null && <span className="rounded-full bg-indigo-100 px-2 py-0.5 text-[10px] font-bold text-indigo-700">MI: {motionIntensity.toFixed(2)}</span>}
+          {isRunway && <span className="rounded-full bg-yellow-100 px-1.5 py-0.5 text-[10px] font-bold text-yellow-700">No negative prompt</span>}
+        </div>
+        <div className="flex flex-wrap items-center gap-1">
+          <button type="button" onClick={() => onCopy(shot)} className="rounded border border-gray-300 bg-white px-2 py-1 text-[11px] font-bold text-gray-600 hover:bg-gray-50 active:scale-95" title="Copy full shot with instructions">Copy FULL</button>
+          <button type="button" onClick={() => onCopy(pasteReady)} className={`rounded px-2 py-1 text-[11px] font-bold text-white active:scale-95 ${btnColor}`} title="Copy paste-ready prompt only">Copy BODY</button>
+        </div>
+      </div>
+      <pre className="max-h-40 overflow-auto whitespace-pre-wrap text-xs leading-relaxed text-gray-900">{shot || "—"}</pre>
+      {audioPrompt && (
+        <div className="mt-2 rounded-lg border border-indigo-200 bg-indigo-50 p-2">
+          <div className="flex items-center justify-between gap-2">
+            <span className="text-[10px] font-bold text-indigo-700">🔊 Audio Prompt</span>
+            <button type="button" onClick={() => onCopy(audioPrompt)} className="rounded bg-indigo-600 px-2 py-0.5 text-[10px] font-bold text-white hover:bg-indigo-700 active:scale-95">Copy Audio</button>
+          </div>
+          <p className="mt-1 text-[11px] leading-relaxed text-indigo-800">{audioPrompt}</p>
+        </div>
+      )}
+    </div>
+  );
+}
+
+
 // ─────────────────────────────────────────────────────────────
 // CARD — generic copy card
 // ─────────────────────────────────────────────────────────────
@@ -2161,15 +2270,15 @@ function buildCopyAllPacksText() {
   const calendar = buildCalendarText();
 
   return [
-    `WSTV EXPORT PACK`,
+    `WSTV EXPORT PACK (Pro 2026)`,
     `Predator: ${safeStr(data.predatorName)}`,
     `Prey: ${safeStr(data.preyName)}`,
     `Arc: ${safeStr(data.arcName)}`,
     "",
-    `=== RUNWAY PACK ===`,
+    `=== RUNWAY PACK (Gen-4.5 | 24/25fps | 720p | NO negatives) ===`,
     runway || "(none)",
     "",
-    `=== KLING PACK ===`,
+    `=== KLING PACK (3.0 | 4K@60fps | Negatives OK | Bind Subject) ===`,
     kling || "(none)",
     "",
     `=== KLING DIRECT (15s) ===`,
@@ -2231,6 +2340,7 @@ function exportTxt() {
 }
   return (
     <div className="space-y-6">
+      <EngineSpecsPanel />
       <SectionLabel label="WSTV Workflow Prompt Map" />
       <WorkflowPromptMap data={data} onCopy={onCopy} />
       <div className="flex flex-wrap gap-2">
@@ -2268,10 +2378,18 @@ function exportTxt() {
 
       {data.negativePrompt && (
         <Card
-          title="🚫 Negative Prompt"
+          title="🚫 Negative Prompt (Kling / MJ only)"
           value={data.negativePrompt}
           onCopy={onCopy}
           accent="border-l-red-400"
+          extraActions={[
+            {
+              label: "⚠️ NOT for Runway",
+              onClick: () => {},
+              className:
+                "rounded border border-red-200 bg-red-50 px-2 py-1 text-[10px] font-bold text-red-600 cursor-default",
+            },
+          ]}
         />
       )}
 
@@ -2293,18 +2411,18 @@ function exportTxt() {
     <div className="flex flex-wrap gap-2">
       <button
         type="button"
-        onClick={() => onCopy(data.runwayShots.filter(Boolean).join("\n\n---\n\n"))}
+        onClick={() => onCopy(data.runwayShots.map((s) => extractRunwayPasteReady(s)).filter(Boolean).join("\n\n---\n\n"))}
         className="rounded-lg border border-green-200 bg-green-50 px-3 py-1.5 text-xs font-extrabold text-green-800 hover:bg-green-100 active:scale-95"
       >
-        Copy All Runway
+        Copy Runway (Paste-Ready)
       </button>
 
       <button
         type="button"
-        onClick={() => onCopy(data.klingShots.filter(Boolean).join("\n\n---\n\n"))}
+        onClick={() => onCopy(data.klingShots.map((s) => extractKlingPromptBody(s)).filter(Boolean).join("\n\n---\n\n"))}
         className="rounded-lg border border-blue-200 bg-blue-50 px-3 py-1.5 text-xs font-extrabold text-blue-800 hover:bg-blue-100 active:scale-95"
       >
-        Copy All Kling
+        Copy Kling (SCALE Body)
       </button>
     </div>
   </div>
@@ -2315,7 +2433,7 @@ function exportTxt() {
       <div className="mb-2 flex items-center justify-between gap-2">
         <div className="text-sm font-extrabold text-green-900">Runway Shots</div>
         <span className="rounded-full bg-white px-2 py-0.5 text-[11px] font-bold text-green-700 ring-1 ring-green-200">
-          Gen-4.5 / I2V
+          Gen-4.5 | 24/25fps | 720p
         </span>
       </div>
 
@@ -2323,23 +2441,11 @@ function exportTxt() {
         Shot 1 → establishing, Shot 2 → continuity, Shot 3 → aftermath (last frame exports).
       </p>
 
+      <p className="mb-3 text-xs text-green-800">I2V = motion only. No negative prompts. Last frame chaining.</p>
+
       <div className="space-y-3">
         {data.runwayShots.map((shot, i) => (
-          <div key={`runway-pro-${i}`} className="rounded-xl border border-green-200 bg-white p-3">
-            <div className="mb-2 flex items-center justify-between gap-2">
-              <div className="text-xs font-extrabold text-gray-900">🎬 Runway Shot {i + 1}</div>
-              <button
-                type="button"
-                onClick={() => onCopy(shot)}
-                className="rounded-lg bg-green-700 px-3 py-1.5 text-xs font-extrabold text-white hover:bg-green-800 active:scale-95"
-              >
-                Copy
-              </button>
-            </div>
-            <pre className="max-h-40 overflow-auto whitespace-pre-wrap text-xs leading-relaxed text-gray-900">
-              {shot || "—"}
-            </pre>
-          </div>
+          <ProShotCard key={`runway-pro-${i}`} engine="runway" index={i} shot={shot} onCopy={onCopy} />
         ))}
       </div>
     </div>
@@ -2349,7 +2455,7 @@ function exportTxt() {
       <div className="mb-2 flex items-center justify-between gap-2">
         <div className="text-sm font-extrabold text-blue-900">Kling Shots</div>
         <span className="rounded-full bg-white px-2 py-0.5 text-[11px] font-bold text-blue-700 ring-1 ring-blue-200">
-          Kling 3.0 / I2V
+          Kling 3.0 | 4K@60fps | Audio
         </span>
       </div>
 
@@ -2357,23 +2463,11 @@ function exportTxt() {
         Best for full-body physics/action beats. Use Runway last frame as reference.
       </p>
 
+      <p className="mb-3 text-xs text-blue-800">SCALE format. Negative prompts OK. Bind Subject + Start/End Frame.</p>
+
       <div className="space-y-3">
         {data.klingShots.map((shot, i) => (
-          <div key={`kling-pro-${i}`} className="rounded-xl border border-blue-200 bg-white p-3">
-            <div className="mb-2 flex items-center justify-between gap-2">
-              <div className="text-xs font-extrabold text-gray-900">🎬 Kling Shot {i + 1}</div>
-              <button
-                type="button"
-                onClick={() => onCopy(shot)}
-                className="rounded-lg bg-blue-700 px-3 py-1.5 text-xs font-extrabold text-white hover:bg-blue-800 active:scale-95"
-              >
-                Copy
-              </button>
-            </div>
-            <pre className="max-h-40 overflow-auto whitespace-pre-wrap text-xs leading-relaxed text-gray-900">
-              {shot || "—"}
-            </pre>
-          </div>
+          <ProShotCard key={`kling-pro-${i}`} engine="kling" index={i} shot={shot} onCopy={onCopy} />
         ))}
       </div>
     </div>
@@ -2398,7 +2492,7 @@ function exportTxt() {
         </span>
 
         <span className="rounded-full bg-amber-100 px-2 py-0.5 text-[11px] font-extrabold text-amber-800 ring-1 ring-amber-200">
-          1 prompt → 15 seconds
+          4K@60fps | Native Audio
         </span>
       </div>
     </div>
@@ -2415,13 +2509,22 @@ function exportTxt() {
     </pre>
 
     {/* Copy button */}
-    <button
-      type="button"
-      onClick={() => onCopy(String(data.klingNative15s))}
-      className="mt-3 inline-flex items-center justify-center rounded-xl bg-blue-700 px-4 py-2 text-sm font-extrabold text-white hover:bg-blue-800 active:scale-[0.98]"
-    >
-      📋 Copy Full 15s Prompt
-    </button>
+    <div className="mt-3 flex flex-wrap gap-2">
+      <button
+        type="button"
+        onClick={() => onCopy(String(data.klingNative15s))}
+        className="rounded-xl bg-blue-700 px-4 py-2 text-sm font-extrabold text-white hover:bg-blue-800 active:scale-[0.98]"
+      >
+        📋 Copy Full 15s Prompt
+      </button>
+      <button
+        type="button"
+        onClick={() => onCopy(extractKlingPromptBody(String(data.klingNative15s)))}
+        className="rounded-xl border border-blue-300 bg-white px-4 py-2 text-sm font-extrabold text-blue-700 hover:bg-blue-50 active:scale-[0.98]"
+      >
+        📋 Copy BODY Only
+      </button>
+    </div>
   </div>
 )}
 
@@ -2462,13 +2565,22 @@ function exportTxt() {
     </pre>
 
     {/* Copy button */}
-    <button
-      type="button"
-      onClick={() => onCopy(String(data.klingSixShot))}
-      className="mt-3 inline-flex items-center justify-center rounded-xl bg-indigo-700 px-4 py-2 text-sm font-extrabold text-white hover:bg-indigo-800 active:scale-[0.98]"
-    >
-      📋 Copy Full 6-Shot Prompt
-    </button>
+    <div className="mt-3 flex flex-wrap gap-2">
+      <button
+        type="button"
+        onClick={() => onCopy(String(data.klingSixShot))}
+        className="rounded-xl bg-indigo-700 px-4 py-2 text-sm font-extrabold text-white hover:bg-indigo-800 active:scale-[0.98]"
+      >
+        📋 Copy Full 6-Shot Prompt
+      </button>
+      <button
+        type="button"
+        onClick={() => onCopy(extractKlingPromptBody(String(data.klingSixShot)))}
+        className="rounded-xl border border-indigo-300 bg-white px-4 py-2 text-sm font-extrabold text-indigo-700 hover:bg-indigo-50 active:scale-[0.98]"
+      >
+        📋 Copy BODY Only
+      </button>
+    </div>
   </div>
 )}
 <SectionLabel label="📅 Content Calendar" />
