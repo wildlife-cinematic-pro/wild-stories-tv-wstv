@@ -27,5 +27,7 @@ export function buildQualityLead(opts?: QualityOptions): string {
     bits.push("Micro-motion layer enabled — keep the background alive with subtle atmospheric movement.");
   if (opts.heroVeo)
     bits.push("Hero Veo routing enabled for the most photoreal action beat or resolve shot.");
+  if (opts.seamlessShot)
+    bits.push("Seamless shot mode — continuous, uncut footage with no implied scene transitions.");
   return bits.join(" ");
 }
