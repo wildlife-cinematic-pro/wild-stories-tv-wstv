@@ -7,15 +7,8 @@
 //   • Takes plain data → returns string or object
 //   • All data comes from predator-data.ts and model-specs.ts
 //
-// FPS NOTE [Official — Runway Help Center]:
-//   Runway Gen-4.5 outputs at 24fps / 25fps native.
-//   Do NOT write "30fps" in Runway/Veo/Sora prompts.
-//   30fps only applies to platform export step after editing.
-//
-// NEGATIVE PROMPT NOTE [Official — Runway Help Center]:
-//   Runway Gen-4 / Gen-4.5 does NOT support negative prompts.
-//   buildNegativePrompt() output is for Kling and Midjourney only.
-//   Never inject negative prompts into Runway video nodes.
+// FPS NOTE [Runway official]:
+//   Gen-4.5 supports 24fps / 25fps. Prompt मा 30fps नलेख्ने।
 // ─────────────────────────────────────────────────────────────
 
 import type {
@@ -90,7 +83,6 @@ function getSafeArcLabel(arc: string): string {
 }
 
 function getSafeArcPrint(arc: string): string {
-  // Use safe label for any human-facing prints (prevents banned words via arc string).
   return getSafeArcLabel(arc);
 }
 
@@ -110,23 +102,20 @@ ${lockLine}`.trim();
 }
 
 // ─────────────────────────────────────────────────────────────
-// Step 4 helper: Kling wide physics rule (Shot2/Shot3 wide)
+// Kling wide physics rule
 // ─────────────────────────────────────────────────────────────
 function klingWidePhysicsRule(): string {
   return "WIDE PHYSICS RULE — Shot 2 and Shot 3 must be FIXED WIDE (full bodies visible) to preserve biomechanics, weight transfer, and collision readability.";
 }
 
 // ─────────────────────────────────────────────────────────────
-// Step 6 helper: One-action hard gate (ONLY when enabled)
-// - Prevents stacked actions like “run + bite + roll” in one shot
-// - Special deterministic rule for “Chase and takedown”
+// One-action hard gate
 // ─────────────────────────────────────────────────────────────
 function oneActionArcBeat(
   arc: Arc,
   beat: "establish" | "action" | "aftermath",
   enabled: boolean
 ): { predatorBeat: string; preyBeat: string; guardLine: string } {
-  // If gate OFF → return normal (still single-ish) wording, but no hard restrictions
   if (!enabled) {
     if (beat === "action") {
       return {
@@ -149,7 +138,6 @@ function oneActionArcBeat(
     };
   }
 
-  // Gate ON → strict one-action wording + guard line
   const baseGuard =
     "ONE-ACTION GATE — one primary predator action + one prey reaction only (no stacked beats).";
 
@@ -290,7 +278,7 @@ function maybeGuard(line: string): string {
 }
 
 // ─────────────────────────────────────────────────────────────
-// 1. DEPTH
+// DEPTH
 // ─────────────────────────────────────────────────────────────
 export function getDepthPrompt(mode: DepthMode): { depth: string; lensNote: string } {
   if (mode === "Cinematic Blur") {
@@ -312,7 +300,7 @@ export function getDepthPrompt(mode: DepthMode): { depth: string; lensNote: stri
 }
 
 // ─────────────────────────────────────────────────────────────
-// 2. MICRO-MOTION LINE
+// MICRO-MOTION
 // ─────────────────────────────────────────────────────────────
 export function buildMicroMotionLine(weather: Weather, env: string): string {
   const envLower = env.toLowerCase();
@@ -328,7 +316,7 @@ export function buildMicroMotionLine(weather: Weather, env: string): string {
 }
 
 // ─────────────────────────────────────────────────────────────
-// 4. QUALITY SUMMARY
+// QUALITY SUMMARY
 // ─────────────────────────────────────────────────────────────
 export function buildQualitySummary(opts: QualityOptions): string {
   return finalizePrompt(
@@ -354,7 +342,7 @@ export function buildQualitySummary(opts: QualityOptions): string {
 }
 
 // ─────────────────────────────────────────────────────────────
-// 5. REFERENCE WORKFLOW
+// REFERENCE WORKFLOW
 // ─────────────────────────────────────────────────────────────
 export function buildReferenceWorkflow(predator: string, opts: QualityOptions): string {
   const realismNote =
@@ -374,7 +362,7 @@ STEP 5 — If drift appears, regenerate from the previous last frame instead of 
 }
 
 // ─────────────────────────────────────────────────────────────
-// 6. NATURALISM CHECKLIST
+// NATURALISM CHECKLIST
 // ─────────────────────────────────────────────────────────────
 export function buildNaturalismChecklist(opts: QualityOptions, weather: Weather, env: string): string[] {
   return [
@@ -396,7 +384,7 @@ export function buildNaturalismChecklist(opts: QualityOptions, weather: Weather,
 }
 
 // ─────────────────────────────────────────────────────────────
-// 7. FILM STOCK + MJ PARAMS
+// FILM STOCK + MJ PARAMS
 // ─────────────────────────────────────────────────────────────
 const MJ_REALISM_PARAMS =
   "--ar 9:16 --style raw --s 100 --v 6.1 --q 4 --no plastic skin, cartoon, CGI, anime, watermark, text overlay, deformed anatomy, extra limbs";
@@ -418,7 +406,7 @@ function finalizeImagePrompt(prompt: string, target: ImagePromptTarget): string 
 }
 
 // ─────────────────────────────────────────────────────────────
-// 8. IMAGE PROMPT (engine-aware; MJ params only when MJ)
+// IMAGE PROMPT
 // ─────────────────────────────────────────────────────────────
 export function buildImagePrompt(
   predator: string,
@@ -449,7 +437,9 @@ export function buildImagePrompt(
         ? "Built as a master reference image for image-to-video continuity — stable silhouette, locked anatomy, readable markings, clean foreground/background separation."
         : "Balanced realism with stable anatomy, natural texture, and clean silhouette separation.";
 
-  const A = `${predator} in a powerful pre-action stance, ${prey} fully alert and reactive — both animals at the most tension-rich beat of the ${getSafeArcLabel(arc)} scene. ${predator} exhales once, ribcage slightly expanded...`;
+  const A = `${predator} in a powerful pre-action stance, ${prey} fully alert and reactive — both animals at the most tension-rich beat of the ${getSafeArcLabel(
+    arc
+  )} scene. ${predator} exhales once, ribcage slightly expanded...`;
   const B = `${env}, ${weatherVariants[weather]}. Layered foreground, readable midground, softened background separation for stable depth maps. Subjects in authentic wildlife behavioral postures, biologically accurate spacing, natural environmental context.`;
   const C = `Wide cinematic wildlife documentary composition, 9:16 vertical frame. Camera: ${cam}, ${depth.lensNote}. ${vibe.camera}. Depth of field: ${depth.depth}. Telephoto compression and documentary framing. Lighting: ${lighting}. Natural rim separation, volumetric atmosphere, realistic shadow direction.`;
   const D = `${texture}. ${vibe.texture}. Micro-detail visible in fur, skin, feathers, debris, moisture, and ground contact. ${realismAdd}`;
@@ -467,7 +457,7 @@ export function buildImagePrompt(
 }
 
 // ─────────────────────────────────────────────────────────────
-// 9. NEGATIVE PROMPT (Kling / MJ only)
+// NEGATIVE PROMPT (Kling / MJ)
 // ─────────────────────────────────────────────────────────────
 export function buildNegativePrompt(predator: string): string {
   const base =
@@ -497,7 +487,7 @@ export function buildNegativePrompt(predator: string): string {
 }
 
 // ─────────────────────────────────────────────────────────────
-// 10. THUMBNAIL PROMPT
+// THUMBNAIL PROMPT
 // ─────────────────────────────────────────────────────────────
 export function buildThumbnailPrompt(
   predator: string,
@@ -516,7 +506,7 @@ export function buildThumbnailPrompt(
 }
 
 // ─────────────────────────────────────────────────────────────
-// 11. VOICEOVER LINE
+// VOICEOVER LINE
 // ─────────────────────────────────────────────────────────────
 export function buildVoiceoverLine(
   predator: string,
@@ -531,7 +521,7 @@ export function buildVoiceoverLine(
 }
 
 // ─────────────────────────────────────────────────────────────
-// 12. RUNWAY SHOTS — FINAL PATTERN + Step 6 One-action gate
+// RUNWAY SHOTS
 // ─────────────────────────────────────────────────────────────
 export function buildRunwayShots(
   predator: string,
@@ -630,7 +620,7 @@ Mood: ${tone.image}.`),
 }
 
 // ─────────────────────────────────────────────────────────────
-// 13. KLING SHOTS — WIDE PHYSICS RULE + Step 6 gate
+// KLING SHOTS
 // ─────────────────────────────────────────────────────────────
 export function buildKlingShots(
   predator: string,
@@ -661,10 +651,7 @@ export function buildKlingShots(
     ? "Motion-only prompting active — do not redescribe the subject's look."
     : "Keep visual restatement minimal.";
 
-  const singleRule = quality?.singleActionRule
-    ? "One action beat only — no stacked actions."
-    : "Keep action focused.";
-
+  const singleRule = quality?.singleActionRule ? "One action beat only — no stacked actions." : "Keep action focused.";
   const wideRule = klingWidePhysicsRule();
 
   const gateOn = !!quality?.singleActionRule;
@@ -687,7 +674,6 @@ Characters: ${predator} drives scene pressure; ${prey} is fully alert and reacti
 Action: ${predator} ${beat1.predatorBeat}. ${prey} ${beat1.preyBeat}.
 Camera: subtle handheld drift or static hold.
 Environment motion: ${micro}.
-Physical sound cues: breath escapes slowly through nostrils, terrain settling, distant habitat ambient.
 Style: ${tone.video}. ${vibe.style}.`),
 
     shot2: finalizePrompt(`KLING SHOT 2 — STRIKE (WIDE${gateOn ? " + ONE-ACTION" : ""}) [${model}]
@@ -701,11 +687,9 @@ ${wideRule}
 ${maybeGuard(beat2.guardLine)}${context}
 
 Scene: ${env}, ${weatherVariants[weather]}.
-Characters: ${predator} initiating the action beat; ${prey} in reactive survival mode.
 Action: ${predator} ${beat2.predatorBeat}. ${prey} ${beat2.preyBeat}.
 Camera: FIXED WIDE — full bodies visible; no crop; no close-ups.
 Environment motion: debris response, surface displacement, ${micro}.
-Physical sound cues: heavy hooves or paws strike ground, terrain compresses, prey vocalises once.
 Physics priority: coherent limbs, grounded weight, readable impact.`),
 
     shot3: finalizePrompt(`KLING SHOT 3 — AFTERMATH (WIDE${gateOn ? " + ONE-ACTION" : ""}) [${model}]
@@ -719,17 +703,15 @@ ${wideRule}
 ${maybeGuard(beat3.guardLine)}${context}
 
 Scene: ${env}, ${weatherVariants[weather]}.
-Characters: ${predator} settling after the encounter; ${prey} off-balance or repositioning.
 Action: ${predator} ${beat3.predatorBeat}. ${prey} ${beat3.preyBeat}.
 Camera: LOCKED FIXED WIDE — no movement; full bodies visible.
 Environment motion: ${micro}.
-Physical sound cues: heavy rhythmic breathing, terrain debris settles, distant habitat returns.
 Style: ${vibe.style}. ${tone.image}.`),
   };
 }
 
 // ─────────────────────────────────────────────────────────────
-// 14. KLING NATIVE 15-SECOND MULTI-SHOT (WIDE enforce + Step 6 gate)
+// KLING NATIVE 15s MULTI-SHOT
 // ─────────────────────────────────────────────────────────────
 export function buildKlingNative15s(
   predator: string,
@@ -817,19 +799,11 @@ ${refLine}
 ${motionRule}
 ${cfgLine}${context}
 
-${body}
-
-─────────────────────────────────────────────────────────
-HOW TO USE:
-1. Generate master image first (Image Prompt → NB2/Flux).
-2. Upload master image as reference in Kling 3.0 Pro/Standard.
-3. Paste THIS ENTIRE PROMPT as one single text prompt.
-4. Set CFG Scale: ${cfgScales.shot2} (0.0–1.0 range).
-✅ Native single-prompt workflow — identity preserved.`);
+${body}`);
 }
 
 // ─────────────────────────────────────────────────────────────
-// 15. KLING 6-SHOT MULTI-SCENE (WIDE enforce + Step 6 gate)
+// KLING 6-SHOT MULTI-SCENE
 // ─────────────────────────────────────────────────────────────
 export function buildKlingSixShot(
   predator: string,
@@ -904,18 +878,11 @@ Environment: debris + ${micro}.
 
 Shot 6 — AFTERMATH WIDE (14–17s) — WIDE:
 ${maybeGuard(b6.guardLine)}${predator} ${b6.predatorBeat}. ${prey} ${b6.preyBeat}.
-Camera: LOCKED FIXED WIDE — full bodies visible; no crop; no close-ups.
-
-──────────────────────────────────────────────────────
-HOW TO USE:
-1. Generate master image (Image Prompt).
-2. Upload master image as reference.
-3. Paste THIS ENTIRE PROMPT as one single input.
-✅ One prompt → 6 shots.`);
+Camera: LOCKED FIXED WIDE — full bodies visible; no crop; no close-ups.`);
 }
 
 // ─────────────────────────────────────────────────────────────
-// 16. 10 IDEAS
+// 10 IDEAS
 // ─────────────────────────────────────────────────────────────
 export function build10Ideas(predator: string, preyList: string[], preset: PredatorInfo): string[] {
   const ideas: string[] = [];
@@ -928,7 +895,9 @@ export function build10Ideas(predator: string, preyList: string[], preset: Preda
     }
   };
 
-  preyList.forEach((prey) => add(`${predator} vs ${prey} — ${getSafeArcPrint(preset.defaultArc)} in ${preset.environment}`));
+  preyList.forEach((prey) =>
+    add(`${predator} vs ${prey} — ${getSafeArcPrint(preset.defaultArc)} in ${preset.environment}`)
+  );
 
   for (const a of arcs) {
     for (const p of preyList) add(`${predator} vs ${p} — ${getSafeArcPrint(a)} in ${preset.environment}`);
@@ -951,15 +920,15 @@ export function build10Ideas(predator: string, preyList: string[], preset: Preda
 }
 
 // ─────────────────────────────────────────────────────────────
-// 17. CAPCUT PLAN
+// CAPCUT PLAN
 // ─────────────────────────────────────────────────────────────
 export function buildCapCutPlan(predator: string, arc: string, weather: Weather): string {
   const safeArc = getSafeArcPrint(arc);
   return finalizePrompt(`CAPCUT PLAN — ${predator} | Arc: ${safeArc} | Weather: ${weather}`);
 }
-// If your file has buildClipChainingGuide(...)
+
 // ─────────────────────────────────────────────────────────────
-// 18. CLIP CHAINING GUIDE
+// CLIP CHAINING
 // ─────────────────────────────────────────────────────────────
 export function buildClipChaining(predator: string, driftRisk: PredatorInfo["driftRisk"]): string {
   const riskLine =
