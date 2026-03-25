@@ -95,6 +95,7 @@ export type QualityOptions = {
   singleActionRule: boolean;
   microMotion: boolean;
   heroVeo: boolean;
+  seamlessShot?: boolean;  // Appends "Continuous, seamless shot" to Runway prompts
 };
 
 // ─────────────────────────────────────────────────────────────
