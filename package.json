@@ -3,16 +3,17 @@
   "version": "1.0.0",
   "private": true,
   "scripts": {
-    "dev": "next dev",
-    "build": "next build",
-    "start": "next start",
-    "lint": "next lint",
-    "test": "vitest",
-    "test:watch": "vitest --watch",
-    "test:ui": "vitest --ui",
-    "test:run": "vitest run",
-    "coverage": "vitest run --coverage"
-  },
+  "dev": "next dev",
+  "build": "next build",
+  "start": "next start",
+  "lint": "eslint .",
+  "lint:fix": "eslint . --fix",
+  "test": "vitest",
+  "test:watch": "vitest --watch",
+  "test:ui": "vitest --ui",
+  "test:run": "vitest run",
+  "coverage": "vitest run --coverage"
+},
   "dependencies": {
     "next": "^15.3.0",
     "react": "^19.1.0",
