@@ -2211,7 +2211,19 @@ function WorkflowPromptMap({
 // ─────────────────────────────────────────────────────────────
 // DEFAULT EXPORT — Main OutputCards wrapper
 // ─────────────────────────────────────────────────────────────
+// Kling "BODY ONLY" extractor (removes HOW TO USE section)
+function extractKlingPromptBody(full: string): string {
+  const s = String(full ?? "");
 
+  // 1) Cut everything from "HOW TO USE" to the end (case-insensitive)
+  let out = s.replace(/\n\s*HOW TO USE\b[\s\S]*$/i, "");
+
+  // 2) If your template uses long divider lines before HOW TO USE, optionally cut those too
+  // (keeps only the main prompt body)
+  out = out.replace(/\n\s*[-_]{5,}\s*$/g, "");
+
+  return out.trim();
+}
 function copyToClipboard(text: string) {
   if (typeof navigator !== "undefined" && navigator.clipboard) {
     navigator.clipboard.writeText(text).catch(() => {});
