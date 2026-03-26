@@ -54,28 +54,27 @@ function extractRunwayPasteReady(shotText: string): string {
 function extractKlingPromptBody(shotText: string): string {
   const s = String(shotText ?? "");
 
-  // 1) Prefer structured "KLING PROMPT" block if present
-  const m = s.match(
-    /═══ KLING 3\.0 (?:MULTI-SHOT )?PROMPT[^═]*═══\s*\n([\s\S]*?)(?:\nKling settings|$)/
-  );
-  let out = m?.[1]?.trim();
+  // 1) Remove HOW TO USE section + everything after it (including preceding divider)
+  //    Divider uses ─ (U+2500), — (em-dash), or - (hyphen)
+  let cleaned = s
+    .replace(/\n\s*[─—\-═]{5,}\s*\n\s*HOW TO USE\b[\s\S]*$/i, "")
+    .trim();
 
-  // 2) Fallback: try to grab SCALE-style body blocks
-  if (!out) {
-    const f = s.match(/(?:Scene|Shot):[\s\S]*?(?:Extra:.*|Style:.*)/);
-    out = f?.[0]?.trim();
+  // 2) Remove the header block (everything before first "Scene:" or "Shot 1")
+  const bodyStart = cleaned.search(/(?:^|\n)\s*(?:Scene:|Shot\s*1\s*[—\-─:])/i);
+  if (bodyStart > 0) {
+    cleaned = cleaned.slice(bodyStart).trim();
   }
 
-  // 3) Final fallback: use entire string
-  if (!out) out = s;
+  // 3) Remove any trailing divider lines that might remain
+  cleaned = cleaned.replace(/\n\s*[─—\-═]{5,}\s*$/g, "").trim();
 
-  // ✅ IMPORTANT: BODY ONLY = remove HOW TO USE section (for 15s native + 6-shot too)
-  out = out.replace(/\n\s*HOW TO USE\b[\s\S]*$/i, "").trim();
+  // 4) If nothing matched, return original minus HOW TO USE
+  if (!cleaned) {
+    return s.replace(/\n\s*[─—\-═]{5,}\s*\n\s*HOW TO USE\b[\s\S]*$/i, "").trim();
+  }
 
-  // Optional: clean trailing divider lines if any remain
-  out = out.replace(/\n\s*[-_]{5,}\s*$/g, "").trim();
-
-  return out;
+  return cleaned;
 }
 
 function extractKlingAudioPrompt(shotText: string): string {
