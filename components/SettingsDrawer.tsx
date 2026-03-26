@@ -1,19 +1,20 @@
+// components/SettingsDrawer.tsx
 "use client";
 
-import { type TouchEventHandler, useEffect, useMemo, useRef, useState } from "react";
+import React, { useEffect, useMemo, useRef, useState } from "react";
 
-type ThemeMode = "dark" | "light";
+type ThemeMode = "light" | "dark";
 type FontSize = "sm" | "md" | "lg";
 type Density = "compact" | "comfortable";
 
 type UISettings = {
   theme: ThemeMode;
-  accent: string; // hex
+  accent: string;
   fontSize: FontSize;
   density: Density;
 };
 
-const STORAGE_KEY = "wstv:uiSettings:v1";
+const STORAGE_KEY = "ui-settings-v1";
 
 const ACCENTS: Array<{ name: string; value: string }> = [
   { name: "Indigo", value: "#6366f1" },
@@ -24,17 +25,25 @@ const ACCENTS: Array<{ name: string; value: string }> = [
   { name: "Violet", value: "#8b5cf6" },
 ];
 
+function clamp(n: number, min: number, max: number) {
+  return Math.min(max, Math.max(min, n));
+}
+
 function hexToRgbTuple(hex: string): [number, number, number] | null {
-  const raw = hex.replace(/^#/, "").trim();
-  if (![3, 6].includes(raw.length)) return null;
+  const raw = (hex ?? "").trim().replace("#", "");
+  const full =
+    raw.length === 3
+      ? raw
+          .split("")
+          .map((c) => c + c)
+          .join("")
+      : raw;
 
-  const full = raw.length === 3 ? raw.split("").map((c) => c + c).join("") : raw;
-  const n = Number.parseInt(full, 16);
-  if (Number.isNaN(n)) return null;
+  if (!/^[0-9a-fA-F]{6}$/.test(full)) return null;
 
-  const r = (n >> 16) & 255;
-  const g = (n >> 8) & 255;
-  const b = n & 255;
+  const r = parseInt(full.slice(0, 2), 16);
+  const g = parseInt(full.slice(2, 4), 16);
+  const b = parseInt(full.slice(4, 6), 16);
   return [r, g, b];
 }
 
@@ -42,13 +51,18 @@ function safeLoadSettings(): UISettings | null {
   try {
     const raw = localStorage.getItem(STORAGE_KEY);
     if (!raw) return null;
-    const parsed = JSON.parse(raw) as Partial<UISettings>;
+    const parsed = JSON.parse(raw) as Partial<UISettings> | null;
     if (!parsed) return null;
 
     const theme: ThemeMode = parsed.theme === "light" ? "light" : "dark";
-    const fontSize: FontSize = parsed.fontSize === "lg" ? "lg" : parsed.fontSize === "sm" ? "sm" : "md";
+    const fontSize: FontSize =
+      parsed.fontSize === "sm" || parsed.fontSize === "lg" ? parsed.fontSize : "md";
     const density: Density = parsed.density === "compact" ? "compact" : "comfortable";
-    const accent = typeof parsed.accent === "string" && parsed.accent ? parsed.accent : "#6366f1";
+
+    const accent =
+      typeof parsed.accent === "string" && parsed.accent.trim()
+        ? parsed.accent.trim()
+        : "#6366f1";
 
     return { theme, accent, fontSize, density };
   } catch {
@@ -56,31 +70,46 @@ function safeLoadSettings(): UISettings | null {
   }
 }
 
-function applySettingsToDOM(settings: UISettings): void {
+function safeSaveSettings(settings: UISettings) {
+  try {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(settings));
+  } catch {
+    // ignore
+  }
+}
+
+function applySettingsToDOM(settings: UISettings) {
   const root = document.documentElement;
 
   root.dataset.theme = settings.theme;
   root.dataset.density = settings.density;
 
+  const fontPx = settings.fontSize === "sm" ? 14 : settings.fontSize === "lg" ? 18 : 16;
+  root.style.setProperty("--base-font-size", `${fontPx}px`);
+
   root.style.setProperty("--accent", settings.accent);
   const rgb = hexToRgbTuple(settings.accent);
-  if (rgb) root.style.setProperty("--accent-rgb", `${rgb[0]} ${rgb[1]} ${rgb[2]}`);
-
-  const fontPx = settings.fontSize === "sm" ? "14px" : settings.fontSize === "lg" ? "18px" : "16px";
-  root.style.setProperty("--base-font-size", fontPx);
+  root.style.setProperty("--accent-rgb", rgb ? `${rgb[0]} ${rgb[1]} ${rgb[2]}` : "99 102 241");
 }
 
-function getFocusableElements(container: HTMLElement): HTMLElement[] {
-  const selector =
-    'a[href],button:not([disabled]),textarea:not([disabled]),input:not([disabled]),select:not([disabled]),[tabindex]:not([tabindex="-1"])';
-  return Array.from(container.querySelectorAll<HTMLElement>(selector)).filter(
-    (el) => !el.hasAttribute("disabled") && !el.getAttribute("aria-hidden")
+function getFocusable(container: HTMLElement): HTMLElement[] {
+  const nodes = Array.from(
+    container.querySelectorAll<HTMLElement>(
+      [
+        'a[href]',
+        'button:not([disabled])',
+        'input:not([disabled])',
+        'select:not([disabled])',
+        'textarea:not([disabled])',
+        '[tabindex]:not([tabindex="-1"])',
+      ].join(",")
+    )
   );
+  return nodes.filter((el) => !el.hasAttribute("disabled") && el.tabIndex !== -1 && !el.hidden);
 }
 
-export default function SettingsDrawer(): JSX.Element {
+export default function SettingsDrawer() {
   const [open, setOpen] = useState(false);
-  const [mounted, setMounted] = useState(false);
   const [reduceMotion, setReduceMotion] = useState(false);
 
   const [settings, setSettings] = useState<UISettings>(() => ({
@@ -94,20 +123,14 @@ export default function SettingsDrawer(): JSX.Element {
   const panelRef = useRef<HTMLDivElement | null>(null);
   const lastActiveRef = useRef<HTMLElement | null>(null);
 
-  const [dragX, setDragX] = useState(0);
-  const dragStateRef = useRef<{ active: boolean; startX: number; startY: number; lastX: number; horizontal: boolean }>({
-    active: false,
-    startX: 0,
-    startY: 0,
-    lastX: 0,
-    horizontal: false,
-  const dragXRef = useRef(0);
+  const draggingRef = useRef(false);
+  const startXRef = useRef(0);
+  const currentDxRef = useRef(0);
 
-  useEffect(() => {
-    dragXRef.current = dragX;
-  }, [dragX]);
-
-  });
+  const accentRgbText = useMemo(() => {
+    const rgb = hexToRgbTuple(settings.accent);
+    return rgb ? `${rgb[0]} ${rgb[1]} ${rgb[2]}` : "99 102 241";
+  }, [settings.accent]);
 
   useEffect(() => {
     const mq = window.matchMedia("(prefers-reduced-motion: reduce)");
@@ -117,47 +140,35 @@ export default function SettingsDrawer(): JSX.Element {
     return () => mq.removeEventListener?.("change", apply);
   }, []);
 
-  const accentRgbText = useMemo(() => {
-    const rgb = hexToRgbTuple(settings.accent);
-    return rgb ? `${rgb[0]} ${rgb[1]} ${rgb[2]}` : "99 102 241";
-  }, [settings.accent]);
-
   useEffect(() => {
     const loaded = safeLoadSettings();
-    if (!loaded) {
+    if (loaded) {
+      setSettings(loaded);
+      applySettingsToDOM(loaded);
+    } else {
       applySettingsToDOM(settings);
-      return;
     }
-    setSettings(loaded);
-    applySettingsToDOM(loaded);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   useEffect(() => {
-    if (typeof window === "undefined") return;
     applySettingsToDOM(settings);
-    try {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(settings));
-    } catch {
-      // ignore
-    }
+    safeSaveSettings(settings);
   }, [settings]);
 
   useEffect(() => {
     if (!open) return;
 
-    lastActiveRef.current = (document.activeElement as HTMLElement | null) ?? null;
+    lastActiveRef.current = document.activeElement as HTMLElement | null;
 
     const panel = panelRef.current;
-    if (!panel) return;
-
-    const focusFirst = () => {
-      const focusables = getFocusableElements(panel);
+    if (panel) {
+      const focusables = getFocusable(panel);
       (focusables[0] ?? panel).focus();
-    };
+    }
 
     const onKeyDown = (e: KeyboardEvent) => {
-      if (!panelRef.current) return;
+      if (!open) return;
 
       if (e.key === "Escape") {
         e.preventDefault();
@@ -167,10 +178,13 @@ export default function SettingsDrawer(): JSX.Element {
 
       if (e.key !== "Tab") return;
 
-      const focusables = getFocusableElements(panelRef.current);
-      if (!focusables.length) {
+      const p = panelRef.current;
+      if (!p) return;
+
+      const focusables = getFocusable(p);
+      if (focusables.length === 0) {
         e.preventDefault();
-        panelRef.current.focus();
+        p.focus();
         return;
       }
 
@@ -178,244 +192,297 @@ export default function SettingsDrawer(): JSX.Element {
       const last = focusables[focusables.length - 1];
       const active = document.activeElement as HTMLElement | null;
 
-      if (e.shiftKey) {
-        if (!active || active === first || !panelRef.current.contains(active)) {
-          e.preventDefault();
-          last.focus();
-        }
-      } else {
-        if (!active || active === last || !panelRef.current.contains(active)) {
-          e.preventDefault();
-          first.focus();
-        }
+      if (!e.shiftKey && active === last) {
+        e.preventDefault();
+        first.focus();
+      } else if (e.shiftKey && (active === first || active === p)) {
+        e.preventDefault();
+        last.focus();
       }
     };
 
-    const t = window.setTimeout(focusFirst, 0);
-    document.addEventListener("keydown", onKeyDown);
-
-    return () => {
-      window.clearTimeout(t);
-      document.removeEventListener("keydown", onKeyDown);
-    };
+    document.addEventListener("keydown", onKeyDown, true);
+    return () => document.removeEventListener("keydown", onKeyDown, true);
   }, [open]);
 
   useEffect(() => {
     if (open) return;
-
-    const toRestore = lastActiveRef.current;
-    const trigger = triggerRef.current;
-
-    if (toRestore && document.contains(toRestore)) {
-      toRestore.focus();
-      return;
-    }
-    trigger?.focus();
+    const prev = lastActiveRef.current;
+    if (prev && typeof prev.focus === "function") prev.focus();
+    else triggerRef.current?.focus();
   }, [open]);
 
-  const openDrawer = () => {
-    setMounted(true);
-    setOpen(true);
+  const setTheme = (theme: ThemeMode) => setSettings((s) => ({ ...s, theme }));
+  const setAccent = (accent: string) => setSettings((s) => ({ ...s, accent }));
+  const setFontSize = (fontSize: FontSize) => setSettings((s) => ({ ...s, fontSize }));
+  const setDensity = (density: Density) => setSettings((s) => ({ ...s, density }));
+
+  const close = () => setOpen(false);
+  const toggle = () => setOpen((v) => !v);
+
+  const onOverlayMouseDown: React.MouseEventHandler<HTMLDivElement> = (e) => {
+    if (e.target === e.currentTarget) close();
   };
 
-  const closeDrawer = () => {
-    setDragX(0);
-    setOpen(false);
-    if (reduceMotion) {
-      setMounted(false);
-      return;
+  const onPanelPointerDown: React.PointerEventHandler<HTMLDivElement> = (e) => {
+    // Only handle primary touch/pen/mouse drags intended for swipe
+    if (e.button !== 0 && e.pointerType === "mouse") return;
+
+    draggingRef.current = true;
+    startXRef.current = e.clientX;
+    currentDxRef.current = 0;
+
+    try {
+      e.currentTarget.setPointerCapture(e.pointerId);
+    } catch {
+      // ignore
     }
-    window.setTimeout(() => setMounted(false), 200);
   };
+
+  const onPanelPointerMove: React.PointerEventHandler<HTMLDivElement> = (e) => {
+    if (!draggingRef.current) return;
+
+    const dx = e.clientX - startXRef.current;
+    // drawer is on the left; swipe LEFT (negative dx) to close
+    currentDxRef.current = clamp(dx, -280, 0);
+
+    const panel = panelRef.current;
+    if (!panel) return;
+
+    panel.style.transition = "none";
+    panel.style.transform = `translateX(${currentDxRef.current}px)`;
+  };
+
+  const endDrag = (pointerId?: number) => {
+    if (!draggingRef.current) return;
+
+    draggingRef.current = false;
+
+    const dx = currentDxRef.current;
+    currentDxRef.current = 0;
+
+    const panel = panelRef.current;
+    if (panel) {
+      panel.style.transition = "";
+      panel.style.transform = "";
+    }
+
+    if (pointerId != null && panel) {
+      try {
+        panel.releasePointerCapture(pointerId);
+      } catch {
+        // ignore
+      }
+    }
+
+    if (dx < -80) close();
+  };
+
+  const onPanelPointerUp: React.PointerEventHandler<HTMLDivElement> = (e) => endDrag(e.pointerId);
+  const onPanelPointerCancel: React.PointerEventHandler<HTMLDivElement> = (e) => endDrag(e.pointerId);
 
   return (
     <>
       <button
         ref={triggerRef}
         type="button"
-        onClick={openDrawer}
+        onClick={toggle}
+        className={[
+          "fixed bottom-4 left-4 z-40",
+          "rounded-full border border-black/10 bg-white/90 text-slate-900 shadow-lg backdrop-blur",
+          "px-3 py-2 text-sm font-medium",
+          "hover:bg-white focus:outline-none focus:ring-2 focus:ring-[rgb(var(--accent-rgb))] focus:ring-offset-2",
+          "dark:border-white/10 dark:bg-slate-900/80 dark:text-slate-50 dark:hover:bg-slate-900",
+        ].join(" ")}
         aria-haspopup="dialog"
         aria-expanded={open}
         aria-controls="settings-drawer"
-        className="fixed bottom-4 left-4 z-50 inline-flex items-center gap-2 rounded-full border border-white/10 bg-[color-mix(in_oklab,var(--panel-strong)_80%,transparent)] px-4 py-2 text-sm font-medium text-[var(--text)] shadow-xl backdrop-blur hover:opacity-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[rgba(var(--accent-rgb)/0.55)] focus-visible:ring-offset-0"
-        style={{ borderColor: "var(--border)", transform: open && dragX !== 0 ? `translateX(${dragX}px)` : undefined }}
       >
-        <span
-          className="inline-block size-2.5 rounded-full"
-          style={{ background: `rgb(${accentRgbText})` }}
-          aria-hidden="true"
-        />
         Settings
       </button>
 
-      {mounted ? (
-        <div className="fixed inset-0 z-50">
-          <button
-            type="button"
-            className={`absolute inset-0 h-full w-full cursor-default bg-black/40 transition-opacity duration-200 motion-reduce:transition-none ${open ? "opacity-100" : "opacity-0"}`}
-            onClick={closeDrawer}
-            aria-label="Close settings"
-          />
-          <div
-            id="settings-drawer"
-            ref={panelRef}
-            role="dialog"
-            aria-modal="true"
-            aria-label="Settings"
-            tabIndex={-1}
-            onTouchStart={onPanelTouchStart}
-            onTouchMove={onPanelTouchMove}
-            onTouchEnd={onPanelTouchEnd}
-            onTouchCancel={onPanelTouchEnd}
-            className={`absolute bottom-0 left-0 top-0 w-[min(22rem,92vw)] border-r border-white/10 bg-[color-mix(in_oklab,var(--panel-strong)_92%,transparent)] p-4 shadow-2xl backdrop-blur-xl transition-transform duration-200 motion-reduce:transition-none ${open ? "translate-x-0" : "-translate-x-full"}`}
-            style={{ borderColor: "var(--border)" }}
-          >
-            <div className="mb-4 flex items-center justify-between">
-              <div className="text-base font-semibold text-[var(--text)]">Settings</div>
-              <button
-                type="button"
-                onClick={closeDrawer}
-                className="rounded-md border border-white/10 bg-transparent px-2 py-1 text-sm text-[var(--text)] hover:opacity-90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[rgba(var(--accent-rgb)/0.55)]"
-                style={{ borderColor: "var(--border)" }}
-              >
-                Close
-              </button>
-            </div>
+      {/* Overlay */}
+      <div
+        className={[
+          "fixed inset-0 z-50",
+          open ? "pointer-events-auto" : "pointer-events-none",
+        ].join(" ")}
+        aria-hidden={!open}
+      >
+        <div
+          onMouseDown={onOverlayMouseDown}
+          className={[
+            "absolute inset-0 bg-black/40",
+            "transition-opacity duration-300 ease-out motion-reduce:transition-none",
+            open ? "opacity-100" : "opacity-0",
+          ].join(" ")}
+        />
 
-            <div className="space-y-5">
-              <section className="rounded-xl border border-white/10 p-3" style={{ borderColor: "var(--border)" }}>
-                <div className="mb-2 text-xs font-semibold uppercase tracking-wider text-[var(--muted)]">Theme</div>
-                <div className="flex gap-2">
-                  <button
-                    type="button"
-                    onClick={() => setSettings((s) => ({ ...s, theme: "dark" }))}
-                    aria-pressed={settings.theme === "dark"}
-                    className="flex-1 rounded-lg border border-white/10 px-3 py-2 text-sm text-[var(--text)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[rgba(var(--accent-rgb)/0.55)]"
-                    style={{
-                      borderColor: settings.theme === "dark" ? `rgba(${accentRgbText} / 0.7)` : "var(--border)",
-                      background: settings.theme === "dark" ? `rgba(${accentRgbText} / 0.12)` : "transparent",
-                    }}
-                  >
-                    Dark
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setSettings((s) => ({ ...s, theme: "light" }))}
-                    aria-pressed={settings.theme === "light"}
-                    className="flex-1 rounded-lg border border-white/10 px-3 py-2 text-sm text-[var(--text)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[rgba(var(--accent-rgb)/0.55)]"
-                    style={{
-                      borderColor: settings.theme === "light" ? `rgba(${accentRgbText} / 0.7)` : "var(--border)",
-                      background: settings.theme === "light" ? `rgba(${accentRgbText} / 0.12)` : "transparent",
-                    }}
-                  >
-                    Light
-                  </button>
-                </div>
-              </section>
+        {/* Drawer */}
+        <div
+          id="settings-drawer"
+          role="dialog"
+          aria-modal="true"
+          aria-label="Settings"
+          ref={panelRef}
+          tabIndex={-1}
+          onPointerDown={onPanelPointerDown}
+          onPointerMove={onPanelPointerMove}
+          onPointerUp={onPanelPointerUp}
+          onPointerCancel={onPanelPointerCancel}
+          className={[
+            "absolute left-0 top-0 h-full w-[320px] max-w-[90vw]",
+            "border-r border-black/10 bg-white text-slate-900 shadow-2xl",
+            "dark:border-white/10 dark:bg-slate-950 dark:text-slate-50",
+            reduceMotion ? "" : "transition-transform duration-300 ease-out",
+            "motion-reduce:transition-none",
+            open ? "translate-x-0" : "-translate-x-full",
+            "touch-pan-y",
+          ].join(" ")}
+        >
+          <div className="flex items-center justify-between border-b border-black/10 px-4 py-3 dark:border-white/10">
+            <div className="text-base font-semibold">UI Settings</div>
+            <button
+              type="button"
+              onClick={close}
+              className={[
+                "rounded-md px-2 py-1 text-sm",
+                "hover:bg-black/5 focus:outline-none focus:ring-2 focus:ring-[rgb(var(--accent-rgb))]",
+                "dark:hover:bg-white/10",
+              ].join(" ")}
+            >
+              Close
+            </button>
+          </div>
 
-              <section className="rounded-xl border border-white/10 p-3" style={{ borderColor: "var(--border)" }}>
-                <div className="mb-2 text-xs font-semibold uppercase tracking-wider text-[var(--muted)]">Accent</div>
-                <div className="grid grid-cols-3 gap-2">
-                  {ACCENTS.map((a) => {
-                    const active = settings.accent.toLowerCase() === a.value.toLowerCase();
-                    return (
-                      <button
-                        key={a.value}
-                        type="button"
-                        onClick={() => setSettings((s) => ({ ...s, accent: a.value }))}
-                        aria-pressed={active}
-                        className="flex items-center justify-center gap-2 rounded-lg border px-2 py-2 text-xs text-[var(--text)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[rgba(var(--accent-rgb)/0.55)]"
-                        style={{
-                          borderColor: active ? `rgba(${accentRgbText} / 0.8)` : "var(--border)",
-                          background: active ? `rgba(${accentRgbText} / 0.12)` : "transparent",
-                        }}
-                        title={a.name}
-                      >
-                        <span className="inline-block size-3.5 rounded-full" style={{ background: a.value }} aria-hidden="true" />
-                        {a.name}
-                      </button>
-                    );
-                  })}
-                </div>
-              </section>
-
-              <section className="rounded-xl border border-white/10 p-3" style={{ borderColor: "var(--border)" }}>
-                <div className="mb-2 text-xs font-semibold uppercase tracking-wider text-[var(--muted)]">Font size</div>
-                <div className="flex gap-2">
-                  {([
-                    ["sm", "Small"],
-                    ["md", "Medium"],
-                    ["lg", "Large"],
-                  ] as const).map(([value, label]) => {
-                    const active = settings.fontSize === value;
-                    return (
-                      <button
-                        key={value}
-                        type="button"
-                        onClick={() => setSettings((s) => ({ ...s, fontSize: value }))}
-                        aria-pressed={active}
-                        className="flex-1 rounded-lg border px-3 py-2 text-sm text-[var(--text)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[rgba(var(--accent-rgb)/0.55)]"
-                        style={{
-                          borderColor: active ? `rgba(${accentRgbText} / 0.8)` : "var(--border)",
-                          background: active ? `rgba(${accentRgbText} / 0.12)` : "transparent",
-                        }}
-                      >
-                        {label}
-                      </button>
-                    );
-                  })}
-                </div>
-              </section>
-
-              <section className="rounded-xl border border-white/10 p-3" style={{ borderColor: "var(--border)" }}>
-                <div className="mb-2 text-xs font-semibold uppercase tracking-wider text-[var(--muted)]">Layout density</div>
-                <div className="flex gap-2">
-                  {([
-                    ["compact", "Compact"],
-                    ["comfortable", "Comfortable"],
-                  ] as const).map(([value, label]) => {
-                    const active = settings.density === value;
-                    return (
-                      <button
-                        key={value}
-                        type="button"
-                        onClick={() => setSettings((s) => ({ ...s, density: value }))}
-                        aria-pressed={active}
-                        className="flex-1 rounded-lg border px-3 py-2 text-sm text-[var(--text)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[rgba(var(--accent-rgb)/0.55)]"
-                        style={{
-                          borderColor: active ? `rgba(${accentRgbText} / 0.8)` : "var(--border)",
-                          background: active ? `rgba(${accentRgbText} / 0.12)` : "transparent",
-                        }}
-                      >
-                        {label}
-                      </button>
-                    );
-                  })}
-                </div>
-              </section>
-
-              <section className="rounded-xl border border-white/10 p-3" style={{ borderColor: "var(--border)" }}>
-                <div className="mb-2 text-xs font-semibold uppercase tracking-wider text-[var(--muted)]">Reset</div>
+          <div className="space-y-6 px-4 py-4">
+            {/* Theme */}
+            <section className="space-y-2">
+              <div className="text-sm font-medium">Theme</div>
+              <div className="flex gap-2">
                 <button
                   type="button"
-                  onClick={() =>
-                    setSettings({
-                      theme: "dark",
-                      accent: "#6366f1",
-                      fontSize: "md",
-                      density: "comfortable",
-                    })
-                  }
-                  className="w-full rounded-lg border border-white/10 px-3 py-2 text-sm text-[var(--text)] hover:opacity-90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[rgba(var(--accent-rgb)/0.55)]"
-                  style={{ borderColor: "var(--border)" }}
+                  onClick={() => setTheme("light")}
+                  className={[
+                    "flex-1 rounded-lg border px-3 py-2 text-sm",
+                    settings.theme === "light"
+                      ? "border-[rgb(var(--accent-rgb))] bg-[rgb(var(--accent-rgb)/0.12)]"
+                      : "border-black/10 hover:bg-black/5 dark:border-white/10 dark:hover:bg-white/10",
+                  ].join(" ")}
                 >
-                  Reset to defaults
+                  Light
                 </button>
-              </section>
-            </div>
+                <button
+                  type="button"
+                  onClick={() => setTheme("dark")}
+                  className={[
+                    "flex-1 rounded-lg border px-3 py-2 text-sm",
+                    settings.theme === "dark"
+                      ? "border-[rgb(var(--accent-rgb))] bg-[rgb(var(--accent-rgb)/0.12)]"
+                      : "border-black/10 hover:bg-black/5 dark:border-white/10 dark:hover:bg-white/10",
+                  ].join(" ")}
+                >
+                  Dark
+                </button>
+              </div>
+            </section>
+
+            {/* Accent */}
+            <section className="space-y-2">
+              <div className="text-sm font-medium">Accent</div>
+              <div className="grid grid-cols-3 gap-2">
+                {ACCENTS.map((a) => {
+                  const selected = settings.accent.toLowerCase() === a.value.toLowerCase();
+                  return (
+                    <button
+                      key={a.value}
+                      type="button"
+                      onClick={() => setAccent(a.value)}
+                      className={[
+                        "rounded-lg border px-3 py-2 text-left text-xs",
+                        selected
+                          ? "border-[rgb(var(--accent-rgb))] bg-[rgb(var(--accent-rgb)/0.12)]"
+                          : "border-black/10 hover:bg-black/5 dark:border-white/10 dark:hover:bg-white/10",
+                      ].join(" ")}
+                    >
+                      <div className="flex items-center gap-2">
+                        <span
+                          className="h-3 w-3 rounded-full"
+                          style={{ backgroundColor: a.value }}
+                          aria-hidden="true"
+                        />
+                        <span className="truncate">{a.name}</span>
+                      </div>
+                    </button>
+                  );
+                })}
+              </div>
+
+              <div className="text-xs opacity-70">
+                Active: <span className="font-mono">{settings.accent}</span>{" "}
+                <span className="font-mono">({accentRgbText})</span>
+              </div>
+            </section>
+
+            {/* Font size */}
+            <section className="space-y-2">
+              <div className="text-sm font-medium">Font size</div>
+              <div className="flex gap-2">
+                {(["sm", "md", "lg"] as const).map((v) => (
+                  <button
+                    key={v}
+                    type="button"
+                    onClick={() => setFontSize(v)}
+                    className={[
+                      "flex-1 rounded-lg border px-3 py-2 text-sm",
+                      settings.fontSize === v
+                        ? "border-[rgb(var(--accent-rgb))] bg-[rgb(var(--accent-rgb)/0.12)]"
+                        : "border-black/10 hover:bg-black/5 dark:border-white/10 dark:hover:bg-white/10",
+                    ].join(" ")}
+                  >
+                    {v === "sm" ? "Small" : v === "lg" ? "Large" : "Medium"}
+                  </button>
+                ))}
+              </div>
+            </section>
+
+            {/* Density */}
+            <section className="space-y-2">
+              <div className="text-sm font-medium">Layout density</div>
+              <div className="flex gap-2">
+                <button
+                  type="button"
+                  onClick={() => setDensity("compact")}
+                  className={[
+                    "flex-1 rounded-lg border px-3 py-2 text-sm",
+                    settings.density === "compact"
+                      ? "border-[rgb(var(--accent-rgb))] bg-[rgb(var(--accent-rgb)/0.12)]"
+                      : "border-black/10 hover:bg-black/5 dark:border-white/10 dark:hover:bg-white/10",
+                  ].join(" ")}
+                >
+                  Compact
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setDensity("comfortable")}
+                  className={[
+                    "flex-1 rounded-lg border px-3 py-2 text-sm",
+                    settings.density === "comfortable"
+                      ? "border-[rgb(var(--accent-rgb))] bg-[rgb(var(--accent-rgb)/0.12)]"
+                      : "border-black/10 hover:bg-black/5 dark:border-white/10 dark:hover:bg-white/10",
+                  ].join(" ")}
+                >
+                  Comfortable
+                </button>
+              </div>
+              <div className="text-xs opacity-70">
+                Compact mode also tightens <span className="font-mono">space-y-*</span> and{" "}
+                <span className="font-mono">gap-*</span> via CSS vars.
+              </div>
+            </section>
           </div>
         </div>
-      ) : null}
+      </div>
     </>
   );
 }
