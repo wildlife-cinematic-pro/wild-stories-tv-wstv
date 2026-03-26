@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState } from "react";
+import { type TouchEventHandler, useEffect, useMemo, useRef, useState } from "react";
 
 type ThemeMode = "dark" | "light";
 type FontSize = "sm" | "md" | "lg";
@@ -80,6 +80,8 @@ function getFocusableElements(container: HTMLElement): HTMLElement[] {
 
 export default function SettingsDrawer(): JSX.Element {
   const [open, setOpen] = useState(false);
+  const [mounted, setMounted] = useState(false);
+  const [reduceMotion, setReduceMotion] = useState(false);
 
   const [settings, setSettings] = useState<UISettings>(() => ({
     theme: "dark",
@@ -91,6 +93,29 @@ export default function SettingsDrawer(): JSX.Element {
   const triggerRef = useRef<HTMLButtonElement | null>(null);
   const panelRef = useRef<HTMLDivElement | null>(null);
   const lastActiveRef = useRef<HTMLElement | null>(null);
+
+  const [dragX, setDragX] = useState(0);
+  const dragStateRef = useRef<{ active: boolean; startX: number; startY: number; lastX: number; horizontal: boolean }>({
+    active: false,
+    startX: 0,
+    startY: 0,
+    lastX: 0,
+    horizontal: false,
+  const dragXRef = useRef(0);
+
+  useEffect(() => {
+    dragXRef.current = dragX;
+  }, [dragX]);
+
+  });
+
+  useEffect(() => {
+    const mq = window.matchMedia("(prefers-reduced-motion: reduce)");
+    const apply = () => setReduceMotion(mq.matches);
+    apply();
+    mq.addEventListener?.("change", apply);
+    return () => mq.removeEventListener?.("change", apply);
+  }, []);
 
   const accentRgbText = useMemo(() => {
     const rgb = hexToRgbTuple(settings.accent);
@@ -188,17 +213,32 @@ export default function SettingsDrawer(): JSX.Element {
     trigger?.focus();
   }, [open]);
 
+  const openDrawer = () => {
+    setMounted(true);
+    setOpen(true);
+  };
+
+  const closeDrawer = () => {
+    setDragX(0);
+    setOpen(false);
+    if (reduceMotion) {
+      setMounted(false);
+      return;
+    }
+    window.setTimeout(() => setMounted(false), 200);
+  };
+
   return (
     <>
       <button
         ref={triggerRef}
         type="button"
-        onClick={() => setOpen(true)}
+        onClick={openDrawer}
         aria-haspopup="dialog"
         aria-expanded={open}
         aria-controls="settings-drawer"
         className="fixed bottom-4 left-4 z-50 inline-flex items-center gap-2 rounded-full border border-white/10 bg-[color-mix(in_oklab,var(--panel-strong)_80%,transparent)] px-4 py-2 text-sm font-medium text-[var(--text)] shadow-xl backdrop-blur hover:opacity-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[rgba(var(--accent-rgb)/0.55)] focus-visible:ring-offset-0"
-        style={{ borderColor: "var(--border)" }}
+        style={{ borderColor: "var(--border)", transform: open && dragX !== 0 ? `translateX(${dragX}px)` : undefined }}
       >
         <span
           className="inline-block size-2.5 rounded-full"
@@ -208,12 +248,12 @@ export default function SettingsDrawer(): JSX.Element {
         Settings
       </button>
 
-      {open ? (
+      {mounted ? (
         <div className="fixed inset-0 z-50">
           <button
             type="button"
-            className="absolute inset-0 h-full w-full cursor-default bg-black/40"
-            onClick={() => setOpen(false)}
+            className={`absolute inset-0 h-full w-full cursor-default bg-black/40 transition-opacity duration-200 motion-reduce:transition-none ${open ? "opacity-100" : "opacity-0"}`}
+            onClick={closeDrawer}
             aria-label="Close settings"
           />
           <div
@@ -223,14 +263,18 @@ export default function SettingsDrawer(): JSX.Element {
             aria-modal="true"
             aria-label="Settings"
             tabIndex={-1}
-            className="absolute bottom-0 left-0 top-0 w-[min(22rem,92vw)] translate-x-0 border-r border-white/10 bg-[color-mix(in_oklab,var(--panel-strong)_92%,transparent)] p-4 shadow-2xl backdrop-blur-xl transition-transform"
+            onTouchStart={onPanelTouchStart}
+            onTouchMove={onPanelTouchMove}
+            onTouchEnd={onPanelTouchEnd}
+            onTouchCancel={onPanelTouchEnd}
+            className={`absolute bottom-0 left-0 top-0 w-[min(22rem,92vw)] border-r border-white/10 bg-[color-mix(in_oklab,var(--panel-strong)_92%,transparent)] p-4 shadow-2xl backdrop-blur-xl transition-transform duration-200 motion-reduce:transition-none ${open ? "translate-x-0" : "-translate-x-full"}`}
             style={{ borderColor: "var(--border)" }}
           >
             <div className="mb-4 flex items-center justify-between">
               <div className="text-base font-semibold text-[var(--text)]">Settings</div>
               <button
                 type="button"
-                onClick={() => setOpen(false)}
+                onClick={closeDrawer}
                 className="rounded-md border border-white/10 bg-transparent px-2 py-1 text-sm text-[var(--text)] hover:opacity-90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[rgba(var(--accent-rgb)/0.55)]"
                 style={{ borderColor: "var(--border)" }}
               >
@@ -375,4 +419,3 @@ export default function SettingsDrawer(): JSX.Element {
     </>
   );
 }
-
