@@ -636,7 +636,7 @@ export function suggestArc(predator: string, prey: string, fallback: string): st
   const r = normalize(prey);
   if (!p || !r) return fallback;
   if (p === "Wolf" && (r === "Elk" || r === "Deer")) return "Pack hunting strategy";
-  if (p === "Orca" || p === "African Wild Dog") return "Pack hunting strategy";
+  if (p === "Orca" || p === "African Wild Dog" || p === "Dolphin") return "Pack hunting strategy";
   if (p === "Jaguar" && r === "Caiman") return "Ambush attack";
   if (p === "Crocodile" && ["Zebra", "Buffalo", "Antelope"].includes(r)) return "Ambush attack";
   if (p === "Nile Crocodile") return "Ambush attack";
