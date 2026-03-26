@@ -108,6 +108,15 @@ function getFocusable(container: HTMLElement): HTMLElement[] {
   return nodes.filter((el) => !el.hasAttribute("disabled") && el.tabIndex !== -1 && !el.hidden);
 }
 
+function isInteractiveTarget(target: EventTarget | null): boolean {
+  if (!(target instanceof HTMLElement)) return false;
+  return Boolean(
+    target.closest(
+      "button, a, input, select, textarea, [role='button'], [role='switch'], [role='radio']"
+    )
+  );
+}
+
 export default function SettingsDrawer() {
   const [open, setOpen] = useState(false);
   const [reduceMotion, setReduceMotion] = useState(false);
@@ -224,9 +233,10 @@ export default function SettingsDrawer() {
     if (e.target === e.currentTarget) close();
   };
 
+  // Swipe: ONLY for touch + ONLY when starting from non-interactive areas
   const onPanelPointerDown: React.PointerEventHandler<HTMLDivElement> = (e) => {
-    // Only handle primary touch/pen/mouse drags intended for swipe
-    if (e.button !== 0 && e.pointerType === "mouse") return;
+    if (e.pointerType !== "touch") return;
+    if (isInteractiveTarget(e.target)) return;
 
     draggingRef.current = true;
     startXRef.current = e.clientX;
@@ -243,7 +253,6 @@ export default function SettingsDrawer() {
     if (!draggingRef.current) return;
 
     const dx = e.clientX - startXRef.current;
-    // drawer is on the left; swipe LEFT (negative dx) to close
     currentDxRef.current = clamp(dx, -280, 0);
 
     const panel = panelRef.current;
@@ -279,7 +288,8 @@ export default function SettingsDrawer() {
   };
 
   const onPanelPointerUp: React.PointerEventHandler<HTMLDivElement> = (e) => endDrag(e.pointerId);
-  const onPanelPointerCancel: React.PointerEventHandler<HTMLDivElement> = (e) => endDrag(e.pointerId);
+  const onPanelPointerCancel: React.PointerEventHandler<HTMLDivElement> = (e) =>
+    endDrag(e.pointerId);
 
   return (
     <>
@@ -301,12 +311,10 @@ export default function SettingsDrawer() {
         Settings
       </button>
 
-      {/* Overlay */}
       <div
-        className={[
-          "fixed inset-0 z-50",
-          open ? "pointer-events-auto" : "pointer-events-none",
-        ].join(" ")}
+        className={["fixed inset-0 z-50", open ? "pointer-events-auto" : "pointer-events-none"].join(
+          " "
+        )}
         aria-hidden={!open}
       >
         <div
@@ -318,7 +326,6 @@ export default function SettingsDrawer() {
           ].join(" ")}
         />
 
-        {/* Drawer */}
         <div
           id="settings-drawer"
           role="dialog"
@@ -356,7 +363,6 @@ export default function SettingsDrawer() {
           </div>
 
           <div className="space-y-6 px-4 py-4">
-            {/* Theme */}
             <section className="space-y-2">
               <div className="text-sm font-medium">Theme</div>
               <div className="flex gap-2">
@@ -387,7 +393,6 @@ export default function SettingsDrawer() {
               </div>
             </section>
 
-            {/* Accent */}
             <section className="space-y-2">
               <div className="text-sm font-medium">Accent</div>
               <div className="grid grid-cols-3 gap-2">
@@ -424,7 +429,6 @@ export default function SettingsDrawer() {
               </div>
             </section>
 
-            {/* Font size */}
             <section className="space-y-2">
               <div className="text-sm font-medium">Font size</div>
               <div className="flex gap-2">
@@ -446,7 +450,6 @@ export default function SettingsDrawer() {
               </div>
             </section>
 
-            {/* Density */}
             <section className="space-y-2">
               <div className="text-sm font-medium">Layout density</div>
               <div className="flex gap-2">
