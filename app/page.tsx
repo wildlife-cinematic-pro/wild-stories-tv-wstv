@@ -1507,7 +1507,7 @@ export default function Page() {
           </div>
         </div>
       )}
-          <SettingsDrawer />
-</main>
+    <SettingsDrawer />
+    </main>
   );
 }
