@@ -85,6 +85,7 @@ import {
 import QualityPanel from "@/components/QualityPanel";
 import OutputCards from "@/components/OutputCards";
 import MediaAnalyzer from "@/components/MediaAnalyzer";
+import SettingsDrawer from "@/components/SettingsDrawer";
 
 type SafeMediaAnalysis = MediaAnalysisResult & {
   imagePromptInject?: string;
@@ -1506,6 +1507,7 @@ export default function Page() {
           </div>
         </div>
       )}
-    </main>
+          <SettingsDrawer />
+</main>
   );
 }
