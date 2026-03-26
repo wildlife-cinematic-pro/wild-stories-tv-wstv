@@ -52,11 +52,30 @@ function extractRunwayPasteReady(shotText: string): string {
 }
 
 function extractKlingPromptBody(shotText: string): string {
-  const m = shotText.match(/═══ KLING 3\.0 (?:MULTI-SHOT )?PROMPT[^═]*═══\s*\n([\s\S]*?)(?:\nKling settings|$)/);
-  if (m?.[1]) return m[1].trim();
-  const f = shotText.match(/(?:Scene|Shot):[\s\S]*?(?:Extra:.*|Style:.*)/);
-  if (f?.[0]) return f[0].trim();
-  return shotText;
+  const s = String(shotText ?? "");
+
+  // 1) Prefer structured "KLING PROMPT" block if present
+  const m = s.match(
+    /═══ KLING 3\.0 (?:MULTI-SHOT )?PROMPT[^═]*═══\s*\n([\s\S]*?)(?:\nKling settings|$)/
+  );
+  let out = m?.[1]?.trim();
+
+  // 2) Fallback: try to grab SCALE-style body blocks
+  if (!out) {
+    const f = s.match(/(?:Scene|Shot):[\s\S]*?(?:Extra:.*|Style:.*)/);
+    out = f?.[0]?.trim();
+  }
+
+  // 3) Final fallback: use entire string
+  if (!out) out = s;
+
+  // ✅ IMPORTANT: BODY ONLY = remove HOW TO USE section (for 15s native + 6-shot too)
+  out = out.replace(/\n\s*HOW TO USE\b[\s\S]*$/i, "").trim();
+
+  // Optional: clean trailing divider lines if any remain
+  out = out.replace(/\n\s*[-_]{5,}\s*$/g, "").trim();
+
+  return out;
 }
 
 function extractKlingAudioPrompt(shotText: string): string {
@@ -2211,19 +2230,7 @@ function WorkflowPromptMap({
 // ─────────────────────────────────────────────────────────────
 // DEFAULT EXPORT — Main OutputCards wrapper
 // ─────────────────────────────────────────────────────────────
-// Kling "BODY ONLY" extractor (removes HOW TO USE section)
-function extractKlingPromptBody(full: string): string {
-  const s = String(full ?? "");
 
-  // 1) Cut everything from "HOW TO USE" to the end (case-insensitive)
-  let out = s.replace(/\n\s*HOW TO USE\b[\s\S]*$/i, "");
-
-  // 2) If your template uses long divider lines before HOW TO USE, optionally cut those too
-  // (keeps only the main prompt body)
-  out = out.replace(/\n\s*[-_]{5,}\s*$/g, "");
-
-  return out.trim();
-}
 function copyToClipboard(text: string) {
   if (typeof navigator !== "undefined" && navigator.clipboard) {
     navigator.clipboard.writeText(text).catch(() => {});
