@@ -1,4 +1,3 @@
-// file: components/PromptVersionsPanel.tsx
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
@@ -30,10 +29,19 @@ function diffByIndex(a?: string, b?: string) {
     left.push({ text: la, changed });
     right.push({ text: lb, changed });
   }
+
   return { left, right };
 }
 
-function DiffBlock({ title, a, b }: { title: string; a?: string; b?: string }) {
+function DiffBlock({
+  title,
+  a,
+  b,
+}: {
+  title: string;
+  a?: string;
+  b?: string;
+}) {
   const { left, right } = useMemo(() => diffByIndex(a, b), [a, b]);
 
   return (
@@ -44,9 +52,12 @@ function DiffBlock({ title, a, b }: { title: string; a?: string; b?: string }) {
         <div className="rounded-xl border border-gray-200 bg-gray-50 p-3">
           <div className="mb-1 text-[11px] font-extrabold text-gray-700">A</div>
           <div className="max-h-72 overflow-auto font-mono text-xs leading-relaxed text-gray-900">
-            {left.map((l, idx) => (
-              <div key={`a-${title}-${idx}`} className={l.changed ? "bg-yellow-100/70" : ""}>
-                {l.text || "\u00A0"}
+            {left.map((line, idx) => (
+              <div
+                key={`a-${title}-${idx}`}
+                className={line.changed ? "bg-yellow-100/70" : ""}
+              >
+                {line.text || "\u00A0"}
               </div>
             ))}
           </div>
@@ -55,16 +66,21 @@ function DiffBlock({ title, a, b }: { title: string; a?: string; b?: string }) {
         <div className="rounded-xl border border-gray-200 bg-gray-50 p-3">
           <div className="mb-1 text-[11px] font-extrabold text-gray-700">B</div>
           <div className="max-h-72 overflow-auto font-mono text-xs leading-relaxed text-gray-900">
-            {right.map((l, idx) => (
-              <div key={`b-${title}-${idx}`} className={l.changed ? "bg-yellow-100/70" : ""}>
-                {l.text || "\u00A0"}
+            {right.map((line, idx) => (
+              <div
+                key={`b-${title}-${idx}`}
+                className={line.changed ? "bg-yellow-100/70" : ""}
+              >
+                {line.text || "\u00A0"}
               </div>
             ))}
           </div>
         </div>
       </div>
 
-      <div className="mt-2 text-[11px] text-gray-500">Yellow lines = differences.</div>
+      <div className="mt-2 text-[11px] text-gray-500">
+        Yellow lines = differences.
+      </div>
     </div>
   );
 }
@@ -84,19 +100,26 @@ export default function PromptVersionsPanel({
   const [importText, setImportText] = useState("");
   const [importMsg, setImportMsg] = useState("");
 
-  const [renameTs, setRenameTs] = useState<string>("");
-  const [renameValue, setRenameValue] = useState<string>("");
+  const [renameTs, setRenameTs] = useState("");
+  const [renameValue, setRenameValue] = useState("");
 
   function refresh() {
-    if (!versionKey) return setVersions([]);
+    if (!versionKey) {
+      setVersions([]);
+      return;
+    }
+
     const list = getVersionsForKey(versionKey);
 
-    // pinned first, then newest
     const sorted = [...list].sort((a, b) => {
       const ap = Boolean(a.pinned);
       const bp = Boolean(b.pinned);
+
       if (ap !== bp) return ap ? -1 : 1;
-      return new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime();
+
+      return (
+        new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime()
+      );
     });
 
     setVersions(sorted);
@@ -107,8 +130,15 @@ export default function PromptVersionsPanel({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [versionKey]);
 
-  const versionA = useMemo(() => versions.find((v) => v.timestamp === selectedA) ?? null, [versions, selectedA]);
-  const versionB = useMemo(() => versions.find((v) => v.timestamp === selectedB) ?? null, [versions, selectedB]);
+  const versionA = useMemo(
+    () => versions.find((v) => v.timestamp === selectedA) ?? null,
+    [versions, selectedA]
+  );
+
+  const versionB = useMemo(
+    () => versions.find((v) => v.timestamp === selectedB) ?? null,
+    [versions, selectedB]
+  );
 
   function onPin(ts: string, next: boolean) {
     updateVersionMeta(versionKey, ts, { pinned: next });
@@ -122,7 +152,11 @@ export default function PromptVersionsPanel({
 
   function onSaveRename() {
     if (!renameTs) return;
-    updateVersionMeta(versionKey, renameTs, { label: renameValue.trim() || "RENAMED" });
+
+    updateVersionMeta(versionKey, renameTs, {
+      label: renameValue.trim() || "RENAMED",
+    });
+
     setRenameTs("");
     setRenameValue("");
     refresh();
@@ -130,12 +164,13 @@ export default function PromptVersionsPanel({
 
   function doImport() {
     setImportMsg("");
+
     try {
       const parsed = JSON.parse(importText);
       const count = importVersionsForKey(versionKey, parsed);
       setImportMsg(`Imported ${count} entries.`);
       refresh();
-    } catch (e) {
+    } catch {
       setImportMsg("Invalid JSON. Paste exported JSON and try again.");
     }
   }
@@ -144,17 +179,22 @@ export default function PromptVersionsPanel({
     <div className="rounded-2xl border border-gray-200 bg-white p-5 shadow-sm">
       <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
         <div>
-          <div className="text-sm font-extrabold text-gray-900">🕘 Prompt Versions</div>
+          <div className="text-sm font-extrabold text-gray-900">
+            🕘 Prompt Versions
+          </div>
           <div className="text-xs text-gray-500">
             Key: <span className="font-semibold">{versionKey}</span>
           </div>
         </div>
+
         <div className="text-xs font-semibold text-gray-600">
-          Saved: <span className="font-extrabold text-gray-900">{versions.length}</span>
+          Saved:{" "}
+          <span className="font-extrabold text-gray-900">
+            {versions.length}
+          </span>
         </div>
       </div>
 
-      {/* Tools */}
       <div className="mb-3 flex flex-wrap gap-2">
         <button
           type="button"
@@ -167,7 +207,7 @@ export default function PromptVersionsPanel({
         <button
           type="button"
           onClick={() => {
-            setImportOpen((s) => !s);
+            setImportOpen((prev) => !prev);
             setImportMsg("");
           }}
           className="rounded-xl border border-gray-300 bg-white px-3 py-2 text-xs font-extrabold text-gray-800 hover:bg-gray-50 active:scale-95"
@@ -190,16 +230,19 @@ export default function PromptVersionsPanel({
         </button>
       </div>
 
-      {/* Import UI */}
       {importOpen && (
         <div className="mb-3 rounded-2xl border border-gray-200 bg-gray-50 p-3">
-          <div className="mb-2 text-xs font-extrabold text-gray-800">Paste exported JSON here</div>
+          <div className="mb-2 text-xs font-extrabold text-gray-800">
+            Paste exported JSON here
+          </div>
+
           <textarea
             value={importText}
             onChange={(e) => setImportText(e.target.value)}
             className="h-32 w-full rounded-xl border border-gray-300 bg-white p-2 font-mono text-xs"
             placeholder='{"key":"...","versions":[...]}'
           />
+
           <div className="mt-2 flex flex-wrap gap-2">
             <button
               type="button"
@@ -208,7 +251,12 @@ export default function PromptVersionsPanel({
             >
               Import
             </button>
-            {importMsg && <span className="text-xs font-semibold text-gray-700">{importMsg}</span>}
+
+            {importMsg && (
+              <span className="text-xs font-semibold text-gray-700">
+                {importMsg}
+              </span>
+            )}
           </div>
         </div>
       )}
@@ -221,7 +269,9 @@ export default function PromptVersionsPanel({
         <>
           <div className="grid gap-3 md:grid-cols-2">
             <div>
-              <label className="mb-1 block text-xs font-extrabold text-gray-700">Compare A</label>
+              <label className="mb-1 block text-xs font-extrabold text-gray-700">
+                Compare A
+              </label>
               <select
                 value={selectedA}
                 onChange={(e) => setSelectedA(e.target.value)}
@@ -230,14 +280,18 @@ export default function PromptVersionsPanel({
                 <option value="">Select A</option>
                 {versions.map((v) => (
                   <option key={v.timestamp} value={v.timestamp}>
-                    {v.pinned ? "⭐ " : ""}v{v.version} • {new Date(v.timestamp).toLocaleString()} • {v.label}
+                    {v.pinned ? "⭐ " : ""}
+                    v{v.version} • {new Date(v.timestamp).toLocaleString()} •{" "}
+                    {v.label}
                   </option>
                 ))}
               </select>
             </div>
 
             <div>
-              <label className="mb-1 block text-xs font-extrabold text-gray-700">Compare B</label>
+              <label className="mb-1 block text-xs font-extrabold text-gray-700">
+                Compare B
+              </label>
               <select
                 value={selectedB}
                 onChange={(e) => setSelectedB(e.target.value)}
@@ -246,7 +300,9 @@ export default function PromptVersionsPanel({
                 <option value="">Select B</option>
                 {versions.map((v) => (
                   <option key={v.timestamp} value={v.timestamp}>
-                    {v.pinned ? "⭐ " : ""}v{v.version} • {new Date(v.timestamp).toLocaleString()} • {v.label}
+                    {v.pinned ? "⭐ " : ""}
+                    v{v.version} • {new Date(v.timestamp).toLocaleString()} •{" "}
+                    {v.label}
                   </option>
                 ))}
               </select>
@@ -281,15 +337,23 @@ export default function PromptVersionsPanel({
             </button>
           </div>
 
-          {/* Quick meta controls */}
           <div className="mt-3 grid gap-2">
             {versions.slice(0, 8).map((v) => (
-              <div key={v.timestamp} className="flex flex-wrap items-center gap-2 rounded-xl border border-gray-200 bg-gray-50 px-3 py-2">
+              <div
+                key={v.timestamp}
+                className="flex flex-wrap items-center gap-2 rounded-xl border border-gray-200 bg-gray-50 px-3 py-2"
+              >
                 <span className="text-xs font-extrabold text-gray-800">
                   {v.pinned ? "⭐ " : ""}v{v.version}
                 </span>
-                <span className="text-xs text-gray-600">{new Date(v.timestamp).toLocaleString()}</span>
-                <span className="text-xs font-semibold text-gray-800">{v.label}</span>
+
+                <span className="text-xs text-gray-600">
+                  {new Date(v.timestamp).toLocaleString()}
+                </span>
+
+                <span className="text-xs font-semibold text-gray-800">
+                  {v.label}
+                </span>
 
                 <button
                   type="button"
@@ -310,10 +374,12 @@ export default function PromptVersionsPanel({
             ))}
           </div>
 
-          {/* Rename UI */}
           {renameTs && (
             <div className="mt-3 rounded-2xl border border-gray-200 bg-white p-3">
-              <div className="mb-2 text-xs font-extrabold text-gray-800">Rename label</div>
+              <div className="mb-2 text-xs font-extrabold text-gray-800">
+                Rename label
+              </div>
+
               <div className="flex flex-wrap gap-2">
                 <input
                   value={renameValue}
@@ -321,6 +387,7 @@ export default function PromptVersionsPanel({
                   className="flex-1 rounded-xl border border-gray-300 bg-white px-3 py-2 text-sm"
                   placeholder="e.g. Best Hook / Strong Realism / Viral"
                 />
+
                 <button
                   type="button"
                   onClick={onSaveRename}
@@ -328,6 +395,7 @@ export default function PromptVersionsPanel({
                 >
                   Save
                 </button>
+
                 <button
                   type="button"
                   onClick={() => {
@@ -344,10 +412,22 @@ export default function PromptVersionsPanel({
 
           {(versionA || versionB) && (
             <div className="mt-4 space-y-3">
-              <DiffBlock title="Image Prompt" a={versionA?.imagePrompt} b={versionB?.imagePrompt} />
+              <DiffBlock
+                title="Image Prompt"
+                a={versionA?.imagePrompt}
+                b={versionB?.imagePrompt}
+              />
               <DiffBlock title="Hook" a={versionA?.hook} b={versionB?.hook} />
-              <DiffBlock title="Caption" a={versionA?.caption} b={versionB?.caption} />
-              <DiffBlock title="Voiceover" a={versionA?.voiceoverLine} b={versionB?.voiceoverLine} />
+              <DiffBlock
+                title="Caption"
+                a={versionA?.caption}
+                b={versionB?.caption}
+              />
+              <DiffBlock
+                title="Voiceover"
+                a={versionA?.voiceoverLine}
+                b={versionB?.voiceoverLine}
+              />
             </div>
           )}
         </>

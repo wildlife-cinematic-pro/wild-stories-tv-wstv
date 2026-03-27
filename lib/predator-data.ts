@@ -24,7 +24,6 @@ import type {
   AnimalVibe,
   Weather,
   Arc,
-  DepthMode,
   RunwayModel,
   KlingModel,
   QualityOptions,
@@ -43,7 +42,6 @@ import {
   RUNWAY_STYLE_NOTE,
   KLING_STYLE_NOTE,
   arcs,
-  weatherOptions,
 } from "@/lib/model-specs";
 
 import { buildQualityLead } from "@/lib/quality-lead";
@@ -929,18 +927,18 @@ export function generateMonthlyCalendar(
     "🐺 Pack Intelligence Week", "🌍 USA Wildlife Week",
   ];
 
-  const hookTemplates = [
-    (p: string, r: string) => `This ${r.toLowerCase()} had no idea. 👁️`,
-    (p: string, r: string) => `${p} vs ${r} — nature has no mercy. 🔥`,
-    (_p: string, _r: string) => `Wait for the last 3 seconds... 😱`,
-    (_p: string, _r: string) => `The most unexpected wildlife moment this month. 🎬`,
-    (_p: string, _r: string) => `Scientists couldn't believe this happened. 👀`,
-    (p: string, _r: string) => `This ${p.toLowerCase()} refused to lose. 💪`,
-    (p: string, _r: string) => `Nobody talks about this side of ${p.toLowerCase()}s. 🧠`,
-    (_p: string, _r: string) => `Watch till the end — you won't expect this. 🔥`,
-    (p: string, _r: string) => `This is why ${p.toLowerCase()}s dominate every environment. 👑`,
-    (_p: string, r: string) => `${r} made ONE mistake. Here's what happened. ⚠️`,
-  ];
+ const hookTemplates = [
+  (_predator: string, prey: string) => `This ${prey.toLowerCase()} had no idea. 👁️`,
+  (predator: string, prey: string) => `${predator} vs ${prey} — nature has no mercy. 🔥`,
+  () => `Wait for the last 3 seconds... 😱`,
+  () => `The most unexpected wildlife moment this month. 🎬`,
+  () => `Scientists couldn't believe this happened. 👀`,
+  (predator: string) => `This ${predator.toLowerCase()} refused to lose. 💪`,
+  (predator: string) => `Nobody talks about this side of ${predator.toLowerCase()}s. 🧠`,
+  () => `Watch till the end — you won't expect this. 🔥`,
+  (predator: string) => `This is why ${predator.toLowerCase()}s dominate every environment. 👑`,
+  (_predator: string, prey: string) => `${prey} made ONE mistake. Here's what happened. ⚠️`,
+];
 
   const durations = ["65–70s (5-Shot Viral)", "60–65s (5-Shot Cinematic)"];
   const seed = hashString(`${primaryPredator}|${primaryPrey}|${primaryArc}|${year}|${month}`);
@@ -999,17 +997,17 @@ export function generateUSAViral30DayCalendar(
   ];
 
   const hookTemplates = [
-    (_p: string, r: string) => `${r} made ONE mistake. ⚠️`,
-    (_p: string, _r: string) => `Watch the last 3 seconds. 👀`,
-    (p: string, _r: string) => `This ${p.toLowerCase()} picked the wrong target. 🔥`,
-    (p: string, r: string)  => `${p} vs ${r} — USA wildlife goes brutal fast.`,
-    (_p: string, _r: string) => `Nobody expected this ending. 😳`,
-    (p: string, _r: string) => `This is why ${p.toLowerCase()}s dominate. 👑`,
-    (_p: string, _r: string) => `The comeback changed everything. 💥`,
-    (_p: string, _r: string) => `Comment who actually won. 👇`,
-    (_p: string, _r: string) => `This encounter turned violent instantly.`,
-    (_p: string, r: string) => `${r} stood ground longer than anyone expected.`,
-  ];
+  (_predator: string, prey: string) => `${prey} made ONE mistake. ⚠️`,
+  () => `Watch the last 3 seconds. 👀`,
+  (predator: string) => `This ${predator.toLowerCase()} picked the wrong target. 🔥`,
+  (predator: string, prey: string) => `${predator} vs ${prey} — USA wildlife goes brutal fast.`,
+  () => `Nobody expected this ending. 😳`,
+  (predator: string) => `This is why ${predator.toLowerCase()}s dominate. 👑`,
+  () => `The comeback changed everything. 💥`,
+  () => `Comment who actually won. 👇`,
+  () => `This encounter turned violent instantly.`,
+  (_predator: string, prey: string) => `${prey} stood ground longer than anyone expected.`,
+];
 
   const durations = ["22–28s (3-Shot Fast Viral)", "45–55s (5-Shot Viral)"];
   const seed = hashString(`${primaryPredator}|${primaryPrey}|${primaryArc}|usa30|${year}|${month}`);
