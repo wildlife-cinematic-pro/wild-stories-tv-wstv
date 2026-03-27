@@ -619,7 +619,8 @@ export function buildImagePrompt(
   const tone = emotionalTonePrompt[emotionalTone];
   const vibe = animalVibePrompt[animalVibe];
   const cam = getFilmStock(cameraGear, lighting, weather);
-  const descInject = sceneDesc?.trim() ? `\n\nScene context: ${sceneDesc.trim()}` : "";
+const descInject = sceneDesc?.trim() ? `\n\nScene context: ${sceneDesc.trim()}` : "";
+const qLead = buildQualityLead(quality, "image");
 
   const realismAdd =
     quality?.realismMode === "High Naturalism"
@@ -633,16 +634,25 @@ export function buildImagePrompt(
   const C = `Wide cinematic wildlife documentary composition, 9:16 vertical frame. Camera: ${cam}, ${depth.lensNote}. ${vibe.camera}. Depth of field: ${depth.depth}. Telephoto compression and documentary framing. Lighting: ${lighting}. Natural rim separation, volumetric atmosphere, realistic shadow direction.`;
   const D = `${texture}. ${vibe.texture}. Micro-detail visible in fur, skin, feathers, debris, moisture, and ground contact. ${realismAdd}`;
 
-  const E =
-    target === "NB2"
-      ? `${vibe.style}, photorealistic, 8K RAW, cinematic colour grade. Pre-process for image-to-video consistency — distinct silhouettes, stable anatomy, unambiguous depth planes. [NB2: use web grounding for accurate ${predator} and ${prey} anatomy and markings.]${descInject}`
-      : target === "RUNWAY"
-        ? `${vibe.style}, photorealistic, cinematic grade. Built as a stable master reference for Runway Gen-4.5 I2V continuity — clean separation, readable silhouette, stable anatomy. High-quality input free of visual artifacts for best I2V results.${descInject}`
-        : target === "NANO_BANANA_2"
-          ? `${vibe.style}, photorealistic, stable anatomy, clean silhouette separation, strong subject readability for I2V workflows.${descInject}`
-          : `${vibe.style}, photorealistic, cinematic grade.${descInject}`;
+  if (target === "NB2" || target === "NANO_BANANA_2") {
+  const B_ref = `${env}, ${weatherVariants[weather]}. Two-plane composition: foreground subjects fully separated from background, unambiguous silhouettes, stable depth map. Subjects placed for clear biomechanical readability — no overlap, each animal fully visible.`;
 
-  return finalizeImagePrompt(`${A} ${B} ${C} ${D} ${E}`, target);
+  const E_ref =
+    target === "NB2"
+      ? `${vibe.style}, photorealistic, 8K RAW. Optimised for I2V reference consistency — distinct silhouettes, locked anatomy, stable depth planes.${descInject}`
+      : `${vibe.style}, photorealistic. Stable anatomy, clean silhouette separation, depth planes optimised for I2V workflows.${descInject}`;
+
+  return finalizeImagePrompt(`${qLead} ${A} ${B_ref} ${C} ${D} ${E_ref}`, target);
+}
+
+if (target === "RUNWAY") {
+  const E_runway = `${vibe.style}, photorealistic, cinematic grade. Built as a stable master reference for Runway Gen-4.5 I2V continuity — clean separation, readable silhouette, stable anatomy. High-quality input free of visual artifacts for best I2V results.${descInject}`;
+
+  return finalizeImagePrompt(`${qLead} ${A} ${B} ${C} ${D} ${E_runway}`, target);
+}
+
+const E = `${vibe.style}, photorealistic, cinematic grade.${descInject}`;
+return finalizeImagePrompt(`${qLead} ${A} ${B} ${C} ${D} ${E}`, target);
 }
 
 // ─────────────────────────────────────────────────────────────
@@ -741,7 +751,7 @@ export function buildRunwayShots(
   const vibe = animalVibePrompt[animalVibe];
   const micro = buildMicroMotionLine(weather, env);
 
-  const qLead = buildQualityLead(quality);
+  const qLead = buildQualityLead(quality, "runway");
   const refTags = buildReferenceTagBlock(quality);
   const context = sceneDesc?.trim() ? `\nScene continuity: ${sceneDesc.trim().slice(0, 150)}` : "";
 
@@ -769,17 +779,17 @@ export function buildRunwayShots(
 
   // Shot 1 — Official Runway structure: [Camera] as [subject] [action]
   const shot1PasteReady = sanitizeRunwayFPS(
-    `Slow dolly-in as ${predator} exhales slowly, ribcage expands and settles, nostrils flare once. ${prey} stays fully alert, body rigid and reactive. ${micro}. ${seamless}`.trim()
+    `Slow dolly-in. ${predator} exhales once — ribcage settles. ${prey} holds still, body rigid. ${micro}. ${seamless}`.trim()
   );
 
   // Shot 2 — Action
   const shot2PasteReady = sanitizeRunwayFPS(
-    `Controlled tracking move as ${predator} ${beat2.predatorBeat}. ${prey} ${beat2.preyBeat}. Ground scatter, foliage response, body-weight transfer visible. ${micro}. ${seamless}`.trim()
+    `Tracking move. ${predator} ${beat2.predatorBeat}. ${prey} ${beat2.preyBeat}. Ground scatter, body-weight transfer. ${micro}. ${seamless}`.trim()
   );
 
   // Shot 3 — Aftermath
   const shot3PasteReady = sanitizeRunwayFPS(
-    `Slow pull-back as ${predator} exhales deeply, posture resets, stance recovers. Eye-line stays engaged. Residual atmosphere, ${micro}. ${seamless}`.trim()
+    `Slow pull-back. ${predator} exhales — posture resets, eye-line engaged. Residual atmosphere, ${micro}. ${seamless}`.trim()
   );
 
   return {
@@ -876,7 +886,7 @@ export function buildKlingShots(
   const vibe = animalVibePrompt[animalVibe];
   const micro = buildMicroMotionLine(weather, env);
 
-  const qLead = buildQualityLead(quality);
+  const qLead = buildQualityLead(quality, "runway");
   const refTags = buildReferenceTagBlock(quality);
   const context = sceneDesc?.trim() ? `\nScene continuity: ${sceneDesc.trim().slice(0, 150)}` : "";
 
@@ -998,7 +1008,7 @@ export function buildKlingNative15s(
   const vibe = animalVibePrompt[animalVibe];
   const micro = buildMicroMotionLine(weather, env);
 
-  const qLead = buildQualityLead(quality);
+  const qLead = buildQualityLead(quality, "kling");
   const refTags = buildReferenceTagBlock(quality);
   const context = sceneDesc?.trim() ? `\nScene context: ${sceneDesc.trim().slice(0, 150)}` : "";
 
@@ -1118,7 +1128,7 @@ export function buildKlingSixShot(
   const vibe = animalVibePrompt[animalVibe];
   const micro = buildMicroMotionLine(weather, env);
 
-  const qLead = buildQualityLead(quality);
+  const qLead = buildQualityLead(quality, "kling");
   const refTags = buildReferenceTagBlock(quality);
   const context = sceneDesc?.trim() ? `\nScene context: ${sceneDesc.trim().slice(0, 150)}` : "";
 
