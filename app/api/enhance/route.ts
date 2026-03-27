@@ -254,15 +254,18 @@ async function callClaudeVision(
   return { res, data };
 }
 
-function extractGeminiText(data: any): string {
-  return (
-    data?.candidates?.[0]?.content?.parts?.map((p: any) => p?.text).join("") ||
-    data?.candidates?.[0]?.content?.parts?.[0]?.text ||
-    ""
-  );
+function extractGeminiText(data: Record<string, unknown>): string {
+  const candidates = data?.candidates as
+    | { content?: { parts?: { text?: string }[] } }[]
+    | undefined;
+  const parts = candidates?.[0]?.content?.parts;
+  const joined = (parts ?? []).map((p) => p?.text ?? "").join("");
+  return joined || parts?.[0]?.text || "";
 }
-function extractClaudeText(data: any): string {
-  return data?.content?.map((c: any) => c?.text).join("") || data?.content?.[0]?.text || "";
+function extractClaudeText(data: Record<string, unknown>): string {
+  const content = data?.content as { text?: string }[] | undefined;
+  const joined = (content ?? []).map((c) => c?.text ?? "").join("");
+  return joined || content?.[0]?.text || "";
 }
 
 export async function POST(req: Request) {
