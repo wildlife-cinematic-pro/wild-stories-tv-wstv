@@ -643,7 +643,9 @@ export function buildImagePrompt(
   const depth = getDepthPrompt(depthMode);
   const tone = emotionalTonePrompt[emotionalTone];
   const vibe = animalVibePrompt[animalVibe];
-  const cam = getFilmStock(cameraGear, lighting, weather);
+  const cam = (target === "NB2" || target === "NANO_BANANA_2")
+  ? cameraGear
+  : getFilmStock(cameraGear, lighting, weather);
 const descInject = sceneDesc?.trim() ? `\n\nScene context: ${sceneDesc.trim()}` : "";
 const qLead = buildQualityLead(quality, "image");
 

@@ -2291,26 +2291,26 @@ function buildCopyAllPacksText() {
   const calendar = buildCalendarText();
 
   return [
-    `WSTV EXPORT PACK (Pro 2026)`,
-    `Predator: ${safeStr(data.predatorName)}`,
-    `Prey: ${safeStr(data.preyName)}`,
-    `Arc: ${safeStr(data.arcName)}`,
-    "",
-    `=== RUNWAY PACK (Gen-4.5 | 24/25fps | 720p | NO negatives) ===`,
-    runway || "(none)",
-    "",
-    `=== KLING PACK (3.0 | 4K@60fps | Negatives OK | Bind Subject) ===`,
-    kling || "(none)",
-    "",
-    `=== KLING DIRECT (15s) ===`,
-    safeStr((data as Record<string, unknown>).klingNative15s) || "(none)",
-    "",
-    `=== KLING 6-SHOT (DIRECT) ===`,
-    safeStr((data as Record<string, unknown>).klingNative15s) || "(none)",
-    "",
-    `=== CONTENT CALENDAR (THIS MONTH) ===`,
-    calendar || "(calendar generator not available)",
-  ].join("\n");
+  `WSTV EXPORT PACK (Pro 2026)`,
+  `Predator: ${safeStr(data.predatorName)}`,
+  `Prey: ${safeStr(data.preyName)}`,
+  `Arc: ${safeStr(data.arcName)}`,
+  "",
+  `=== RUNWAY PACK (Gen-4.5 | 24/25fps | 720p | NO negatives) ===`,
+  runway || "(none)",
+  "",
+  `=== KLING PACK (3.0 | 4K@60fps | Negatives OK | Bind Subject) ===`,
+  kling || "(none)",
+  "",
+  `=== KLING DIRECT (15s) ===`,
+  safeStr((data as Record<string, unknown>).klingNative15s) || "(none)",
+  "",
+  `=== KLING 6-SHOT (DIRECT) ===`,
+  safeStr((data as Record<string, unknown>).klingSixShot) || "(none)",
+  "",
+  `=== CONTENT CALENDAR (THIS MONTH) ===`,
+  calendar || "(calendar generator not available)",
+].join("\n");
 }
 
 function buildExportTxtFull() {
