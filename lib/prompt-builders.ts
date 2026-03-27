@@ -507,6 +507,14 @@ export function buildMicroMotionLine(weather: Weather, env: string): string {
     envLower.includes("underwater") ||
     envLower.includes("marine");
 
+  const isArctic =
+    envLower.includes("arctic") ||
+    envLower.includes("snow") ||
+    envLower.includes("tundra") ||
+    envLower.includes("ice") ||
+    envLower.includes("glacier") ||
+    envLower.includes("frozen");
+
   if (isAquatic) {
     if (weather === "Storm") {
       return "choppy surface movement, wave slap, underwater particulate drift, foam disturbance, current-driven motion";
@@ -514,7 +522,14 @@ export function buildMicroMotionLine(weather: Weather, env: string): string {
     if (weather === "Golden Hour") {
       return "surface ripples catching warm light, gentle wave movement, shifting caustic reflections, suspended particles drifting in water";
     }
+    if (weather === "Winter Blizzard" || weather === "Frozen Dusk") {
+      return "cold surface disturbance, drifting ice particles, subtle current movement, freezing water atmosphere";
+    }
     return "water ripples, current-driven movement, shifting surface reflections, suspended particles drifting naturally";
+  }
+
+  if (isArctic) {
+    return "snow drift, subtle natural breath condensation, soft powder displacement, faint wind movement across frozen ground";
   }
 
   if (weather === "Winter Blizzard" || weather === "Frozen Dusk")
