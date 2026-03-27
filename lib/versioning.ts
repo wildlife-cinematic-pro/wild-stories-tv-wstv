@@ -46,24 +46,21 @@ export function exportVersionsForKey(key: string): void {
  * - Merge into existing list (by timestamp unique), keep newest first, limit.
  */
 export function importVersionsForKey(key: string, raw: unknown, limit = MAX_VERSIONS_PER_KEY): number {
-  const incoming: PromptVersion[] = Array.isArray(raw)
-    ? (raw as PromptVersion[])
-    : (raw as any)?.versions && Array.isArray((raw as any).versions)
-      ? ((raw as any).versions as PromptVersion[])
-      : [];
-
-  if (!incoming.length) return 0;
-
-  const map = readPromptVersions();
-  const existing = map[key] ?? [];
-
-  const byTs = new Map<string, PromptVersion>();
-  for (const v of existing) byTs.set(v.timestamp, v);
-  for (const v of incoming) {
-    if (v && typeof v === "object" && typeof (v as any).timestamp === "string") {
-      byTs.set(v.timestamp, v as PromptVersion);
-    }
+ const incoming: PromptVersion[] = Array.isArray(raw)
+  ? (raw as PromptVersion[])
+  : Array.isArray((raw as { versions?: unknown }).versions)
+    ? (raw as { versions: PromptVersion[] }).versions
+    : [];
+if (!incoming.length) return 0;
+const map = readPromptVersions();
+const existing = map[key] ?? [];
+const byTs = new Map<string, PromptVersion>();
+for (const v of existing) byTs.set(v.timestamp, v);
+for (const v of incoming) {
+  if (v && typeof v === "object" && typeof v.timestamp === "string") {
+    byTs.set(v.timestamp, v as PromptVersion);
   }
+}
 
   const merged = Array.from(byTs.values()).sort(
     (a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime()
