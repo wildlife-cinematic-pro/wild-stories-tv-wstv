@@ -568,19 +568,33 @@ export function buildKlingAudioPrompt(
   else if (envLower.includes("desert"))
     ambient = "desert wind whisper, sand grain movement, dry heat stillness";
 
-  // Weather overlay
+    // Weather overlay
   let weatherAudio = "";
-if (isAquatic) {
-  if (weather === "Storm") weatherAudio = ", turbulent surface chop, wave impact, current surge";
-  else if (weather === "Winter Blizzard") weatherAudio = ", icy surface disturbance, freezing wind over water";
-  else if (weather === "Frozen Dusk") weatherAudio = ", cold still water ambience, crystalline surface movement";
-  else if (weather === "Golden Hour") weatherAudio = ", warm surface wash, gentle wave rhythm, reflective water stillness";
-} else {
-  if (weather === "Storm") weatherAudio = ", rolling thunder in distance, rain striking foliage";
-  else if (weather === "Winter Blizzard") weatherAudio = ", fierce blizzard wind, snow pelting surfaces";
-  else if (weather === "Frozen Dusk") weatherAudio = ", eerie frozen silence, crystalline wind";
-  else if (weather === "Golden Hour") weatherAudio = ", warm twilight stillness, evening insect chorus";
-}
+
+  const isArcticLike =
+    envLower.includes("arctic") ||
+    envLower.includes("snow") ||
+    envLower.includes("tundra") ||
+    envLower.includes("ice") ||
+    envLower.includes("glacier") ||
+    envLower.includes("frozen");
+
+  if (isAquatic) {
+    if (weather === "Storm") weatherAudio = ", turbulent surface chop, wave impact, current surge";
+    else if (weather === "Winter Blizzard") weatherAudio = ", icy surface disturbance, freezing wind over water";
+    else if (weather === "Frozen Dusk") weatherAudio = ", cold still water ambience, crystalline surface movement";
+    else if (weather === "Golden Hour") weatherAudio = ", warm surface wash, gentle wave rhythm, reflective water stillness";
+  } else if (isArcticLike) {
+    if (weather === "Storm") weatherAudio = ", harsh wind pressure, distant ice crack, frozen surface disturbance";
+    else if (weather === "Winter Blizzard") weatherAudio = ", fierce blizzard wind, snow pelting surfaces";
+    else if (weather === "Frozen Dusk") weatherAudio = ", eerie frozen silence, crystalline wind";
+    else if (weather === "Golden Hour") weatherAudio = ", cold low-angle light, brittle snow hush, distant icy wind";
+  } else {
+    if (weather === "Storm") weatherAudio = ", rolling thunder in distance, rain striking foliage";
+    else if (weather === "Winter Blizzard") weatherAudio = ", fierce blizzard wind, snow pelting surfaces";
+    else if (weather === "Frozen Dusk") weatherAudio = ", eerie frozen silence, crystalline wind";
+    else if (weather === "Golden Hour") weatherAudio = ", warm twilight stillness, evening insect chorus";
+  }
 
   // Beat-specific animal audio
   let animalAudio = "";
@@ -867,19 +881,19 @@ export function buildRunwayShots(
   const tone = emotionalTonePrompt[emotionalTone];
   const vibe = animalVibePrompt[animalVibe];
   const micro = buildMicroMotionLine(weather, env);
-  const envLower = env.toLowerCase();
-const isAquatic =
-  envLower.includes("water") ||
-  envLower.includes("river") ||
-  envLower.includes("lake") ||
-  envLower.includes("swamp") ||
-  envLower.includes("ocean") ||
-  envLower.includes("sea") ||
-  envLower.includes("reef") ||
-  envLower.includes("coast") ||
-  envLower.includes("shore") ||
-  envLower.includes("underwater") ||
-  envLower.includes("marine");
+    const envLower = env.toLowerCase();
+  const isAquatic =
+    envLower.includes("water") ||
+    envLower.includes("river") ||
+    envLower.includes("lake") ||
+    envLower.includes("swamp") ||
+    envLower.includes("ocean") ||
+    envLower.includes("sea") ||
+    envLower.includes("reef") ||
+    envLower.includes("coast") ||
+    envLower.includes("shore") ||
+    envLower.includes("underwater") ||
+    envLower.includes("marine");
 
   const qLead = buildQualityLead(quality, "runway");
   const context = sceneDesc?.trim() ? `\nScene continuity: ${sceneDesc.trim().slice(0, 150)}` : "";
@@ -907,20 +921,24 @@ const isAquatic =
   const beat3 = oneActionArcBeat(arc, "aftermath", gateOn);
 
   // Shot 1 — Official Runway structure: [Camera] as [subject] [action]
-  const shot1PasteReady = sanitizeRunwayFPS(
-    `Slow dolly-in. ${predator} exhales once — ribcage settles. ${prey} holds still, body rigid. ${micro}. ${seamless}`.trim()
+    const shot1PasteReady = sanitizeRunwayFPS(
+    isAquatic
+      ? `Slow dolly-in. ${predator} glides once through the water column. ${prey} holds tense position, body rigid in the current. ${micro}. ${seamless}`.trim()
+      : `Slow dolly-in. ${predator} exhales once — ribcage settles. ${prey} holds still, body rigid. ${micro}. ${seamless}`.trim()
   );
 
   // Shot 2 — Action
-  const shot2PasteReady = sanitizeRunwayFPS(
-  `Tracking move. ${predator} ${beat2.predatorBeat}. ${prey} ${beat2.preyBeat}. ${
-    isAquatic ? "Water spray, body momentum shift." : "Ground scatter, body-weight transfer."
-  } ${micro}. ${seamless}`.trim()
-);
+    const shot2PasteReady = sanitizeRunwayFPS(
+    isAquatic
+      ? `Tracking move. ${predator} commits to one fast water-pressure burst. ${prey} reacts with one evasive dart. Water displacement, turbulence, and current reaction. ${micro}. ${seamless}`.trim()
+      : `Tracking move. ${predator} ${beat2.predatorBeat}. ${prey} ${beat2.preyBeat}. Ground scatter, body-weight transfer. ${micro}. ${seamless}`.trim()
+  );
 
   // Shot 3 — Aftermath
-  const shot3PasteReady = sanitizeRunwayFPS(
-    `Slow pull-back. ${predator} exhales — posture resets, eye-line engaged. Residual atmosphere, ${micro}. ${seamless}`.trim()
+    const shot3PasteReady = sanitizeRunwayFPS(
+    isAquatic
+      ? `Slow pull-back. ${predator} slows and stabilizes in the water. Residual turbulence settles, eye-line engaged. ${micro}. ${seamless}`.trim()
+      : `Slow pull-back. ${predator} exhales — posture resets, eye-line engaged. Residual atmosphere, ${micro}. ${seamless}`.trim()
   );
 
   return {
@@ -962,8 +980,8 @@ ${shot2PasteReady}
 Camera motion: controlled tracking move.
 Subject action: ${predator} ${beat2.predatorBeat}.
 Prey reaction: ${prey} ${beat2.preyBeat}.
-Environment motion: ground scatter, foliage response, body-weight transfer, ${micro}.
-Physics: preserve natural acceleration and deceleration.
+Environment motion: ${isAquatic ? `water displacement, turbulence, current response, ${micro}` : `ground scatter, foliage response, body-weight transfer, ${micro}`}.
+Physics: ${isAquatic ? "preserve believable water resistance, turbulence, and directional momentum." : "preserve natural acceleration and deceleration."}
 Duration: 5–10 seconds recommended.
 ⚠️ Upload Shot 1 last frame as I2V input.`),
 
