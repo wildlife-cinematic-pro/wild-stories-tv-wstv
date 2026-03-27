@@ -133,8 +133,6 @@ function finalizePrompt(input: string): string {
 
 // ─────────────────────────────────────────────────────────────
 // RUNWAY-SPECIFIC SANITIZER
-// [Official rule: Runway ignores JSON, doesn't support negatives,
-//  and reiterating image elements reduces motion quality]
 // ─────────────────────────────────────────────────────────────
 
 /** Strips 30fps references from Runway prompts (official: 24/25 only) */
@@ -144,7 +142,6 @@ export function sanitizeRunwayFPS(prompt: string): string {
 
 /** Strips negative-prompt-like phrasing from Runway prompts */
 export function sanitizeRunwayNegative(prompt: string): string {
-  // Runway does NOT support negative prompts — remove "no X" patterns
   return prompt
     .replace(/\b(no|never|don't|do not|avoid|without)\s+[^,.;]+/gi, "")
     .replace(/\s{2,}/g, " ")
@@ -154,13 +151,11 @@ export function sanitizeRunwayNegative(prompt: string): string {
 /** Full Runway prompt sanitizer (apply before final output) */
 export function sanitizeRunwayPrompt(prompt: string): string {
   const out = sanitizeRunwayFPS(prompt);
-  // Don't fully strip negatives from instructional text — only from paste-ready sections
   return out;
 }
 
 // ─────────────────────────────────────────────────────────────
 // KLING 3.0 MOTION INTENSITY CALCULATOR
-// [Official: 0.1–1.0, specify for predictable results]
 // ─────────────────────────────────────────────────────────────
 
 export function getKlingMotionIntensity(
@@ -182,18 +177,18 @@ export function getKlingMotionIntensity(
 
   switch (beat) {
     case "establish":
-      return Math.max(0.1, base - 0.25); // Subtle tension
+      return Math.max(0.1, base - 0.25);
     case "action":
-      return Math.min(1.0, base + 0.15); // Peak energy
+      return Math.min(1.0, base + 0.15);
     case "aftermath":
-      return Math.max(0.1, base - 0.2); // Settling
+      return Math.max(0.1, base - 0.2);
     default:
       return base;
   }
 }
 
 // ─────────────────────────────────────────────────────────────
-// SAFE ARC LABELS (platform-safe)
+// SAFE ARC LABELS
 // ─────────────────────────────────────────────────────────────
 const ARC_SAFE_LABEL: Record<string, string> = {
   "Chase and takedown": "chase sequence",
@@ -215,7 +210,7 @@ function getSafeArcPrint(arc: string): string {
 }
 
 // ─────────────────────────────────────────────────────────────
-// Reference tags block
+// Shared helpers
 // ─────────────────────────────────────────────────────────────
 function buildKlingCharacterLine(
   predator: string,
@@ -237,16 +232,10 @@ function buildKlingLocationLine(
     : `Lighting & Location: ${env}, ${weatherVariants[weather]}.`;
 }
 
-function buildKlingExtraLine(
-  base: string,
-  motionOnlyI2V?: boolean
-): string {
+function buildKlingExtraLine(base: string, motionOnlyI2V?: boolean): string {
   return motionOnlyI2V ? base : `${base}.`;
 }
-// ─────────────────────────────────────────────────────────────
-// Kling WIDE PHYSICS RULE
-// [Kling 3.0: wide shots preserve biomechanics with 4K detail]
-// ─────────────────────────────────────────────────────────────
+
 function klingWidePhysicsRule(): string {
   return "WIDE PHYSICS RULE — Shot 2 and Shot 3 must be FIXED WIDE (full bodies visible) to preserve biomechanics, weight transfer, and collision readability. Kling 3.0's 4K output ensures micro-detail even in wide framing.";
 }
@@ -254,14 +243,9 @@ function klingWidePhysicsRule(): string {
 // ─────────────────────────────────────────────────────────────
 // ONE-ACTION HARD GATE
 // ─────────────────────────────────────────────────────────────
-function oneActionArcBeat(
-  arc: Arc,
-  beat: "establish" | "action" | "aftermath",
-  enabled: boolean,
-  env?: string
-): { predatorBeat: string; preyBeat: string; guardLine: string } {
-  const envLower = (env ?? "").toLowerCase();
-  const isAquatic =
+function isAquaticEnv(env: string): boolean {
+  const envLower = env.toLowerCase();
+  return (
     envLower.includes("water") ||
     envLower.includes("river") ||
     envLower.includes("lake") ||
@@ -272,7 +256,218 @@ function oneActionArcBeat(
     envLower.includes("coast") ||
     envLower.includes("shore") ||
     envLower.includes("underwater") ||
-    envLower.includes("marine");
+    envLower.includes("marine")
+  );
+}
+
+function oneActionArcBeat(
+  arc: Arc,
+  beat: "establish" | "action" | "aftermath",
+  enabled: boolean,
+  aquatic = false
+): { predatorBeat: string; preyBeat: string; guardLine: string } {
+  if (aquatic) {
+    const baseGuard =
+      "ONE-ACTION GATE — one primary predator action + one prey reaction only (no stacked beats).";
+
+    if (!enabled) {
+      if (beat === "action") {
+        return {
+          predatorBeat: "commits to one clear forward surge through the water",
+          preyBeat: "answers with one readable evasive dart",
+          guardLine: "",
+        };
+      }
+      if (beat === "aftermath") {
+        return {
+          predatorBeat: "slows and settles into a controlled glide",
+          preyBeat: "repositions once and holds distance in the current, fully alert",
+          guardLine: "",
+        };
+      }
+      return {
+        predatorBeat: "holds a coiled pre-strike glide with restrained movement",
+        preyBeat: "locks attention and holds a tense hover once",
+        guardLine: "",
+      };
+    }
+
+    switch (arc) {
+      case "Chase and takedown":
+        if (beat === "action") {
+          return {
+            predatorBeat: "accelerates into a single chase surge through the water",
+            preyBeat: "breaks into one clean escape dart with one evasive direction change",
+            guardLine: `${baseGuard}\nChase gate: this shot is chase-only (no capture/contact actions).`,
+          };
+        }
+        if (beat === "aftermath") {
+          return {
+            predatorBeat: "slows into a controlled glide as turbulence fades",
+            preyBeat: "repositions once and holds distance, fully alert",
+            guardLine: baseGuard,
+          };
+        }
+        return {
+          predatorBeat: "holds a coiled pre-chase glide with restrained movement",
+          preyBeat: "locks attention and freezes once in the water column",
+          guardLine: baseGuard,
+        };
+
+      case "Ambush attack":
+        if (beat === "action") {
+          return {
+            predatorBeat: "launches once from cover with one decisive forward surge",
+            preyBeat: "reacts once with a sharp evasive dart and turn",
+            guardLine: baseGuard,
+          };
+        }
+        return {
+          predatorBeat:
+            beat === "aftermath"
+              ? "settles into a slower glide as the water stabilizes"
+              : "compresses into a low-tension glide, movement tightly controlled",
+          preyBeat:
+            beat === "aftermath"
+              ? "stabilizes position once, still alert"
+              : "stiffens and locks attention once",
+          guardLine: baseGuard,
+        };
+
+      case "Escape from danger":
+        if (beat === "action") {
+          return {
+            predatorBeat: "commits once toward the target with a single pressure surge",
+            preyBeat: "executes one desperate escape burst through the water",
+            guardLine: baseGuard,
+          };
+        }
+        return {
+          predatorBeat:
+            beat === "aftermath"
+              ? "halts forward pressure and glides once, fully aware"
+              : "builds pressure without closing distance",
+          preyBeat:
+            beat === "aftermath"
+              ? "regains stable position once, still tense"
+              : "tenses and prepares to flee",
+          guardLine: baseGuard,
+        };
+
+      case "Territory dominance battle":
+        if (beat === "action") {
+          return {
+            predatorBeat: "presses forward once in a controlled dominance surge",
+            preyBeat: "answers once with a single threat display or retreating shift",
+            guardLine: baseGuard,
+          };
+        }
+        return {
+          predatorBeat:
+            beat === "aftermath"
+              ? "holds position and settles into a composed glide"
+              : "holds space with still dominance",
+          preyBeat:
+            beat === "aftermath"
+              ? "holds distance, posture tight"
+              : "stays tense, watching",
+          guardLine: baseGuard,
+        };
+
+      case "Predator vs predator fight":
+        if (beat === "action") {
+          return {
+            predatorBeat: "commits one forward pressure beat with a single clash moment",
+            preyBeat: "responds once with one counter-shift or recoil",
+            guardLine: baseGuard,
+          };
+        }
+        return {
+          predatorBeat:
+            beat === "aftermath"
+              ? "resets spacing and settles into a controlled glide"
+              : "circles pressure slowly without contact",
+          preyBeat:
+            beat === "aftermath"
+              ? "rebalances once, eyes locked"
+              : "mirrors spacing, ready",
+          guardLine: baseGuard,
+        };
+
+      case "Pack hunting strategy":
+        if (beat === "action") {
+          return {
+            predatorBeat: "tightens formation once with one coordinated lateral close-in",
+            preyBeat: "reacts once by pivoting toward one escape lane",
+            guardLine: baseGuard,
+          };
+        }
+        return {
+          predatorBeat:
+            beat === "aftermath"
+              ? "holds formation and eases into a steady glide"
+              : "maintains disciplined spacing",
+          preyBeat:
+            beat === "aftermath"
+              ? "holds distance, still tense"
+              : "stays alert, scanning",
+          guardLine: baseGuard,
+        };
+
+      case "Defender stands ground":
+        if (beat === "action") {
+          return {
+            predatorBeat: "drives one decisive forward defense surge",
+            preyBeat: "reacts once with one recoil or lateral slip",
+            guardLine: baseGuard,
+          };
+        }
+        return {
+          predatorBeat:
+            beat === "aftermath"
+              ? "holds position as motion settles"
+              : "holds a planted defensive line in the water",
+          preyBeat:
+            beat === "aftermath"
+              ? "keeps distance, posture tight"
+              : "tests space, cautious",
+          guardLine: baseGuard,
+        };
+
+      case "Giant vs giant clash":
+        if (beat === "action") {
+          return {
+            predatorBeat: "loads pressure and commits one heavy clash beat",
+            preyBeat: "responds once with one grounded shove or recoil through the water",
+            guardLine: baseGuard,
+          };
+        }
+        return {
+          predatorBeat:
+            beat === "aftermath"
+              ? "settles mass and eases into a slower glide"
+              : "approaches slowly with heavy pressure through the water",
+          preyBeat:
+            beat === "aftermath"
+              ? "rebalances once, still tense"
+              : "holds ground, ready",
+          guardLine: baseGuard,
+        };
+
+      default:
+        return {
+          predatorBeat:
+            beat === "action"
+              ? "commits to one clear forward surge"
+              : "holds tension with controlled movement",
+          preyBeat:
+            beat === "action"
+              ? "answers with one survival reaction"
+              : "stays alert and reactive",
+          guardLine: baseGuard,
+        };
+    }
+  }
 
   if (!enabled) {
     if (beat === "action") {
@@ -303,12 +498,8 @@ function oneActionArcBeat(
     case "Chase and takedown":
       if (beat === "action") {
         return {
-          predatorBeat: isAquatic
-            ? "accelerates into a single chase burst with powerful propulsion"
-            : "accelerates into a single chase burst with grounded strides (no contact yet)",
-          preyBeat: isAquatic
-            ? "breaks into one clean escape burst with one evasive direction change"
-            : "breaks into one clean escape sprint with one evasive lane change",
+          predatorBeat: "accelerates into a single chase burst with grounded strides (no contact yet)",
+          preyBeat: "breaks into one clean escape sprint with one evasive lane change",
           guardLine: `${baseGuard}\nChase gate: this shot is chase-only (no contact/capture actions).`,
         };
       }
@@ -328,12 +519,8 @@ function oneActionArcBeat(
     case "Ambush attack":
       if (beat === "action") {
         return {
-          predatorBeat: isAquatic
-            ? "launches once with one decisive forward surge through the water"
-            : "launches once from cover with one decisive forward commitment",
-          preyBeat: isAquatic
-            ? "reacts once with a sharp evasive dart and turn"
-            : "reacts once with a sharp evasive jump and turn",
+          predatorBeat: "launches once from cover with one decisive forward commitment",
+          preyBeat: "reacts once with a sharp evasive jump and turn",
           guardLine: baseGuard,
         };
       }
@@ -349,12 +536,8 @@ function oneActionArcBeat(
     case "Escape from danger":
       if (beat === "action") {
         return {
-          predatorBeat: isAquatic
-            ? "commits once toward the target with a single forward pressure surge"
-            : "commits once toward the target with a single forward pressure move",
-          preyBeat: isAquatic
-            ? "executes one desperate escape burst through the water"
-            : "executes one desperate escape move (one dodge or sprint burst)",
+          predatorBeat: "commits once toward the target with a single forward pressure move",
+          preyBeat: "executes one desperate escape move (one dodge or sprint burst)",
           guardLine: baseGuard,
         };
       }
@@ -367,12 +550,8 @@ function oneActionArcBeat(
     case "Territory dominance battle":
       if (beat === "action") {
         return {
-          predatorBeat: isAquatic
-            ? "pushes forward once in a controlled dominance surge"
-            : "steps forward once in a controlled dominance advance",
-          preyBeat: isAquatic
-            ? "answers once with a single threat display or retreat drift"
-            : "answers once with a single threat display or retreat step",
+          predatorBeat: "steps forward once in a controlled dominance advance",
+          preyBeat: "answers once with a single threat display or retreat step",
           guardLine: baseGuard,
         };
       }
@@ -385,12 +564,8 @@ function oneActionArcBeat(
     case "Predator vs predator fight":
       if (beat === "action") {
         return {
-          predatorBeat: isAquatic
-            ? "commits one forward pressure beat (one surge / push / clash moment)"
-            : "commits one forward pressure beat (one shove / push / clash moment)",
-          preyBeat: isAquatic
-            ? "responds once with one counter-surge or recoil"
-            : "responds once with one counter-step or recoil",
+          predatorBeat: "commits one forward pressure beat (one shove / push / clash moment)",
+          preyBeat: "responds once with one counter-step or recoil",
           guardLine: baseGuard,
         };
       }
@@ -403,12 +578,8 @@ function oneActionArcBeat(
     case "Pack hunting strategy":
       if (beat === "action") {
         return {
-          predatorBeat: isAquatic
-            ? "tightens formation once with one coordinated lateral close-in through the water"
-            : "tightens formation once (one coordinated lateral close-in)",
-          preyBeat: isAquatic
-            ? "reacts once by pivoting and attempting one escape direction through the current"
-            : "reacts once by pivoting and attempting one escape direction",
+          predatorBeat: "tightens formation once (one coordinated lateral close-in)",
+          preyBeat: "reacts once by pivoting and attempting one escape direction",
           guardLine: baseGuard,
         };
       }
@@ -421,12 +592,8 @@ function oneActionArcBeat(
     case "Defender stands ground":
       if (beat === "action") {
         return {
-          predatorBeat: isAquatic
-            ? "drives one decisive forward defense surge"
-            : "drives one decisive forward defense step (one push)",
-          preyBeat: isAquatic
-            ? "reacts once with one recoil or sidestep through the water"
-            : "reacts once with one recoil or sidestep",
+          predatorBeat: "drives one decisive forward defense step (one push)",
+          preyBeat: "reacts once with one recoil or sidestep",
           guardLine: baseGuard,
         };
       }
@@ -439,12 +606,8 @@ function oneActionArcBeat(
     case "Giant vs giant clash":
       if (beat === "action") {
         return {
-          predatorBeat: isAquatic
-            ? "loads momentum and commits one heavy clash beat through the water"
-            : "loads weight and commits one heavy clash beat (single impact moment)",
-          preyBeat: isAquatic
-            ? "responds once with one grounded surge or recoil"
-            : "responds once with one grounded shove or recoil",
+          predatorBeat: "loads weight and commits one heavy clash beat (single impact moment)",
+          preyBeat: "responds once with one grounded shove or recoil",
           guardLine: baseGuard,
         };
       }
@@ -494,18 +657,7 @@ export function getDepthPrompt(mode: DepthMode): { depth: string; lensNote: stri
 // ─────────────────────────────────────────────────────────────
 export function buildMicroMotionLine(weather: Weather, env: string): string {
   const envLower = env.toLowerCase();
-  const isAquatic =
-    envLower.includes("water") ||
-    envLower.includes("river") ||
-    envLower.includes("lake") ||
-    envLower.includes("swamp") ||
-    envLower.includes("ocean") ||
-    envLower.includes("sea") ||
-    envLower.includes("reef") ||
-    envLower.includes("coast") ||
-    envLower.includes("shore") ||
-    envLower.includes("underwater") ||
-    envLower.includes("marine");
+  const isAquatic = isAquaticEnv(env);
 
   const isArctic =
     envLower.includes("arctic") ||
@@ -543,8 +695,7 @@ export function buildMicroMotionLine(weather: Weather, env: string): string {
 }
 
 // ─────────────────────────────────────────────────────────────
-// KLING 3.0 NATIVE AUDIO PROMPT BUILDER (NEW)
-// [Official: Kling 3.0 generates matching ambient sound from prompt]
+// KLING 3.0 NATIVE AUDIO PROMPT BUILDER
 // ─────────────────────────────────────────────────────────────
 export function buildKlingAudioPrompt(
   predator: string,
@@ -555,20 +706,8 @@ export function buildKlingAudioPrompt(
   beat: "establish" | "action" | "aftermath"
 ): string {
   const envLower = env.toLowerCase();
-  const isAquatic =
-    envLower.includes("water") ||
-    envLower.includes("river") ||
-    envLower.includes("lake") ||
-    envLower.includes("swamp") ||
-    envLower.includes("ocean") ||
-    envLower.includes("sea") ||
-    envLower.includes("reef") ||
-    envLower.includes("coast") ||
-    envLower.includes("shore") ||
-    envLower.includes("underwater") ||
-    envLower.includes("marine");
+  const isAquatic = isAquaticEnv(env);
 
-  // Base ambient by environment
   let ambient = "distant natural ambience, wind through terrain";
   if (envLower.includes("forest") || envLower.includes("jungle"))
     ambient = "distant bird calls, rustling canopy, layered forest ambience";
@@ -583,7 +722,6 @@ export function buildKlingAudioPrompt(
   else if (envLower.includes("desert"))
     ambient = "desert wind whisper, sand grain movement, dry heat stillness";
 
-    // Weather overlay
   let weatherAudio = "";
 
   const isArcticLike =
@@ -611,7 +749,6 @@ export function buildKlingAudioPrompt(
     else if (weather === "Golden Hour") weatherAudio = ", warm twilight stillness, evening insect chorus";
   }
 
-  // Beat-specific animal audio
   let animalAudio = "";
   switch (beat) {
     case "establish":
@@ -752,11 +889,12 @@ export function buildImagePrompt(
 ): string {
   const depth = getDepthPrompt(depthMode);
   const vibe = animalVibePrompt[animalVibe];
-  const cam = (target === "NB2" || target === "NANO_BANANA_2")
-  ? cameraGear
-  : getFilmStock(cameraGear, lighting, weather);
-const descInject = sceneDesc?.trim() ? `\n\nScene context: ${sceneDesc.trim()}` : "";
-const qLead = buildQualityLead(quality, "image");
+  const cam =
+    target === "NB2" || target === "NANO_BANANA_2"
+      ? cameraGear
+      : getFilmStock(cameraGear, lighting, weather);
+  const descInject = sceneDesc?.trim() ? `\n\nScene context: ${sceneDesc.trim()}` : "";
+  const qLead = buildQualityLead(quality, "image");
 
   const realismAdd =
     quality?.realismMode === "High Naturalism"
@@ -771,50 +909,44 @@ const qLead = buildQualityLead(quality, "image");
   const D = `${texture}. ${vibe.texture}. Micro-detail visible in fur, skin, feathers, debris, moisture, and ground contact. ${realismAdd}`;
 
   if (target === "NB2") {
-  const B_ref = `${env}, ${weatherVariants[weather]}. Two-plane composition: foreground subjects fully separated from background, unambiguous silhouettes, stable depth map. Subjects placed for clear biomechanical readability — no overlap, each animal fully visible.`;
-  const E_ref = `${vibe.style}, photorealistic, 8K RAW. Optimised for I2V reference consistency — distinct silhouettes, locked anatomy, stable depth planes.${descInject}`;
+    const B_ref = `${env}, ${weatherVariants[weather]}. Two-plane composition: foreground subjects fully separated from background, unambiguous silhouettes, stable depth map. Subjects placed for clear biomechanical readability — no overlap, each animal fully visible.`;
+    const E_ref = `${vibe.style}, photorealistic, 8K RAW. Optimised for I2V reference consistency — distinct silhouettes, locked anatomy, stable depth planes.${descInject}`;
+    return finalizeImagePrompt(`${qLead} ${A} ${B_ref} ${C} ${D} ${E_ref}`, target);
+  }
 
-  return finalizeImagePrompt(`${qLead} ${A} ${B_ref} ${C} ${D} ${E_ref}`, target);
-}
+  if (target === "NANO_BANANA_2") {
+    const A_nb2 = `Subject: ${predator} and ${prey}, both fully visible, locked in the peak tension beat of a ${getSafeArcLabel(arc)} scene.`;
+    const B_nb2 = `Context/background: ${env}, ${weatherVariants[weather]}. Natural habitat cues, readable terrain, clear background layers.`;
+    const C_nb2 = `Pose/action: ${predator} in a powerful pre-action stance, ${prey} fully alert and reactive, authentic wildlife body language, biologically accurate spacing.`;
+    const D_nb2 = `Composition: wide cinematic wildlife documentary frame, 9:16 vertical. Camera: ${cam}. ${vibe.camera}. ${depth.lensNote}. Depth of field: ${depth.depth}.`;
+    const E_nb2 = `Lighting: ${lighting}. Natural rim separation, volumetric atmosphere, realistic shadow direction.`;
+    const F_nb2 = `Style: ${vibe.style}, photorealistic. ${texture}. ${vibe.texture}. Micro-detail visible in fur, skin, feathers, debris, moisture, and ground contact. ${realismAdd}${descInject}`;
 
-if (target === "NANO_BANANA_2") {
-  const A_nb2 = `Subject: ${predator} and ${prey}, both fully visible, locked in the peak tension beat of a ${getSafeArcLabel(arc)} scene.`;
-  const B_nb2 = `Context/background: ${env}, ${weatherVariants[weather]}. Natural habitat cues, readable terrain, clear background layers.`;
-  const C_nb2 = `Pose/action: ${predator} in a powerful pre-action stance, ${prey} fully alert and reactive, authentic wildlife body language, biologically accurate spacing.`;
-  const D_nb2 = `Composition: wide cinematic wildlife documentary frame, 9:16 vertical. Camera: ${cam}. ${vibe.camera}. ${depth.lensNote}. Depth of field: ${depth.depth}.`;
-  const E_nb2 = `Lighting: ${lighting}. Natural rim separation, volumetric atmosphere, realistic shadow direction.`;
-  const F_nb2 = `Style: ${vibe.style}, photorealistic. ${texture}. ${vibe.texture}. Micro-detail visible in fur, skin, feathers, debris, moisture, and ground contact. ${realismAdd}${descInject}`;
+    return finalizeImagePrompt(
+      `${qLead} ${A_nb2} ${B_nb2} ${C_nb2} ${D_nb2} ${E_nb2} ${F_nb2}`,
+      target
+    );
+  }
 
-  return finalizeImagePrompt(
-    `${qLead} ${A_nb2} ${B_nb2} ${C_nb2} ${D_nb2} ${E_nb2} ${F_nb2}`,
-    target
-  );
-}
+  if (target === "RUNWAY") {
+    const E_runway = `${vibe.style}, photorealistic, cinematic grade. Built as a stable master reference for Runway Gen-4.5 I2V continuity — clean separation, readable silhouette, stable anatomy. High-quality input free of visual artifacts for best I2V results.${descInject}`;
+    return finalizeImagePrompt(`${qLead} ${A} ${B} ${C} ${D} ${E_runway}`, target);
+  }
 
-if (target === "RUNWAY") {
-  const E_runway = `${vibe.style}, photorealistic, cinematic grade. Built as a stable master reference for Runway Gen-4.5 I2V continuity — clean separation, readable silhouette, stable anatomy. High-quality input free of visual artifacts for best I2V results.${descInject}`;
-
-  return finalizeImagePrompt(`${qLead} ${A} ${B} ${C} ${D} ${E_runway}`, target);
-}
-
-const E = `${vibe.style}, photorealistic, cinematic grade.${descInject}`;
-return finalizeImagePrompt(`${qLead} ${A} ${B} ${C} ${D} ${E}`, target);
+  const E = `${vibe.style}, photorealistic, cinematic grade.${descInject}`;
+  return finalizeImagePrompt(`${qLead} ${A} ${B} ${C} ${D} ${E}`, target);
 }
 
 // ─────────────────────────────────────────────────────────────
-// NEGATIVE PROMPT (Kling 3.0 / MJ only — NEVER for Runway)
-// [Official: Runway Gen-4/4.5 does NOT support negative prompts.
-//  Kling 3.0: Negative prompts supported and recommended.]
+// NEGATIVE PROMPT
 // ─────────────────────────────────────────────────────────────
 export function buildNegativePrompt(predator: string): string {
-  // Updated for Kling 3.0 official negative prompt best practices
   const base =
     "cartoon, CGI look, anime style, unnatural motion, morphing artifacts, " +
     "split screen, floating limbs, jerky movement, watermark, text overlay, " +
     "extra limbs, colour banding, fire, flame, fantasy breath, " +
     "exaggerated vapor glow, energy effect, light beam, glowing mouth, " +
     "smiling, laughing, cartoonish expression, bright unnatural colors, " +
-    // Kling 3.0 specific anti-drift additions:
     "face distortion, warping, morphing textures, inconsistent physics, " +
     "background shifting, changing markings, extra digits, deformed anatomy";
 
@@ -872,13 +1004,7 @@ export function buildVoiceoverLine(
 }
 
 // ─────────────────────────────────────────────────────────────
-// RUNWAY SHOTS — GEN-4.5 OFFICIAL FORMAT
-//
-// [Official structure: [Camera] [subject] [action] in [environment]]
-// [I2V: motion-only. Do NOT restate appearance from image.]
-// [Sequential: "X occurs, then Y occurs. Finally, Z occurs."]
-// [Timestamps optional: [00:01] X. [00:04] Y.]
-// [24/25fps only. Duration 2-10s.]
+// RUNWAY SHOTS
 // ─────────────────────────────────────────────────────────────
 export function buildRunwayShots(
   predator: string,
@@ -896,19 +1022,7 @@ export function buildRunwayShots(
   const tone = emotionalTonePrompt[emotionalTone];
   const vibe = animalVibePrompt[animalVibe];
   const micro = buildMicroMotionLine(weather, env);
-    const envLower = env.toLowerCase();
-  const isAquatic =
-    envLower.includes("water") ||
-    envLower.includes("river") ||
-    envLower.includes("lake") ||
-    envLower.includes("swamp") ||
-    envLower.includes("ocean") ||
-    envLower.includes("sea") ||
-    envLower.includes("reef") ||
-    envLower.includes("coast") ||
-    envLower.includes("shore") ||
-    envLower.includes("underwater") ||
-    envLower.includes("marine");
+  const isAquatic = isAquaticEnv(env);
 
   const qLead = buildQualityLead(quality, "runway");
   const context = sceneDesc?.trim() ? `\nScene continuity: ${sceneDesc.trim().slice(0, 150)}` : "";
@@ -917,7 +1031,6 @@ export function buildRunwayShots(
     ? "Use the uploaded master image or previous last frame as the locked reference."
     : "Use the current shot as the visual guide.";
 
-  // Official Runway I2V rule enforcement
   const motionRule = quality?.motionOnlyI2V
     ? "⚠️ RUNWAY I2V RULE (Official): Image carries ALL identity (coat, markings, anatomy). This prompt describes MOTION, CAMERA, and PHYSICS only. Do NOT restate subject appearance — doing so reduces motion quality."
     : "Keep appearance text minimal; motion is the priority.";
@@ -926,31 +1039,27 @@ export function buildRunwayShots(
     ? "One primary subject action and one camera move only."
     : "Keep motion readable and limited.";
 
-  const seamless = quality?.seamlessShot
-    ? "Continuous, seamless shot."
-    : "";
+  const seamless = quality?.seamlessShot ? "Continuous, seamless shot." : "";
 
   const gateOn = !!quality?.singleActionRule;
-  const beat1 = oneActionArcBeat(arc, "establish", gateOn);
-  const beat2 = oneActionArcBeat(arc, "action", gateOn);
-  const beat3 = oneActionArcBeat(arc, "aftermath", gateOn);
+  const aquatic = isAquaticEnv(env);
+  const beat1 = oneActionArcBeat(arc, "establish", gateOn, aquatic);
+  const beat2 = oneActionArcBeat(arc, "action", gateOn, aquatic);
+  const beat3 = oneActionArcBeat(arc, "aftermath", gateOn, aquatic);
 
-  // Shot 1 — Official Runway structure: [Camera] as [subject] [action]
-    const shot1PasteReady = sanitizeRunwayFPS(
+  const shot1PasteReady = sanitizeRunwayFPS(
     isAquatic
       ? `Slow dolly-in. ${predator} glides once through the water column. ${prey} holds tense position, body rigid in the current. ${micro}. ${seamless}`.trim()
       : `Slow dolly-in. ${predator} exhales once — ribcage settles. ${prey} holds still, body rigid. ${micro}. ${seamless}`.trim()
   );
 
-  // Shot 2 — Action
-    const shot2PasteReady = sanitizeRunwayFPS(
+  const shot2PasteReady = sanitizeRunwayFPS(
     isAquatic
       ? `Tracking move. ${predator} commits to one fast water-pressure burst. ${prey} reacts with one evasive dart. Water displacement, turbulence, and current reaction. ${micro}. ${seamless}`.trim()
       : `Tracking move. ${predator} ${beat2.predatorBeat}. ${prey} ${beat2.preyBeat}. Ground scatter, body-weight transfer. ${micro}. ${seamless}`.trim()
   );
 
-  // Shot 3 — Aftermath
-    const shot3PasteReady = sanitizeRunwayFPS(
+  const shot3PasteReady = sanitizeRunwayFPS(
     isAquatic
       ? `Slow pull-back. ${predator} slows and stabilizes in the water. Residual turbulence settles, eye-line engaged. ${micro}. ${seamless}`.trim()
       : `Slow pull-back. ${predator} exhales — posture resets, eye-line engaged. Residual atmosphere, ${micro}. ${seamless}`.trim()
@@ -1023,12 +1132,7 @@ Duration: 5–10 seconds recommended.
 }
 
 // ─────────────────────────────────────────────────────────────
-// KLING SHOTS — 3.0 OFFICIAL FORMAT
-//
-// [SCALE framework: Shot → Character → Action → Lighting → Extra]
-// [Native 4K at 60fps. Duration 3–15s. Up to 6 multi-shot.]
-// [Negative prompts supported. Motion intensity recommended.]
-// [Native audio integrated. Bind Subject for identity lock.]
+// KLING SHOTS
 // ─────────────────────────────────────────────────────────────
 export function buildKlingShots(
   predator: string,
@@ -1065,20 +1169,20 @@ export function buildKlingShots(
   const wideRule = klingWidePhysicsRule();
 
   const gateOn = !!quality?.singleActionRule;
-  const beat1 = oneActionArcBeat(arc, "establish", gateOn);
-  const beat2 = oneActionArcBeat(arc, "action", gateOn);
-  const beat3 = oneActionArcBeat(arc, "aftermath", gateOn);
+  const aquatic = isAquaticEnv(env);
+  const beat1 = oneActionArcBeat(arc, "establish", gateOn, aquatic);
+  const beat2 = oneActionArcBeat(arc, "action", gateOn, aquatic);
+  const beat3 = oneActionArcBeat(arc, "aftermath", gateOn, aquatic);
 
-  // Motion intensity per beat
   const mi1 = getKlingMotionIntensity(arc, "establish");
   const mi2 = getKlingMotionIntensity(arc, "action");
   const mi3 = getKlingMotionIntensity(arc, "aftermath");
 
-  // Audio prompts
   const audio1 = buildKlingAudioPrompt(predator, prey, env, weather, arc, "establish");
   const audio2 = buildKlingAudioPrompt(predator, prey, env, weather, arc, "action");
   const audio3 = buildKlingAudioPrompt(predator, prey, env, weather, arc, "aftermath");
-    const characterLine = buildKlingCharacterLine(predator, prey, quality?.motionOnlyI2V);
+
+  const characterLine = buildKlingCharacterLine(predator, prey, quality?.motionOnlyI2V);
   const locationLine = buildKlingLocationLine(env, weather, quality?.motionOnlyI2V);
   const extra1 = quality?.motionOnlyI2V
     ? `${micro}. Photorealistic wildlife documentary. 9:16 vertical.`
@@ -1154,7 +1258,6 @@ Kling settings: Motion intensity ${mi3.toFixed(2)} | Optionally set End Frame fo
 
 // ─────────────────────────────────────────────────────────────
 // KLING NATIVE 15-SECOND MULTI-SHOT
-// [Official Kling 3.0: 15s native, up to 6 shots per prompt]
 // ─────────────────────────────────────────────────────────────
 export function buildKlingNative15s(
   predator: string,
@@ -1191,20 +1294,20 @@ export function buildKlingNative15s(
   const cfgLine = `Guidance Scale: Shot 1 → ${cfgScales.shot1} | Shot 2 → ${cfgScales.shot2} | Shot 3 → ${cfgScales.shot3} (set in Kling settings, 0.0–1.0)`;
 
   const gateOn = !!quality?.singleActionRule;
-  const b1 = oneActionArcBeat(arc, "establish", gateOn);
-  const b2 = oneActionArcBeat(arc, "action", gateOn);
-  const b3 = oneActionArcBeat(arc, "aftermath", gateOn);
+  const aquatic = isAquaticEnv(env);
+  const b1 = oneActionArcBeat(arc, "establish", gateOn, aquatic);
+  const b2 = oneActionArcBeat(arc, "action", gateOn, aquatic);
+  const b3 = oneActionArcBeat(arc, "aftermath", gateOn, aquatic);
 
-  // Motion intensities
   const mi1 = getKlingMotionIntensity(arc, "establish");
   const mi2 = getKlingMotionIntensity(arc, "action");
   const mi3 = getKlingMotionIntensity(arc, "aftermath");
 
-  // Audio prompts for each beat
   const audio1 = buildKlingAudioPrompt(predator, prey, env, weather, arc, "establish");
   const audio2 = buildKlingAudioPrompt(predator, prey, env, weather, arc, "action");
   const audio3 = buildKlingAudioPrompt(predator, prey, env, weather, arc, "aftermath");
-    const nativeSceneLine = quality?.motionOnlyI2V
+
+  const nativeSceneLine = quality?.motionOnlyI2V
     ? `Scene: same environment continuity, ${weatherVariants[weather]}.`
     : `Scene: ${env}, ${weatherVariants[weather]}.`;
   const nativeCharacterLine = quality?.motionOnlyI2V
@@ -1277,7 +1380,6 @@ HOW TO USE (Kling 3.0 Official Workflow):
 
 // ─────────────────────────────────────────────────────────────
 // KLING 6-SHOT MULTI-SCENE
-// [Official Kling 3.0: Up to 6 shots in one prompt]
 // ─────────────────────────────────────────────────────────────
 export function buildKlingSixShot(
   predator: string,
@@ -1312,41 +1414,32 @@ export function buildKlingSixShot(
     "WIDE PHYSICS RULE — Action + aftermath shots must be WIDE (full bodies visible) for realistic biomechanics.";
 
   const gateOn = !!quality?.singleActionRule;
-  const b5 = oneActionArcBeat(arc, "action", gateOn);
-  const b6 = oneActionArcBeat(arc, "aftermath", gateOn);
-    const sixShotSceneLine = quality?.motionOnlyI2V
+  const aquatic = isAquaticEnv(env);
+  const b5 = oneActionArcBeat(arc, "action", gateOn, aquatic);
+  const b6 = oneActionArcBeat(arc, "aftermath", gateOn, aquatic);
+
+  const sixShotSceneLine = quality?.motionOnlyI2V
     ? `Scene: same environment continuity, ${weatherVariants[weather]}.`
     : `Scene: ${env}, ${weatherVariants[weather]}.`;
   const sixShotCharacterLine = quality?.motionOnlyI2V
     ? `Characters: same ${predator} identity from input frame. Same ${prey} identity from input frame.`
     : `Characters: ${predator} (drives pressure). ${prey} (fully reactive).`;
-      const envLower = env.toLowerCase();
-  const isAquatic =
-    envLower.includes("water") ||
-    envLower.includes("river") ||
-    envLower.includes("lake") ||
-    envLower.includes("swamp") ||
-    envLower.includes("ocean") ||
-    envLower.includes("sea") ||
-    envLower.includes("reef") ||
-    envLower.includes("coast") ||
-    envLower.includes("shore") ||
-    envLower.includes("underwater") ||
-    envLower.includes("marine");
 
-  const sixShotAudio1 = isAquatic
+  const isAquaticShot = isAquaticEnv(env);
+
+  const sixShotAudio1 = isAquaticShot
     ? "Audio: subtle underwater movement, low current wash, restrained predator motion."
     : "Audio: controlled predator breathing, sharp inhale.";
 
-  const sixShotAudio2 = isAquatic
+  const sixShotAudio2 = isAquaticShot
     ? "Audio: water movement, tension stillness, distant current wash."
     : "Audio: wind through terrain, tension stillness.";
 
-  const sixShotAudio3 = isAquatic
+  const sixShotAudio3 = isAquaticShot
     ? "Audio: current pressure shift, water displacement, prey alert movement."
     : `Audio: weight transfer on ground surface, ${prey} alert vocalization.`;
 
-  const sixShotAudio4 = isAquatic
+  const sixShotAudio4 = isAquaticShot
     ? "Audio: alternating water movement, shifting current tension."
     : "Audio: rapid alternating breathing patterns.";
 
@@ -1456,7 +1549,6 @@ export function buildCapCutPlan(predator: string, arc: string, weather: Weather)
 
 // ─────────────────────────────────────────────────────────────
 // CLIP CHAINING
-// [Updated with official chaining methods for both engines]
 // ─────────────────────────────────────────────────────────────
 export function buildClipChaining(predator: string, driftRisk: PredatorInfo["driftRisk"]): string {
   const riskLine =
@@ -1489,7 +1581,7 @@ RULE (Kling): Use Bind Subject (Elements 3.0) for identity lock.`);
 }
 
 // ─────────────────────────────────────────────────────────────
-// ENGINE CONSTRAINT VALIDATOR (NEW — catches misconfigs before paste)
+// ENGINE CONSTRAINT VALIDATOR
 // ─────────────────────────────────────────────────────────────
 export type EngineWarning = {
   engine: "runway" | "kling";
