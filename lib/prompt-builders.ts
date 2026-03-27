@@ -886,7 +886,7 @@ export function buildKlingShots(
   const vibe = animalVibePrompt[animalVibe];
   const micro = buildMicroMotionLine(weather, env);
 
-  const qLead = buildQualityLead(quality, "runway");
+  const qLead = buildQualityLead(quality, "kling");
   const refTags = buildReferenceTagBlock(quality);
   const context = sceneDesc?.trim() ? `\nScene continuity: ${sceneDesc.trim().slice(0, 150)}` : "";
 
