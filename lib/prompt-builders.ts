@@ -922,7 +922,6 @@ export function buildKlingShots(
   const micro = buildMicroMotionLine(weather, env);
 
   const qLead = buildQualityLead(quality, "kling");
-  const refTags = buildReferenceTagBlock(quality);
   const context = sceneDesc?.trim() ? `\nScene continuity: ${sceneDesc.trim().slice(0, 150)}` : "";
 
   const refLine = quality?.referenceLock
@@ -966,7 +965,6 @@ export function buildKlingShots(
     shot1: finalizePrompt(`KLING SHOT 1 — TENSION [${model}]
 ${note}
 ${qLead}
-${refTags}
 ${refLine}
 ${motionRule}
 ${singleRule}
@@ -987,7 +985,6 @@ Kling settings: Motion intensity ${mi1.toFixed(2)} | Enable Bind Subject for ide
     shot2: finalizePrompt(`KLING SHOT 2 — STRIKE (WIDE${gateOn ? " + ONE-ACTION" : ""}) [${model}]
 ${note}
 ${qLead}
-${refTags}
 ${refLine}
 ${motionRule}
 ${singleRule}
@@ -1009,7 +1006,6 @@ Kling settings: Motion intensity ${mi2.toFixed(2)} | WIDE framing enforced | Upl
     shot3: finalizePrompt(`KLING SHOT 3 — AFTERMATH (WIDE${gateOn ? " + ONE-ACTION" : ""}) [${model}]
 ${note}
 ${qLead}
-${refTags}
 ${refLine}
 ${motionRule}
 ${singleRule}
@@ -1052,7 +1048,6 @@ export function buildKlingNative15s(
   const micro = buildMicroMotionLine(weather, env);
 
   const qLead = buildQualityLead(quality, "kling");
-  const refTags = buildReferenceTagBlock(quality);
   const context = sceneDesc?.trim() ? `\nScene context: ${sceneDesc.trim().slice(0, 150)}` : "";
 
   const isNative = model === "Kling 3.0 Pro" || model === "Kling 3.0 Standard";
@@ -1124,7 +1119,6 @@ Selected: ${model}. Switch model to activate.
 ─────────────────────────────────────
 ${note}
 ${qLead}
-${refTags}
 ${refLine}
 ${motionRule}${context}
 
@@ -1135,7 +1129,6 @@ ${body}`);
 ─────────────────────────────────────────────────────────
 ${note}
 ${qLead}
-${refTags}
 ${refLine}
 ${motionRule}
 ${cfgLine}
@@ -1178,7 +1171,6 @@ export function buildKlingSixShot(
   const micro = buildMicroMotionLine(weather, env);
 
   const qLead = buildQualityLead(quality, "kling");
-  const refTags = buildReferenceTagBlock(quality);
   const context = sceneDesc?.trim() ? `\nScene context: ${sceneDesc.trim().slice(0, 150)}` : "";
 
   const isNative = model === "Kling 3.0 Pro" || model === "Kling 3.0 Standard";
@@ -1207,7 +1199,6 @@ export function buildKlingSixShot(
 ──────────────────────────────────────────────────────
 ${note}
 ${qLead}
-${refTags}
 Guidance Scale: ${cfgBase} (0.0–1.0 range)
 ${wideRule}${context}
 
