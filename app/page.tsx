@@ -13,11 +13,12 @@ import type {
   RealismMode,
   GeneratedPackage,
   MediaAnalysisResult,
-  PredatorInfo,
+    PredatorInfo,
   RunwayModel,
   KlingModel,
   CustomPredatorForm,
   PromptVersion,
+  ImagePromptTarget,
 } from "@/types";
 
 import {
@@ -246,8 +247,9 @@ export default function Page() {
   const [animalVibe, setAnimalVibe] = useState<AnimalVibe>("National Geographic Wild");
 
   // STEP 2 (engine + quality)
-  const [runwayModel, setRunwayModel] = useState<RunwayModel>(RUNWAY_MODELS[0]);
+    const [runwayModel, setRunwayModel] = useState<RunwayModel>(RUNWAY_MODELS[0]);
   const [klingModel, setKlingModel] = useState<KlingModel>(KLING_MODELS[0]);
+  const [imagePromptTarget, setImagePromptTarget] = useState<ImagePromptTarget>("NANO_BANANA_2");
 
   const [realismMode, setRealismMode] = useState<RealismMode>("Reference Locked");
   const [motionOnlyI2V, setMotionOnlyI2V] = useState(true);
@@ -499,7 +501,7 @@ export default function Page() {
         heroVeo,
       };
 
-      const imagePrompt = buildImagePrompt(
+            const imagePrompt = buildImagePrompt(
         predator,
         prey,
         preset.environment,
@@ -513,7 +515,7 @@ export default function Page() {
         animalVibe,
         sceneInject,
         quality,
-        "NANO_BANANA_2" // ✅ or "RUNWAY" or "NB2"
+        imagePromptTarget
       );
 
       const runway = buildRunwayShots(
@@ -1125,6 +1127,22 @@ export default function Page() {
                   heroVeo={heroVeo}
                   setHeroVeo={setHeroVeo}
                 />
+
+                <div className="mt-3">
+                  <label className="mb-1 block text-xs font-semibold text-gray-500">
+                    Image Prompt Target
+                  </label>
+                  <select
+                    value={imagePromptTarget}
+                    onChange={(e) => setImagePromptTarget(e.target.value as ImagePromptTarget)}
+                    className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-800"
+                  >
+                    <option value="NANO_BANANA_2">Nano Banana 2 (default)</option>
+                    <option value="NB2">NB2 (legacy)</option>
+                    <option value="RUNWAY">Runway Reference</option>
+                    <option value="MJ">Midjourney</option>
+                  </select>
+                </div>
 
                 {/* ✅ Reference tags helper (place right under Reference Lock controls) */}
                 <div className="mt-2 rounded-lg border border-violet-200 bg-violet-50 p-3 text-xs text-violet-700">
