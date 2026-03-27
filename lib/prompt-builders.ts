@@ -157,7 +157,6 @@ export function sanitizeRunwayPrompt(prompt: string): string {
 // ─────────────────────────────────────────────────────────────
 // KLING 3.0 MOTION INTENSITY CALCULATOR
 // ─────────────────────────────────────────────────────────────
-
 export function getKlingMotionIntensity(
   arc: Arc,
   beat: "establish" | "action" | "aftermath"
@@ -210,7 +209,7 @@ function getSafeArcPrint(arc: string): string {
 }
 
 // ─────────────────────────────────────────────────────────────
-// Shared helpers
+// KLING HELPER LINES
 // ─────────────────────────────────────────────────────────────
 function buildKlingCharacterLine(
   predator: string,
@@ -236,6 +235,9 @@ function buildKlingExtraLine(base: string, motionOnlyI2V?: boolean): string {
   return motionOnlyI2V ? base : `${base}.`;
 }
 
+// ─────────────────────────────────────────────────────────────
+// Kling WIDE PHYSICS RULE
+// ─────────────────────────────────────────────────────────────
 function klingWidePhysicsRule(): string {
   return "WIDE PHYSICS RULE — Shot 2 and Shot 3 must be FIXED WIDE (full bodies visible) to preserve biomechanics, weight transfer, and collision readability. Kling 3.0's 4K output ensures micro-detail even in wide framing.";
 }
@@ -529,7 +531,10 @@ function oneActionArcBeat(
           beat === "aftermath"
             ? "settles posture and exhales once, stance recovered"
             : "compresses low and still, breath controlled",
-        preyBeat: beat === "aftermath" ? "stabilizes footing once, still alert" : "stiffens and locks attention once",
+        preyBeat:
+          beat === "aftermath"
+            ? "stabilizes footing once, still alert"
+            : "stiffens and locks attention once",
         guardLine: baseGuard,
       };
 
@@ -542,8 +547,14 @@ function oneActionArcBeat(
         };
       }
       return {
-        predatorBeat: beat === "aftermath" ? "halts and scans once, breath visible" : "builds pressure without advancing",
-        preyBeat: beat === "aftermath" ? "regains footing once, still tense" : "tenses and prepares to flee",
+        predatorBeat:
+          beat === "aftermath"
+            ? "halts and scans once, breath visible"
+            : "builds pressure without advancing",
+        preyBeat:
+          beat === "aftermath"
+            ? "regains footing once, still tense"
+            : "tenses and prepares to flee",
         guardLine: baseGuard,
       };
 
@@ -556,8 +567,14 @@ function oneActionArcBeat(
         };
       }
       return {
-        predatorBeat: beat === "aftermath" ? "stands composed and exhales once" : "holds ground with still dominance",
-        preyBeat: beat === "aftermath" ? "holds distance, posture tight" : "stays tense, watching",
+        predatorBeat:
+          beat === "aftermath"
+            ? "stands composed and exhales once"
+            : "holds ground with still dominance",
+        preyBeat:
+          beat === "aftermath"
+            ? "holds distance, posture tight"
+            : "stays tense, watching",
         guardLine: baseGuard,
       };
 
@@ -570,8 +587,14 @@ function oneActionArcBeat(
         };
       }
       return {
-        predatorBeat: beat === "aftermath" ? "resets stance and exhales once" : "circles pressure slowly without contact",
-        preyBeat: beat === "aftermath" ? "rebalances once, eyes locked" : "mirrors stance, ready",
+        predatorBeat:
+          beat === "aftermath"
+            ? "resets stance and exhales once"
+            : "circles pressure slowly without contact",
+        preyBeat:
+          beat === "aftermath"
+            ? "rebalances once, eyes locked"
+            : "mirrors stance, ready",
         guardLine: baseGuard,
       };
 
@@ -584,8 +607,14 @@ function oneActionArcBeat(
         };
       }
       return {
-        predatorBeat: beat === "aftermath" ? "holds formation and exhales once" : "maintains disciplined spacing",
-        preyBeat: beat === "aftermath" ? "holds distance, still tense" : "stays alert, scanning",
+        predatorBeat:
+          beat === "aftermath"
+            ? "holds formation and exhales once"
+            : "maintains disciplined spacing",
+        preyBeat:
+          beat === "aftermath"
+            ? "holds distance, still tense"
+            : "stays alert, scanning",
         guardLine: baseGuard,
       };
 
@@ -598,8 +627,14 @@ function oneActionArcBeat(
         };
       }
       return {
-        predatorBeat: beat === "aftermath" ? "stands firm, breath settling" : "plants stance, head lowered",
-        preyBeat: beat === "aftermath" ? "keeps distance, posture tight" : "tests space, cautious",
+        predatorBeat:
+          beat === "aftermath"
+            ? "stands firm, breath settling"
+            : "plants stance, head lowered",
+        preyBeat:
+          beat === "aftermath"
+            ? "keeps distance, posture tight"
+            : "tests space, cautious",
         guardLine: baseGuard,
       };
 
@@ -612,15 +647,27 @@ function oneActionArcBeat(
         };
       }
       return {
-        predatorBeat: beat === "aftermath" ? "settles weight and exhales once" : "approaches slowly with heavy weight transfer",
-        preyBeat: beat === "aftermath" ? "rebalances once, still tense" : "holds ground, ready",
+        predatorBeat:
+          beat === "aftermath"
+            ? "settles weight and exhales once"
+            : "approaches slowly with heavy weight transfer",
+        preyBeat:
+          beat === "aftermath"
+            ? "rebalances once, still tense"
+            : "holds ground, ready",
         guardLine: baseGuard,
       };
 
     default:
       return {
-        predatorBeat: beat === "action" ? "commits to one clear movement beat" : "holds tension with controlled breath",
-        preyBeat: beat === "action" ? "answers with one survival reaction" : "stays alert and reactive",
+        predatorBeat:
+          beat === "action"
+            ? "commits to one clear movement beat"
+            : "holds tension with controlled breath",
+        preyBeat:
+          beat === "action"
+            ? "answers with one survival reaction"
+            : "stays alert and reactive",
         guardLine: baseGuard,
       };
   }
@@ -657,7 +704,18 @@ export function getDepthPrompt(mode: DepthMode): { depth: string; lensNote: stri
 // ─────────────────────────────────────────────────────────────
 export function buildMicroMotionLine(weather: Weather, env: string): string {
   const envLower = env.toLowerCase();
-  const isAquatic = isAquaticEnv(env);
+  const isAquatic =
+    envLower.includes("water") ||
+    envLower.includes("river") ||
+    envLower.includes("lake") ||
+    envLower.includes("swamp") ||
+    envLower.includes("ocean") ||
+    envLower.includes("sea") ||
+    envLower.includes("reef") ||
+    envLower.includes("coast") ||
+    envLower.includes("shore") ||
+    envLower.includes("underwater") ||
+    envLower.includes("marine");
 
   const isArctic =
     envLower.includes("arctic") ||
@@ -706,7 +764,18 @@ export function buildKlingAudioPrompt(
   beat: "establish" | "action" | "aftermath"
 ): string {
   const envLower = env.toLowerCase();
-  const isAquatic = isAquaticEnv(env);
+  const isAquatic =
+    envLower.includes("water") ||
+    envLower.includes("river") ||
+    envLower.includes("lake") ||
+    envLower.includes("swamp") ||
+    envLower.includes("ocean") ||
+    envLower.includes("sea") ||
+    envLower.includes("reef") ||
+    envLower.includes("coast") ||
+    envLower.includes("shore") ||
+    envLower.includes("underwater") ||
+    envLower.includes("marine");
 
   let ambient = "distant natural ambience, wind through terrain";
   if (envLower.includes("forest") || envLower.includes("jungle"))
@@ -893,6 +962,7 @@ export function buildImagePrompt(
     target === "NB2" || target === "NANO_BANANA_2"
       ? cameraGear
       : getFilmStock(cameraGear, lighting, weather);
+
   const descInject = sceneDesc?.trim() ? `\n\nScene context: ${sceneDesc.trim()}` : "";
   const qLead = buildQualityLead(quality, "image");
 
@@ -1004,7 +1074,7 @@ export function buildVoiceoverLine(
 }
 
 // ─────────────────────────────────────────────────────────────
-// RUNWAY SHOTS
+// RUNWAY SHOTS — GEN-4.5 OFFICIAL FORMAT
 // ─────────────────────────────────────────────────────────────
 export function buildRunwayShots(
   predator: string,
@@ -1042,10 +1112,9 @@ export function buildRunwayShots(
   const seamless = quality?.seamlessShot ? "Continuous, seamless shot." : "";
 
   const gateOn = !!quality?.singleActionRule;
-  const aquatic = isAquaticEnv(env);
-  const beat1 = oneActionArcBeat(arc, "establish", gateOn, aquatic);
-  const beat2 = oneActionArcBeat(arc, "action", gateOn, aquatic);
-  const beat3 = oneActionArcBeat(arc, "aftermath", gateOn, aquatic);
+  const beat1 = oneActionArcBeat(arc, "establish", gateOn, isAquatic);
+  const beat2 = oneActionArcBeat(arc, "action", gateOn, isAquatic);
+  const beat3 = oneActionArcBeat(arc, "aftermath", gateOn, isAquatic);
 
   const shot1PasteReady = sanitizeRunwayFPS(
     isAquatic
@@ -1132,7 +1201,7 @@ Duration: 5–10 seconds recommended.
 }
 
 // ─────────────────────────────────────────────────────────────
-// KLING SHOTS
+// KLING SHOTS — 3.0 OFFICIAL FORMAT
 // ─────────────────────────────────────────────────────────────
 export function buildKlingShots(
   predator: string,
@@ -1425,21 +1494,19 @@ export function buildKlingSixShot(
     ? `Characters: same ${predator} identity from input frame. Same ${prey} identity from input frame.`
     : `Characters: ${predator} (drives pressure). ${prey} (fully reactive).`;
 
-  const isAquaticShot = isAquaticEnv(env);
-
-  const sixShotAudio1 = isAquaticShot
+  const sixShotAudio1 = aquatic
     ? "Audio: subtle underwater movement, low current wash, restrained predator motion."
     : "Audio: controlled predator breathing, sharp inhale.";
 
-  const sixShotAudio2 = isAquaticShot
+  const sixShotAudio2 = aquatic
     ? "Audio: water movement, tension stillness, distant current wash."
     : "Audio: wind through terrain, tension stillness.";
 
-  const sixShotAudio3 = isAquaticShot
+  const sixShotAudio3 = aquatic
     ? "Audio: current pressure shift, water displacement, prey alert movement."
     : `Audio: weight transfer on ground surface, ${prey} alert vocalization.`;
 
-  const sixShotAudio4 = isAquaticShot
+  const sixShotAudio4 = aquatic
     ? "Audio: alternating water movement, shifting current tension."
     : "Audio: rapid alternating breathing patterns.";
 
@@ -1507,6 +1574,7 @@ HOW TO USE (Kling 3.0 Official 6-Shot Workflow):
 export function build10Ideas(predator: string, preyList: string[], preset: PredatorInfo): string[] {
   const ideas: string[] = [];
   const seen = new Set<string>();
+
   const add = (idea: string) => {
     const safe = finalizePrompt(idea);
     if (!seen.has(safe) && ideas.length < 10) {
@@ -1520,12 +1588,15 @@ export function build10Ideas(predator: string, preyList: string[], preset: Preda
   );
 
   for (const a of arcs) {
-    for (const p of preyList) add(`${predator} vs ${p} — ${getSafeArcPrint(a)} in ${preset.environment}`);
+    for (const p of preyList) {
+      add(`${predator} vs ${p} — ${getSafeArcPrint(a)} in ${preset.environment}`);
+    }
   }
 
   for (const w of weatherOptions) {
-    for (const p of preyList)
+    for (const p of preyList) {
       add(`${predator} vs ${p} — ${getSafeArcPrint(preset.defaultArc)} during ${w} in ${preset.environment}`);
+    }
   }
 
   [
