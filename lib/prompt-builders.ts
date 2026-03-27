@@ -257,8 +257,23 @@ function klingWidePhysicsRule(): string {
 function oneActionArcBeat(
   arc: Arc,
   beat: "establish" | "action" | "aftermath",
-  enabled: boolean
+  enabled: boolean,
+  env?: string
 ): { predatorBeat: string; preyBeat: string; guardLine: string } {
+  const envLower = (env ?? "").toLowerCase();
+  const isAquatic =
+    envLower.includes("water") ||
+    envLower.includes("river") ||
+    envLower.includes("lake") ||
+    envLower.includes("swamp") ||
+    envLower.includes("ocean") ||
+    envLower.includes("sea") ||
+    envLower.includes("reef") ||
+    envLower.includes("coast") ||
+    envLower.includes("shore") ||
+    envLower.includes("underwater") ||
+    envLower.includes("marine");
+
   if (!enabled) {
     if (beat === "action") {
       return {
@@ -288,8 +303,12 @@ function oneActionArcBeat(
     case "Chase and takedown":
       if (beat === "action") {
         return {
-          predatorBeat: "accelerates into a single chase burst with grounded strides (no contact yet)",
-          preyBeat: "breaks into one clean escape sprint with one evasive lane change",
+          predatorBeat: isAquatic
+            ? "accelerates into a single chase burst with powerful propulsion"
+            : "accelerates into a single chase burst with grounded strides (no contact yet)",
+          preyBeat: isAquatic
+            ? "breaks into one clean escape burst with one evasive direction change"
+            : "breaks into one clean escape sprint with one evasive lane change",
           guardLine: `${baseGuard}\nChase gate: this shot is chase-only (no contact/capture actions).`,
         };
       }
@@ -309,8 +328,12 @@ function oneActionArcBeat(
     case "Ambush attack":
       if (beat === "action") {
         return {
-          predatorBeat: "launches once from cover with one decisive forward commitment",
-          preyBeat: "reacts once with a sharp evasive jump and turn",
+          predatorBeat: isAquatic
+            ? "launches once with one decisive forward surge through the water"
+            : "launches once from cover with one decisive forward commitment",
+          preyBeat: isAquatic
+            ? "reacts once with a sharp evasive dart and turn"
+            : "reacts once with a sharp evasive jump and turn",
           guardLine: baseGuard,
         };
       }
@@ -326,8 +349,12 @@ function oneActionArcBeat(
     case "Escape from danger":
       if (beat === "action") {
         return {
-          predatorBeat: "commits once toward the target with a single forward pressure move",
-          preyBeat: "executes one desperate escape move (one dodge or sprint burst)",
+          predatorBeat: isAquatic
+            ? "commits once toward the target with a single forward pressure surge"
+            : "commits once toward the target with a single forward pressure move",
+          preyBeat: isAquatic
+            ? "executes one desperate escape burst through the water"
+            : "executes one desperate escape move (one dodge or sprint burst)",
           guardLine: baseGuard,
         };
       }
@@ -340,8 +367,12 @@ function oneActionArcBeat(
     case "Territory dominance battle":
       if (beat === "action") {
         return {
-          predatorBeat: "steps forward once in a controlled dominance advance",
-          preyBeat: "answers once with a single threat display or retreat step",
+          predatorBeat: isAquatic
+            ? "pushes forward once in a controlled dominance surge"
+            : "steps forward once in a controlled dominance advance",
+          preyBeat: isAquatic
+            ? "answers once with a single threat display or retreat drift"
+            : "answers once with a single threat display or retreat step",
           guardLine: baseGuard,
         };
       }
@@ -354,8 +385,12 @@ function oneActionArcBeat(
     case "Predator vs predator fight":
       if (beat === "action") {
         return {
-          predatorBeat: "commits one forward pressure beat (one shove / push / clash moment)",
-          preyBeat: "responds once with one counter-step or recoil",
+          predatorBeat: isAquatic
+            ? "commits one forward pressure beat (one surge / push / clash moment)"
+            : "commits one forward pressure beat (one shove / push / clash moment)",
+          preyBeat: isAquatic
+            ? "responds once with one counter-surge or recoil"
+            : "responds once with one counter-step or recoil",
           guardLine: baseGuard,
         };
       }
@@ -368,8 +403,12 @@ function oneActionArcBeat(
     case "Pack hunting strategy":
       if (beat === "action") {
         return {
-          predatorBeat: "tightens formation once (one coordinated lateral close-in)",
-          preyBeat: "reacts once by pivoting and attempting one escape direction",
+          predatorBeat: isAquatic
+            ? "tightens formation once with one coordinated lateral close-in through the water"
+            : "tightens formation once (one coordinated lateral close-in)",
+          preyBeat: isAquatic
+            ? "reacts once by pivoting and attempting one escape direction through the current"
+            : "reacts once by pivoting and attempting one escape direction",
           guardLine: baseGuard,
         };
       }
@@ -382,8 +421,12 @@ function oneActionArcBeat(
     case "Defender stands ground":
       if (beat === "action") {
         return {
-          predatorBeat: "drives one decisive forward defense step (one push)",
-          preyBeat: "reacts once with one recoil or sidestep",
+          predatorBeat: isAquatic
+            ? "drives one decisive forward defense surge"
+            : "drives one decisive forward defense step (one push)",
+          preyBeat: isAquatic
+            ? "reacts once with one recoil or sidestep through the water"
+            : "reacts once with one recoil or sidestep",
           guardLine: baseGuard,
         };
       }
@@ -396,8 +439,12 @@ function oneActionArcBeat(
     case "Giant vs giant clash":
       if (beat === "action") {
         return {
-          predatorBeat: "loads weight and commits one heavy clash beat (single impact moment)",
-          preyBeat: "responds once with one grounded shove or recoil",
+          predatorBeat: isAquatic
+            ? "loads momentum and commits one heavy clash beat through the water"
+            : "loads weight and commits one heavy clash beat (single impact moment)",
+          preyBeat: isAquatic
+            ? "responds once with one grounded surge or recoil"
+            : "responds once with one grounded shove or recoil",
           guardLine: baseGuard,
         };
       }
@@ -820,6 +867,19 @@ export function buildRunwayShots(
   const tone = emotionalTonePrompt[emotionalTone];
   const vibe = animalVibePrompt[animalVibe];
   const micro = buildMicroMotionLine(weather, env);
+  const envLower = env.toLowerCase();
+const isAquatic =
+  envLower.includes("water") ||
+  envLower.includes("river") ||
+  envLower.includes("lake") ||
+  envLower.includes("swamp") ||
+  envLower.includes("ocean") ||
+  envLower.includes("sea") ||
+  envLower.includes("reef") ||
+  envLower.includes("coast") ||
+  envLower.includes("shore") ||
+  envLower.includes("underwater") ||
+  envLower.includes("marine");
 
   const qLead = buildQualityLead(quality, "runway");
   const context = sceneDesc?.trim() ? `\nScene continuity: ${sceneDesc.trim().slice(0, 150)}` : "";
@@ -853,8 +913,10 @@ export function buildRunwayShots(
 
   // Shot 2 — Action
   const shot2PasteReady = sanitizeRunwayFPS(
-    `Tracking move. ${predator} ${beat2.predatorBeat}. ${prey} ${beat2.preyBeat}. Ground scatter, body-weight transfer. ${micro}. ${seamless}`.trim()
-  );
+  `Tracking move. ${predator} ${beat2.predatorBeat}. ${prey} ${beat2.preyBeat}. ${
+    isAquatic ? "Water spray, body momentum shift." : "Ground scatter, body-weight transfer."
+  } ${micro}. ${seamless}`.trim()
+);
 
   // Shot 3 — Aftermath
   const shot3PasteReady = sanitizeRunwayFPS(
