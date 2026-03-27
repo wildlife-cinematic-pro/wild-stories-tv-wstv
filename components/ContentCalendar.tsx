@@ -60,18 +60,18 @@ export default function ContentCalendar({
   const todayBtnRef = useRef<HTMLButtonElement | null>(null);
 
   const hooks = useMemo(() => {
-    const h = (data as any).hook2026;
+    const h = (data as Record<string, unknown>).hook2026;
     if (Array.isArray(h) && h.length) return h.map(safeStr).filter(Boolean);
-    const single = safeStr((data as any).hook);
+    const single = safeStr((data as Record<string, unknown>).hook);
     return single ? [single] : [];
   }, [data]);
 
   const caption = useMemo(() => {
-    const c = (data as any).caption2026;
-    return safeStr(c) || safeStr((data as any).caption);
+    const c = (data as Record<string, unknown>).caption2026;
+    return safeStr(c) || safeStr((data as Record<string, unknown>).caption);
   }, [data]);
 
-  const hashtags = useMemo(() => joinHashtags((data as any).hashtags), [data]);
+  const hashtags = useMemo(() => joinHashtags((data as Record<string, unknown>).hashtags), [data]);
 
   const items: CalendarItem[] = useMemo(() => {
     const base = new Date();

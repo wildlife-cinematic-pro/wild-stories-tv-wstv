@@ -793,28 +793,31 @@ export function CalendarPanel({
   arc: string;
 }) {
   const [open, setOpen] = useState(false);
-  const [week, setWeek] = useState(0);
-  const [mode, setMode] = useState<CalendarMode>("monthly");
-  const [monthCursor, setMonthCursor] = useState(
-    () => new Date(new Date().getFullYear(), new Date().getMonth(), 1)
-  );
+const [week, setWeek] = useState(0);
+const [mode, setMode] = useState<CalendarMode>("monthly");
+const [monthCursor, setMonthCursor] = useState(
+  () => new Date(new Date().getFullYear(), new Date().getMonth(), 1)
+);
 
-  useEffect(() => {
-    const timer = window.setInterval(() => {
-      const now = new Date();
-      const fresh = new Date(now.getFullYear(), now.getMonth(), 1);
-      setMonthCursor((prev) =>
-        prev.getFullYear() === fresh.getFullYear() && prev.getMonth() === fresh.getMonth()
-          ? prev
-          : fresh
-      );
-    }, 60_000);
-    return () => window.clearInterval(timer);
-  }, []);
+const inputKey = `${predator}|${prey}|${arc}|${monthCursor.getTime()}|${mode}`;
+const [prevInputKey, setPrevInputKey] = useState(inputKey);
+if (inputKey !== prevInputKey) {
+  setPrevInputKey(inputKey);
+  setWeek(0);
+}
 
-  useEffect(() => {
-    setWeek(0);
-  }, [predator, prey, arc, monthCursor, mode]);
+useEffect(() => {
+  const timer = window.setInterval(() => {
+    const now = new Date();
+    const fresh = new Date(now.getFullYear(), now.getMonth(), 1);
+    setMonthCursor((prev) =>
+      prev.getFullYear() === fresh.getFullYear() && prev.getMonth() === fresh.getMonth()
+        ? prev
+        : fresh
+    );
+  }, 60_000);
+  return () => window.clearInterval(timer);
+}, []);
 
   const calendar =
     mode === "monthly"
@@ -2272,8 +2275,8 @@ function buildCalendarText() {
       const cal = generateMonthlyCalendar(predator, prey, arc, today);
       return cal
         .map(
-          (d: any) =>
-            `${d.dateLabel ?? d.dateISO ?? ""} | Hook: ${safeStr(d.hook)} | Caption: ${safeStr(d.caption)} | Hashtags: ${safeStr(d.hashtags)}`
+          (d: Record<string, unknown>) =>
+`${safeStr(d.dateLabel) || safeStr(d.dateISO)} | Hook: ${safeStr(d.hook)} | Caption: ${safeStr(d.caption)} | Hashtags: ${safeStr(d.hashtags)}`
         )
         .join("\n");
     }
@@ -2300,10 +2303,10 @@ function buildCopyAllPacksText() {
     kling || "(none)",
     "",
     `=== KLING DIRECT (15s) ===`,
-    safeStr((data as any).klingNative15s) || "(none)",
+    safeStr((data as Record<string, unknown>).klingNative15s) || "(none)",
     "",
     `=== KLING 6-SHOT (DIRECT) ===`,
-    safeStr((data as any).klingSixShot) || "(none)",
+    safeStr((data as Record<string, unknown>).klingNative15s) || "(none)",
     "",
     `=== CONTENT CALENDAR (THIS MONTH) ===`,
     calendar || "(calendar generator not available)",
@@ -2314,31 +2317,30 @@ function buildExportTxtFull() {
   const packs = buildCopyAllPacksText();
 
   return [
-    packs,
-    "",
-    `=== CORE PROMPTS ===`,
-    `IMAGE PROMPT\n${safeStr(data.imagePrompt)}`,
-    "",
-    `NEGATIVE PROMPT\n${safeStr((data as any).negativePrompt)}`,
-    "",
-    `THUMBNAIL PROMPT\n${safeStr((data as any).thumbnailPrompt)}`,
-    "",
-    `VOICEOVER\n${safeStr((data as any).voiceoverLine)}`,
-    "",
-    `CAPCUT PLAN\n${safeStr((data as any).capCutPlan)}`,
-    "",
-    `CLIP CHAINING\n${safeStr((data as any).clipChaining)}`,
-    "",
-    `HOOK\n${safeStr((data as any).hook)}`,
-    "",
-    `CAPTION\n${safeStr((data as any).caption)}`,
-    "",
-    `CTA\n${safeStr((data as any).cta)}`,
-    "",
-    `HASHTAGS\n${safeStr((data as any).hashtags)}`,
-  ].join("\n");
+  packs,
+  "",
+  `=== CORE PROMPTS ===`,
+  `IMAGE PROMPT\n${safeStr(data.imagePrompt)}`,
+  "",
+  `NEGATIVE PROMPT\n${safeStr((data as Record<string, unknown>).negativePrompt)}`,
+  "",
+  `THUMBNAIL PROMPT\n${safeStr((data as Record<string, unknown>).thumbnailPrompt)}`,
+  "",
+  `VOICEOVER\n${safeStr((data as Record<string, unknown>).voiceoverLine)}`,
+  "",
+  `CAPCUT PLAN\n${safeStr((data as Record<string, unknown>).capCutPlan)}`,
+  "",
+  `CLIP CHAINING\n${safeStr((data as Record<string, unknown>).clipChaining)}`,
+  "",
+  `HOOK\n${safeStr((data as Record<string, unknown>).hook)}`,
+  "",
+  `CAPTION\n${safeStr((data as Record<string, unknown>).caption)}`,
+  "",
+  `CTA\n${safeStr((data as Record<string, unknown>).cta)}`,
+  "",
+  `HASHTAGS\n${safeStr((data as Record<string, unknown>).hashtags)}`,
+].join("\n");
 }
-
 async function copyAllPacks() {
   const text = buildCopyAllPacksText();
   try {

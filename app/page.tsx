@@ -435,7 +435,7 @@ export default function Page() {
     if (saved?.heroVeo !== undefined) setHeroVeo(saved.heroVeo);
 
     // ✅ persist auto-apply toggle (safe even if older settings type)
-    const aa = (saved as any)?.autoApplyHighDrift;
+    const aa = (saved as Record<string, unknown>)?.autoApplyHighDrift;
     if (typeof aa === "boolean") setAutoApplyHighDrift(aa);
   }, []);
 
@@ -451,7 +451,7 @@ export default function Page() {
       heroVeo,
       // ✅ persist auto-apply toggle
       autoApplyHighDrift,
-    } as any);
+    } as Record<string, unknown>);
   }, [
     activeProvider,
     realismMode,
@@ -729,7 +729,7 @@ export default function Page() {
 
         const data = await res.json().catch(() => ({} as unknown));
         if (!res.ok)
-          throw new Error((data as any)?.error || `AI enhancement failed (${res.status})`);
+          throw new Error(((data as Record<string, unknown>)?.error as string) || `AI enhancement failed (${res.status})`);
 
         enhanced = { ...(data as Partial<GeneratedPackage>), aiEnhanced: true };
       }
@@ -763,7 +763,7 @@ export default function Page() {
 
       setStep(3);
     } catch (e) {
-      // eslint-disable-next-line no-console
+
       console.error("[generate error]", e);
       setError(e instanceof Error ? e.message : "Generation failed");
     } finally {

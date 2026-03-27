@@ -50,7 +50,7 @@ function toErrorMessage(err: unknown): string {
   if (err instanceof Error) return err.message || "Unknown error";
 
   if (err && typeof err === "object") {
-    const anyErr = err as any;
+    const anyErr = err as Record<string, unknown>;
     if (typeof anyErr.message === "string") return anyErr.message;
     if (typeof anyErr.error === "string") return anyErr.error;
     if (typeof anyErr.details === "string") return anyErr.details;
