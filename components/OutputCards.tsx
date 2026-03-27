@@ -2261,23 +2261,31 @@ function safeStr(v: unknown) {
 }
 
 function buildCalendarText() {
-  // Basic “today month” calendar dump (same data used by your calendar generators)
   try {
     const predator = data.predatorName ?? "Tiger";
     const prey = data.preyName ?? "Deer";
     const arc = String(data.arcName ?? "Ambush attack");
     const today = new Date();
 
-    // If you already have these functions imported in OutputCards.tsx, keep:
-    // generateMonthlyCalendar, generateUSAViral30DayCalendar
-    // If not imported, just return empty.
     if (typeof generateMonthlyCalendar === "function") {
       const cal = generateMonthlyCalendar(predator, prey, arc, today);
       return cal
-        .map(
-          (d: Record<string, unknown>) =>
-`${safeStr(d.dateLabel) || safeStr(d.dateISO)} | Hook: ${safeStr(d.hook)} | Caption: ${safeStr(d.caption)} | Hashtags: ${safeStr(d.hashtags)}`
-        )
+        .map((d: Record<string, unknown>) => {
+          const reel1 = (d.reel1 ?? {}) as Record<string, unknown>;
+          const reel2 = (d.reel2 ?? {}) as Record<string, unknown>;
+
+          const lines = [
+            `${safeStr(d.dateLabel) || safeStr(d.dateISO)}`,
+            safeStr(reel1.hook) ? `Reel 1 Hook: ${safeStr(reel1.hook)}` : "",
+            safeStr(reel1.caption) ? `Reel 1 Caption: ${safeStr(reel1.caption)}` : "",
+            safeStr(reel1.hashtags) ? `Reel 1 Hashtags: ${safeStr(reel1.hashtags)}` : "",
+            safeStr(reel2.hook) ? `Reel 2 Hook: ${safeStr(reel2.hook)}` : "",
+            safeStr(reel2.caption) ? `Reel 2 Caption: ${safeStr(reel2.caption)}` : "",
+            safeStr(reel2.hashtags) ? `Reel 2 Hashtags: ${safeStr(reel2.hashtags)}` : "",
+          ].filter(Boolean);
+
+          return lines.join(" | ");
+        })
         .join("\n");
     }
   } catch {}

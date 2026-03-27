@@ -460,14 +460,36 @@ export function getDepthPrompt(mode: DepthMode): { depth: string; lensNote: stri
 // ─────────────────────────────────────────────────────────────
 export function buildMicroMotionLine(weather: Weather, env: string): string {
   const envLower = env.toLowerCase();
+  const isAquatic =
+    envLower.includes("water") ||
+    envLower.includes("river") ||
+    envLower.includes("lake") ||
+    envLower.includes("swamp") ||
+    envLower.includes("ocean") ||
+    envLower.includes("sea") ||
+    envLower.includes("reef") ||
+    envLower.includes("coast") ||
+    envLower.includes("shore") ||
+    envLower.includes("underwater") ||
+    envLower.includes("marine");
+
+  if (isAquatic) {
+    if (weather === "Storm") {
+      return "choppy surface movement, wave slap, underwater particulate drift, foam disturbance, current-driven motion";
+    }
+    if (weather === "Golden Hour") {
+      return "surface ripples catching warm light, gentle wave movement, shifting caustic reflections, suspended particles drifting in water";
+    }
+    return "water ripples, current-driven movement, shifting surface reflections, suspended particles drifting naturally";
+  }
+
   if (weather === "Winter Blizzard" || weather === "Frozen Dusk")
     return "snow drift, subtle natural breath condensation, soft powder displacement, faint wind movement in distant brush";
   if (weather === "Storm")
     return "wind pressure through foliage, rain or mist disturbance, loose debris reacting to gusts";
   if (weather === "Golden Hour")
     return "warm dust motes, subtle grass sway, breath movement, drifting airborne particles in backlight";
-  if (envLower.includes("water") || envLower.includes("river") || envLower.includes("lake") || envLower.includes("swamp"))
-    return "water ripples, reeds moving gently, surface reflections shifting naturally";
+
   return "subtle foliage sway, drifting dust or mist, breath movement, light environmental reaction around the subjects";
 }
 
@@ -484,6 +506,18 @@ export function buildKlingAudioPrompt(
   beat: "establish" | "action" | "aftermath"
 ): string {
   const envLower = env.toLowerCase();
+  const isAquatic =
+    envLower.includes("water") ||
+    envLower.includes("river") ||
+    envLower.includes("lake") ||
+    envLower.includes("swamp") ||
+    envLower.includes("ocean") ||
+    envLower.includes("sea") ||
+    envLower.includes("reef") ||
+    envLower.includes("coast") ||
+    envLower.includes("shore") ||
+    envLower.includes("underwater") ||
+    envLower.includes("marine");
 
   // Base ambient by environment
   let ambient = "distant natural ambience, wind through terrain";
@@ -493,8 +527,8 @@ export function buildKlingAudioPrompt(
     ambient = "dry wind sweeping grass, distant insect drone, open-plain ambience";
   else if (envLower.includes("arctic") || envLower.includes("snow") || envLower.includes("tundra"))
     ambient = "howling arctic wind, crunching ice surface, stark frozen silence";
-  else if (envLower.includes("water") || envLower.includes("river") || envLower.includes("lake"))
-    ambient = "flowing water, gentle ripples on surface, waterside wildlife";
+  else if (isAquatic)
+    ambient = "moving water, current wash, surface ripples, underwater ambience";
   else if (envLower.includes("mountain") || envLower.includes("cliff"))
     ambient = "mountain wind, distant rockfall echoes, alpine silence";
   else if (envLower.includes("desert"))
@@ -511,13 +545,19 @@ export function buildKlingAudioPrompt(
   let animalAudio = "";
   switch (beat) {
     case "establish":
-      animalAudio = `${predator} slow controlled breathing through nostrils, ${prey} alert stillness with occasional tension exhale`;
+      animalAudio = isAquatic
+        ? `${predator} controlled body movement through water, subtle fin or tail displacement, ${prey} tense reactive movement in the current`
+        : `${predator} slow controlled breathing through nostrils, ${prey} alert stillness with occasional tension exhale`;
       break;
     case "action":
-      animalAudio = `heavy ground impact from ${predator} movement, explosive burst sounds, ${prey} distress vocalization, debris scatter`;
+      animalAudio = isAquatic
+        ? `${predator} explosive water displacement, rapid current turbulence, ${prey} frantic splash or dart movement, bubble and spray burst`
+        : `heavy ground impact from ${predator} movement, explosive burst sounds, ${prey} distress vocalization, debris scatter`;
       break;
     case "aftermath":
-      animalAudio = `${predator} heavy rhythmic breathing settling, terrain debris settling, ${prey} cautious repositioning footsteps`;
+      animalAudio = isAquatic
+        ? `${predator} slower water movement settling, residual turbulence fading, ${prey} cautious repositioning through the water`
+        : `${predator} heavy rhythmic breathing settling, terrain debris settling, ${prey} cautious repositioning footsteps`;
       break;
   }
 
@@ -789,7 +829,6 @@ export function buildRunwayShots(
   const micro = buildMicroMotionLine(weather, env);
 
   const qLead = buildQualityLead(quality, "runway");
-  const refTags = buildReferenceTagBlock(quality);
   const context = sceneDesc?.trim() ? `\nScene continuity: ${sceneDesc.trim().slice(0, 150)}` : "";
 
   const refLine = quality?.referenceLock
@@ -833,7 +872,6 @@ export function buildRunwayShots(
     shot1: finalizePrompt(`RUNWAY SHOT 1 — ESTABLISHING [${model}]
 ${note}
 ${qLead}
-${refTags}
 ${refLine}
 ${motionRule}
 ${singleRule}
@@ -857,7 +895,6 @@ After generation: extract LAST FRAME for Shot 2 chaining.`),
     shot2: finalizePrompt(`RUNWAY SHOT 2 — ACTION${gateOn ? " (ONE-ACTION)" : ""} [${model}]
 ${note}
 ${qLead}
-${refTags}
 ${refLine}
 ${motionRule}
 ${singleRule}
@@ -878,7 +915,6 @@ Duration: 5–10 seconds recommended.
     shot3: finalizePrompt(`RUNWAY SHOT 3 — AFTERMATH [${model}]
 ${note}
 ${qLead}
-${refTags}
 ${refLine}
 ${motionRule}
 ${singleRule}
@@ -1235,12 +1271,12 @@ Shot 5 — ACTION WIDE (11–14s) — WIDE | Motion: ${getKlingMotionIntensity(a
 ${maybeGuard(b5.guardLine)}${predator} ${b5.predatorBeat}. ${prey} ${b5.preyBeat}.
 Camera: FIXED WIDE — full bodies visible; no crop; no close-ups.
 Environment: debris + ${micro}.
-Audio: ${buildKlingAudioPrompt(predator, prey, env, weather, arc, "action")}
+${buildKlingAudioPrompt(predator, prey, env, weather, arc, "action")}
 
 Shot 6 — AFTERMATH WIDE (14–17s) — WIDE | Motion: ${getKlingMotionIntensity(arc, "aftermath").toFixed(2)}:
 ${maybeGuard(b6.guardLine)}${predator} ${b6.predatorBeat}. ${prey} ${b6.preyBeat}.
 Camera: LOCKED FIXED WIDE — full bodies visible; no crop; no close-ups.
-Audio: ${buildKlingAudioPrompt(predator, prey, env, weather, arc, "aftermath")}
+${buildKlingAudioPrompt(predator, prey, env, weather, arc, "aftermath")}
 
 ──────────────────────────────────────────────────────
 HOW TO USE (Kling 3.0 Official 6-Shot Workflow):
