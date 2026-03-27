@@ -2270,23 +2270,23 @@ function buildCalendarText() {
     if (typeof generateMonthlyCalendar === "function") {
       const cal = generateMonthlyCalendar(predator, prey, arc, today);
       return cal
-        .map((d: Record<string, unknown>) => {
-          const reel1 = (d.reel1 ?? {}) as Record<string, unknown>;
-          const reel2 = (d.reel2 ?? {}) as Record<string, unknown>;
+  .map((d: Record<string, unknown>) => {
+    const reel1 = (d.reel1 ?? {}) as Record<string, unknown>;
+    const reel2 = (d.reel2 ?? {}) as Record<string, unknown>;
 
-          const lines = [
-            `${safeStr(d.dateLabel) || safeStr(d.dateISO)}`,
-            safeStr(reel1.hook) ? `Reel 1 Hook: ${safeStr(reel1.hook)}` : "",
-            safeStr(reel1.caption) ? `Reel 1 Caption: ${safeStr(reel1.caption)}` : "",
-            safeStr(reel1.hashtags) ? `Reel 1 Hashtags: ${safeStr(reel1.hashtags)}` : "",
-            safeStr(reel2.hook) ? `Reel 2 Hook: ${safeStr(reel2.hook)}` : "",
-            safeStr(reel2.caption) ? `Reel 2 Caption: ${safeStr(reel2.caption)}` : "",
-            safeStr(reel2.hashtags) ? `Reel 2 Hashtags: ${safeStr(reel2.hashtags)}` : "",
-          ].filter(Boolean);
+    const lines = [
+      `${safeStr(d.dateLabel) || safeStr(d.dateISO)}`,
+      safeStr(reel1.hook) ? `Reel 1 Hook: ${safeStr(reel1.hook)}` : "",
+      safeStr(reel1.caption) ? `Reel 1 Caption: ${safeStr(reel1.caption)}` : "",
+      safeStr(reel1.hashtags) ? `Reel 1 Hashtags: ${safeStr(reel1.hashtags)}` : "",
+      safeStr(reel2.hook) ? `Reel 2 Hook: ${safeStr(reel2.hook)}` : "",
+      safeStr(reel2.caption) ? `Reel 2 Caption: ${safeStr(reel2.caption)}` : "",
+      safeStr(reel2.hashtags) ? `Reel 2 Hashtags: ${safeStr(reel2.hashtags)}` : "",
+    ].filter(Boolean);
 
-          return lines.join(" | ");
-        })
-        .join("\n");
+    return lines.join(" | ");
+  })
+  .join("\n");
     }
   } catch {}
   return "";
