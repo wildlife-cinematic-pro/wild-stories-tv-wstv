@@ -67,7 +67,6 @@ import { emotionalTonePrompt, animalVibePrompt, weatherVariants } from "@/lib/pr
 import {
   RUNWAY_STYLE_NOTE,
   KLING_STYLE_NOTE,
-  REF_TAGS,
   arcCfgScale,
   getKlingCfgScales,
   arcs,
@@ -75,7 +74,6 @@ import {
 } from "@/lib/model-specs";
 
 import { buildQualityLead } from "@/lib/quality-lead";
-import { buildMotionBrushPlan } from "./workflow-packs";
 export { buildQualityLead };
 
 // ─────────────────────────────────────────────────────────────
@@ -219,17 +217,6 @@ function getSafeArcPrint(arc: string): string {
 // ─────────────────────────────────────────────────────────────
 // Reference tags block
 // ─────────────────────────────────────────────────────────────
-function buildReferenceTagBlock(opts?: QualityOptions): string {
-  const lockLine = opts?.referenceLock
-    ? "Reference lock: ON (use the same tags every shot)."
-    : "Reference lock: optional (tags still recommended).";
-
-  return `REFERENCE TAGS (use these consistently)
-- Predator master: ${REF_TAGS.heroPredator}
-- Prey master: ${REF_TAGS.heroPrey}
-- Environment plate: ${REF_TAGS.envPlate}
-${lockLine}`.trim();
-}
 function buildKlingCharacterLine(
   predator: string,
   prey: string,
@@ -536,10 +523,17 @@ export function buildKlingAudioPrompt(
 
   // Weather overlay
   let weatherAudio = "";
+if (isAquatic) {
+  if (weather === "Storm") weatherAudio = ", turbulent surface chop, wave impact, current surge";
+  else if (weather === "Winter Blizzard") weatherAudio = ", icy surface disturbance, freezing wind over water";
+  else if (weather === "Frozen Dusk") weatherAudio = ", cold still water ambience, crystalline surface movement";
+  else if (weather === "Golden Hour") weatherAudio = ", warm surface wash, gentle wave rhythm, reflective water stillness";
+} else {
   if (weather === "Storm") weatherAudio = ", rolling thunder in distance, rain striking foliage";
   else if (weather === "Winter Blizzard") weatherAudio = ", fierce blizzard wind, snow pelting surfaces";
   else if (weather === "Frozen Dusk") weatherAudio = ", eerie frozen silence, crystalline wind";
   else if (weather === "Golden Hour") weatherAudio = ", warm twilight stillness, evening insect chorus";
+}
 
   // Beat-specific animal audio
   let animalAudio = "";
@@ -681,7 +675,6 @@ export function buildImagePrompt(
   target: ImagePromptTarget = "NB2"
 ): string {
   const depth = getDepthPrompt(depthMode);
-  const tone = emotionalTonePrompt[emotionalTone];
   const vibe = animalVibePrompt[animalVibe];
   const cam = (target === "NB2" || target === "NANO_BANANA_2")
   ? cameraGear
@@ -1232,6 +1225,35 @@ export function buildKlingSixShot(
   const sixShotCharacterLine = quality?.motionOnlyI2V
     ? `Characters: same ${predator} identity from input frame. Same ${prey} identity from input frame.`
     : `Characters: ${predator} (drives pressure). ${prey} (fully reactive).`;
+      const envLower = env.toLowerCase();
+  const isAquatic =
+    envLower.includes("water") ||
+    envLower.includes("river") ||
+    envLower.includes("lake") ||
+    envLower.includes("swamp") ||
+    envLower.includes("ocean") ||
+    envLower.includes("sea") ||
+    envLower.includes("reef") ||
+    envLower.includes("coast") ||
+    envLower.includes("shore") ||
+    envLower.includes("underwater") ||
+    envLower.includes("marine");
+
+  const sixShotAudio1 = isAquatic
+    ? "Audio: subtle underwater movement, low current wash, restrained predator motion."
+    : "Audio: controlled predator breathing, sharp inhale.";
+
+  const sixShotAudio2 = isAquatic
+    ? "Audio: water movement, tension stillness, distant current wash."
+    : "Audio: wind through terrain, tension stillness.";
+
+  const sixShotAudio3 = isAquatic
+    ? "Audio: current pressure shift, water displacement, prey alert movement."
+    : `Audio: weight transfer on ground surface, ${prey} alert vocalization.`;
+
+  const sixShotAudio4 = isAquatic
+    ? "Audio: alternating water movement, shifting current tension."
+    : "Audio: rapid alternating breathing patterns.";
 
   return finalizePrompt(`KLING 6-SHOT MULTI-SCENE [${model}] — Native Single-Prompt Format
 ──────────────────────────────────────────────────────
@@ -1244,28 +1266,29 @@ ${wideRule}${context}
 
 ${sixShotSceneLine}
 ${sixShotCharacterLine}
+
 Style: ${vibe.style}. ${tone.image}. Photorealistic wildlife documentary. 9:16 vertical frame.
 Story arc: ${getSafeArcPrint(arc)}.
 
 Shot 1 — MACRO CLOSE-UP (0–2s) | Motion: 0.20:
 ${predator} eye fills frame — iris visible, catch light sharp, pupil dilated.
 Camera: locked static macro.
-Audio: controlled predator breathing, sharp inhale.
+${sixShotAudio1}
 
 Shot 2 — WIDE ESTABLISHING (2–5s) | Motion: 0.30:
 ${predator} LEFT, ${prey} RIGHT, ~10m apart. ${predator} exhales once. ${prey} freezes.
 Camera: locked wide.
-Audio: wind through terrain, tension stillness.
+${sixShotAudio2}
 
 Shot 3 — PROFILE TRACKING (5–8s) | Motion: 0.45:
 ${predator} shifts weight forward — shoulders compress. ${prey} rises to threat display.
 Camera: low side-angle tracking, very slow.
-Audio: weight transfer on ground surface, ${prey} alert vocalization.
+${sixShotAudio3}
 
 Shot 4 — SHOT-REVERSE-SHOT (8–11s) | Motion: 0.35:
 Alternating close-ups: ${predator} intensity / ${prey} panic tells.
 Camera: no movement.
-Audio: rapid alternating breathing patterns.
+${sixShotAudio4}
 
 Shot 5 — ACTION WIDE (11–14s) — WIDE | Motion: ${getKlingMotionIntensity(arc, "action").toFixed(2)}:
 ${maybeGuard(b5.guardLine)}${predator} ${b5.predatorBeat}. ${prey} ${b5.preyBeat}.
