@@ -230,7 +230,32 @@ function buildReferenceTagBlock(opts?: QualityOptions): string {
 - Environment plate: ${REF_TAGS.envPlate}
 ${lockLine}`.trim();
 }
+function buildKlingCharacterLine(
+  predator: string,
+  prey: string,
+  motionOnlyI2V?: boolean
+): string {
+  return motionOnlyI2V
+    ? `Characters: same ${predator} identity from input frame; same ${prey} identity from input frame.`
+    : `Characters: ${predator} (predator — drives scene pressure); ${prey} (prey — fully alert and reactive).`;
+}
 
+function buildKlingLocationLine(
+  env: string,
+  weather: Weather,
+  motionOnlyI2V?: boolean
+): string {
+  return motionOnlyI2V
+    ? `Lighting & Location: same environment continuity, ${weatherVariants[weather]}.`
+    : `Lighting & Location: ${env}, ${weatherVariants[weather]}.`;
+}
+
+function buildKlingExtraLine(
+  base: string,
+  motionOnlyI2V?: boolean
+): string {
+  return motionOnlyI2V ? base : `${base}.`;
+}
 // ─────────────────────────────────────────────────────────────
 // Kling WIDE PHYSICS RULE
 // [Kling 3.0: wide shots preserve biomechanics with 4K detail]
@@ -634,15 +659,25 @@ const qLead = buildQualityLead(quality, "image");
   const C = `Wide cinematic wildlife documentary composition, 9:16 vertical frame. Camera: ${cam}, ${depth.lensNote}. ${vibe.camera}. Depth of field: ${depth.depth}. Telephoto compression and documentary framing. Lighting: ${lighting}. Natural rim separation, volumetric atmosphere, realistic shadow direction.`;
   const D = `${texture}. ${vibe.texture}. Micro-detail visible in fur, skin, feathers, debris, moisture, and ground contact. ${realismAdd}`;
 
-  if (target === "NB2" || target === "NANO_BANANA_2") {
+  if (target === "NB2") {
   const B_ref = `${env}, ${weatherVariants[weather]}. Two-plane composition: foreground subjects fully separated from background, unambiguous silhouettes, stable depth map. Subjects placed for clear biomechanical readability — no overlap, each animal fully visible.`;
-
-  const E_ref =
-    target === "NB2"
-      ? `${vibe.style}, photorealistic, 8K RAW. Optimised for I2V reference consistency — distinct silhouettes, locked anatomy, stable depth planes.${descInject}`
-      : `${vibe.style}, photorealistic. Stable anatomy, clean silhouette separation, depth planes optimised for I2V workflows.${descInject}`;
+  const E_ref = `${vibe.style}, photorealistic, 8K RAW. Optimised for I2V reference consistency — distinct silhouettes, locked anatomy, stable depth planes.${descInject}`;
 
   return finalizeImagePrompt(`${qLead} ${A} ${B_ref} ${C} ${D} ${E_ref}`, target);
+}
+
+if (target === "NANO_BANANA_2") {
+  const A_nb2 = `Subject: ${predator} and ${prey}, both fully visible, locked in the peak tension beat of a ${getSafeArcLabel(arc)} scene.`;
+  const B_nb2 = `Context/background: ${env}, ${weatherVariants[weather]}. Natural habitat cues, readable terrain, clear background layers.`;
+  const C_nb2 = `Pose/action: ${predator} in a powerful pre-action stance, ${prey} fully alert and reactive, authentic wildlife body language, biologically accurate spacing.`;
+  const D_nb2 = `Composition: wide cinematic wildlife documentary frame, 9:16 vertical. Camera: ${cam}. ${vibe.camera}. ${depth.lensNote}. Depth of field: ${depth.depth}.`;
+  const E_nb2 = `Lighting: ${lighting}. Natural rim separation, volumetric atmosphere, realistic shadow direction.`;
+  const F_nb2 = `Style: ${vibe.style}, photorealistic. ${texture}. ${vibe.texture}. Micro-detail visible in fur, skin, feathers, debris, moisture, and ground contact. ${realismAdd}${descInject}`;
+
+  return finalizeImagePrompt(
+    `${qLead} ${A_nb2} ${B_nb2} ${C_nb2} ${D_nb2} ${E_nb2} ${F_nb2}`,
+    target
+  );
 }
 
 if (target === "RUNWAY") {
@@ -918,6 +953,14 @@ export function buildKlingShots(
   const audio1 = buildKlingAudioPrompt(predator, prey, env, weather, arc, "establish");
   const audio2 = buildKlingAudioPrompt(predator, prey, env, weather, arc, "action");
   const audio3 = buildKlingAudioPrompt(predator, prey, env, weather, arc, "aftermath");
+    const characterLine = buildKlingCharacterLine(predator, prey, quality?.motionOnlyI2V);
+  const locationLine = buildKlingLocationLine(env, weather, quality?.motionOnlyI2V);
+  const extra1 = quality?.motionOnlyI2V
+    ? `${micro}. Photorealistic wildlife documentary. 9:16 vertical.`
+    : `${micro}. ${tone.video}. ${vibe.style}. Photorealistic wildlife documentary. 9:16 vertical.`;
+  const extra3 = quality?.motionOnlyI2V
+    ? `${micro}. ${tone.image}.`
+    : `${micro}. ${vibe.style}. ${tone.image}.`;
 
   return {
     shot1: finalizePrompt(`KLING SHOT 1 — TENSION [${model}]
@@ -932,10 +975,10 @@ ${maybeGuard(beat1.guardLine)}${context}
 
 ═══ KLING 3.0 PROMPT (SCALE format) ═══
 Shot: Subtle handheld drift or static hold, medium-wide framing.
-Characters: ${predator} (predator — drives scene pressure); ${prey} (prey — fully alert and reactive).
+${characterLine}
 Action: ${predator} ${beat1.predatorBeat}. ${prey} ${beat1.preyBeat}.
-Lighting & Location: ${env}, ${weatherVariants[weather]}.
-Extra: ${micro}. ${tone.video}. ${vibe.style}. Photorealistic wildlife documentary. 9:16 vertical.
+${locationLine}
+Extra: ${buildKlingExtraLine(extra1, quality?.motionOnlyI2V)}
 
 ${audio1}
 
@@ -954,10 +997,10 @@ ${maybeGuard(beat2.guardLine)}${context}
 
 ═══ KLING 3.0 PROMPT (SCALE format) ═══
 Shot: FIXED WIDE — full bodies visible, no crop, no close-ups.
-Characters: ${predator} initiating the action beat; ${prey} in reactive survival mode.
+${characterLine}
 Action: ${predator} ${beat2.predatorBeat}. ${prey} ${beat2.preyBeat}.
-Lighting & Location: ${env}, ${weatherVariants[weather]}.
-Extra: Debris response, surface displacement, ${micro}. Physics priority: coherent limbs, grounded weight, readable impact.
+${locationLine}
+Extra: ${buildKlingExtraLine(`Debris response, surface displacement, ${micro}. Physics priority: coherent limbs, grounded weight, readable impact`, quality?.motionOnlyI2V)}
 
 ${audio2}
 
@@ -976,10 +1019,10 @@ ${maybeGuard(beat3.guardLine)}${context}
 
 ═══ KLING 3.0 PROMPT (SCALE format) ═══
 Shot: LOCKED FIXED WIDE — no movement, full bodies visible.
-Characters: ${predator} settling after the encounter; ${prey} off-balance or repositioning.
+${characterLine}
 Action: ${predator} ${beat3.predatorBeat}. ${prey} ${beat3.preyBeat}.
-Lighting & Location: ${env}, ${weatherVariants[weather]}.
-Extra: ${micro}. ${vibe.style}. ${tone.image}.
+${locationLine}
+Extra: ${buildKlingExtraLine(extra3, quality?.motionOnlyI2V)}
 
 ${audio3}
 
@@ -1040,11 +1083,17 @@ export function buildKlingNative15s(
   const audio1 = buildKlingAudioPrompt(predator, prey, env, weather, arc, "establish");
   const audio2 = buildKlingAudioPrompt(predator, prey, env, weather, arc, "action");
   const audio3 = buildKlingAudioPrompt(predator, prey, env, weather, arc, "aftermath");
+    const nativeSceneLine = quality?.motionOnlyI2V
+    ? `Scene: same environment continuity, ${weatherVariants[weather]}.`
+    : `Scene: ${env}, ${weatherVariants[weather]}.`;
+  const nativeCharacterLine = quality?.motionOnlyI2V
+    ? `Characters: same ${predator} identity from input frame. Same ${prey} identity from input frame.`
+    : `Characters: ${predator} (predator — drives scene pressure). ${prey} (prey — fully reactive throughout).`;
 
   const body = `═══ KLING 3.0 MULTI-SHOT PROMPT (SCALE format) ═══
 
-Scene: ${env}, ${weatherVariants[weather]}.
-Characters: ${predator} (predator — drives scene pressure). ${prey} (prey — fully reactive throughout).
+${nativeSceneLine}
+${nativeCharacterLine}
 Style: ${vibe.style}. ${tone.image}. Photorealistic wildlife documentary. 9:16 vertical frame.
 Arc: ${getSafeArcPrint(arc)}.
 ${wideRule}
@@ -1147,6 +1196,12 @@ export function buildKlingSixShot(
   const gateOn = !!quality?.singleActionRule;
   const b5 = oneActionArcBeat(arc, "action", gateOn);
   const b6 = oneActionArcBeat(arc, "aftermath", gateOn);
+    const sixShotSceneLine = quality?.motionOnlyI2V
+    ? `Scene: same environment continuity, ${weatherVariants[weather]}.`
+    : `Scene: ${env}, ${weatherVariants[weather]}.`;
+  const sixShotCharacterLine = quality?.motionOnlyI2V
+    ? `Characters: same ${predator} identity from input frame. Same ${prey} identity from input frame.`
+    : `Characters: ${predator} (drives pressure). ${prey} (fully reactive).`;
 
   return finalizePrompt(`KLING 6-SHOT MULTI-SCENE [${model}] — Native Single-Prompt Format
 ──────────────────────────────────────────────────────
@@ -1158,8 +1213,8 @@ ${wideRule}${context}
 
 ═══ KLING 3.0 MULTI-SHOT PROMPT (6 shots) ═══
 
-Scene: ${env}, ${weatherVariants[weather]}.
-Characters: ${predator} (drives pressure). ${prey} (fully reactive).
+${sixShotSceneLine}
+${sixShotCharacterLine}
 Style: ${vibe.style}. ${tone.image}. Photorealistic wildlife documentary. 9:16 vertical frame.
 Story arc: ${getSafeArcPrint(arc)}.
 
