@@ -155,7 +155,7 @@ export function sanitizeRunwayNegative(prompt: string): string {
 
 /** Full Runway prompt sanitizer (apply before final output) */
 export function sanitizeRunwayPrompt(prompt: string): string {
-  let out = sanitizeRunwayFPS(prompt);
+  const out = sanitizeRunwayFPS(prompt);
   // Don't fully strip negatives from instructional text — only from paste-ready sections
   return out;
 }
