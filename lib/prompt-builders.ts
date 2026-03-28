@@ -1133,18 +1133,23 @@ export function buildImagePrompt(
   }
 
   if (target === "NANO_BANANA_2") {
-    const A_nb2 = `Subject: ${predator} and ${prey}, both fully visible, locked in the peak tension beat of a ${getSafeArcLabel(arc)} scene.`;
-    const B_nb2 = `Context/background: ${env}, ${weatherVariants[weather]}. Natural habitat cues, readable terrain, clear background layers.`;
-    const C_nb2 = `Pose/action: ${predator} in a powerful pre-action stance, ${prey} fully alert and reactive, authentic wildlife body language, biologically accurate spacing.`;
-    const D_nb2 = `Composition: wide cinematic wildlife documentary frame, 9:16 vertical. Camera: ${cam}. ${vibe.camera}. ${depth.lensNote}. Depth of field: ${depth.depth}.`;
-    const E_nb2 = `Lighting: ${lighting}. Natural rim separation, volumetric atmosphere, realistic shadow direction.`;
-    const F_nb2 = `Style: ${vibe.style}, photorealistic. ${texture}. ${vibe.texture}. Micro-detail visible in fur, skin, feathers, debris, moisture, and ground contact. ${realismAdd}${descInject}`;
+  const A_nb2 = `Subject: ${predator} and ${prey}, both fully visible, locked in the peak tension beat of a ${getSafeArcLabel(arc)} scene.`;
+  const B_nb2 = `Context/background: ${env}, ${weatherVariants[weather]}. Natural habitat cues, readable terrain, clear background layers.`;
+  const C_nb2 =
+    habitatMode === "aquatic"
+      ? `Pose/action: ${predator} in a powerful pre-action glide, ${prey} fully alert and reactive, authentic aquatic wildlife body language, biologically accurate spacing in the water column.`
+      : habitatMode === "shoreline"
+        ? `Pose/action: ${predator} in a powerful pre-action shoreline ambush posture at the water's edge, ${prey} fully alert and reactive near the bank, authentic wildlife body language, biologically accurate spacing.`
+        : `Pose/action: ${predator} in a powerful pre-action stance, ${prey} fully alert and reactive, authentic wildlife body language, biologically accurate spacing.`;
+  const D_nb2 = `Composition: wide cinematic wildlife documentary frame, 9:16 vertical. Camera: ${cam}. ${vibe.camera}. ${depth.lensNote}. Depth of field: ${depth.depth}.`;
+  const E_nb2 = `Lighting: ${lighting}. Natural rim separation, volumetric atmosphere, realistic shadow direction.`;
+  const F_nb2 = `Style: ${vibe.style}, photorealistic. ${texture}. ${vibe.texture}. Micro-detail visible in fur, skin, feathers, debris, moisture, and ground contact. ${realismAdd}${descInject}`;
 
-    return finalizeImagePrompt(
-      `${qLead} ${A_nb2} ${B_nb2} ${C_nb2} ${D_nb2} ${E_nb2} ${F_nb2}`,
-      target
-    );
-  }
+  return finalizeImagePrompt(
+    `${qLead} ${A_nb2} ${B_nb2} ${C_nb2} ${D_nb2} ${E_nb2} ${F_nb2}`,
+    target
+  );
+}
 
   if (target === "RUNWAY") {
     const E_runway = `${vibe.style}, photorealistic, cinematic grade. Built as a stable master reference for Runway Gen-4.5 I2V continuity — clean separation, readable silhouette, stable anatomy. High-quality input free of visual artifacts for best I2V results.${descInject}`;
