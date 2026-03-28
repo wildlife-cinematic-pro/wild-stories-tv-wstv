@@ -1133,7 +1133,11 @@ export function buildImagePrompt(
   }
 
   if (target === "NANO_BANANA_2") {
-  const A_nb2 = `Subject: ${predator} and ${prey}, both fully visible, locked in the peak tension beat of a ${getSafeArcLabel(arc)} scene.`;
+  const arcPhrase = /^[aeiou]/i.test(getSafeArcLabel(arc))
+    ? `an ${getSafeArcLabel(arc)}`
+    : `a ${getSafeArcLabel(arc)}`;
+
+  const A_nb2 = `Subject: ${predator} and ${prey}, both fully visible, locked in the peak tension beat of ${arcPhrase}.`;
   const B_nb2 = `Context/background: ${env}, ${weatherVariants[weather]}. Natural habitat cues, readable terrain, clear background layers.`;
   const C_nb2 =
     habitatMode === "aquatic"
