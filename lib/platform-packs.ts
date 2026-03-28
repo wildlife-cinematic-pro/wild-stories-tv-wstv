@@ -29,18 +29,25 @@ import type {
 const VIRAL_HOOKS: Partial<Record<Arc, (predator: string, prey: string) => string>> = {
   "Ambush attack": (predator, prey) =>
     `The ${prey.toLowerCase()} noticed the ${predator.toLowerCase()} too late. ⚠️`,
+
   "Chase and takedown": (predator, prey) =>
     `Once the ${predator.toLowerCase()} locked in, the ${prey.toLowerCase()} had seconds. ⚡`,
+
   "Defender stands ground": (predator) =>
     `Nobody expected this ${predator.toLowerCase()} to hold its ground. 🦬`,
+
   "Giant vs giant clash": (predator, prey) =>
     `${predator} vs ${prey} — two giants, one brutal moment. 🔥`,
+
   "Territory dominance battle": (_predator, prey) =>
     `The ${prey.toLowerCase()} crossed the wrong boundary. 👀`,
+
   "Pack hunting strategy": (_predator, prey) =>
     `The ${prey.toLowerCase()} was already surrounded. It just didn't know it yet. 🧠`,
+
   "Predator vs predator fight": () =>
     `Two apex predators. One territory. No room to back down. 💥`,
+
   "Escape from danger": (_predator, prey) =>
     `This ${prey.toLowerCase()} had less than a second to react. ⚡`,
 };
@@ -132,7 +139,7 @@ const CAPTIONS_2026: Partial<Record<Arc, (predator: string, prey: string, env: s
   "Predator vs predator fight": (predator, prey, env) =>
     `Two apex predators. One territory. No safe outcome. 💥\n\nA ${predator.toLowerCase()} facing a ${prey.toLowerCase()} in the ${env} feels intense because both animals understand the cost of a bad decision. These moments escalate fast.\n\nWhich animal did you trust more here? 👇\n\nFollow for rare predator-vs-predator tension. 🔥`,
   "Escape from danger": (predator, prey, env) =>
-  `Everything changed in under a second in the ${env}. ⚡\n\nThe ${prey.toLowerCase()} had almost no time to react before the ${predator.toLowerCase()} moved.`
+  `Everything changed in under a second in the ${env}. ⚡\n\nThe ${prey.toLowerCase()} had almost no time to react before the ${predator.toLowerCase()} moved. In moments like this, survival comes down to one decision made fast enough.\n\nDid you think the ${prey.toLowerCase()} escaped in time? 👇\n\nFollow for wildlife moments that hit instantly. 🎬`,
 };
 
 // ─────────────────────────────────────────────────────────────

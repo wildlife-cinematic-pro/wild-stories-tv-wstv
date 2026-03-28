@@ -1114,7 +1114,14 @@ export function buildImagePrompt(
         ? "Built as a master reference image for image-to-video continuity — stable silhouette, locked anatomy, readable markings, clean foreground/background separation."
         : "Balanced realism with stable anatomy, natural texture, and clean silhouette separation.";
 
-  const A = `${predator} in a powerful pre-action stance, ${prey} fully alert and reactive — both animals at the most tension-rich beat of the ${getSafeArcLabel(arc)} scene. ${predator} exhales once, ribcage slightly expanded...`;
+  const habitatMode = getHabitatMode(predator, prey, env);
+
+  const A =
+     habitatMode === "aquatic"
+    ? `${predator} in a powerful pre-action glide, ${prey} fully alert and reactive — both animals at the most tension-rich beat of the ${getSafeArcLabel(arc)} scene. ${predator} holds pressure through the water column, body controlled and ready.`
+    : habitatMode === "shoreline"
+      ? `${predator} in a powerful pre-action shoreline ambush posture, ${prey} fully alert and reactive near the bank — both animals at the most tension-rich beat of the ${getSafeArcLabel(arc)} scene. ${predator} stays low at the water's edge, body compressed and ready to surge.`
+      : `${predator} in a powerful pre-action stance, ${prey} fully alert and reactive — both animals at the most tension-rich beat of the ${getSafeArcLabel(arc)} scene. ${predator} exhales once, ribcage slightly expanded.`;
   const B = `${env}, ${weatherVariants[weather]}. Layered foreground, readable midground, softened background separation for stable depth maps. Subjects in authentic wildlife behavioral postures, biologically accurate spacing, natural environmental context.`;
   const C = `Wide cinematic wildlife documentary composition, 9:16 vertical frame. Camera: ${cam}, ${depth.lensNote}. ${vibe.camera}. Depth of field: ${depth.depth}. Telephoto compression and documentary framing. Lighting: ${lighting}. Natural rim separation, volumetric atmosphere, realistic shadow direction.`;
   const D = `${texture}. ${vibe.texture}. Micro-detail visible in fur, skin, feathers, debris, moisture, and ground contact. ${realismAdd}`;
@@ -1199,6 +1206,12 @@ export function buildThumbnailPrompt(
   );
 }
 
+function withArticle(animal: string): string {
+  const lower = animal.toLowerCase();
+  const article = /^[aeiou]/.test(lower) ? "an" : "a";
+  return `${article} ${lower}`;
+}
+
 // ─────────────────────────────────────────────────────────────
 // VOICEOVER LINE
 // ─────────────────────────────────────────────────────────────
@@ -1210,7 +1223,7 @@ export function buildVoiceoverLine(
 ): string {
   const tone = emotionalTonePrompt[emotionalTone];
   return finalizePrompt(
-    `In the wild heart of ${env}, a ${predator.toLowerCase()} and a ${prey.toLowerCase()} share the same moment. ${tone.voiceover}`
+    `In the wild heart of ${env}, ${withArticle(predator)} and ${withArticle(prey)} share the same moment. ${tone.voiceover}`
   );
 }
 
