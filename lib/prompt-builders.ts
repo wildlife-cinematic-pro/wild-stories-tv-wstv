@@ -1282,12 +1282,12 @@ export function buildRunwayShots(
   const beat3 = oneActionArcBeat(arc, "aftermath", gateOn, habitatMode);
 
   const shot1PasteReady = sanitizeRunwayFPS(
-    isAquatic
-      ? `Slow dolly-in. ${predator} glides once through the water column. ${prey} holds tense position, body rigid in the current. ${micro}. ${seamless}`.trim()
-      : isShoreline
-        ? `Slow dolly-in. ${predator} holds low at the water's edge. ${prey} stands tense near the bank, body rigid, eye-line locked. ${micro}. ${seamless}`.trim()
-        : `Slow dolly-in. ${predator} exhales once — ribcage settles. ${prey} holds still, body rigid. ${micro}. ${seamless}`.trim()
-  );
+  isAquatic
+    ? `Slow dolly-in. ${predator} glides once through the water column. ${prey} holds tense position, body rigid in the current. ${micro}. ${seamless}`.trim()
+    : isShoreline
+      ? `Slow dolly-in. ${predator} holds low at the water's edge. ${prey} stands tense near the bank, body rigid, eye-line locked. ${micro}. ${seamless}`.trim()
+      : `Slow dolly-in. ${predator} ${beat1.predatorBeat}. ${prey} ${beat1.preyBeat}. ${micro}. ${seamless}`.trim()
+);
 
   const shot2PasteReady = sanitizeRunwayFPS(
     isAquatic
@@ -1298,12 +1298,12 @@ export function buildRunwayShots(
   );
 
   const shot3PasteReady = sanitizeRunwayFPS(
-    isAquatic
-      ? `Slow pull-back. ${predator} slows and stabilizes in the water. Residual turbulence settles, eye-line engaged. ${micro}. ${seamless}`.trim()
-      : isShoreline
-        ? `Slow pull-back. ${predator} settles low at the waterline. Residual splash and mud disturbance fade while both subjects hold tense eye-lines. ${micro}. ${seamless}`.trim()
-        : `Slow pull-back. ${predator} exhales — posture resets, eye-line engaged. Residual atmosphere, ${micro}. ${seamless}`.trim()
-  );
+  isAquatic
+    ? `Slow pull-back. ${predator} slows and stabilizes in the water. Residual turbulence settles, eye-line engaged. ${micro}. ${seamless}`.trim()
+    : isShoreline
+      ? `Slow pull-back. ${predator} settles low at the waterline. Residual splash and mud disturbance fade while both subjects hold tense eye-lines. ${micro}. ${seamless}`.trim()
+      : `Slow pull-back. ${predator} ${beat3.predatorBeat}. ${prey} ${beat3.preyBeat}. Residual atmosphere settles. ${micro}. ${seamless}`.trim()
+);
 
   return {
     shot1: finalizePrompt(`RUNWAY SHOT 1 — ESTABLISHING [${model}]
@@ -1717,11 +1717,10 @@ export function buildKlingSixShot(
     : `Characters: ${predator} (drives pressure). ${prey} (fully reactive).`;
 
   const sixShotAudio1 = aquatic
-    ? "Audio: subtle underwater movement, low current wash, restrained predator motion."
-    : shoreline
-      ? "Audio: subtle shoreline wash, restrained low predator movement, wet-ground stillness."
-      : "Audio: controlled predator breathing, sharp inhale.";
-
+  ? "Audio: subtle underwater movement, low current wash, restrained body movement."
+  : shoreline
+    ? "Audio: subtle shoreline wash, restrained low body movement, wet-ground stillness."
+    : "Audio: heavy controlled breathing, sharp inhale.";
   const sixShotAudio2 = aquatic
     ? "Audio: water movement, tension stillness, distant current wash."
     : shoreline
@@ -1729,10 +1728,10 @@ export function buildKlingSixShot(
       : "Audio: wind through terrain, tension stillness.";
 
   const sixShotAudio3 = aquatic
-    ? "Audio: current pressure shift, water displacement, prey alert movement."
-    : shoreline
-      ? "Audio: splash pressure shift, muddy bank disturbance, prey alert movement."
-      : `Audio: weight transfer on ground surface, ${prey} alert vocalization.`;
+  ? "Audio: current pressure shift, water displacement, prey alert movement."
+  : shoreline
+    ? "Audio: splash pressure shift, muddy bank disturbance, prey alert movement."
+    : `Audio: weight transfer on ground surface, tense animal movement, alert vocalization.`;
 
   const sixShotAudio4 = aquatic
     ? "Audio: alternating water movement, shifting current tension."
