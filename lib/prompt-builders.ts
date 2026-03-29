@@ -907,33 +907,40 @@ export function buildKlingAudioPrompt(
   const isAquatic = habitatMode === "aquatic";
   const isShoreline = habitatMode === "shoreline";
 
-  let ambient = "distant natural ambience, wind through terrain";
-
-  if (isAquatic) {
-    ambient = "moving water, current wash, surface ripples, underwater ambience";
-  } else if (isShoreline) {
-    ambient = "lapping shoreline water, shallow splash movement, muddy bank disturbance, open wetland ambience";
-  } else if (envLower.includes("forest") || envLower.includes("jungle")) {
-    ambient = "distant bird calls, rustling canopy, layered forest ambience";
-  } else if (envLower.includes("savanna") || envLower.includes("grassland")) {
-    ambient = "dry wind sweeping grass, distant insect drone, open-plain ambience";
-  } else if (envLower.includes("arctic") || envLower.includes("snow") || envLower.includes("tundra")) {
-    ambient = "howling arctic wind, crunching ice surface, stark frozen silence";
-  } else if (envLower.includes("mountain") || envLower.includes("cliff")) {
-    ambient = "mountain wind, distant rockfall echoes, alpine silence";
-  } else if (envLower.includes("desert")) {
-    ambient = "desert wind whisper, sand grain movement, dry heat stillness";
-  }
-
-  let weatherAudio = "";
-
   const isArcticLike =
-    envLower.includes("arctic") ||
-    envLower.includes("snow") ||
-    envLower.includes("tundra") ||
-    envLower.includes("ice") ||
-    envLower.includes("glacier") ||
-    envLower.includes("frozen");
+  envLower.includes("arctic") ||
+  envLower.includes("snow") ||
+  envLower.includes("tundra") ||
+  envLower.includes("ice") ||
+  envLower.includes("glacier") ||
+  envLower.includes("frozen") ||
+  envLower.includes("winter");
+
+let ambient = "distant natural ambience, wind through terrain";
+
+if (isAquatic) {
+  ambient = "moving water, current wash, surface ripples, underwater ambience";
+} else if (isShoreline) {
+  ambient = "lapping shoreline water, shallow splash movement, muddy bank disturbance, open wetland ambience";
+} else if (envLower.includes("forest") || envLower.includes("jungle")) {
+  if (isArcticLike) {
+    ambient = "cold mountain wind through pines, distant winter forest hush, snow underfoot atmosphere";
+  } else {
+    ambient = "distant bird calls, rustling canopy, layered forest ambience";
+  }
+} else if (envLower.includes("savanna") || envLower.includes("grassland")) {
+  ambient = "dry wind sweeping grass, distant insect drone, open-plain ambience";
+} else if (envLower.includes("arctic") || envLower.includes("snow") || envLower.includes("tundra")) {
+  ambient = "howling arctic wind, crunching ice surface, stark frozen silence";
+} else if (envLower.includes("mountain") || envLower.includes("cliff")) {
+  ambient = isArcticLike
+    ? "cold alpine wind, distant frozen forest hush, brittle snow atmosphere"
+    : "mountain wind, distant rockfall echoes, alpine silence";
+} else if (envLower.includes("desert")) {
+  ambient = "desert wind whisper, sand grain movement, dry heat stillness";
+}
+
+let weatherAudio = "";
 
   if (isAquatic) {
     if (weather === "Storm") weatherAudio = ", turbulent surface chop, wave impact, current surge";
