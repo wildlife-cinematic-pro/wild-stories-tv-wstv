@@ -238,9 +238,9 @@ function ModelCard({
 
 export default function Page() {
   // STEP 1 (basic inputs)
-  const [predator, setPredator] = useState("Lion");
-  const [prey, setPrey] = useState("Deer");
-  const [arc, setArc] = useState<Arc>("Ambush attack");
+  const [predator, setPredator] = useState("Wolf");
+const [prey, setPrey] = useState("Elk");
+const [arc, setArc] = useState<Arc>("Pack hunting strategy");
   const [weather, setWeather] = useState<Weather>("Golden Hour");
   const [depthMode, setDepthMode] = useState<DepthMode>("Balanced Depth");
   const [emotionalTone, setEmotionalTone] = useState<EmotionalTone>("Raw Tension");
@@ -295,10 +295,51 @@ export default function Page() {
   });
 
   const predatorOptions = useMemo(() => {
-    const base = Object.keys(predatorData);
-    const extra = customPredators.map((p) => p.name);
-    return Array.from(new Set([...base, ...extra])).sort((a, b) => a.localeCompare(b));
-  }, [customPredators]);
+  const base = Object.keys(predatorData);
+  const extra = customPredators.map((p) => p.name);
+
+  const usaPriority = [
+    "Wolf",
+    "Mountain Lion",
+    "Grizzly Bear",
+    "Bald Eagle",
+    "Alligator",
+    "Bison",
+    "Bull Elk",
+    "Moose",
+    "Cougar",
+    "Bobcat",
+    "Black Bear",
+    "Coyote",
+    "Raccoon",
+    "Red Fox",
+    "Great Horned Owl",
+    "Beaver",
+    "River Otter",
+    "Badger",
+    "White-tailed Deer",
+    "Wild Boar",
+    "Dolphin",
+    "Orca",
+    "Shark",
+  ];
+
+  const all = Array.from(new Set([...base, ...extra]));
+
+  return all.sort((a, b) => {
+    const ai = usaPriority.indexOf(a);
+    const bi = usaPriority.indexOf(b);
+
+    const aPinned = ai !== -1;
+    const bPinned = bi !== -1;
+
+    if (aPinned && bPinned) return ai - bi;
+    if (aPinned) return -1;
+    if (bPinned) return 1;
+
+    return a.localeCompare(b);
+  });
+}, [customPredators]);
 
   const lionFallback = useMemo<NormalizedPreset>(() => {
     const rawLion = (predatorData as Record<string, unknown>)["Lion"];
@@ -780,26 +821,26 @@ export default function Page() {
           WILD STORIES TV (WSTV)
         </h1>
         <p className="mt-1 text-sm text-white/70 drop-shadow-[0_2px_10px_rgba(0,0,0,0.55)]">
-          Step 1 → setup. Step 2 → style/engine/quality. Step 3 → generate + export.
-        </p>
+  Step 1 → viral wildlife setup. Step 2 → visual engine & quality. Step 3 → generate for reels.
+</p>
       </div>
 
       {/* Stepper */}
       <div className="mb-6 flex flex-wrap gap-2">
-        <StepPill step={1} active={step === 1} label="Setup" onClick={() => setStep(1)} />
-        <StepPill
-          step={2}
-          active={step === 2}
-          label="Style / Engine / Quality"
-          onClick={() => setStep(2)}
-        />
-        <StepPill
-          step={3}
-          active={step === 3}
-          label="Generate & Export"
-          onClick={() => setStep(3)}
-        />
-      </div>
+  <StepPill step={1} active={step === 1} label="Viral Wildlife Setup" onClick={() => setStep(1)} />
+  <StepPill
+    step={2}
+    active={step === 2}
+    label="Visual Engine & Quality"
+    onClick={() => setStep(2)}
+  />
+  <StepPill
+    step={3}
+    active={step === 3}
+    label="Generate for Reels"
+    onClick={() => setStep(3)}
+  />
+</div>
 
       {/* STEP 1 */}
       {step === 1 && (
@@ -808,12 +849,12 @@ export default function Page() {
             STEP 1
           </div>
           <h2 className="mb-4 text-lg font-extrabold text-gray-900">
-            Predator, Arc & Scene Setup
-          </h2>
+  Viral Wildlife Setup
+</h2>
 
           <div className="grid gap-3 sm:grid-cols-2">
             <div>
-              <label className="mb-1 block text-xs font-semibold text-gray-500">Predator</label>
+              <label className="mb-1 block text-xs font-semibold text-gray-500">Apex Predator</label>
               <select
                 value={predator}
                 onChange={(e) => setPredator(e.target.value)}
@@ -835,7 +876,7 @@ export default function Page() {
             </div>
 
             <div>
-              <label className="mb-1 block text-xs font-semibold text-gray-500">Prey</label>
+              <label className="mb-1 block text-xs font-semibold text-gray-500">Survival Animal</label>
               <div className="flex gap-2">
                 <input
                   value={prey}
@@ -863,7 +904,7 @@ export default function Page() {
 
           <div className="mt-3 grid gap-3 sm:grid-cols-3">
             <div>
-              <label className="mb-1 block text-xs font-semibold text-gray-500">Story Arc</label>
+              <label className="mb-1 block text-xs font-semibold text-gray-500">Conflict Arc</label>
               <select
                 value={arc}
                 onChange={(e) => setArc(e.target.value as Arc)}
@@ -878,7 +919,7 @@ export default function Page() {
             </div>
 
             <div>
-              <label className="mb-1 block text-xs font-semibold text-gray-500">Weather</label>
+              <label className="mb-1 block text-xs font-semibold text-gray-500">Scene Atmosphere</label>
               <select
                 value={weather}
                 onChange={(e) => setWeather(e.target.value as Weather)}
@@ -893,7 +934,7 @@ export default function Page() {
             </div>
 
             <div>
-              <label className="mb-1 block text-xs font-semibold text-gray-500">Depth Mode</label>
+              <label className="mb-1 block text-xs font-semibold text-gray-500">Cinematic Depth</label>
               <select
                 value={depthMode}
                 onChange={(e) => setDepthMode(e.target.value as DepthMode)}
@@ -911,7 +952,7 @@ export default function Page() {
           <div className="mt-3 grid gap-3 sm:grid-cols-2">
             <div>
               <label className="mb-1 block text-xs font-semibold text-gray-500">
-                Emotional Tone
+                Tension Level
               </label>
               <select
                 value={emotionalTone}
@@ -927,7 +968,7 @@ export default function Page() {
             </div>
 
             <div>
-              <label className="mb-1 block text-xs font-semibold text-gray-500">Animal Vibe</label>
+              <label className="mb-1 block text-xs font-semibold text-gray-500">Instinct Style</label>
               <select
                 value={animalVibe}
                 onChange={(e) => setAnimalVibe(e.target.value as AnimalVibe)}
@@ -948,7 +989,7 @@ export default function Page() {
               onClick={() => setStep(2)}
               className="rounded-xl bg-gray-900 px-5 py-2.5 text-sm font-extrabold text-white hover:bg-black active:scale-[0.98]"
             >
-              Continue → Step 2
+             Continue → Visual Engine & Quality
             </button>
           </div>
         </div>
@@ -961,8 +1002,8 @@ export default function Page() {
             STEP 2
           </div>
           <h2 className="mb-4 text-lg font-extrabold text-gray-900">
-            Style, Engine & Quality Controls
-          </h2>
+  Visual Engine & Quality
+</h2>
 
           {/* ✅ Quality Automation panel */}
           <div className="mb-4 rounded-2xl border border-gray-200 bg-white p-4 shadow-sm">
@@ -1304,7 +1345,7 @@ export default function Page() {
               onClick={() => setStep(3)}
               className="rounded-xl bg-gray-900 px-5 py-2.5 text-sm font-extrabold text-white hover:bg-black active:scale-[0.98]"
             >
-              Continue → Step 3
+              Continue → Generate for Reels
             </button>
           </div>
         </div>
@@ -1317,7 +1358,7 @@ export default function Page() {
             <div className="mb-3 text-xs font-extrabold uppercase tracking-widest text-gray-600">
               STEP 3
             </div>
-            <h2 className="mb-3 text-lg font-extrabold text-gray-900">Generate & Export</h2>
+            <h2 className="mb-3 text-lg font-extrabold text-gray-900">Generate for Reels</h2>
 
             <div className="mb-3 flex flex-wrap gap-2">
               {(["none", "gemini", "claude"] as AIProvider[]).map((p) => (
