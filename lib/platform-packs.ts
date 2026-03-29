@@ -82,10 +82,10 @@ const HOOKS_2026: Partial<Record<Arc, (predator: string, prey: string) => string
     `One step too far changed the entire mood. 👀`,
   ],
   "Pack hunting strategy": (predator, prey) => [
-    `The ${prey.toLowerCase()} was already surrounded. It just didn't know it yet. 🧠`,
-    `This is why ${predator.toLowerCase()}s don't hunt alone. 🐺`,
-    `One signal and the whole trap closed. ⚡`,
-  ],
+  `The ${prey.toLowerCase()} was already boxed in before it reacted. ⚠️`,
+  `This is why ${predator.toLowerCase()}s hunt like a system, not a chase. 🧠`,
+  `By the time the ${prey.toLowerCase()} moved, the angle was already gone. 👀`,
+],
   "Predator vs predator fight": (predator, prey) => [
     `Two apex predators. One space. No safe outcome. 💥`,
     `${predator} vs ${prey} — this turned violent instantly. 🔥`,
@@ -140,7 +140,13 @@ const CAPTIONS_2026: Partial<Record<Arc, (predator: string, prey: string, env: s
     `In the ${env}, territory is never symbolic. 👀\n\nThe ${prey.toLowerCase()} stepped into the wrong space, and the ${predator.toLowerCase()} answered immediately. In the wild, boundaries are enforced, not discussed.\n\nWould you have backed off earlier? 👇\n\nFollow for raw dominance moments in nature. 🔥`,
 
   "Pack hunting strategy": (predator, prey, env) =>
-    `At first, the ${prey.toLowerCase()} looked free. Then the trap became visible. 🧠\n\nIn the ${env}, the ${predator.toLowerCase()} group is dangerous because every movement feels coordinated before the prey fully reads the pattern.\n\nDid you notice the setup before the pressure closed in? 👇\n\nFollow for smart wildlife sequences, not just loud ones. 🎬`,
+  `At first, the ${prey.toLowerCase()} looked free. Then the pattern became obvious. 🧠
+
+In the ${env}, the ${predator.toLowerCase()} pack is dangerous because the pressure builds before the prey fully reads what is happening. This is not chaos. It is timing, spacing, and control.
+
+At what second did you realize the escape lane was gone? 👇
+
+Follow for wildlife sequences with real tension and clean storytelling. 🎬`,
 
   "Predator vs predator fight": (predator, prey, env) =>
     `Two apex predators. One territory. No safe outcome. 💥\n\nA ${predator.toLowerCase()} facing a ${prey.toLowerCase()} in the ${env} feels intense because both animals understand the cost of a bad decision. These encounters escalate fast.\n\nWhich animal did you trust more here? 👇\n\nFollow for rare predator-vs-predator tension. 🔥`,
@@ -164,7 +170,7 @@ const VIRAL_CTAS: Partial<Record<Arc, string>> = {
   "Territory dominance battle":
     "Would you have backed off earlier? Comment below 👇 Follow for raw dominance moments.",
   "Pack hunting strategy":
-    "Did you notice the trap early? Comment below 👇 Follow for smart wildlife sequences.",
+  "When did you notice the trap forming? Comment below 👇 Follow for smart wildlife tension.",
   "Predator vs predator fight":
     "Which animal would you trust more here? Comment below 👇 Follow for rare predator encounters.",
   "Escape from danger":
@@ -179,6 +185,8 @@ const USA_HASHTAGS: Partial<Record<Arc, string>> = {
     "#wildlife #viral #nature #yellowstone #wildlifeencounter #unexpected #animalbattle #naturaldocumentary #wildanimals #viralreels",
   "Giant vs giant clash":
     "#wildlife #viral #nature #animalbattle #giantanimals #wildfight #naturaldocumentary #viralvideo #wildanimals #shocking",
+  "Pack hunting strategy":
+    "#wildlife #nature #wolfpack #elk #animalbehavior #wildlifedocumentary #facebookreels #viralreels #predatorprey #yellowstone",
 };
 
 // ─────────────────────────────────────────────────────────────

@@ -195,7 +195,7 @@ const ARC_SAFE_LABEL: Record<string, string> = {
   "Escape from danger": "escape sequence",
   "Territory dominance battle": "dominance encounter",
   "Predator vs predator fight": "predator confrontation",
-  "Pack hunting strategy": "pack coordination",
+  "Pack hunting strategy": "Pack hunting strategy",
   "Defender stands ground": "defensive stand",
   "Giant vs giant clash": "giant confrontation",
 };
@@ -1123,7 +1123,7 @@ export function buildImagePrompt(
       ? `${predator} in a powerful pre-action shoreline ambush posture, ${prey} fully alert and reactive near the bank — both animals at the most tension-rich beat of the ${getSafeArcLabel(arc)} scene. ${predator} stays low at the water's edge, body compressed and ready to surge.`
       : `${predator} in a powerful pre-action stance, ${prey} fully alert and reactive — both animals at the most tension-rich beat of the ${getSafeArcLabel(arc)} scene. ${predator} exhales once, ribcage slightly expanded.`;
   const B = `${env}, ${weatherVariants[weather]}. Layered foreground, readable midground, softened background separation for stable depth maps. Subjects in authentic wildlife behavioral postures, biologically accurate spacing, natural environmental context.`;
-  const C = `Wide cinematic wildlife documentary composition, 9:16 vertical frame. Camera: ${cam}, ${depth.lensNote}. ${vibe.camera}. Depth of field: ${depth.depth}. Telephoto compression and documentary framing. Lighting: ${lighting}. Natural rim separation, volumetric atmosphere, realistic shadow direction.`;
+  const C = `Wide cinematic wildlife documentary composition, 9:16 vertical frame. Camera: ${cam}, ${depth.lensNote}. ${vibe.camera}. Depth of field: ${depth.depth}. Telephoto compression and documentary framing. Lighting: ${weatherVariants[weather]}. Natural rim separation, volumetric atmosphere, realistic shadow direction.`;
   const D = `${texture}. ${vibe.texture}. Micro-detail visible in fur, skin, feathers, debris, moisture, and ground contact. ${realismAdd}`;
 
   if (target === "NB2") {
@@ -1146,7 +1146,7 @@ export function buildImagePrompt(
         ? `Pose/action: ${predator} in a powerful pre-action shoreline ambush posture at the water's edge, ${prey} fully alert and reactive near the bank, authentic wildlife body language, biologically accurate spacing.`
         : `Pose/action: ${predator} in a powerful pre-action stance, ${prey} fully alert and reactive, authentic wildlife body language, biologically accurate spacing.`;
   const D_nb2 = `Composition: wide cinematic wildlife documentary frame, 9:16 vertical. Camera: ${cam}. ${vibe.camera}. ${depth.lensNote}. Depth of field: ${depth.depth}.`;
-  const E_nb2 = `Lighting: ${lighting}. Natural rim separation, volumetric atmosphere, realistic shadow direction.`;
+  const E_nb2 = `Lighting: ${weatherVariants[weather]}. Natural rim separation, volumetric atmosphere, realistic shadow direction.`;
   const F_nb2 = `Style: ${vibe.style}, photorealistic. ${texture}. ${vibe.texture}. Micro-detail visible in fur, skin, feathers, debris, moisture, and ground contact. ${realismAdd}${descInject}`;
 
   return finalizeImagePrompt(

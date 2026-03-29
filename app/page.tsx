@@ -512,9 +512,13 @@ const [arc, setArc] = useState<Arc>("Pack hunting strategy");
     setCustomPredators(savedCustom);
   }, []);
 
-  useEffect(() => {
-    if (preset.prey[0]) setPrey(preset.prey[0]);
-  }, [predator, preset.prey]);
+ useEffect(() => {
+  if (preset.prey[0]) {
+    const nextPrey = preset.prey[0];
+    setPrey(nextPrey);
+    setArc(suggestArc(predator, nextPrey, "Ambush attack") as Arc);
+  }
+}, [predator, preset.prey]);
 
   async function handleGenerate() {
     setIsGenerating(true);
