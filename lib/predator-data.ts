@@ -998,15 +998,15 @@ export function generateUSAViral30DayCalendar(
 
   const hookTemplates = [
   (_predator: string, prey: string) => `${prey} made one wrong move. ⚠️`,
-  () => `One bad second changed everything. 👀`,
-  (predator: string) => `This ${predator.toLowerCase()} closed in fast. 🔥`,
-  (predator: string, prey: string) => `${predator} vs ${prey} — USA wildlife gets brutal fast.`,
-  () => `Nobody expected the pressure to shift like this. 😳`,
-  (predator: string) => `This is why ${predator.toLowerCase()}s are so dangerous. 👑`,
-  () => `The whole encounter changed in an instant. 💥`,
-  () => `Comment who controlled the moment. 👇`,
-  () => `This turned tense immediately.`,
-  (_predator: string, prey: string) => `${prey} held on longer than expected.`,
+  (_predator: string, prey: string) => `The ${prey.toLowerCase()} looked away for one second. 👀`,
+  (predator: string, prey: string) => `${predator} vs ${prey} — this turned ugly fast. 🔥`,
+  () => `One bad second changed everything. ⚡`,
+  () => `This moment flipped faster than it looked. 🎬`,
+  () => `The pressure was already there before anyone noticed. 👁️`,
+  (predator: string) => `This is why ${predator.toLowerCase()}s are so dangerous. 🧠`,
+  () => `The trap was already closing. ⚠️`,
+  (predator: string) => `Nobody expects this side of a ${predator.toLowerCase()}. 🔥`,
+  (_predator: string, prey: string) => `${prey} almost escaped. Almost. 😳`,
 ];
 
   const durations = ["22–28s (3-Shot Fast Viral)", "45–55s (5-Shot Viral)"];
