@@ -928,16 +928,38 @@ export function generateMonthlyCalendar(
   ];
 
  const hookTemplates = [
-  (_predator: string, prey: string) => `The ${prey.toLowerCase()} looked away for one second. ⚠️`,
+  (_predator: string, prey: string) => `${prey} made one wrong move. ⚠️`,
+  (_predator: string, prey: string) => `The ${prey.toLowerCase()} looked away for one second. 👀`,
   (predator: string, prey: string) => `${predator} vs ${prey} — this turned ugly fast. 🔥`,
-  () => `One bad second changed everything. 👀`,
+  () => `One bad second changed everything. ⚡`,
   () => `This moment flipped faster than it looked. 🎬`,
   () => `The pressure was already there before anyone noticed. 👁️`,
-  (predator: string) => `This ${predator.toLowerCase()} refused to give ground. 💪`,
   (predator: string) => `This is why ${predator.toLowerCase()}s are so dangerous. 🧠`,
-  () => `The trap was already closing. ⚡`,
-  (predator: string) => `Nobody expects this side of a ${predator.toLowerCase()}. 👑`,
-  (_predator: string, prey: string) => `${prey} made one wrong move. ⚠️`,
+  () => `The trap was already closing. ⚠️`,
+  (predator: string) => `Nobody expects this side of a ${predator.toLowerCase()}. 🔥`,
+  (_predator: string, prey: string) => `${prey} almost escaped. Almost. 😳`,
+
+  (predator: string) => `This ${predator.toLowerCase()} picked the perfect moment. 🎯`,
+  (_predator: string, prey: string) => `${prey} had one lane left and it vanished. 😮`,
+  (predator: string, prey: string) => `${predator} was already too close when the ${prey.toLowerCase()} reacted. ⚠️`,
+  () => `This sequence got worse with every second. 👀`,
+  () => `The danger was obvious too late. 🔥`,
+  (predator: string) => `This is the side of ${predator.toLowerCase()}s most people never see. 🎬`,
+  (_predator: string, prey: string) => `The ${prey.toLowerCase()} hesitated once. That was enough. ⚡`,
+  (predator: string, prey: string) => `${predator} vs ${prey} — no wasted movement here. 🧠`,
+  () => `You can feel the pressure building before anything happens. 👁️`,
+  (predator: string) => `${predator} stayed calm and that changed everything. ❄️`,
+
+  (_predator: string, prey: string) => `The ${prey.toLowerCase()} saw the threat late. Very late. ⚠️`,
+  (predator: string) => `This ${predator.toLowerCase()} never rushed the moment. 🐾`,
+  () => `It looked quiet right before it turned brutal. 🔥`,
+  (_predator: string, prey: string) => `${prey} almost found space, then lost it. 😳`,
+  (predator: string, prey: string) => `${predator} vs ${prey} — the timing here is everything. ⏱️`,
+  () => `The opening disappeared in a second. ⚡`,
+  (predator: string) => `This is why ${predator.toLowerCase()}s control the encounter early. 👑`,
+  (_predator: string, prey: string) => `The ${prey.toLowerCase()} was moving, but not free. 👀`,
+  () => `The whole mood changed before the chase even started. 🎬`,
+  (predator: string, prey: string) => `${predator} boxed the ${prey.toLowerCase()} in before the panic started. 🧠`,
 ];
 
   const durations = ["65–70s (5-Shot Viral)", "60–65s (5-Shot Cinematic)"];
