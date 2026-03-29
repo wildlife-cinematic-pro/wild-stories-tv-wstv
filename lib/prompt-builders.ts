@@ -853,12 +853,13 @@ export function buildMicroMotionLine(weather: Weather, env: string): string {
     envLower.includes("marine");
 
   const isArctic =
-    envLower.includes("arctic") ||
-    envLower.includes("snow") ||
-    envLower.includes("tundra") ||
-    envLower.includes("ice") ||
-    envLower.includes("glacier") ||
-    envLower.includes("frozen");
+  envLower.includes("arctic") ||
+  envLower.includes("snow") ||
+  envLower.includes("tundra") ||
+  envLower.includes("ice") ||
+  envLower.includes("glacier") ||
+  envLower.includes("frozen") ||
+  envLower.includes("winter");
 
   if (isAquatic) {
     if (weather === "Storm") {
@@ -873,7 +874,10 @@ export function buildMicroMotionLine(weather: Weather, env: string): string {
     return "water ripples, current-driven movement, shifting surface reflections, suspended particles drifting naturally";
   }
 
-  if (isArctic) {
+    if (isArctic) {
+    if (weather === "Golden Hour") {
+      return "fine snow drift, visible breath vapor, soft powder movement, faint wind through frozen brush, airborne ice crystals in warm backlight";
+    }
     return "snow drift, subtle natural breath condensation, soft powder displacement, faint wind movement across frozen ground";
   }
 
