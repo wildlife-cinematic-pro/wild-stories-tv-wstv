@@ -264,9 +264,16 @@ export function buildCTA(arc: Arc): string {
 export function buildHashtags(predator: string, prey: string, arc: Arc): string {
   const base =
     USA_HASHTAGS[arc] ??
-    `#wildlife #nature #wildlifevideo #animalencounter #wildlifedocumentary #viralreels #naturelovers #animalbehavior`;
+    `#wildlife #nature #wolfpack #animalbehavior #wildlifedocumentary #facebookreels #viralreels #predatorprey #yellowstone`;
 
-  return `${base} #${predator.toLowerCase().replace(/\s+/g, "")} #${prey.toLowerCase().replace(/\s+/g, "")} #facebookreels`;
+  const tags = [
+    ...base.split(/\s+/),
+    `#${predator.toLowerCase().replace(/\s+/g, "")}`,
+    `#${prey.toLowerCase().replace(/\s+/g, "")}`,
+    "#facebookreels",
+  ];
+
+  return [...new Set(tags)].join(" ");
 }
 
 // ─────────────────────────────────────────────────────────────

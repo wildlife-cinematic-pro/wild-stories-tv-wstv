@@ -1019,19 +1019,19 @@ export function generateUSAViral30DayCalendar(
   ];
 
   const hookTemplates = [
-  (_predator: string, prey: string) => `${prey} made one wrong move. ⚠️`,
-  (_predator: string, prey: string) => `The ${prey.toLowerCase()} looked away for one second. 👀`,
-  (predator: string, prey: string) => `${predator} vs ${prey} — this turned ugly fast. 🔥`,
-  () => `One bad second changed everything. ⚡`,
-  () => `This moment flipped faster than it looked. 🎬`,
-  () => `The pressure was already there before anyone noticed. 👁️`,
-  (predator: string) => `This is why ${predator.toLowerCase()}s are so dangerous. 🧠`,
-  () => `The trap was already closing. ⚠️`,
-  (predator: string) => `Nobody expects this side of a ${predator.toLowerCase()}. 🔥`,
-  (_predator: string, prey: string) => `${prey} almost escaped. Almost. 😳`,
+  (_predator: string, prey: string) => `${prey} made ONE mistake. ⚠️`,
+  () => `Watch the last 3 seconds. 👀`,
+  (predator: string) => `This ${predator.toLowerCase()} picked the wrong target. 🔥`,
+  (predator: string, prey: string) => `${predator} vs ${prey} — USA wildlife goes brutal fast.`,
+  () => `Nobody expected this ending. 😳`,
+  (predator: string) => `This is why ${predator.toLowerCase()}s dominate. 👑`,
+  () => `The comeback changed everything. 💥`,
+  () => `Comment who actually won. 👇`,
+  () => `This encounter turned violent instantly.`,
+  (_predator: string, prey: string) => `${prey} stood ground longer than anyone expected.`,
 ];
 
-  const durations = ["22–28s (3-Shot Fast Viral)", "45–55s (5-Shot Viral)"];
+const durations = ["22–28s (3-Shot Fast Viral)", "45–55s (5-Shot Viral)"];
   const seed = hashString(`${primaryPredator}|${primaryPrey}|${primaryArc}|usa30|${year}|${month}`);
   const rC = shiftArray(rotations, seed % rotations.length);
   const rT = shiftArray(seasonPack.themes, seed % seasonPack.themes.length);

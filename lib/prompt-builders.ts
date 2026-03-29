@@ -943,26 +943,26 @@ if (isAquatic) {
 let weatherAudio = "";
 
   if (isAquatic) {
-    if (weather === "Storm") weatherAudio = ", turbulent surface chop, wave impact, current surge";
-    else if (weather === "Winter Blizzard") weatherAudio = ", icy surface disturbance, freezing wind over water";
-    else if (weather === "Frozen Dusk") weatherAudio = ", cold still water ambience, crystalline surface movement";
-    else if (weather === "Golden Hour") weatherAudio = ", warm surface wash, gentle wave rhythm, reflective water stillness";
-  } else if (isShoreline) {
-    if (weather === "Storm") weatherAudio = ", choppy shallows, splashing bank wash, wind over wet ground";
-    else if (weather === "Golden Hour") weatherAudio = ", warm shoreline wash, gentle shallows movement, reflective water stillness";
-    else if (weather === "Frozen Dusk") weatherAudio = ", cold shoreline stillness, brittle wet-ground atmosphere";
-    else if (weather === "Winter Blizzard") weatherAudio = ", icy shoreline wind, freezing surface disturbance";
-  } else if (isArcticLike) {
-    if (weather === "Storm") weatherAudio = ", harsh wind pressure, distant ice crack, frozen surface disturbance";
-    else if (weather === "Winter Blizzard") weatherAudio = ", fierce blizzard wind, snow pelting surfaces";
-    else if (weather === "Frozen Dusk") weatherAudio = ", eerie frozen silence, crystalline wind";
-    else if (weather === "Golden Hour") weatherAudio = ", cold low-angle light, brittle snow hush, distant icy wind";
-  } else {
-    if (weather === "Storm") weatherAudio = ", rolling thunder in distance, rain striking foliage";
-    else if (weather === "Winter Blizzard") weatherAudio = ", fierce blizzard wind, snow pelting surfaces";
-    else if (weather === "Frozen Dusk") weatherAudio = ", eerie frozen silence, crystalline wind";
-    else if (weather === "Golden Hour") weatherAudio = ", warm twilight stillness, evening insect chorus";
-  }
+  if (weather === "Storm") weatherAudio = ", turbulent surface chop, wave impact, current surge";
+  else if (weather === "Winter Blizzard") weatherAudio = ", icy surface disturbance, freezing wind over water";
+  else if (weather === "Frozen Dusk") weatherAudio = ", cold still water ambience, crystalline surface movement";
+  else if (weather === "Golden Hour") weatherAudio = ", warm surface wash, gentle wave rhythm, reflective water stillness";
+} else if (isShoreline) {
+  if (weather === "Storm") weatherAudio = ", choppy shallows, splashing bank wash, wind over wet ground";
+  else if (weather === "Golden Hour") weatherAudio = ", warm shoreline wash, gentle shallows movement, reflective water stillness";
+  else if (weather === "Frozen Dusk") weatherAudio = ", cold shoreline stillness, brittle wet-ground atmosphere";
+  else if (weather === "Winter Blizzard") weatherAudio = ", icy shoreline wind, freezing surface disturbance";
+} else if (isArcticLike) {
+  if (weather === "Storm") weatherAudio = ", harsh wind pressure, distant ice crack, frozen surface disturbance";
+  else if (weather === "Winter Blizzard") weatherAudio = ", fierce blizzard wind, snow pelting surfaces";
+  else if (weather === "Frozen Dusk") weatherAudio = ", eerie frozen silence, crystalline wind";
+  else if (weather === "Golden Hour") weatherAudio = ", brittle snow hush, faint icy wind through pines, drifting snow crystals, distant frozen forest stillness";
+} else {
+  if (weather === "Storm") weatherAudio = ", rolling thunder in distance, rain striking foliage";
+  else if (weather === "Winter Blizzard") weatherAudio = ", fierce blizzard wind, snow pelting surfaces";
+  else if (weather === "Frozen Dusk") weatherAudio = ", eerie frozen silence, crystalline wind";
+  else if (weather === "Golden Hour") weatherAudio = ", warm twilight stillness, evening insect chorus";
+}
 
   let animalAudio = "";
   switch (beat) {
