@@ -1222,8 +1222,8 @@ export function buildThumbnailPrompt(
   const tone = emotionalTonePrompt[emotionalTone];
   const vibe = animalVibePrompt[animalVibe];
   return finalizePrompt(
-    `Ultra dramatic wildlife documentary thumbnail close-up of ${predator} and ${prey} in ${env}, ${weatherVariants[weather]}. ${tone.image}. Intense mutual awareness, raw animal instinct, ${lighting}. ${vibe.style}. Photorealistic documentary realism, 9:16 vertical frame.`
-  );
+  `Ultra dramatic wildlife documentary thumbnail close-up of ${predator} and ${prey} in ${env}, ${weatherVariants[weather]}. ${tone.image}. Intense mutual awareness, raw animal instinct. ${vibe.style}. Photorealistic documentary realism, 9:16 vertical frame.`
+);
 }
 
 function withArticle(animal: string): string {
