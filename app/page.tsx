@@ -617,16 +617,14 @@ const [arc, setArc] = useState<Arc>("Pack hunting strategy");
 
       const negativePrompt = buildNegativePrompt(predator);
 
-      const thumbnailPrompt = buildThumbnailPrompt(
-        predator,
-        prey,
-        preset.environment,
-        preset.lighting,
-        weather,
-        emotionalTone,
-        animalVibe
-      );
-
+     const thumbnailPrompt = buildThumbnailPrompt(
+  predator,
+  prey,
+  preset.environment,
+  weather,
+  emotionalTone,
+  animalVibe
+);
       const voiceoverLine = buildVoiceoverLine(predator, prey, preset.environment, emotionalTone);
       const capCutPlan = buildCapCutPlan(predator, finalArc, weather);
       const clipChaining = buildClipChaining(predator, preset.driftRisk);

@@ -1214,16 +1214,31 @@ export function buildThumbnailPrompt(
   predator: string,
   prey: string,
   env: string,
-  lighting: string,
   weather: Weather,
   emotionalTone: EmotionalTone,
   animalVibe: AnimalVibe
 ): string {
   const tone = emotionalTonePrompt[emotionalTone];
   const vibe = animalVibePrompt[animalVibe];
+
+  const envLower = env.toLowerCase();
+  const isArcticLike =
+    envLower.includes("arctic") ||
+    envLower.includes("snow") ||
+    envLower.includes("tundra") ||
+    envLower.includes("ice") ||
+    envLower.includes("glacier") ||
+    envLower.includes("frozen") ||
+    envLower.includes("winter");
+
+  const winterThumbDetail =
+    isArcticLike && weather === "Golden Hour"
+      ? "pale blue snow shadows, drifting frost, visible breath vapor, soft backlight through pine trees, "
+      : "";
+
   return finalizePrompt(
-  `Ultra dramatic wildlife documentary thumbnail close-up of ${predator} and ${prey} in ${env}, ${weatherVariants[weather]}. ${tone.image}. Intense mutual awareness, raw animal instinct. ${vibe.style}. Photorealistic documentary realism, 9:16 vertical frame.`
-);
+    `Ultra dramatic wildlife documentary thumbnail close-up of ${predator} and ${prey} in ${env}, ${weatherVariants[weather]}. ${tone.image}. Intense mutual awareness, raw animal instinct, ${winterThumbDetail}${vibe.style}. Photorealistic documentary realism, 9:16 vertical frame.`
+  );
 }
 
 function withArticle(animal: string): string {
@@ -1694,6 +1709,15 @@ export function buildKlingSixShot(
   const tone = emotionalTonePrompt[emotionalTone];
   const vibe = animalVibePrompt[animalVibe];
   const micro = buildMicroMotionLine(weather, env);
+  const envLower = env.toLowerCase();
+const isArcticLike =
+  envLower.includes("arctic") ||
+  envLower.includes("snow") ||
+  envLower.includes("tundra") ||
+  envLower.includes("ice") ||
+  envLower.includes("glacier") ||
+  envLower.includes("frozen") ||
+  envLower.includes("winter");
 
   const qLead = buildQualityLead(quality, "kling");
   const context = sceneDesc?.trim() ? `\nScene context: ${sceneDesc.trim().slice(0, 150)}` : "";
@@ -1731,23 +1755,32 @@ export function buildKlingSixShot(
   ? "Audio: subtle underwater movement, low current wash, restrained body movement."
   : shoreline
     ? "Audio: subtle shoreline wash, restrained low body movement, wet-ground stillness."
-    : "Audio: heavy controlled breathing, sharp inhale.";
-  const sixShotAudio2 = aquatic
-    ? "Audio: water movement, tension stillness, distant current wash."
-    : shoreline
-      ? "Audio: shallow water movement, bank tension stillness, wet mud ambience."
+    : isArcticLike
+      ? "Audio: cold breath, faint pine wind, tight controlled inhale."
+      : "Audio: heavy controlled breathing, sharp inhale.";
+
+const sixShotAudio2 = aquatic
+  ? "Audio: water movement, tension stillness, distant current wash."
+  : shoreline
+    ? "Audio: shallow water movement, bank tension stillness, wet mud ambience."
+    : isArcticLike
+      ? "Audio: cold mountain wind through pines, winter stillness."
       : "Audio: wind through terrain, tension stillness.";
 
-  const sixShotAudio3 = aquatic
+const sixShotAudio3 = aquatic
   ? "Audio: current pressure shift, water displacement, prey alert movement."
   : shoreline
     ? "Audio: splash pressure shift, muddy bank disturbance, prey alert movement."
-    : `Audio: weight transfer on ground surface, tense animal movement, alert vocalization.`;
+    : isArcticLike
+      ? "Audio: snow crunch under shifting weight, tense movement, alert vocalization."
+      : "Audio: weight transfer on ground surface, tense animal movement, alert vocalization.";
 
-  const sixShotAudio4 = aquatic
-    ? "Audio: alternating water movement, shifting current tension."
-    : shoreline
-      ? "Audio: alternating shallow splash tension, wet-ground disturbance."
+const sixShotAudio4 = aquatic
+  ? "Audio: alternating water movement, shifting current tension."
+  : shoreline
+    ? "Audio: alternating shallow splash tension, wet-ground disturbance."
+    : isArcticLike
+      ? "Audio: sharp alternating breath, faint frozen forest hush."
       : "Audio: rapid alternating breathing patterns.";
 
   return finalizePrompt(`KLING 6-SHOT MULTI-SCENE [${model}] — Native Single-Prompt Format
