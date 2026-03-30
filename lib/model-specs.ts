@@ -134,25 +134,23 @@ export const RUNWAY_MODEL_NOTES: Record<RunwayModel, ModelNote> = {
 
 export const KLING_MODEL_NOTES: Record<KlingModel, ModelNote> = {
   "Kling 3.0 Pro": {
-    official: "Primary-doc refresh needed for exact public feature wording.",            // [Official]
+    official: "Action-focused Kling workflow option used in WSTV.",
     house:    "🆕 Best for action sequences, 15s multi-shot, motion transfer.",
-    // NOTE: '6-shot multi-scene' is a [House] workflow pattern —
-    // not an official named feature. Do not present it as official.
   },
   "Kling 3.0 Standard": {
-    official: "Primary-doc refresh needed for exact public feature wording.",                         // [Official]
+    official: "Balanced Kling workflow option used in WSTV.",
     house:    "🆕 Good balance of quality and speed for daily WSTV schedule.",
   },
   "Kling 2.6 Pro": {
-    official: "Primary-doc refresh needed for exact public feature wording.",                                    // [Official]
+    official: "Earlier Kling workflow option kept for compatibility.",
     house:    "Solid fallback if 3.0 queue is long.",
   },
   "Kling 2.5 Turbo Pro": {
-    official: "Primary-doc refresh needed for exact public feature wording.",                          // [Official]
+    official: "Fast Kling workflow option for lighter motion tests.",
     house:    "Quick motion structure tests only.",
   },
   "Kling 2.5 Turbo": {
-    official: "Primary-doc refresh needed for exact public feature wording.",                                                  // [Official]
+    official: "Fast draft Kling workflow option.",
     house:    "Cheapest option — low-stakes drafts only.",
   },
 };
