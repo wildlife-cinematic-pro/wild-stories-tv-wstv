@@ -2935,19 +2935,19 @@ const klingShots = useMemo(
             </button>
 
             <button
-              type="button"
-              onClick={() =>
-  onCopy(
-    runwayShots
-      .map((s) => extractRunwayPasteReady(s))
-      .filter(Boolean)
-      .join("\n\n---\n\n")
-  )
-}
-              className="rounded-lg border border-blue-200 bg-blue-50 px-3 py-1.5 text-xs font-extrabold text-blue-800 hover:bg-blue-100 active:scale-95"
-            >
-              Copy Kling (SCALE Body)
-            </button>
+  type="button"
+  onClick={() =>
+    onCopy(
+      klingShots
+        .map((s) => extractKlingPromptBody(s))
+        .filter(Boolean)
+        .join("\n\n---\n\n")
+    )
+  }
+  className="rounded-lg border border-blue-200 bg-blue-50 px-3 py-1.5 text-xs font-extrabold text-blue-800 hover:bg-blue-100 active:scale-95"
+>
+  Copy Kling (SCALE Body)
+</button>
           </div>
         </div>
 
@@ -3219,7 +3219,7 @@ const klingShots = useMemo(
           <SectionLabel label="Animal Behavior" />
           <AnimalBehaviorPanel
             behavior={data.animalBehavior}
-            predator="Subject"
+            predator={data.predatorName ?? "Subject"}
             onCopy={onCopy}
           />
         </>
