@@ -2,6 +2,7 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState } from "react";
+import { buildSoundDesignPack, getAnimalBehavior } from "@/lib/workflow-packs";
 
 import type {
   AIProvider,
