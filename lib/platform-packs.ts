@@ -72,10 +72,10 @@ const HOOKS_2026: Partial<Record<Arc, (predator: string, prey: string) => string
     `One refusal to move changed the whole encounter. 👀`,
   ],
   "Giant vs giant clash": (predator, prey) => [
-    `${predator} vs ${prey} — two giants, zero room to back down. 🔥`,
-    `When animals this big collide, timing matters more than size. 👁️`,
-    `This is the kind of clash viewers replay twice. 🎬`,
-  ],
+  `${predator} and ${prey} were too close for either one to back off. 🔥`,
+  `One heavy step turned this into a real collision. 👀`,
+  `When animals this big commit, the impact feels immediate. ⚠️`,
+],
   "Territory dominance battle": (predator, prey) => [
     `The ${prey.toLowerCase()} crossed the wrong boundary. ⚠️`,
     `This is ${predator}'s ground and the ${prey.toLowerCase()} felt it instantly. 🔥`,
