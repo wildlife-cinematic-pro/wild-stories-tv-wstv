@@ -677,6 +677,15 @@ const [arc, setArc] = useState<Arc>("Pack hunting strategy");
 
       const watchTimeReport = buildWatchTimeReport("5-shot", 2);
       const motionStrength = arcMotionStrength[finalArc] ?? 70;
+    const soundDesignPack = buildSoundDesignPack(
+  predator,
+  prey,
+  finalArc,
+  weather,
+  klingModel
+);
+
+const animalBehaviorResult = getAnimalBehavior(predator);
 
       const basePkg: GeneratedPackage = {
         predatorName: predator,
@@ -749,7 +758,9 @@ const [arc, setArc] = useState<Arc>("Pack hunting strategy");
         referenceWorkflow,
         naturalismChecklist,
         modelsUsed: { runway: runwayModel, kling: klingModel },
-        sceneDesc: sceneInject,
+sceneDesc: sceneInject,
+soundDesignPack,
+animalBehavior: animalBehaviorResult ?? undefined,
       };
 
       let enhanced: Partial<GeneratedPackage> = {};
