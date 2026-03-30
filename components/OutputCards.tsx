@@ -111,7 +111,7 @@ export function EngineSpecsPanel() {
       <div className="flex flex-wrap items-center justify-between gap-2">
         <div className="flex flex-wrap items-center gap-2">
           <span className="text-sm font-bold text-gray-900">
-            ⚙️ Engine Specs (Runway verified · Kling pending refresh)
+            ⚙️ Engine Specs (Runway + Kling workflow notes)
           </span>
           <span className="rounded bg-green-100 px-2 py-0.5 text-xs font-bold text-green-700">
             Runway Gen-4.5
@@ -189,8 +189,7 @@ export function EngineSpecsPanel() {
                 Reference-led continuity / Bind Subject workflow
               </p>
               <p>
-                <span className="font-bold">Status:</span> Primary-doc refresh
-                recommended for exact public feature wording
+              <span className="font-bold">Status:</span> Current WSTV Kling workflow reference
               </p>
             </div>
           </div>
