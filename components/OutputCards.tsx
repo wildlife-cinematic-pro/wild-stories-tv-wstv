@@ -2415,7 +2415,7 @@ function WorkflowPromptMap({
         </div>
 
        
-        <div
+       <div
   ref={(el) => {
     stepRefs.current[3] = el;
   }}
@@ -2676,14 +2676,14 @@ export default function OutputCards({
   const onCopy = copyToClipboard;
 
   const runwayShots = useMemo(
-    () => (data.runwayShots ?? []).map((s) => String(s ?? "")),
-    [data.runwayShots]
-  );
+  () => (data.runwayShots ?? []).map((s) => String(s ?? "")),
+  [data.runwayShots]
+);
 
-  const klingShots = useMemo(
-    () => (data.klingShots ?? []).map((s) => String(s ?? "")),
-    [data.klingShots]
-  );
+const klingShots = useMemo(
+  () => (data.klingShots ?? []).map((s) => String(s ?? "")),
+  [data.klingShots]
+);
 
   const versionKey = useMemo(() => {
     const p = data.predatorName ?? "";
@@ -2921,12 +2921,13 @@ export default function OutputCards({
             <button
               type="button"
               onClick={() =>
-                onCopy(
-                  runwayShots
-                    .map((s) => extractRunwayPasteReady(s))
-                    .filter(Boolean)
-                    .join("\n\n---\n\n")
-                )
+  onCopy(
+    runwayShots
+      .map((s) => extractRunwayPasteReady(s))
+      .filter(Boolean)
+      .join("\n\n---\n\n")
+  )
+}
               }
               className="rounded-lg border border-green-200 bg-green-50 px-3 py-1.5 text-xs font-extrabold text-green-800 hover:bg-green-100 active:scale-95"
             >
@@ -2936,13 +2937,13 @@ export default function OutputCards({
             <button
               type="button"
               onClick={() =>
-                onCopy(
-                  klingShots
-                    .map((s) => extractKlingPromptBody(s))
-                    .filter(Boolean)
-                    .join("\n\n---\n\n")
-                )
-              }
+  onCopy(
+    klingShots
+      .map((s) => extractKlingPromptBody(s))
+      .filter(Boolean)
+      .join("\n\n---\n\n")
+  )
+}
               className="rounded-lg border border-blue-200 bg-blue-50 px-3 py-1.5 text-xs font-extrabold text-blue-800 hover:bg-blue-100 active:scale-95"
             >
               Copy Kling (SCALE Body)
