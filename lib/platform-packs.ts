@@ -262,14 +262,17 @@ export function buildCTA(arc: Arc): string {
 
 /** Hashtag string — arc-specific base + animal names appended */
 export function buildHashtags(predator: string, prey: string, arc: Arc): string {
+  const predatorTag = `#${predator.toLowerCase().replace(/\s+/g, "")}`;
+  const preyTag = `#${prey.toLowerCase().replace(/\s+/g, "")}`;
+
   const base =
     USA_HASHTAGS[arc] ??
-    `#wildlife #nature #wolfpack #animalbehavior #wildlifedocumentary #facebookreels #viralreels #predatorprey #yellowstone`;
+    `#wildlife #nature #animalbehavior #wildlifedocumentary #facebookreels #viralreels #predatorprey ${predatorTag} ${preyTag}`;
 
   const tags = [
     ...base.split(/\s+/),
-    `#${predator.toLowerCase().replace(/\s+/g, "")}`,
-    `#${prey.toLowerCase().replace(/\s+/g, "")}`,
+    predatorTag,
+    preyTag,
     "#facebookreels",
   ];
 
