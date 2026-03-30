@@ -941,10 +941,14 @@ export function CalendarPanel({
   );
 
   const inputKey = `${predator}|${prey}|${arc}|${monthCursor.getTime()}|${mode}`;
+const lastInputKeyRef = useRef(inputKey);
 
-  useEffect(() => {
+if (lastInputKeyRef.current !== inputKey) {
+  lastInputKeyRef.current = inputKey;
+  if (week !== 0) {
     setWeek(0);
-  }, [inputKey]);
+  }
+}
 
   useEffect(() => {
     const timer = window.setInterval(() => {
