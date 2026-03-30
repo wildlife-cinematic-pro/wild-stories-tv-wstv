@@ -488,22 +488,8 @@ const [arc, setArc] = useState<Arc>("Pack hunting strategy");
     if (typeof aa === "boolean") setAutoApplyHighDrift(aa);
   }, []);
 
-  // Persist settings
-  useEffect(() => {
-    writeSettings({
-  activeProvider,
-  realismMode,
-  motionOnlyI2V,
-  referenceLock,
-  singleActionRule,
-  microMotion,
-  heroVeo,
-  autoApplyHighDrift,
-});
-      // ✅ persist auto-apply toggle
-      autoApplyHighDrift,
-    } as Record<string, unknown>);
-  }, [
+ useEffect(() => {
+  writeSettings({
     activeProvider,
     realismMode,
     motionOnlyI2V,
@@ -512,7 +498,17 @@ const [arc, setArc] = useState<Arc>("Pack hunting strategy");
     microMotion,
     heroVeo,
     autoApplyHighDrift,
-  ]);
+  });
+}, [
+  activeProvider,
+  realismMode,
+  motionOnlyI2V,
+  referenceLock,
+  singleActionRule,
+  microMotion,
+  heroVeo,
+  autoApplyHighDrift,
+]);
 
   // ✅ Load custom predators once
   useEffect(() => {
