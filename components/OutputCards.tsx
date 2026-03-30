@@ -3217,11 +3217,11 @@ const klingShots = useMemo(
       {data.animalBehavior && (
         <>
           <SectionLabel label="Animal Behavior" />
-          <AnimalBehaviorPanel
-            behavior={data.animalBehavior}
-            predator={data.predatorName ?? "Subject"}
-            onCopy={onCopy}
-          />
+         <AnimalBehaviorPanel
+  behavior={data.animalBehavior}
+  predator={data.predatorName ?? "Subject"}
+  onCopy={onCopy}
+/>
         </>
       )}
 
