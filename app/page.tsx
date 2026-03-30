@@ -2,7 +2,11 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState } from "react";
-import { buildSoundDesignPack, getAnimalBehavior } from "@/lib/workflow-packs";
+import {
+  buildSoundDesignPack,
+  getAnimalBehavior,
+  buildCapCutScript,
+} from "@/lib/workflow-packs";
 
 import type {
   AIProvider,
@@ -762,7 +766,7 @@ sceneDesc: sceneInject,
 soundDesignPack,
 animalBehavior: animalBehaviorResult ?? undefined,
       };
-
+const capCutScript = buildCapCutScript(basePkg);
       let enhanced: Partial<GeneratedPackage> = {};
 
       if (activeProvider !== "none") {
@@ -794,7 +798,11 @@ animalBehavior: animalBehaviorResult ?? undefined,
         enhanced = { ...(data as Partial<GeneratedPackage>), aiEnhanced: true };
       }
 
-      const finalPkg: GeneratedPackage = { ...enhanced, ...basePkg };
+      const finalPkg: GeneratedPackage = {
+  ...enhanced,
+  ...basePkg,
+  capCutScript,
+};
 
       setPkg(finalPkg);
 
