@@ -2738,40 +2738,145 @@ const klingShots = useMemo(
     return "";
   }
 
-  function buildCopyAllPacksText() {
-    const runway = runwayShots
-      .map((s, i) => `Runway Shot ${i + 1}\n${safeStr(s)}`)
-      .join("\n\n---\n\n");
+ function buildCopyAllPacksText() {
+  const runway = runwayShots
+    .map((s, i) => `Runway Shot ${i + 1}\n${safeStr(s)}`)
+    .join("\n\n---\n\n");
 
-    const kling = klingShots
-      .map((s, i) => `Kling Shot ${i + 1}\n${safeStr(s)}`)
-      .join("\n\n---\n\n");
+  const kling = klingShots
+    .map((s, i) => `Kling Shot ${i + 1}\n${safeStr(s)}`)
+    .join("\n\n---\n\n");
 
-    const calendar = buildCalendarText();
+  const calendar = buildCalendarText();
+  const twoPart = buildTwoPartText();
+  const capCutScript = buildCapCutScriptText();
+  const animalBehavior = buildAnimalBehaviorText();
+  const soundDesign = buildSoundDesignText();
+
+  return [
+    `WSTV EXPORT PACK (Pro 2026)`,
+    `Predator: ${safeStr(data.predatorName)}`,
+    `Prey: ${safeStr(data.preyName)}`,
+    `Arc: ${safeStr(data.arcName)}`,
+    "",
+    `=== RUNWAY PACK (Gen-4.5 | 24/25fps | 720p | NO negatives) ===`,
+    runway || "(none)",
+    "",
+    `=== KLING PACK (3.0 | WSTV action workflow | Negatives OK) ===`,
+    kling || "(none)",
+    "",
+    `=== KLING DIRECT (15s) ===`,
+    safeStr((data as Record<string, unknown>).klingNative15s) || "(none)",
+    "",
+    `=== KLING 6-SHOT (DIRECT) ===`,
+    safeStr((data as Record<string, unknown>).klingSixShot) || "(none)",
+    "",
+    `=== CONTENT CALENDAR (THIS MONTH) ===`,
+    calendar || "(calendar generator not available)",
+    "",
+    twoPart,
+    "",
+    capCutScript,
+    "",
+    animalBehavior,
+    "",
+    soundDesign,
+  ]
+    .filter(Boolean)
+    .join("\n");
+}
+  function buildTwoPartText() {
+    if (!data.twoPartViralOverview) return "";
 
     return [
-      `WSTV EXPORT PACK (Pro 2026)`,
-      `Predator: ${safeStr(data.predatorName)}`,
-      `Prey: ${safeStr(data.preyName)}`,
-      `Arc: ${safeStr(data.arcName)}`,
+      "=== TWO-PART VIRAL PRESET ===",
+      data.twoPartViralOverview
+        ? `OVERVIEW\n${safeStr(data.twoPartViralOverview)}`
+        : "",
+      data.twoPartWorkflowGuide
+        ? `WORKFLOW GUIDE\n${safeStr(data.twoPartWorkflowGuide)}`
+        : "",
+      data.twoPartPart1Hook
+        ? `PART 1 HOOK\n${safeStr(data.twoPartPart1Hook)}`
+        : "",
+      data.twoPartPart1Caption
+        ? `PART 1 CAPTION\n${safeStr(data.twoPartPart1Caption)}`
+        : "",
+      data.twoPartPart1Draft
+        ? `PART 1 DRAFT\n${safeStr(data.twoPartPart1Draft)}`
+        : "",
+      data.twoPartPart1Final
+        ? `PART 1 FINAL\n${safeStr(data.twoPartPart1Final)}`
+        : "",
+      data.twoPartPart2Hook
+        ? `PART 2 HOOK\n${safeStr(data.twoPartPart2Hook)}`
+        : "",
+      data.twoPartPart2Caption
+        ? `PART 2 CAPTION\n${safeStr(data.twoPartPart2Caption)}`
+        : "",
+      data.twoPartPart2Draft
+        ? `PART 2 DRAFT\n${safeStr(data.twoPartPart2Draft)}`
+        : "",
+      data.twoPartPart2Final
+        ? `PART 2 FINAL\n${safeStr(data.twoPartPart2Final)}`
+        : "",
+    ]
+      .filter(Boolean)
+      .join("\n\n");
+  }
+
+  function buildCapCutScriptText() {
+    if (!data.capCutScript) return "";
+
+    return [
+      "=== CAPCUT SCRIPT ===",
+      `Duration: ${data.capCutScript.totalDuration}`,
+      `Aspect Ratio: ${data.capCutScript.aspectRatio}`,
+      `FPS: ${data.capCutScript.fps}`,
+      `Music Mood: ${data.capCutScript.musicMood}`,
       "",
-      `=== RUNWAY PACK (Gen-4.5 | 24/25fps | 720p | NO negatives) ===`,
-      runway || "(none)",
+      ...data.capCutScript.beats.map(
+        (b) =>
+          `[${b.timeIn} → ${b.timeOut}] ${b.shotRef}\n` +
+          `Text: ${b.onScreenText}\n` +
+          `Transition: ${b.transition}\n` +
+          `SFX: ${b.sfx}\n` +
+          `Music: ${b.musicNote}`
+      ),
       "",
-      `=== KLING PACK (3.0 | WSTV action workflow | Negatives OK) ===`,
-      kling || "(none)",
-      "",
-      `=== KLING DIRECT (15s) ===`,
-      safeStr((data as Record<string, unknown>).klingNative15s) || "(none)",
-      "",
-      `=== KLING 6-SHOT (DIRECT) ===`,
-      safeStr((data as Record<string, unknown>).klingSixShot) || "(none)",
-      "",
-      `=== CONTENT CALENDAR (THIS MONTH) ===`,
-      calendar || "(calendar generator not available)",
+      `Export: ${data.capCutScript.exportSettings}`,
     ].join("\n");
   }
 
+  function buildAnimalBehaviorText() {
+    if (!data.animalBehavior) return "";
+
+    return [
+      `=== ANIMAL BEHAVIOR (${safeStr(data.predatorName ?? "Subject")}) ===`,
+      `PRE-ATTACK\n${data.animalBehavior.preAttackSignals.join("\n")}`,
+      `MOTION\n${data.animalBehavior.naturalMotion.join("\n")}`,
+      `SOUND\n${data.animalBehavior.soundDesign.join("\n")}`,
+      `BODY LANGUAGE\n${data.animalBehavior.bodyLanguage.join("\n")}`,
+      `FACTS\n${data.animalBehavior.habitatFacts.join("\n")}`,
+      `PROMPT INJECTION\n${data.animalBehavior.promptInjection}`,
+    ].join("\n\n");
+  }
+
+  function buildSoundDesignText() {
+    if (!data.soundDesignPack) return "";
+
+    return [
+      "=== SOUND DESIGN PACK ===",
+      `Shot 1 Ambient: ${safeStr(data.soundDesignPack.shot1_ambient)}`,
+      `Shot 1 Animal: ${safeStr(data.soundDesignPack.shot1_animal)}`,
+      `Shot 2 Impact: ${safeStr(data.soundDesignPack.shot2_impact)}`,
+      `Shot 2 Animal: ${safeStr(data.soundDesignPack.shot2_animal)}`,
+      `Shot 3 Resolve: ${safeStr(data.soundDesignPack.shot3_resolve)}`,
+      `Music Mood: ${safeStr(data.soundDesignPack.musicMood)}`,
+      `Kling Audio Prompt:\n${safeStr(data.soundDesignPack.klingAudioPrompt)}`,
+      `CapCut SFX:\n${data.soundDesignPack.capCutSFX.join("\n")}`,
+    ].join("\n\n");
+  }
   function buildExportTxtFull() {
     const packs = buildCopyAllPacksText();
 
