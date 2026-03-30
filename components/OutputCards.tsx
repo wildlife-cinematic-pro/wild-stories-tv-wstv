@@ -90,7 +90,7 @@ export function EngineSpecsPanel() {
     <div className="rounded-xl border border-gray-200 bg-gray-50 p-4 shadow-sm">
       <div className="flex flex-wrap items-center justify-between gap-2">
         <div className="flex flex-wrap items-center gap-2">
-          <span className="text-sm font-bold text-gray-900">⚙️ Engine Specs (Official 2026)</span>
+          <span className="text-sm font-bold text-gray-900">⚙️ Engine Specs (Runway verified · Kling pending refresh)</span>
           <span className="rounded bg-green-100 px-2 py-0.5 text-xs font-bold text-green-700">Runway Gen-4.5</span>
           <span className="rounded bg-blue-100 px-2 py-0.5 text-xs font-bold text-blue-700">Kling 3.0</span>
         </div>
@@ -111,17 +111,14 @@ export function EngineSpecsPanel() {
             </div>
           </div>
           <div className="rounded-xl border border-blue-200 bg-blue-50 p-3">
-            <p className="mb-2 text-xs font-extrabold text-blue-900">🔵 Kling 3.0 (Official)</p>
+            <p className="mb-2 text-xs font-extrabold text-blue-900">🔵 Kling 3.0 (Current WSTV workflow)</p>
             <div className="space-y-1.5 text-xs text-blue-800">
-              <p><span className="font-bold">Resolution:</span> Native 4K (3840×2160)</p>
-              <p><span className="font-bold">FPS:</span> Up to 60fps</p>
-              <p><span className="font-bold">Duration:</span> 3–15 seconds</p>
-              <p><span className="font-bold">Multi-shot:</span> Up to 6 shots per prompt</p>
-              <p><span className="font-bold">Native Audio:</span> ✅ Dialogue, ambient, SFX</p>
-              <p><span className="font-bold">Negative Prompts:</span> ✅ Supported + recommended</p>
-              <p><span className="font-bold">Motion Intensity:</span> 0.1–1.0</p>
-              <p><span className="font-bold">Identity Lock:</span> Elements 3.0 (Bind Subject)</p>
-              <p><span className="font-bold">Frame Control:</span> Start + End frame</p>
+              <p><span className="font-bold">Role:</span> WSTV action-focused workflow engine</p>
+<p><span className="font-bold">Use case:</span> Full-body physics, strike beats, multi-shot experiments</p>
+<p><span className="font-bold">Prompting:</span> SCALE-style action prompting in WSTV</p>
+<p><span className="font-bold">Negative prompts:</span> Used in WSTV Kling workflow</p>
+<p><span className="font-bold">Identity workflow:</span> Reference-led continuity / Bind Subject workflow</p>
+<p><span className="font-bold">Status:</span> Primary-doc refresh recommended for exact public feature wording</p>
             </div>
           </div>
         </div>
@@ -2193,9 +2190,9 @@ function WorkflowPromptMap({
           <WorkflowCard
             step={6}
             title={`Negative Prompt — ${(data as Record<string, unknown>).predator ?? "Predator"}`}
-            badge="Kling / Flux / MJ only"
+            badge="Kling / image models only"
             color={{ border: "border-red-400", bg: "bg-red-50", badge: "bg-red-100 text-red-700" }}
-            help="Use in Kling/Flux/MJ negative prompt field. Do NOT use in Runway Gen-4.5."
+            help="Use in Kling or supported image-model negative prompt fields. Do NOT use in Runway Gen-4.5."
             done={done[6]}
             onToggle={() => toggle(6)}
           >
@@ -2307,7 +2304,7 @@ function buildCopyAllPacksText() {
   `=== RUNWAY PACK (Gen-4.5 | 24/25fps | 720p | NO negatives) ===`,
   runway || "(none)",
   "",
-  `=== KLING PACK (3.0 | 4K@60fps | Negatives OK | Bind Subject) ===`,
+  `=== KLING PACK (3.0 | WSTV action workflow | Negatives OK) ===`,
   kling || "(none)",
   "",
   `=== KLING DIRECT (15s) ===`,
@@ -2369,6 +2366,9 @@ function exportTxt() {
   return (
     <div className="space-y-6">
       <EngineSpecsPanel />
+      <div className="mt-3 rounded-lg border border-blue-200 bg-blue-50 p-3 text-xs text-blue-800">
+  Meta Reels export: 9:16 vertical, audio on, and keep important text inside the safe zone.
+</div>
       <SectionLabel label="WSTV Workflow Prompt Map" />
       <WorkflowPromptMap data={data} onCopy={onCopy} />
       <div className="flex flex-wrap gap-2">
@@ -2406,7 +2406,7 @@ function exportTxt() {
 
       {data.negativePrompt && (
         <Card
-          title="🚫 Negative Prompt (Kling / MJ only)"
+          title="🚫 Negative Prompt (Kling / image models only, not Runway)"
           value={data.negativePrompt}
           onCopy={onCopy}
           accent="border-l-red-400"
@@ -2483,7 +2483,7 @@ function exportTxt() {
       <div className="mb-2 flex items-center justify-between gap-2">
         <div className="text-sm font-extrabold text-blue-900">Kling Shots</div>
         <span className="rounded-full bg-white px-2 py-0.5 text-[11px] font-bold text-blue-700 ring-1 ring-blue-200">
-          Kling 3.0 | 4K@60fps | Audio
+          Kling 3.0 | Action workflow | Audio-capable
         </span>
       </div>
 
@@ -2520,7 +2520,7 @@ function exportTxt() {
         </span>
 
         <span className="rounded-full bg-amber-100 px-2 py-0.5 text-[11px] font-extrabold text-amber-800 ring-1 ring-amber-200">
-          4K@60fps | Native Audio
+          Action-ready | Audio-capable
         </span>
       </div>
     </div>
@@ -2574,14 +2574,14 @@ function exportTxt() {
         </span>
 
         <span className="rounded-full bg-amber-100 px-2 py-0.5 text-[11px] font-extrabold text-amber-800 ring-1 ring-amber-200">
-          Official 2026 feature
+          Current WSTV workflow
         </span>
       </div>
     </div>
 
     {/* Description */}
     <p className="mb-3 text-xs leading-relaxed text-indigo-800">
-      <span className="font-extrabold">Official multi-shot flow:</span>{" "}
+      <span className="font-extrabold">WSTV multi-shot flow:</span>{" "}
       Macro close-up → Wide establishing → Profile tracking → Shot-reverse-shot →
       Action wide → Winner aftermath. एकै prompt ले 6 cinematic shots generate गर्छ —
       subject identity सबै shots मा locked हुन्छ।

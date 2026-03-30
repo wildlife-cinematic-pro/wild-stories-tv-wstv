@@ -30,7 +30,7 @@
 //   • Avoid negative phrasing ("the camera doesn't move").
 //   • Runway Characters feature available for consistency.
 //
-// KLING 3.0 [Official — Kuaishou/Kling docs, Feb 2026]:
+// KLING 3.0 [WSTV current workflow notes — primary-doc refresh recommended]:
 //   • Resolution: Native 4K (3840×2160) at up to 60fps.
 //   • Duration: 3–15 seconds per generation.
 //   • Multi-shot: Up to 6 shots in a single prompt.
@@ -93,7 +93,7 @@ export const RUNWAY_SPECS = {
   chainingMethod: "Extract last frame → use as I2V input for next generation.",
 } as const;
 
-/** Kling 3.0 official constraints */
+/** Kling 3.0 current WSTV constraints (primary-doc refresh recommended) */
 export const KLING_SPECS = {
   resolution: "Native 4K (3840×2160)" as const,
   fpsMax: 60 as const,
@@ -150,8 +150,9 @@ export function sanitizeRunwayNegative(prompt: string): string {
 
 /** Full Runway prompt sanitizer (apply before final output) */
 export function sanitizeRunwayPrompt(prompt: string): string {
-  const out = sanitizeRunwayFPS(prompt);
-  return out;
+  const a = sanitizeRunwayFPS(prompt);
+  const b = sanitizeRunwayNegative(a);
+  return b.replace(/\s{2,}/g, " ").trim();
 }
 
 // ─────────────────────────────────────────────────────────────
@@ -1143,7 +1144,10 @@ export function buildImagePrompt(
     return finalizeImagePrompt(`${qLead} ${A} ${B_ref} ${C} ${D} ${E_ref}`, target);
   }
 
-  if (target === "NANO_BANANA_2") {
+  // House structure aligned to Gemini image-generation guidance:
+// start with clear subject/context/action, then add composition,
+// lighting, and style details for stronger visual control.
+if (target === "NANO_BANANA_2") {
   const arcPhrase = /^[aeiou]/i.test(getSafeArcLabel(arc))
     ? `an ${getSafeArcLabel(arc)}`
     : `a ${getSafeArcLabel(arc)}`;
@@ -1678,7 +1682,7 @@ Motion intensities: Shot 1 → ${mi1.toFixed(2)} | Shot 2 → ${mi2.toFixed(2)} 
 ${body}
 
 ─────────────────────────────────────────────────────────
-HOW TO USE (Kling 3.0 Official Workflow):
+HOW TO USE (Kling 3.0 WSTV Workflow):
 1. Generate master image first (Image Prompt → NB2/Flux).
 2. Upload master image as reference in Kling 3.0 Pro/Standard.
 3. Enable "Bind Subject" (Elements 3.0) for identity lock.
@@ -1836,7 +1840,7 @@ Camera: LOCKED FIXED WIDE — full bodies visible; no crop; no close-ups.
 ${buildKlingAudioPrompt(predator, prey, env, weather, arc, "aftermath")}
 
 ──────────────────────────────────────────────────────
-HOW TO USE (Kling 3.0 Official 6-Shot Workflow):
+HOW TO USE (Kling 3.0 WSTV 6-Shot Workflow):
 1. Generate master image (Image Prompt).
 2. Upload master image as reference.
 3. Enable "Bind Subject" (Elements 3.0) for identity lock.

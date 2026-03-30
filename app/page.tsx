@@ -615,7 +615,7 @@ const [arc, setArc] = useState<Arc>("Pack hunting strategy");
         quality
       );
 
-      const negativePrompt = buildNegativePrompt(predator);
+      const negativePromptForKling = buildNegativePrompt(predator);
 
      const thumbnailPrompt = buildThumbnailPrompt(
   predator,
@@ -680,7 +680,7 @@ const [arc, setArc] = useState<Arc>("Pack hunting strategy");
         arcName: finalArc,
 
         imagePrompt,
-        negativePrompt,
+        negativePrompt: negativePromptForKling,
         thumbnailPrompt,
         voiceoverLine,
 
@@ -1140,14 +1140,14 @@ const [arc, setArc] = useState<Arc>("Pack hunting strategy");
                       title={m}
                       subtitle={
                         m === "Kling 3.0 Pro"
-                          ? "Flagship — native 4K@60fps, full physics, audio, Start/End Frame, 6-shot multi-scene"
+                          ? "Strong action workflow — reference-led continuity, audio-capable, multi-shot friendly"
                           : m === "Kling 3.0 Standard"
-                            ? "Strong motion + audio, Start/End Frame"
+  ? "Balanced action workflow — strong motion, reference-friendly"
                             : m === "Kling 2.6 Pro"
-                              ? "Image/Text to Video + audio"
-                              : m === "Kling 2.5 Turbo Pro"
-                                ? "Fast — Start/End Frame"
-                                : "Fast — Image to Video"
+  ? "Earlier Kling workflow option"
+  : m === "Kling 2.5 Turbo Pro"
+    ? "Fast draft workflow"
+    : "Fast image-to-video draft option"
                       }
                       onClick={() => setKlingModel(m)}
                     />

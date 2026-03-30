@@ -87,11 +87,11 @@ export const KLING_STYLE_NOTE: Record<KlingModel, string> = {
   "Kling 3.0 Pro":
     // [Official] native audio, Start/End Frame, motion control
     // [House] best for action sequences and body mechanics
-    "Kling 3.0 Pro: flagship — native audio, Start/End Frame, motion control. Describe body mechanics, weight, impact forces, environmental reaction in full detail.",
+  "Kling 3.0 Pro: WSTV action workflow — describe body mechanics, weight, impact forces, and environmental reaction in full detail.",
 
   "Kling 3.0 Standard":
     // [Official] native audio, Start/End Frame
-    "Kling 3.0 Standard: strong motion + audio + Start/End Frame. Describe primary action, weight, and environmental reaction.",
+    "Kling 3.0 Standard: balanced WSTV motion workflow — describe primary action, weight, and environmental reaction.",
 
   "Kling 2.6 Pro":
     // [Official] Image/Text to Video + audio
@@ -113,7 +113,7 @@ export const KLING_STYLE_NOTE: Record<KlingModel, string> = {
 // .official — .house recommendations stay stable.
 // ─────────────────────────────────────────────────────────────
 export type ModelNote = {
-  official: string; // confirmed by official docs
+  official: string; // confirmed by official docs:
   house:    string; // creator-practice recommendation
 };
 
@@ -134,25 +134,25 @@ export const RUNWAY_MODEL_NOTES: Record<RunwayModel, ModelNote> = {
 
 export const KLING_MODEL_NOTES: Record<KlingModel, ModelNote> = {
   "Kling 3.0 Pro": {
-    official: "Native audio generation, Start/End Frame, motion control.",             // [Official]
+    official: "Primary-doc refresh needed for exact public feature wording.",            // [Official]
     house:    "🆕 Best for action sequences, 15s multi-shot, motion transfer.",
     // NOTE: '6-shot multi-scene' is a [House] workflow pattern —
     // not an official named feature. Do not present it as official.
   },
   "Kling 3.0 Standard": {
-    official: "Native audio, Start/End Frame, strong motion.",                         // [Official]
+    official: "Primary-doc refresh needed for exact public feature wording.",                         // [Official]
     house:    "🆕 Good balance of quality and speed for daily WSTV schedule.",
   },
   "Kling 2.6 Pro": {
-    official: "Image/Text to Video with audio.",                                       // [Official]
+    official: "Primary-doc refresh needed for exact public feature wording.",                                    // [Official]
     house:    "Solid fallback if 3.0 queue is long.",
   },
   "Kling 2.5 Turbo Pro": {
-    official: "Fast generation, Start/End Frame supported.",                           // [Official]
+    official: "Primary-doc refresh needed for exact public feature wording.",                          // [Official]
     house:    "Quick motion structure tests only.",
   },
   "Kling 2.5 Turbo": {
-    official: "Fast Image to Video.",                                                  // [Official]
+    official: "Primary-doc refresh needed for exact public feature wording.",                                                  // [Official]
     house:    "Cheapest option — low-stakes drafts only.",
   },
 };
@@ -167,7 +167,7 @@ export const KLING_MODEL_NOTES: Record<KlingModel, ModelNote> = {
 // ─────────────────────────────────────────────────────────────
 export const TIMELINE_BASE_FPS: Record<Engine | "VEO" | "SORA", string> = {
   RUNWAY: "24fps native — set CapCut project to 24fps to match source",
-  KLING:  "Up to 60fps (Kling 3.0) — use 24fps for cinematic; 60fps only for social action clips",
+  KLING:  "Use 24fps for cinematic editing; higher frame-rate social exports can be used for action clips",
   VEO:    "24fps cinematic native — match 24fps in editor",
   SORA:   "24fps standard — export to 30fps at final platform upload step only",
 };
@@ -223,16 +223,16 @@ export const arcMotionStrength: Record<Arc, number> = {
 };
 
 // ─────────────────────────────────────────────────────────────
-// ARC CFG SCALE  (Kling 3.0 — 0.0–1.0 range)
+// ARC CFG SCALE  (WSTV Kling workflow — 0.0–1.0 guidance range)
 //
-// [Official — Kling 3.0 guide]:
-//   CFG Scale 0.0–1.0 (not "Motion Strength" — different control).
-//   0.0 = Kling full creativity | 1.0 = strict prompt follow.
+// [WSTV workflow note]:
+//   CFG-style control treated in WSTV as a 0.0–1.0 guidance range.
+//   Reconfirm exact public wording from primary Kling docs when available.
 //
 // [House] Wildlife sweet spot: 0.4–0.65
 //   Per-shot offsets:
 //     Shot 1 = base − 0.10  (gentler establishing shot)
-//     Shot 2 = base          (peak action beat)
+//     Shot 2 = base         (peak action beat)
 //     Shot 3 = base − 0.15  (minimal aftermath)
 // ─────────────────────────────────────────────────────────────
 export const arcCfgScale: Record<Arc, number> = {
