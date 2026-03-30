@@ -142,9 +142,33 @@ export function sanitizeRunwayFPS(prompt: string): string {
 
 /** Strips negative-prompt-like phrasing from Runway prompts */
 export function sanitizeRunwayNegative(prompt: string): string {
-  return prompt
-    .replace(/\b(no|never|don't|do not|avoid|without)\s+[^,.;]+/gi, "")
+  const negativeStart = /^(?:no|never|avoid|do not|don't)\b/i;
+
+  const sentences = prompt.match(/[^.!?]+[.!?]?/g) ?? [prompt];
+
+  const kept = sentences.filter((sentence) => {
+    const trimmed = sentence.trim();
+    if (!trimmed) return false;
+
+    const normalized = trimmed.replace(/^[–—-]\s*/, "");
+    if (!negativeStart.test(normalized)) return true;
+
+    const body = normalized.replace(/[.!?]+$/, "");
+    const parts = body
+      .split(/[;,]/)
+      .map((part) => part.trim())
+      .filter(Boolean);
+
+    const allNegative =
+      parts.length > 0 && parts.every((part) => negativeStart.test(part));
+
+    return !allNegative;
+  });
+
+  return kept
+    .join(" ")
     .replace(/\s{2,}/g, " ")
+    .replace(/\s+([,.;!?])/g, "$1")
     .trim();
 }
 
