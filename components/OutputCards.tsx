@@ -3205,6 +3205,55 @@ const klingShots = useMemo(
           <PlatformPackPanel pack={data.platformPack} onCopy={onCopy} />
         </>
       )}
+      {data.twoPartViralOverview && (
+  <>
+    <SectionLabel label="Two-Part Viral Preset" />
+
+    <Card
+      title="🎯 Two-Part Viral Overview"
+      value={data.twoPartViralOverview}
+      onCopy={onCopy}
+      accent="border-l-rose-500"
+    />
+
+    {data.twoPartWorkflowGuide && (
+      <Card
+        title="🧭 Two-Part Workflow Guide"
+        value={data.twoPartWorkflowGuide}
+        onCopy={onCopy}
+        accent="border-l-pink-500"
+      />
+    )}
+
+    <Card
+      title="🔥 Part 1 — Hook + Collision Cliffhanger"
+      value={[
+        data.twoPartPart1Hook ? `Hook:\n${data.twoPartPart1Hook}` : "",
+        data.twoPartPart1Caption ? `Caption:\n${data.twoPartPart1Caption}` : "",
+        data.twoPartPart1Draft ? `Draft Prompt:\n${data.twoPartPart1Draft}` : "",
+        data.twoPartPart1Final ? `Final Prompt:\n${data.twoPartPart1Final}` : "",
+      ]
+        .filter(Boolean)
+        .join("\n\n")}
+      onCopy={onCopy}
+      accent="border-l-orange-500"
+    />
+
+    <Card
+      title="👑 Part 2 — Payoff + Winner Walk"
+      value={[
+        data.twoPartPart2Hook ? `Hook:\n${data.twoPartPart2Hook}` : "",
+        data.twoPartPart2Caption ? `Caption:\n${data.twoPartPart2Caption}` : "",
+        data.twoPartPart2Draft ? `Draft Prompt:\n${data.twoPartPart2Draft}` : "",
+        data.twoPartPart2Final ? `Final Prompt:\n${data.twoPartPart2Final}` : "",
+      ]
+        .filter(Boolean)
+        .join("\n\n")}
+      onCopy={onCopy}
+      accent="border-l-amber-500"
+    />
+  </>
+)}
 
       {data.capCutScript && (
         <>
