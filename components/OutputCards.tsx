@@ -941,14 +941,13 @@ export function CalendarPanel({
   );
 
   const inputKey = `${predator}|${prey}|${arc}|${monthCursor.getTime()}|${mode}`;
-const lastInputKeyRef = useRef(inputKey);
 
-if (lastInputKeyRef.current !== inputKey) {
-  lastInputKeyRef.current = inputKey;
-  if (week !== 0) {
-    setWeek(0);
-  }
-}
+  useEffect(() => {
+    if (week !== 0) {
+      const id = window.setTimeout(() => setWeek(0), 0);
+      return () => window.clearTimeout(id);
+    }
+  }, [inputKey, week]);
 
   useEffect(() => {
     const timer = window.setInterval(() => {
@@ -961,6 +960,7 @@ if (lastInputKeyRef.current !== inputKey) {
           : fresh
       );
     }, 60_000);
+
     return () => window.clearInterval(timer);
   }, []);
 
@@ -979,15 +979,18 @@ if (lastInputKeyRef.current !== inputKey) {
           monthCursor
         );
 
-  const weeks = Array.from({ length: Math.ceil(calendar.length / 7) }, (_, i) =>
-    calendar.slice(i * 7, i * 7 + 7)
+  const weeks = Array.from(
+    { length: Math.ceil(calendar.length / 7) },
+    (_, i) => calendar.slice(i * 7, i * 7 + 7)
   );
+
+  const safeWeek = Math.min(week, Math.max(weeks.length - 1, 0));
+
   const weekLabels = weeks.map(
     (w, i) =>
-      `Week ${i + 1} (${w[0]?.dateLabel ?? ""}–${
-        w[w.length - 1]?.dateLabel ?? ""
-      })`
+      `Week ${i + 1} (${w[0]?.dateLabel ?? ""}–${w[w.length - 1]?.dateLabel ?? ""})`
   );
+
   const monthLabel = monthCursor.toLocaleDateString(undefined, {
     month: "long",
     year: "numeric",
@@ -1038,17 +1041,17 @@ if (lastInputKeyRef.current !== inputKey) {
               USA Viral 30D
             </button>
           </div>
+
           <button
             onClick={() =>
-              setMonthCursor(
-                (p) => new Date(p.getFullYear(), p.getMonth() - 1, 1)
-              )
+              setMonthCursor((p) => new Date(p.getFullYear(), p.getMonth() - 1, 1))
             }
             className="rounded-lg border border-teal-300 bg-white px-3 py-1.5 text-xs font-semibold text-teal-700 hover:bg-teal-50 active:scale-95"
             type="button"
           >
             ← Prev
           </button>
+
           <button
             onClick={() => {
               const n = new Date();
@@ -1059,17 +1062,17 @@ if (lastInputKeyRef.current !== inputKey) {
           >
             Today
           </button>
+
           <button
             onClick={() =>
-              setMonthCursor(
-                (p) => new Date(p.getFullYear(), p.getMonth() + 1, 1)
-              )
+              setMonthCursor((p) => new Date(p.getFullYear(), p.getMonth() + 1, 1))
             }
             className="rounded-lg border border-teal-300 bg-white px-3 py-1.5 text-xs font-semibold text-teal-700 hover:bg-teal-50 active:scale-95"
             type="button"
           >
             Next →
           </button>
+
           <button
             onClick={() => setOpen((o) => !o)}
             className="rounded-lg border border-teal-300 bg-white px-3 py-1.5 text-xs font-semibold text-teal-700 hover:bg-teal-50 active:scale-95"
@@ -1088,7 +1091,7 @@ if (lastInputKeyRef.current !== inputKey) {
                 key={i}
                 onClick={() => setWeek(i)}
                 className={`rounded-lg px-3 py-1.5 text-xs font-semibold transition-all ${
-                  week === i
+                  safeWeek === i
                     ? "bg-teal-600 text-white"
                     : "border border-teal-200 bg-white text-teal-700 hover:bg-teal-50"
                 }`}
@@ -1098,11 +1101,13 @@ if (lastInputKeyRef.current !== inputKey) {
               </button>
             ))}
           </div>
+
           <div className="mb-2 text-xs font-bold text-teal-700">
-            {weeks[week]?.[0]?.theme}
+            {weeks[safeWeek]?.[0]?.theme}
           </div>
+
           <div className="space-y-2">
-            {weeks[week]?.map((day) => (
+            {weeks[safeWeek]?.map((day) => (
               <div
                 key={`${mode}-${day.day}`}
                 className="rounded-lg border border-teal-100 bg-white p-3"
@@ -1118,11 +1123,10 @@ if (lastInputKeyRef.current !== inputKey) {
                     {day.dateLabel}
                   </span>
                 </div>
+
                 <div className="grid gap-2 md:grid-cols-2">
                   <div className="rounded-lg bg-teal-50 p-2">
-                    <p className="mb-1 text-xs font-bold text-teal-700">
-                      🎬 Reel 1
-                    </p>
+                    <p className="mb-1 text-xs font-bold text-teal-700">🎬 Reel 1</p>
                     <p className="text-xs text-gray-700">
                       {day.reel1.predator} vs {day.reel1.prey}
                     </p>
@@ -1133,10 +1137,9 @@ if (lastInputKeyRef.current !== inputKey) {
                       &quot;{day.reel1.hook}&quot;
                     </p>
                   </div>
+
                   <div className="rounded-lg bg-indigo-50 p-2">
-                    <p className="mb-1 text-xs font-bold text-indigo-700">
-                      🎬 Reel 2
-                    </p>
+                    <p className="mb-1 text-xs font-bold text-indigo-700">🎬 Reel 2</p>
                     <p className="text-xs text-gray-700">
                       {day.reel2.predator} vs {day.reel2.prey}
                     </p>
@@ -1148,6 +1151,7 @@ if (lastInputKeyRef.current !== inputKey) {
                     </p>
                   </div>
                 </div>
+
                 <div className="mt-2 rounded bg-yellow-50 px-2 py-1 text-[11px] font-medium text-yellow-800">
                   {day.cmpNote}
                 </div>
