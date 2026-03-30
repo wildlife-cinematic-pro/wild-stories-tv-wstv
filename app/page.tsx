@@ -6,20 +6,8 @@ import {
   buildSoundDesignPack,
   getAnimalBehavior,
   buildCapCutScript,
-  const twoPartViralPreset = shouldBuildTwoPartViralPreset(
-  predator,
-  prey,
-  finalArc
-)
-  ? buildTwoPartViralPreset(
-      predator,
-      prey,
-      preset.environment,
-      weather,
-      finalArc,
-      runwayModel
-    )
-  : null;
+  shouldBuildTwoPartViralPreset,
+  buildTwoPartViralPreset,
 } from "@/lib/workflow-packs";
 
 import type {
@@ -786,6 +774,20 @@ animalBehavior: animalBehaviorResult ?? undefined,
   basePkg,
   "5-shot"
 );
+    const twoPartViralPreset = shouldBuildTwoPartViralPreset(
+  predator,
+  prey,
+  finalArc
+)
+  ? buildTwoPartViralPreset(
+      predator,
+      prey,
+      preset.environment,
+      weather,
+      finalArc,
+      runwayModel
+    )
+  : null;
       let enhanced: Partial<GeneratedPackage> = {};
 
       if (activeProvider !== "none") {
