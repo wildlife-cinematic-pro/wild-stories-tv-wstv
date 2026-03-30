@@ -1205,6 +1205,7 @@ export function buildNegativePrompt(predator: string): string {
     "Komodo Dragon": "wrong scale pattern, scale morphing",
     "Polar Bear": "wrong fur colour, tropical environment, fur colour drift",
     Bobcat: "wrong spot pattern, long tail, marking inconsistency",
+    "Wolf Pack": "pack member drift, inconsistent wolf count, mismatched coat patterns between wolves, merged bodies, extra legs",
     Alligator: "wrong scale pattern, fictional setting, jaw deformation",
   };
 

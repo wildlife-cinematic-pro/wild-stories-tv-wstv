@@ -238,7 +238,7 @@ function ModelCard({
 
 export default function Page() {
   // STEP 1 (basic inputs)
-  const [predator, setPredator] = useState("Wolf");
+  const [predator, setPredator] = useState("Wolf Pack");
 const [prey, setPrey] = useState("Elk");
 const [arc, setArc] = useState<Arc>("Pack hunting strategy");
   const [weather, setWeather] = useState<Weather>("Golden Hour");
@@ -299,7 +299,8 @@ const [arc, setArc] = useState<Arc>("Pack hunting strategy");
   const extra = customPredators.map((p) => p.name);
 
   const usaPriority = [
-    "Wolf",
+  "Wolf Pack",
+  "Wolf",
     "Mountain Lion",
     "Grizzly Bear",
     "Bald Eagle",
@@ -521,12 +522,14 @@ const [arc, setArc] = useState<Arc>("Pack hunting strategy");
 }, [predator, preset.prey]);
 
   async function handleGenerate() {
-    setIsGenerating(true);
-    setError("");
-    setPkg(null);
+  setIsGenerating(true);
+  setError("");
+  setPkg(null);
 
-    try {
-      if (!predator || !prey) throw new Error("Missing predator or prey");
+  try {
+    console.log("GENERATE PREDATOR =", predator);
+
+    if (!predator || !prey) throw new Error("Missing predator or prey");
 
       const finalArc = suggestArc(predator, prey, arc) as Arc;
 
