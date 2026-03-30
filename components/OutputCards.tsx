@@ -2928,7 +2928,7 @@ const klingShots = useMemo(
       .join("\n\n---\n\n")
   )
 }
-              }
+              
               className="rounded-lg border border-green-200 bg-green-50 px-3 py-1.5 text-xs font-extrabold text-green-800 hover:bg-green-100 active:scale-95"
             >
               Copy Runway (Paste-Ready)
@@ -2938,8 +2938,8 @@ const klingShots = useMemo(
               type="button"
               onClick={() =>
   onCopy(
-    klingShots
-      .map((s) => extractKlingPromptBody(s))
+    runwayShots
+      .map((s) => extractRunwayPasteReady(s))
       .filter(Boolean)
       .join("\n\n---\n\n")
   )
