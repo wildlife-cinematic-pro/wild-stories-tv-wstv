@@ -104,6 +104,7 @@ export type StoredSettings = {
   singleActionRule?: boolean;
   microMotion?: boolean;
   heroVeo?: boolean;
+  autoApplyHighDrift?: boolean;
 };
 
 export function readSettings(): StoredSettings {
