@@ -1859,7 +1859,7 @@ Environment: ${
 }.
 ${buildKlingAudioPrompt(predator, prey, env, weather, arc, "action")}
 
-Shot 6 — AFTERMATH WIDE (14–17s) — WIDE | Motion: ${getKlingMotionIntensity(arc, "aftermath").toFixed(2)}:
+Shot 6 — AFTERMATH WIDE (14–15s) — WIDE | Motion: ${getKlingMotionIntensity(arc, "aftermath").toFixed(2)}:
 ${maybeGuard(b6.guardLine)}${predator} ${b6.predatorBeat}. ${prey} ${b6.preyBeat}.
 Camera: LOCKED FIXED WIDE — full bodies visible; no crop; no close-ups.
 ${buildKlingAudioPrompt(predator, prey, env, weather, arc, "aftermath")}
