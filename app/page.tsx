@@ -766,7 +766,6 @@ sceneDesc: sceneInject,
 soundDesignPack,
 animalBehavior: animalBehaviorResult ?? undefined,
       };
-const capCutScript = buildCapCutScript(basePkg);
       let enhanced: Partial<GeneratedPackage> = {};
 
       if (activeProvider !== "none") {
@@ -801,7 +800,6 @@ const capCutScript = buildCapCutScript(basePkg);
       const finalPkg: GeneratedPackage = {
   ...enhanced,
   ...basePkg,
-  capCutScript,
 };
 
       setPkg(finalPkg);
