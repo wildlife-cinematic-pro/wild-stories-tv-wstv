@@ -119,7 +119,9 @@ export function getQualityRecommendations(input: QualityRecommendationInput): Qu
     // keep recommended baseline
   }
 
-  // Model-based hints
+// Model-based hints
+// Show these only when the user is not already dealing with more important warnings.
+if (warnings.length === 0 && level !== "HIGH") {
   if (!isRunway45(input.runwayModel)) {
     warnings.push({
       id: "runway-not-45",
@@ -137,24 +139,30 @@ export function getQualityRecommendations(input: QualityRecommendationInput): Qu
       detail: "Kling Pro is better for physics + character interaction + multi-shot stability.",
     });
   }
+}
 
   // If current settings diverge from recommended, add a “quick fix” warning
   const diverged =
-    input.realismMode !== recommended.realismMode ||
-    input.motionOnlyI2V !== recommended.motionOnlyI2V ||
-    input.referenceLock !== recommended.referenceLock ||
-    input.singleActionRule !== recommended.singleActionRule ||
-    input.microMotion !== recommended.microMotion ||
-    input.heroVeo !== recommended.heroVeo;
+  input.realismMode !== recommended.realismMode ||
+  input.motionOnlyI2V !== recommended.motionOnlyI2V ||
+  input.referenceLock !== recommended.referenceLock ||
+  input.singleActionRule !== recommended.singleActionRule ||
+  input.microMotion !== recommended.microMotion ||
+  input.heroVeo !== recommended.heroVeo;
 
-  if (diverged) {
-    warnings.push({
-      id: "apply-reco",
-      severity: "info",
-      title: "Apply Recommended available",
-      detail: "Your current settings differ from the recommended safe baseline. Click Apply Recommended.",
-    });
-  }
+const criticalDiverged =
+  input.motionOnlyI2V !== recommended.motionOnlyI2V ||
+  input.referenceLock !== recommended.referenceLock ||
+  input.singleActionRule !== recommended.singleActionRule;
+
+if ((level === "MEDIUM" || level === "HIGH") && criticalDiverged) {
+  warnings.push({
+    id: "apply-reco",
+    severity: "info",
+    title: "Apply Recommended available",
+    detail: "Your current settings differ from the recommended safe baseline. Click Apply Recommended.",
+  });
+}
 
   return { level, warnings, why, recommended };
 }
