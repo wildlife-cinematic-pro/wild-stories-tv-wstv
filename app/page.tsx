@@ -764,6 +764,14 @@ sceneDesc: sceneInject,
 soundDesignPack,
 animalBehavior: animalBehaviorResult ?? undefined,
       };
+    const capCutScript = buildCapCutScript(
+  predator,
+  prey,
+  finalArc,
+  weather,
+  basePkg,
+  "5-shot"
+);
       let enhanced: Partial<GeneratedPackage> = {};
 
       if (activeProvider !== "none") {
@@ -798,6 +806,7 @@ animalBehavior: animalBehaviorResult ?? undefined,
       const finalPkg: GeneratedPackage = {
   ...enhanced,
   ...basePkg,
+  capCutScript,
 };
 
       setPkg(finalPkg);
