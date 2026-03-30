@@ -44,41 +44,61 @@ import {
 } from "@/lib/predator-data";
 
 function extractRunwayPasteReady(shotText: string): string {
-  const m = shotText.match(/═══ PASTE-READY I2V PROMPT[^═]*═══\s*\n([\s\S]*?)(?:\n─── SHOT BREAKDOWN|$)/);
+  const m = shotText.match(
+    /═══ PASTE-READY I2V PROMPT[^═]*═══\s*\n([\s\S]*?)(?:\n─── SHOT BREAKDOWN|$)/
+  );
   if (m?.[1]) return m[1].trim();
-  const f = shotText.match(/Paste-ready I2V prompt:\s*\n([\s\S]*?)(?:\nCamera motion:|$)/);
+
+  const f = shotText.match(
+    /Paste-ready I2V prompt:\s*\n([\s\S]*?)(?:\nCamera motion:|$)/
+  );
   if (f?.[1]) return f[1].trim();
+
   return extractMotionOnlyPrompt(shotText);
 }
 
 function extractKlingPromptBody(shotText: string): string {
   const s = String(shotText ?? "");
+  const marker = "═══ KLING PROMPT (WSTV structured format) ═══";
+  const start = s.indexOf(marker);
 
-  // 1) Remove HOW TO USE section + everything after it (including preceding divider)
-  //    Divider uses ─ (U+2500), — (em-dash), or - (hyphen)
+  if (start >= 0) {
+    const afterMarker = s.slice(start + marker.length).trim();
+
+    const endCandidates = [
+      afterMarker.indexOf("\nAudio:"),
+      afterMarker.indexOf("\n\nAudio:"),
+      afterMarker.indexOf("\nKling settings:"),
+      afterMarker.indexOf("\n\nKling settings:"),
+    ].filter((n) => n >= 0);
+
+    const end = endCandidates.length ? Math.min(...endCandidates) : -1;
+    return (end >= 0 ? afterMarker.slice(0, end) : afterMarker).trim();
+  }
+
   let cleaned = s
     .replace(/\n\s*[─—\-═]{5,}\s*\n\s*HOW TO USE\b[\s\S]*$/i, "")
     .trim();
 
-  // 2) Remove the header block (everything before first "Scene:" or "Shot 1")
-  const bodyStart = cleaned.search(/(?:^|\n)\s*(?:Scene:|Shot\s*1\s*[—\-─:])/i);
-  if (bodyStart > 0) {
+  const bodyStart = cleaned.search(
+    /(?:^|\n)\s*(?:Scene:|Shot\s*:|Shot\s*1\s*[—\-─:])/i
+  );
+  if (bodyStart >= 0) {
     cleaned = cleaned.slice(bodyStart).trim();
   }
 
-  // 3) Remove any trailing divider lines that might remain
   cleaned = cleaned.replace(/\n\s*[─—\-═]{5,}\s*$/g, "").trim();
-
-  // 4) If nothing matched, return original minus HOW TO USE
-  if (!cleaned) {
-    return s.replace(/\n\s*[─—\-═]{5,}\s*\n\s*HOW TO USE\b[\s\S]*$/i, "").trim();
-  }
-
   return cleaned;
 }
 
+function extractImagePromptBody(promptText: string): string {
+  return String(promptText ?? "").trim();
+}
+
 function extractKlingAudioPrompt(shotText: string): string {
-  const m = shotText.match(/Audio:\s*(.*?)(?:\n|$)/);
+  const m = String(shotText ?? "").match(
+    /\nAudio:\s*([\s\S]*?)(?:\n\s*Kling settings:|$)/i
+  );
   return m?.[1]?.trim() ?? "";
 }
 
@@ -90,35 +110,88 @@ export function EngineSpecsPanel() {
     <div className="rounded-xl border border-gray-200 bg-gray-50 p-4 shadow-sm">
       <div className="flex flex-wrap items-center justify-between gap-2">
         <div className="flex flex-wrap items-center gap-2">
-          <span className="text-sm font-bold text-gray-900">⚙️ Engine Specs (Runway verified · Kling pending refresh)</span>
-          <span className="rounded bg-green-100 px-2 py-0.5 text-xs font-bold text-green-700">Runway Gen-4.5</span>
-          <span className="rounded bg-blue-100 px-2 py-0.5 text-xs font-bold text-blue-700">Kling 3.0</span>
+          <span className="text-sm font-bold text-gray-900">
+            ⚙️ Engine Specs (Runway verified · Kling pending refresh)
+          </span>
+          <span className="rounded bg-green-100 px-2 py-0.5 text-xs font-bold text-green-700">
+            Runway Gen-4.5
+          </span>
+          <span className="rounded bg-blue-100 px-2 py-0.5 text-xs font-bold text-blue-700">
+            Kling 3.0
+          </span>
         </div>
-        <button onClick={() => setOpen((o) => !o)} className="rounded-lg border border-gray-300 bg-white px-3 py-1.5 text-xs font-semibold text-gray-700 hover:bg-gray-50 active:scale-95" type="button">{open ? "Hide ▲" : "Show ▼"}</button>
+        <button
+          onClick={() => setOpen((o) => !o)}
+          className="rounded-lg border border-gray-300 bg-white px-3 py-1.5 text-xs font-semibold text-gray-700 hover:bg-gray-50 active:scale-95"
+          type="button"
+        >
+          {open ? "Hide ▲" : "Show ▼"}
+        </button>
       </div>
       {open && (
         <div className="mt-3 grid gap-3 md:grid-cols-2">
           <div className="rounded-xl border border-green-200 bg-green-50 p-3">
-            <p className="mb-2 text-xs font-extrabold text-green-900">🟢 Runway Gen-4.5 (Official)</p>
+            <p className="mb-2 text-xs font-extrabold text-green-900">
+              🟢 Runway Gen-4.5 (Official)
+            </p>
             <div className="space-y-1.5 text-xs text-green-800">
-              <p><span className="font-bold">FPS:</span> 24 or 25 only</p>
-              <p><span className="font-bold">Duration:</span> 2–10 seconds</p>
-              <p><span className="font-bold">Output:</span> 720p (built-in 4K upscale)</p>
-              <p><span className="font-bold">I2V Rule:</span> MOTION-ONLY. Image carries identity.</p>
-              <p><span className="font-bold">Negative Prompts:</span> ❌ NOT supported</p>
-              <p><span className="font-bold">Structure:</span> [Camera] [subject] [action] in [env]</p>
-              <p><span className="font-bold">Chaining:</span> Extract last frame → I2V input</p>
+              <p>
+                <span className="font-bold">FPS:</span> 24 or 25 only
+              </p>
+              <p>
+                <span className="font-bold">Duration:</span> 2–10 seconds
+              </p>
+              <p>
+                <span className="font-bold">Output:</span> 720p (built-in 4K
+                upscale)
+              </p>
+              <p>
+                <span className="font-bold">I2V Rule:</span> MOTION-ONLY. Image
+                carries identity.
+              </p>
+              <p>
+                <span className="font-bold">Negative Prompts:</span> ❌ NOT
+                supported
+              </p>
+              <p>
+                <span className="font-bold">Structure:</span> [Camera] [subject]
+                [action] in [env]
+              </p>
+              <p>
+                <span className="font-bold">Chaining:</span> Extract last frame
+                → I2V input
+              </p>
             </div>
           </div>
           <div className="rounded-xl border border-blue-200 bg-blue-50 p-3">
-            <p className="mb-2 text-xs font-extrabold text-blue-900">🔵 Kling 3.0 (Current WSTV workflow)</p>
+            <p className="mb-2 text-xs font-extrabold text-blue-900">
+              🔵 Kling 3.0 (Current WSTV workflow)
+            </p>
             <div className="space-y-1.5 text-xs text-blue-800">
-              <p><span className="font-bold">Role:</span> WSTV action-focused workflow engine</p>
-<p><span className="font-bold">Use case:</span> Full-body physics, strike beats, multi-shot experiments</p>
-<p><span className="font-bold">Prompting:</span> SCALE-style action prompting in WSTV</p>
-<p><span className="font-bold">Negative prompts:</span> Used in WSTV Kling workflow</p>
-<p><span className="font-bold">Identity workflow:</span> Reference-led continuity / Bind Subject workflow</p>
-<p><span className="font-bold">Status:</span> Primary-doc refresh recommended for exact public feature wording</p>
+              <p>
+                <span className="font-bold">Role:</span> WSTV action-focused
+                workflow engine
+              </p>
+              <p>
+                <span className="font-bold">Use case:</span> Full-body physics,
+                strike beats, multi-shot experiments
+              </p>
+              <p>
+                <span className="font-bold">Prompting:</span> SCALE-style action
+                prompting in WSTV
+              </p>
+              <p>
+                <span className="font-bold">Negative prompts:</span> Used in
+                WSTV Kling workflow
+              </p>
+              <p>
+                <span className="font-bold">Identity workflow:</span>{" "}
+                Reference-led continuity / Bind Subject workflow
+              </p>
+              <p>
+                <span className="font-bold">Status:</span> Primary-doc refresh
+                recommended for exact public feature wording
+              </p>
             </div>
           </div>
         </div>
@@ -129,43 +202,97 @@ export function EngineSpecsPanel() {
 
 // === NEW: Pro Shot Card (Copy FULL / Copy BODY / Audio) ===
 
-function ProShotCard({ engine, index, shot, onCopy }: { engine: "runway" | "kling"; index: number; shot: string; onCopy: (t: string) => void }) {
+function ProShotCard({
+  engine,
+  index,
+  shot,
+  onCopy,
+}: {
+  engine: "runway" | "kling";
+  index: number;
+  shot: string;
+  onCopy: (t: string) => void;
+}) {
   const isRunway = engine === "runway";
-  const pasteReady = isRunway ? extractRunwayPasteReady(shot) : extractKlingPromptBody(shot);
+  const pasteReady = isRunway
+    ? extractRunwayPasteReady(shot)
+    : extractKlingPromptBody(shot);
+
   const audioPrompt = !isRunway ? extractKlingAudioPrompt(shot) : "";
   const miMatch = shot.match(/Motion intensity:\s*([\d.]+)/);
   const motionIntensity = miMatch ? parseFloat(miMatch[1]) : null;
   const borderColor = isRunway ? "border-green-200" : "border-blue-200";
-  const btnColor = isRunway ? "bg-green-700 hover:bg-green-800" : "bg-blue-700 hover:bg-blue-800";
+  const btnColor = isRunway
+    ? "bg-green-700 hover:bg-green-800"
+    : "bg-blue-700 hover:bg-blue-800";
   const engineLabel = isRunway ? "Runway" : "Kling";
 
   return (
     <div className={`rounded-xl border ${borderColor} bg-white p-3`}>
       <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
         <div className="flex flex-wrap items-center gap-2">
-          <div className="text-xs font-extrabold text-gray-900">🎬 {engineLabel} Shot {index + 1}</div>
-          {motionIntensity !== null && <span className="rounded-full bg-indigo-100 px-2 py-0.5 text-[10px] font-bold text-indigo-700">MI: {motionIntensity.toFixed(2)}</span>}
-          {isRunway && <span className="rounded-full bg-yellow-100 px-1.5 py-0.5 text-[10px] font-bold text-yellow-700">No negative prompt</span>}
+          <div className="text-xs font-extrabold text-gray-900">
+            🎬 {engineLabel} Shot {index + 1}
+          </div>
+          {motionIntensity !== null && (
+            <span className="rounded-full bg-indigo-100 px-2 py-0.5 text-[10px] font-bold text-indigo-700">
+              MI: {motionIntensity.toFixed(2)}
+            </span>
+          )}
+          {isRunway && (
+            <span className="rounded-full bg-yellow-100 px-1.5 py-0.5 text-[10px] font-bold text-yellow-700">
+              No negative prompt
+            </span>
+          )}
         </div>
+
         <div className="flex flex-wrap items-center gap-1">
-          <button type="button" onClick={() => onCopy(shot)} className="rounded border border-gray-300 bg-white px-2 py-1 text-[11px] font-bold text-gray-600 hover:bg-gray-50 active:scale-95" title="Copy full shot with instructions">Copy FULL</button>
-          <button type="button" onClick={() => onCopy(pasteReady)} className={`rounded px-2 py-1 text-[11px] font-bold text-white active:scale-95 ${btnColor}`} title="Copy paste-ready prompt only">Copy BODY</button>
+          <button
+            type="button"
+            onClick={() => onCopy(shot)}
+            className="rounded border border-gray-300 bg-white px-2 py-1 text-[11px] font-bold text-gray-600 hover:bg-gray-50 active:scale-95"
+            title="Copy full shot with instructions"
+          >
+            Copy FULL
+          </button>
+
+          <button
+            type="button"
+            onClick={() => onCopy(pasteReady)}
+            className={`rounded px-2 py-1 text-[11px] font-bold text-white active:scale-95 ${btnColor}`}
+            title="Copy paste-ready prompt only"
+          >
+            Copy BODY
+          </button>
         </div>
       </div>
-      <pre className="max-h-40 overflow-auto whitespace-pre-wrap text-xs leading-relaxed text-gray-900">{shot || "—"}</pre>
+
+      <pre className="max-h-40 overflow-auto whitespace-pre-wrap text-xs leading-relaxed text-gray-900">
+        {shot || "—"}
+      </pre>
+
       {audioPrompt && (
         <div className="mt-2 rounded-lg border border-indigo-200 bg-indigo-50 p-2">
           <div className="flex items-center justify-between gap-2">
-            <span className="text-[10px] font-bold text-indigo-700">🔊 Audio Prompt</span>
-            <button type="button" onClick={() => onCopy(audioPrompt)} className="rounded bg-indigo-600 px-2 py-0.5 text-[10px] font-bold text-white hover:bg-indigo-700 active:scale-95">Copy Audio</button>
+            <span className="text-[10px] font-bold text-indigo-700">
+              🔊 Audio Prompt
+            </span>
+            <button
+              type="button"
+              onClick={() => onCopy(audioPrompt)}
+              className="rounded bg-indigo-600 px-2 py-0.5 text-[10px] font-bold text-white hover:bg-indigo-700 active:scale-95"
+            >
+              Copy Audio
+            </button>
           </div>
-          <p className="mt-1 text-[11px] leading-relaxed text-indigo-800">{audioPrompt}</p>
+          <p className="mt-1 text-[11px] leading-relaxed text-indigo-800">
+            {audioPrompt}
+          </p>
         </div>
       )}
     </div>
   );
 }
-
 
 // ─────────────────────────────────────────────────────────────
 // CARD — generic copy card
@@ -377,10 +504,7 @@ export function FiveShotPanel({
 
       <div className="space-y-2">
         {shots.map((s) => (
-          <div
-            key={s.key}
-            className={`rounded-lg border-l-4 p-3 ${s.color}`}
-          >
+          <div key={s.key} className={`rounded-lg border-l-4 p-3 ${s.color}`}>
             <div className="mb-2 flex items-center justify-between gap-2">
               <div className="flex items-center gap-2">
                 <span className="text-xs font-bold text-gray-800">
@@ -641,7 +765,10 @@ export function PostingTimesPanel() {
             then keep the winners from your own Facebook Insights.
           </div>
           {times.map((day, i) => (
-            <div key={i} className="rounded-lg border border-blue-200 bg-white p-3">
+            <div
+              key={i}
+              className="rounded-lg border border-blue-200 bg-white p-3"
+            >
               <p className="mb-2 text-xs font-bold text-blue-800">{day.day}</p>
               <div className="space-y-1.5">
                 {day.slots.map((slot, j) => (
@@ -668,8 +795,8 @@ export function PostingTimesPanel() {
             </div>
           ))}
           <div className="rounded-lg border border-yellow-200 bg-yellow-50 p-2 text-xs text-yellow-800">
-            💡 <strong>Pro tip:</strong> Reply quickly to early comments so the reel
-            feels active and conversational while it is fresh.
+            💡 <strong>Pro tip:</strong> Reply quickly to early comments so the
+            reel feels active and conversational while it is fresh.
           </div>
         </div>
       )}
@@ -707,11 +834,15 @@ export function WatchTimePanel({ report }: { report: WatchTimeReport }) {
         <div className="rounded-lg border border-green-300 bg-white p-3 text-center">
           <p className="text-xs text-gray-400">5-Shot (New)</p>
           <p className="text-xl font-bold text-green-600">60–70s</p>
-          <p className="text-xs font-semibold text-green-600">✓ Research peak</p>
+          <p className="text-xs font-semibold text-green-600">
+            ✓ Research peak
+          </p>
         </div>
         <div className="rounded-lg border border-indigo-200 bg-white p-3 text-center">
           <p className="text-xs text-gray-400">Watch Time/View</p>
-          <p className="text-xl font-bold text-indigo-600">{report.watchTimePerView}</p>
+          <p className="text-xl font-bold text-indigo-600">
+            {report.watchTimePerView}
+          </p>
           <p className="text-xs text-gray-400">5x improvement</p>
         </div>
       </div>
@@ -719,7 +850,9 @@ export function WatchTimePanel({ report }: { report: WatchTimeReport }) {
       <div className="mb-3 rounded-lg border border-yellow-200 bg-yellow-50 p-3 text-xs">
         <p className="mb-1 font-bold text-yellow-800">💰 Revenue note</p>
         <p className="text-yellow-700">{report.usaCPMNote}</p>
-        <p className="mt-1 text-yellow-600">Estimated: {report.estimatedMonthlyEarnings}</p>
+        <p className="mt-1 text-yellow-600">
+          Estimated: {report.estimatedMonthlyEarnings}
+        </p>
       </div>
 
       <div className="mb-3 space-y-1.5">
@@ -736,7 +869,9 @@ export function WatchTimePanel({ report }: { report: WatchTimeReport }) {
         className="w-full rounded-lg border border-purple-300 bg-white py-2 text-xs font-bold text-purple-700 hover:bg-purple-50 active:scale-95"
         type="button"
       >
-        {showEarnings ? "Hide Earnings Table ▲" : "📊 Show CMP Earnings Calculator ▼"}
+        {showEarnings
+          ? "Hide Earnings Table ▲"
+          : "📊 Show CMP Earnings Calculator ▼"}
       </button>
 
       {showEarnings && (
@@ -748,9 +883,15 @@ export function WatchTimePanel({ report }: { report: WatchTimeReport }) {
             <table className="w-full text-xs">
               <thead className="bg-gray-50">
                 <tr>
-                  <th className="p-2 text-left font-semibold text-gray-600">Views</th>
-                  <th className="p-2 text-left font-semibold text-gray-600">General</th>
-                  <th className="p-2 text-left font-semibold text-green-600">USA Heavy 🇺🇸</th>
+                  <th className="p-2 text-left font-semibold text-gray-600">
+                    Views
+                  </th>
+                  <th className="p-2 text-left font-semibold text-gray-600">
+                    General
+                  </th>
+                  <th className="p-2 text-left font-semibold text-green-600">
+                    USA Heavy 🇺🇸
+                  </th>
                 </tr>
               </thead>
               <tbody>
@@ -762,14 +903,17 @@ export function WatchTimePanel({ report }: { report: WatchTimeReport }) {
                     <td className="p-2 text-gray-600">
                       {row.minEarnings}–{row.maxEarnings}
                     </td>
-                    <td className="p-2 font-bold text-green-700">{row.usaOptimized}</td>
+                    <td className="p-2 font-bold text-green-700">
+                      {row.usaOptimized}
+                    </td>
                   </tr>
                 ))}
               </tbody>
             </table>
           </div>
           <p className="mt-2 text-xs text-gray-400">
-            Use your Professional Dashboard as the source of truth once you gain access.
+            Use your Professional Dashboard as the source of truth once you gain
+            access.
           </p>
         </div>
       )}
@@ -790,42 +934,55 @@ export function CalendarPanel({
   arc: string;
 }) {
   const [open, setOpen] = useState(false);
-const [week, setWeek] = useState(0);
-const [mode, setMode] = useState<CalendarMode>("monthly");
-const [monthCursor, setMonthCursor] = useState(
-  () => new Date(new Date().getFullYear(), new Date().getMonth(), 1)
-);
+  const [week, setWeek] = useState(0);
+  const [mode, setMode] = useState<CalendarMode>("monthly");
+  const [monthCursor, setMonthCursor] = useState(
+    () => new Date(new Date().getFullYear(), new Date().getMonth(), 1)
+  );
 
-const inputKey = `${predator}|${prey}|${arc}|${monthCursor.getTime()}|${mode}`;
-const [prevInputKey, setPrevInputKey] = useState(inputKey);
-if (inputKey !== prevInputKey) {
-  setPrevInputKey(inputKey);
-  setWeek(0);
-}
+  const inputKey = `${predator}|${prey}|${arc}|${monthCursor.getTime()}|${mode}`;
 
-useEffect(() => {
-  const timer = window.setInterval(() => {
-    const now = new Date();
-    const fresh = new Date(now.getFullYear(), now.getMonth(), 1);
-    setMonthCursor((prev) =>
-      prev.getFullYear() === fresh.getFullYear() && prev.getMonth() === fresh.getMonth()
-        ? prev
-        : fresh
-    );
-  }, 60_000);
-  return () => window.clearInterval(timer);
-}, []);
+  useEffect(() => {
+    setWeek(0);
+  }, [inputKey]);
+
+  useEffect(() => {
+    const timer = window.setInterval(() => {
+      const now = new Date();
+      const fresh = new Date(now.getFullYear(), now.getMonth(), 1);
+      setMonthCursor((prev) =>
+        prev.getFullYear() === fresh.getFullYear() &&
+        prev.getMonth() === fresh.getMonth()
+          ? prev
+          : fresh
+      );
+    }, 60_000);
+    return () => window.clearInterval(timer);
+  }, []);
 
   const calendar =
     mode === "monthly"
-      ? generateMonthlyCalendar(predator || "Tiger", prey || "Deer", arc || "Ambush attack", monthCursor)
-      : generateUSAViral30DayCalendar(predator || "Mountain Lion", prey || "Deer", arc || "Ambush attack", monthCursor);
+      ? generateMonthlyCalendar(
+          predator || "Tiger",
+          prey || "Deer",
+          arc || "Ambush attack",
+          monthCursor
+        )
+      : generateUSAViral30DayCalendar(
+          predator || "Mountain Lion",
+          prey || "Deer",
+          arc || "Ambush attack",
+          monthCursor
+        );
 
   const weeks = Array.from({ length: Math.ceil(calendar.length / 7) }, (_, i) =>
     calendar.slice(i * 7, i * 7 + 7)
   );
   const weekLabels = weeks.map(
-    (w, i) => `Week ${i + 1} (${w[0]?.dateLabel ?? ""}–${w[w.length - 1]?.dateLabel ?? ""})`
+    (w, i) =>
+      `Week ${i + 1} (${w[0]?.dateLabel ?? ""}–${
+        w[w.length - 1]?.dateLabel ?? ""
+      })`
   );
   const monthLabel = monthCursor.toLocaleDateString(undefined, {
     month: "long",
@@ -837,12 +994,16 @@ useEffect(() => {
       <div className="flex flex-wrap items-center justify-between gap-2">
         <div className="flex flex-wrap items-center gap-2">
           <span className="text-sm font-bold text-gray-900">
-            {mode === "monthly" ? "📅 Monthly Content Calendar" : "🇺🇸 Fixed 30-Day USA Viral Calendar"}
+            {mode === "monthly"
+              ? "📅 Monthly Content Calendar"
+              : "🇺🇸 Fixed 30-Day USA Viral Calendar"}
           </span>
           <span className="rounded bg-teal-100 px-2 py-0.5 text-xs font-bold text-teal-700">
             {monthLabel}
           </span>
-          <span className="rounded bg-teal-100 px-2 py-0.5 text-xs font-bold text-teal-700">2 Reels/Day</span>
+          <span className="rounded bg-teal-100 px-2 py-0.5 text-xs font-bold text-teal-700">
+            2 Reels/Day
+          </span>
           <span className="rounded bg-green-100 px-2 py-0.5 text-xs font-bold text-green-700">
             {calendar.length * 2} Total Reels
           </span>
@@ -853,7 +1014,9 @@ useEffect(() => {
             <button
               onClick={() => setMode("monthly")}
               className={`px-3 py-1.5 text-xs font-semibold ${
-                mode === "monthly" ? "bg-teal-600 text-white" : "text-teal-700 hover:bg-teal-50"
+                mode === "monthly"
+                  ? "bg-teal-600 text-white"
+                  : "text-teal-700 hover:bg-teal-50"
               }`}
               type="button"
             >
@@ -862,7 +1025,9 @@ useEffect(() => {
             <button
               onClick={() => setMode("usa30")}
               className={`px-3 py-1.5 text-xs font-semibold ${
-                mode === "usa30" ? "bg-rose-600 text-white" : "text-rose-700 hover:bg-rose-50"
+                mode === "usa30"
+                  ? "bg-rose-600 text-white"
+                  : "text-rose-700 hover:bg-rose-50"
               }`}
               type="button"
             >
@@ -870,7 +1035,11 @@ useEffect(() => {
             </button>
           </div>
           <button
-            onClick={() => setMonthCursor((p) => new Date(p.getFullYear(), p.getMonth() - 1, 1))}
+            onClick={() =>
+              setMonthCursor(
+                (p) => new Date(p.getFullYear(), p.getMonth() - 1, 1)
+              )
+            }
             className="rounded-lg border border-teal-300 bg-white px-3 py-1.5 text-xs font-semibold text-teal-700 hover:bg-teal-50 active:scale-95"
             type="button"
           >
@@ -887,7 +1056,11 @@ useEffect(() => {
             Today
           </button>
           <button
-            onClick={() => setMonthCursor((p) => new Date(p.getFullYear(), p.getMonth() + 1, 1))}
+            onClick={() =>
+              setMonthCursor(
+                (p) => new Date(p.getFullYear(), p.getMonth() + 1, 1)
+              )
+            }
             className="rounded-lg border border-teal-300 bg-white px-3 py-1.5 text-xs font-semibold text-teal-700 hover:bg-teal-50 active:scale-95"
             type="button"
           >
@@ -921,7 +1094,9 @@ useEffect(() => {
               </button>
             ))}
           </div>
-          <div className="mb-2 text-xs font-bold text-teal-700">{weeks[week]?.[0]?.theme}</div>
+          <div className="mb-2 text-xs font-bold text-teal-700">
+            {weeks[week]?.[0]?.theme}
+          </div>
           <div className="space-y-2">
             {weeks[week]?.map((day) => (
               <div
@@ -941,7 +1116,9 @@ useEffect(() => {
                 </div>
                 <div className="grid gap-2 md:grid-cols-2">
                   <div className="rounded-lg bg-teal-50 p-2">
-                    <p className="mb-1 text-xs font-bold text-teal-700">🎬 Reel 1</p>
+                    <p className="mb-1 text-xs font-bold text-teal-700">
+                      🎬 Reel 1
+                    </p>
                     <p className="text-xs text-gray-700">
                       {day.reel1.predator} vs {day.reel1.prey}
                     </p>
@@ -953,7 +1130,9 @@ useEffect(() => {
                     </p>
                   </div>
                   <div className="rounded-lg bg-indigo-50 p-2">
-                    <p className="mb-1 text-xs font-bold text-indigo-700">🎬 Reel 2</p>
+                    <p className="mb-1 text-xs font-bold text-indigo-700">
+                      🎬 Reel 2
+                    </p>
                     <p className="text-xs text-gray-700">
                       {day.reel2.predator} vs {day.reel2.prey}
                     </p>
@@ -1007,7 +1186,9 @@ EXPORT: ${script.exportSettings}`;
     <div className="rounded-xl border border-purple-200 bg-purple-50 p-4 shadow-sm">
       <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
         <div className="flex items-center gap-2">
-          <span className="text-sm font-bold text-gray-900">✂️ CapCut Auto-Script</span>
+          <span className="text-sm font-bold text-gray-900">
+            ✂️ CapCut Auto-Script
+          </span>
           <span className="rounded bg-purple-100 px-2 py-0.5 text-xs font-bold text-purple-700">
             {script.totalDuration} · {script.aspectRatio}
           </span>
@@ -1027,17 +1208,24 @@ EXPORT: ${script.exportSettings}`;
 
       <div className="space-y-2">
         {script.beats.map((beat, i) => (
-          <div key={i} className="rounded-lg border border-purple-100 bg-white p-3">
+          <div
+            key={i}
+            className="rounded-lg border border-purple-100 bg-white p-3"
+          >
             <div className="mb-2 flex flex-wrap items-center gap-2">
               <span className="rounded bg-purple-600 px-2 py-0.5 text-xs font-bold text-white">
                 {beat.timeIn} → {beat.timeOut}
               </span>
-              <span className="text-xs font-bold text-gray-700">{beat.shotRef}</span>
+              <span className="text-xs font-bold text-gray-700">
+                {beat.shotRef}
+              </span>
             </div>
             <div className="grid gap-1 text-xs">
               <div>
                 <span className="font-semibold text-gray-500">📝 Text: </span>
-                <span className="text-gray-700">&quot;{beat.onScreenText}&quot;</span>
+                <span className="text-gray-700">
+                  &quot;{beat.onScreenText}&quot;
+                </span>
               </div>
               <div>
                 <span className="font-semibold text-gray-500">✂️ Cut: </span>
@@ -1066,7 +1254,9 @@ EXPORT: ${script.exportSettings}`;
           </div>
         ))}
       </div>
-      <p className="mt-2 text-xs text-purple-600">Export: {script.exportSettings}</p>
+      <p className="mt-2 text-xs text-purple-600">
+        Export: {script.exportSettings}
+      </p>
     </div>
   );
 }
@@ -1155,7 +1345,9 @@ export function AnimalBehaviorPanel({
             Copy
           </button>
         </div>
-        <p className="text-xs leading-5 text-green-800">{behavior.promptInjection}</p>
+        <p className="text-xs leading-5 text-green-800">
+          {behavior.promptInjection}
+        </p>
       </div>
     </div>
   );
@@ -1172,18 +1364,44 @@ export function SoundDesignPanel({
   onCopy: (t: string) => void;
 }) {
   const rows = [
-    { label: "Shot 1 — Ambient", value: pack.shot1_ambient, color: "border-amber-200 bg-amber-50" },
-    { label: "Shot 1 — Animal", value: pack.shot1_animal, color: "border-amber-200 bg-amber-50" },
-    { label: "Shot 2 — Impact", value: pack.shot2_impact, color: "border-red-200 bg-red-50" },
-    { label: "Shot 2 — Animal", value: pack.shot2_animal, color: "border-red-200 bg-red-50" },
-    { label: "Shot 3 — Resolve", value: pack.shot3_resolve, color: "border-green-200 bg-green-50" },
-    { label: "Music Mood", value: pack.musicMood, color: "border-purple-200 bg-purple-50" },
+    {
+      label: "Shot 1 — Ambient",
+      value: pack.shot1_ambient,
+      color: "border-amber-200 bg-amber-50",
+    },
+    {
+      label: "Shot 1 — Animal",
+      value: pack.shot1_animal,
+      color: "border-amber-200 bg-amber-50",
+    },
+    {
+      label: "Shot 2 — Impact",
+      value: pack.shot2_impact,
+      color: "border-red-200 bg-red-50",
+    },
+    {
+      label: "Shot 2 — Animal",
+      value: pack.shot2_animal,
+      color: "border-red-200 bg-red-50",
+    },
+    {
+      label: "Shot 3 — Resolve",
+      value: pack.shot3_resolve,
+      color: "border-green-200 bg-green-50",
+    },
+    {
+      label: "Music Mood",
+      value: pack.musicMood,
+      color: "border-purple-200 bg-purple-50",
+    },
   ];
 
   return (
     <div className="rounded-xl border border-indigo-200 bg-indigo-50 p-4 shadow-sm">
       <div className="mb-3 flex flex-wrap items-center gap-2">
-        <span className="text-sm font-bold text-gray-900">🔊 Sound Design Pack</span>
+        <span className="text-sm font-bold text-gray-900">
+          🔊 Sound Design Pack
+        </span>
         <span className="rounded bg-indigo-100 px-2 py-0.5 text-xs font-bold text-indigo-700">
           Kling + CapCut SFX
         </span>
@@ -1194,7 +1412,9 @@ export function SoundDesignPanel({
           <div key={i} className={`rounded-lg border p-2.5 ${item.color}`}>
             <div className="flex items-start justify-between gap-2">
               <div>
-                <p className="mb-0.5 text-[11px] font-bold text-gray-500">{item.label}</p>
+                <p className="mb-0.5 text-[11px] font-bold text-gray-500">
+                  {item.label}
+                </p>
                 <p className="text-xs text-gray-700">{item.value}</p>
               </div>
               <button
@@ -1211,7 +1431,9 @@ export function SoundDesignPanel({
 
       <div className="rounded-lg border border-indigo-300 bg-indigo-100 p-3">
         <div className="mb-2 flex items-center justify-between">
-          <span className="text-xs font-bold text-indigo-800">🎬 Kling Audio Prompt</span>
+          <span className="text-xs font-bold text-indigo-800">
+            🎬 Kling Audio Prompt
+          </span>
           <button
             onClick={() => onCopy(pack.klingAudioPrompt)}
             className="rounded bg-indigo-600 px-2 py-1 text-xs font-bold text-white hover:bg-indigo-700 active:scale-95"
@@ -1220,7 +1442,9 @@ export function SoundDesignPanel({
             Copy
           </button>
         </div>
-        <p className="text-xs leading-5 text-indigo-900">{pack.klingAudioPrompt}</p>
+        <p className="text-xs leading-5 text-indigo-900">
+          {pack.klingAudioPrompt}
+        </p>
       </div>
 
       <div className="mt-3 space-y-1">
@@ -1254,9 +1478,20 @@ export function SoundDesignPanel({
 // ─────────────────────────────────────────────────────────────
 // PLATFORM PACK PANEL
 // ─────────────────────────────────────────────────────────────
-export function PlatformPackPanel({ pack, onCopy }: { pack: PlatformPack; onCopy: (t: string) => void }) {
+export function PlatformPackPanel({
+  pack,
+  onCopy,
+}: {
+  pack: PlatformPack;
+  onCopy: (t: string) => void;
+}) {
   const [platform, setPlatform] = useState<PlatformTarget>("facebook");
-  const platforms: PlatformTarget[] = ["facebook", "instagram", "tiktok", "youtube_shorts"];
+  const platforms: PlatformTarget[] = [
+    "facebook",
+    "instagram",
+    "tiktok",
+    "youtube_shorts",
+  ];
 
   const labels: Record<PlatformTarget, string> = {
     facebook: "📘 Facebook",
@@ -1281,7 +1516,9 @@ export function PlatformPackPanel({ pack, onCopy }: { pack: PlatformPack; onCopy
             key={p}
             onClick={() => setPlatform(p)}
             className={`flex-1 py-2 text-xs font-bold transition-all ${
-              platform === p ? `${colors[p]} text-white` : "bg-white text-gray-600 hover:bg-gray-50"
+              platform === p
+                ? `${colors[p]} text-white`
+                : "bg-white text-gray-600 hover:bg-gray-50"
             }`}
             type="button"
           >
@@ -1312,7 +1549,9 @@ export function PlatformPackPanel({ pack, onCopy }: { pack: PlatformPack; onCopy
         ) : (
           <div className="rounded-lg bg-gray-50 p-3">
             <p className="text-xs font-bold text-gray-500">Hook</p>
-            <p className="mt-1 text-sm font-semibold text-gray-800">{data.hook}</p>
+            <p className="mt-1 text-sm font-semibold text-gray-800">
+              {data.hook}
+            </p>
             <button
               onClick={() => onCopy(data.hook)}
               className="mt-2 rounded bg-gray-900 px-2 py-1 text-xs text-white"
@@ -1331,7 +1570,9 @@ export function PlatformPackPanel({ pack, onCopy }: { pack: PlatformPack; onCopy
             {"description" in data ? data.description : data.caption}
           </p>
           <button
-            onClick={() => onCopy("description" in data ? data.description : data.caption)}
+            onClick={() =>
+              onCopy("description" in data ? data.description : data.caption)
+            }
             className="mt-2 rounded bg-gray-900 px-2 py-1 text-xs text-white"
             type="button"
           >
@@ -1340,8 +1581,12 @@ export function PlatformPackPanel({ pack, onCopy }: { pack: PlatformPack; onCopy
         </div>
 
         <div className="rounded-lg bg-gray-50 p-3">
-          <p className="text-xs font-bold text-gray-500">{"tags" in data ? "Tags" : "Hashtags"}</p>
-          <p className="mt-1 text-xs text-gray-700">{"tags" in data ? data.tags : data.hashtags}</p>
+          <p className="text-xs font-bold text-gray-500">
+            {"tags" in data ? "Tags" : "Hashtags"}
+          </p>
+          <p className="mt-1 text-xs text-gray-700">
+            {"tags" in data ? data.tags : data.hashtags}
+          </p>
           <button
             onClick={() => onCopy("tags" in data ? data.tags : data.hashtags)}
             className="mt-2 rounded bg-gray-900 px-2 py-1 text-xs text-white"
@@ -1416,9 +1661,24 @@ export function BulkGeneratePanel({
         >
           {isRunning ? (
             <span className="flex items-center gap-2">
-              <svg className="h-4 w-4 animate-spin" viewBox="0 0 24 24" fill="none">
-                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+              <svg
+                className="h-4 w-4 animate-spin"
+                viewBox="0 0 24 24"
+                fill="none"
+              >
+                <circle
+                  className="opacity-25"
+                  cx="12"
+                  cy="12"
+                  r="10"
+                  stroke="currentColor"
+                  strokeWidth="4"
+                />
+                <path
+                  className="opacity-75"
+                  fill="currentColor"
+                  d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"
+                />
               </svg>
               Generating...
             </span>
@@ -1500,7 +1760,9 @@ export function BulkGeneratePanel({
                         <button
                           onClick={() =>
                             onCopy(
-                              item.pkg!.imagePrompt + "\n\n" + (item.pkg!.hook2026?.[0] ?? item.pkg!.hook)
+                              item.pkg!.imagePrompt +
+                                "\n\n" +
+                                (item.pkg!.hook2026?.[0] ?? item.pkg!.hook)
                             )
                           }
                           className="rounded bg-gray-900 px-2 py-1 text-xs text-white hover:bg-black active:scale-95"
@@ -1540,8 +1802,12 @@ export function VersionControlPanel({
   if (!versions.length) {
     return (
       <div className="rounded-xl border border-slate-200 bg-slate-50 p-4 text-center">
-        <p className="text-sm font-semibold text-gray-600">No versions saved yet</p>
-        <p className="mt-1 text-xs text-gray-400">Generate र &quot;Save Version&quot; थिच्नुस्</p>
+        <p className="text-sm font-semibold text-gray-600">
+          No versions saved yet
+        </p>
+        <p className="mt-1 text-xs text-gray-400">
+          Generate र &quot;Save Version&quot; थिच्नुस्
+        </p>
       </div>
     );
   }
@@ -1549,7 +1815,9 @@ export function VersionControlPanel({
   return (
     <div className="rounded-xl border border-slate-200 bg-slate-50 p-4 shadow-sm">
       <div className="mb-3 flex flex-wrap items-center gap-2">
-        <span className="text-sm font-bold text-gray-900">🔄 Prompt Versions</span>
+        <span className="text-sm font-bold text-gray-900">
+          🔄 Prompt Versions
+        </span>
         <span className="rounded bg-slate-200 px-2 py-0.5 text-xs font-bold text-slate-700">
           {predator} vs {prey}
         </span>
@@ -1562,7 +1830,9 @@ export function VersionControlPanel({
           <div
             key={i}
             className={`rounded-lg border p-3 transition-all ${
-              compareIdx === i ? "border-blue-300 bg-blue-50" : "border-slate-200 bg-white"
+              compareIdx === i
+                ? "border-blue-300 bg-blue-50"
+                : "border-slate-200 bg-white"
             }`}
           >
             <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
@@ -1570,7 +1840,9 @@ export function VersionControlPanel({
                 <span className="rounded bg-slate-200 px-2 py-0.5 text-xs font-bold text-slate-600">
                   V{v.version}
                 </span>
-                <span className="text-xs font-semibold text-gray-700">{v.label}</span>
+                <span className="text-xs font-semibold text-gray-700">
+                  {v.label}
+                </span>
                 <span className="text-[11px] text-gray-400">
                   {new Date(v.timestamp).toLocaleDateString()}
                 </span>
@@ -1608,12 +1880,18 @@ export function VersionControlPanel({
                   <span className="text-gray-700">{v.hook}</span>
                 </div>
                 <div className="rounded bg-amber-50 p-2">
-                  <span className="font-bold text-amber-700">Image Prompt: </span>
-                  <span className="line-clamp-3 text-gray-700">{v.imagePrompt}</span>
+                  <span className="font-bold text-amber-700">
+                    Image Prompt:{" "}
+                  </span>
+                  <span className="line-clamp-3 text-gray-700">
+                    {v.imagePrompt}
+                  </span>
                 </div>
                 {v.performanceNote && (
                   <div className="rounded bg-green-50 p-2">
-                    <span className="font-bold text-green-700">Performance: </span>
+                    <span className="font-bold text-green-700">
+                      Performance:{" "}
+                    </span>
                     <span className="text-gray-700">{v.performanceNote}</span>
                   </div>
                 )}
@@ -1637,11 +1915,25 @@ function safeText(v: unknown): string {
   return String(v ?? "").trim();
 }
 
-function deriveDriftLabel(clipChaining?: string): { label: string; pill: string } {
+function deriveDriftLabel(
+  clipChaining?: string
+): { label: string; pill: string } {
   const t = (clipChaining ?? "").toUpperCase();
-  if (t.includes("HIGH")) return { label: "HIGH Drift — use all 6 steps", pill: "bg-red-100 text-red-700" };
-  if (t.includes("LOW")) return { label: "LOW Drift — 3 steps ok", pill: "bg-green-100 text-green-700" };
-  if (t.includes("MEDIUM")) return { label: "MEDIUM Drift — recommend all steps", pill: "bg-amber-100 text-amber-800" };
+  if (t.includes("HIGH"))
+    return {
+      label: "HIGH Drift — use all 6 steps",
+      pill: "bg-red-100 text-red-700",
+    };
+  if (t.includes("LOW"))
+    return {
+      label: "LOW Drift — 3 steps ok",
+      pill: "bg-green-100 text-green-700",
+    };
+  if (t.includes("MEDIUM"))
+    return {
+      label: "MEDIUM Drift — recommend all steps",
+      pill: "bg-amber-100 text-amber-800",
+    };
   return { label: "Drift — unknown", pill: "bg-gray-100 text-gray-700" };
 }
 
@@ -1665,7 +1957,9 @@ function WorkflowCard({
   onToggle: () => void;
 }) {
   return (
-    <div className={`rounded-2xl border-2 ${color.border} ${color.bg} p-4 shadow-sm`}>
+    <div
+      className={`rounded-2xl border-2 ${color.border} ${color.bg} p-4 shadow-sm`}
+    >
       <div className="mb-3 flex items-start justify-between gap-2">
         <div className="flex items-start gap-3">
           <div className="mt-0.5 flex h-7 w-7 items-center justify-center rounded-full bg-gray-900 text-xs font-bold text-white">
@@ -1674,7 +1968,9 @@ function WorkflowCard({
           <div>
             <div className="flex flex-wrap items-center gap-2">
               <h3 className="text-sm font-extrabold text-gray-900">{title}</h3>
-              <span className={`rounded-full px-2 py-0.5 text-[11px] font-bold ${color.badge}`}>
+              <span
+                className={`rounded-full px-2 py-0.5 text-[11px] font-bold ${color.badge}`}
+              >
                 {badge}
               </span>
             </div>
@@ -1802,7 +2098,8 @@ function WorkflowPromptMap({
   const imagePrompt = safeText(data.imagePrompt);
   const negativePrompt = safeText(data.negativePrompt ?? "");
   const characterLock = safeText(data.referenceWorkflow ?? "");
-  const shot3Aftermath = runwayShots[2] ?? runwayShots[runwayShots.length - 1] ?? "";
+  const shot3Aftermath =
+    runwayShots[2] ?? runwayShots[runwayShots.length - 1] ?? "";
 
   const drift = deriveDriftLabel(data.clipChaining);
 
@@ -1835,7 +2132,10 @@ function WorkflowPromptMap({
     6: null,
   });
 
-  const copiedCount = useMemo(() => Object.values(done).filter(Boolean).length, [done]);
+  const copiedCount = useMemo(
+    () => Object.values(done).filter(Boolean).length,
+    [done]
+  );
 
   const pipeline = useMemo(() => {
     const parts = [
@@ -1887,8 +2187,6 @@ function WorkflowPromptMap({
     window.setTimeout(() => scrollToStep(1), 50);
   }
 
-  // Recommended indices based on pipeline:
-  // Runway1 (index 0), Kling2 (index 1), Runway3 (index 2 / Step4)
   const recommended = useMemo(() => {
     return {
       runway: new Set([0, 2]),
@@ -1910,11 +2208,15 @@ function WorkflowPromptMap({
     <div className="rounded-2xl border border-gray-200 bg-white p-5 shadow-sm">
       <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
         <div className="flex flex-wrap items-center gap-2">
-          <h2 className="text-sm font-extrabold text-gray-900">WSTV App → Runway Tracker</h2>
+          <h2 className="text-sm font-extrabold text-gray-900">
+            WSTV App → Runway Tracker
+          </h2>
           <span className="rounded bg-gray-100 px-2 py-0.5 text-xs font-semibold text-gray-700">
             {copiedCount}/6 done
           </span>
-          <span className={`inline-flex items-center gap-2 rounded px-2 py-0.5 text-xs font-bold ${drift.pill}`}>
+          <span
+            className={`inline-flex items-center gap-2 rounded px-2 py-0.5 text-xs font-bold ${drift.pill}`}
+          >
             <span className="inline-block h-3 w-3 rounded-full bg-current opacity-30" />
             {drift.label}
           </span>
@@ -1933,12 +2235,13 @@ function WorkflowPromptMap({
         <strong>Pipeline:</strong> {pipeline}
       </div>
 
-      {/* Global toggle bar */}
       <div className="mb-4 flex flex-wrap items-center justify-between gap-2 rounded-xl border border-gray-200 bg-gray-50 p-3">
         <div className="flex flex-wrap items-center gap-2">
           <span className="text-xs font-bold text-gray-800">Shots View</span>
           <span className="text-xs text-gray-500">
-            {onlyPipelineShots ? "Only pipeline shots highlighted" : "All shots visible"}
+            {onlyPipelineShots
+              ? "Only pipeline shots highlighted"
+              : "All shots visible"}
           </span>
         </div>
 
@@ -1947,7 +2250,9 @@ function WorkflowPromptMap({
             type="button"
             onClick={() => setOnlyPipelineShots(true)}
             className={`px-3 py-1.5 text-xs font-bold ${
-              onlyPipelineShots ? "bg-gray-900 text-white" : "text-gray-700 hover:bg-gray-50"
+              onlyPipelineShots
+                ? "bg-gray-900 text-white"
+                : "text-gray-700 hover:bg-gray-50"
             }`}
           >
             Only Pipeline
@@ -1956,7 +2261,9 @@ function WorkflowPromptMap({
             type="button"
             onClick={() => setOnlyPipelineShots(false)}
             className={`px-3 py-1.5 text-xs font-bold ${
-              !onlyPipelineShots ? "bg-gray-900 text-white" : "text-gray-700 hover:bg-gray-50"
+              !onlyPipelineShots
+                ? "bg-gray-900 text-white"
+                : "text-gray-700 hover:bg-gray-50"
             }`}
           >
             Show All
@@ -1965,35 +2272,66 @@ function WorkflowPromptMap({
       </div>
 
       <div className="grid gap-4 md:grid-cols-3">
-        {/* Step 1 — Image Prompt */}
-        <div ref={(el) => { stepRefs.current[1] = el; }}>
+        <div
+          ref={(el) => {
+            stepRefs.current[1] = el;
+          }}
+        >
           <WorkflowCard
             step={1}
             title="Image Prompt"
             badge="NB2 / Flux / Midjourney"
-            color={{ border: "border-amber-400", bg: "bg-amber-50", badge: "bg-amber-100 text-amber-700" }}
+            color={{
+              border: "border-amber-400",
+              bg: "bg-amber-50",
+              badge: "bg-amber-100 text-amber-700",
+            }}
             help="Paste into NB2/Flux/MJ → generate master hero still → download PNG → upload to Runway as reference image."
             done={done[1]}
             onToggle={() => toggle(1)}
           >
             <TextBox value={imagePrompt} />
-            <CopyBtn label="Copy Image Prompt" onCopy={() => onCopy(imagePrompt)} />
+            <div className="mt-3 flex gap-2">
+              <button
+                type="button"
+                onClick={() => onCopy(imagePrompt)}
+                className="flex-1 rounded-lg bg-gray-900 py-2 text-xs font-bold text-white hover:bg-black active:scale-[0.99]"
+              >
+                📋 Copy Image Prompt
+              </button>
+              <button
+                type="button"
+                onClick={() => onCopy(extractImagePromptBody(imagePrompt))}
+                className="flex-1 rounded-lg border border-amber-300 bg-white py-2 text-xs font-bold text-amber-800 hover:bg-amber-50 active:scale-[0.99]"
+              >
+                📋 Copy BODY
+              </button>
+            </div>
           </WorkflowCard>
         </div>
 
-        {/* Step 2 — Runway Shots */}
-        <div ref={(el) => { stepRefs.current[2] = el; }}>
+        <div
+          ref={(el) => {
+            stepRefs.current[2] = el;
+          }}
+        >
           <WorkflowCard
             step={2}
             title="Shot 1 — Establishing"
             badge="Runway Gen-4.5"
-            color={{ border: "border-green-400", bg: "bg-green-50", badge: "bg-green-100 text-green-700" }}
+            color={{
+              border: "border-green-400",
+              bg: "bg-green-50",
+              badge: "bg-green-100 text-green-700",
+            }}
             help="Upload master image → paste into Runway Gen-4.5 I2V → generate. Extract last frame after generation."
             done={done[2]}
             onToggle={() => toggle(2)}
           >
             <div className="mb-2 flex items-center justify-between gap-2">
-              <span className="text-xs font-bold text-gray-700">Runway shots</span>
+              <span className="text-xs font-bold text-gray-700">
+                Runway shots
+              </span>
               <span className="rounded bg-amber-100 px-2 py-0.5 text-[11px] font-bold text-amber-700">
                 Recommended: Runway Shot 1
               </span>
@@ -2003,7 +2341,9 @@ function WorkflowPromptMap({
               <SubShot
                 title="Runway Shot 1"
                 text={runwayShots[0] ?? ""}
-                onCopy={() => onCopy(runwayShots[0] ?? "")}
+                onCopy={() =>
+                  onCopy(extractRunwayPasteReady(runwayShots[0] ?? ""))
+                }
                 recommended={recommended.runway.has(0)}
                 selected={runwaySelected[0] && shotVisible.runway[0]}
                 onToggleSelected={
@@ -2056,7 +2396,9 @@ function WorkflowPromptMap({
                 onCopy(
                   [runwayShots[0], runwayShots[1], runwayShots[2]]
                     .filter(Boolean)
-                    .filter((_, i) => (onlyPipelineShots ? runwaySelected[i] : shotVisible.runway[i]))
+                    .filter((_, i) =>
+                      onlyPipelineShots ? runwaySelected[i] : shotVisible.runway[i]
+                    )
                     .join("\n\n---\n\n")
                 )
               }
@@ -2064,145 +2406,225 @@ function WorkflowPromptMap({
           </WorkflowCard>
         </div>
 
-        {/* Step 3 — Kling Shots */}
-        <div ref={(el) => { stepRefs.current[3] = el; }}>
-          <WorkflowCard
-            step={3}
-            title="Shot 2 — Action / Strike"
-            badge="Kling 3.0 Pro"
-            color={{ border: "border-blue-400", bg: "bg-blue-50", badge: "bg-blue-100 text-blue-700" }}
-            help="Upload Shot last frame → paste into Kling I2V → generate. Extract last frame after."
-            done={done[3]}
-            onToggle={() => toggle(3)}
-          >
-            <div className="mb-2 flex items-center justify-between gap-2">
-              <span className="text-xs font-bold text-gray-700">Kling shots</span>
-              <span className="rounded bg-amber-100 px-2 py-0.5 text-[11px] font-bold text-amber-700">
-                Recommended: Kling Shot 2
-              </span>
-            </div>
+       
+        <div
+  ref={(el) => {
+    stepRefs.current[3] = el;
+  }}
+>
+  <WorkflowCard
+    step={3}
+    title="Shot 2 — Action / Strike"
+    badge="Kling 3.0 Pro"
+    color={{
+      border: "border-blue-400",
+      bg: "bg-blue-50",
+      badge: "bg-blue-100 text-blue-700",
+    }}
+    help="Upload Shot last frame → paste into Kling I2V → generate. Extract last frame after."
+    done={done[3]}
+    onToggle={() => toggle(3)}
+  >
+    <div className="mb-2 flex items-center justify-between gap-2">
+      <span className="text-xs font-bold text-gray-700">Kling shots</span>
+      <span className="rounded bg-amber-100 px-2 py-0.5 text-[11px] font-bold text-amber-700">
+        Recommended: Kling Shot 2
+      </span>
+    </div>
 
-            <div className="space-y-2">
-              <SubShot
-                title="Kling Shot 1"
-                text={klingShots[0] ?? ""}
-                onCopy={() => onCopy(klingShots[0] ?? "")}
-                recommended={recommended.kling.has(0)}
-                selected={klingSelected[0] && shotVisible.kling[0]}
-                onToggleSelected={
-                  !onlyPipelineShots
-                    ? () =>
-                        setShotVisible((p) => ({
-                          ...p,
-                          kling: [false, p.kling[1], p.kling[2]],
-                        }))
-                    : undefined
-                }
-              />
-              <SubShot
-                title="Kling Shot 2"
-                text={klingShots[1] ?? ""}
-                onCopy={() => onCopy(klingShots[1] ?? "")}
-                recommended={recommended.kling.has(1)}
-                selected={klingSelected[1] && shotVisible.kling[1]}
-                onToggleSelected={
-                  !onlyPipelineShots
-                    ? () =>
-                        setShotVisible((p) => ({
-                          ...p,
-                          kling: [p.kling[0], false, p.kling[2]],
-                        }))
-                    : undefined
-                }
-              />
-              <SubShot
-                title="Kling Shot 3"
-                text={klingShots[2] ?? ""}
-                onCopy={() => onCopy(klingShots[2] ?? "")}
-                recommended={recommended.kling.has(2)}
-                selected={klingSelected[2] && shotVisible.kling[2]}
-                onToggleSelected={
-                  !onlyPipelineShots
-                    ? () =>
-                        setShotVisible((p) => ({
-                          ...p,
-                          kling: [p.kling[0], p.kling[1], false],
-                        }))
-                    : undefined
-                }
-              />
-            </div>
+    <div className="space-y-2">
+      <SubShot
+        title="Kling Shot 1"
+        text={klingShots[0] ?? ""}
+        onCopy={() =>
+          onCopy(
+            [
+              extractKlingPromptBody(klingShots[0] ?? ""),
+              extractKlingAudioPrompt(klingShots[0] ?? "")
+                ? `\n\nAudio:\n${extractKlingAudioPrompt(klingShots[0] ?? "")}`
+                : "",
+            ].join("")
+          )
+        }
+        recommended={recommended.kling.has(0)}
+        selected={klingSelected[0] && shotVisible.kling[0]}
+        onToggleSelected={
+          !onlyPipelineShots
+            ? () =>
+                setShotVisible((p) => ({
+                  ...p,
+                  kling: [false, p.kling[1], p.kling[2]],
+                }))
+            : undefined
+        }
+      />
 
-            <CopyBtn
-              label="Copy Visible Kling Shots"
-              onCopy={() =>
-                onCopy(
-                  [klingShots[0], klingShots[1], klingShots[2]]
-                    .filter(Boolean)
-                    .filter((_, i) => (onlyPipelineShots ? klingSelected[i] : shotVisible.kling[i]))
-                    .join("\n\n---\n\n")
-                )
-              }
-            />
-          </WorkflowCard>
-        </div>
+      <SubShot
+        title="Kling Shot 2"
+        text={klingShots[1] ?? ""}
+        onCopy={() =>
+          onCopy(
+            [
+              extractKlingPromptBody(klingShots[1] ?? ""),
+              extractKlingAudioPrompt(klingShots[1] ?? "")
+                ? `\n\nAudio:\n${extractKlingAudioPrompt(klingShots[1] ?? "")}`
+                : "",
+            ].join("")
+          )
+        }
+        recommended={recommended.kling.has(1)}
+        selected={klingSelected[1] && shotVisible.kling[1]}
+        onToggleSelected={
+          !onlyPipelineShots
+            ? () =>
+                setShotVisible((p) => ({
+                  ...p,
+                  kling: [p.kling[0], false, p.kling[2]],
+                }))
+            : undefined
+        }
+      />
 
-        {/* Step 4 — Shot 3 Aftermath */}
-        <div ref={(el) => { stepRefs.current[4] = el; }}>
+      <SubShot
+        title="Kling Shot 3"
+        text={klingShots[2] ?? ""}
+        onCopy={() =>
+          onCopy(
+            [
+              extractKlingPromptBody(klingShots[2] ?? ""),
+              extractKlingAudioPrompt(klingShots[2] ?? "")
+                ? `\n\nAudio:\n${extractKlingAudioPrompt(klingShots[2] ?? "")}`
+                : "",
+            ].join("")
+          )
+        }
+        recommended={recommended.kling.has(2)}
+        selected={klingSelected[2] && shotVisible.kling[2]}
+        onToggleSelected={
+          !onlyPipelineShots
+            ? () =>
+                setShotVisible((p) => ({
+                  ...p,
+                  kling: [p.kling[0], p.kling[1], false],
+                }))
+            : undefined
+        }
+      />
+    </div>
+
+    <CopyBtn
+      label="Copy Visible Kling Shots"
+      onCopy={() =>
+        onCopy(
+          [klingShots[0], klingShots[1], klingShots[2]]
+            .filter(Boolean)
+            .filter((_, i) =>
+              onlyPipelineShots ? klingSelected[i] : shotVisible.kling[i]
+            )
+            .map((shot) =>
+              [
+                extractKlingPromptBody(shot),
+                extractKlingAudioPrompt(shot)
+                  ? `\n\nAudio:\n${extractKlingAudioPrompt(shot)}`
+                  : "",
+              ].join("")
+            )
+            .join("\n\n---\n\n")
+        )
+      }
+    />
+  </WorkflowCard>
+</div>
+
+        <div
+          ref={(el) => {
+            stepRefs.current[4] = el;
+          }}
+        >
           <WorkflowCard
             step={4}
             title="Shot 3 — Aftermath"
             badge="Runway Gen-4.5"
-            color={{ border: "border-purple-400", bg: "bg-purple-50", badge: "bg-purple-100 text-purple-700" }}
+            color={{
+              border: "border-purple-400",
+              bg: "bg-purple-50",
+              badge: "bg-purple-100 text-purple-700",
+            }}
             help="Upload Kling last frame → paste into Runway Gen-4.5 I2V → breathing settles, posture resolves."
             done={done[4]}
             onToggle={() => toggle(4)}
           >
             <div className="mb-2 flex items-center justify-between gap-2">
-              <span className="text-xs font-bold text-gray-700">Runway3 (Recommended)</span>
+              <span className="text-xs font-bold text-gray-700">
+                Runway3 (Recommended)
+              </span>
               <span className="rounded bg-amber-100 px-2 py-0.5 text-[11px] font-bold text-amber-700">
                 Recommended: Runway Shot 3
               </span>
             </div>
             <TextBox value={shot3Aftermath} />
-            <CopyBtn label="Copy Shot 3 Motion" onCopy={() => onCopy(shot3Aftermath)} />
+            <CopyBtn
+              label="Copy Shot 3 Motion"
+              onCopy={() => onCopy(extractRunwayPasteReady(shot3Aftermath))}
+            />
           </WorkflowCard>
         </div>
 
-        {/* Step 5 — Character Lock */}
-        <div ref={(el) => { stepRefs.current[5] = el; }}>
+        <div
+          ref={(el) => {
+            stepRefs.current[5] = el;
+          }}
+        >
           <WorkflowCard
             step={5}
             title="Character Lock"
             badge="Runway Combine Text (T5)"
-            color={{ border: "border-teal-400", bg: "bg-teal-50", badge: "bg-teal-100 text-teal-700" }}
+            color={{
+              border: "border-teal-400",
+              bg: "bg-teal-50",
+              badge: "bg-teal-100 text-teal-700",
+            }}
             help="Paste into Runway Workflow Text Node (T5) → lock identities between clips. Keep permanently."
             done={done[5]}
             onToggle={() => toggle(5)}
           >
             <TextBox value={characterLock} />
-            <CopyBtn label="Copy Character Lock" onCopy={() => onCopy(characterLock)} />
+            <CopyBtn
+              label="Copy Character Lock"
+              onCopy={() => onCopy(characterLock)}
+            />
           </WorkflowCard>
         </div>
 
-        {/* Step 6 — Negative Prompt */}
-        <div ref={(el) => { stepRefs.current[6] = el; }}>
+        <div
+          ref={(el) => {
+            stepRefs.current[6] = el;
+          }}
+        >
           <WorkflowCard
             step={6}
-            title={`Negative Prompt — ${(data as Record<string, unknown>).predator ?? "Predator"}`}
+            title={`Negative Prompt — ${
+              (data as Record<string, unknown>).predator ?? "Predator"
+            }`}
             badge="Kling / image models only"
-            color={{ border: "border-red-400", bg: "bg-red-50", badge: "bg-red-100 text-red-700" }}
+            color={{
+              border: "border-red-400",
+              bg: "bg-red-50",
+              badge: "bg-red-100 text-red-700",
+            }}
             help="Use in Kling or supported image-model negative prompt fields. Do NOT use in Runway Gen-4.5."
             done={done[6]}
             onToggle={() => toggle(6)}
           >
             <TextBox value={negativePrompt} />
-            <CopyBtn label="Copy Negative Prompt" onCopy={() => onCopy(negativePrompt)} />
+            <CopyBtn
+              label="Copy Negative Prompt"
+              onCopy={() => onCopy(negativePrompt)}
+            />
           </WorkflowCard>
         </div>
       </div>
 
-      {/* Jump buttons */}
       <div className="mt-4 flex flex-wrap gap-2">
         {[1, 2, 3, 4, 5, 6].map((s) => (
           <button
@@ -2244,156 +2666,197 @@ export default function OutputCards({
   onRestoreVersion?: (v: PromptVersion) => void;
 }) {
   const onCopy = copyToClipboard;
-const versionKey = useMemo(() => {
-  const p = data.predatorName ?? "";
-  const r = data.preyName ?? "";
-  const a = String(data.arcName ?? "");
-  if (!p || !r || !a) return "";
-  return `${p}|${r}|${a}`;
-}, [data.predatorName, data.preyName, data.arcName]);
-function safeStr(v: unknown) {
-  if (typeof v === "string") return v.trim();
-  if (Array.isArray(v)) return v.map(String).join("\n").trim();
-  return String(v ?? "").trim();
-}
 
-function buildCalendarText() {
-  try {
-    const predator = data.predatorName ?? "Tiger";
-    const prey = data.preyName ?? "Deer";
-    const arc = String(data.arcName ?? "Ambush attack");
-    const today = new Date();
+  const runwayShots = useMemo(
+    () => (data.runwayShots ?? []).map((s) => String(s ?? "")),
+    [data.runwayShots]
+  );
 
-    if (typeof generateMonthlyCalendar === "function") {
-      const cal = generateMonthlyCalendar(predator, prey, arc, today);
-      return cal
-  .map((d: Record<string, unknown>) => {
-    const reel1 = (d.reel1 ?? {}) as Record<string, unknown>;
-    const reel2 = (d.reel2 ?? {}) as Record<string, unknown>;
+  const klingShots = useMemo(
+    () => (data.klingShots ?? []).map((s) => String(s ?? "")),
+    [data.klingShots]
+  );
 
-    const lines = [
-      `${safeStr(d.dateLabel) || safeStr(d.dateISO)}`,
-      safeStr(reel1.hook) ? `Reel 1 Hook: ${safeStr(reel1.hook)}` : "",
-      safeStr(reel1.caption) ? `Reel 1 Caption: ${safeStr(reel1.caption)}` : "",
-      safeStr(reel1.hashtags) ? `Reel 1 Hashtags: ${safeStr(reel1.hashtags)}` : "",
-      safeStr(reel2.hook) ? `Reel 2 Hook: ${safeStr(reel2.hook)}` : "",
-      safeStr(reel2.caption) ? `Reel 2 Caption: ${safeStr(reel2.caption)}` : "",
-      safeStr(reel2.hashtags) ? `Reel 2 Hashtags: ${safeStr(reel2.hashtags)}` : "",
-    ].filter(Boolean);
+  const versionKey = useMemo(() => {
+    const p = data.predatorName ?? "";
+    const r = data.preyName ?? "";
+    const a = String(data.arcName ?? "");
+    if (!p || !r || !a) return "";
+    return `${p}|${r}|${a}`;
+  }, [data.predatorName, data.preyName, data.arcName]);
 
-    return lines.join(" | ");
-  })
-  .join("\n");
-    }
-  } catch {}
-  return "";
-}
-
-function buildCopyAllPacksText() {
-  const runway = (data.runwayShots ?? []).map((s, i) => `Runway Shot ${i + 1}\n${safeStr(s)}`).join("\n\n---\n\n");
-  const kling = (data.klingShots ?? []).map((s, i) => `Kling Shot ${i + 1}\n${safeStr(s)}`).join("\n\n---\n\n");
-
-  const calendar = buildCalendarText();
-
-  return [
-  `WSTV EXPORT PACK (Pro 2026)`,
-  `Predator: ${safeStr(data.predatorName)}`,
-  `Prey: ${safeStr(data.preyName)}`,
-  `Arc: ${safeStr(data.arcName)}`,
-  "",
-  `=== RUNWAY PACK (Gen-4.5 | 24/25fps | 720p | NO negatives) ===`,
-  runway || "(none)",
-  "",
-  `=== KLING PACK (3.0 | WSTV action workflow | Negatives OK) ===`,
-  kling || "(none)",
-  "",
-  `=== KLING DIRECT (15s) ===`,
-  safeStr((data as Record<string, unknown>).klingNative15s) || "(none)",
-  "",
-  `=== KLING 6-SHOT (DIRECT) ===`,
-  safeStr((data as Record<string, unknown>).klingSixShot) || "(none)",
-  "",
-  `=== CONTENT CALENDAR (THIS MONTH) ===`,
-  calendar || "(calendar generator not available)",
-].join("\n");
-}
-
-function buildExportTxtFull() {
-  const packs = buildCopyAllPacksText();
-
-  return [
-  packs,
-  "",
-  `=== CORE PROMPTS ===`,
-  `IMAGE PROMPT\n${safeStr(data.imagePrompt)}`,
-  "",
-  `NEGATIVE PROMPT\n${safeStr((data as Record<string, unknown>).negativePrompt)}`,
-  "",
-  `THUMBNAIL PROMPT\n${safeStr((data as Record<string, unknown>).thumbnailPrompt)}`,
-  "",
-  `VOICEOVER\n${safeStr((data as Record<string, unknown>).voiceoverLine)}`,
-  "",
-  `CAPCUT PLAN\n${safeStr((data as Record<string, unknown>).capCutPlan)}`,
-  "",
-  `CLIP CHAINING\n${safeStr((data as Record<string, unknown>).clipChaining)}`,
-  "",
-  `HOOK\n${safeStr((data as Record<string, unknown>).hook)}`,
-  "",
-  `CAPTION\n${safeStr((data as Record<string, unknown>).caption)}`,
-  "",
-  `CTA\n${safeStr((data as Record<string, unknown>).cta)}`,
-  "",
-  `HASHTAGS\n${safeStr((data as Record<string, unknown>).hashtags)}`,
-].join("\n");
-}
-async function copyAllPacks() {
-  const text = buildCopyAllPacksText();
-  try {
-    await navigator.clipboard.writeText(text);
-  } catch {
-    // fallback: reuse existing onCopy
-    onCopy(text);
+  function safeStr(v: unknown) {
+    if (typeof v === "string") return v.trim();
+    if (Array.isArray(v)) return v.map(String).join("\n").trim();
+    return String(v ?? "").trim();
   }
-}
 
-function exportTxt() {
-  const text = buildExportTxtFull();
-  const p = safeStr(data.predatorName || "predator");
-  const r = safeStr(data.preyName || "prey");
-  const a = safeStr(data.arcName || "arc").replace(/\s+/g, "_");
-  downloadText(`wstv-export-${p}-vs-${r}-${a}.txt`, text);
-}
+  function buildCalendarText() {
+    try {
+      const predator = data.predatorName ?? "Tiger";
+      const prey = data.preyName ?? "Deer";
+      const arc = String(data.arcName ?? "Ambush attack");
+      const today = new Date();
+
+      if (typeof generateMonthlyCalendar === "function") {
+        const cal = generateMonthlyCalendar(predator, prey, arc, today);
+        return cal
+          .map((d: Record<string, unknown>) => {
+            const reel1 = (d.reel1 ?? {}) as Record<string, unknown>;
+            const reel2 = (d.reel2 ?? {}) as Record<string, unknown>;
+
+            const lines = [
+              `${safeStr(d.dateLabel) || safeStr(d.dateISO)}`,
+              safeStr(reel1.hook) ? `Reel 1 Hook: ${safeStr(reel1.hook)}` : "",
+              safeStr(reel1.caption)
+                ? `Reel 1 Caption: ${safeStr(reel1.caption)}`
+                : "",
+              safeStr(reel1.hashtags)
+                ? `Reel 1 Hashtags: ${safeStr(reel1.hashtags)}`
+                : "",
+              safeStr(reel2.hook) ? `Reel 2 Hook: ${safeStr(reel2.hook)}` : "",
+              safeStr(reel2.caption)
+                ? `Reel 2 Caption: ${safeStr(reel2.caption)}`
+                : "",
+              safeStr(reel2.hashtags)
+                ? `Reel 2 Hashtags: ${safeStr(reel2.hashtags)}`
+                : "",
+            ].filter(Boolean);
+
+            return lines.join(" | ");
+          })
+          .join("\n");
+      }
+    } catch {}
+    return "";
+  }
+
+  function buildCopyAllPacksText() {
+    const runway = runwayShots
+      .map((s, i) => `Runway Shot ${i + 1}\n${safeStr(s)}`)
+      .join("\n\n---\n\n");
+
+    const kling = klingShots
+      .map((s, i) => `Kling Shot ${i + 1}\n${safeStr(s)}`)
+      .join("\n\n---\n\n");
+
+    const calendar = buildCalendarText();
+
+    return [
+      `WSTV EXPORT PACK (Pro 2026)`,
+      `Predator: ${safeStr(data.predatorName)}`,
+      `Prey: ${safeStr(data.preyName)}`,
+      `Arc: ${safeStr(data.arcName)}`,
+      "",
+      `=== RUNWAY PACK (Gen-4.5 | 24/25fps | 720p | NO negatives) ===`,
+      runway || "(none)",
+      "",
+      `=== KLING PACK (3.0 | WSTV action workflow | Negatives OK) ===`,
+      kling || "(none)",
+      "",
+      `=== KLING DIRECT (15s) ===`,
+      safeStr((data as Record<string, unknown>).klingNative15s) || "(none)",
+      "",
+      `=== KLING 6-SHOT (DIRECT) ===`,
+      safeStr((data as Record<string, unknown>).klingSixShot) || "(none)",
+      "",
+      `=== CONTENT CALENDAR (THIS MONTH) ===`,
+      calendar || "(calendar generator not available)",
+    ].join("\n");
+  }
+
+  function buildExportTxtFull() {
+    const packs = buildCopyAllPacksText();
+
+    return [
+      packs,
+      "",
+      `=== CORE PROMPTS ===`,
+      `IMAGE PROMPT\n${safeStr(data.imagePrompt)}`,
+      "",
+      `NEGATIVE PROMPT\n${safeStr(
+        (data as Record<string, unknown>).negativePrompt
+      )}`,
+      "",
+      `THUMBNAIL PROMPT\n${safeStr(
+        (data as Record<string, unknown>).thumbnailPrompt
+      )}`,
+      "",
+      `VOICEOVER\n${safeStr((data as Record<string, unknown>).voiceoverLine)}`,
+      "",
+      `CAPCUT PLAN\n${safeStr((data as Record<string, unknown>).capCutPlan)}`,
+      "",
+      `CLIP CHAINING\n${safeStr(
+        (data as Record<string, unknown>).clipChaining
+      )}`,
+      "",
+      `HOOK\n${safeStr((data as Record<string, unknown>).hook)}`,
+      "",
+      `CAPTION\n${safeStr((data as Record<string, unknown>).caption)}`,
+      "",
+      `CTA\n${safeStr((data as Record<string, unknown>).cta)}`,
+      "",
+      `HASHTAGS\n${safeStr((data as Record<string, unknown>).hashtags)}`,
+    ].join("\n");
+  }
+
+  async function copyAllPacks() {
+    const text = buildCopyAllPacksText();
+    try {
+      await navigator.clipboard.writeText(text);
+    } catch {
+      onCopy(text);
+    }
+  }
+
+  function exportTxt() {
+    const text = buildExportTxtFull();
+    const p = safeStr(data.predatorName || "predator");
+    const r = safeStr(data.preyName || "prey");
+    const a = safeStr(data.arcName || "arc").replace(/\s+/g, "_");
+    downloadText(`wstv-export-${p}-vs-${r}-${a}.txt`, text);
+  }
+
   return (
     <div className="space-y-6">
       <EngineSpecsPanel />
+
       <div className="mt-3 rounded-lg border border-blue-200 bg-blue-50 p-3 text-xs text-blue-800">
-  Meta Reels export: 9:16 vertical, audio on, and keep important text inside the safe zone.
-</div>
+        Meta Reels export: 9:16 vertical, audio on, and keep important text
+        inside the safe zone.
+      </div>
+
       <SectionLabel label="WSTV Workflow Prompt Map" />
       <WorkflowPromptMap data={data} onCopy={onCopy} />
-      <div className="flex flex-wrap gap-2">
-  <button
-    type="button"
-    onClick={copyAllPacks}
-    className="rounded-xl bg-gray-900 px-4 py-2 text-xs font-extrabold text-white hover:bg-black active:scale-95"
-  >
-    📋 Copy All (Runway/Kling/Calendar)
-  </button>
 
-  <button
-    type="button"
-    onClick={exportTxt}
-    className="rounded-xl border border-gray-300 bg-white px-4 py-2 text-xs font-extrabold text-gray-800 hover:bg-gray-50 active:scale-95"
-  >
-    ⬇ Export TXT
-  </button>
-</div>
-{versionKey && (
-  <>
-    <SectionLabel label="🕘 Prompt Versions" />
-    <PromptVersionsPanel versionKey={versionKey} onRestoreVersion={onRestoreVersion} />
-  </>
-)}
+      <div className="flex flex-wrap gap-2">
+        <button
+          type="button"
+          onClick={copyAllPacks}
+          className="rounded-xl bg-gray-900 px-4 py-2 text-xs font-extrabold text-white hover:bg-black active:scale-95"
+        >
+          📋 Copy All (Runway/Kling/Calendar)
+        </button>
+
+        <button
+          type="button"
+          onClick={exportTxt}
+          className="rounded-xl border border-gray-300 bg-white px-4 py-2 text-xs font-extrabold text-gray-800 hover:bg-gray-50 active:scale-95"
+        >
+          ⬇ Export TXT
+        </button>
+      </div>
+
+      {versionKey && (
+        <>
+          <SectionLabel label="🕘 Prompt Versions" />
+          <PromptVersionsPanel
+            versionKey={versionKey}
+            onRestoreVersion={onRestoreVersion}
+          />
+        </>
+      )}
+
       <SectionLabel label="Core Prompts" />
 
       <Card
@@ -2402,6 +2865,14 @@ function exportTxt() {
         onCopy={onCopy}
         accent="border-l-amber-500"
         aiEnhanced={data.aiEnhanced}
+        extraActions={[
+          {
+            label: "Copy BODY",
+            onClick: () => onCopy(extractImagePromptBody(data.imagePrompt)),
+            className:
+              "rounded border border-amber-300 bg-amber-50 px-3 py-1 text-sm font-semibold text-amber-800 hover:bg-amber-100 active:scale-95",
+          },
+        ]}
       />
 
       {data.negativePrompt && (
@@ -2432,191 +2903,227 @@ function exportTxt() {
 
       <SectionLabel label="🎬 Video Shots (Pro Layout)" />
 
-<div className="rounded-2xl border border-gray-200 bg-white p-4 shadow-sm">
-  <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
-    <div className="text-sm font-extrabold text-gray-900">Raw Shot Lists</div>
+      <div className="rounded-2xl border border-gray-200 bg-white p-4 shadow-sm">
+        <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
+          <div className="text-sm font-extrabold text-gray-900">
+            Raw Shot Lists
+          </div>
 
-    <div className="flex flex-wrap gap-2">
-      <button
-        type="button"
-        onClick={() => onCopy(data.runwayShots.map((s) => extractRunwayPasteReady(s)).filter(Boolean).join("\n\n---\n\n"))}
-        className="rounded-lg border border-green-200 bg-green-50 px-3 py-1.5 text-xs font-extrabold text-green-800 hover:bg-green-100 active:scale-95"
-      >
-        Copy Runway (Paste-Ready)
-      </button>
+          <div className="flex flex-wrap gap-2">
+            <button
+              type="button"
+              onClick={() =>
+                onCopy(
+                  runwayShots
+                    .map((s) => extractRunwayPasteReady(s))
+                    .filter(Boolean)
+                    .join("\n\n---\n\n")
+                )
+              }
+              className="rounded-lg border border-green-200 bg-green-50 px-3 py-1.5 text-xs font-extrabold text-green-800 hover:bg-green-100 active:scale-95"
+            >
+              Copy Runway (Paste-Ready)
+            </button>
 
-      <button
-        type="button"
-        onClick={() => onCopy(data.klingShots.map((s) => extractKlingPromptBody(s)).filter(Boolean).join("\n\n---\n\n"))}
-        className="rounded-lg border border-blue-200 bg-blue-50 px-3 py-1.5 text-xs font-extrabold text-blue-800 hover:bg-blue-100 active:scale-95"
-      >
-        Copy Kling (SCALE Body)
-      </button>
-    </div>
-  </div>
+            <button
+              type="button"
+              onClick={() =>
+                onCopy(
+                  klingShots
+                    .map((s) => extractKlingPromptBody(s))
+                    .filter(Boolean)
+                    .join("\n\n---\n\n")
+                )
+              }
+              className="rounded-lg border border-blue-200 bg-blue-50 px-3 py-1.5 text-xs font-extrabold text-blue-800 hover:bg-blue-100 active:scale-95"
+            >
+              Copy Kling (SCALE Body)
+            </button>
+          </div>
+        </div>
 
-  <div className="grid gap-4 md:grid-cols-2">
-    {/* RUNWAY */}
-    <div className="rounded-2xl border border-green-200 bg-green-50 p-4">
-      <div className="mb-2 flex items-center justify-between gap-2">
-        <div className="text-sm font-extrabold text-green-900">Runway Shots</div>
-        <span className="rounded-full bg-white px-2 py-0.5 text-[11px] font-bold text-green-700 ring-1 ring-green-200">
-          Gen-4.5 | 24/25fps | 720p
-        </span>
+        <div className="grid gap-4 md:grid-cols-2">
+          <div className="rounded-2xl border border-green-200 bg-green-50 p-4">
+            <div className="mb-2 flex items-center justify-between gap-2">
+              <div className="text-sm font-extrabold text-green-900">
+                Runway Shots
+              </div>
+              <span className="rounded-full bg-white px-2 py-0.5 text-[11px] font-bold text-green-700 ring-1 ring-green-200">
+                Gen-4.5 | 24/25fps | 720p
+              </span>
+            </div>
+
+            <p className="mb-3 text-xs text-green-800">
+              Shot 1 → establishing, Shot 2 → continuity, Shot 3 → aftermath
+              (last frame exports).
+            </p>
+
+            <p className="mb-3 text-xs text-green-800">
+              I2V = motion only. No negative prompts. Last frame chaining.
+            </p>
+
+            <div className="space-y-3">
+              {runwayShots.map((shot, i) => (
+                <ProShotCard
+                  key={`runway-pro-${i}`}
+                  engine="runway"
+                  index={i}
+                  shot={shot}
+                  onCopy={onCopy}
+                />
+              ))}
+            </div>
+          </div>
+
+          <div className="rounded-2xl border border-blue-200 bg-blue-50 p-4">
+            <div className="mb-2 flex items-center justify-between gap-2">
+              <div className="text-sm font-extrabold text-blue-900">
+                Kling Shots
+              </div>
+              <span className="rounded-full bg-white px-2 py-0.5 text-[11px] font-bold text-blue-700 ring-1 ring-blue-200">
+                Kling 3.0 | Action workflow | Audio-capable
+              </span>
+            </div>
+
+            <p className="mb-3 text-xs text-blue-800">
+              Best for full-body physics/action beats. Use Runway last frame as
+              reference.
+            </p>
+
+            <p className="mb-3 text-xs text-blue-800">
+              SCALE format. Negative prompts OK. Bind Subject + Start/End Frame.
+            </p>
+
+            <div className="space-y-3">
+              {klingShots.map((shot, i) => (
+                <ProShotCard
+                  key={`kling-pro-${i}`}
+                  engine="kling"
+                  index={i}
+                  shot={shot}
+                  onCopy={onCopy}
+                />
+              ))}
+            </div>
+          </div>
+        </div>
       </div>
-
-      <p className="mb-3 text-xs text-green-800">
-        Shot 1 → establishing, Shot 2 → continuity, Shot 3 → aftermath (last frame exports).
-      </p>
-
-      <p className="mb-3 text-xs text-green-800">I2V = motion only. No negative prompts. Last frame chaining.</p>
-
-      <div className="space-y-3">
-        {data.runwayShots.map((shot, i) => (
-          <ProShotCard key={`runway-pro-${i}`} engine="runway" index={i} shot={shot} onCopy={onCopy} />
-        ))}
-      </div>
-    </div>
-
-    {/* KLING */}
-    <div className="rounded-2xl border border-blue-200 bg-blue-50 p-4">
-      <div className="mb-2 flex items-center justify-between gap-2">
-        <div className="text-sm font-extrabold text-blue-900">Kling Shots</div>
-        <span className="rounded-full bg-white px-2 py-0.5 text-[11px] font-bold text-blue-700 ring-1 ring-blue-200">
-          Kling 3.0 | Action workflow | Audio-capable
-        </span>
-      </div>
-
-      <p className="mb-3 text-xs text-blue-800">
-        Best for full-body physics/action beats. Use Runway last frame as reference.
-      </p>
-
-      <p className="mb-3 text-xs text-blue-800">SCALE format. Negative prompts OK. Bind Subject + Start/End Frame.</p>
-
-      <div className="space-y-3">
-        {data.klingShots.map((shot, i) => (
-          <ProShotCard key={`kling-pro-${i}`} engine="kling" index={i} shot={shot} onCopy={onCopy} />
-        ))}
-      </div>
-    </div>
-  </div>
-</div>
 
       {data.klingNative15s !== undefined && data.klingNative15s !== null && (
-  <div className="rounded-2xl border border-blue-300 bg-blue-50 p-4 shadow-sm">
-    {/* Header */}
-    <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
-      <div className="flex flex-wrap items-center gap-2">
-        <div className="text-sm font-extrabold text-blue-900">
-          Kling 15-Second Native Multi-Shot
+        <div className="rounded-2xl border border-blue-300 bg-blue-50 p-4 shadow-sm">
+          <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
+            <div className="flex flex-wrap items-center gap-2">
+              <div className="text-sm font-extrabold text-blue-900">
+                Kling 15-Second Native Multi-Shot
+              </div>
+
+              <span className="rounded-full bg-white px-2 py-0.5 text-[11px] font-bold text-blue-700 ring-1 ring-blue-200">
+                Kling 3.0 Pro / Standard
+              </span>
+
+              <span className="rounded-full bg-green-100 px-2 py-0.5 text-[11px] font-extrabold text-green-700 ring-1 ring-green-200">
+                ✓ Zero inter-clip drift
+              </span>
+
+              <span className="rounded-full bg-amber-100 px-2 py-0.5 text-[11px] font-extrabold text-amber-800 ring-1 ring-amber-200">
+                Action-ready | Audio-capable
+              </span>
+            </div>
+          </div>
+
+          <p className="mb-3 text-xs leading-relaxed text-blue-800">
+            यो एउटै prompt Kling 3.0 Pro/Standard मा paste गर्दा 15 seconds को
+            continuous video आउँछ। 3 अलग shots generate हुन्छन्, subject
+            identity automatically locked हुन्छ।
+          </p>
+
+          <pre className="max-h-[420px] overflow-auto whitespace-pre-wrap rounded-xl border border-blue-200 bg-white p-3 text-xs leading-relaxed text-gray-900">
+            {String(data.klingNative15s)}
+          </pre>
+
+          <div className="mt-3 flex flex-wrap gap-2">
+            <button
+              type="button"
+              onClick={() => onCopy(String(data.klingNative15s))}
+              className="rounded-xl bg-blue-700 px-4 py-2 text-sm font-extrabold text-white hover:bg-blue-800 active:scale-[0.98]"
+            >
+              📋 Copy Full 15s Prompt
+            </button>
+            <button
+              type="button"
+              onClick={() =>
+                onCopy(extractKlingPromptBody(String(data.klingNative15s)))
+              }
+              className="rounded-xl border border-blue-300 bg-white px-4 py-2 text-sm font-extrabold text-blue-700 hover:bg-blue-50 active:scale-[0.98]"
+            >
+              📋 Copy BODY Only
+            </button>
+          </div>
         </div>
+      )}
 
-        <span className="rounded-full bg-white px-2 py-0.5 text-[11px] font-bold text-blue-700 ring-1 ring-blue-200">
-          Kling 3.0 Pro / Standard
-        </span>
+      {data.klingSixShot !== undefined && data.klingSixShot !== null && (
+        <div className="rounded-2xl border border-indigo-300 bg-indigo-50 p-4 shadow-sm">
+          <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
+            <div className="flex flex-wrap items-center gap-2">
+              <div className="text-sm font-extrabold text-indigo-900">
+                Kling 6-Shot Multi-Scene
+              </div>
 
-        <span className="rounded-full bg-green-100 px-2 py-0.5 text-[11px] font-extrabold text-green-700 ring-1 ring-green-200">
-          ✓ Zero inter-clip drift
-        </span>
+              <span className="rounded-full bg-white px-2 py-0.5 text-[11px] font-bold text-indigo-700 ring-1 ring-indigo-200">
+                Kling 3.0 Pro / Standard
+              </span>
 
-        <span className="rounded-full bg-amber-100 px-2 py-0.5 text-[11px] font-extrabold text-amber-800 ring-1 ring-amber-200">
-          Action-ready | Audio-capable
-        </span>
-      </div>
-    </div>
+              <span className="rounded-full bg-green-100 px-2 py-0.5 text-[11px] font-extrabold text-green-700 ring-1 ring-green-200">
+                ✓ 6 shots — 1 prompt
+              </span>
 
-    {/* Nepali helper line (like screenshot) */}
-    <p className="mb-3 text-xs leading-relaxed text-blue-800">
-      यो एउटै prompt Kling 3.0 Pro/Standard मा paste गर्दा 15 seconds को continuous video आउँछ।
-      3 अलग shots generate हुन्छन्, subject identity automatically locked हुन्छ।
-    </p>
+              <span className="rounded-full bg-amber-100 px-2 py-0.5 text-[11px] font-extrabold text-amber-800 ring-1 ring-amber-200">
+                Current WSTV workflow
+              </span>
+            </div>
+          </div>
 
-    {/* Prompt box */}
-    <pre className="max-h-[420px] overflow-auto whitespace-pre-wrap rounded-xl border border-blue-200 bg-white p-3 text-xs leading-relaxed text-gray-900">
-      {String(data.klingNative15s)}
-    </pre>
+          <p className="mb-3 text-xs leading-relaxed text-indigo-800">
+            <span className="font-extrabold">WSTV multi-shot flow:</span>{" "}
+            Macro close-up → Wide establishing → Profile tracking →
+            Shot-reverse-shot → Action wide → Winner aftermath. एकै prompt ले 6
+            cinematic shots generate गर्छ — subject identity सबै shots मा locked
+            हुन्छ।
+          </p>
 
-    {/* Copy button */}
-    <div className="mt-3 flex flex-wrap gap-2">
-      <button
-        type="button"
-        onClick={() => onCopy(String(data.klingNative15s))}
-        className="rounded-xl bg-blue-700 px-4 py-2 text-sm font-extrabold text-white hover:bg-blue-800 active:scale-[0.98]"
-      >
-        📋 Copy Full 15s Prompt
-      </button>
-      <button
-        type="button"
-        onClick={() => onCopy(extractKlingPromptBody(String(data.klingNative15s)))}
-        className="rounded-xl border border-blue-300 bg-white px-4 py-2 text-sm font-extrabold text-blue-700 hover:bg-blue-50 active:scale-[0.98]"
-      >
-        📋 Copy BODY Only
-      </button>
-    </div>
-  </div>
-)}
+          <pre className="max-h-[520px] overflow-auto whitespace-pre-wrap rounded-xl border border-indigo-200 bg-white p-3 text-xs leading-relaxed text-gray-900">
+            {String(data.klingSixShot)}
+          </pre>
 
-{data.klingSixShot !== undefined && data.klingSixShot !== null && (
-  <div className="rounded-2xl border border-indigo-300 bg-indigo-50 p-4 shadow-sm">
-    {/* Header row */}
-    <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
-      <div className="flex flex-wrap items-center gap-2">
-        <div className="text-sm font-extrabold text-indigo-900">
-          Kling 6-Shot Multi-Scene
+          <div className="mt-3 flex flex-wrap gap-2">
+            <button
+              type="button"
+              onClick={() => onCopy(String(data.klingSixShot))}
+              className="rounded-xl bg-indigo-700 px-4 py-2 text-sm font-extrabold text-white hover:bg-indigo-800 active:scale-[0.98]"
+            >
+              📋 Copy Full 6-Shot Prompt
+            </button>
+            <button
+              type="button"
+              onClick={() =>
+                onCopy(extractKlingPromptBody(String(data.klingSixShot)))
+              }
+              className="rounded-xl border border-indigo-300 bg-white px-4 py-2 text-sm font-extrabold text-indigo-700 hover:bg-indigo-50 active:scale-[0.98]"
+            >
+              📋 Copy BODY Only
+            </button>
+          </div>
         </div>
+      )}
 
-        <span className="rounded-full bg-white px-2 py-0.5 text-[11px] font-bold text-indigo-700 ring-1 ring-indigo-200">
-          Kling 3.0 Pro / Standard
-        </span>
+      <SectionLabel label="📅 Content Calendar" />
+      <CalendarPanel
+        predator={data.predatorName ?? "Tiger"}
+        prey={data.preyName ?? "Deer"}
+        arc={data.arcName ?? "Ambush attack"}
+      />
 
-        <span className="rounded-full bg-green-100 px-2 py-0.5 text-[11px] font-extrabold text-green-700 ring-1 ring-green-200">
-          ✓ 6 shots — 1 prompt
-        </span>
-
-        <span className="rounded-full bg-amber-100 px-2 py-0.5 text-[11px] font-extrabold text-amber-800 ring-1 ring-amber-200">
-          Current WSTV workflow
-        </span>
-      </div>
-    </div>
-
-    {/* Description */}
-    <p className="mb-3 text-xs leading-relaxed text-indigo-800">
-      <span className="font-extrabold">WSTV multi-shot flow:</span>{" "}
-      Macro close-up → Wide establishing → Profile tracking → Shot-reverse-shot →
-      Action wide → Winner aftermath. एकै prompt ले 6 cinematic shots generate गर्छ —
-      subject identity सबै shots मा locked हुन्छ।
-    </p>
-
-    {/* Prompt box */}
-    <pre className="max-h-[520px] overflow-auto whitespace-pre-wrap rounded-xl border border-indigo-200 bg-white p-3 text-xs leading-relaxed text-gray-900">
-      {String(data.klingSixShot)}
-    </pre>
-
-    {/* Copy button */}
-    <div className="mt-3 flex flex-wrap gap-2">
-      <button
-        type="button"
-        onClick={() => onCopy(String(data.klingSixShot))}
-        className="rounded-xl bg-indigo-700 px-4 py-2 text-sm font-extrabold text-white hover:bg-indigo-800 active:scale-[0.98]"
-      >
-        📋 Copy Full 6-Shot Prompt
-      </button>
-      <button
-        type="button"
-        onClick={() => onCopy(extractKlingPromptBody(String(data.klingSixShot)))}
-        className="rounded-xl border border-indigo-300 bg-white px-4 py-2 text-sm font-extrabold text-indigo-700 hover:bg-indigo-50 active:scale-[0.98]"
-      >
-        📋 Copy BODY Only
-      </button>
-    </div>
-  </div>
-)}
-<SectionLabel label="📅 Content Calendar" />
-<CalendarPanel
-  predator={data.predatorName ?? "Tiger"}
-  prey={data.preyName ?? "Deer"}
-  arc={data.arcName ?? "Ambush attack"}
-/>
       <SectionLabel label="Hooks & Copy" />
 
       {data.hook2026 && data.hook2026.length > 0 ? (
@@ -2627,13 +3134,27 @@ function exportTxt() {
           recommendedIndex={data.recommendedHookIndex}
         />
       ) : data.hook ? (
-        <Card title="🔥 Hook" value={data.hook} onCopy={onCopy} accent="border-l-orange-500" />
+        <Card
+          title="🔥 Hook"
+          value={data.hook}
+          onCopy={onCopy}
+          accent="border-l-orange-500"
+        />
       ) : null}
 
       {data.caption2026 ? (
-        <Caption2026Panel caption2026={data.caption2026} captionOld={data.caption} onCopy={onCopy} />
+        <Caption2026Panel
+          caption2026={data.caption2026}
+          captionOld={data.caption}
+          onCopy={onCopy}
+        />
       ) : data.caption ? (
-        <Card title="📝 Caption" value={data.caption} onCopy={onCopy} accent="border-l-emerald-500" />
+        <Card
+          title="📝 Caption"
+          value={data.caption}
+          onCopy={onCopy}
+          accent="border-l-emerald-500"
+        />
       ) : null}
 
       {data.voiceoverLine && (
@@ -2648,12 +3169,18 @@ function exportTxt() {
 
       {data.cta && <Card title="📢 CTA" value={data.cta} onCopy={onCopy} />}
 
-      {data.hashtags && <Card title="# Hashtags" value={data.hashtags} onCopy={onCopy} />}
+      {data.hashtags && (
+        <Card title="# Hashtags" value={data.hashtags} onCopy={onCopy} />
+      )}
 
       {data.fiveShotCinematic && data.fiveShotViral && (
         <>
           <SectionLabel label="5-Shot Pipeline" />
-          <FiveShotPanel cinematic={data.fiveShotCinematic} viral={data.fiveShotViral} onCopy={onCopy} />
+          <FiveShotPanel
+            cinematic={data.fiveShotCinematic}
+            viral={data.fiveShotViral}
+            onCopy={onCopy}
+          />
         </>
       )}
 
@@ -2681,7 +3208,11 @@ function exportTxt() {
       {data.animalBehavior && (
         <>
           <SectionLabel label="Animal Behavior" />
-          <AnimalBehaviorPanel behavior={data.animalBehavior} predator="Subject" onCopy={onCopy} />
+          <AnimalBehaviorPanel
+            behavior={data.animalBehavior}
+            predator="Subject"
+            onCopy={onCopy}
+          />
         </>
       )}
 
