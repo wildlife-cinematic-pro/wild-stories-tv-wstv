@@ -491,13 +491,15 @@ const [arc, setArc] = useState<Arc>("Pack hunting strategy");
   // Persist settings
   useEffect(() => {
     writeSettings({
-      activeProvider,
-      realismMode,
-      motionOnlyI2V,
-      referenceLock,
-      singleActionRule,
-      microMotion,
-      heroVeo,
+  activeProvider,
+  realismMode,
+  motionOnlyI2V,
+  referenceLock,
+  singleActionRule,
+  microMotion,
+  heroVeo,
+  autoApplyHighDrift,
+});
       // ✅ persist auto-apply toggle
       autoApplyHighDrift,
     } as Record<string, unknown>);
