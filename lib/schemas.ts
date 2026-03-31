@@ -7,7 +7,7 @@ export const enhanceRequestSchema = z.object({
   provider: z.enum(["claude", "gemini"]),
   predator: z.string().min(1).max(64),
   prey: z.string().min(1).max(64),
-  env: z.string().min(1).max(120),
+  env: z.string().min(1).max(300),
   arc: z.string().min(1).max(120),
   weather: z.string().min(1).max(80),
   emotionalTone: z.string().min(1).max(80),
