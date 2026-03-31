@@ -111,6 +111,30 @@ export const KLING_SPECS = {
 } as const;
 
 // ─────────────────────────────────────────────────────────────
+// KLING PROMPT LENGTH VALIDATOR
+// ─────────────────────────────────────────────────────────────
+export const KLING_CHAR_LIMIT = 2500;
+
+export function validateKlingPromptLength(prompt: string): {
+  length: number;
+  isOver: boolean;
+  remaining: number;
+  warning: string | null;
+} {
+  const length = prompt.length;
+  const isOver = length > KLING_CHAR_LIMIT;
+  const remaining = KLING_CHAR_LIMIT - length;
+  return {
+    length,
+    isOver,
+    remaining,
+    warning: isOver
+      ? `⚠️ Kling prompt ${length} chars — limit ${Math.abs(remaining)} chars le nacheko. Kling le silently truncate garxa!`
+      : null,
+  };
+}
+
+// ─────────────────────────────────────────────────────────────
 // Banned-words sanitizer (platform-safe)
 // ─────────────────────────────────────────────────────────────
 const BANNED_WORDS: Array<[RegExp, string]> = [
@@ -1887,6 +1911,12 @@ const pasteReadyCore = [
   `Shot 3 WIDE: ${predator} settles and regains posture. ${prey} stabilizes, still alert. Full bodies visible.`,
 ].join("\n").trim();
 
+  // ✅ Kling 2500-char limit check
+const klingValidation = validateKlingPromptLength(pasteReadyCore);
+const klingLengthLine = klingValidation.isOver
+  ? `⚠️ PROMPT TOO LONG: ${klingValidation.length} / 2500 — paste garna agadi trim garos!`
+  : `✅ Prompt length OK: ${klingValidation.length} / 2500 chars`;
+
   const body = `═══ KLING 3.0 MULTI-SHOT PROMPT (SCALE format) ═══
 
 ${nativeSceneLine}
@@ -1943,6 +1973,7 @@ ${cfgLine}
 Motion intensities: Shot 1 → ${mi1.toFixed(2)} | Shot 2 → ${mi2.toFixed(2)} | Shot 3 → ${mi3.toFixed(2)}${context}
 
 ═══ PASTE INTO KLING — stays under 2500 chars (copy this block only) ═══
+${klingLengthLine}
 ${pasteReadyCore}
 
 ─── FULL BREAKDOWN — reference only, do NOT paste into Kling ───
