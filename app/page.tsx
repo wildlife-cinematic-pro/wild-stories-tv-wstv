@@ -564,7 +564,7 @@ const [animalVibe, setAnimalVibe] = useState<AnimalVibe>("National Geographic Wi
             const imagePrompt = buildImagePrompt(
         predator,
         prey,
-        final.environment,
+        finalEnvironment,
         finalArc,
         preset.lighting,
         preset.cameraGear,
@@ -581,7 +581,7 @@ const [animalVibe, setAnimalVibe] = useState<AnimalVibe>("National Geographic Wi
       const runway = buildRunwayShots(
         predator,
         prey,
-        final.environment,
+        finalEnvironment,
         finalArc,
         weather,
         runwayModel,
@@ -594,7 +594,7 @@ const [animalVibe, setAnimalVibe] = useState<AnimalVibe>("National Geographic Wi
       const kling = buildKlingShots(
         predator,
         prey,
-        final.environment,
+        finalEnvironment,
         finalArc,
         weather,
         klingModel,
@@ -607,7 +607,7 @@ const [animalVibe, setAnimalVibe] = useState<AnimalVibe>("National Geographic Wi
       const klingNative15s = buildKlingNative15s(
         predator,
         prey,
-        final.environment,
+        finalEnvironment,
         finalArc,
         weather,
         klingModel,
@@ -620,7 +620,7 @@ const [animalVibe, setAnimalVibe] = useState<AnimalVibe>("National Geographic Wi
       const klingSixShot = buildKlingSixShot(
         predator,
         prey,
-        final.environment,
+        finalEnvironment,
         finalArc,
         weather,
         klingModel,
@@ -635,17 +635,17 @@ const [animalVibe, setAnimalVibe] = useState<AnimalVibe>("National Geographic Wi
      const thumbnailPrompt = buildThumbnailPrompt(
   predator,
   prey,
-  final.environment,
+  finalEnvironment,
   weather,
   emotionalTone,
   animalVibe
 );
-      const voiceoverLine = buildVoiceoverLine(predator, prey, final.environment, emotionalTone);
+      const voiceoverLine = buildVoiceoverLine(predator, prey, finalEnvironment, emotionalTone);
       const capCutPlan = buildCapCutPlan(predator, finalArc, weather);
       const clipChaining = buildClipChaining(predator, preset.driftRisk);
 
       const hook2026 = build2026Hook(predator, prey, finalArc);
-      const caption2026 = build2026Caption(predator, prey, final.environment, finalArc);
+      const caption2026 = build2026Caption(predator, prey, finalEnvironment, finalArc);
       const cta = buildCTA(finalArc);
       const hashtags = buildHashtags(predator, prey, finalArc);
       const recommendedHookIndex = getRecommendedHookIndex(finalArc);
@@ -656,18 +656,18 @@ const [animalVibe, setAnimalVibe] = useState<AnimalVibe>("National Geographic Wi
 };
     const tenIdeas = build10Ideas(predator, preset.prey, presetForIdeas as never);
 
-      const platformPack = buildPlatformPack(predator, prey, finalArc, final.environment);
+      const platformPack = buildPlatformPack(predator, prey, finalArc, finalEnvironment);
       const seoTitle = buildSEOTitle(predator, prey, finalArc);
-      const altTextPrompt = buildAltTextPrompt(predator, prey, final.environment, finalArc);
+      const altTextPrompt = buildAltTextPrompt(predator, prey, finalEnvironment, finalArc);
 
       const qualitySummary = buildQualitySummary(quality);
       const referenceWorkflow = buildReferenceWorkflow(predator, quality);
-      const naturalismChecklist = buildNaturalismChecklist(quality, weather, final.environment);
+      const naturalismChecklist = buildNaturalismChecklist(quality, weather, finalEnvironment);
 
       const fiveShotCinematic = buildFiveShotCinematic(
         predator,
         prey,
-        final.environment,
+        finalEnvironment,
         finalArc,
         weather,
         runwayModel,
@@ -680,7 +680,7 @@ const [animalVibe, setAnimalVibe] = useState<AnimalVibe>("National Geographic Wi
       const fiveShotViral = buildFiveShotViral(
         predator,
         prey,
-        final.environment,
+        finalEnvironment,
         finalArc,
         weather,
         runwayModel,
@@ -793,7 +793,7 @@ animalBehavior: animalBehaviorResult ?? undefined,
   ? buildTwoPartViralPreset(
       predator,
       prey,
-      final.environment,
+      finalEnvironment,
       weather,
       finalArc,
       runwayModel
