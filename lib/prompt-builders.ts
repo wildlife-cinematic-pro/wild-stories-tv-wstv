@@ -1882,9 +1882,9 @@ const audio3Short = buildKlingAudioShort(predator, prey, env, weather, "aftermat
 // Short audio lines used here; full audio kept in body below for reference display only.
 const pasteReadyCore = [
   `Same scene and same ${predator}/${prey} identities from input image. Photorealistic wildlife documentary, 9:16 vertical.`,
-  `Shot 1: ${predator} ${s1.predatorBeat}. ${prey} ${s1.preyBeat}. Static or subtle handheld drift.`,
-  `Shot 2 WIDE: ${predator} ${s2.predatorBeat}. ${prey} ${s2.preyBeat}. Full bodies visible.`,
-  `Shot 3 WIDE: ${predator} ${s3.predatorBeat}. ${prey} ${s3.preyBeat}. Full bodies visible.`,
+  `Shot 1: tension hold, both alert. Static or subtle handheld drift.`,
+  `Shot 2 WIDE: one decisive attack and one evasive reaction. Full bodies visible.`,
+  `Shot 3 WIDE: aftermath reset, both still readable. Full bodies visible.`,
 ].join("\n").trim();
 
   const body = `═══ KLING 3.0 MULTI-SHOT PROMPT (SCALE format) ═══
