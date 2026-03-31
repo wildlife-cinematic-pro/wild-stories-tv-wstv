@@ -72,20 +72,20 @@ const HOOKS_2026: Partial<Record<Arc, (predator: string, prey: string) => string
     `One refusal to move changed the whole encounter. 👀`,
   ],
   "Giant vs giant clash": (predator, prey) => [
-  `${predator} and ${prey} were too close for either one to back off. 🔥`,
-  `One heavy step turned this into a real collision. 👀`,
-  `When animals this big commit, the impact feels immediate. ⚠️`,
-],
+    `${predator} and ${prey} were too close for either one to back off. 🔥`,
+    `One heavy step turned this into a real collision. 👀`,
+    `When animals this big commit, the impact feels immediate. ⚠️`,
+  ],
   "Territory dominance battle": (predator, prey) => [
     `The ${prey.toLowerCase()} crossed the wrong boundary. ⚠️`,
     `This is ${predator}'s ground and the ${prey.toLowerCase()} felt it instantly. 🔥`,
     `One step too far changed the entire mood. 👀`,
   ],
   "Pack hunting strategy": (predator, prey) => [
-  `The ${prey.toLowerCase()} was already boxed in before it reacted. ⚠️`,
-  `This is why ${predator.toLowerCase()}s hunt like a system, not a chase. 🧠`,
-  `By the time the ${prey.toLowerCase()} moved, the angle was already gone. 👀`,
-],
+    `The ${prey.toLowerCase()} was already boxed in before it reacted. ⚠️`,
+    `This is why ${predator.toLowerCase()}s hunt like a system, not a chase. 🧠`,
+    `By the time the ${prey.toLowerCase()} moved, the angle was already gone. 👀`,
+  ],
   "Predator vs predator fight": (predator, prey) => [
     `Two apex predators. One space. No safe outcome. 💥`,
     `${predator} vs ${prey} — this turned violent instantly. 🔥`,
@@ -112,9 +112,9 @@ const VIRAL_CAPTIONS: Partial<Record<Arc, (predator: string, prey: string, env: 
     `Two massive animals met in the ${env}, and neither wanted to yield space. A ${predator.toLowerCase()} and a ${prey.toLowerCase()} bring a different kind of tension — slower, heavier, and much more violent once contact happens. 🔥`,
   "Territory dominance battle": (predator, prey, env) =>
     `In the ${env}, the line between passing through and crossing the wrong boundary is tiny. The ${prey.toLowerCase()} stepped in anyway, and the ${predator.toLowerCase()} answered immediately. Territory in the wild is never symbolic — it is enforced. 👀`,
-"Pack hunting strategy": (predator, prey, env) =>
-  `At first, the ${prey.toLowerCase()} looked free. Then the shape of the trap became clear. In the ${env}, the ${predator.toLowerCase()} is dangerous not because of chaos, but because every movement feels coordinated before the prey even realizes it. 🧠`,
-    "Predator vs predator fight": (predator, prey, env) =>
+  "Pack hunting strategy": (predator, prey, env) =>
+    `At first, the ${prey.toLowerCase()} looked free. Then the shape of the trap became clear. In the ${env}, the ${predator.toLowerCase()} is dangerous not because of chaos, but because every movement feels coordinated before the prey even realizes it. 🧠`,
+  "Predator vs predator fight": (predator, prey, env) =>
     `A ${predator.toLowerCase()} and a ${prey.toLowerCase()} in the ${env} creates a different kind of pressure — no easy retreat, no harmless bluff, and almost no margin for error. These confrontations feel rare because both animals understand the cost. 💥`,
   "Escape from danger": (predator, prey, env) =>
     `Everything in the ${env} changed in an instant. The ${prey.toLowerCase()} had almost no time to process the danger before the ${predator.toLowerCase()} was already moving. In moments like this, survival comes down to one decision made fast enough. ⚡`,
@@ -140,7 +140,7 @@ const CAPTIONS_2026: Partial<Record<Arc, (predator: string, prey: string, env: s
     `In the ${env}, territory is never symbolic. 👀\n\nThe ${prey.toLowerCase()} stepped into the wrong space, and the ${predator.toLowerCase()} answered immediately. In the wild, boundaries are enforced, not discussed.\n\nWould you have backed off earlier? 👇\n\nFollow for raw dominance moments in nature. 🔥`,
 
   "Pack hunting strategy": (predator, prey, env) =>
-  `At first, the ${prey.toLowerCase()} looked free. Then the pattern became obvious. 🧠
+    `At first, the ${prey.toLowerCase()} looked free. Then the pattern became obvious. 🧠
 
 In the ${env}, the ${predator.toLowerCase()} is dangerous because the pressure builds before the prey fully reads what is happening. This is not chaos. It is timing, spacing, and control.
 
@@ -170,7 +170,7 @@ const VIRAL_CTAS: Partial<Record<Arc, string>> = {
   "Territory dominance battle":
     "Would you have backed off earlier? Comment below 👇 Follow for raw dominance moments.",
   "Pack hunting strategy":
-  "When did you notice the trap forming? Comment below 👇 Follow for smart wildlife tension.",
+    "When did you notice the trap forming? Comment below 👇 Follow for smart wildlife tension.",
   "Predator vs predator fight":
     "Which animal would you trust more here? Comment below 👇 Follow for rare predator encounters.",
   "Escape from danger":
@@ -211,6 +211,21 @@ export function getRecommendedHookIndex(arc: Arc): number {
 }
 
 // ─────────────────────────────────────────────────────────────
+// SOCIAL ENV SANITIZER
+// ─────────────────────────────────────────────────────────────
+function sanitizeSocialEnv(env: string): string {
+  return String(env ?? "")
+    .replace(/\s*with geothermal steam/gi, "")
+    .replace(/\bgeothermal steam\b/gi, "")
+    .replace(/\bsteam vents?\b/gi, "")
+    .replace(/\bmist\b/gi, "")
+    .replace(/\bhaze\b/gi, "")
+    .replace(/\s{2,}/g, " ")
+    .replace(/\s+,/g, ",")
+    .trim();
+}
+
+// ─────────────────────────────────────────────────────────────
 // PUBLIC BUILDER FUNCTIONS
 // ─────────────────────────────────────────────────────────────
 
@@ -235,28 +250,32 @@ export function build2026Hook(predator: string, prey: string, arc: Arc): string[
   return hooks.map((hook) => (hook.length > 78 ? `${hook.slice(0, 75)}...` : hook));
 }
 
+/** CTA line — arc-specific or generic fallback */
+export function buildCTA(arc: Arc): string {
+  return (
+    VIRAL_CTAS[arc] ??
+    "Who wins this battle? Comment your guess 👇 Follow for daily wildlife cinema."
+  );
+}
+
 /** Legacy caption — trimmed to 220 chars */
 export function buildCaption(predator: string, prey: string, env: string, arc: Arc): string {
+  const cleanEnv = sanitizeSocialEnv(env);
+
   const raw =
-    VIRAL_CAPTIONS[arc]?.(predator, prey, env) ??
-    `${predator} and ${prey} collide in the ${env}, and the mood changes instantly. This ${arc.toLowerCase()} sequence feels tense, physical, and completely unforgiving from the first movement.`;
+    VIRAL_CAPTIONS[arc]?.(predator, prey, cleanEnv) ??
+    `${predator} and ${prey} collide in the ${cleanEnv}, and the mood changes instantly. This ${arc.toLowerCase()} sequence feels tense, physical, and completely unforgiving from the first movement.`;
 
   return raw.length > 220 ? `${raw.slice(0, 217)}...` : raw;
 }
 
 /** 2026 story caption — full 5-part structure, no trimming */
 export function build2026Caption(predator: string, prey: string, env: string, arc: Arc): string {
-  return (
-    CAPTIONS_2026[arc]?.(predator, prey, env) ??
-    `${predator} and ${prey} collide in the ${env}. The moment feels immediate, physical, and unforgiving from the first move.\n\nWhich part of the sequence hit hardest for you? 👇\n\nFollow for daily wildlife cinema. 🔥`
-  );
-}
+  const cleanEnv = sanitizeSocialEnv(env);
 
-/** CTA line — arc-specific or generic fallback */
-export function buildCTA(arc: Arc): string {
   return (
-    VIRAL_CTAS[arc] ??
-    `Who wins this battle? Comment your guess 👇 Follow for daily wildlife cinema.`
+    CAPTIONS_2026[arc]?.(predator, prey, cleanEnv) ??
+    `${predator} and ${prey} collide in the ${cleanEnv}. The moment feels immediate, physical, and unforgiving from the first move.\n\nWhich part of the sequence hit hardest for you? 👇\n\nFollow for daily wildlife cinema. 🔥`
   );
 }
 
@@ -288,8 +307,9 @@ export function buildPlatformPack(
   arc: Arc,
   env: string
 ): PlatformPack {
+  const cleanEnv = sanitizeSocialEnv(env);
   const hooks = build2026Hook(predator, prey, arc);
-  const caption = build2026Caption(predator, prey, env, arc);
+  const caption = build2026Caption(predator, prey, cleanEnv, arc);
 
   const facebook: FacebookPack = {
     hook: hooks[0],
@@ -345,5 +365,6 @@ export function buildAltTextPrompt(
   env: string,
   arc: Arc
 ): string {
-  return `AI-generated cinematic wildlife scene showing ${predator} and ${prey} in ${env} during a ${arc.toLowerCase()} sequence. Wild Stories TV original content.`;
+  const cleanEnv = sanitizeSocialEnv(env);
+  return `AI-generated cinematic wildlife scene showing ${predator} and ${prey} in ${cleanEnv} during a ${arc.toLowerCase()} sequence. Wild Stories TV original content.`;
 }
