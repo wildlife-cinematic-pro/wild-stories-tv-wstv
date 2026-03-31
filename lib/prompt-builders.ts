@@ -1881,22 +1881,11 @@ const audio3Short = buildKlingAudioShort(predator, prey, env, weather, "aftermat
     // Paste-ready core — trimmed to stay under Kling's 2500-char textPrompt limit.
 // Short audio lines used here; full audio kept in body below for reference display only.
 const pasteReadyCore = [
-  nativeSceneLine,
-  nativeCharacterLine,
-  `Style: Photorealistic wildlife documentary. 9:16 vertical.`,
-  ``,
-  `Shot 1 (0-5s):`,
-  `${predator} ${s1.predatorBeat}. ${prey} ${s1.preyBeat}.`,
-  `Camera: static hold or subtle handheld drift.`,
-  ``,
-  `Shot 2 (5-10s) — WIDE:`,
-  `${predator} ${s2.predatorBeat}. ${prey} ${s2.preyBeat}.`,
-  `Camera: FIXED WIDE — full bodies visible.`,
-  ``,
-  `Shot 3 (10-15s) — WIDE:`,
-  `${predator} ${s3.predatorBeat}. ${prey} ${s3.preyBeat}.`,
-  `Camera: LOCKED FIXED WIDE — full bodies visible.`,
-].filter(Boolean).join("\n").trim();
+  `Same scene and same ${predator}/${prey} identities from input image. Photorealistic wildlife documentary, 9:16 vertical.`,
+  `Shot 1: ${predator} ${s1.predatorBeat}. ${prey} ${s1.preyBeat}. Static or subtle handheld drift.`,
+  `Shot 2 WIDE: ${predator} ${s2.predatorBeat}. ${prey} ${s2.preyBeat}. Full bodies visible.`,
+  `Shot 3 WIDE: ${predator} ${s3.predatorBeat}. ${prey} ${s3.preyBeat}. Full bodies visible.`,
+].join("\n").trim();
 
   const body = `═══ KLING 3.0 MULTI-SHOT PROMPT (SCALE format) ═══
 
