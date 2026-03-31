@@ -650,7 +650,11 @@ const [animalVibe, setAnimalVibe] = useState<AnimalVibe>("National Geographic Wi
       const hashtags = buildHashtags(predator, prey, finalArc);
       const recommendedHookIndex = getRecommendedHookIndex(finalArc);
 
-      const tenIdeas = build10Ideas(predator, preset.prey, preset as unknown as never);
+      const presetForIdeas = {
+  ...preset,
+  environment: finalEnvironment,
+};
+    const tenIdeas = build10Ideas(predator, preset.prey, presetForIdeas as never);
 
       const platformPack = buildPlatformPack(predator, prey, finalArc, final.environment);
       const seoTitle = buildSEOTitle(predator, prey, finalArc);
