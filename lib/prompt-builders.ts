@@ -251,9 +251,12 @@ function buildKlingLocationLine(
   weather: Weather,
   motionOnlyI2V?: boolean
 ): string {
+  const cleanEnv = sanitizeImageEnv(env);
+  const cleanWeather = sanitizeWeatherPhrase(weatherVariants[weather]);
+
   return motionOnlyI2V
-    ? `Lighting & Location: same environment continuity, ${weatherVariants[weather]}.`
-    : `Lighting & Location: ${env}, ${weatherVariants[weather]}.`;
+    ? `Lighting & Location: same environment continuity, ${cleanWeather}.`
+    : `Lighting & Location: ${cleanEnv}, ${cleanWeather}.`;
 }
 
 function buildKlingExtraLine(base: string, motionOnlyI2V?: boolean): string {
@@ -1130,7 +1133,21 @@ function sanitizeImageEnv(env: string): string {
     .replace(/\s+,/g, ",")
     .trim();
 }
-
+function sanitizeWeatherPhrase(phrase: string): string {
+  return String(phrase ?? "")
+    .replace(/\bbreath steam visible\b/gi, "clean cold-air clarity")
+    .replace(/\bvisible breath vapor\b/gi, "clean cold-air clarity")
+    .replace(/\bbreath vapor\b/gi, "clean cold-air clarity")
+    .replace(/\bbreath clouds\b/gi, "clean cold-air clarity")
+    .replace(/\bsteam\b/gi, "")
+    .replace(/\bmist\b/gi, "")
+    .replace(/\bhaze\b/gi, "")
+    .replace(/\s{2,}/g, " ")
+    .replace(/\s+,/g, ",")
+    .replace(/,\s*,/g, ",")
+    .replace(/,\s*\./g, ".")
+    .trim();
+}
 function sanitizeImageTexture(texture: string): string {
   return String(texture ?? "")
     .replace(/\bdust on hooves\b/gi, "clean hooves")
@@ -1208,6 +1225,7 @@ function buildImageSubjectLine(
 
   return `Subject: ${predatorLabel} on the left and ${preyLabel} on the right, ${visibility}, locked in the peak tension beat of ${arcPhrase}.`;
 }
+
 export function buildImagePrompt(
   predator: string,
   prey: string,
@@ -1227,8 +1245,11 @@ export function buildImagePrompt(
   const depth = getDepthPrompt(depthMode);
   const vibe = animalVibePrompt[animalVibe];
   const cleanEnv = sanitizeImageEnv(env);
-const cleanTexture = sanitizeImageTexture(texture);
-const cleanAir = "clear clean air, no visible steam, no smoke plumes, no mist, no airborne haze";
+  const cleanTexture = sanitizeImageTexture(texture);
+  const cleanWeather = sanitizeWeatherPhrase(weatherVariants[weather]);
+  const cleanAir =
+    "clear clean air, no visible steam, no smoke plumes, no mist, no airborne haze";
+
   const cam =
     target === "NB2" || target === "NANO_BANANA_2"
       ? cameraGear
@@ -1239,7 +1260,7 @@ const cleanAir = "clear clean air, no visible steam, no smoke plumes, no mist, n
 
   const realismAdd =
     quality?.realismMode === "High Naturalism"
-? "Biological imperfections visible — stray hairs, uneven fur breakup, natural surface wear, moisture, asymmetrical detail, realistic paw pressure, true contact shadows."
+      ? "Biological imperfections visible — stray hairs, uneven fur breakup, natural surface wear, moisture, asymmetrical detail, realistic paw pressure, true contact shadows."
       : quality?.realismMode === "Reference Locked"
         ? "Built as a master reference image for image-to-video continuity — stable silhouette, locked anatomy, readable markings, clean foreground/background separation."
         : "Balanced realism with stable anatomy, natural texture, and clean silhouette separation.";
@@ -1247,45 +1268,53 @@ const cleanAir = "clear clean air, no visible steam, no smoke plumes, no mist, n
   const habitatMode = getHabitatMode(predator, prey, env);
 
   const A =
-     habitatMode === "aquatic"
-    ? `${predator} in a powerful pre-action glide, ${prey} fully alert and reactive — both animals at the most tension-rich beat of the ${getSafeArcLabel(arc)} scene. ${predator} holds pressure through the water column, body controlled and ready.`
-    : habitatMode === "shoreline"
-      ? `${predator} in a powerful pre-action shoreline ambush posture, ${prey} fully alert and reactive near the bank — both animals at the most tension-rich beat of the ${getSafeArcLabel(arc)} scene. ${predator} stays low at the water's edge, body compressed and ready to surge.`
-: `${predator} in a powerful pre-action stance, ${prey} fully alert and reactive — both animals at the most tension-rich beat of the ${getSafeArcLabel(arc)} scene. ${predator} holds a controlled pre-action posture, ribcage tense, body compressed and ready.`;   const B = `${cleanEnv}, ${weatherVariants[weather]}, ${cleanAir}. Layered foreground, readable midground, softened background separation for stable depth maps. Subjects in authentic wildlife behavioral postures, biologically accurate spacing, natural environmental context.`;
-const C = `Wide cinematic wildlife documentary composition, 9:16 vertical frame. Camera: ${cam}, ${depth.lensNote}. ${vibe.camera}. Depth of field: ${depth.depth}. Telephoto compression and documentary framing. Lighting: ${weatherVariants[weather]}. Natural rim separation, realistic shadow direction, crisp visibility, true-to-life exposure rolloff, no atmospheric plumes.`;
-const D = `${cleanTexture}. ${vibe.texture}. Micro-detail visible in fur, skin, feathers, moisture, and clean ground contact. ${realismAdd}`;
-if (target === "NB2") {
-const B_ref = `${cleanEnv}, ${weatherVariants[weather]}, ${cleanAir}. Two-plane composition: foreground subjects fully separated from background, unambiguous silhouettes, stable depth map. Subjects placed for clear biomechanical readability — no overlap, each animal fully visible.`;    const E_ref = `${vibe.style}, photorealistic, 8K RAW. Optimised for I2V reference consistency — distinct silhouettes, locked anatomy, stable depth planes.${descInject}`;
+    habitatMode === "aquatic"
+      ? `${predator} in a powerful pre-action glide, ${prey} fully alert and reactive — both animals at the most tension-rich beat of the ${getSafeArcLabel(arc)} scene. ${predator} holds pressure through the water column, body controlled and ready.`
+      : habitatMode === "shoreline"
+        ? `${predator} in a powerful pre-action shoreline ambush posture, ${prey} fully alert and reactive near the bank — both animals at the most tension-rich beat of the ${getSafeArcLabel(arc)} scene. ${predator} stays low at the water's edge, body compressed and ready to surge.`
+        : `${predator} in a powerful pre-action stance, ${prey} fully alert and reactive — both animals at the most tension-rich beat of the ${getSafeArcLabel(arc)} scene. ${predator} holds a controlled pre-action posture, ribcage tense, body compressed and ready.`;
+
+  const B = `${cleanEnv}, ${cleanWeather}, ${cleanAir}. Layered foreground, readable midground, softened background separation for stable depth maps. Subjects in authentic wildlife behavioral postures, biologically accurate spacing, natural environmental context.`;
+
+  const C = `Wide cinematic wildlife documentary composition, 9:16 vertical frame. Camera: ${cam}, ${depth.lensNote}. ${vibe.camera}. Depth of field: ${depth.depth}. Telephoto compression and documentary framing. Lighting: ${cleanWeather}. Natural rim separation, realistic shadow direction, crisp visibility, true-to-life exposure rolloff, no atmospheric plumes.`;
+
+  const D = `${cleanTexture}. ${vibe.texture}. Micro-detail visible in fur, skin, feathers, moisture, and clean ground contact. ${realismAdd}`;
+
+  if (target === "NB2") {
+    const B_ref = `${cleanEnv}, ${cleanWeather}, ${cleanAir}. Two-plane composition: foreground subjects fully separated from background, unambiguous silhouettes, stable depth map. Subjects placed for clear biomechanical readability — no overlap, each animal fully visible.`;
+    const E_ref = `${vibe.style}, photorealistic, 8K RAW. Optimised for I2V reference consistency — distinct silhouettes, locked anatomy, stable depth planes.${descInject}`;
     return finalizeImagePrompt(`${qLead} ${A} ${B_ref} ${C} ${D} ${E_ref}`, target);
   }
 
   // House structure aligned to Gemini image-generation guidance:
-// start with clear subject/context/action, then add composition,
-// lighting, and style details for stronger visual control.
-if (target === "NANO_BANANA_2") {
-  const arcPhrase = /^[aeiou]/i.test(getSafeArcLabel(arc))
-    ? `an ${getSafeArcLabel(arc)}`
-    : `a ${getSafeArcLabel(arc)}`;
+  // start with clear subject/context/action, then add composition,
+  // lighting, and style details for stronger visual control.
+  if (target === "NANO_BANANA_2") {
+    const arcPhrase = /^[aeiou]/i.test(getSafeArcLabel(arc))
+      ? `an ${getSafeArcLabel(arc)}`
+      : `a ${getSafeArcLabel(arc)}`;
 
-const A_nb2 = buildImageSubjectLine(predator, prey, arcPhrase, arc);
-  const B_nb2 = `Context/background: ${cleanEnv}, ${weatherVariants[weather]}, ${cleanAir}. Natural habitat cues, readable terrain, clear background layers.`;
+    const A_nb2 = buildImageSubjectLine(predator, prey, arcPhrase, arc);
+    const B_nb2 = `Context/background: ${cleanEnv}, ${cleanWeather}, ${cleanAir}. Natural habitat cues, readable terrain, clear background layers.`;
 
-  const C_nb2 =
-    habitatMode === "aquatic"
-      ? `Pose/action: ${predator} in a powerful pre-action glide, ${prey} fully alert and reactive, authentic aquatic wildlife body language, biologically accurate spacing in the water column, both subjects clearly readable, no overlap.`
-      : habitatMode === "shoreline"
-        ? `Pose/action: ${predator} in a powerful pre-action shoreline ambush posture at the water's edge, ${prey} fully alert and reactive near the bank, authentic wildlife body language, biologically accurate spacing, both subjects clearly readable, no overlap.`
-        : `Pose/action: ${predator} in a powerful pre-action stance, ${prey} fully alert and reactive, authentic wildlife body language, biologically accurate spacing, both subjects clearly readable, no overlap.`;
+    const C_nb2 =
+      habitatMode === "aquatic"
+        ? `Pose/action: ${predator} in a powerful pre-action glide, ${prey} fully alert and reactive, authentic aquatic wildlife body language, biologically accurate spacing in the water column, both subjects clearly readable, no overlap.`
+        : habitatMode === "shoreline"
+          ? `Pose/action: ${predator} in a powerful pre-action shoreline ambush posture at the water's edge, ${prey} fully alert and reactive near the bank, authentic wildlife body language, biologically accurate spacing, both subjects clearly readable, no overlap.`
+          : `Pose/action: ${predator} in a powerful pre-action stance, ${prey} fully alert and reactive, authentic wildlife body language, biologically accurate spacing, both subjects clearly readable, no overlap.`;
 
-const D_nb2 = `Composition: wide cinematic wildlife documentary frame, 9:16 vertical. Camera: top-tier full-frame wildlife documentary camera, ${cam.replace("tracking", "framing")}, premium super-telephoto optics, natural optical compression, authentic perspective, ${depth.lensNote}. Depth of field: ${depth.depth}. Clean subject separation, full-body readability, no overlap, stable silhouette separation.`;
-const E_nb2 = `Lighting: ${weatherVariants[weather]}. Natural rim separation, realistic shadow direction, true-to-life exposure rolloff, realistic dynamic range, natural highlight control, no artificial glow, no synthetic HDR look, no visible steam, no mist, no haze, no atmospheric plumes.`;
+    const D_nb2 = `Composition: wide cinematic wildlife documentary frame, 9:16 vertical. Camera: top-tier full-frame wildlife documentary camera, ${cam.replace("tracking", "framing")}, premium super-telephoto optics, natural optical compression, authentic perspective, ${depth.lensNote}. Depth of field: ${depth.depth}. Clean subject separation, full-body readability, no overlap, stable silhouette separation.`;
 
-const F_nb2 = `Style: ${vibe.style}, photorealistic, true wildlife documentary realism. ${cleanTexture}. ${vibe.texture}. Extremely natural fur, skin, moisture, and clean ground-contact detail. True-to-life color science, realistic micro-contrast, realistic lens rendering, biologically accurate anatomy, no plastic texture, no CGI feel, no over-sharpened artificial look. ${realismAdd}${descInject}`;
-  return finalizeImagePrompt(
-    `${qLead} ${A_nb2} ${B_nb2} ${C_nb2} ${D_nb2} ${E_nb2} ${F_nb2}`,
-    target
-  );
-}
+    const E_nb2 = `Lighting: ${cleanWeather}. Natural rim separation, realistic shadow direction, true-to-life exposure rolloff, realistic dynamic range, natural highlight control, no artificial glow, no synthetic HDR look, no visible steam, no mist, no haze, no atmospheric plumes.`;
+
+    const F_nb2 = `Style: ${vibe.style}, photorealistic, true wildlife documentary realism. ${cleanTexture}. ${vibe.texture}. Extremely natural fur, skin, moisture, and clean ground-contact detail. True-to-life color science, realistic micro-contrast, realistic lens rendering, biologically accurate anatomy, no plastic texture, no CGI feel, no over-sharpened artificial look. ${realismAdd}${descInject}`;
+
+    return finalizeImagePrompt(
+      `${qLead} ${A_nb2} ${B_nb2} ${C_nb2} ${D_nb2} ${E_nb2} ${F_nb2}`,
+      target
+    );
+  }
 
   if (target === "RUNWAY") {
     const E_runway = `${vibe.style}, photorealistic, cinematic grade. Built as a stable master reference for Runway Gen-4.5 I2V continuity — clean separation, readable silhouette, stable anatomy. High-quality input free of visual artifacts for best I2V results.${descInject}`;
@@ -1343,6 +1372,7 @@ export function buildThumbnailPrompt(
   const tone = emotionalTonePrompt[emotionalTone];
   const vibe = animalVibePrompt[animalVibe];
   const cleanEnv = sanitizeImageEnv(env);
+  const cleanWeather = sanitizeWeatherPhrase(weatherVariants[weather]);
   const cleanAir =
     "clear clean air, no visible steam, no smoke plumes, no mist, no airborne haze";
 
@@ -1362,7 +1392,7 @@ export function buildThumbnailPrompt(
       : "";
 
   return finalizePrompt(
-    `Ultra dramatic wildlife documentary thumbnail close-up of ${predator} and ${prey} in ${cleanEnv}, ${weatherVariants[weather]}, ${cleanAir}. ${tone.image}. Intense mutual awareness, raw animal instinct, ${winterThumbDetail}${vibe.style}. Photorealistic documentary realism, 9:16 vertical frame.`
+    `Ultra dramatic wildlife documentary thumbnail close-up of ${predator} and ${prey} in ${cleanEnv}, ${cleanWeather}, ${cleanAir}. ${tone.image}. Intense mutual awareness, raw animal instinct, ${winterThumbDetail}${vibe.style}. Photorealistic documentary realism, 9:16 vertical frame.`
   );
 }
 
@@ -1383,8 +1413,8 @@ export function buildVoiceoverLine(
 ): string {
   const tone = emotionalTonePrompt[emotionalTone];
   return finalizePrompt(
-    `In the wild heart of ${env}, ${withArticle(predator)} and ${withArticle(prey)} share the same moment. ${tone.voiceover}`
-  );
+  `In the wild heart of ${sanitizeImageEnv(env)}, ${withArticle(predator)} and ${withArticle(prey)} share the same moment. ${tone.voiceover}`
+);
 }
 
 // ─────────────────────────────────────────────────────────────
@@ -1736,9 +1766,11 @@ export function buildKlingNative15s(
   const note = KLING_STYLE_NOTE[model];
   const tone = emotionalTonePrompt[emotionalTone];
   const vibe = animalVibePrompt[animalVibe];
-  const micro = buildMicroMotionLine(weather, env);
+const micro = buildMicroMotionLine(weather, env);
+const cleanEnv = sanitizeImageEnv(env);
+const cleanWeather = sanitizeWeatherPhrase(weatherVariants[weather]);
 
-  const qLead = buildQualityLead(quality, "kling");
+const qLead = buildQualityLead(quality, "kling");
   const context = sceneDesc?.trim() ? `\nScene context: ${sceneDesc.trim().slice(0, 150)}` : "";
 
   const isNative = model === "Kling 3.0 Pro" || model === "Kling 3.0 Standard";
@@ -1790,10 +1822,10 @@ export function buildKlingNative15s(
   const audio3 = buildKlingAudioPrompt(predator, prey, env, weather, arc, "aftermath");
 
   const nativeSceneLine = quality?.motionOnlyI2V
-    ? `Scene: same environment continuity, ${weatherVariants[weather]}.`
-    : isShoreline
-      ? `Scene: shoreline ambush zone, water edge, disturbed shallows, muddy bank, ${weatherVariants[weather]}.`
-      : `Scene: ${env}, ${weatherVariants[weather]}.`;
+  ? `Scene: same environment continuity, ${cleanWeather}.`
+  : isShoreline
+    ? `Scene: shoreline ambush zone, water edge, disturbed shallows, muddy bank, ${cleanWeather}.`
+    : `Scene: ${cleanEnv}, ${cleanWeather}.`;
 
   const nativeCharacterLine = quality?.motionOnlyI2V
     ? `Characters: same ${predator} identity from input frame. Same ${prey} identity from input frame.`
@@ -1888,6 +1920,8 @@ export function buildKlingSixShot(
   const tone = emotionalTonePrompt[emotionalTone];
   const vibe = animalVibePrompt[animalVibe];
   const micro = buildMicroMotionLine(weather, env);
+  const cleanEnv = sanitizeImageEnv(env);
+  const cleanWeather = sanitizeWeatherPhrase(weatherVariants[weather]);
   const envLower = env.toLowerCase();
   const isArcticLike =
     envLower.includes("arctic") ||
@@ -1933,10 +1967,10 @@ export function buildKlingSixShot(
   };
 
   const sixShotSceneLine = quality?.motionOnlyI2V
-    ? `Scene: same environment continuity, ${weatherVariants[weather]}.`
+    ? `Scene: same environment continuity, ${cleanWeather}.`
     : shoreline
-      ? `Scene: shoreline ambush zone, shallow water edge, muddy bank, ${weatherVariants[weather]}.`
-      : `Scene: ${env}, ${weatherVariants[weather]}.`;
+      ? `Scene: shoreline ambush zone, shallow water edge, muddy bank, ${cleanWeather}.`
+      : `Scene: ${cleanEnv}, ${cleanWeather}.`;
 
   const sixShotCharacterLine = quality?.motionOnlyI2V
     ? `Characters: same ${predator} identity from input frame. Same ${prey} identity from input frame.`
