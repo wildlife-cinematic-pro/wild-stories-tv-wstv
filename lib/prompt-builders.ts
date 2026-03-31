@@ -1028,6 +1028,50 @@ let weatherAudio = "";
 }
 
 // ─────────────────────────────────────────────────────────────
+// KLING AUDIO — SHORT VERSION (paste-ready core only, <120 chars per line)
+// ─────────────────────────────────────────────────────────────
+export function buildKlingAudioShort(
+  predator: string,
+  prey: string,
+  env: string,
+  weather: Weather,
+  beat: "establish" | "action" | "aftermath"
+): string {
+  const habitatMode = getHabitatMode(predator, prey, env);
+  const isAquatic = habitatMode === "aquatic";
+  const isShoreline = habitatMode === "shoreline";
+  const envLower = env.toLowerCase();
+
+  const isArcticLike =
+    envLower.includes("arctic") || envLower.includes("snow") ||
+    envLower.includes("tundra") || envLower.includes("ice") ||
+    envLower.includes("glacier") || envLower.includes("frozen") ||
+    envLower.includes("winter");
+
+  const weatherTag =
+    weather === "Winter Blizzard" ? "blizzard wind, snow surfaces" :
+    weather === "Storm" ? "storm wind, rain" :
+    weather === "Golden Hour" ? "warm twilight stillness" :
+    weather === "Frozen Dusk" ? "frozen silence, crystalline wind" :
+    "ambient wind";
+
+  const ambientTag =
+    isAquatic ? "water current, surface movement" :
+    isShoreline ? "shoreline wash, wet bank" :
+    isArcticLike ? "arctic wind, frozen ground" :
+    envLower.includes("forest") ? "forest ambience, canopy" :
+    envLower.includes("savanna") || envLower.includes("grassland") ? "dry wind, insect drone" :
+    "terrain ambience";
+
+  const animalTag =
+    beat === "establish" ? `${predator} controlled breathing, ${prey} alert stillness` :
+    beat === "action"    ? `${predator} impact, ${prey} distress vocalization, debris` :
+                           `${predator} breathing settling, ${prey} cautious repositioning`;
+
+  return finalizePrompt(`Audio: ${ambientTag}, ${weatherTag}. ${animalTag}. No music.`);
+}
+
+// ─────────────────────────────────────────────────────────────
 // QUALITY SUMMARY
 // ─────────────────────────────────────────────────────────────
 export function buildQualitySummary(opts: QualityOptions): string {
@@ -1820,6 +1864,9 @@ const qLead = buildQualityLead(quality, "kling");
   const audio1 = buildKlingAudioPrompt(predator, prey, env, weather, arc, "establish");
   const audio2 = buildKlingAudioPrompt(predator, prey, env, weather, arc, "action");
   const audio3 = buildKlingAudioPrompt(predator, prey, env, weather, arc, "aftermath");
+  const audio1Short = buildKlingAudioShort(predator, prey, env, weather, "establish");
+const audio2Short = buildKlingAudioShort(predator, prey, env, weather, "action");
+const audio3Short = buildKlingAudioShort(predator, prey, env, weather, "aftermath");
 
   const nativeSceneLine = quality?.motionOnlyI2V
   ? `Scene: same environment continuity, ${cleanWeather}.`
@@ -1830,6 +1877,38 @@ const qLead = buildQualityLead(quality, "kling");
   const nativeCharacterLine = quality?.motionOnlyI2V
     ? `Characters: same ${predator} identity from input frame. Same ${prey} identity from input frame.`
     : `Characters: ${predator} (predator — drives scene pressure). ${prey} (prey — fully reactive throughout).`;
+
+    // Paste-ready core — trimmed to stay under Kling's 2500-char textPrompt limit.
+// Short audio lines used here; full audio kept in body below for reference display only.
+const pasteReadyCore = [
+  nativeSceneLine,
+  nativeCharacterLine,
+  `Style: ${vibe.style}. ${tone.image}. Photorealistic wildlife documentary. 9:16 vertical frame.`,
+  `Arc: ${getSafeArcPrint(arc)}.`,
+  `WIDE PHYSICS RULE — Shot 2 and Shot 3 must be FIXED WIDE (full bodies visible).`,
+  ``,
+  `Shot 1 — INITIATION (0–5s) | Motion: ${mi1.toFixed(2)}:`,
+  s1.guardLine ? s1.guardLine.trim() : ``,
+  `${predator} ${s1.predatorBeat}. ${prey} ${s1.preyBeat}.`,
+  `Camera: static hold or subtle handheld drift.`,
+  `Environment motion: ${micro}.`,
+  audio1Short,
+  ``,
+  `Shot 2 — ESCALATION (5–10s) — WIDE | Motion: ${mi2.toFixed(2)}:`,
+  s2.guardLine ? s2.guardLine.trim() : ``,
+  `${predator} ${s2.predatorBeat}. ${prey} ${s2.preyBeat}.`,
+  `Camera: FIXED WIDE — full bodies visible; no crop; no close-ups.`,
+  `Environment: ${isAquatic ? `surface response, grounded contact, ${micro}` : isShoreline ? `splash, muddy bank scatter, ${micro}` : `surface response, grounded contact, ${micro}`}.`,
+  `Physics priority: grounded weight transfer, coherent limb mechanics, readable impact.`,
+  audio2Short,
+  ``,
+  `Shot 3 — RESOLUTION (10–15s) — WIDE | Motion: ${mi3.toFixed(2)}:`,
+  s3.guardLine ? s3.guardLine.trim() : ``,
+  `${predator} ${s3.predatorBeat}. ${prey} ${s3.preyBeat}.`,
+  `Camera: LOCKED FIXED WIDE — full bodies visible; no crop; no close-ups.`,
+  `Environment: residual atmosphere — ${micro}.`,
+  audio3Short,
+].filter(line => line !== undefined && line !== null).join("\n").trim();
 
   const body = `═══ KLING 3.0 MULTI-SHOT PROMPT (SCALE format) ═══
 
@@ -1886,6 +1965,10 @@ ${motionRule}
 ${cfgLine}
 Motion intensities: Shot 1 → ${mi1.toFixed(2)} | Shot 2 → ${mi2.toFixed(2)} | Shot 3 → ${mi3.toFixed(2)}${context}
 
+═══ PASTE INTO KLING — stays under 2500 chars (copy this block only) ═══
+${pasteReadyCore}
+
+─── FULL BREAKDOWN — reference only, do NOT paste into Kling ───
 ${body}
 
 ─────────────────────────────────────────────────────────
@@ -1893,13 +1976,14 @@ HOW TO USE (Kling 3.0 WSTV Workflow):
 1. Generate master image first (Image Prompt → NB2/Flux).
 2. Upload master image as reference in Kling 3.0 Pro/Standard.
 3. Enable "Bind Subject" (Elements 3.0) for identity lock.
-4. Paste THIS ENTIRE PROMPT as one single text prompt.
+4. Paste ONLY the block above the FULL BREAKDOWN line into Kling.
 5. Set Guidance Scale: ${cfgScales.shot2} (0.0–1.0 range).
 6. Enable native audio for documentary-quality sound.
 7. Output: Native 4K at 60fps available.
 8. Optional: Set End Frame image for final-pose control.
 ✅ Native single-prompt workflow — identity preserved across all 3 beats.`);
 }
+
 
 // ─────────────────────────────────────────────────────────────
 // KLING 6-SHOT MULTI-SCENE
