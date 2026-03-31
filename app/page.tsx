@@ -20,12 +20,13 @@ import type {
   RealismMode,
   GeneratedPackage,
   MediaAnalysisResult,
-    PredatorInfo,
+  PredatorInfo,
   RunwayModel,
   KlingModel,
   CustomPredatorForm,
   PromptVersion,
   ImagePromptTarget,
+  HabitatPreset,
 } from "@/types";
 
 import {
@@ -49,6 +50,7 @@ import {
 import {
   arcs,
   weatherOptions,
+  habitatOptions,
   depthModes,
   arcMotionStrength,
   RUNWAY_MODELS,
@@ -89,6 +91,7 @@ import {
   readCustomPredators,
   writeCustomPredators,
 } from "@/lib/storage";
+import { habitatPromptMap } from "@/lib/habitat-presets";
 
 import QualityPanel from "@/components/QualityPanel";
 import OutputCards from "@/components/OutputCards";
@@ -249,9 +252,10 @@ export default function Page() {
 const [prey, setPrey] = useState("Elk");
 const [arc, setArc] = useState<Arc>("Pack hunting strategy");
   const [weather, setWeather] = useState<Weather>("Golden Hour");
-  const [depthMode, setDepthMode] = useState<DepthMode>("Balanced Depth");
-  const [emotionalTone, setEmotionalTone] = useState<EmotionalTone>("Raw Tension");
-  const [animalVibe, setAnimalVibe] = useState<AnimalVibe>("National Geographic Wild");
+const [habitat, setHabitat] = useState<HabitatPreset>("Auto");
+const [depthMode, setDepthMode] = useState<DepthMode>("Balanced Depth");
+const [emotionalTone, setEmotionalTone] = useState<EmotionalTone>("Raw Tension");
+const [animalVibe, setAnimalVibe] = useState<AnimalVibe>("National Geographic Wild");
 
   // STEP 2 (engine + quality)
     const [runwayModel, setRunwayModel] = useState<RunwayModel>(RUNWAY_MODELS[0]);
