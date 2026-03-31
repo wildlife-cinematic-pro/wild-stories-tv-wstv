@@ -391,6 +391,9 @@ const [animalVibe, setAnimalVibe] = useState<AnimalVibe>("National Geographic Wi
     );
   }, [predator, lionFallback, customPredators]);
 
+  const finalEnvironment =
+  habitat === "Auto" ? preset.environment : habitatPromptMap[habitat];
+
   // ✅ Quality recommendations (AFTER preset)
   const qualityReco = useMemo(() => {
     return getQualityRecommendations({
@@ -966,52 +969,67 @@ animalBehavior: animalBehaviorResult ?? undefined,
             </div>
           </div>
 
-          <div className="mt-3 grid gap-3 sm:grid-cols-3">
-            <div>
-              <label className="mb-1 block text-xs font-semibold text-gray-500">Conflict Arc</label>
-              <select
-                value={arc}
-                onChange={(e) => setArc(e.target.value as Arc)}
-                className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-800"
-              >
-                {arcs.map((a) => (
-                  <option key={a} value={a}>
-                    {a}
-                  </option>
-                ))}
-              </select>
-            </div>
+          <div className="mt-3 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+  <div>
+    <label className="mb-1 block text-xs font-semibold text-gray-500">Conflict Arc</label>
+    <select
+      value={arc}
+      onChange={(e) => setArc(e.target.value as Arc)}
+      className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-800"
+    >
+      {arcs.map((a) => (
+        <option key={a} value={a}>
+          {a}
+        </option>
+      ))}
+    </select>
+  </div>
 
-            <div>
-              <label className="mb-1 block text-xs font-semibold text-gray-500">Scene Atmosphere</label>
-              <select
-                value={weather}
-                onChange={(e) => setWeather(e.target.value as Weather)}
-                className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-800"
-              >
-                {weatherOptions.map((w) => (
-                  <option key={w} value={w}>
-                    {w}
-                  </option>
-                ))}
-              </select>
-            </div>
+  <div>
+    <label className="mb-1 block text-xs font-semibold text-gray-500">Background / Habitat</label>
+    <select
+      value={habitat}
+      onChange={(e) => setHabitat(e.target.value as HabitatPreset)}
+      className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-800"
+    >
+      {habitatOptions.map((h) => (
+        <option key={h} value={h}>
+          {h}
+        </option>
+      ))}
+    </select>
+  </div>
 
-            <div>
-              <label className="mb-1 block text-xs font-semibold text-gray-500">Cinematic Depth</label>
-              <select
-                value={depthMode}
-                onChange={(e) => setDepthMode(e.target.value as DepthMode)}
-                className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-800"
-              >
-                {depthModes.map((d) => (
-                  <option key={d} value={d}>
-                    {d}
-                  </option>
-                ))}
-              </select>
-            </div>
-          </div>
+  <div>
+    <label className="mb-1 block text-xs font-semibold text-gray-500">Scene Atmosphere</label>
+    <select
+      value={weather}
+      onChange={(e) => setWeather(e.target.value as Weather)}
+      className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-800"
+    >
+      {weatherOptions.map((w) => (
+        <option key={w} value={w}>
+          {w}
+        </option>
+      ))}
+    </select>
+  </div>
+
+  <div>
+    <label className="mb-1 block text-xs font-semibold text-gray-500">Cinematic Depth</label>
+    <select
+      value={depthMode}
+      onChange={(e) => setDepthMode(e.target.value as DepthMode)}
+      className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-800"
+    >
+      {depthModes.map((d) => (
+        <option key={d} value={d}>
+          {d}
+        </option>
+      ))}
+    </select>
+  </div>
+</div>
 
           <div className="mt-3 grid gap-3 sm:grid-cols-2">
             <div>
