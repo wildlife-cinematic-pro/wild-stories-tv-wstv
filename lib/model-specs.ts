@@ -12,7 +12,7 @@
 //   Never merge official phrasing into .house — keep them separate.
 // ─────────────────────────────────────────────────────────────
 
-import type { RunwayModel, KlingModel, Arc, Engine, DepthMode, Weather } from "@/types";
+import type { RunwayModel, KlingModel, Arc, Engine, DepthMode, Weather, HabitatPreset } from "@/types";
 
 // ─────────────────────────────────────────────────────────────
 // BRAND
@@ -203,7 +203,19 @@ export const weatherOptions: Weather[] = [
   "Winter Blizzard",
   "Frozen Dusk",
 ];
-
+export const habitatOptions: HabitatPreset[] = [
+  "Auto",
+  "Open Green Grassland",
+  "Dry Savanna Plain",
+  "Marsh Wetland",
+  "Riverbank Reeds",
+  "Forest Clearing",
+  "Dense Jungle Edge",
+  "Rocky Mountain Meadow",
+  "Snow Field Tundra",
+  "Desert Scrubland",
+  "Coastal Cliffline",
+];
 // ─────────────────────────────────────────────────────────────
 // ARC MOTION STRENGTH  (Runway legacy 0–100 scale)
 // [House] — relative intensity per arc for Motion Strength slider.
