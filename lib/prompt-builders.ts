@@ -1881,10 +1881,10 @@ const audio3Short = buildKlingAudioShort(predator, prey, env, weather, "aftermat
     // Paste-ready core — trimmed to stay under Kling's 2500-char textPrompt limit.
 // Short audio lines used here; full audio kept in body below for reference display only.
 const pasteReadyCore = [
-  `Same scene and same ${predator}/${prey} identities from input image. Photorealistic wildlife documentary, 9:16 vertical.`,
-  `Shot 1: tension hold, both alert. Static or subtle handheld drift.`,
-  `Shot 2 WIDE: one decisive attack and one evasive reaction. Full bodies visible.`,
-  `Shot 3 WIDE: aftermath reset, both still readable. Full bodies visible.`,
+  `Same scene and same ${predator}/${prey} identities from input image. Photorealistic wildlife documentary.`,
+  `Shot 1: ${predator} holds controlled tension. ${prey} locks attention. Static or subtle handheld drift.`,
+  `Shot 2 WIDE: ${predator} commits one decisive forward move. ${prey} reacts once with a clear evasive response. Full bodies visible.`,
+  `Shot 3 WIDE: ${predator} settles and regains posture. ${prey} stabilizes, still alert. Full bodies visible.`,
 ].join("\n").trim();
 
   const body = `═══ KLING 3.0 MULTI-SHOT PROMPT (SCALE format) ═══
