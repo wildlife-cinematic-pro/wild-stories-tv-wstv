@@ -59,36 +59,46 @@ function extractRunwayPasteReady(shotText: string): string {
 
 function extractKlingPromptBody(shotText: string): string {
   const s = String(shotText ?? "");
-  const marker = "═══ KLING PROMPT (WSTV structured format) ═══";
-  const start = s.indexOf(marker);
 
-  if (start >= 0) {
-    const afterMarker = s.slice(start + marker.length).trim();
+  const markers = [
+    "═══ PASTE INTO KLING — stays under 2500 chars (copy this block only) ═══",
+    "═══ KLING 3.0 PROMPT (SCALE format) ═══",
+    "═══ KLING PROMPT (WSTV structured format) ═══",
+  ];
 
-    const endCandidates = [
-      afterMarker.indexOf("\nAudio:"),
-      afterMarker.indexOf("\n\nAudio:"),
-      afterMarker.indexOf("\nKling settings:"),
-      afterMarker.indexOf("\n\nKling settings:"),
-    ].filter((n) => n >= 0);
+  for (const marker of markers) {
+    const start = s.indexOf(marker);
+    if (start >= 0) {
+      const afterMarker = s.slice(start + marker.length).trim();
 
-    const end = endCandidates.length ? Math.min(...endCandidates) : -1;
-    return (end >= 0 ? afterMarker.slice(0, end) : afterMarker).trim();
+      const endCandidates = [
+        afterMarker.indexOf("\n─── FULL BREAKDOWN"),
+        afterMarker.indexOf("\n\n─── FULL BREAKDOWN"),
+        afterMarker.indexOf("\nAudio:"),
+        afterMarker.indexOf("\n\nAudio:"),
+        afterMarker.indexOf("\nKling settings:"),
+        afterMarker.indexOf("\n\nKling settings:"),
+        afterMarker.indexOf("\n────────────────────────────────"),
+      ].filter((n) => n >= 0);
+
+      const end = endCandidates.length ? Math.min(...endCandidates) : -1;
+      return (end >= 0 ? afterMarker.slice(0, end) : afterMarker).trim();
+    }
   }
 
   let cleaned = s
     .replace(/\n\s*[─—\-═]{5,}\s*\n\s*HOW TO USE\b[\s\S]*$/i, "")
+    .replace(/\n\s*─── FULL BREAKDOWN[\s\S]*$/i, "")
     .trim();
 
   const bodyStart = cleaned.search(
-    /(?:^|\n)\s*(?:Scene:|Shot\s*:|Shot\s*1\s*[—\-─:])/i
+    /(?:^|\n)\s*(?:Scene:|Style:|Shot\s*1\s*[\(\-—:])/i
   );
   if (bodyStart >= 0) {
     cleaned = cleaned.slice(bodyStart).trim();
   }
 
-  cleaned = cleaned.replace(/\n\s*[─—\-═]{5,}\s*$/g, "").trim();
-  return cleaned;
+  return cleaned.replace(/\n\s*[─—\-═]{5,}\s*$/g, "").trim();
 }
 
 function extractImagePromptBody(promptText: string): string {
