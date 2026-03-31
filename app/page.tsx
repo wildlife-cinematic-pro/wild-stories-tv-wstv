@@ -564,7 +564,7 @@ const [animalVibe, setAnimalVibe] = useState<AnimalVibe>("National Geographic Wi
             const imagePrompt = buildImagePrompt(
         predator,
         prey,
-        preset.environment,
+        final.environment,
         finalArc,
         preset.lighting,
         preset.cameraGear,
@@ -581,7 +581,7 @@ const [animalVibe, setAnimalVibe] = useState<AnimalVibe>("National Geographic Wi
       const runway = buildRunwayShots(
         predator,
         prey,
-        preset.environment,
+        final.environment,
         finalArc,
         weather,
         runwayModel,
@@ -594,7 +594,7 @@ const [animalVibe, setAnimalVibe] = useState<AnimalVibe>("National Geographic Wi
       const kling = buildKlingShots(
         predator,
         prey,
-        preset.environment,
+        final.environment,
         finalArc,
         weather,
         klingModel,
@@ -607,7 +607,7 @@ const [animalVibe, setAnimalVibe] = useState<AnimalVibe>("National Geographic Wi
       const klingNative15s = buildKlingNative15s(
         predator,
         prey,
-        preset.environment,
+        final.environment,
         finalArc,
         weather,
         klingModel,
@@ -620,7 +620,7 @@ const [animalVibe, setAnimalVibe] = useState<AnimalVibe>("National Geographic Wi
       const klingSixShot = buildKlingSixShot(
         predator,
         prey,
-        preset.environment,
+        final.environment,
         finalArc,
         weather,
         klingModel,
@@ -635,35 +635,35 @@ const [animalVibe, setAnimalVibe] = useState<AnimalVibe>("National Geographic Wi
      const thumbnailPrompt = buildThumbnailPrompt(
   predator,
   prey,
-  preset.environment,
+  final.environment,
   weather,
   emotionalTone,
   animalVibe
 );
-      const voiceoverLine = buildVoiceoverLine(predator, prey, preset.environment, emotionalTone);
+      const voiceoverLine = buildVoiceoverLine(predator, prey, final.environment, emotionalTone);
       const capCutPlan = buildCapCutPlan(predator, finalArc, weather);
       const clipChaining = buildClipChaining(predator, preset.driftRisk);
 
       const hook2026 = build2026Hook(predator, prey, finalArc);
-      const caption2026 = build2026Caption(predator, prey, preset.environment, finalArc);
+      const caption2026 = build2026Caption(predator, prey, final.environment, finalArc);
       const cta = buildCTA(finalArc);
       const hashtags = buildHashtags(predator, prey, finalArc);
       const recommendedHookIndex = getRecommendedHookIndex(finalArc);
 
       const tenIdeas = build10Ideas(predator, preset.prey, preset as unknown as never);
 
-      const platformPack = buildPlatformPack(predator, prey, finalArc, preset.environment);
+      const platformPack = buildPlatformPack(predator, prey, finalArc, final.environment);
       const seoTitle = buildSEOTitle(predator, prey, finalArc);
-      const altTextPrompt = buildAltTextPrompt(predator, prey, preset.environment, finalArc);
+      const altTextPrompt = buildAltTextPrompt(predator, prey, final.environment, finalArc);
 
       const qualitySummary = buildQualitySummary(quality);
       const referenceWorkflow = buildReferenceWorkflow(predator, quality);
-      const naturalismChecklist = buildNaturalismChecklist(quality, weather, preset.environment);
+      const naturalismChecklist = buildNaturalismChecklist(quality, weather, final.environment);
 
       const fiveShotCinematic = buildFiveShotCinematic(
         predator,
         prey,
-        preset.environment,
+        final.environment,
         finalArc,
         weather,
         runwayModel,
@@ -676,7 +676,7 @@ const [animalVibe, setAnimalVibe] = useState<AnimalVibe>("National Geographic Wi
       const fiveShotViral = buildFiveShotViral(
         predator,
         prey,
-        preset.environment,
+        final.environment,
         finalArc,
         weather,
         runwayModel,
@@ -789,7 +789,7 @@ animalBehavior: animalBehaviorResult ?? undefined,
   ? buildTwoPartViralPreset(
       predator,
       prey,
-      preset.environment,
+      final.environment,
       weather,
       finalArc,
       runwayModel
@@ -805,7 +805,7 @@ animalBehavior: animalBehaviorResult ?? undefined,
             provider: activeProvider,
             predator,
             prey,
-            env: preset.environment,
+            env: final.environment,
             arc: finalArc,
             weather,
             emotionalTone,
@@ -1330,7 +1330,7 @@ animalBehavior: animalBehaviorResult ?? undefined,
                         setCustomForm({
                           name: "",
                           prey: "",
-                          environment: preset.environment || "",
+                          environment: final.environment || "",
                           defaultArc: arc,
                           driftRisk: preset.driftRisk,
                         });
