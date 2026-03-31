@@ -878,13 +878,13 @@ export function buildMicroMotionLine(weather: Weather, env: string): string {
     envLower.includes("marine");
 
   const isArctic =
-  envLower.includes("arctic") ||
-  envLower.includes("snow") ||
-  envLower.includes("tundra") ||
-  envLower.includes("ice") ||
-  envLower.includes("glacier") ||
-  envLower.includes("frozen") ||
-  envLower.includes("winter");
+    envLower.includes("arctic") ||
+    envLower.includes("snow") ||
+    envLower.includes("tundra") ||
+    envLower.includes("ice") ||
+    envLower.includes("glacier") ||
+    envLower.includes("frozen") ||
+    envLower.includes("winter");
 
   if (isAquatic) {
     if (weather === "Storm") {
@@ -899,21 +899,26 @@ export function buildMicroMotionLine(weather: Weather, env: string): string {
     return "water ripples, current-driven movement, shifting surface reflections, suspended particles drifting naturally";
   }
 
-    if (isArctic) {
+  if (isArctic) {
     if (weather === "Golden Hour") {
       return "subtle frozen-brush sway, light fur movement, clean cold-air stillness, gentle pine movement in warm backlight";
     }
-    return "snow drift, subtle natural breath condensation, soft powder displacement, faint wind movement across frozen ground";
+    return "subtle frozen-ground movement, light fur movement, clean cold-air stillness, faint terrain movement across frozen ground";
   }
 
-  if (weather === "Winter Blizzard" || weather === "Frozen Dusk")
-    return "snow drift, subtle natural breath condensation, soft powder displacement, faint wind movement in distant brush";
-  if (weather === "Storm")
-    return "wind pressure through foliage, rain or mist disturbance, loose debris reacting to gusts";
-  if (weather === "Golden Hour")
-    return "subtle grass sway, light fur movement, stable clean air, gentle background vegetation movement";
+  if (weather === "Winter Blizzard" || weather === "Frozen Dusk") {
+    return "subtle frozen-brush sway, light fur movement, clean cold-air stillness, faint distant brush movement";
+  }
 
-  return "subtle foliage sway, drifting dust or mist, breath movement, light environmental reaction around the subjects";
+  if (weather === "Storm") {
+    return "wind pressure through foliage, rain disturbance, loose surface response reacting to gusts";
+  }
+
+  if (weather === "Golden Hour") {
+    return "subtle grass sway, light fur movement, stable clean air, gentle background vegetation movement";
+  }
+
+  return "subtle foliage sway, stable clean air, light environmental reaction around the subjects";
 }
 
 // ─────────────────────────────────────────────────────────────
@@ -1144,6 +1149,15 @@ function sanitizeImageTexture(texture: string): string {
     .replace(/\bhaze\b/gi, "")
     .replace(/\s{2,}/g, " ")
     .replace(/\s+,/g, ",")
+    .trim();
+}
+function sanitizeVideoBeatText(text: string): string {
+  return String(text ?? "")
+    .replace(/\bexhales once\b/gi, "settles once")
+    .replace(/\bbreath settling\b/gi, "posture settling")
+    .replace(/\bbreath visible\b/gi, "posture tight and controlled")
+    .replace(/\bheavy breath release\b/gi, "controlled reset")
+    .replace(/\bbreath controlled\b/gi, "movement controlled")
     .trim();
 }
 // ─────────────────────────────────────────────────────────────
@@ -1418,29 +1432,47 @@ export function buildRunwayShots(
   const beat2 = oneActionArcBeat(arc, "action", gateOn, habitatMode);
   const beat3 = oneActionArcBeat(arc, "aftermath", gateOn, habitatMode);
 
+  const s1 = {
+    ...beat1,
+    predatorBeat: sanitizeVideoBeatText(beat1.predatorBeat),
+    preyBeat: sanitizeVideoBeatText(beat1.preyBeat),
+  };
+
+  const s2 = {
+    ...beat2,
+    predatorBeat: sanitizeVideoBeatText(beat2.predatorBeat),
+    preyBeat: sanitizeVideoBeatText(beat2.preyBeat),
+  };
+
+  const s3 = {
+    ...beat3,
+    predatorBeat: sanitizeVideoBeatText(beat3.predatorBeat),
+    preyBeat: sanitizeVideoBeatText(beat3.preyBeat),
+  };
+
   const shot1PasteReady = sanitizeRunwayFPS(
-  isAquatic
-    ? `Slow dolly-in. The left subject glides once through the water column. The right subject holds tense position in the current. ${micro}. ${seamless}`.trim()
-    : isShoreline
-      ? `Slow dolly-in. The left subject holds low at the water's edge. The right subject stands tense near the bank, eye-line locked. ${micro}. ${seamless}`.trim()
-      : `Slow dolly-in. The left subject ${beat1.predatorBeat}. The right subject ${beat1.preyBeat}. ${micro}. ${seamless}`.trim()
-);
+    isAquatic
+      ? `Slow dolly-in. The left subject glides once through the water column. The right subject holds tense position in the current. ${micro}. ${seamless}`.trim()
+      : isShoreline
+        ? `Slow dolly-in. The left subject holds low at the water's edge. The right subject stands tense near the bank, eye-line locked. ${micro}. ${seamless}`.trim()
+        : `Slow dolly-in. The left subject ${s1.predatorBeat}. The right subject ${s1.preyBeat}. ${micro}. ${seamless}`.trim()
+  );
 
   const shot2PasteReady = sanitizeRunwayFPS(
-  isAquatic
-    ? `Tracking move. The left subject commits to one fast water-pressure burst. The right subject reacts with one evasive dart. Water displacement, turbulence, and current response. ${micro}. ${seamless}`.trim()
-    : isShoreline
-      ? `Tracking move. The left subject bursts once from the shoreline. The right subject reacts with one evasive leap and turn. Splash, mud scatter, and bank disturbance. ${micro}. ${seamless}`.trim()
-      : `Tracking move. The left subject ${beat2.predatorBeat}. The right subject ${beat2.preyBeat}. Ground compression, clear body-weight transfer. ${micro}. ${seamless}`.trim()
-);
+    isAquatic
+      ? `Tracking move. The left subject commits to one fast water-pressure burst. The right subject reacts with one evasive dart. Water displacement, turbulence, and current response. ${micro}. ${seamless}`.trim()
+      : isShoreline
+        ? `Tracking move. The left subject bursts once from the shoreline. The right subject reacts with one evasive leap and turn. Splash, mud scatter, and bank disturbance. ${micro}. ${seamless}`.trim()
+        : `Tracking move. The left subject ${s2.predatorBeat}. The right subject ${s2.preyBeat}. Ground compression, clear body-weight transfer. ${micro}. ${seamless}`.trim()
+  );
 
   const shot3PasteReady = sanitizeRunwayFPS(
-  isAquatic
-    ? `Slow pull-back. The left subject slows and stabilizes in the water. The right subject holds tense eye-line as residual turbulence settles. ${micro}. ${seamless}`.trim()
-    : isShoreline
-      ? `Slow pull-back. The left subject settles low at the waterline. The right subject holds tense eye-line as residual splash and mud disturbance fade. ${micro}. ${seamless}`.trim()
-      : `Slow pull-back. The left subject ${beat3.predatorBeat}. The right subject ${beat3.preyBeat}. Residual atmosphere settles. ${micro}. ${seamless}`.trim()
-);
+    isAquatic
+      ? `Slow pull-back. The left subject slows and stabilizes in the water. The right subject holds tense eye-line as residual turbulence settles. ${micro}. ${seamless}`.trim()
+      : isShoreline
+        ? `Slow pull-back. The left subject settles low at the waterline. The right subject holds tense eye-line as residual splash and mud disturbance fade. ${micro}. ${seamless}`.trim()
+        : `Slow pull-back. The left subject ${s3.predatorBeat}. The right subject ${s3.preyBeat}. Residual atmosphere settles. ${micro}. ${seamless}`.trim()
+  );
 
   return {
     shot1: finalizePrompt(`RUNWAY SHOT 1 — ESTABLISHING [${model}]
@@ -1449,15 +1481,15 @@ ${qLead}
 ${refLine}
 ${motionRule}
 ${singleRule}
-${maybeGuard(beat1.guardLine)}${context}
+${maybeGuard(s1.guardLine)}${context}
 
 ═══ PASTE-READY I2V PROMPT (copy this into Runway) ═══
 ${shot1PasteReady}
 
 ─── SHOT BREAKDOWN ───
 Camera motion: slow dolly-in.
-Subject action: left subject ${beat1.predatorBeat}.
-Right-side reaction: right subject ${beat1.preyBeat}.
+Subject action: left subject ${s1.predatorBeat}.
+Right-side reaction: right subject ${s1.preyBeat}.
 Environment motion: ${micro}.
 Tone: ${tone.video}.
 Framing: ${vibe.camera}.
@@ -1472,15 +1504,15 @@ ${qLead}
 ${refLine}
 ${motionRule}
 ${singleRule}
-${maybeGuard(beat2.guardLine)}${context}
+${maybeGuard(s2.guardLine)}${context}
 
 ═══ PASTE-READY I2V PROMPT (copy this into Runway) ═══
 ${shot2PasteReady}
 
 ─── SHOT BREAKDOWN ───
 Camera motion: controlled tracking move.
-Subject action: left subject ${beat2.predatorBeat}.
-Right-side reaction: right subject ${beat2.preyBeat}.
+Subject action: left subject ${s2.predatorBeat}.
+Right-side reaction: right subject ${s2.preyBeat}.
 Environment motion: ${
   isAquatic
     ? `water displacement, turbulence, current response, ${micro}`
@@ -1504,15 +1536,15 @@ ${qLead}
 ${refLine}
 ${motionRule}
 ${singleRule}
-${maybeGuard(beat3.guardLine)}
+${maybeGuard(s3.guardLine)}${context}
 
 ═══ PASTE-READY I2V PROMPT (copy this into Runway) ═══
 ${shot3PasteReady}
 
 ─── SHOT BREAKDOWN ───
 Camera motion: slow pull-back.
-Subject action: left subject ${beat3.predatorBeat}.
-Right-side reaction: right subject ${beat3.preyBeat}.
+Subject action: left subject ${s3.predatorBeat}.
+Right-side reaction: right subject ${s3.preyBeat}.
 Environment motion: residual atmosphere — ${micro}.
 Mood: ${tone.image}.
 Duration: 5–10 seconds recommended.
@@ -1565,6 +1597,24 @@ export function buildKlingShots(
   const beat2 = oneActionArcBeat(arc, "action", gateOn, habitatMode);
   const beat3 = oneActionArcBeat(arc, "aftermath", gateOn, habitatMode);
 
+  const s1 = {
+    ...beat1,
+    predatorBeat: sanitizeVideoBeatText(beat1.predatorBeat),
+    preyBeat: sanitizeVideoBeatText(beat1.preyBeat),
+  };
+
+  const s2 = {
+    ...beat2,
+    predatorBeat: sanitizeVideoBeatText(beat2.predatorBeat),
+    preyBeat: sanitizeVideoBeatText(beat2.preyBeat),
+  };
+
+  const s3 = {
+    ...beat3,
+    predatorBeat: sanitizeVideoBeatText(beat3.predatorBeat),
+    preyBeat: sanitizeVideoBeatText(beat3.preyBeat),
+  };
+
   const mi1 = getKlingMotionIntensity(arc, "establish");
   const mi2 = getKlingMotionIntensity(arc, "action");
   const mi3 = getKlingMotionIntensity(arc, "aftermath");
@@ -1604,12 +1654,12 @@ ${refLine}
 ${motionRule}
 ${singleRule}
 Motion intensity: ${mi1.toFixed(2)}
-${maybeGuard(beat1.guardLine)}${context}
+${maybeGuard(s1.guardLine)}${context}
 
 ═══ KLING 3.0 PROMPT (SCALE format) ═══
 Shot: Subtle handheld drift or static hold, medium-wide framing.
 ${characterLine}
-Action: ${predator} ${beat1.predatorBeat}. ${prey} ${beat1.preyBeat}.
+Action: ${predator} ${s1.predatorBeat}. ${prey} ${s1.preyBeat}.
 ${locationLine}
 Extra: ${buildKlingExtraLine(extra1, quality?.motionOnlyI2V)}
 
@@ -1625,19 +1675,19 @@ ${motionRule}
 ${singleRule}
 ${wideRule}
 Motion intensity: ${mi2.toFixed(2)}
-${maybeGuard(beat2.guardLine)}${context}
+${maybeGuard(s2.guardLine)}${context}
 
 ═══ KLING 3.0 PROMPT (SCALE format) ═══
 Shot: FIXED WIDE — full bodies visible, no crop, no close-ups.
 ${characterLine}
-Action: ${predator} ${beat2.predatorBeat}. ${prey} ${beat2.preyBeat}.
+Action: ${predator} ${s2.predatorBeat}. ${prey} ${s2.preyBeat}.
 ${locationLine}
 Extra: ${buildKlingExtraLine(
   isAquatic
-    ? `Surface response, grounded contact,, ${micro}. Physics priority: coherent limbs, grounded weight, readable impact`
+    ? `Surface response, grounded contact, ${micro}. Physics priority: coherent limbs, grounded weight, readable impact`
     : isShoreline
       ? `Splash response, muddy bank displacement, shallow-water disturbance, ${micro}. Physics priority: coherent limbs, grounded traction, readable impact`
-      : `Surface response, grounded contact,, ${micro}. Physics priority: coherent limbs, grounded weight, readable impact`,
+      : `Surface response, grounded contact, ${micro}. Physics priority: coherent limbs, grounded weight, readable impact`,
   quality?.motionOnlyI2V
 )}
 
@@ -1653,12 +1703,12 @@ ${motionRule}
 ${singleRule}
 ${wideRule}
 Motion intensity: ${mi3.toFixed(2)}
-${maybeGuard(beat3.guardLine)}${context}
+${maybeGuard(s3.guardLine)}${context}
 
 ═══ KLING 3.0 PROMPT (SCALE format) ═══
 Shot: LOCKED FIXED WIDE — no movement, full bodies visible.
 ${characterLine}
-Action: ${predator} ${beat3.predatorBeat}. ${prey} ${beat3.preyBeat}.
+Action: ${predator} ${s3.predatorBeat}. ${prey} ${s3.preyBeat}.
 ${locationLine}
 Extra: ${buildKlingExtraLine(extra3, quality?.motionOnlyI2V)}
 
@@ -1713,6 +1763,24 @@ export function buildKlingNative15s(
   const b2 = oneActionArcBeat(arc, "action", gateOn, habitatMode);
   const b3 = oneActionArcBeat(arc, "aftermath", gateOn, habitatMode);
 
+  const s1 = {
+    ...b1,
+    predatorBeat: sanitizeVideoBeatText(b1.predatorBeat),
+    preyBeat: sanitizeVideoBeatText(b1.preyBeat),
+  };
+
+  const s2 = {
+    ...b2,
+    predatorBeat: sanitizeVideoBeatText(b2.predatorBeat),
+    preyBeat: sanitizeVideoBeatText(b2.preyBeat),
+  };
+
+  const s3 = {
+    ...b3,
+    predatorBeat: sanitizeVideoBeatText(b3.predatorBeat),
+    preyBeat: sanitizeVideoBeatText(b3.preyBeat),
+  };
+
   const mi1 = getKlingMotionIntensity(arc, "establish");
   const mi2 = getKlingMotionIntensity(arc, "action");
   const mi3 = getKlingMotionIntensity(arc, "aftermath");
@@ -1740,13 +1808,13 @@ Arc: ${getSafeArcPrint(arc)}.
 ${wideRule}
 
 Shot 1 — INITIATION (0–5 seconds) | Motion: ${mi1.toFixed(2)}:
-${maybeGuard(b1.guardLine)}${predator} ${b1.predatorBeat}. ${prey} ${b1.preyBeat}.
+${maybeGuard(s1.guardLine)}${predator} ${s1.predatorBeat}. ${prey} ${s1.preyBeat}.
 Camera: static hold or subtle handheld drift.
 Environment motion: ${micro}.
 ${audio1}
 
 Shot 2 — ESCALATION (5–10 seconds) — WIDE | Motion: ${mi2.toFixed(2)}:
-${maybeGuard(b2.guardLine)}${predator} ${b2.predatorBeat}. ${prey} ${b2.preyBeat}.
+${maybeGuard(s2.guardLine)}${predator} ${s2.predatorBeat}. ${prey} ${s2.preyBeat}.
 Camera: FIXED WIDE — full bodies visible; no crop; no close-ups.
 Environment motion: ${
   isAquatic
@@ -1759,7 +1827,7 @@ Physics priority: grounded weight transfer, coherent limb mechanics, readable im
 ${audio2}
 
 Shot 3 — RESOLUTION (10–15 seconds) — WIDE | Motion: ${mi3.toFixed(2)}:
-${maybeGuard(b3.guardLine)}${predator} ${b3.predatorBeat}. ${prey} ${b3.preyBeat}.
+${maybeGuard(s3.guardLine)}${predator} ${s3.predatorBeat}. ${prey} ${s3.preyBeat}.
 Camera: LOCKED FIXED WIDE — full bodies visible; no crop; no close-ups.
 Environment motion: residual atmosphere — ${micro}.
 ${audio3}`;
@@ -1821,14 +1889,14 @@ export function buildKlingSixShot(
   const vibe = animalVibePrompt[animalVibe];
   const micro = buildMicroMotionLine(weather, env);
   const envLower = env.toLowerCase();
-const isArcticLike =
-  envLower.includes("arctic") ||
-  envLower.includes("snow") ||
-  envLower.includes("tundra") ||
-  envLower.includes("ice") ||
-  envLower.includes("glacier") ||
-  envLower.includes("frozen") ||
-  envLower.includes("winter");
+  const isArcticLike =
+    envLower.includes("arctic") ||
+    envLower.includes("snow") ||
+    envLower.includes("tundra") ||
+    envLower.includes("ice") ||
+    envLower.includes("glacier") ||
+    envLower.includes("frozen") ||
+    envLower.includes("winter");
 
   const qLead = buildQualityLead(quality, "kling");
   const context = sceneDesc?.trim() ? `\nScene context: ${sceneDesc.trim().slice(0, 150)}` : "";
@@ -1852,6 +1920,18 @@ const isArcticLike =
   const b5 = oneActionArcBeat(arc, "action", gateOn, habitatMode);
   const b6 = oneActionArcBeat(arc, "aftermath", gateOn, habitatMode);
 
+  const s5 = {
+    ...b5,
+    predatorBeat: sanitizeVideoBeatText(b5.predatorBeat),
+    preyBeat: sanitizeVideoBeatText(b5.preyBeat),
+  };
+
+  const s6 = {
+    ...b6,
+    predatorBeat: sanitizeVideoBeatText(b6.predatorBeat),
+    preyBeat: sanitizeVideoBeatText(b6.preyBeat),
+  };
+
   const sixShotSceneLine = quality?.motionOnlyI2V
     ? `Scene: same environment continuity, ${weatherVariants[weather]}.`
     : shoreline
@@ -1863,36 +1943,36 @@ const isArcticLike =
     : `Characters: ${predator} (drives pressure). ${prey} (fully reactive).`;
 
   const sixShotAudio1 = aquatic
-  ? "Audio: subtle underwater movement, low current wash, restrained body movement."
-  : shoreline
-    ? "Audio: subtle shoreline wash, restrained low body movement, wet-ground stillness."
-    : isArcticLike
-      ? "Audio: cold breath, faint pine wind, tight controlled inhale."
-      : "Audio: heavy controlled breathing, sharp inhale.";
+    ? "Audio: subtle underwater movement, low current wash, restrained body movement."
+    : shoreline
+      ? "Audio: subtle shoreline wash, restrained low body movement, wet-ground stillness."
+      : isArcticLike
+        ? "Audio: cold breath, faint pine wind, tight controlled inhale."
+        : "Audio: heavy controlled breathing, sharp inhale.";
 
-const sixShotAudio2 = aquatic
-  ? "Audio: water movement, tension stillness, distant current wash."
-  : shoreline
-    ? "Audio: shallow water movement, bank tension stillness, wet mud ambience."
-    : isArcticLike
-      ? "Audio: cold mountain wind through pines, winter stillness."
-      : "Audio: wind through terrain, tension stillness.";
+  const sixShotAudio2 = aquatic
+    ? "Audio: water movement, tension stillness, distant current wash."
+    : shoreline
+      ? "Audio: shallow water movement, bank tension stillness, wet mud ambience."
+      : isArcticLike
+        ? "Audio: cold mountain wind through pines, winter stillness."
+        : "Audio: wind through terrain, tension stillness.";
 
-const sixShotAudio3 = aquatic
-  ? "Audio: current pressure shift, water displacement, prey alert movement."
-  : shoreline
-    ? "Audio: splash pressure shift, muddy bank disturbance, prey alert movement."
-    : isArcticLike
-      ? "Audio: snow crunch under shifting weight, tense movement, alert vocalization."
-      : "Audio: weight transfer on ground surface, tense animal movement, alert vocalization.";
+  const sixShotAudio3 = aquatic
+    ? "Audio: current pressure shift, water displacement, prey alert movement."
+    : shoreline
+      ? "Audio: splash pressure shift, muddy bank disturbance, prey alert movement."
+      : isArcticLike
+        ? "Audio: snow crunch under shifting weight, tense movement, alert vocalization."
+        : "Audio: weight transfer on ground surface, tense animal movement, alert vocalization.";
 
-const sixShotAudio4 = aquatic
-  ? "Audio: alternating water movement, shifting current tension."
-  : shoreline
-    ? "Audio: alternating shallow splash tension, wet-ground disturbance."
-    : isArcticLike
-      ? "Audio: sharp alternating breath, faint frozen forest hush."
-      : "Audio: rapid alternating breathing patterns.";
+  const sixShotAudio4 = aquatic
+    ? "Audio: alternating water movement, shifting current tension."
+    : shoreline
+      ? "Audio: alternating shallow splash tension, wet-ground disturbance."
+      : isArcticLike
+        ? "Audio: sharp alternating breath, faint frozen forest hush."
+        : "Audio: rapid alternating breathing patterns.";
 
   return finalizePrompt(`KLING 6-SHOT MULTI-SCENE [${model}] — Native Single-Prompt Format
 ──────────────────────────────────────────────────────
@@ -1915,7 +1995,7 @@ Camera: locked static macro.
 ${sixShotAudio1}
 
 Shot 2 — WIDE ESTABLISHING (2–5s) | Motion: 0.30:
-${predator} LEFT, ${prey} RIGHT, ~10m apart. ${predator} exhales once. ${prey} freezes.
+${predator} LEFT, ${prey} RIGHT, ~10m apart. ${predator} holds tense stillness. ${prey} freezes.
 Camera: locked wide.
 ${sixShotAudio2}
 
@@ -1930,19 +2010,19 @@ Camera: no movement.
 ${sixShotAudio4}
 
 Shot 5 — ACTION WIDE (11–14s) — WIDE | Motion: ${getKlingMotionIntensity(arc, "action").toFixed(2)}:
-${maybeGuard(b5.guardLine)}${predator} ${b5.predatorBeat}. ${prey} ${b5.preyBeat}.
+${maybeGuard(s5.guardLine)}${predator} ${s5.predatorBeat}. ${prey} ${s5.preyBeat}.
 Camera: FIXED WIDE — full bodies visible; no crop; no close-ups.
 Environment: ${
   aquatic
-    ? `debris + ${micro}`
+    ? `surface response + ${micro}`
     : shoreline
       ? `splash, muddy bank scatter, disturbed shallows, ${micro}`
-      : `debris + ${micro}`
+      : `surface response + ${micro}`
 }.
 ${buildKlingAudioPrompt(predator, prey, env, weather, arc, "action")}
 
 Shot 6 — AFTERMATH WIDE (14–15s) — WIDE | Motion: ${getKlingMotionIntensity(arc, "aftermath").toFixed(2)}:
-${maybeGuard(b6.guardLine)}${predator} ${b6.predatorBeat}. ${prey} ${b6.preyBeat}.
+${maybeGuard(s6.guardLine)}${predator} ${s6.predatorBeat}. ${prey} ${s6.preyBeat}.
 Camera: LOCKED FIXED WIDE — full bodies visible; no crop; no close-ups.
 ${buildKlingAudioPrompt(predator, prey, env, weather, arc, "aftermath")}
 
