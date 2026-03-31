@@ -112,9 +112,9 @@ const VIRAL_CAPTIONS: Partial<Record<Arc, (predator: string, prey: string, env: 
     `Two massive animals met in the ${env}, and neither wanted to yield space. A ${predator.toLowerCase()} and a ${prey.toLowerCase()} bring a different kind of tension — slower, heavier, and much more violent once contact happens. 🔥`,
   "Territory dominance battle": (predator, prey, env) =>
     `In the ${env}, the line between passing through and crossing the wrong boundary is tiny. The ${prey.toLowerCase()} stepped in anyway, and the ${predator.toLowerCase()} answered immediately. Territory in the wild is never symbolic — it is enforced. 👀`,
-  "Pack hunting strategy": (predator, prey, env) =>
-    `At first, the ${prey.toLowerCase()} looked free. Then the shape of the trap became clear. In the ${env}, the ${predator.toLowerCase()} pack is dangerous not because of chaos, but because every movement feels coordinated before the prey even realizes it. 🧠`,
-  "Predator vs predator fight": (predator, prey, env) =>
+"Pack hunting strategy": (predator, prey, env) =>
+  `At first, the ${prey.toLowerCase()} looked free. Then the shape of the trap became clear. In the ${env}, the ${predator.toLowerCase()} is dangerous not because of chaos, but because every movement feels coordinated before the prey even realizes it. 🧠`,
+    "Predator vs predator fight": (predator, prey, env) =>
     `A ${predator.toLowerCase()} and a ${prey.toLowerCase()} in the ${env} creates a different kind of pressure — no easy retreat, no harmless bluff, and almost no margin for error. These confrontations feel rare because both animals understand the cost. 💥`,
   "Escape from danger": (predator, prey, env) =>
     `Everything in the ${env} changed in an instant. The ${prey.toLowerCase()} had almost no time to process the danger before the ${predator.toLowerCase()} was already moving. In moments like this, survival comes down to one decision made fast enough. ⚡`,
@@ -142,7 +142,7 @@ const CAPTIONS_2026: Partial<Record<Arc, (predator: string, prey: string, env: s
   "Pack hunting strategy": (predator, prey, env) =>
   `At first, the ${prey.toLowerCase()} looked free. Then the pattern became obvious. 🧠
 
-In the ${env}, the ${predator.toLowerCase()} pack is dangerous because the pressure builds before the prey fully reads what is happening. This is not chaos. It is timing, spacing, and control.
+In the ${env}, the ${predator.toLowerCase()} is dangerous because the pressure builds before the prey fully reads what is happening. This is not chaos. It is timing, spacing, and control.
 
 At what second did you realize the escape lane was gone? 👇
 

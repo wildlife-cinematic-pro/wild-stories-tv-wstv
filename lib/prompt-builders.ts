@@ -1117,6 +1117,51 @@ function finalizeImagePrompt(prompt: string, target: ImagePromptTarget): string 
 // ─────────────────────────────────────────────────────────────
 // IMAGE PROMPT
 // ─────────────────────────────────────────────────────────────
+function buildImageSubjectLine(
+  predator: string,
+  prey: string,
+  arcPhrase: string,
+  arc: string
+): string {
+  const exactGroupMap: Record<string, string> = {
+    "Wolf Pack": "three wolves",
+  };
+
+  const exactSingleMap: Record<string, string> = {
+    Elk: "one elk",
+  };
+
+  const predatorLabel =
+    exactGroupMap[predator] ?? exactSingleMap[predator] ?? predator;
+
+  const preyLabel =
+    exactGroupMap[prey] ?? exactSingleMap[prey] ?? prey;
+
+  const visibility =
+    exactGroupMap[predator] || exactGroupMap[prey]
+      ? "all fully visible"
+      : "both fully visible";
+
+  const usesPredatorPreyRoles =
+    arc === "Ambush attack" ||
+    arc === "Chase and takedown" ||
+    arc === "Pack hunting strategy" ||
+    arc === "Escape from danger";
+
+  if (usesPredatorPreyRoles) {
+    const predatorSide = exactGroupMap[predator]
+      ? "predator group on the left"
+      : "predator on the left";
+
+    const preySide = exactGroupMap[prey]
+      ? "prey group on the right"
+      : "prey on the right";
+
+    return `Subject: ${predatorLabel} and ${preyLabel}, ${visibility}, ${predatorSide} and ${preySide}, locked in the peak tension beat of ${arcPhrase}.`;
+  }
+
+  return `Subject: ${predatorLabel} on the left and ${preyLabel} on the right, ${visibility}, locked in the peak tension beat of ${arcPhrase}.`;
+}
 export function buildImagePrompt(
   predator: string,
   prey: string,
@@ -1141,7 +1186,7 @@ export function buildImagePrompt(
       : getFilmStock(cameraGear, lighting, weather);
 
   const descInject = sceneDesc?.trim() ? `\n\nScene context: ${sceneDesc.trim()}` : "";
-  const qLead = buildQualityLead(quality, "image");
+  const qLead = "";
 
   const realismAdd =
     quality?.realismMode === "High Naturalism"
@@ -1176,18 +1221,20 @@ if (target === "NANO_BANANA_2") {
     ? `an ${getSafeArcLabel(arc)}`
     : `a ${getSafeArcLabel(arc)}`;
 
-  const A_nb2 = `Subject: ${predator} and ${prey}, both fully visible, locked in the peak tension beat of ${arcPhrase}.`;
+const A_nb2 = buildImageSubjectLine(predator, prey, arcPhrase, arc);
   const B_nb2 = `Context/background: ${env}, ${weatherVariants[weather]}. Natural habitat cues, readable terrain, clear background layers.`;
+
   const C_nb2 =
     habitatMode === "aquatic"
-      ? `Pose/action: ${predator} in a powerful pre-action glide, ${prey} fully alert and reactive, authentic aquatic wildlife body language, biologically accurate spacing in the water column.`
+      ? `Pose/action: ${predator} in a powerful pre-action glide, ${prey} fully alert and reactive, authentic aquatic wildlife body language, biologically accurate spacing in the water column, both subjects clearly readable, no overlap.`
       : habitatMode === "shoreline"
-        ? `Pose/action: ${predator} in a powerful pre-action shoreline ambush posture at the water's edge, ${prey} fully alert and reactive near the bank, authentic wildlife body language, biologically accurate spacing.`
-        : `Pose/action: ${predator} in a powerful pre-action stance, ${prey} fully alert and reactive, authentic wildlife body language, biologically accurate spacing.`;
-  const D_nb2 = `Composition: wide cinematic wildlife documentary frame, 9:16 vertical. Camera: ${cam}. ${vibe.camera}. ${depth.lensNote}. Depth of field: ${depth.depth}.`;
-  const E_nb2 = `Lighting: ${weatherVariants[weather]}. Natural rim separation, volumetric atmosphere, realistic shadow direction.`;
-  const F_nb2 = `Style: ${vibe.style}, photorealistic. ${texture}. ${vibe.texture}. Micro-detail visible in fur, skin, feathers, debris, moisture, and ground contact. ${realismAdd}${descInject}`;
+        ? `Pose/action: ${predator} in a powerful pre-action shoreline ambush posture at the water's edge, ${prey} fully alert and reactive near the bank, authentic wildlife body language, biologically accurate spacing, both subjects clearly readable, no overlap.`
+        : `Pose/action: ${predator} in a powerful pre-action stance, ${prey} fully alert and reactive, authentic wildlife body language, biologically accurate spacing, both subjects clearly readable, no overlap.`;
 
+const D_nb2 = `Composition: wide cinematic wildlife documentary frame, 9:16 vertical. Camera: top-tier full-frame wildlife documentary camera, ${cam.replace("tracking", "framing")}, premium super-telephoto optics, natural optical compression, authentic perspective, ${depth.lensNote}. Depth of field: ${depth.depth}. Clean subject separation, full-body readability, no overlap, stable silhouette separation.`;
+  const E_nb2 = `Lighting: ${weatherVariants[weather]}. Natural rim separation, volumetric atmosphere, realistic shadow direction, true-to-life exposure rolloff, realistic dynamic range, natural highlight control, no artificial glow, no synthetic HDR look.`;
+
+const F_nb2 = `Style: ${vibe.style}, photorealistic, true wildlife documentary realism. ${texture}. ${vibe.texture}. Extremely natural fur, skin, moisture, dust, and ground-contact detail. True-to-life color science, realistic micro-contrast, realistic lens rendering, biologically accurate anatomy, no plastic texture, no CGI feel, no over-sharpened artificial look. ${realismAdd}${descInject}`;
   return finalizeImagePrompt(
     `${qLead} ${A_nb2} ${B_nb2} ${C_nb2} ${D_nb2} ${E_nb2} ${F_nb2}`,
     target
@@ -1338,26 +1385,26 @@ export function buildRunwayShots(
 
   const shot1PasteReady = sanitizeRunwayFPS(
   isAquatic
-    ? `Slow dolly-in. ${predator} glides once through the water column. ${prey} holds tense position, body rigid in the current. ${micro}. ${seamless}`.trim()
+    ? `Slow dolly-in. The left subject glides once through the water column. The right subject holds tense position in the current. ${micro}. ${seamless}`.trim()
     : isShoreline
-      ? `Slow dolly-in. ${predator} holds low at the water's edge. ${prey} stands tense near the bank, body rigid, eye-line locked. ${micro}. ${seamless}`.trim()
-      : `Slow dolly-in. ${predator} ${beat1.predatorBeat}. ${prey} ${beat1.preyBeat}. ${micro}. ${seamless}`.trim()
+      ? `Slow dolly-in. The left subject holds low at the water's edge. The right subject stands tense near the bank, eye-line locked. ${micro}. ${seamless}`.trim()
+      : `Slow dolly-in. The left subject ${beat1.predatorBeat}. The right subject ${beat1.preyBeat}. ${micro}. ${seamless}`.trim()
 );
 
   const shot2PasteReady = sanitizeRunwayFPS(
-    isAquatic
-      ? `Tracking move. ${predator} commits to one fast water-pressure burst. ${prey} reacts with one evasive dart. Water displacement, turbulence, and current reaction. ${micro}. ${seamless}`.trim()
-      : isShoreline
-        ? `Tracking move. ${predator} bursts once from the shoreline. ${prey} reacts with one evasive leap and turn. Splash, mud scatter, and bank disturbance. ${micro}. ${seamless}`.trim()
-        : `Tracking move. ${predator} ${beat2.predatorBeat}. ${prey} ${beat2.preyBeat}. Ground scatter, body-weight transfer. ${micro}. ${seamless}`.trim()
-  );
+  isAquatic
+    ? `Tracking move. The left subject commits to one fast water-pressure burst. The right subject reacts with one evasive dart. Water displacement, turbulence, and current response. ${micro}. ${seamless}`.trim()
+    : isShoreline
+      ? `Tracking move. The left subject bursts once from the shoreline. The right subject reacts with one evasive leap and turn. Splash, mud scatter, and bank disturbance. ${micro}. ${seamless}`.trim()
+      : `Tracking move. The left subject ${beat2.predatorBeat}. The right subject ${beat2.preyBeat}. Ground scatter, clear body-weight transfer. ${micro}. ${seamless}`.trim()
+);
 
   const shot3PasteReady = sanitizeRunwayFPS(
   isAquatic
-    ? `Slow pull-back. ${predator} slows and stabilizes in the water. Residual turbulence settles, eye-line engaged. ${micro}. ${seamless}`.trim()
+    ? `Slow pull-back. The left subject slows and stabilizes in the water. The right subject holds tense eye-line as residual turbulence settles. ${micro}. ${seamless}`.trim()
     : isShoreline
-      ? `Slow pull-back. ${predator} settles low at the waterline. Residual splash and mud disturbance fade while both subjects hold tense eye-lines. ${micro}. ${seamless}`.trim()
-      : `Slow pull-back. ${predator} ${beat3.predatorBeat}. ${prey} ${beat3.preyBeat}. Residual atmosphere settles. ${micro}. ${seamless}`.trim()
+      ? `Slow pull-back. The left subject settles low at the waterline. The right subject holds tense eye-line as residual splash and mud disturbance fade. ${micro}. ${seamless}`.trim()
+      : `Slow pull-back. The left subject ${beat3.predatorBeat}. The right subject ${beat3.preyBeat}. Residual atmosphere settles. ${micro}. ${seamless}`.trim()
 );
 
   return {
@@ -1374,8 +1421,8 @@ ${shot1PasteReady}
 
 ─── SHOT BREAKDOWN ───
 Camera motion: slow dolly-in.
-Subject action: ${predator} ${beat1.predatorBeat}.
-Prey reaction: ${prey} ${beat1.preyBeat}.
+Subject action: left subject ${beat1.predatorBeat}.
+Right-side reaction: right subject ${beat1.preyBeat}.
 Environment motion: ${micro}.
 Tone: ${tone.video}.
 Framing: ${vibe.camera}.
@@ -1397,8 +1444,8 @@ ${shot2PasteReady}
 
 ─── SHOT BREAKDOWN ───
 Camera motion: controlled tracking move.
-Subject action: ${predator} ${beat2.predatorBeat}.
-Prey reaction: ${prey} ${beat2.preyBeat}.
+Subject action: left subject ${beat2.predatorBeat}.
+Right-side reaction: right subject ${beat2.preyBeat}.
 Environment motion: ${
   isAquatic
     ? `water displacement, turbulence, current response, ${micro}`
@@ -1429,8 +1476,8 @@ ${shot3PasteReady}
 
 ─── SHOT BREAKDOWN ───
 Camera motion: slow pull-back.
-Subject action: ${predator} ${beat3.predatorBeat}.
-Prey reaction: ${prey} ${beat3.preyBeat}.
+Subject action: left subject ${beat3.predatorBeat}.
+Right-side reaction: right subject ${beat3.preyBeat}.
 Environment motion: residual atmosphere — ${micro}.
 Mood: ${tone.image}.
 Duration: 5–10 seconds recommended.
