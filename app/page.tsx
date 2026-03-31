@@ -529,7 +529,7 @@ const [animalVibe, setAnimalVibe] = useState<AnimalVibe>("National Geographic Wi
   if (preset.prey[0]) {
     const nextPrey = preset.prey[0];
     setPrey(nextPrey);
-    setArc(suggestArc(predator, nextPrey, preset.defaultArc) as Arc);
+    setArc(suggestArc(predator, nextPrey, "Ambush attack") as Arc);
   }
 }, [predator, preset.prey]);
 
