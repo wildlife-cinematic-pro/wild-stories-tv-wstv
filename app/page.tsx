@@ -529,7 +529,7 @@ const [animalVibe, setAnimalVibe] = useState<AnimalVibe>("National Geographic Wi
   if (preset.prey[0]) {
     const nextPrey = preset.prey[0];
     setPrey(nextPrey);
-    setArc(suggestArc(predator, nextPrey, "Ambush attack") as Arc);
+    setArc(suggestArc(predator, nextPrey, preset.defaultArc) as Arc);
   }
 }, [predator, preset.prey]);
 
@@ -809,7 +809,7 @@ animalBehavior: animalBehaviorResult ?? undefined,
             provider: activeProvider,
             predator,
             prey,
-            env: final.environment,
+            env: finalEnvironment,
             arc: finalArc,
             weather,
             emotionalTone,
@@ -1334,7 +1334,7 @@ animalBehavior: animalBehaviorResult ?? undefined,
                         setCustomForm({
                           name: "",
                           prey: "",
-                          environment: final.environment || "",
+                          environment: finalEnvironment || "",
                           defaultArc: arc,
                           driftRisk: preset.driftRisk,
                         });
