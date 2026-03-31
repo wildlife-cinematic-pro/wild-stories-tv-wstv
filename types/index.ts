@@ -26,6 +26,19 @@ export type Weather =
   | "Winter Blizzard"
   | "Frozen Dusk";
 
+export type HabitatPreset =
+  | "Auto"
+  | "Open Green Grassland"
+  | "Dry Savanna Plain"
+  | "Marsh Wetland"
+  | "Riverbank Reeds"
+  | "Forest Clearing"
+  | "Dense Jungle Edge"
+  | "Rocky Mountain Meadow"
+  | "Snow Field Tundra"
+  | "Desert Scrubland"
+  | "Coastal Cliffline";
+
 export type EmotionalTone =
   | "Raw Tension"
   | "Silent Dread"
