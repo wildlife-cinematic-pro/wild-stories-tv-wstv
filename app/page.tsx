@@ -253,7 +253,7 @@ export default function Page() {
   const [predator, setPredator] = useState("Wolf Pack");
 const [prey, setPrey] = useState("Elk");
 const [arc, setArc] = useState<Arc>("Pack hunting strategy");
-  const [weather, setWeather] = useState<Weather>("Golden Hour");
+  const [weather, setWeather] = useState<Weather>("Dawn");
 const [habitat, setHabitat] = useState<HabitatPreset>("Auto");
 const [depthMode, setDepthMode] = useState<DepthMode>("Balanced Depth");
 const [emotionalTone, setEmotionalTone] = useState<EmotionalTone>("Raw Tension");
