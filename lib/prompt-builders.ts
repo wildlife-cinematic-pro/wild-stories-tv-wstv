@@ -2000,6 +2000,7 @@ HOW TO USE (Kling 3.0 WSTV Workflow):
 7. Output: Native 4K at 60fps available.
 8. Optional: Set End Frame image for final-pose control.
 ✅ Native single-prompt workflow — identity preserved across all 3 beats.`);
+}
 
 
 // ─────────────────────────────────────────────────────────────
