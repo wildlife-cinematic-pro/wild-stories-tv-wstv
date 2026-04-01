@@ -33,6 +33,7 @@ import type {
   DepthMode,
   PredatorInfo,
   CustomPredatorForm,
+  HabitatPreset,
 } from "@/types";
 
 import { weatherOptions, depthModes } from "@/lib/model-specs";
@@ -105,6 +106,7 @@ export type StoredSettings = {
   microMotion?: boolean;
   heroVeo?: boolean;
   autoApplyHighDrift?: boolean;
+  habitat?: HabitatPreset;
 };
 
 export function readSettings(): StoredSettings {
