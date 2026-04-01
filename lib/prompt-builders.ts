@@ -1905,6 +1905,8 @@ const audio3Short = buildKlingAudioShort(predator, prey, env, weather, "aftermat
     // Paste-ready core — trimmed to stay under Kling's 2500-char textPrompt limit.
 // Short audio lines used here; full audio kept in body below for reference display only.
   
+// lib/prompt-builders.ts
+
 const pasteReadyCore = [
   `Same scene and same ${predator}/${prey} identities from input image. Photorealistic wildlife documentary. 9:16 vertical.`,
   ``,
@@ -1927,33 +1929,13 @@ const pasteReadyCore = [
   `Camera: LOCKED FIXED WIDE — full bodies visible.`,
   audio3Short,
 ].join("\n").trim();
-```
-
----
-
-## Result
-```
-
-Scene: Yellowstone valley, golden hour...
-Characters: same Wolf Pack identity...
-Arc: pack hunting strategy.
-
-Shot 1 — INITIATION (0–5s) | Motion: 0.35:
-Wolf Pack holds a coiled pre-chase stance. Elk locks attention...
-Camera: static hold or subtle handheld drift.
-Audio: forest ambience, warm twilight...
-
-Shot 2 — ESCALATION WIDE | Motion: 0.75:
-...
-
-  ].join("\n").trim();
 
 const klingValidation = validateKlingPromptLength(pasteReadyCore);
 const klingLengthLine = klingValidation.isOver
   ? `PROMPT TOO LONG: ${klingValidation.length} / 2500`
   : `Prompt length OK: ${klingValidation.length} / 2500 chars`;
 
-  const body = `═══ KLING 3.0 MULTI-SHOT PROMPT (SCALE format) ═══
+const body = `═══ KLING 3.0 MULTI-SHOT PROMPT (SCALE format) ═══
 
 ${nativeSceneLine}
 ${nativeCharacterLine}
@@ -1986,9 +1968,10 @@ Camera: LOCKED FIXED WIDE — full bodies visible; no crop; no close-ups.
 Environment motion: residual atmosphere — ${micro}.
 ${audio3}`;
 
-  if (!isNative) {
-    return finalizePrompt(`⚠️ KLING NATIVE 15S: Requires Kling 3.0 Pro or Kling 3.0 Standard.
-Selected: ${model}. Switch model to activate.
+if (!isNative) {
+  return finalizePrompt(`⚠️ KLING NATIVE 15S: Requires Kling 3.0 Pro or Kling 3.0 Standard.
+Selected: ${model}. Switch model to activate.`);
+}
 
 ─────────────────────────────────────
 ${note}
