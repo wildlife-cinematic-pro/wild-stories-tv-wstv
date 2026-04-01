@@ -1973,16 +1973,7 @@ if (!isNative) {
 Selected: ${model}. Switch model to activate.`);
 }
 
-─────────────────────────────────────
-${note}
-${qLead}
-${refLine}
-${motionRule}${context}
-
-${body}`);
-  }
-
-  return finalizePrompt(`KLING NATIVE 15-SECOND MULTI-SHOT [${model}]
+return finalizePrompt(`KLING NATIVE 15-SECOND MULTI-SHOT [${model}]
 ─────────────────────────────────────────────────────────
 ${note}
 ${qLead}
@@ -2009,7 +2000,6 @@ HOW TO USE (Kling 3.0 WSTV Workflow):
 7. Output: Native 4K at 60fps available.
 8. Optional: Set End Frame image for final-pose control.
 ✅ Native single-prompt workflow — identity preserved across all 3 beats.`);
-}
 
 
 // ─────────────────────────────────────────────────────────────
