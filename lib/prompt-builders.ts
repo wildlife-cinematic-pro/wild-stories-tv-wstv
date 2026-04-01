@@ -1946,11 +1946,12 @@ Audio: forest ambience, warm twilight...
 Shot 2 — ESCALATION WIDE | Motion: 0.75:
 ...
 
-  // ✅ Kling 2500-char limit check
+  ].join("\n").trim();
+
 const klingValidation = validateKlingPromptLength(pasteReadyCore);
 const klingLengthLine = klingValidation.isOver
-  ? `⚠️ PROMPT TOO LONG: ${klingValidation.length} / 2500 — paste garna agadi trim garos!`
-  : `✅ Prompt length OK: ${klingValidation.length} / 2500 chars`;
+  ? `PROMPT TOO LONG: ${klingValidation.length} / 2500`
+  : `Prompt length OK: ${klingValidation.length} / 2500 chars`;
 
   const body = `═══ KLING 3.0 MULTI-SHOT PROMPT (SCALE format) ═══
 
