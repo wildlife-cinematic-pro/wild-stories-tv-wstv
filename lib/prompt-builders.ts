@@ -286,6 +286,12 @@ function buildKlingLocationLine(
 function buildKlingExtraLine(base: string, motionOnlyI2V?: boolean): string {
   return motionOnlyI2V ? base : `${base}.`;
 }
+function formatActionSubject(subject: string, beat: string): string {
+  if (subject === "Wolf Pack") {
+    return `The pack ${beat}`;
+  }
+  return `${subject} ${beat}`;
+}
 
 // ─────────────────────────────────────────────────────────────
 // Kling WIDE PHYSICS RULE
@@ -788,16 +794,16 @@ function oneActionArcBeat(
     case "Pack hunting strategy":
       if (beat === "action") {
         return {
-          predatorBeat: "tightens formation once (one coordinated lateral close-in)",
+          predatorBeat: "pack tightens formation once (one coordinated lateral close-in)",
           preyBeat: "reacts once by pivoting and attempting one escape direction",
           guardLine: baseGuard,
         };
       }
       return {
         predatorBeat:
-          beat === "aftermath"
-            ? "holds formation and exhales once"
-            : "maintains disciplined spacing",
+  beat === "aftermath"
+    ? "pack holds formation and settles once"
+    : "pack maintains disciplined spacing",
         preyBeat:
           beat === "aftermath"
             ? "holds distance, still tense"
@@ -1818,7 +1824,7 @@ ${maybeGuard(s1.guardLine)}${context}
 ═══ KLING 3.0 PROMPT (SCALE format) ═══
 Shot: Subtle handheld drift or static hold, medium-wide framing.
 ${characterLine}
-Action: ${predator} ${s1.predatorBeat}. ${prey} ${s1.preyBeat}.
+Action: ${formatActionSubject(predator, s1.predatorBeat)}. ${prey} ${s1.preyBeat}.
 ${locationLine}
 Extra: ${buildKlingExtraLine(extra1, quality?.motionOnlyI2V)}
 
@@ -1839,7 +1845,7 @@ ${maybeGuard(s2.guardLine)}${context}
 ═══ KLING 3.0 PROMPT (SCALE format) ═══
 Shot: FIXED WIDE — full bodies visible, no crop, no close-ups.
 ${characterLine}
-Action: ${predator} ${s2.predatorBeat}. ${prey} ${s2.preyBeat}.
+Action: ${formatActionSubject(predator, s2.predatorBeat)}. ${prey} ${s2.preyBeat}.
 ${locationLine}
 Extra: ${buildKlingExtraLine(
   isAquatic
@@ -1849,6 +1855,8 @@ Extra: ${buildKlingExtraLine(
       : `Surface response, grounded contact, ${micro}. Physics priority: coherent limbs, grounded weight, readable impact`,
   quality?.motionOnlyI2V
 )}
+
+
 
 ${audio2}
 
@@ -1867,7 +1875,7 @@ ${maybeGuard(s3.guardLine)}${context}
 ═══ KLING 3.0 PROMPT (SCALE format) ═══
 Shot: LOCKED FIXED WIDE — no movement, full bodies visible.
 ${characterLine}
-Action: ${predator} ${s3.predatorBeat}. ${prey} ${s3.preyBeat}.
+Action: ${formatActionSubject(predator, s3.predatorBeat)}. ${prey} ${s3.preyBeat}.
 ${locationLine}
 Extra: ${buildKlingExtraLine(extra3, quality?.motionOnlyI2V)}
 
@@ -1976,17 +1984,17 @@ const pasteReadyCore = [
   `Arc: ${getSafeArcPrint(arc)}.`,
   ``,
   `Shot 1 — INITIATION (0–5s) | Motion: ${mi1.toFixed(2)}:`,
-  `${predator} ${s1.predatorBeat}. ${prey} ${s1.preyBeat}.`,
+  `${formatActionSubject(predator, s1.predatorBeat)}. ${prey} ${s1.preyBeat}.`,
   `Camera: static hold or subtle handheld drift.`,
   audio1Short,
   ``,
   `Shot 2 — ESCALATION (5–10s) WIDE | Motion: ${mi2.toFixed(2)}:`,
-  `${predator} ${s2.predatorBeat}. ${prey} ${s2.preyBeat}.`,
+  `${formatActionSubject(predator, s2.predatorBeat)}. ${prey} ${s2.preyBeat}.`,
   `Camera: FIXED WIDE — full bodies visible, no crop.`,
   audio2Short,
   ``,
   `Shot 3 — RESOLUTION (10–15s) WIDE | Motion: ${mi3.toFixed(2)}:`,
-  `${predator} ${s3.predatorBeat}. ${prey} ${s3.preyBeat}.`,
+  `${formatActionSubject(predator, s3.predatorBeat)}. ${prey} ${s3.preyBeat}.`,
   `Camera: LOCKED FIXED WIDE — full bodies visible.`,
   audio3Short,
 ].join("\n").trim();
