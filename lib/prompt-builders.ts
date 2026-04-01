@@ -716,7 +716,7 @@ function oneActionArcBeat(
       return {
         predatorBeat:
           beat === "aftermath"
-            ? "settles posture and exhales once, stance recovered"
+            ? "settles posture once, stance recovered"
             : "compresses low and still, breath controlled",
         preyBeat:
           beat === "aftermath"
