@@ -1933,7 +1933,6 @@ const pasteReadyCore = [
 
 ## Result
 ```
-✅ Prompt length OK: ~850 / 2500 chars
 
 Scene: Yellowstone valley, golden hour...
 Characters: same Wolf Pack identity...
