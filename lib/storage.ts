@@ -308,6 +308,7 @@ const QS = {
   arc: "a",
   weather: "w",
   depth: "d",
+  habitat: "h",
 } as const;
 
 function isWeather(x: string): x is Weather {
@@ -318,18 +319,37 @@ function isDepth(x: string): x is DepthMode {
   return (depthModes as string[]).includes(x);
 }
 
+function isHabitatPreset(x: string): x is HabitatPreset {
+  return [
+    "Auto",
+    "Open Green Grassland",
+    "Dry Savanna Plain",
+    "Marsh Wetland",
+    "Riverbank Reeds",
+    "Forest Clearing",
+    "Dense Jungle Edge",
+    "Rocky Mountain Meadow",
+    "Snow Field Tundra",
+    "Desert Scrubland",
+    "Coastal Cliffline",
+  ].includes(x);
+}
+
 /** Read predator / prey / arc / weather / depth from URL params */
 export function readShareState(): Partial<ShareState> {
   if (typeof window === "undefined") return {};
   const sp = new URLSearchParams(window.location.search);
   const w = sp.get(QS.weather);
   const d = sp.get(QS.depth);
+  const h = sp.get(QS.habitat);
+
   return {
     predator: sp.get(QS.predator) ?? undefined,
     prey: sp.get(QS.prey) ?? undefined,
     arc: sp.get(QS.arc) ?? undefined,
     weather: w && isWeather(w) ? w : undefined,
     depthMode: d && isDepth(d) ? d : undefined,
+    habitat: h && isHabitatPreset(h) ? h : undefined,
   };
 }
 
@@ -339,11 +359,14 @@ export function writeShareState(state: ShareState): void {
   const url = new URL(window.location.href);
   const sp = url.searchParams;
   const sod = (k: string, v: string) => (v ? sp.set(k, v) : sp.delete(k));
+
   sod(QS.predator, state.predator);
   sod(QS.prey, state.prey);
   sod(QS.arc, state.arc);
   sod(QS.weather, state.weather);
   sod(QS.depth, state.depthMode);
+  sod(QS.habitat, state.habitat);
+
   window.history.replaceState(null, "", url.toString());
 }
 
@@ -353,14 +376,16 @@ export function buildShareLink(state: ShareState): string {
   const url = new URL(window.location.href);
   url.search = "";
   const sp = url.searchParams;
+
   if (state.predator) sp.set(QS.predator, state.predator);
   if (state.prey) sp.set(QS.prey, state.prey);
   if (state.arc) sp.set(QS.arc, state.arc);
   if (state.weather) sp.set(QS.weather, state.weather);
   if (state.depthMode) sp.set(QS.depth, state.depthMode);
+  if (state.habitat) sp.set(QS.habitat, state.habitat);
+
   return url.toString();
 }
-
 // ─────────────────────────────────────────────────────────────
 // DOWNLOAD HELPERS  (client-side only)
 // ─────────────────────────────────────────────────────────────
