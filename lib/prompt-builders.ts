@@ -1216,26 +1216,86 @@ function sanitizeWeatherPhrase(phrase: string): string {
     .replace(/,\s*\./g, ".")
     .trim();
 }
-function sanitizeImageTexture(texture: string): string {
-  return String(texture ?? "")
+function isArcticEnv(env: string): boolean {
+  const s = String(env ?? "").toLowerCase();
+  return (
+    s.includes("snow") ||
+    s.includes("tundra") ||
+    s.includes("ice") ||
+    s.includes("glacier") ||
+    s.includes("frozen") ||
+    s.includes("winter") ||
+    s.includes("arctic")
+  );
+}
+
+function sanitizeImageTexture(texture: string, env: string): string {
+  const isArctic = isArcticEnv(env);
+
+  let out = String(texture ?? "")
     .replace(/\bdust on hooves\b/gi, "clean hooves")
-    .replace(/\bsnow kicked from paws\b/gi, "clean snow contact around paws, no kicked-up snow")
-    .replace(/\bkicked-up snow\b/gi, "clean snow contact")
-    .replace(/\bkicked up snow\b/gi, "clean snow contact")
-    .replace(/\bpowder movement\b/gi, "clean snow surface")
-    .replace(/\bpowder spray\b/gi, "clean snow surface")
-    .replace(/\bdust\b/gi, "clean ground-contact detail")
     .replace(/\bvisible breath plumes\b/gi, "clean muzzle detail")
     .replace(/\bvisible breath vapor\b/gi, "clean muzzle detail")
     .replace(/\bbreath plumes\b/gi, "clean muzzle detail")
     .replace(/\bbreath vapor\b/gi, "clean muzzle detail")
     .replace(/\bsmoke\b/gi, "")
     .replace(/\bmist\b/gi, "")
-    .replace(/\bhaze\b/gi, "")
+    .replace(/\bhaze\b/gi, "");
+
+  if (isArctic) {
+    out = out
+      .replace(/\bsnow kicked from paws\b/gi, "clean snow contact around paws, no kicked-up snow")
+      .replace(/\bkicked-up snow\b/gi, "clean snow contact")
+      .replace(/\bkicked up snow\b/gi, "clean snow contact")
+      .replace(/\bpowder movement\b/gi, "clean snow surface")
+      .replace(/\bpowder spray\b/gi, "clean snow surface")
+      .replace(/\bdust\b/gi, "clean ground-contact detail");
+  } else {
+    out = out
+      .replace(/\bsnow kicked from paws\b/gi, "natural paw contact with grass and uneven ground")
+      .replace(/\bkicked-up snow\b/gi, "natural ground-contact detail")
+      .replace(/\bkicked up snow\b/gi, "natural ground-contact detail")
+      .replace(/\bpowder movement\b/gi, "natural ground-contact detail")
+      .replace(/\bpowder spray\b/gi, "natural ground-contact detail")
+      .replace(/\bfrost on guard hairs\b/gi, "sunlit guard hairs")
+      .replace(/\bicy fur detail\b/gi, "clean realistic fur texture")
+      .replace(/\bsharp icy fur detail\b/gi, "clean realistic fur texture")
+      .replace(/\bclean snow contact around paws\b/gi, "natural paw contact with grass and uneven ground")
+      .replace(/\bsnow contact around paws\b/gi, "natural paw contact with grass and uneven ground")
+      .replace(/\bsnow contact\b/gi, "natural ground-contact detail")
+      .replace(/\bdust\b/gi, "clean ground-contact detail");
+  }
+
+  return out
     .replace(/\s{2,}/g, " ")
     .replace(/\s+,/g, ",")
+    .replace(/,\s*,/g, ",")
+    .replace(/,\s*\./g, ".")
     .trim();
 }
+
+function sanitizeCameraGearForHabitat(cameraGear: string, env: string): string {
+  const isArctic = isArcticEnv(env);
+
+  let out = String(cameraGear ?? "");
+
+  if (!isArctic) {
+    out = out
+      .replace(/\bacross snow\b/gi, "across open terrain")
+      .replace(/\bover snow\b/gi, "over open terrain")
+      .replace(/\bon snow\b/gi, "on open terrain")
+      .replace(/\bsnowfield\b/gi, "open field")
+      .replace(/\bicy\b/gi, "clean")
+      .replace(/\bfrozen\b/gi, "open");
+  }
+
+  return out
+    .replace(/\s{2,}/g, " ")
+    .replace(/\s+,/g, ",")
+    .replace(/,\s*,/g, ",")
+    .trim();
+}
+
 function sanitizeVideoBeatText(text: string): string {
   return String(text ?? "")
     .replace(/\bexhales once\b/gi, "settles once")
@@ -1313,15 +1373,16 @@ export function buildImagePrompt(
   const depth = getDepthPrompt(depthMode);
   const vibe = animalVibePrompt[animalVibe];
   const cleanEnv = sanitizeImageEnv(env);
-  const cleanTexture = sanitizeImageTexture(texture);
-  const cleanWeather = sanitizeWeatherPhrase(weatherVariants[weather]);
+const cleanTexture = sanitizeImageTexture(texture, env);
+const cleanWeather = sanitizeWeatherPhrase(weatherVariants[weather]);
+const cleanCameraGear = sanitizeCameraGearForHabitat(cameraGear, env);
   const cleanAir =
     "clear clean air, no visible steam, no smoke plumes, no mist, no airborne haze";
 
   const cam =
-    target === "NB2" || target === "NANO_BANANA_2"
-      ? cameraGear
-      : getFilmStock(cameraGear, lighting, weather);
+  target === "NB2" || target === "NANO_BANANA_2"
+    ? cleanCameraGear
+    : getFilmStock(cleanCameraGear, lighting, weather);
 
   const descInject = sceneDesc?.trim() ? `\n\nScene context: ${sceneDesc.trim()}` : "";
   const qLead = "";
