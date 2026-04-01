@@ -90,6 +90,8 @@ import {
   writeSettings,
   readCustomPredators,
   writeCustomPredators,
+  readShareState,
+  writeShareState,
 } from "@/lib/storage";
 import { habitatPromptMap } from "@/lib/habitat-presets";
 
@@ -483,6 +485,13 @@ const [animalVibe, setAnimalVibe] = useState<AnimalVibe>("National Geographic Wi
 
   // Load settings
   useEffect(() => {
+    const shared = readShareState();
+if (shared.predator) setPredator(shared.predator);
+if (shared.prey) setPrey(shared.prey);
+if (shared.arc) setArc(shared.arc as Arc);
+if (shared.weather) setWeather(shared.weather);
+if (shared.depthMode) setDepthMode(shared.depthMode);
+if (shared.habitat) setHabitat(shared.habitat);
     const saved = readSettings();
     if (saved?.activeProvider) setActiveProvider(saved.activeProvider);
     if (saved?.realismMode) setRealismMode(saved.realismMode);
@@ -522,6 +531,17 @@ const [animalVibe, setAnimalVibe] = useState<AnimalVibe>("National Geographic Wi
    habitat,
 ]);
 
+useEffect(() => {
+  writeShareState({
+    predator,
+    prey,
+    arc,
+    weather,
+    depthMode,
+    habitat,
+  });
+}, [predator, prey, arc, weather, depthMode, habitat]);
+  
   // ✅ Load custom predators once
   useEffect(() => {
     const savedCustom = readCustomPredators();
