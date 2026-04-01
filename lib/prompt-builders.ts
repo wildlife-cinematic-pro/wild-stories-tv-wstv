@@ -794,7 +794,7 @@ function oneActionArcBeat(
     case "Pack hunting strategy":
       if (beat === "action") {
         return {
-          predatorBeat: "pack tightens formation once (one coordinated lateral close-in)",
+          predatorBeat: "tightens formation once (one coordinated lateral close-in)",
           preyBeat: "reacts once by pivoting and attempting one escape direction",
           guardLine: baseGuard,
         };
@@ -802,8 +802,8 @@ function oneActionArcBeat(
       return {
         predatorBeat:
   beat === "aftermath"
-    ? "pack holds formation and settles once"
-    : "pack maintains disciplined spacing",
+    ? "holds formation and settles once"
+    : "maintains disciplined spacing",
         preyBeat:
           beat === "aftermath"
             ? "holds distance, still tense"
