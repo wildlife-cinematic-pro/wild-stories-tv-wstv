@@ -491,6 +491,7 @@ const [animalVibe, setAnimalVibe] = useState<AnimalVibe>("National Geographic Wi
     if (saved?.singleActionRule !== undefined) setSingleActionRule(saved.singleActionRule);
     if (saved?.microMotion !== undefined) setMicroMotion(saved.microMotion);
     if (saved?.heroVeo !== undefined) setHeroVeo(saved.heroVeo);
+    if (saved?.habitat) setHabitat(saved.habitat);
 
     // ✅ persist auto-apply toggle (safe even if older settings type)
     const aa = (saved as Record<string, unknown>)?.autoApplyHighDrift;
@@ -507,6 +508,7 @@ const [animalVibe, setAnimalVibe] = useState<AnimalVibe>("National Geographic Wi
     microMotion,
     heroVeo,
     autoApplyHighDrift,
+    habitat,
   });
 }, [
   activeProvider,
@@ -517,6 +519,7 @@ const [animalVibe, setAnimalVibe] = useState<AnimalVibe>("National Geographic Wi
   microMotion,
   heroVeo,
   autoApplyHighDrift,
+   habitat,
 ]);
 
   // ✅ Load custom predators once
