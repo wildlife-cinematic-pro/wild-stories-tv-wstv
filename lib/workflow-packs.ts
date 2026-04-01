@@ -405,6 +405,7 @@ export function getAnimalBehavior(predator: string): AnimalBehavior | null {
 export function buildSoundDesignPack(
   predator: string,
   prey: string,
+  env: string,
   arc: Arc,
   weather: Weather,
   klingModel: string
@@ -413,15 +414,29 @@ export function buildSoundDesignPack(
   const isWinter = weather === "Winter Blizzard" || weather === "Frozen Dusk";
   const isWater = ["Crocodile", "Nile Crocodile", "Shark", "Orca", "Saltwater Crocodile"].includes(predator);
   const isAerial = ["Eagle", "Golden Eagle", "Harpy Eagle", "Bald Eagle"].includes(predator);
+    const cleanEnv = sanitizeWorkflowEnv(env).toLowerCase();
 
-  const ambient = sanitizeWorkflowPhrase(
+  const isGrassland =
+    /grassland|prairie|savanna|open plain|open terrain|meadow|field/.test(cleanEnv);
+
+  const isForestEnv =
+    /forest|jungle|woodland|pine|conifer|canopy/.test(cleanEnv);
+
+  const isWetlandEnv =
+    /river|water|lake|swamp|wetland|marsh|shore|coast|estuary|reed/.test(cleanEnv);
+
+    const ambient = sanitizeWorkflowPhrase(
     isWinter
       ? "Cold wind 8-12kHz, distant snow surface creak, low sub-bass 30Hz"
-      : isWater
-        ? "River current 200-800Hz, drip echo, distant water bird"
+      : isWater || isWetlandEnv
+        ? "River current 200-800Hz, wet shoreline movement, distant water bird"
         : isAerial
           ? "High altitude wind, thermal updraft, distant echo"
-          : "Savanna/forest ambience 400-2000Hz, distant bird, grass movement"
+          : isGrassland
+            ? "Open grassland ambience 400-2000Hz, dry wind through grass, distant insect drone"
+            : isForestEnv
+              ? "Forest ambience 400-2000Hz, distant bird calls, light canopy movement"
+              : "Natural habitat ambience 400-2000Hz, distant bird, light environmental movement"
   );
 
   const impactSFX = sanitizeWorkflowPhrase(
