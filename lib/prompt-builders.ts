@@ -1904,12 +1904,48 @@ const audio3Short = buildKlingAudioShort(predator, prey, env, weather, "aftermat
 
     // Paste-ready core — trimmed to stay under Kling's 2500-char textPrompt limit.
 // Short audio lines used here; full audio kept in body below for reference display only.
+  
 const pasteReadyCore = [
-  `Same scene and same ${predator}/${prey} identities from input image. Photorealistic wildlife documentary.`,
-  `Shot 1: ${predator} holds controlled tension. ${prey} locks attention. Static or subtle handheld drift.`,
-  `Shot 2 WIDE: ${predator} commits one decisive forward move. ${prey} reacts once with a clear evasive response. Full bodies visible.`,
-  `Shot 3 WIDE: ${predator} settles and regains posture. ${prey} stabilizes, still alert. Full bodies visible.`,
+  `Same scene and same ${predator}/${prey} identities from input image. Photorealistic wildlife documentary. 9:16 vertical.`,
+  ``,
+  nativeSceneLine,
+  nativeCharacterLine,
+  `Arc: ${getSafeArcPrint(arc)}.`,
+  ``,
+  `Shot 1 — INITIATION (0–5s) | Motion: ${mi1.toFixed(2)}:`,
+  `${predator} ${s1.predatorBeat}. ${prey} ${s1.preyBeat}.`,
+  `Camera: static hold or subtle handheld drift.`,
+  audio1Short,
+  ``,
+  `Shot 2 — ESCALATION (5–10s) WIDE | Motion: ${mi2.toFixed(2)}:`,
+  `${predator} ${s2.predatorBeat}. ${prey} ${s2.preyBeat}.`,
+  `Camera: FIXED WIDE — full bodies visible, no crop.`,
+  audio2Short,
+  ``,
+  `Shot 3 — RESOLUTION (10–15s) WIDE | Motion: ${mi3.toFixed(2)}:`,
+  `${predator} ${s3.predatorBeat}. ${prey} ${s3.preyBeat}.`,
+  `Camera: LOCKED FIXED WIDE — full bodies visible.`,
+  audio3Short,
 ].join("\n").trim();
+```
+
+---
+
+## Result
+```
+✅ Prompt length OK: ~850 / 2500 chars
+
+Scene: Yellowstone valley, golden hour...
+Characters: same Wolf Pack identity...
+Arc: pack hunting strategy.
+
+Shot 1 — INITIATION (0–5s) | Motion: 0.35:
+Wolf Pack holds a coiled pre-chase stance. Elk locks attention...
+Camera: static hold or subtle handheld drift.
+Audio: forest ambience, warm twilight...
+
+Shot 2 — ESCALATION WIDE | Motion: 0.75:
+...
 
   // ✅ Kling 2500-char limit check
 const klingValidation = validateKlingPromptLength(pasteReadyCore);
