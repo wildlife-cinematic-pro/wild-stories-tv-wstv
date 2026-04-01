@@ -695,6 +695,7 @@ const [animalVibe, setAnimalVibe] = useState<AnimalVibe>("National Geographic Wi
 
       const watchTimeReport = buildWatchTimeReport("5-shot", 2);
       const motionStrength = arcMotionStrength[finalArc] ?? 70;
+    
    const soundDesignPack = buildSoundDesignPack(
   predator,
   prey,
