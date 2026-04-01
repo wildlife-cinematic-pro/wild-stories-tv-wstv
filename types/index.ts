@@ -304,6 +304,7 @@ export type ShareState = {
   arc: string;
   weather: Weather;
   depthMode: DepthMode;
+  habitat: HabitatPreset;
 };
 
 // ─────────────────────────────────────────────────────────────
