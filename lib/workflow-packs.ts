@@ -23,10 +23,7 @@ import type {
   TwoPartViralPreset,
 } from "@/types";
 
-import {
-  BRAND_NAME,
-  WORKFLOW_PREFIX,
-} from "@/lib/model-specs";
+import { BRAND_NAME, WORKFLOW_PREFIX } from "@/lib/model-specs";
 
 // ─────────────────────────────────────────────────────────────
 // WORKFLOW SANITIZERS
@@ -53,8 +50,14 @@ function sanitizeWorkflowPhrase(text: string): string {
         .replace(/\bbreath vapor sound\b/gi, "cold-air movement")
         .replace(/\bfrozen breath whoosh\b/gi, "cold-air rush")
         .replace(/\bbreath clouds collision\b/gi, "surface-contact collision")
-        .replace(/\bbreath comes in visible rapid clouds\b/gi, "breathing becomes fast and controlled")
-        .replace(/\bbreath clouds rapid and thick in cold air\b/gi, "controlled breathing in cold air")
+        .replace(
+          /\bbreath comes in visible rapid clouds\b/gi,
+          "breathing becomes fast and controlled"
+        )
+        .replace(
+          /\bbreath clouds rapid and thick in cold air\b/gi,
+          "controlled breathing in cold air"
+        )
         .replace(/\bbreath clouds rapid\b/gi, "fast controlled breathing")
         .replace(/\bcold breath visible\b/gi, "clean cold-air clarity")
         .replace(/\bbreath vapor visible\b/gi, "clean cold-air clarity")
@@ -64,8 +67,14 @@ function sanitizeWorkflowPhrase(text: string): string {
         .replace(/\bdistant geothermal hiss\b/gi, "distant wind through open terrain")
         .replace(/\bpowder displacement on contact\b/gi, "stable surface response on contact")
         .replace(/\bsnow drifting across layered depth\b/gi, "layered cold-environment depth")
-        .replace(/\blight snow drifting across frame\b/gi, "restrained cold-environment motion across frame")
-        .replace(/\bsnow particles drifting diagonally through layered depth\b/gi, "layered cold-environment depth")
+        .replace(
+          /\blight snow drifting across frame\b/gi,
+          "restrained cold-environment motion across frame"
+        )
+        .replace(
+          /\bsnow particles drifting diagonally through layered depth\b/gi,
+          "layered cold-environment depth"
+        )
         .replace(/\bbreath remain readable\b/gi, "micro-motion remains readable")
         .replace(/\bBreath vapor: intensity 1-2\/5\.?\b/gi, "")
         .replace(/[ \t]{2,}/g, " ")
@@ -412,20 +421,25 @@ export function buildSoundDesignPack(
 ): SoundDesignPack {
   const behavior = getAnimalBehavior(predator);
   const isWinter = weather === "Winter Blizzard" || weather === "Frozen Dusk";
-  const isWater = ["Crocodile", "Nile Crocodile", "Shark", "Orca", "Saltwater Crocodile"].includes(predator);
+  const isWater = [
+    "Crocodile",
+    "Nile Crocodile",
+    "Shark",
+    "Orca",
+    "Saltwater Crocodile",
+  ].includes(predator);
   const isAerial = ["Eagle", "Golden Eagle", "Harpy Eagle", "Bald Eagle"].includes(predator);
-    const cleanEnv = sanitizeWorkflowEnv(env).toLowerCase();
+  const cleanEnv = sanitizeWorkflowEnv(env).toLowerCase();
 
   const isGrassland =
     /grassland|prairie|savanna|open plain|open terrain|meadow|field/.test(cleanEnv);
 
-  const isForestEnv =
-    /forest|jungle|woodland|pine|conifer|canopy/.test(cleanEnv);
+  const isForestEnv = /forest|jungle|woodland|pine|conifer|canopy/.test(cleanEnv);
 
   const isWetlandEnv =
     /river|water|lake|swamp|wetland|marsh|shore|coast|estuary|reed/.test(cleanEnv);
 
-    const ambient = sanitizeWorkflowPhrase(
+  const ambient = sanitizeWorkflowPhrase(
     isWinter
       ? "Cold wind 8-12kHz, distant snow surface creak, low sub-bass 30Hz"
       : isWater || isWetlandEnv
@@ -445,13 +459,17 @@ export function buildSoundDesignPack(
 
   const arcMusic: Partial<Record<Arc, string>> = {
     "Ambush attack": "Silence → single low cello → explosive percussion hit → ambient resolve",
-    "Chase and takedown": "Rising pulse rhythm → full orchestral run → sharp cutoff → breathing settle",
-    "Defender stands ground": "Low drone build → massive brass hit → triumphant resolve → silence",
+    "Chase and takedown":
+      "Rising pulse rhythm → full orchestral run → sharp cutoff → breathing settle",
+    "Defender stands ground":
+      "Low drone build → massive brass hit → triumphant resolve → silence",
     "Giant vs giant clash": "Epic percussion build → full orchestra collision → dramatic settle",
     "Territory dominance battle": "Tension strings → territorial percussion → dominant resolve",
     "Pack hunting strategy": "Minimal percussion pulse → coordinated build → impact → group call",
-    "Escape from danger": "Panic strings → desperate percussion → sudden silence OR escape resolve",
-    "Predator vs predator fight": "Aggressive percussion duel → chaotic peak → one strong resolve",
+    "Escape from danger":
+      "Panic strings → desperate percussion → sudden silence OR escape resolve",
+    "Predator vs predator fight":
+      "Aggressive percussion duel → chaotic peak → one strong resolve",
   };
 
   const hasKlingAudio = klingModel === "Kling 3.0 Pro" || klingModel === "Kling 3.0 Standard";
@@ -483,7 +501,13 @@ export function buildSoundDesignPack(
     capCutSFX: [
       sanitizeWorkflowPhrase(`Shot 1: ${ambient}`),
       sanitizeWorkflowPhrase(
-        `Shot 2: ${isWinter ? "Ground thud + cold terrain reaction" : isWater ? "Water explosion" : "Ground thud + terrain reaction"} + ${behavior?.soundDesign[1]?.slice(0, 60) ?? "animal vocalization"}`
+        `Shot 2: ${
+          isWinter
+            ? "Ground thud + cold terrain reaction"
+            : isWater
+              ? "Water explosion"
+              : "Ground thud + terrain reaction"
+        } + ${behavior?.soundDesign[1]?.slice(0, 60) ?? "animal vocalization"}`
       ),
       sanitizeWorkflowPhrase(`Shot 3: Breathing settle + ${ambient.split(",")[0]}`),
       `Music: ${arcMusic[arc]?.split("→")[0] ?? "Low tension build"}`,
@@ -524,7 +548,9 @@ export function buildCapCutScript(
       shotRef: "Shot 1 — Image / Establishing",
       onScreenText: hook.slice(0, 40),
       transition: "Cut (no transition — hard cut stops scroll)",
-      sfx: isWinter ? "Cold wind ambience, low 20Hz sub rumble" : "Natural habitat ambience, distant call",
+      sfx: isWinter
+        ? "Cold wind ambience, low 20Hz sub rumble"
+        : "Natural habitat ambience, distant call",
       musicNote: "Music starts 0:01 — very low volume, slow build",
     },
     {
@@ -563,7 +589,9 @@ export function buildCapCutScript(
       shotRef: "Shot 2 — Standoff / Setup",
       onScreenText: `${predator} vs ${prey}...`,
       transition: "Match cut on eye movement",
-      sfx: isWinter ? "Wind, snow surface movement, distant environment" : "Grass movement, distant environment",
+      sfx: isWinter
+        ? "Wind, snow surface movement, distant environment"
+        : "Grass movement, distant environment",
       musicNote: "Music enters 0:05 — single low cello note sustained",
     },
     {
@@ -600,7 +628,8 @@ export function buildCapCutScript(
     aspectRatio: "9:16 (1080×1920)",
     fps: 24,
     beats: pipelineStyle === "5-shot" ? beats5 : beats3,
-    exportSettings: "H.264 | 1080×1920 | 24fps project | 30fps export for upload | 20–25 Mbps | AAC 320kbps",
+    exportSettings:
+      "H.264 | 1080×1920 | 24fps project | 30fps export for upload | 20–25 Mbps | AAC 320kbps",
     musicMood,
   };
 }
@@ -671,7 +700,9 @@ export function buildRunwayCameraPlan(
     [
       `Primary move: ${s.move} | Speed: ${s.speed}.`,
       `Why: ${s.why}`,
-      winter ? "In winter scenes, keep the move restrained so micro-motion and layered depth remain readable." : "",
+      winter
+        ? "In winter scenes, keep the move restrained so micro-motion and layered depth remain readable."
+        : "",
       `Avoid: ${s.avoid}`,
       pipelineStyle === "5-shot"
         ? "Use the gentlest move on shots 1 and 5; save the strongest move for the action beat only."
@@ -726,8 +757,10 @@ export function buildRunwayDraftMotionPrompt(
 
   const arcPrompt: Record<Arc, string> = {
     "Ambush attack": "slow stalking advance, head low, shoulders rolling subtly",
-    "Predator vs predator fight": "measured forward pressure, bodies tense, one cautious step from each subject",
-    "Chase and takedown": "burst of forward acceleration, grounded body weight, restrained tracking energy",
+    "Predator vs predator fight":
+      "measured forward pressure, bodies tense, one cautious step from each subject",
+    "Chase and takedown":
+      "burst of forward acceleration, grounded body weight, restrained tracking energy",
     "Escape from danger": "sudden survival reaction, one backward or lateral escape movement",
     "Territory dominance battle": "dominant hold, chest expanding, one warning step forward",
     "Pack hunting strategy": "coordinated lateral movement, spacing tightening around the target",
@@ -736,7 +769,11 @@ export function buildRunwayDraftMotionPrompt(
   };
 
   return sanitizeWorkflowPhrase(
-    `${arcPrompt[arc]}, ${winter ? "clean cold-air clarity, restrained cold-environment motion across frame" : "subtle wind through the environment"}, static camera or very slow push-in`
+    `${arcPrompt[arc]}, ${
+      winter
+        ? "clean cold-air clarity, restrained cold-environment motion across frame"
+        : "subtle wind through the environment"
+    }, static camera or very slow push-in`
   );
 }
 
@@ -749,18 +786,30 @@ export function buildRunwayFinalMotionPrompt(
   const winter = weather === "Winter Blizzard" || weather === "Frozen Dusk";
 
   const arcPrompt: Record<Arc, string> = {
-    "Ambush attack": "slow stalking advance with grounded body weight, head low, shoulders rolling with predatory restraint",
-    "Predator vs predator fight": "deliberate forward pressure, visible weight transfer through the limbs, one committed reaction beat",
-    "Chase and takedown": "controlled surge forward, body fully committed, natural acceleration and deceleration",
-    "Escape from danger": "single desperate escape movement, clean body mechanics, immediate terrain reaction",
-    "Territory dominance battle": "dominant stillness broken by one warning advance, chest and neck carrying the tension",
-    "Pack hunting strategy": "disciplined lateral coordination, spacing tightening, one clear pack movement beat",
-    "Defender stands ground": "lowered head, planted stance, powerful forward commitment without breaking silhouette clarity",
-    "Giant vs giant clash": "heavy advance, grounded momentum, full-body weight loading before impact",
+    "Ambush attack":
+      "slow stalking advance with grounded body weight, head low, shoulders rolling with predatory restraint",
+    "Predator vs predator fight":
+      "deliberate forward pressure, visible weight transfer through the limbs, one committed reaction beat",
+    "Chase and takedown":
+      "controlled surge forward, body fully committed, natural acceleration and deceleration",
+    "Escape from danger":
+      "single desperate escape movement, clean body mechanics, immediate terrain reaction",
+    "Territory dominance battle":
+      "dominant stillness broken by one warning advance, chest and neck carrying the tension",
+    "Pack hunting strategy":
+      "disciplined lateral coordination, spacing tightening, one clear pack movement beat",
+    "Defender stands ground":
+      "lowered head, planted stance, powerful forward commitment without breaking silhouette clarity",
+    "Giant vs giant clash":
+      "heavy advance, grounded momentum, full-body weight loading before impact",
   };
 
   return sanitizeWorkflowPhrase(
-    `${arcPrompt[arc]}, ${winter ? "clean cold-air clarity, layered cold-environment depth" : "subtle atmospheric motion in the background"}, restrained camera push for documentary realism`
+    `${arcPrompt[arc]}, ${
+      winter
+        ? "clean cold-air clarity, layered cold-environment depth"
+        : "subtle atmospheric motion in the background"
+    }, restrained camera push for documentary realism`
   );
 }
 
@@ -775,7 +824,10 @@ function extractPromptLine(longPrompt: string, label: string): string {
 function cleanWSTVClause(text: string): string {
   return text
     .replace(/\s+/g, " ")
-    .replace(/\b(the core|movement|motion|subject identity|input frame|documentary realism)\b/gi, (m) => m.toLowerCase())
+    .replace(
+      /\b(the core|movement|motion|subject identity|input frame|documentary realism)\b/gi,
+      (m) => m.toLowerCase()
+    )
     .replace(/\s+,/g, ",")
     .replace(/\s+\./g, ".")
     .trim();
@@ -810,9 +862,7 @@ export function buildWSTVMotionPromptDraftFromKling(
     .filter(Boolean)
     .join(", ");
 
-  const cleaned = cleanWSTVClause(assembled)
-    .replace(/, ,/g, ",")
-    .replace(/,\s*$/, "");
+  const cleaned = cleanWSTVClause(assembled).replace(/, ,/g, ",").replace(/,\s*$/, "");
 
   return sanitizeWorkflowPhrase(cleaned.length >= 40 ? cleaned : fallback);
 }
@@ -857,9 +907,7 @@ export function buildWSTVMotionPromptFinalFromKling(
     .filter(Boolean)
     .join(", ");
 
-  const cleaned = cleanWSTVClause(assembled)
-    .replace(/, ,/g, ",")
-    .replace(/,\s*$/, "");
+  const cleaned = cleanWSTVClause(assembled).replace(/, ,/g, ",").replace(/,\s*$/, "");
 
   return sanitizeWorkflowPhrase(cleaned.length >= 50 ? cleaned : fallback);
 }
@@ -871,9 +919,7 @@ export function extractMotionOnlyPrompt(longPrompt: string): string {
   const physics =
     extractPromptLine(longPrompt, "Physics priority") ||
     extractPromptLine(longPrompt, "Physics");
-  const tone =
-    extractPromptLine(longPrompt, "Tone") ||
-    extractPromptLine(longPrompt, "Mood");
+  const tone = extractPromptLine(longPrompt, "Tone") || extractPromptLine(longPrompt, "Mood");
   const audio = extractPromptLine(longPrompt, "Audio");
 
   const parts = [camera, subject, environment, physics, tone, audio]
