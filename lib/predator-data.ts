@@ -168,7 +168,7 @@ export const predatorData: Record<string, PredatorInfo> = {
     driftRisk: "LOW",
   },
     "Grizzly Bear": {
-  prey: ["Salmon", "Elk Calf", "White-tailed Deer", "Bison Calf"],
+    prey: ["Salmon", "Elk Calf", "Moose", "Bison"],
   environment: "Rocky Mountain meadow and open wilderness in late summer",
   lighting: "dramatic overcast mountain light, open-air clarity, dry grass movement, heavy cloud diffusion, natural cold contrast",
   cameraGear: "Canon EOS R3, 400mm wildlife lens, ground-level wildlife documentary framing",
@@ -222,7 +222,7 @@ export const predatorData: Record<string, PredatorInfo> = {
     driftRisk: "MEDIUM",
   },
     "Bald Eagle": {
-    prey: ["Salmon", "Trout", "Rabbit", "Duck"],
+        prey: ["Salmon", "Duck", "Rabbit", "Trout"],
     environment: "Alaskan river mouth and evergreen lakeshore under cold open sky",
     lighting: "clean northern daylight, silver-blue water reflections, crisp feather edge light, cold atmospheric clarity, natural contrast",
     cameraGear: "Canon EOS R5, 500mm super-telephoto, low-angle riverside wildlife framing",
@@ -330,7 +330,7 @@ export const predatorData: Record<string, PredatorInfo> = {
     driftRisk: "HIGH",
   },
     "Mountain Lion": {
-    prey: ["Mule Deer", "White-tailed Deer", "Elk Calf", "Bighorn Sheep"],
+       prey: ["White-tailed Deer", "Mule Deer", "Elk Calf", "Bighorn Sheep"],
     environment: "Rocky Mountain pine forest and rocky ridgeline at golden hour",
     lighting: "warm mountain golden hour, long ridge shadows, pine-filtered light, amber highlights on tawny coat, dry high-altitude air clarity",
     cameraGear: "Canon EOS R5, 400mm super-telephoto, ridge-level long-lens wildlife framing",
@@ -339,7 +339,7 @@ export const predatorData: Record<string, PredatorInfo> = {
     driftRisk: "HIGH",
   },
     Cougar: {
-    prey: ["White-tailed Deer", "Elk Calf", "Mule Deer", "Bighorn Sheep"],
+        prey: ["Mule Deer", "Elk Calf", "White-tailed Deer", "Bighorn Sheep"],
     environment: "Pacific Northwest forest edge with mossy ground and dark conifers",
     lighting: "cool overcast forest light, soft mist through trees, mossy green bounce light, deep natural shadow separation",
     cameraGear: "Nikon Z8, 300mm wildlife lens, forest-floor documentary framing",
@@ -348,7 +348,7 @@ export const predatorData: Record<string, PredatorInfo> = {
     driftRisk: "HIGH",
   },
     Bobcat: {
-    prey: ["Rabbit", "Squirrel", "Wild Turkey", "Quail"],
+        prey: ["Wild Turkey", "Rabbit", "Quail", "Squirrel"],
     environment: "Southwestern desert scrub and rocky brushland at dusk",
     lighting: "deep desert dusk light, warm earth tones, cool blue brush shadows, last horizon glow, fine dust in the air",
     cameraGear: "Sony A1, 300mm wildlife lens, low-angle scrubland wildlife framing",
@@ -357,7 +357,7 @@ export const predatorData: Record<string, PredatorInfo> = {
     driftRisk: "HIGH",
   },
     "Black Bear": {
-    prey: ["Salmon", "White-tailed Deer Fawn", "Rabbit", "Ground Squirrel"],
+       prey: ["Salmon", "White-tailed Deer Fawn", "Ground Squirrel", "Rabbit"],
     environment: "Appalachian forest and Smoky Mountain creekside in morning fog",
     lighting: "soft fog-filtered dawn light, diffuse forest shadows, green canopy bounce light, damp air and low mist",
     cameraGear: "Nikon Z8, 300mm wildlife lens, forest-edge documentary framing",
@@ -366,7 +366,7 @@ export const predatorData: Record<string, PredatorInfo> = {
     driftRisk: "LOW",
   },
     Coyote: {
-    prey: ["Jackrabbit", "Rabbit", "Quail", "White-tailed Deer Fawn"],
+        prey: ["White-tailed Deer Fawn", "Jackrabbit", "Rabbit", "Quail"],
     environment: "open prairie and sagebrush flats at first light",
     lighting: "cold dawn light, pale gold horizon glow, soft side light across dry grass, long early-morning shadows",
     cameraGear: "Sony A1, 300mm wildlife lens, ground-level pursuit framing",
@@ -375,7 +375,7 @@ export const predatorData: Record<string, PredatorInfo> = {
     driftRisk: "MEDIUM",
   },
     Alligator: {
-    prey: ["Wild Boar", "White-tailed Deer", "Raccoon", "Large Fish"],
+        prey: ["White-tailed Deer", "Wild Boar", "Raccoon", "Large Fish"],
     environment: "Florida Everglades swamp with cypress roots, dark tannin water, and Spanish moss",
     lighting: "humid wetland light, reflective black water surface, soft rim light through cypress cover, swamp haze and subtle mist",
     cameraGear: "Canon EOS R5, 200mm wildlife lens, water-surface ambush framing",
@@ -383,8 +383,8 @@ export const predatorData: Record<string, PredatorInfo> = {
     defaultArc: "Ambush attack",
     driftRisk: "LOW",
   },
-    Bison: {
-    prey: ["Grizzly Bear", "Wolf Pack", "Mountain Lion", "Coyote Pack"],
+        Bison: {
+    prey: ["Grizzly Bear", "Wolf Pack", "Wolf", "Mountain Lion"],
     environment: "Yellowstone grassland with geothermal steam and wide open prairie",
     lighting: "dramatic golden hour backlight, dust clouds in the air, geothermal haze, strong rim light on horns and shoulder mass",
     cameraGear: "Nikon Z9, 400mm super-telephoto, wide Yellowstone prairie framing",
@@ -392,8 +392,8 @@ export const predatorData: Record<string, PredatorInfo> = {
     defaultArc: "Defender stands ground",
     driftRisk: "LOW",
   },
-    Moose: {
-    prey: ["Wolf Pack", "Grizzly Bear", "Mountain Lion", "Cougar"],
+        Moose: {
+    prey: ["Wolf Pack", "Wolf", "Grizzly Bear", "Mountain Lion"],
     environment: "northern lake edge and willow marsh in cold autumn air",
     lighting: "low northern golden light, reflected lake glow, visible breath mist, long shadows over wet ground and reeds",
     cameraGear: "Nikon Z9, 500mm wildlife lens, lake-edge long-lens documentary framing",
@@ -401,8 +401,8 @@ export const predatorData: Record<string, PredatorInfo> = {
     defaultArc: "Defender stands ground",
     driftRisk: "LOW",
   },
-    "Bull Elk": {
-    prey: ["Mountain Lion", "Wolf Pack", "Grizzly Bear", "Cougar"],
+        "Bull Elk": {
+    prey: ["Wolf Pack", "Wolf", "Mountain Lion", "Grizzly Bear"],
     environment: "Rocky Mountain meadow in autumn with frost and distant peaks",
     lighting: "golden autumn dawn light, amber glow on antlers, visible breath mist, long shadows over frost-covered grass",
     cameraGear: "Sony A1, 300mm wildlife lens, wide mountain meadow wildlife framing",
@@ -474,7 +474,7 @@ export const predatorData: Record<string, PredatorInfo> = {
     driftRisk: "MEDIUM",
   },
   Beaver: {
-    prey: ["Coyote", "Wolf", "Black Bear", "River Otter"],
+        prey: ["Black Bear", "Coyote", "Wolf", "River Otter"],
     environment: "freshwater riverbank beside a beaver dam and lodge at golden hour",
     lighting: "warm golden hour reflections on slow water, backlit spray droplets, soft haze over reeds, realistic shadow falloff under willows",
     cameraGear: "Canon EOS R5, 200mm wildlife lens, low riverbank framing at waterline",
@@ -501,7 +501,7 @@ export const predatorData: Record<string, PredatorInfo> = {
     driftRisk: "MEDIUM",
   },
   "Great Horned Owl": {
-    prey: ["Rabbit", "Mouse", "Skunk", "Squirrel"],
+        prey: ["Rabbit", "Squirrel", "Skunk", "Mouse"],
     environment: "forest edge and open field under a bright moon with scattered clouds",
     lighting: "moonlit silhouette framing, faint blue ambient fill, subtle cloud-shadow movement, soft rim light on feather tufts",
     cameraGear: "Canon EOS R5, 600mm super-telephoto, silent flight dive tracking from treeline",
@@ -509,8 +509,8 @@ export const predatorData: Record<string, PredatorInfo> = {
     defaultArc: "Ambush attack",
     driftRisk: "MEDIUM",
   },
-  "White-tailed Deer": {
-    prey: ["Coyote", "Bobcat", "Cougar", "Alligator"],
+    "White-tailed Deer": {
+        prey: ["Mountain Lion", "Alligator", "Coyote", "Bobcat"],
     environment: "Midwestern forest edge and cornfield at dawn with low ground fog",
     lighting: "cold dawn fog, warm first sunlight through trees, dew highlights on coat, soft atmospheric haze across fields",
     cameraGear: "Canon EOS R5, 400mm super-telephoto, field-edge documentary framing",
@@ -518,8 +518,8 @@ export const predatorData: Record<string, PredatorInfo> = {
     defaultArc: "Escape from danger",
     driftRisk: "MEDIUM",
   },
-  "Wild Boar": {
-    prey: ["Coyote", "Wolf", "Black Bear", "Mountain Lion"],
+    "Wild Boar": {
+    prey: ["Alligator", "Mountain Lion", "Black Bear", "Coyote"],
     environment: "Southern US pine woods and swamp edge with muddy wallows at dusk",
     lighting: "humid dusk light, warm amber sidelighting through pine trunks, wet mud reflections, heavy shadow pockets in brush",
     cameraGear: "Sony A1, 300mm wildlife lens, low ground tracking with aggressive motion blur on charge",
@@ -632,8 +632,7 @@ export function coerceArc(x: string): Arc {
 }
 
 export function suggestArc(predator: string, prey: string, fallback: string): string {
-  const normalize = (v: string) => {
-    if (v === "Wolf Pack") return "Wolf";
+    const normalize = (v: string) => {
     if (v === "American Alligator") return "Alligator";
     if (v === "Coyote Pack") return "Coyote";
     if (v === "Brown Bear") return "Grizzly Bear";
@@ -642,7 +641,8 @@ export function suggestArc(predator: string, prey: string, fallback: string): st
   const p = normalize(predator);
   const r = normalize(prey);
   if (!p || !r) return fallback;
-  if (p === "Wolf" && ["Elk", "Deer", "White-tailed Deer", "Mule Deer", "Moose Calf"].includes(r)) return "Pack hunting strategy";
+    if (p === "Wolf Pack" && ["Elk", "Deer", "White-tailed Deer", "Mule Deer", "Moose Calf"].includes(r)) return "Pack hunting strategy";
+  if (p === "Wolf" && ["Elk", "Deer", "White-tailed Deer", "Mule Deer"].includes(r)) return "Chase and takedown";
   if (p === "Orca" || p === "African Wild Dog" || p === "Dolphin") return "Pack hunting strategy";
   if (p === "Jaguar" && r === "Caiman") return "Ambush attack";
   if (p === "Crocodile" && ["Zebra", "Buffalo", "Antelope"].includes(r)) return "Ambush attack";
@@ -652,14 +652,16 @@ export function suggestArc(predator: string, prey: string, fallback: string): st
   if (p === "Shark" || p === "Cheetah") return "Chase and takedown";
   if (p === "Lion" && r === "Buffalo") return "Territory dominance battle";
   if (["Tiger", "Siberian Tiger", "Snow Leopard", "Komodo Dragon", "Jaguar", "Puma", "Polar Bear", "Cougar", "Mountain Lion", "Bobcat", "Alligator"].includes(p)) return "Ambush attack";
-  if (p === "Wolverine" || p === "Grizzly Bear" || p === "Black Bear") return "Territory dominance battle";
+  if ((p === "Grizzly Bear" && r === "Bison") || (p === "Grizzly Bear" && r === "Moose")) return "Giant vs giant clash";
+if ((p === "Grizzly Bear" || p === "Black Bear") && r === "Salmon") return "Chase and takedown";
+if (p === "Wolverine" || p === "Grizzly Bear" || p === "Black Bear") return "Territory dominance battle";
   if (p === "Saltwater Crocodile" || p === "Leopard Seal" || p === "Black Mamba") return "Ambush attack";
   if (p === "African Lion Male") return "Territory dominance battle";
   if (p === "Tasmanian Devil") return "Predator vs predator fight";
-  if (p === "Chimpanzee") return "Pack hunting strategy";
-  if (["Bison", "Moose", "Bull Elk", "Musk Ox", "Cape Buffalo"].includes(p)) return "Defender stands ground";
+    if (p === "Chimpanzee") return "Pack hunting strategy";
   if (p === "Bison" && r === "Grizzly Bear") return "Giant vs giant clash";
   if (p === "Moose" && r === "Grizzly Bear") return "Giant vs giant clash";
+  if (["Bison", "Moose", "Bull Elk", "Musk Ox", "Cape Buffalo"].includes(p)) return "Defender stands ground";
   return fallback;
 }
 
@@ -697,15 +699,15 @@ export function calculateViralScore(
   scores.push({ label: "Watch Time Setup", score: wtScore, tip: pipelineStyle === "5-shot" ? "5-shot pipeline = strong watch time ✓" : "Switch to 5-shot for 3x watch time" });
 
   // USA optimization (0–20)
-  const usaArcs: Arc[] = ["Defender stands ground", "Giant vs giant clash", "Territory dominance battle"];
-  const usaAnimals = ["Bison", "Grizzly Bear", "Bald Eagle", "Mountain Lion", "Wolf", "Bull Elk", "Moose"];
+  const usaArcs: Arc[] = ["Defender stands ground", "Giant vs giant clash", "Territory dominance battle", "Pack hunting strategy"];
+    const usaAnimals = ["Bison", "Grizzly Bear", "Black Bear", "Bald Eagle", "Mountain Lion", "Wolf", "Wolf Pack", "Bull Elk", "Moose", "Alligator", "White-tailed Deer"];
   const usaWeather: Weather[] = ["Golden Hour", "Winter Blizzard", "Frozen Dusk"];
   const usaScore = Math.min(20,
     (usaArcs.includes(arc) ? 8 : 4) +
-    (usaAnimals.includes(predator) || usaAnimals.includes(prey) ? 7 : 3) +
+        ((usaAnimals.includes(predator) && usaAnimals.includes(prey)) ? 8 : ((usaAnimals.includes(predator) || usaAnimals.includes(prey)) ? 6 : 3)) +
     (usaWeather.includes(weather) ? 5 : 2)
   );
-  scores.push({ label: "USA Audience Fit", score: usaScore, tip: usaScore >= 16 ? "USA-optimized ✓" : "Use Bison/Eagle/Wolf + Defender/Giant arcs" });
+    scores.push({ label: "USA Audience Fit", score: usaScore, tip: usaScore >= 16 ? "USA-optimized ✓" : "Use Wolf Pack/Bison/Alligator/Mountain Lion + strong clash or ambush arcs" });
 
   // Originality (0–20)
   const origScore = Math.min(20,
@@ -743,8 +745,8 @@ export function calculateViralScore(
 // ─────────────────────────────────────────────────────────────
 export function buildBulkItems(predator: string, preset: PredatorInfo): BulkItem[] {
   const items: BulkItem[] = [];
-  const weathers: Weather[] = ["Golden Hour", "Winter Blizzard", "Storm", "Dawn"];
-  const topArcs: Arc[] = ["Ambush attack", "Chase and takedown", "Defender stands ground", "Giant vs giant clash"];
+    const weathers: Weather[] = ["Dawn", "Golden Hour", "Overcast", "Storm"];
+    const topArcs: Arc[] = ["Ambush attack", "Pack hunting strategy", "Defender stands ground", "Giant vs giant clash"];
 
   preset.prey.slice(0, 3).forEach((prey) => {
     weathers.slice(0, 2).forEach((w) => {
@@ -765,7 +767,7 @@ export function buildBulkItems(predator: string, preset: PredatorInfo): BulkItem
     }
   });
 
-  return items.slice(0, 8);
+    return items.slice(0, 6);
 }
 
 // ─────────────────────────────────────────────────────────────
@@ -830,7 +832,7 @@ export function buildWatchTimeReport(
   pipelineStyle: "3-shot" | "5-shot",
   dailyReels = 2
 ): WatchTimeReport {
-  const secs            = pipelineStyle === "3-shot" ? 13 : 65;
+    const secs            = pipelineStyle === "3-shot" ? 25 : 45;
   const watchMinsPerView = secs / 60;
   const goalMinutes     = 600_000;
   const avgViewsPerReel = 5_000;
@@ -839,16 +841,16 @@ export function buildWatchTimeReport(
 
   return {
     currentDuration:          `~${secs} seconds`,
-    targetDuration:           "Use longer reels when the story supports it",
+        targetDuration:           "Aim for 22–28s on fast viral runs and 38–48s on stronger story builds",
     watchTimePerView:         `${watchMinsPerView.toFixed(2)} min/view`,
     viewsNeededFor600k:       Math.ceil(goalMinutes / watchMinsPerView),
     daysToGoal,
     estimatedMonthlyEarnings: "Variable — depends on audience, eligibility, format mix, and actual dashboard RPM.",
     usaCPMNote:               "Use revenue estimates only as planning ranges. Meta payout varies by format, region, originality, advertiser demand, and beta access.",
     tipsToIncrease: [
-      "Build the reel around a clear start → escalation → payoff → resolve loop.",
+            "Make the first 1–3 seconds instantly readable with visible predator pressure and no slow setup.",
       "Use on-screen captions because many viewers watch muted on mobile.",
-      "Keep shot transitions motivated by movement, sound, or tension change.",
+            "Keep shot transitions motivated by tension change, collision setup, or escape pressure.",
       "Post consistently and test multiple time windows with Facebook Insights.",
       "Favor original footage/prompt outputs over reposts or low-value edits.",
       "Pin your best-performing welcome reel in the Featured section for conversion.",
@@ -917,61 +919,61 @@ export function generateMonthlyCalendar(
   const month = monthDate.getMonth();
   const daysInMonth = new Date(year, month + 1, 0).getDate();
 
-  const rotations = [
-    { predator: primaryPredator || "Tiger",       prey: primaryPrey || "Deer",       arc: primaryArc || "Ambush attack" },
-    { predator: "Bison",         prey: "Grizzly Bear",  arc: "Giant vs giant clash" },
-    { predator: "Siberian Tiger",prey: "Wild Boar",     arc: "Ambush attack" },
-    { predator: "Wolf",          prey: "Elk",           arc: "Pack hunting strategy" },
-    { predator: "Nile Crocodile",prey: "Wildebeest",    arc: "Ambush attack" },
-    { predator: "Cheetah",       prey: "Gazelle",       arc: "Chase and takedown" },
-    { predator: "Bull Elk",      prey: "Mountain Lion", arc: "Defender stands ground" },
-    { predator: "Polar Bear",    prey: "Seal",          arc: "Ambush attack" },
-    { predator: "Grizzly Bear",  prey: "Salmon",        arc: "Chase and takedown" },
-    { predator: "Bald Eagle",    prey: "Rabbit",        arc: "Chase and takedown" },
+      const rotations = [
+    { predator: primaryPredator || "Mountain Lion", prey: primaryPrey || "White-tailed Deer", arc: primaryArc || "Ambush attack" },
+    { predator: "Bison",         prey: "Grizzly Bear",      arc: "Giant vs giant clash" },
+    { predator: "Alligator",     prey: "Wild Boar",         arc: "Ambush attack" },
+    { predator: "Wolf Pack",     prey: "Elk",               arc: "Pack hunting strategy" },
+    { predator: "Alligator",     prey: "White-tailed Deer", arc: "Ambush attack" },
+    { predator: "Coyote",        prey: "Jackrabbit",        arc: "Chase and takedown" },
+    { predator: "Bull Elk",      prey: "Mountain Lion",     arc: "Defender stands ground" },
+    { predator: "Moose",         prey: "Wolf Pack",         arc: "Defender stands ground" },
+    { predator: "Grizzly Bear",  prey: "Salmon",            arc: "Chase and takedown" },
+    { predator: "Bald Eagle",    prey: "Rabbit",            arc: "Chase and takedown" },
   ];
 
-  const themes = [
-    "🦁 Apex Predators Week", "🔥 Giants Clash Week", "❄️ Winter Survival Week",
-    "🌿 Jungle Hunters Week", "🦅 Sky + Water Week",   "🦬 Defenders Week",
-    "🐺 Pack Intelligence Week", "🌍 USA Wildlife Week",
+    const themes = [
+    "🦬 Giants Clash Week", "🐺 Pack Pressure Week", "🐊 Water Ambush Week",
+    "🦅 Sky Strike Week", "🫎 Defender Week", "🌲 Forest Edge Week",
+    "🏔️ Rocky Mountain Week", "🇺🇸 USA Wildlife Week",
   ];
 
- const hookTemplates = [
-  (_predator: string, prey: string) => `${prey} made one wrong move. ⚠️`,
-  (_predator: string, prey: string) => `The ${prey.toLowerCase()} looked away for one second. 👀`,
-  (predator: string, prey: string) => `${predator} vs ${prey} — this turned ugly fast. 🔥`,
-  () => `One bad second changed everything. ⚡`,
-  () => `This moment flipped faster than it looked. 🎬`,
-  () => `The pressure was already there before anyone noticed. 👁️`,
-  (predator: string) => `This is why ${predator.toLowerCase()}s are so dangerous. 🧠`,
+  const hookTemplates = [
+  (_predator: string, prey: string) => `${prey} froze for one second. ⚠️`,
+  (_predator: string, prey: string) => `The ${prey.toLowerCase()} looked up too late. 👀`,
+  (predator: string, prey: string) => `${predator} vs ${prey} — the pressure starts instantly. 🔥`,
+  () => `No slow setup. The threat is immediate. ⚡`,
+  () => `This turned dangerous before the chase even started. 🎬`,
+  () => `The first second already feels wrong. 👁️`,
+  (predator: string) => `This is why ${predator.toLowerCase()}s control the opening frame. 🧠`,
   () => `The trap was already closing. ⚠️`,
-  (predator: string) => `Nobody expects this side of a ${predator.toLowerCase()}. 🔥`,
-  (_predator: string, prey: string) => `${prey} almost escaped. Almost. 😳`,
+  (predator: string) => `${predator} stayed calm and took space fast. 🔥`,
+  (_predator: string, prey: string) => `${prey} almost found an escape lane. Almost. 😳`,
 
-  (predator: string) => `This ${predator.toLowerCase()} picked the perfect moment. 🎯`,
-  (_predator: string, prey: string) => `${prey} had one lane left and it vanished. 😮`,
+  (predator: string) => `This ${predator.toLowerCase()} picked the exact right moment. 🎯`,
+  (_predator: string, prey: string) => `${prey} had one safe lane and lost it. 😮`,
   (predator: string, prey: string) => `${predator} was already too close when the ${prey.toLowerCase()} reacted. ⚠️`,
-  () => `This sequence got worse with every second. 👀`,
-  () => `The danger was obvious too late. 🔥`,
-  (predator: string) => `This is the side of ${predator.toLowerCase()}s most people never see. 🎬`,
+  () => `This sequence gets worse every second. 👀`,
+  () => `The danger was readable immediately. 🔥`,
+  (predator: string) => `This side of a ${predator.toLowerCase()} feels real fast. 🎬`,
   (_predator: string, prey: string) => `The ${prey.toLowerCase()} hesitated once. That was enough. ⚡`,
-  (predator: string, prey: string) => `${predator} vs ${prey} — no wasted movement here. 🧠`,
-  () => `You can feel the pressure building before anything happens. 👁️`,
-  (predator: string) => `${predator} stayed calm and that changed everything. ❄️`,
+  (predator: string, prey: string) => `${predator} vs ${prey} — no wasted motion here. 🧠`,
+  () => `You can feel the collision coming from the start. 👁️`,
+  (predator: string) => `${predator} never gave up the pressure. ❄️`,
 
   (_predator: string, prey: string) => `The ${prey.toLowerCase()} saw the threat late. Very late. ⚠️`,
-  (predator: string) => `This ${predator.toLowerCase()} never rushed the moment. 🐾`,
-  () => `It looked quiet right before it turned brutal. 🔥`,
-  (_predator: string, prey: string) => `${prey} almost found space, then lost it. 😳`,
-  (predator: string, prey: string) => `${predator} vs ${prey} — the timing here is everything. ⏱️`,
+  (predator: string) => `This ${predator.toLowerCase()} never rushed the opening. 🐾`,
+  () => `It looked readable for one second, then brutal. 🔥`,
+  (_predator: string, prey: string) => `${prey} almost created space, then lost it. 😳`,
+  (predator: string, prey: string) => `${predator} vs ${prey} — timing decides everything. ⏱️`,
   () => `The opening disappeared in a second. ⚡`,
-  (predator: string) => `This is why ${predator.toLowerCase()}s control the encounter early. 👑`,
-  (_predator: string, prey: string) => `The ${prey.toLowerCase()} was moving, but not free. 👀`,
-  () => `The whole mood changed before the chase even started. 🎬`,
-  (predator: string, prey: string) => `${predator} boxed the ${prey.toLowerCase()} in before the panic started. 🧠`,
+  (predator: string) => `This is why ${predator.toLowerCase()}s control encounters early. 👑`,
+  (_predator: string, prey: string) => `The ${prey.toLowerCase()} was moving, but never free. 👀`,
+  () => `The whole mood changes before full action starts. 🎬`,
+  (predator: string, prey: string) => `${predator} boxed the ${prey.toLowerCase()} in before panic fully hit. 🧠`,
 ];
 
-  const durations = ["65–70s (5-Shot Viral)", "60–65s (5-Shot Cinematic)"];
+  const durations = ["22–28s (3-Shot Fast Viral)", "38–48s (5-Shot Viral)"];
   const seed = hashString(`${primaryPredator}|${primaryPrey}|${primaryArc}|${year}|${month}`);
   const rC = shiftArray(rotations, seed % rotations.length);
   const rT = shiftArray(themes, seed % themes.length);
@@ -990,7 +992,7 @@ export function generateMonthlyCalendar(
       reel1: { predator: r1.predator, prey: r1.prey, arc: r1.arc, hook: rH[(day - 1) % rH.length](r1.predator, r1.prey), duration: rD[(day - 1) % rD.length] },
       reel2: { predator: r2.predator, prey: r2.prey, arc: r2.arc, hook: rH[day % rH.length](r2.predator, r2.prey),         duration: rD[day % rD.length] },
       theme: rT[Math.floor((day - 1) / 4) % rT.length],
-      cmpNote: totalVideos >= 30 ? `🔥 CMP: ${totalVideos} videos — strong consistency signal` : totalVideos >= 5 ? `✅ CMP: ${totalVideos} videos posted` : `⏳ CMP: ${totalVideos}/5 videos minimum`,
+            cmpNote: totalVideos >= 30 ? `🔥 CMP: ${totalVideos} videos — strong consistency signal • first-frame tension priority` : totalVideos >= 5 ? `✅ CMP: ${totalVideos} videos posted • keep openings fast and readable` : `⏳ CMP: ${totalVideos}/5 videos minimum • prioritize immediate readable tension`,
     };
   });
 }
@@ -1012,32 +1014,32 @@ export function generateUSAViral30DayCalendar(
   const month = seedDate.getMonth();
   const seasonPack = getUSAMonthSeason(month);
 
-  const rotations = [
-    { predator: primaryPredator || "Mountain Lion", prey: primaryPrey || "Deer",          arc: primaryArc || "Ambush attack" },
-    { predator: "Grizzly Bear",   prey: "Bison",           arc: "Giant vs giant clash" },
-    { predator: "Wolf",           prey: "Elk",             arc: "Pack hunting strategy" },
-    { predator: "Mountain Lion",  prey: "Mule Deer",       arc: "Ambush attack" },
-    { predator: "Bobcat",         prey: "Wild Turkey",     arc: "Ambush attack" },
-    { predator: "Bald Eagle",     prey: "Rabbit",          arc: "Chase and takedown" },
-    { predator: "Alligator",      prey: "Deer",            arc: "Ambush attack" },
-    { predator: "Coyote",         prey: "Jackrabbit",      arc: "Chase and takedown" },
-    { predator: "Polar Bear",     prey: "Seal",            arc: "Ambush attack" },
-    { predator: "Cougar",         prey: "Bighorn Sheep",   arc: "Defender stands ground" },
-    { predator: "Moose",          prey: "Wolf",            arc: "Defender stands ground" },
-    { predator: "Black Bear",     prey: "Salmon",          arc: "Chase and takedown" },
+      const rotations = [
+    { predator: primaryPredator || "Mountain Lion", prey: primaryPrey || "White-tailed Deer", arc: primaryArc || "Ambush attack" },
+    { predator: "Grizzly Bear",   prey: "Bison",              arc: "Giant vs giant clash" },
+    { predator: "Wolf Pack",      prey: "Elk",                arc: "Pack hunting strategy" },
+    { predator: "Mountain Lion",  prey: "Mule Deer",          arc: "Ambush attack" },
+    { predator: "Bobcat",         prey: "Wild Turkey",        arc: "Ambush attack" },
+    { predator: "Bald Eagle",     prey: "Rabbit",             arc: "Chase and takedown" },
+    { predator: "Alligator",      prey: "White-tailed Deer",  arc: "Ambush attack" },
+    { predator: "Alligator",      prey: "Wild Boar",          arc: "Ambush attack" },
+    { predator: "Coyote",         prey: "Jackrabbit",         arc: "Chase and takedown" },
+    { predator: "Bull Elk",       prey: "Mountain Lion",      arc: "Defender stands ground" },
+    { predator: "Moose",          prey: "Wolf Pack",          arc: "Defender stands ground" },
+    { predator: "Black Bear",     prey: "Salmon",             arc: "Chase and takedown" },
   ];
 
-  const hookTemplates = [
-  (_predator: string, prey: string) => `${prey} made ONE mistake. ⚠️`,
-  () => `Watch the last 3 seconds. 👀`,
-  (predator: string) => `This ${predator.toLowerCase()} picked the wrong target. 🔥`,
-  (predator: string, prey: string) => `${predator} vs ${prey} — USA wildlife goes brutal fast.`,
-  () => `Nobody expected this ending. 😳`,
-  (predator: string) => `This is why ${predator.toLowerCase()}s dominate. 👑`,
-  () => `The comeback changed everything. 💥`,
-  () => `Comment who actually won. 👇`,
-  () => `This encounter turned violent instantly.`,
-  (_predator: string, prey: string) => `${prey} stood ground longer than anyone expected.`,
+    const hookTemplates = [
+  (_predator: string, prey: string) => `${prey} froze for one second. ⚠️`,
+  (predator: string, prey: string) => `${predator} was already too close when the ${prey.toLowerCase()} reacted. 👀`,
+  (predator: string, prey: string) => `${predator} vs ${prey} — the pressure starts immediately. 🔥`,
+  () => `No slow setup. The threat is instant. 🎬`,
+  (predator: string) => `This is why ${predator.toLowerCase()}s feel dangerous up close. ⚡`,
+  (_predator: string, prey: string) => `The ${prey.toLowerCase()} had almost no escape lane. 😳`,
+  () => `The first second already tells you this is bad. 👁️`,
+  (predator: string) => `${predator} stayed calm and closed the space fast. 🧠`,
+  () => `Comment who controlled the encounter first. 👇`,
+  (_predator: string, prey: string) => `${prey} reacted late and paid for it. ⚠️`,
 ];
 
 const durations = ["22–28s (3-Shot Fast Viral)", "45–55s (5-Shot Viral)"];
@@ -1052,7 +1054,7 @@ const durations = ["22–28s (3-Shot Fast Viral)", "45–55s (5-Shot Viral)"];
     const r1 = rC[(day - 1) % rC.length];
     const r2 = rC[(day + 2) % rC.length];
     const totalVideos = day * 2;
-    const baseCmpNote = `🇺🇸 USA viral mode • test EST 8–10 AM or 12–3 PM • ${seasonPack.season} angle: ${seasonPack.environment}`;
+    const baseCmpNote = `🇺🇸 USA viral mode • first-frame readable tension • test EST 8–10 AM or 12–3 PM • ${seasonPack.season} angle: ${seasonPack.environment}`;
     return {
       day,
       dateLabel: new Date(year, month, day).toLocaleDateString(undefined, { month: "short", day: "numeric" }),
@@ -1073,11 +1075,11 @@ export function getOriginalityChecklist(): OriginalityItem[] {
     { check: "Original content only",          tip: "Create or meaningfully transform the content yourself. Minor edits to someone else's clip can be deprioritized or demonetized.",                             critical: true,  source: "Meta original content guidelines" },
     { check: "Avoid low-value reuploads",       tip: "Borders, speed changes, stitched clips, or simple reaction overlays are not enough on their own.",                                                          critical: true,  source: "Meta original content guidelines" },
     { check: "Use clear AI transparency",       tip: "When publishing fully synthetic or heavily edited photoreal content, add a clear disclosure or use available AI labels.",                                    critical: true,  source: "Meta AI labeling guidance" },
-    { check: "Burned-in captions added",        tip: "Captions improve comprehension for muted mobile viewing and make the reel easier to follow instantly.",                                                     critical: true,  source: "Cross-platform video best practice" },
-    { check: "Strong first-frame hook",         tip: "Make the first shot visually legible and high-contrast enough to stop scrolling before the payoff begins.",                                                  critical: true,  source: "Creative best practice" },
-    { check: "Consistent posting + testing",    tip: "Use 1–2 Facebook posts/reels per day only if quality stays high; otherwise reduce frequency and protect originality.",                                       critical: false, source: "Buffer 2026 frequency guidance" },
+        { check: "Burned-in captions added",        tip: "Use short burned-in captions that help the first 1–3 seconds read instantly on mute, especially during the opening tension beat.",                           critical: true,  source: "Cross-platform video best practice" },
+        { check: "Strong first-frame hook",         tip: "Make the first shot instantly readable with visible predator pressure, clear subject separation, and no slow empty setup.",                                   critical: true,  source: "Creative best practice" },
+        { check: "Consistent posting + testing",    tip: "Test 1–2 Facebook reels per day only if opening-frame quality stays high; reduce volume if the first seconds become weak or repetitive.",                    critical: false, source: "Buffer 2026 frequency guidance" },
     { check: "Check Professional Dashboard",    tip: "Facebook Content Monetization beta is invite-based. Keep checking your Professional Dashboard for access and policy status.",                                critical: true,  source: "Meta Content Monetization beta" },
-    { check: "Feature your best welcome reel",  tip: "Use the Page Featured section to pin the strongest conversion asset for new visitors.",                                                                      critical: false, source: "Meta Business Help Center" },
+        { check: "Feature your best welcome reel",  tip: "Use the Page Featured section to pin the reel with the clearest first-frame tension and strongest U.S.-readable wildlife setup.",                             critical: false, source: "Meta Business Help Center" },
   ];
 }
 
