@@ -16,7 +16,7 @@ export const habitatPromptMap: Record<Exclude<HabitatPreset, "Auto">, string> = 
     "Forest Clearing":
     "North American forest clearing with patchy grass, brush edge, broken light through pines or hardwoods, open wildlife corridor, realistic undergrowth, dirt, leaves, and uneven natural footing",
 
-    "Dense Jungle Edge":
+      "Dense Jungle Edge":
     "dense brush edge with layered foliage, tangled cover, shadowed ground, realistic habitat depth, hidden approach lanes, strong concealment for ambush setups",
 
     "Rocky Mountain Meadow":

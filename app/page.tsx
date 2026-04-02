@@ -554,12 +554,16 @@ useEffect(() => {
   }, []);
 
  useEffect(() => {
-  if (preset.prey[0]) {
-    const nextPrey = preset.prey[0];
+  if (!preset.prey.length) return;
+
+  const nextPrey = preset.prey.includes(prey) ? prey : preset.prey[0];
+
+  if (!preset.prey.includes(prey)) {
     setPrey(nextPrey);
-        setArc(suggestArc(predator, nextPrey, preset.defaultArc) as Arc);
   }
-}, [predator, preset.prey]);
+
+  setArc(suggestArc(predator, nextPrey, preset.defaultArc) as Arc);
+}, [predator, prey, preset.prey, preset.defaultArc]);
 
   async function handleGenerate() {
   setIsGenerating(true);

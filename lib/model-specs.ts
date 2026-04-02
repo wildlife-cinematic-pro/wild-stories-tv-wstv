@@ -205,16 +205,16 @@ export const weatherOptions: Weather[] = [
 ];
 export const habitatOptions: HabitatPreset[] = [
   "Auto",
-  "Open Green Grassland",
-  "Dry Savanna Plain",
-  "Marsh Wetland",
-  "Riverbank Reeds",
-  "Forest Clearing",
-  "Dense Jungle Edge",
   "Rocky Mountain Meadow",
-  "Snow Field Tundra",
+  "Forest Clearing",
+  "Open Green Grassland",
+  "Riverbank Reeds",
+  "Marsh Wetland",
   "Desert Scrubland",
+  "Snow Field Tundra",
   "Coastal Cliffline",
+  "Dry Savanna Plain",
+  "Dense Jungle Edge",
 ];
 // ─────────────────────────────────────────────────────────────
 // ARC MOTION STRENGTH  (Runway legacy 0–100 scale)
