@@ -114,6 +114,7 @@ type NormalizedPreset = {
   lighting: string;
   cameraGear: string;
   texture: string;
+  defaultArc: string;
   driftRisk: DriftRisk;
 };
 
@@ -146,10 +147,11 @@ function normalizePreset(input: unknown, fallback: NormalizedPreset): Normalized
       ? (obj.prey as string[])
       : fallback.prey;
 
-  const environment = typeof obj.environment === "string" ? obj.environment : fallback.environment;
+    const environment = typeof obj.environment === "string" ? obj.environment : fallback.environment;
   const lighting = typeof obj.lighting === "string" ? obj.lighting : fallback.lighting;
   const cameraGear = typeof obj.cameraGear === "string" ? obj.cameraGear : fallback.cameraGear;
   const texture = typeof obj.texture === "string" ? obj.texture : fallback.texture;
+  const defaultArc = typeof obj.defaultArc === "string" ? obj.defaultArc : fallback.defaultArc;
 
   const driftRisk = toDriftRisk(obj.driftRisk);
 
@@ -159,6 +161,7 @@ function normalizePreset(input: unknown, fallback: NormalizedPreset): Normalized
     lighting,
     cameraGear,
     texture,
+    defaultArc,
     driftRisk,
   };
 }
@@ -364,6 +367,7 @@ const [animalVibe, setAnimalVibe] = useState<AnimalVibe>("National Geographic Wi
       cameraGear: "Telephoto lens",
       texture: "Fine fur detail",
       driftRisk: "MEDIUM",
+            defaultArc: "Ambush attack",
     });
   }, []);
 
@@ -388,6 +392,7 @@ const [animalVibe, setAnimalVibe] = useState<AnimalVibe>("National Geographic Wi
         cameraGear: "Telephoto lens",
         texture: "Fine fur detail",
         driftRisk: custom.driftRisk,
+                defaultArc: custom.defaultArc || "Ambush attack",
       },
       lionFallback
     );
@@ -552,7 +557,7 @@ useEffect(() => {
   if (preset.prey[0]) {
     const nextPrey = preset.prey[0];
     setPrey(nextPrey);
-    setArc(suggestArc(predator, nextPrey, "Ambush attack") as Arc);
+        setArc(suggestArc(predator, nextPrey, preset.defaultArc) as Arc);
   }
 }, [predator, preset.prey]);
 
