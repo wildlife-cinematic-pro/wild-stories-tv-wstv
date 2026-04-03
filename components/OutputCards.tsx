@@ -412,13 +412,13 @@ export function FiveShotPanel({
   const [style, setStyle] = useState<"cinematic" | "viral">("viral");
   const plan = style === "cinematic" ? cinematic : viral;
 
-  const shots = [
+    const shots = [
     {
       key: "shot1",
       label:
         style === "cinematic"
-          ? "SHOT 1 — Hook (0–5s)"
-          : "SHOT 1 — Hook Close-up (0–4s)",
+          ? "SHOT 1 — Opening Tension (0–4s)"
+          : "SHOT 1 — Opening Tension (0–4s)",
       color: "border-amber-400 bg-amber-50",
       badge: "RUNWAY",
       bc: "bg-amber-100 text-amber-700",
@@ -427,8 +427,8 @@ export function FiveShotPanel({
       key: "shot2",
       label:
         style === "cinematic"
-          ? "SHOT 2 — Setup (5–12s)"
-          : "SHOT 2 — Standoff (4–12s)",
+          ? "SHOT 2 — Pressure Build (4–12s)"
+          : "SHOT 2 — Pressure Build (4–12s)",
       color: "border-green-400 bg-green-50",
       badge: "RUNWAY",
       bc: "bg-green-100 text-green-700",
@@ -437,8 +437,8 @@ export function FiveShotPanel({
       key: "shot3",
       label:
         style === "cinematic"
-          ? "SHOT 3 — Tension (12–22s)"
-          : "SHOT 3 — Clash (12–22s)",
+          ? "SHOT 3 — Action Pressure (12–22s)"
+          : "SHOT 3 — Action Pressure (12–22s)",
       color: "border-blue-400 bg-blue-50",
       badge: "KLING",
       bc: "bg-blue-100 text-blue-700",
@@ -447,8 +447,8 @@ export function FiveShotPanel({
       key: "shot4",
       label:
         style === "cinematic"
-          ? "SHOT 4 — Action (22–32s)"
-          : "SHOT 4 — Aftermath (22–32s)",
+          ? "SHOT 4 — Reaction Pressure (22–32s)"
+          : "SHOT 4 — Reaction Pressure (22–32s)",
       color: "border-blue-400 bg-blue-50",
       badge: "KLING",
       bc: "bg-blue-100 text-blue-700",
@@ -457,8 +457,8 @@ export function FiveShotPanel({
       key: "shot5",
       label:
         style === "cinematic"
-          ? "SHOT 5 — Impact (32–40s)"
-          : "SHOT 5 — Winner Walk (32–42s)",
+          ? "SHOT 5 — Resolved Tension (32–40s)"
+          : "SHOT 5 — Resolved Tension (32–42s)",
       color: "border-green-400 bg-green-50",
       badge: "RUNWAY",
       bc: "bg-green-100 text-green-700",
@@ -2431,14 +2431,14 @@ function WorkflowPromptMap({
 >
   <WorkflowCard
     step={3}
-    title="Shot 2 — Action / Strike"
+              title="Shot 2 — Action Pressure"
     badge="Kling 3.0 Pro"
     color={{
       border: "border-blue-400",
       bg: "bg-blue-50",
       badge: "bg-blue-100 text-blue-700",
     }}
-    help="Upload Shot last frame → paste into Kling I2V → generate. Extract last frame after."
+              help="Upload Runway last frame → paste into Kling I2V → generate the action-pressure beat with readable impact and clear subject spacing. Extract last frame after."
     done={done[3]}
     onToggle={() => toggle(3)}
   >
