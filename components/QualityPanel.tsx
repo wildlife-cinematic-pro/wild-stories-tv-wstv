@@ -89,13 +89,13 @@ export default function QualityPanel({
     <div className="rounded-xl border border-emerald-200 bg-emerald-50 p-4 shadow-sm">
 
       {/* Header */}
-      <div className="mb-3 flex flex-wrap items-center gap-2">
-        <span className="text-sm font-bold text-emerald-900">🧪 High-Quality / Natural Output</span>
+            <div className="mb-3 flex flex-wrap items-center gap-2">
+        <span className="text-sm font-bold text-emerald-900">🧪 Quality Control for Realism + Opening Readability</span>
         <span className="rounded bg-emerald-100 px-2 py-0.5 text-xs font-bold text-emerald-700">
-          Image descriptive
+          Image = clear subject setup
         </span>
         <span className="rounded bg-emerald-100 px-2 py-0.5 text-xs font-bold text-emerald-700">
-          Video motion-only
+          Video = motion-first clarity
         </span>
       </div>
 
@@ -138,14 +138,14 @@ export default function QualityPanel({
           value={singleActionRule}
           onChange={setSingleActionRule}
           tone="gray"
-          tooltip="One subject action + one camera move per shot. Reduces melting and chaotic physics."
+          tooltip="One subject action + one camera move per shot. Reduces melting, chaotic physics, overlap, and unreadable action."
         />
         <Toggle
           label="Micro-Motion"
           value={microMotion}
           onChange={setMicroMotion}
           tone="emerald"
-          tooltip="Keep the background alive with subtle environmental movement. Prevents static-scene syndrome."
+          tooltip="Keep the background alive with subtle environmental movement without weakening first-frame clarity."
         />
         <Toggle
           label="Hero Veo"
@@ -158,9 +158,9 @@ export default function QualityPanel({
 
       {/* Recommendation note */}
       <p className="mt-3 text-xs leading-5 text-emerald-800">
-        Recommended: <strong>Reference Locked</strong> + <strong>Motion-only I2V</strong> +{" "}
-        <strong>Single Action Rule</strong>. This keeps the animal identity stable and the motion natural.
-      </p>
+  Recommended: <strong>Reference Locked</strong> + <strong>Motion-only I2V</strong> +{" "}
+  <strong>Single Action Rule</strong>. This keeps identity stable, spacing readable, and the opening frame strong.
+</p>
     </div>
   );
 }
