@@ -167,15 +167,15 @@ export const predatorData: Record<string, PredatorInfo> = {
     defaultArc: "Ambush attack",
     driftRisk: "LOW",
   },
-    "Grizzly Bear": {
-    prey: ["Salmon", "Elk Calf", "Moose", "Bison"],
-  environment: "Rocky Mountain meadow and open wilderness in late summer",
-  lighting: "dramatic overcast mountain light, open-air clarity, dry grass movement, heavy cloud diffusion, natural cold contrast",
-  cameraGear: "Canon EOS R3, 400mm wildlife lens, ground-level wildlife documentary framing",
-  texture: "massive shaggy brown coat, muscular shoulder hump, scarred muzzle detail, dry earth on claws, wind-tossed fur",
-  defaultArc: "Territory dominance battle",
-  driftRisk: "LOW",
-},
+      "Grizzly Bear": {
+    prey: ["Bison", "Moose", "Salmon", "Elk Calf"],
+    environment: "Yellowstone meadow, river corridor, and open wilderness in late summer",
+    lighting: "dramatic overcast mountain light, open-air clarity, dry grass movement, heavy cloud diffusion, natural cold contrast",
+    cameraGear: "Canon EOS R3, 400mm wildlife lens, ground-level wildlife documentary framing",
+    texture: "massive shaggy brown coat, muscular shoulder hump, scarred muzzle detail, dry earth on claws, wind-tossed fur",
+    defaultArc: "Territory dominance battle",
+    driftRisk: "LOW",
+  },
   Hyena: {
     prey: ["Antelope", "Zebra", "Deer", "Wild Boar"],
     environment: "dry grassland",
@@ -221,9 +221,9 @@ export const predatorData: Record<string, PredatorInfo> = {
     defaultArc: "Ambush attack",
     driftRisk: "MEDIUM",
   },
-    "Bald Eagle": {
-        prey: ["Salmon", "Duck", "Rabbit", "Trout"],
-    environment: "Alaskan river mouth and evergreen lakeshore under cold open sky",
+     "Bald Eagle": {
+    prey: ["Salmon", "Trout", "Duck", "Rabbit"],
+    environment: "Alaskan river mouth, lakeshore, and conifer-lined shallows under cold open sky",
     lighting: "clean northern daylight, silver-blue water reflections, crisp feather edge light, cold atmospheric clarity, natural contrast",
     cameraGear: "Canon EOS R5, 500mm super-telephoto, low-angle riverside wildlife framing",
     texture: "bright white head feathers against dark brown body, sharp yellow talons, hooked golden beak, layered feather detail, wind through wings",
@@ -329,9 +329,9 @@ export const predatorData: Record<string, PredatorInfo> = {
     defaultArc: "Ambush attack",
     driftRisk: "HIGH",
   },
-    "Mountain Lion": {
-       prey: ["White-tailed Deer", "Mule Deer", "Elk Calf", "Bighorn Sheep"],
-    environment: "Rocky Mountain pine forest and rocky ridgeline at golden hour",
+      "Mountain Lion": {
+    prey: ["Mule Deer", "White-tailed Deer", "Elk Calf", "Bighorn Sheep"],
+    environment: "Rocky Mountain forest edge, rocky ridgeline, and open meadow at golden hour",
     lighting: "warm mountain golden hour, long ridge shadows, pine-filtered light, amber highlights on tawny coat, dry high-altitude air clarity",
     cameraGear: "Canon EOS R5, 400mm super-telephoto, ridge-level long-lens wildlife framing",
     texture: "tawny smooth coat, muscular rear haunches, long balancing tail, dust and pine needles on paws, sharp whisker detail",
@@ -365,18 +365,18 @@ export const predatorData: Record<string, PredatorInfo> = {
     defaultArc: "Territory dominance battle",
     driftRisk: "LOW",
   },
-    Coyote: {
-        prey: ["White-tailed Deer Fawn", "Jackrabbit", "Rabbit", "Quail"],
-    environment: "open prairie and sagebrush flats at first light",
+      Coyote: {
+    prey: ["Jackrabbit", "Rabbit", "White-tailed Deer Fawn", "Quail"],
+    environment: "open prairie, sagebrush flats, and scrub desert edge at first light",
     lighting: "cold dawn light, pale gold horizon glow, soft side light across dry grass, long early-morning shadows",
     cameraGear: "Sony A1, 300mm wildlife lens, ground-level pursuit framing",
     texture: "lean grey-brown coat, alert ears, narrow muzzle, dusty paws, wiry tail fur, subtle wind movement through coat",
     defaultArc: "Chase and takedown",
     driftRisk: "MEDIUM",
   },
-    Alligator: {
-        prey: ["White-tailed Deer", "Wild Boar", "Raccoon", "Large Fish"],
-    environment: "Florida Everglades swamp with cypress roots, dark tannin water, and Spanish moss",
+      Alligator: {
+    prey: ["Wild Boar", "White-tailed Deer", "Raccoon", "Large Fish"],
+    environment: "Florida Everglades marsh and cypress-lined swamp with dark tannin water",
     lighting: "humid wetland light, reflective black water surface, soft rim light through cypress cover, swamp haze and subtle mist",
     cameraGear: "Canon EOS R5, 200mm wildlife lens, water-surface ambush framing",
     texture: "dark armored scales with algae patches, yellow-green eyes above waterline, powerful jaw detail, rippling wake behind tail",

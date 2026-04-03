@@ -2155,15 +2155,15 @@ function WorkflowPromptMap({
   );
 
   const pipeline = useMemo(() => {
-    const parts = [
-      "Image Prompt → NB2/Flux → Upload to Runway",
-      "→ Shot 1 (Runway1)",
-      "→ last frame",
-      "→ Shot 2 (Kling2)",
-      "→ last frame",
-      "→ Shot 3 (Runway3)",
-      "→ CapCut",
-    ];
+          const parts = [
+        "Image Prompt → Master Still",
+        "→ Opening Tension (Runway)",
+        "→ last frame",
+        "→ Action Pressure (Kling)",
+        "→ last frame",
+        "→ Resolved Tension (Runway)",
+        "→ CapCut",
+      ];
     return parts.join(" ");
   }, []);
 
@@ -2226,7 +2226,7 @@ function WorkflowPromptMap({
       <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
         <div className="flex flex-wrap items-center gap-2">
           <h2 className="text-sm font-extrabold text-gray-900">
-            WSTV App → Runway Tracker
+                      WSTV Prompt Workflow Tracker
           </h2>
           <span className="rounded bg-gray-100 px-2 py-0.5 text-xs font-semibold text-gray-700">
             {copiedCount}/6 done
