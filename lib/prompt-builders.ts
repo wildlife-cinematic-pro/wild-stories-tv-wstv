@@ -1109,16 +1109,16 @@ export function buildQualitySummary(opts: QualityOptions): string {
     [
       `Realism mode: ${opts.realismMode}.`,
       opts.referenceLock
-        ? "Reference-locked workflow keeps the same animal face, markings, and body proportions across clips."
+        ? "Reference-locked workflow keeps the same animal face, markings, body proportions, and silhouette readability across clips."
         : "Reference lock disabled — use only if you intentionally want variation.",
       opts.motionOnlyI2V
-        ? "All video prompts are motion-led so the engines do not try to redraw the animal every shot."
-        : "Video prompts may be more descriptive, which can increase drift.",
+        ? "Video prompts stay motion-led so the engines preserve the source image identity and first-frame readability."
+        : "Video prompts may be more descriptive, which can increase drift and weaken subject clarity.",
       opts.singleActionRule
-        ? "Single-action prompting is active to reduce melting, tearing, and chaotic physics."
-        : "Multi-action prompting can reduce coherence.",
+        ? "Single-action prompting is active to reduce melting, tearing, chaotic physics, and unreadable overlap."
+        : "Multi-action prompting can reduce clarity and motion coherence.",
       opts.microMotion
-        ? "Environmental micro-motion is active to prevent static-scene syndrome."
+        ? "Environmental micro-motion is active to avoid static-scene syndrome while keeping the opening readable."
         : "Background movement is minimal.",
       opts.heroVeo
         ? "Veo hero mode is active for the most realism-sensitive beats."
@@ -1133,23 +1133,24 @@ export function buildQualitySummary(opts: QualityOptions): string {
 export function buildReferenceWorkflow(predator: string, opts: QualityOptions): string {
   const realismNote =
     opts.realismMode === "Reference Locked"
-      ? "Use a clean, evenly lit master still with readable silhouette and separated background."
+      ? "Use a clean, evenly lit master still with readable silhouette, strong first-frame readability, and clear foreground/background separation."
       : opts.realismMode === "High Naturalism"
-        ? "Use a gritty still with real dirt, moisture, stray hairs, and believable contact shadows."
-        : "Use a balanced hero still with strong separation and stable anatomy.";
+        ? "Use a gritty still with real dirt, moisture, stray hairs, believable contact shadows, and clear subject readability."
+        : "Use a balanced hero still with strong separation, stable anatomy, and immediate subject clarity.";
 
   return finalizePrompt(`REFERENCE LOCK WORKFLOW — ${predator.toUpperCase()}
 ${realismNote}
 STEP 1 — Generate one master image first.
-STEP 2 — Use that exact image as the reference or first frame for every video clip.
+STEP 2 — Keep the opening frame readable: clear silhouette, visible tension, strong subject separation, no empty dead space.
+STEP 3 — Use that exact image as the reference or first frame for every video clip.
   • Runway: Upload as I2V input. Prompt = motion only.
   • Kling 3.0: Upload as reference + enable "Bind Subject" (Elements 3.0).
-STEP 3 — Keep video prompts focused on motion only: subject action, environment motion, camera motion.
-STEP 4 — Change only one main motion beat per shot to preserve identity.
-STEP 5 — If drift appears:
+STEP 4 — Keep video prompts focused on motion only: subject action, environment motion, camera motion.
+STEP 5 — Change only one main motion beat per shot to preserve identity, anatomy, and spacing.
+STEP 6 — If drift appears:
   • Runway: Extract previous last frame → use as new I2V input.
   • Kling: Re-upload master image with Bind Subject enabled.
-STEP 6 — For Kling 3.0: Optionally set End Frame to guide resolution pose.`);
+STEP 7 — For Kling 3.0: Optionally set End Frame to guide the final tension pose.`);
 }
 
 // ─────────────────────────────────────────────────────────────
@@ -1158,19 +1159,19 @@ STEP 6 — For Kling 3.0: Optionally set End Frame to guide resolution pose.`);
 export function buildNaturalismChecklist(opts: QualityOptions, weather: Weather, env: string): string[] {
   return [
     opts.realismMode === "High Naturalism" || opts.realismMode === "Reference Locked"
-      ? "Inject biological imperfections: stray hairs, dirt, uneven fur breakup, paw pressure, moisture, asymmetry."
+      ? "Inject biological imperfections: stray hairs, dirt, uneven fur breakup, paw pressure, moisture, asymmetry, while keeping anatomy clean and readable."
       : "Keep textures clean but not plastic.",
-    `Keep one undeniable light geometry so motion engines can preserve form and shadow direction in ${weather.toLowerCase()} conditions.`,
-    `Use environmental motion such as ${buildMicroMotionLine(weather, env)}.`,
+    `Keep one undeniable light direction so motion engines preserve form, shadow logic, and first-frame readability in ${weather.toLowerCase()} conditions.`,
+    `Use environmental motion such as ${buildMicroMotionLine(weather, env)} without obscuring subject visibility.`,
     opts.motionOnlyI2V
-      ? "Runway: Do NOT restate animal's appearance in I2V prompts (official rule — reduces motion quality). Kling: Keep appearance text to one clause max."
-      : "If you describe appearance in video, keep it extremely short.",
+      ? "Runway: do not restate animal appearance in I2V prompts. Kling: keep appearance text extremely short so identity and opening-frame readability stay stable."
+      : "If you describe appearance in video, keep it extremely short and subordinate to motion clarity.",
     opts.singleActionRule
-      ? "One subject action + one camera move per shot only."
-      : "Avoid more than two simultaneous motion beats.",
+      ? "One subject action plus one camera move per shot only. Keep spacing readable and avoid overlap."
+      : "Avoid more than two simultaneous motion beats or the scene can lose clarity.",
     opts.referenceLock
-      ? "Runway: Regenerate from master frame or previous last frame. Kling 3.0: Use Bind Subject / Elements for identity lock."
-      : "Expect more visual variation without reference lock.",
+      ? "Regenerate from the master frame or previous last frame to preserve silhouette, spacing, and subject readability across clips."
+      : "Expect more visual variation and weaker identity stability without reference lock.",
   ].map(finalizePrompt);
 }
 
@@ -1382,8 +1383,8 @@ export function buildImagePrompt(
 const cleanTexture = sanitizeImageTexture(texture, env);
 const cleanWeather = sanitizeWeatherPhrase(weatherVariants[weather]);
 const cleanCameraGear = sanitizeCameraGearForHabitat(cameraGear, env);
-  const cleanAir =
-    "clear clean air, no visible steam, no smoke plumes, no mist, no airborne haze";
+    const cleanAir =
+    "clear clean air, no visible steam, no smoke plumes, no mist, no airborne haze, clean subject separation";
 
   const cam =
   target === "NB2" || target === "NANO_BANANA_2"
@@ -1402,21 +1403,19 @@ const cleanCameraGear = sanitizeCameraGearForHabitat(cameraGear, env);
 
   const habitatMode = getHabitatMode(predator, prey, env);
 
-  const A =
+    const A =
     habitatMode === "aquatic"
-      ? `${predator} in a powerful pre-action glide, ${prey} fully alert and reactive — both animals at the most tension-rich beat of the ${getSafeArcLabel(arc)} scene. ${predator} holds pressure through the water column, body controlled and ready.`
+      ? `${predator} and ${prey} both clearly readable in the same frame at the most tension-rich beat of the ${getSafeArcLabel(arc)} scene. ${predator} holds controlled pressure through the water column, ${prey} stays fully alert and reactive, immediate visible tension, no empty setup.`
       : habitatMode === "shoreline"
-        ? `${predator} in a powerful pre-action shoreline ambush posture, ${prey} fully alert and reactive near the bank — both animals at the most tension-rich beat of the ${getSafeArcLabel(arc)} scene. ${predator} stays low at the water's edge, body compressed and ready to surge.`
-        : `${predator} in a powerful pre-action stance, ${prey} fully alert and reactive — both animals at the most tension-rich beat of the ${getSafeArcLabel(arc)} scene. ${predator} holds a controlled pre-action posture, ribcage tense, body compressed and ready.`;
+        ? `${predator} and ${prey} both clearly readable near the waterline at the most tension-rich beat of the ${getSafeArcLabel(arc)} scene. ${predator} stays low at the bank, ${prey} holds full survival awareness, immediate visible tension, no empty setup.`
+        : `${predator} and ${prey} both clearly readable in the same frame at the most tension-rich beat of the ${getSafeArcLabel(arc)} scene. ${predator} holds a controlled pre-action posture, ${prey} stays fully alert and reactive, immediate visible tension, no empty setup.`;
 
-  const B = `${cleanEnv}, ${cleanWeather}, ${cleanAir}. Layered foreground, readable midground, softened background separation for stable depth maps. Subjects in authentic wildlife behavioral postures, biologically accurate spacing, natural environmental context.`;
-
-  const C = `Wide cinematic wildlife documentary composition, 9:16 vertical frame. Camera: ${cam}, ${depth.lensNote}. ${vibe.camera}. Depth of field: ${depth.depth}. Telephoto compression and documentary framing. Lighting: ${cleanWeather}. Natural rim separation, realistic shadow direction, crisp visibility, true-to-life exposure rolloff, no atmospheric plumes.`;
-
-  const D = `${cleanTexture}. ${vibe.texture}. Micro-detail visible in fur, skin, feathers, moisture, and clean ground contact. ${realismAdd}`;
+        const C = `Wide cinematic wildlife documentary composition, 9:16 vertical frame. Camera: ${cam}, ${depth.lensNote}. ${vibe.camera}. Depth of field: ${depth.depth}. Telephoto compression and documentary framing. Lighting: ${cleanWeather}. Natural rim separation, realistic shadow direction, crisp visibility, true-to-life exposure rolloff, no atmospheric plumes.`;
+          const B = `${cleanEnv}, ${cleanWeather}, ${cleanAir}. Layered foreground, readable midground, softened background separation for stable depth maps. Subjects in authentic wildlife behavioral postures, biologically accurate spacing, natural environmental context, immediate readable tension, no empty dead space.`;
+        const D = `${cleanTexture}. ${vibe.texture}. Micro-detail visible in fur, skin, feathers, moisture, and clean ground contact. ${realismAdd}`;
 
   if (target === "NB2") {
-    const B_ref = `${cleanEnv}, ${cleanWeather}, ${cleanAir}. Two-plane composition: foreground subjects fully separated from background, unambiguous silhouettes, stable depth map. Subjects placed for clear biomechanical readability — no overlap, each animal fully visible.`;
+        const B_ref = `${cleanEnv}, ${cleanWeather}, ${cleanAir}. Two-plane composition: foreground subjects fully separated from background, unambiguous silhouettes, stable depth map. Subjects placed for clear biomechanical readability, strong first-frame readability, no overlap, each animal fully visible, no empty dead space.`;
     const E_ref = `${vibe.style}, photorealistic, 8K RAW. Optimised for I2V reference consistency — distinct silhouettes, locked anatomy, stable depth planes.${descInject}`;
     return finalizeImagePrompt(`${qLead} ${A} ${B_ref} ${C} ${D} ${E_ref}`, target);
   }
@@ -1430,20 +1429,19 @@ const cleanCameraGear = sanitizeCameraGearForHabitat(cameraGear, env);
       : `a ${getSafeArcLabel(arc)}`;
 
     const A_nb2 = buildImageSubjectLine(predator, prey, arcPhrase, arc);
-    const B_nb2 = `Context/background: ${cleanEnv}, ${cleanWeather}, ${cleanAir}. Natural habitat cues, readable terrain, clear background layers.`;
+        const B_nb2 = `Context/background: ${cleanEnv}, ${cleanWeather}, ${cleanAir}. Natural habitat cues, readable terrain, clear background layers, strong first-frame readability, no empty dead space.`;
 
-    const C_nb2 =
+        const C_nb2 =
       habitatMode === "aquatic"
-        ? `Pose/action: ${predator} in a powerful pre-action glide, ${prey} fully alert and reactive, authentic aquatic wildlife body language, biologically accurate spacing in the water column, both subjects clearly readable, no overlap.`
+        ? `Pose/action: ${predator} applies visible pre-action pressure through the water column, ${prey} stays fully alert and reactive, authentic aquatic wildlife body language, biologically accurate spacing, both subjects clearly readable, no overlap, tension visible immediately.`
         : habitatMode === "shoreline"
-          ? `Pose/action: ${predator} in a powerful pre-action shoreline ambush posture at the water's edge, ${prey} fully alert and reactive near the bank, authentic wildlife body language, biologically accurate spacing, both subjects clearly readable, no overlap.`
-          : `Pose/action: ${predator} in a powerful pre-action stance, ${prey} fully alert and reactive, authentic wildlife body language, biologically accurate spacing, both subjects clearly readable, no overlap.`;
+          ? `Pose/action: ${predator} holds visible pre-action shoreline pressure at the water's edge, ${prey} stays fully alert and reactive near the bank, authentic wildlife body language, biologically accurate spacing, both subjects clearly readable, no overlap, tension visible immediately.`
+          : `Pose/action: ${predator} holds visible pre-action pressure, ${prey} stays fully alert and reactive, authentic wildlife body language, biologically accurate spacing, both subjects clearly readable, no overlap, tension visible immediately.`;
 
-    const D_nb2 = `Composition: wide cinematic wildlife documentary frame, 9:16 vertical. Camera: top-tier full-frame wildlife documentary camera, ${cam.replace("tracking", "framing")}, premium super-telephoto optics, natural optical compression, authentic perspective, ${depth.lensNote}. Depth of field: ${depth.depth}. Clean subject separation, full-body readability, no overlap, stable silhouette separation.`;
+        const D_nb2 = `Composition: wide cinematic wildlife documentary frame, 9:16 vertical, mobile-first opening frame. Camera: top-tier full-frame wildlife documentary camera, ${cam.replace("tracking", "framing")}, premium super-telephoto optics, natural optical compression, authentic perspective, ${depth.lensNote}. Depth of field: ${depth.depth}. Clean subject separation, full-body readability, no overlap, stable silhouette separation, immediate readable tension, no empty dead space.`;
+         const E_nb2 = `Lighting: ${cleanWeather}. Natural rim separation, realistic shadow direction, true-to-life exposure rolloff, realistic dynamic range, natural highlight control, clean first-frame readability, no artificial glow, no synthetic HDR look, no visible steam, no mist, no haze, no atmospheric plumes.`;
 
-    const E_nb2 = `Lighting: ${cleanWeather}. Natural rim separation, realistic shadow direction, true-to-life exposure rolloff, realistic dynamic range, natural highlight control, no artificial glow, no synthetic HDR look, no visible steam, no mist, no haze, no atmospheric plumes.`;
-
-    const F_nb2 = `Style: ${vibe.style}, photorealistic, true wildlife documentary realism. ${cleanTexture}. ${vibe.texture}. Extremely natural fur, skin, moisture, and clean ground-contact detail. True-to-life color science, realistic micro-contrast, realistic lens rendering, biologically accurate anatomy, no plastic texture, no CGI feel, no over-sharpened artificial look. ${realismAdd}${descInject}`;
+        const F_nb2 = `Style: ${vibe.style}, photorealistic, true wildlife documentary realism. ${cleanTexture}. ${vibe.texture}. Extremely natural fur, skin, moisture, and clean ground-contact detail. True-to-life color science, realistic micro-contrast, realistic lens rendering, biologically accurate anatomy, no plastic texture, no CGI feel, no over-sharpened artificial look. Prioritize strong opening-frame readability, visible predator pressure, and clear subject separation. ${realismAdd}${descInject}`;
 
     return finalizeImagePrompt(
       `${qLead} ${A_nb2} ${B_nb2} ${C_nb2} ${D_nb2} ${E_nb2} ${F_nb2}`,
@@ -1452,7 +1450,7 @@ const cleanCameraGear = sanitizeCameraGearForHabitat(cameraGear, env);
   }
 
   if (target === "RUNWAY") {
-    const E_runway = `${vibe.style}, photorealistic, cinematic grade. Built as a stable master reference for Runway Gen-4.5 I2V continuity — clean separation, readable silhouette, stable anatomy. High-quality input free of visual artifacts for best I2V results.${descInject}`;
+        const E_runway = `${vibe.style}, photorealistic, cinematic grade. Built as a stable master reference for Runway Gen-4.5 I2V continuity — clean separation, readable silhouette, stable anatomy, strong first-frame readability, immediate visible tension. High-quality input free of visual artifacts for best I2V results.${descInject}`;
     return finalizeImagePrompt(`${qLead} ${A} ${B} ${C} ${D} ${E_runway}`, target);
   }
 
@@ -1465,13 +1463,13 @@ const cleanCameraGear = sanitizeCameraGearForHabitat(cameraGear, env);
 // ─────────────────────────────────────────────────────────────
 export function buildNegativePrompt(predator: string): string {
   const base =
-    "cartoon, CGI look, anime style, unnatural motion, morphing artifacts, " +
-    "split screen, floating limbs, jerky movement, watermark, text overlay, " +
-    "extra limbs, colour banding, fire, flame, fantasy breath, " +
-    "exaggerated vapor glow, energy effect, light beam, glowing mouth, " +
-    "smiling, laughing, cartoonish expression, bright unnatural colors, " +
-    "face distortion, warping, morphing textures, inconsistent physics, " +
-    "background shifting, changing markings, extra digits, deformed anatomy";
+    "cartoon, CGI look, anime style, illustration, game render, unnatural motion, morphing artifacts, " +
+    "split screen, floating limbs, jerky movement, watermark, text overlay, subtitle burn-in, " +
+    "extra limbs, extra tails, extra heads, duplicate animals, wrong animal count, merged bodies, " +
+    "partial body crop, cut-off paws, cut-off hooves, cut-off tails, hidden subjects, overlapping bodies, " +
+    "close-up crop, off-frame subject, face distortion, warping, melting anatomy, inconsistent physics, " +
+    "background shifting, changing markings, deformed anatomy, plastic fur, oversharpened HDR, synthetic glow, " +
+    "fire, flame, fantasy breath, glowing mouth, energy effect, light beam, smoke plume, steam, mist, haze, fog wall, dusty blur, bright unnatural colors";
 
   const specific: Record<string, string> = {
     Lion: "wrong mane colour, extra mane, mane drift between shots",
@@ -1481,13 +1479,20 @@ export function buildNegativePrompt(predator: string): string {
     Jaguar: "wrong spot pattern, spot shifting",
     "Snow Leopard": "wrong spot pattern, short tail, tail length changing",
     Cheetah: "wrong tear marks, thick mane, tear mark drift",
-    Shark: "cartoon fins, fin morphing",
+    Shark: "cartoon fins, fin morphing, reef setting for open-water action",
     Orca: "wrong colour pattern, pattern shifting between frames",
     "Komodo Dragon": "wrong scale pattern, scale morphing",
     "Polar Bear": "wrong fur colour, tropical environment, fur colour drift",
     Bobcat: "wrong spot pattern, long tail, marking inconsistency",
-    "Wolf Pack": "pack member drift, inconsistent wolf count, mismatched coat patterns between wolves, merged bodies, extra legs",
+    Wolf: "dog-like face, domestic dog body proportions, fluffy pet fur, inconsistent coat pattern",
+    "Wolf Pack":
+      "pack member drift, inconsistent wolf count, mismatched coat patterns between wolves, merged bodies, extra legs, dog-like faces",
+    Coyote: "dog-like face, domestic dog proportions, oversized body, inconsistent coat pattern",
     Alligator: "wrong scale pattern, fictional setting, jaw deformation",
+    "Mountain Lion": "spotted juvenile coat, exaggerated mane, wrong tail length, house-cat face",
+    Cougar: "spotted juvenile coat, exaggerated mane, wrong tail length, house-cat face",
+    "Grizzly Bear": "undersized body, black-bear face, wrong shoulder hump, wrong fur colour",
+    "Bald Eagle": "wrong beak shape, wrong head colour, juvenile plumage in adult scene, deformed wings",
   };
 
   return finalizePrompt(`${base}${specific[predator] ? `, ${specific[predator]}` : ""}`);
@@ -1521,13 +1526,13 @@ export function buildThumbnailPrompt(
     envLower.includes("frozen") ||
     envLower.includes("winter");
 
-  const winterThumbDetail =
+    const winterThumbDetail =
     isArcticLike && weather === "Golden Hour"
-      ? "pale blue snow shadows, crisp clean winter air, clear backlight through pine trees, no visible breath vapor, no drifting frost, "
+      ? "pale blue snow shadows, crisp clean winter air, clear backlight through pine trees, sharp silhouette separation on snow, "
       : "";
 
-  return finalizePrompt(
-    `Ultra dramatic wildlife documentary thumbnail close-up of ${predator} and ${prey} in ${cleanEnv}, ${cleanWeather}, ${cleanAir}. ${tone.image}. Intense mutual awareness, raw animal instinct, ${winterThumbDetail}${vibe.style}. Photorealistic documentary realism, 9:16 vertical frame.`
+    return finalizePrompt(
+    `Ultra dramatic wildlife documentary thumbnail with ${predator} and ${prey} both clearly readable in the same frame, immediate visible tension, strong subject separation, no empty setup, mobile-first composition, in ${cleanEnv}, ${cleanWeather}, ${cleanAir}. ${tone.image}. Intense mutual awareness, raw animal instinct, ${winterThumbDetail}${vibe.style}. Photorealistic documentary realism, 9:16 vertical frame.`
   );
 }
 
@@ -1616,31 +1621,31 @@ export function buildRunwayShots(
   };
 
   const shot1PasteReady = sanitizeRunwayFPS(
-    isAquatic
-      ? `Slow dolly-in. The left subject glides once through the water column. The right subject holds tense position in the current. ${micro}. ${seamless}`.trim()
-      : isShoreline
-        ? `Slow dolly-in. The left subject holds low at the water's edge. The right subject stands tense near the bank, eye-line locked. ${micro}. ${seamless}`.trim()
-        : `Slow dolly-in. The left subject ${s1.predatorBeat}. The right subject ${s1.preyBeat}. ${micro}. ${seamless}`.trim()
-  );
+  isAquatic
+    ? `Wide opening hold with a subtle push-in. Keep both subjects fully readable from frame one. The left subject glides once with controlled forward pressure through the water column. The right subject holds tense position in the current with locked eye-line. Clear spacing, readable threat line, clean motion start. ${micro}. ${seamless}`.trim()
+    : isShoreline
+      ? `Wide opening hold with a subtle push-in. Keep both subjects fully readable from frame one. The left subject holds low at the water's edge with visible forward pressure. The right subject stays tense near the bank with locked eye-line. Clear spacing, readable bank-to-waterline tension, clean motion start. ${micro}. ${seamless}`.trim()
+      : `Wide opening hold with a subtle push-in. Keep both subjects fully readable from frame one. The left subject ${s1.predatorBeat}. The right subject ${s1.preyBeat}. Locked eye-line, clear spacing, readable tension from the first second. ${micro}. ${seamless}`.trim()
+);
 
   const shot2PasteReady = sanitizeRunwayFPS(
-    isAquatic
-      ? `Tracking move. The left subject commits to one fast water-pressure burst. The right subject reacts with one evasive dart. Water displacement, turbulence, and current response. ${micro}. ${seamless}`.trim()
-      : isShoreline
-        ? `Tracking move. The left subject bursts once from the shoreline. The right subject reacts with one evasive leap and turn. Splash, mud scatter, and bank disturbance. ${micro}. ${seamless}`.trim()
-        : `Tracking move. The left subject ${s2.predatorBeat}. The right subject ${s2.preyBeat}. Ground compression, clear body-weight transfer. ${micro}. ${seamless}`.trim()
-  );
+  isAquatic
+    ? `Wide action read with restrained tracking. Keep both subjects fully visible. The left subject commits to one fast water-pressure burst toward the right subject. The right subject reacts with one evasive dart. Clear pursuit line, readable spacing, no overlap. Water displacement, turbulence, and current response. ${micro}. ${seamless}`.trim()
+    : isShoreline
+      ? `Wide action read with restrained tracking. Keep both subjects fully visible. The left subject bursts once from the shoreline toward the right subject. The right subject reacts with one evasive leap and turn. Clear predator-to-prey line, readable spacing, no overlap. Splash, mud scatter, and bank disturbance. ${micro}. ${seamless}`.trim()
+      : `Wide action read with restrained tracking. Keep both subjects fully visible. The left subject ${s2.predatorBeat}. The right subject ${s2.preyBeat}. Clear predator-to-prey line, readable spacing, no overlap. Ground compression, clear body-weight transfer. ${micro}. ${seamless}`.trim()
+);
 
-  const shot3PasteReady = sanitizeRunwayFPS(
-    isAquatic
-      ? `Slow pull-back. The left subject slows and stabilizes in the water. The right subject holds tense eye-line as residual turbulence settles. ${micro}. ${seamless}`.trim()
-      : isShoreline
-        ? `Slow pull-back. The left subject settles low at the waterline. The right subject holds tense eye-line as residual splash and mud disturbance fade. ${micro}. ${seamless}`.trim()
-        : `Slow pull-back. The left subject ${s3.predatorBeat}. The right subject ${s3.preyBeat}. Residual atmosphere settles. ${micro}. ${seamless}`.trim()
-  );
+const shot3PasteReady = sanitizeRunwayFPS(
+  isAquatic
+    ? `Wide aftermath hold with a slow pull-back. Keep both subjects fully readable. The left subject slows and stabilizes in the water. The right subject holds tense eye-line as residual turbulence settles. Clear spacing remains readable to the end. ${micro}. ${seamless}`.trim()
+    : isShoreline
+      ? `Wide aftermath hold with a slow pull-back. Keep both subjects fully readable. The left subject settles low at the waterline. The right subject holds tense eye-line as residual splash and mud disturbance fade. Clear spacing remains readable to the end. ${micro}. ${seamless}`.trim()
+      : `Wide aftermath hold with a slow pull-back. Keep both subjects fully readable. The left subject ${s3.predatorBeat}. The right subject ${s3.preyBeat}. Residual atmosphere settles while spacing stays clear and readable. ${micro}. ${seamless}`.trim()
+);
 
   return {
-    shot1: finalizePrompt(`RUNWAY SHOT 1 — ESTABLISHING [${model}]
+        shot1: finalizePrompt(`RUNWAY SHOT 1 — OPENING TENSION [${model}]
 ${note}
 ${qLead}
 ${refLine}
@@ -1652,18 +1657,19 @@ ${maybeGuard(s1.guardLine)}${context}
 ${shot1PasteReady}
 
 ─── SHOT BREAKDOWN ───
-Camera motion: slow dolly-in.
+Camera motion: wide opening hold with a subtle push-in.
+Opening priority: both subjects fully readable from frame one, immediate visible tension, locked eye-line, clear spacing.
 Subject action: left subject ${s1.predatorBeat}.
 Right-side reaction: right subject ${s1.preyBeat}.
 Environment motion: ${micro}.
 Tone: ${tone.video}.
-Framing: ${vibe.camera}.
+Framing: wide opening read, full-body visibility, clean silhouette separation.
 Duration: 5–10 seconds recommended.
 FPS: 24 or 25 (set in Advanced).
 ⚠️ No negative prompt — Runway does not support negatives.
 After generation: extract LAST FRAME for Shot 2 chaining.`),
 
-    shot2: finalizePrompt(`RUNWAY SHOT 2 — ACTION${gateOn ? " (ONE-ACTION)" : ""} [${model}]
+       shot2: finalizePrompt(`RUNWAY SHOT 2 — ACTION PRESSURE [${model}]
 ${note}
 ${qLead}
 ${refLine}
@@ -1675,7 +1681,8 @@ ${maybeGuard(s2.guardLine)}${context}
 ${shot2PasteReady}
 
 ─── SHOT BREAKDOWN ───
-Camera motion: controlled tracking move.
+Camera motion: wide action read with restrained tracking.
+Action priority: both subjects fully visible, clear predator-to-prey line, readable spacing, no overlap.
 Subject action: left subject ${s2.predatorBeat}.
 Right-side reaction: right subject ${s2.preyBeat}.
 Environment motion: ${
@@ -1692,10 +1699,11 @@ Physics: ${
       ? "preserve believable shoreline traction, splash interaction, mud displacement, and grounded weight transfer."
       : "preserve natural acceleration and deceleration."
 }
+Framing: wide action readability, full-body visibility, clean silhouette separation.
 Duration: 5–10 seconds recommended.
 ⚠️ Upload Shot 1 last frame as I2V input.`),
 
-    shot3: finalizePrompt(`RUNWAY SHOT 3 — AFTERMATH [${model}]
+    shot3: finalizePrompt(`RUNWAY SHOT 3 — RESOLVED TENSION [${model}]
 ${note}
 ${qLead}
 ${refLine}
@@ -1707,13 +1715,15 @@ ${maybeGuard(s3.guardLine)}${context}
 ${shot3PasteReady}
 
 ─── SHOT BREAKDOWN ───
-Camera motion: slow pull-back.
+Camera motion: wide aftermath hold with a slow pull-back.
+End-state priority: both subjects fully readable, spacing still clear, tension remains visible to the final frame.
 Subject action: left subject ${s3.predatorBeat}.
 Right-side reaction: right subject ${s3.preyBeat}.
 Environment motion: residual atmosphere — ${micro}.
 Mood: ${tone.image}.
+Framing: wide aftermath readability, full-body visibility, clean separation.
 Duration: 5–10 seconds recommended.
-⚠️ Upload Shot 2 last frame as I2V input.`),
+⚠️ Upload Shot 2 last frame as I2V input.`), 
   };
 }
 
@@ -1812,17 +1822,18 @@ export function buildKlingShots(
     : `${baseExtra3} ${vibe.style}.`;
 
   return {
-    shot1: finalizePrompt(`KLING SHOT 1 — TENSION [${model}]
+        shot1: finalizePrompt(`KLING SHOT 1 — OPENING TENSION [${model}]
 ${note}
 ${qLead}
 ${refLine}
 ${motionRule}
 ${singleRule}
 Motion intensity: ${mi1.toFixed(2)}
+Opening priority: both subjects fully readable from frame one, locked eye-line, clear spacing, immediate visible tension.
 ${maybeGuard(s1.guardLine)}${context}
 
 ═══ KLING 3.0 PROMPT (SCALE format) ═══
-Shot: Subtle handheld drift or static hold, medium-wide framing.
+Shot: WIDE opening hold or subtle push-in, full bodies visible from frame one.
 ${characterLine}
 Action: ${formatActionSubject(predator, s1.predatorBeat)}. ${prey} ${s1.preyBeat}.
 ${locationLine}
@@ -1832,7 +1843,7 @@ ${audio1}
 
 Kling settings: Motion intensity ${mi1.toFixed(2)} | Enable Bind Subject for identity lock | Negative prompt: use the Kling Negative Prompt card`),
 
-    shot2: finalizePrompt(`KLING SHOT 2 — STRIKE (WIDE${gateOn ? " + ONE-ACTION" : ""}) [${model}]
+ shot2: finalizePrompt(`KLING SHOT 2 — ACTION PRESSURE (WIDE${gateOn ? " + ONE-ACTION" : ""}) [${model}]
 ${note}
 ${qLead}
 ${refLine}
@@ -1840,6 +1851,7 @@ ${motionRule}
 ${singleRule}
 ${wideRule}
 Motion intensity: ${mi2.toFixed(2)}
+Action priority: both subjects fully visible, clear predator-to-prey line, readable spacing, no overlap.
 ${maybeGuard(s2.guardLine)}${context}
 
 ═══ KLING 3.0 PROMPT (SCALE format) ═══
@@ -1856,13 +1868,11 @@ Extra: ${buildKlingExtraLine(
   quality?.motionOnlyI2V
 )}
 
-
-
 ${audio2}
 
 Kling settings: Motion intensity ${mi2.toFixed(2)} | WIDE framing enforced | Upload Shot 1 last frame as I2V reference`),
 
-    shot3: finalizePrompt(`KLING SHOT 3 — AFTERMATH (WIDE${gateOn ? " + ONE-ACTION" : ""}) [${model}]
+    shot3: finalizePrompt(`KLING SHOT 3 — RESOLVED TENSION (WIDE${gateOn ? " + ONE-ACTION" : ""}) [${model}]
 ${note}
 ${qLead}
 ${refLine}
@@ -1870,6 +1880,7 @@ ${motionRule}
 ${singleRule}
 ${wideRule}
 Motion intensity: ${mi3.toFixed(2)}
+End-state priority: both subjects fully readable, spacing still clear, tension remains visible to the final frame.
 ${maybeGuard(s3.guardLine)}${context}
 
 ═══ KLING 3.0 PROMPT (SCALE format) ═══
@@ -1983,19 +1994,19 @@ const pasteReadyCore = [
   nativeCharacterLine,
   `Arc: ${getSafeArcPrint(arc)}.`,
   ``,
-  `Shot 1 — INITIATION (0–5s) | Motion: ${mi1.toFixed(2)}:`,
-  `${formatActionSubject(predator, s1.predatorBeat)}. ${prey} ${s1.preyBeat}.`,
-  `Camera: static hold or subtle handheld drift.`,
+  `Shot 1 — OPENING TENSION (0–5s) | Motion: ${mi1.toFixed(2)}:`,
+  `${formatActionSubject(predator, s1.predatorBeat)}. ${prey} ${s1.preyBeat}. Clear spacing, locked eye-line, both subjects fully readable from frame one.`,
+  `Camera: WIDE opening hold or subtle push-in, full bodies visible from frame one.`,
   audio1Short,
   ``,
-  `Shot 2 — ESCALATION (5–10s) WIDE | Motion: ${mi2.toFixed(2)}:`,
-  `${formatActionSubject(predator, s2.predatorBeat)}. ${prey} ${s2.preyBeat}.`,
-  `Camera: FIXED WIDE — full bodies visible, no crop.`,
+  `Shot 2 — ACTION PRESSURE (5–10s) WIDE | Motion: ${mi2.toFixed(2)}:`,
+  `${formatActionSubject(predator, s2.predatorBeat)}. ${prey} ${s2.preyBeat}. Both subjects fully visible, clear predator-to-prey line, readable spacing, no overlap.`,
+  `Camera: FIXED WIDE — full bodies visible, no crop, action readability first.`,
   audio2Short,
   ``,
-  `Shot 3 — RESOLUTION (10–15s) WIDE | Motion: ${mi3.toFixed(2)}:`,
-  `${formatActionSubject(predator, s3.predatorBeat)}. ${prey} ${s3.preyBeat}.`,
-  `Camera: LOCKED FIXED WIDE — full bodies visible.`,
+  `Shot 3 — RESOLVED TENSION (10–15s) WIDE | Motion: ${mi3.toFixed(2)}:`,
+  `${formatActionSubject(predator, s3.predatorBeat)}. ${prey} ${s3.preyBeat}. Both subjects remain fully readable, spacing stays clear to the final frame.`,
+  `Camera: LOCKED FIXED WIDE — full bodies visible, end-state readability first.`,
   audio3Short,
 ].join("\n").trim();
 
@@ -2012,14 +2023,16 @@ Style: ${vibe.style}. ${tone.image}. Photorealistic wildlife documentary. 9:16 v
 Arc: ${getSafeArcPrint(arc)}.
 ${wideRule}
 
-Shot 1 — INITIATION (0–5 seconds) | Motion: ${mi1.toFixed(2)}:
+Shot 1 — OPENING TENSION (0–5 seconds) | Motion: ${mi1.toFixed(2)}:
 ${maybeGuard(s1.guardLine)}${predator} ${s1.predatorBeat}. ${prey} ${s1.preyBeat}.
-Camera: static hold or subtle handheld drift.
+Opening priority: both subjects fully readable from frame one, locked eye-line, clear spacing, immediate visible tension.
+Camera: WIDE opening hold or subtle push-in, full bodies visible from frame one.
 Environment motion: ${micro}.
 ${audio1}
 
-Shot 2 — ESCALATION (5–10 seconds) — WIDE | Motion: ${mi2.toFixed(2)}:
+Shot 2 — ACTION PRESSURE (5–10 seconds) — WIDE | Motion: ${mi2.toFixed(2)}:
 ${maybeGuard(s2.guardLine)}${predator} ${s2.predatorBeat}. ${prey} ${s2.preyBeat}.
+Action priority: both subjects fully visible, clear predator-to-prey line, readable spacing, no overlap.
 Camera: FIXED WIDE — full bodies visible; no crop; no close-ups.
 Environment motion: ${
   isAquatic
@@ -2031,8 +2044,9 @@ Environment motion: ${
 Physics priority: grounded weight transfer, coherent limb mechanics, readable impact.
 ${audio2}
 
-Shot 3 — RESOLUTION (10–15 seconds) — WIDE | Motion: ${mi3.toFixed(2)}:
+Shot 3 — RESOLVED TENSION (10–15 seconds) — WIDE | Motion: ${mi3.toFixed(2)}:
 ${maybeGuard(s3.guardLine)}${predator} ${s3.predatorBeat}. ${prey} ${s3.preyBeat}.
+End-state priority: both subjects fully readable, spacing still clear, tension remains visible to the final frame.
 Camera: LOCKED FIXED WIDE — full bodies visible; no crop; no close-ups.
 Environment motion: residual atmosphere — ${micro}.
 ${audio3}`;
@@ -2194,28 +2208,29 @@ ${sixShotCharacterLine}
 Style: ${vibe.style}. ${tone.image}. Photorealistic wildlife documentary. 9:16 vertical frame.
 Story arc: ${getSafeArcPrint(arc)}.
 
-Shot 1 — MACRO CLOSE-UP (0–2s) | Motion: 0.20:
-${predator} eye fills frame — iris visible, catch light sharp, pupil dilated.
-Camera: locked static macro.
+Shot 1 — OPENING TENSION (0–2s) | Motion: 0.25:
+${predator} LEFT, ${prey} RIGHT, both fully visible in the same frame, immediate eye-line lock, clear spacing, visible tension from frame one.
+Camera: WIDE opening hold or subtle push-in.
 ${sixShotAudio1}
 
-Shot 2 — WIDE ESTABLISHING (2–5s) | Motion: 0.30:
-${predator} LEFT, ${prey} RIGHT, ~10m apart. ${predator} holds tense stillness. ${prey} freezes.
+Shot 2 — PRESSURE HOLD (2–5s) | Motion: 0.30:
+${predator} maintains visible forward pressure. ${prey} stays fully alert and reactive, no overlap, spacing stays readable.
 Camera: locked wide.
 ${sixShotAudio2}
 
-Shot 3 — PROFILE TRACKING (5–8s) | Motion: 0.45:
-${predator} shifts weight forward — shoulders compress. ${prey} rises to threat display.
+Shot 3 — PROFILE PRESSURE (5–8s) | Motion: 0.45:
+${predator} shifts weight forward with controlled commitment. ${prey} answers with one readable defensive or escape-ready adjustment.
 Camera: low side-angle tracking, very slow.
 ${sixShotAudio3}
 
-Shot 4 — SHOT-REVERSE-SHOT (8–11s) | Motion: 0.35:
-Alternating close-ups: ${predator} intensity / ${prey} panic tells.
+Shot 4 — TENSION REACTION CUT (8–11s) | Motion: 0.35:
+Alternating readable reaction beats: ${predator} intensity / ${prey} survival focus. Keep tension high, keep both reactions clean and natural.
 Camera: no movement.
 ${sixShotAudio4}
 
-Shot 5 — ACTION WIDE (11–14s) — WIDE | Motion: ${getKlingMotionIntensity(arc, "action").toFixed(2)}:
+Shot 5 — ACTION PRESSURE WIDE (11–14s) — WIDE | Motion: ${getKlingMotionIntensity(arc, "action").toFixed(2)}:
 ${maybeGuard(s5.guardLine)}${predator} ${s5.predatorBeat}. ${prey} ${s5.preyBeat}.
+Action priority: both subjects fully visible, clear predator-to-prey line, readable spacing, no overlap.
 Camera: FIXED WIDE — full bodies visible; no crop; no close-ups.
 Environment: ${
   aquatic
@@ -2226,8 +2241,9 @@ Environment: ${
 }.
 ${buildKlingAudioPrompt(predator, prey, env, weather, arc, "action")}
 
-Shot 6 — AFTERMATH WIDE (14–15s) — WIDE | Motion: ${getKlingMotionIntensity(arc, "aftermath").toFixed(2)}:
+Shot 6 — RESOLVED TENSION WIDE (14–15s) — WIDE | Motion: ${getKlingMotionIntensity(arc, "aftermath").toFixed(2)}:
 ${maybeGuard(s6.guardLine)}${predator} ${s6.predatorBeat}. ${prey} ${s6.preyBeat}.
+End-state priority: both subjects fully readable, spacing still clear, tension remains visible to the final frame.
 Camera: LOCKED FIXED WIDE — full bodies visible; no crop; no close-ups.
 ${buildKlingAudioPrompt(predator, prey, env, weather, arc, "aftermath")}
 
@@ -2274,13 +2290,16 @@ export function build10Ideas(predator: string, preyList: string[], preset: Preda
     }
   }
 
-  [
-    `${predator} vs rival ${predator} — dominance encounter in ${preset.environment}`,
-    `Young ${predator} first hunt — ${getSafeArcPrint(preset.defaultArc)} in ${preset.environment}`,
-    `${predator} at night — full moon ambush in ${preset.environment}`,
-    `${predator} mother protecting cubs in ${preset.environment}`,
-    `Rare: ${predator} vs ${preyList[preyList.length - 1]} — desperate escape in ${preset.environment}`,
-  ].forEach(add);
+  const firstPrey = preyList[0] ?? "survival animal";
+const lastPrey = preyList[preyList.length - 1] ?? "survival animal";
+
+[
+  `${predator} vs ${firstPrey} — opening tension standoff in ${preset.environment}`,
+  `${predator} vs ${firstPrey} — sudden pressure beat in ${preset.environment}`,
+  `${predator} vs ${lastPrey} — defensive stand in ${preset.environment}`,
+  `${predator} vs ${lastPrey} — escape pressure in ${preset.environment}`,
+  `${predator} vs rival ${predator} — dominance encounter in ${preset.environment}`,
+].forEach(add);
 
   return ideas.slice(0, 10);
 }
@@ -2290,7 +2309,14 @@ export function build10Ideas(predator: string, preyList: string[], preset: Preda
 // ─────────────────────────────────────────────────────────────
 export function buildCapCutPlan(predator: string, arc: string, weather: Weather): string {
   const safeArc = getSafeArcPrint(arc);
-  return finalizePrompt(`CAPCUT PLAN — ${predator} | Arc: ${safeArc} | Weather: ${weather}`);
+  return finalizePrompt(
+    `CAPCUT PLAN — ${predator} | Arc: ${safeArc} | Weather: ${weather}
+1. Start on the strongest readable opening frame.
+2. Keep both subjects visible as early as possible.
+3. Prioritize immediate predator pressure and survival-animal reaction.
+4. Avoid slow setup, empty opening space, or unclear subject visibility.
+5. End on a clean high-tension or resolved-tension frame.`
+  );
 }
 
 // ─────────────────────────────────────────────────────────────
@@ -2308,20 +2334,21 @@ export function buildClipChaining(predator: string, driftRisk: PredatorInfo["dri
 ${riskLine}
 
 ═══ RUNWAY GEN-4.5 CHAINING (Official Method) ═══
-STEP 1 — Generate Shot 1 (Runway I2V) → extract LAST FRAME.
+STEP 1 — Generate Shot 1 (Runway I2V) with strong first-frame readability and both subjects clearly readable.
   • Move playback scrubber to the very end of the completed video.
-  • This loads the selected frame into the current model.
-STEP 2 — Chain Shot 2: upload last frame as I2V input. Prompt = motion only.
-STEP 3 — Chain Shot 3: upload Shot 2 last frame. Lowest motion complexity.
+  • Extract the LAST FRAME and use it as the next input.
+STEP 2 — Chain Shot 2: upload Shot 1 last frame as I2V input. Prompt = motion only.
+STEP 3 — Chain Shot 3: upload Shot 2 last frame. Keep end-state tension readable and spacing clear.
 STEP 4 — Combine clips in a video editor. Remove the shared frame.
 
 ═══ KLING 3.0 CHAINING ═══
-STEP 1 — Generate Shot 1 (Kling I2V) → extract last frame.
-STEP 2 — Upload last frame as I2V input + enable Bind Subject.
-STEP 3 — Optionally set End Frame for precise pose control.
+STEP 1 — Generate Shot 1 with clear opening tension and readable full-subject visibility.
+STEP 2 — Upload the previous last frame as I2V input + enable Bind Subject.
+STEP 3 — Optionally set End Frame for precise final-pose control.
 STEP 4 — Alternative: use Multi-Shot mode (up to 6 shots, single prompt).
 
-RULE: Subject description WORD-FOR-WORD identical across all clips.
+RULE: Subject description stays consistent across all clips.
+RULE: Preserve predator-to-survival-animal spacing and readable silhouette separation.
 RULE (Runway): Do NOT include appearance text in I2V prompts.
 RULE (Kling): Use Bind Subject (Elements 3.0) for identity lock.`);
 }
@@ -2363,14 +2390,15 @@ export function validateEngineConstraints(opts: {
       warnings.push({
         engine: "runway",
         level: "error",
-        message: "Runway Gen-4/4.5 does NOT support negative prompts. Remove the negative prompt.",
+        message: "Runway Gen-4/4.5 does not support negative prompts. Remove the negative prompt.",
       });
     }
     if (opts.hasAppearanceInPrompt) {
       warnings.push({
         engine: "runway",
         level: "warning",
-        message: "Runway I2V: Restating appearance from the image can reduce motion quality. Use motion-only prompts.",
+        message:
+          "Runway I2V: restating appearance from the image can reduce motion quality and weaken first-frame readability. Use motion-only prompts.",
       });
     }
   }
@@ -2387,7 +2415,8 @@ export function validateEngineConstraints(opts: {
       warnings.push({
         engine: "kling",
         level: "info",
-        message: "Kling 3.0 supports negative prompts — recommended for reducing drift and artifacts.",
+        message:
+          "Kling 3.0 supports negative prompts. Use them to reduce drift, anatomy artifacts, overlap, and weak subject readability.",
       });
     }
   }

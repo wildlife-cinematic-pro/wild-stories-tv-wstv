@@ -695,8 +695,8 @@ export function calculateViralScore(
   scores.push({ label: "Hook Strength", score: hookScore, tip: hookScore >= 16 ? "Strong hook ✓" : "Use animal name + immediate danger + one clear consequence" });
 
   // Watch time (0–25)
-  const wtScore = pipelineStyle === "5-shot" ? 22 : 10;
-  scores.push({ label: "Watch Time Setup", score: wtScore, tip: pipelineStyle === "5-shot" ? "5-shot pipeline = strong watch time ✓" : "Switch to 5-shot for 3x watch time" });
+    const wtScore = pipelineStyle === "5-shot" ? 20 : 18;
+     scores.push({ label: "Watch Time Setup", score: wtScore, tip: pipelineStyle === "5-shot" ? "5-shot pipeline = strong story retention ✓" : "3-shot pipeline = strong short-form retention ✓" });
 
   // USA optimization (0–20)
   const usaArcs: Arc[] = ["Defender stands ground", "Giant vs giant clash", "Territory dominance battle", "Pack hunting strategy"];
@@ -716,11 +716,11 @@ export function calculateViralScore(
   scores.push({ label: "Originality Signal", score: origScore, tip: origScore >= 16 ? "High originality ✓" : "Enable Quality Controls + add Scene Description" });
 
   // Emotional impact (0–15)
-  const highEmotionArcs: Arc[] = ["Giant vs giant clash", "Defender stands ground", "Escape from danger"];
+    const highEmotionArcs: Arc[] = ["Giant vs giant clash", "Defender stands ground", "Escape from danger", "Ambush attack", "Pack hunting strategy"];
   const emotScore = Math.min(15,
     (highEmotionArcs.includes(arc) ? 8 : 5) + ((pkg.caption2026?.length ?? 0) > 200 ? 7 : 4)
   );
-  scores.push({ label: "Emotional Impact", score: emotScore, tip: emotScore >= 12 ? "Strong emotional arc ✓" : "Use Giant/Defender arcs + story-based caption" });
+    scores.push({ label: "Emotional Impact", score: emotScore, tip: emotScore >= 12 ? "Strong emotional arc ✓" : "Use clash, ambush, pack-pressure, or escape arcs + story-based caption" });
 
   const total = scores.reduce((s, x) => s + x.score, 0);
   const verdict: ViralScore["verdict"] =
@@ -787,14 +787,14 @@ export function buildFiveShotCinematic(
 
   return {
     style: "cinematic",
-    shot1: `[RUNWAY ${runwayModel}] SHOT 1 — HOOK (0–4s):\n${rN}\n${qL}\nExtreme close-up: ${predator} eyes filling half the frame, ${env}, ${w}. Pupils locked forward, zero movement — only ribcage rising slowly. ${tone.image}. SCROLL STOPPER — first 3 seconds must be visually arresting. Motion strength: 40.`,
-    shot2: `[RUNWAY ${runwayModel}] SHOT 2 — SETUP (4–12s):\n${rN}\nWide establishing — ${predator} on left, ${prey} unaware in distance, ${env}, ${w}. Slow cinematic push-in from 20m to 12m. ${vibe.camera}. Audience understands the full situation fast. Motion strength: 48.`,
-    shot3: `[KLING ${klingModel}] SHOT 3 — TENSION (12–22s):\n${kN}\n${predator} body drops low, weight shifting forward, ${env}, ${w}. Every muscle coiled. ${prey} suddenly senses danger — head snaps up, ears forward, body rigid. ${tone.video} Both animals locked. CFG Scale: 0.50.`,
-    shot4: `[KLING ${klingModel}] SHOT 4 — ACTION (22–36s):\n${kN}\nExplosive full-body motion — ${predator} launches forward in ${env}, ${w}. Maximum biomechanics: spine extending, claws engaging, full muscular commitment. ${prey} reacts — legs driving, full survival flight. Ground reacts: dust/snow/leaves scatter. [Audio: impact, breathing, SFX] CFG Scale: 0.65.`,
-    shot5: `[RUNWAY ${runwayModel}] SHOT 5 — AFTERMATH (36–50s):\n${rN}\n${predator} stands dominant in ${env}, ${w}. Camera slowly pulls back from close to wide — revealing full environment. ${emotionalTone === "Calm Dominance" ? "Absolute stillness. Total ownership." : "Heavy breath. Eyes forward. The world is quiet now."} ${vibe.camera}. LOOP-READY ending. Motion strength: 34.`,
-    totalDuration: "45–50 seconds",
-    watchTimeNote: "Balanced story mode: shorter than the old 60s+ build, so completion rate stays stronger while the narrative still has room to breathe. Use 3-shot for pure speed, 5-shot for deeper tension.",
-    captionTip: "Keep burned-in captions short and punchy. Aim for 1 short line at a time. Put the biggest emotional word first: WAIT / IMPACT / ESCAPE / WHO WON?",
+    shot1: `[RUNWAY ${runwayModel}] SHOT 1 — OPENING HOOK (0–4s):\n${rN}\n${qL}\nReadable first frame: ${predator} clearly visible with immediate threat presence and ${prey} also readable in the setup, ${env}, ${w}. No empty setup. Clear subject separation, visible pressure instantly, mobile-friendly composition. ${tone.image}. Motion strength: 38.`,
+    shot2: `[RUNWAY ${runwayModel}] SHOT 2 — PRESSURE BUILD (4–12s):\n${rN}\nWide readable setup — ${predator} and ${prey} both clearly visible in ${env}, ${w}. ${predator} closes pressure once or compresses low once. ${prey} reacts once and loses comfort immediately. Slow cinematic push-in only if subject readability stays clean. ${vibe.camera}. Motion strength: 46.`,
+    shot3: `[KLING ${klingModel}] SHOT 3 — TENSION LOCK (12–22s):\n${kN}\nKeep both animals readable in ${env}, ${w}. ${predator} loads forward pressure with grounded weight transfer. ${prey} senses danger once, snaps attention up, and holds in visible survival tension. ${tone.video} Clear body language, no chaotic overlap, tension fully readable. CFG Scale: 0.50.`,
+    shot4: `[KLING ${klingModel}] SHOT 4 — ACTION RELEASE (22–36s):\n${kN}\nKeep the action readable in ${env}, ${w}. ${predator} commits with clear grounded biomechanics, visible weight transfer, and one decisive forward release. ${prey} reacts with full survival motion and readable escape pressure. Ground reacts: dust/snow/leaves scatter. [Audio: impact, breathing, SFX] Fixed wide if needed for clean body readability. CFG Scale: 0.65.`,
+        shot5: `[RUNWAY ${runwayModel}] SHOT 5 — AFTERMATH WINNER FRAME (36–48s):\n${rN}\n${predator} remains clearly readable in ${env}, ${w} after the action beat. Keep the ending simple, dominant, and visually clean for mobile. ${emotionalTone === "Calm Dominance" ? "Absolute stillness. Total ownership." : "Heavy breath. Eyes forward. Pressure still lingers."} ${vibe.camera}. End on a strong readable final frame with loop-ready clarity. Motion strength: 30.`,
+        totalDuration: "38–48 seconds",
+        watchTimeNote: "Balanced story mode: keep the opening instantly readable, keep the middle escalating, and keep the full runtime tight enough for stronger completion on short-form platforms.",
+        captionTip: "Keep burned-in captions very short and readable. The first caption should help the opening frame read instantly: LOOK / DANGER / IMPACT / ESCAPE / WHO WON?",
   };
 }
 
@@ -814,14 +814,14 @@ export function buildFiveShotViral(
 
   return {
     style: "viral",
-    shot1: `[RUNWAY ${runwayModel}] SHOT 1 — HOOK CLOSE-UP (0–3s):\n${rN}\n${qL}\nExtreme tight face: ${predator} staring forward, ${env}, ${w}. Breath visible. Eyes unblinking. Camera barely moves. ${tone.image}. MUST stop the scroll immediately. Motion strength: 38.`,
-    shot2: `[RUNWAY ${runwayModel}] SHOT 2 — STANDOFF (3–10s):\n${rN}\n${predator} LEFT — ${prey} RIGHT — 8m apart in ${env}, ${w}. ${prey} rises to max threat display. ${predator} doesn't move an inch. Slow push-in 15m→9m. Build tension fast. ${vibe.camera}. Motion strength: 52.`,
-    shot3: `[KLING ${klingModel}] SHOT 3 — CLASH (10–20s):\n${kN}\nBoth animals charge simultaneously in ${env}, ${w}. Full body physics: ${groundFX}. Maximum impact. [Audio: deep collision, animal sounds, environmental scatter]. Camera WIDE. CFG Scale: 0.65.`,
-    shot4: `[KLING ${klingModel}] SHOT 4 — REVERSAL (20–34s):\n${kN}\n${prey} retreating or off-balance. ${predator} holds ground, ${env}, ${w}. ${tone.video} Ground still settling. Momentum shifts visibly. CFG Scale: 0.50.`,
-    shot5: `[RUNWAY ${runwayModel}] SHOT 5 — WINNER WALK (34–52s):\n${rN}\n${predator} walks forward confidently past camera, ${env}, ${w}. LOW ANGLE — massive body fills frame. Unhurried. Unstoppable. ${vibe.camera}. Camera holds as ${predator} exits frame — PERFECT LOOP POINT. "Who won? Comment 👇" Motion strength: 30.`,
-    totalDuration: "45–55 seconds",
-    watchTimeNote: "This 45–55s version keeps the 5-shot storytelling feel without dragging.",
-    captionTip: "Use 1 caption beat per shot: LOOK / WAIT / IMPACT / TURN / COMMENT. For maximum speed, switch to the 3-shot pipeline.",
+    shot1: `[RUNWAY ${runwayModel}] SHOT 1 — OPENING HOOK (0–3s):\n${rN}\n${qL}\nReadable first frame: ${predator} clearly visible with immediate threat presence, ${prey} also readable in the same setup, ${env}, ${w}. No empty setup. Clear subject separation, visible tension instantly, mobile-friendly composition. ${tone.image}. Camera nearly locked. Motion strength: 36.`,
+    shot2: `[RUNWAY ${runwayModel}] SHOT 2 — PRESSURE BUILD (3–10s):\n${rN}\n${predator} and ${prey} remain clearly readable in ${env}, ${w}. ${predator} closes pressure once or compresses low once. ${prey} reacts once and loses visual comfort. Slow push-in only if composition stays clean on mobile. Build tension immediately. ${vibe.camera}. Motion strength: 50.`,
+        shot3: `[KLING ${klingModel}] SHOT 3 — CLASH (10–20s):\n${kN}\nFixed wide for full-body readability in ${env}, ${w}. Both animals commit with clear biomechanics, grounded weight transfer, and visible impact path. Full body physics: ${groundFX}. [Audio: deep collision, animal sounds, environmental scatter]. Keep the action readable, not chaotic. CFG Scale: 0.65.`,
+        shot4: `[KLING ${klingModel}] SHOT 4 — REVERSAL (20–34s):\n${kN}\nKeep the frame readable in ${env}, ${w}. ${prey} loses balance, space, or forward confidence once. ${predator} holds pressure without chaotic movement. Ground still settling, momentum shift clearly visible, survival tension still active. CFG Scale: 0.50.`,
+        shot5: `[RUNWAY ${runwayModel}] SHOT 5 — AFTERMATH WINNER FRAME (34–48s):\n${rN}\n${predator} remains clearly readable in ${env}, ${w} with calm control after the pressure shift. Keep the ending simple, dominant, and loop-friendly. Low angle only if subject readability stays clean on mobile. ${vibe.camera}. End on a strong readable winner frame. "Who won? Comment 👇" Motion strength: 28.`,
+        totalDuration: "38–48 seconds",
+        watchTimeNote: "This 38–48s version keeps the story readable while protecting short-form retention and first-frame impact.",
+        captionTip: "Use short burned-in caption beats that read instantly: LOOK / PRESSURE / IMPACT / TURN / COMMENT. Keep the first caption readable in the opening second.",
   };
 }
 
@@ -998,10 +998,10 @@ export function generateMonthlyCalendar(
 }
 
 function getUSAMonthSeason(monthIndex: number) {
-  if ([11, 0, 1].includes(monthIndex)) return { season: "Winter", themes: ["❄️ Snow Survival Week", "🦬 Cold-Weather Giants Week", "🐺 Pack Pressure Week", "🧊 Frozen Ambush Week", "🦅 Harsh Elements Week", "🔥 Shock Ending Week"], environment: "snow, cold breath, low-sun tension" };
-  if ([2, 3, 4].includes(monthIndex))  return { season: "Spring", themes: ["🌿 Forest Edge Week", "🦃 Open Country Week", "🦌 Ambush Renewal Week", "🦅 Fresh Growth Week", "🐺 Fast Chase Week", "🔥 Shock Ending Week"],           environment: "fresh brush, woodland edge, spring light" };
-  if ([5, 6, 7].includes(monthIndex))  return { season: "Summer", themes: ["☀️ Heatwave Week", "🏜️ Dry Ground Week", "🐊 Water Ambush Week", "🦬 Dust Clash Week", "🦅 Open Sky Week", "🔥 Shock Ending Week"],                    environment: "dust, heat shimmer, dry scrubland" };
-  return { season: "Fall", themes: ["🍂 Rut Season Week", "🦌 Dominance Week", "🐺 Migration Pressure Week", "🪨 Rocky Ambush Week", "🦅 Golden Light Week", "🔥 Shock Ending Week"], environment: "golden brush, migration tension, cold dusk" };
+  if ([11, 0, 1].includes(monthIndex)) return { season: "Winter", themes: ["❄️ Snow Survival Week", "🦬 Yellowstone Giants Week", "🐺 Pack Pressure Week", "🧊 Frozen Ambush Week", "🦅 Harsh Elements Week", "🔥 Shock Ending Week"], environment: "snow, cold breath, low-sun tension" };
+    if ([2, 3, 4].includes(monthIndex))  return { season: "Spring", themes: ["🌿 Forest Edge Week", "🦌 Deer Pressure Week", "🐊 Wetland Ambush Week", "🦅 Fresh Growth Week", "🐺 Fast Chase Week", "🔥 Shock Ending Week"],           environment: "fresh brush, woodland edge, spring light" };
+    if ([5, 6, 7].includes(monthIndex))  return { season: "Summer", themes: ["☀️ Heatwave Week", "🏜️ Dry Ground Week", "🐊 Everglades Ambush Week", "🦬 Dust Clash Week", "🦅 Open Sky Week", "🔥 Shock Ending Week"],              environment: "dust, heat shimmer, dry scrubland" };
+    return { season: "Fall", themes: ["🍂 Rut Season Week", "🦌 Elk Pressure Week", "🐺 Migration Pressure Week", "🪨 Rocky Ambush Week", "🦅 Golden Light Week", "🔥 Shock Ending Week"], environment: "golden brush, migration tension, cold dusk" };
 }
 
 export function generateUSAViral30DayCalendar(

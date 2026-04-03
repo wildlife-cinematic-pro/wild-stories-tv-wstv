@@ -295,6 +295,7 @@ const [animalVibe, setAnimalVibe] = useState<AnimalVibe>("National Geographic Wi
   // ✅ Custom Predators (user-added)
   const [customPredators, setCustomPredators] = useState<CustomPredatorForm[]>([]);
   const [customModalOpen, setCustomModalOpen] = useState(false);
+  const lastAutoSuggestedArcRef = useRef<Arc | null>(null);
 
   const [customForm, setCustomForm] = useState<{
     name: string;
@@ -305,8 +306,8 @@ const [animalVibe, setAnimalVibe] = useState<AnimalVibe>("National Geographic Wi
   }>({
     name: "",
     prey: "",
-    environment: "",
-    defaultArc: "Ambush attack",
+    environment: "Rocky Mountain forest edge and open meadow",
+    defaultArc: "Pack hunting strategy",
     driftRisk: "MEDIUM",
   });
 
@@ -314,28 +315,28 @@ const [animalVibe, setAnimalVibe] = useState<AnimalVibe>("National Geographic Wi
   const base = Object.keys(predatorData);
   const extra = customPredators.map((p) => p.name);
 
-  const usaPriority = [
-  "Wolf Pack",
-  "Wolf",
+    const usaPriority = [
+    "Wolf Pack",
     "Mountain Lion",
-    "Grizzly Bear",
-    "Bald Eagle",
     "Alligator",
     "Bison",
-    "Bull Elk",
+    "Grizzly Bear",
+    "Bald Eagle",
     "Moose",
-    "Cougar",
-    "Bobcat",
+    "Bull Elk",
     "Black Bear",
     "Coyote",
-    "Raccoon",
-    "Red Fox",
+    "Bobcat",
+    "Cougar",
+    "Wolf",
+    "Wild Boar",
     "Great Horned Owl",
+    "Red Fox",
     "Beaver",
     "River Otter",
     "Badger",
+    "Raccoon",
     "White-tailed Deer",
-    "Wild Boar",
     "Dolphin",
     "Orca",
     "Shark",
@@ -361,11 +362,11 @@ const [animalVibe, setAnimalVibe] = useState<AnimalVibe>("National Geographic Wi
   const lionFallback = useMemo<NormalizedPreset>(() => {
     const rawLion = (predatorData as Record<string, unknown>)["Lion"];
     return normalizePreset(rawLion, {
-      prey: ["Deer"],
-      environment: "Savanna",
-      lighting: "Natural light",
-      cameraGear: "Telephoto lens",
-      texture: "Fine fur detail",
+      prey: ["White-tailed Deer"],
+      environment: "Rocky Mountain forest edge and open meadow",
+      lighting: "cold dawn light, pale gold horizon glow, thin ground mist, soft natural side light",
+      cameraGear: "Nikon Z9, 400mm wildlife lens, long-lens documentary framing",
+      texture: "natural fur, feather, or scale detail, grounded body weight, realistic contact with dirt, grass, brush, and uneven terrain",
       driftRisk: "MEDIUM",
             defaultArc: "Ambush attack",
     });
@@ -386,13 +387,13 @@ const [animalVibe, setAnimalVibe] = useState<AnimalVibe>("National Geographic Wi
 
     return normalizePreset(
       {
-        prey: preyList.length ? preyList : ["Deer"],
-        environment: custom.environment || "Savanna",
-        lighting: "Natural light",
-        cameraGear: "Telephoto lens",
-        texture: "Fine fur detail",
-        driftRisk: custom.driftRisk,
-                defaultArc: custom.defaultArc || "Ambush attack",
+        prey: preyList.length ? preyList : ["White-tailed Deer"],
+        environment: custom.environment || "Rocky Mountain forest edge and open meadow",
+        lighting: "cold dawn light, pale gold horizon glow, thin ground mist, soft natural side light",
+        cameraGear: "Nikon Z9, 400mm wildlife lens, long-lens documentary framing",
+        texture: "natural fur, feather, or scale detail, grounded body weight, realistic contact with dirt, grass, brush, and uneven terrain",
+        driftRisk: custom.driftRisk || "MEDIUM",
+                     defaultArc: custom.defaultArc || "Pack hunting strategy",
       },
       lionFallback
     );
@@ -553,17 +554,28 @@ useEffect(() => {
     setCustomPredators(savedCustom);
   }, []);
 
- useEffect(() => {
+  useEffect(() => {
   if (!preset.prey.length) return;
 
-  const nextPrey = preset.prey.includes(prey) ? prey : preset.prey[0];
+  const preyWasAdjusted = !preset.prey.includes(prey);
+  const nextPrey = preyWasAdjusted ? preset.prey[0] : prey;
 
-  if (!preset.prey.includes(prey)) {
+  if (preyWasAdjusted) {
     setPrey(nextPrey);
   }
 
-  setArc(suggestArc(predator, nextPrey, preset.defaultArc) as Arc);
-}, [predator, prey, preset.prey, preset.defaultArc]);
+  const suggestedArc = suggestArc(predator, nextPrey, preset.defaultArc) as Arc;
+
+  const shouldAutoUpdateArc =
+    preyWasAdjusted ||
+    arc === lastAutoSuggestedArcRef.current;
+
+  if (shouldAutoUpdateArc && arc !== suggestedArc) {
+    setArc(suggestedArc);
+  }
+
+  lastAutoSuggestedArcRef.current = suggestedArc;
+}, [predator, prey, arc, preset.prey, preset.defaultArc]);
 
   async function handleGenerate() {
   setIsGenerating(true);
@@ -1368,8 +1380,8 @@ animalBehavior: animalBehaviorResult ?? undefined,
                         setCustomForm({
                           name: "",
                           prey: "",
-                          environment: finalEnvironment || "",
-                          defaultArc: arc,
+                          environment: finalEnvironment || "Rocky Mountain forest edge and open meadow",
+                          defaultArc: arc || "Pack hunting strategy",
                           driftRisk: preset.driftRisk,
                         });
                         setCustomModalOpen(true);
@@ -1577,7 +1589,7 @@ animalBehavior: animalBehaviorResult ?? undefined,
                 <input
                   value={customForm.name}
                   onChange={(e) => setCustomForm((p) => ({ ...p, name: e.target.value }))}
-                  placeholder="e.g., Snow Leopard"
+                  placeholder="e.g., Mountain Lion"
                   className="w-full rounded-xl border border-gray-300 px-3 py-2 text-sm"
                 />
               </div>
@@ -1589,7 +1601,7 @@ animalBehavior: animalBehaviorResult ?? undefined,
                 <input
                   value={customForm.prey}
                   onChange={(e) => setCustomForm((p) => ({ ...p, prey: e.target.value }))}
-                  placeholder="e.g., Deer, Goat, Boar"
+                  placeholder="e.g., White-tailed Deer, Elk, Wild Boar"
                   className="w-full rounded-xl border border-gray-300 px-3 py-2 text-sm"
                 />
               </div>
@@ -1599,7 +1611,7 @@ animalBehavior: animalBehaviorResult ?? undefined,
                 <input
                   value={customForm.environment}
                   onChange={(e) => setCustomForm((p) => ({ ...p, environment: e.target.value }))}
-                  placeholder="e.g., Jungle, Snowfield, Riverbank"
+                  placeholder="e.g., Rocky Mountain forest edge, Everglades swamp, Yellowstone grassland"
                   className="w-full rounded-xl border border-gray-300 px-3 py-2 text-sm"
                 />
               </div>
@@ -1641,9 +1653,9 @@ animalBehavior: animalBehaviorResult ?? undefined,
 
                   const entry: CustomPredatorForm = {
                     name,
-                    prey: customForm.prey.trim() || "Deer",
-                    environment: customForm.environment.trim() || "Savanna",
-                    defaultArc: customForm.defaultArc.trim() || "Ambush attack",
+                    prey: customForm.prey.trim() || "White-tailed Deer",
+                    environment: customForm.environment.trim() || "Rocky Mountain forest edge and open meadow",
+                    defaultArc: customForm.defaultArc.trim() || "Pack hunting strategy",
                     driftRisk: customForm.driftRisk,
                   };
 
@@ -1671,7 +1683,7 @@ animalBehavior: animalBehaviorResult ?? undefined,
                     writeCustomPredators(next);
                     return next;
                   });
-                  if (predator === name) setPredator("Lion");
+                 if (predator === name) setPredator("Wolf Pack");
                   setCustomModalOpen(false);
                 }}
                 className="rounded-xl border border-red-200 bg-red-50 px-5 py-2.5 text-sm font-extrabold text-red-700 hover:bg-red-100 active:scale-[0.98]"

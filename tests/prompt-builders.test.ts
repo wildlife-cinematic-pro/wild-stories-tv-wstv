@@ -4,6 +4,9 @@ import {
   buildRunwayShots,
   buildKlingShots,
   buildKlingNative15s,
+  buildKlingSixShot,
+  buildCapCutPlan,
+  buildClipChaining,
 } from "@/lib/prompt-builders";
 
 describe("buildImagePrompt – engine-aware MJ params", () => {
@@ -204,5 +207,132 @@ describe("Step 6 — One-action hard gate (Runway + Kling)", () => {
     );
     // Native prompt text मा पनि banned शब्द आउनु हुँदैन
     banned(out);
+  });
+});
+describe("Step 7 — Opening readability and tension clarity", () => {
+  const base = {
+    predator: "Wolf",
+    prey: "Elk",
+    env: "Rocky Mountain meadow",
+    arc: "Pack hunting strategy" as const,
+    weather: "Golden Hour" as const,
+    emotionalTone: "Raw Tension" as const,
+    animalVibe: "BBC Earth Documentary" as const,
+    sceneDesc: "Both animals are visible at the first moment, tension is immediate, no empty setup.",
+  };
+
+  const quality = {
+    realismMode: "Reference Locked",
+    motionOnlyI2V: true,
+    referenceLock: true,
+    singleActionRule: true,
+    microMotion: true,
+    heroVeo: false,
+  } as const;
+
+  it("Runway Shot1 includes opening readability language", () => {
+    const shots = buildRunwayShots(
+      base.predator,
+      base.prey,
+      base.env,
+      base.arc,
+      base.weather,
+      "Gen-4.5",
+      base.emotionalTone,
+      base.animalVibe,
+      base.sceneDesc,
+      quality
+    );
+    expect(shots.shot1).toContain("fully readable from frame one");
+    expect(shots.shot1).toContain("immediate visible tension");
+  });
+
+  it("Kling Shot1 includes opening readability language", () => {
+    const shots = buildKlingShots(
+      base.predator,
+      base.prey,
+      base.env,
+      base.arc,
+      base.weather,
+      "Kling 3.0 Pro",
+      base.emotionalTone,
+      base.animalVibe,
+      base.sceneDesc,
+      quality
+    );
+    expect(shots.shot1).toContain("fully readable from frame one");
+    expect(shots.shot1).toContain("immediate visible tension");
+  });
+
+  it("KlingNative15s includes opening-tension wording and first-frame readability", () => {
+    const out = buildKlingNative15s(
+      base.predator,
+      base.prey,
+      base.env,
+      base.arc,
+      base.weather,
+      "Kling 3.0 Pro",
+      base.emotionalTone,
+      base.animalVibe,
+      base.sceneDesc,
+      quality
+    );
+    expect(out).toContain("OPENING TENSION");
+    expect(out).toContain("fully readable from frame one");
+  });
+});
+describe("Step 7B — Kling 6-shot opening readability", () => {
+  const base = {
+    predator: "Wolf",
+    prey: "Elk",
+    env: "Rocky Mountain meadow",
+    arc: "Pack hunting strategy" as const,
+    weather: "Golden Hour" as const,
+    emotionalTone: "Raw Tension" as const,
+    animalVibe: "BBC Earth Documentary" as const,
+    sceneDesc: "Both animals are visible early, tension is immediate, no empty setup.",
+  };
+
+  const quality = {
+    realismMode: "Reference Locked",
+    motionOnlyI2V: true,
+    referenceLock: true,
+    singleActionRule: true,
+    microMotion: true,
+    heroVeo: false,
+  } as const;
+
+  it("KlingSixShot starts with readable opening tension instead of a weak macro-only opening", () => {
+    const out = buildKlingSixShot(
+      base.predator,
+      base.prey,
+      base.env,
+      base.arc,
+      base.weather,
+      "Kling 3.0 Pro",
+      base.emotionalTone,
+      base.animalVibe,
+      base.sceneDesc,
+      quality
+    );
+
+    expect(out).toContain("OPENING TENSION");
+    expect(out).toContain("both fully visible");
+    expect(out).not.toContain("MACRO CLOSE-UP");
+  });
+});
+describe("Step 7C — supporting prompt helpers keep readability language", () => {
+  it("CapCut plan emphasizes strong opening readability", () => {
+    const out = buildCapCutPlan("Wolf", "Pack hunting strategy", "Golden Hour");
+    expect(out).toContain("strongest readable opening frame");
+    expect(out).toContain("both subjects visible");
+    expect(out).toContain("immediate predator pressure");
+  });
+
+  it("Clip chaining emphasizes readable first frame and clear spacing", () => {
+    const out = buildClipChaining("Wolf", "MEDIUM");
+    expect(out).toContain("strong first-frame readability");
+    expect(out).toContain("clear opening tension");
+    expect(out).toContain("spacing");
   });
 });

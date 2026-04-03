@@ -27,11 +27,11 @@ import type {
 // 1. VIRAL HOOKS  (legacy — one hook per arc)
 // ─────────────────────────────────────────────────────────────
 const VIRAL_HOOKS: Partial<Record<Arc, (predator: string, prey: string) => string>> = {
-  "Ambush attack": (predator, prey) =>
-    `The ${prey.toLowerCase()} noticed the ${predator.toLowerCase()} too late. ⚠️`,
+    "Ambush attack": (predator, prey) =>
+    `The ${prey.toLowerCase()} looked up too late and the ${predator.toLowerCase()} was already there. ⚠️`,
 
-  "Chase and takedown": (predator, prey) =>
-    `Once the ${predator.toLowerCase()} locked in, the ${prey.toLowerCase()} had seconds. ⚡`,
+    "Chase and takedown": (predator, prey) =>
+    `Once the ${predator.toLowerCase()} committed, the ${prey.toLowerCase()} lost space fast. ⚡`,
 
   "Defender stands ground": (predator) =>
     `Nobody expected this ${predator.toLowerCase()} to hold its ground. 🦬`,
@@ -42,29 +42,29 @@ const VIRAL_HOOKS: Partial<Record<Arc, (predator: string, prey: string) => strin
   "Territory dominance battle": (_predator, prey) =>
     `The ${prey.toLowerCase()} crossed the wrong boundary. 👀`,
 
-  "Pack hunting strategy": (_predator, prey) =>
-    `The ${prey.toLowerCase()} was already surrounded. It just didn't know it yet. 🧠`,
+    "Pack hunting strategy": (_predator, prey) =>
+    `The ${prey.toLowerCase()} was already losing the field before it reacted. 🧠`,
 
   "Predator vs predator fight": () =>
     `Two apex predators. One territory. No room to back down. 💥`,
 
-  "Escape from danger": (_predator, prey) =>
-    `This ${prey.toLowerCase()} had less than a second to react. ⚡`,
+    "Escape from danger": (_predator, prey) =>
+    `This ${prey.toLowerCase()} had almost no time to read the danger. ⚡`,
 };
 
 // ─────────────────────────────────────────────────────────────
 // 2. 2026 HOOKS  (3 variants per arc — A/B/C test ready)
 // ─────────────────────────────────────────────────────────────
 const HOOKS_2026: Partial<Record<Arc, (predator: string, prey: string) => string[]>> = {
-  "Ambush attack": (predator, prey) => [
-    `The ${prey.toLowerCase()} looked away for one second. ⚠️`,
-    `The ${predator.toLowerCase()} was already in range before the move. 👀`,
-    `One silent step ended this ${prey.toLowerCase()}'s safety. 🔥`,
+    "Ambush attack": (predator, prey) => [
+    `The ${prey.toLowerCase()} looked up too late. ⚠️`,
+    `The ${predator.toLowerCase()} was already inside the danger zone. 👀`,
+    `No warning. Just pressure and one bad second. 🔥`,
   ],
-  "Chase and takedown": (predator, prey) => [
-    `Once the ${predator.toLowerCase()} locked in, this turned ugly fast. ⚡`,
-    `The ${prey.toLowerCase()} reacted instantly. It still wasn't enough. 😳`,
-    `This chase was over the second the ${predator.toLowerCase()} committed. 🎬`,
+    "Chase and takedown": (predator, prey) => [
+    `The ${predator.toLowerCase()} committed and the escape window vanished. ⚡`,
+    `The ${prey.toLowerCase()} reacted fast. The gap still closed. 😳`,
+    `This chase was readable from the first stride. 🎬`,
   ],
   "Defender stands ground": (predator, prey) => [
     `Nobody expected this ${predator.toLowerCase()} to hold position. 🦬`,
@@ -81,10 +81,10 @@ const HOOKS_2026: Partial<Record<Arc, (predator: string, prey: string) => string
     `This is ${predator}'s ground and the ${prey.toLowerCase()} felt it instantly. 🔥`,
     `One step too far changed the entire mood. 👀`,
   ],
-  "Pack hunting strategy": (predator, prey) => [
-    `The ${prey.toLowerCase()} was already boxed in before it reacted. ⚠️`,
-    `This is why ${predator.toLowerCase()}s hunt like a system, not a chase. 🧠`,
-    `By the time the ${prey.toLowerCase()} moved, the angle was already gone. 👀`,
+    "Pack hunting strategy": (predator, prey) => [
+    `The ${prey.toLowerCase()} was already losing space before it reacted. ⚠️`,
+    `This is why ${predator.toLowerCase()}s feel dangerous before full contact. 🧠`,
+    `By the time the ${prey.toLowerCase()} moved, the escape lane was already gone. 👀`,
   ],
   "Predator vs predator fight": (predator, prey) => [
     `Two apex predators. One space. No safe outcome. 💥`,
@@ -124,12 +124,10 @@ const VIRAL_CAPTIONS: Partial<Record<Arc, (predator: string, prey: string, env: 
 // 4. 2026 STORY CAPTION
 // ─────────────────────────────────────────────────────────────
 const CAPTIONS_2026: Partial<Record<Arc, (predator: string, prey: string, env: string) => string>> = {
-  "Ambush attack": (predator, prey, env) =>
-    `In the ${env}, the warning came too late. ⚠️\n\nThe ${prey.toLowerCase()} looked safe for a moment, but the ${predator.toLowerCase()} had already closed the distance. That is what makes ambushes feel brutal in real time — the danger is already there before the prey fully understands it.\n\nAt what second did you realize the turn was coming? 👇\n\nFollow for original wildlife reels with real tension. 🔥`,
-
-  "Chase and takedown": (predator, prey, env) =>
-    `Across the ${env}, this became a pure speed decision. ⚡\n\nThe ${predator.toLowerCase()} committed fully, and the ${prey.toLowerCase()} had only a tiny window to respond. Moments like this show how quickly a chase becomes a result.\n\nDid you think the ${prey.toLowerCase()} had a real chance? 👇\n\nFollow for original wildlife reels built for retention. 🎬`,
-
+    "Ambush attack": (predator, prey, env) =>
+    `In the ${env}, the danger was readable before the full move. ⚠️\n\nThe ${prey.toLowerCase()} looked up too late, and the ${predator.toLowerCase()} was already inside the pressure zone. That is what makes a real ambush feel brutal on screen — no long setup, just one bad second and immediate tension.\n\nAt what second did you realize the safety was gone? 👇\n\nFollow for original wildlife reels built around real tension. 🔥`,
+    "Chase and takedown": (predator, prey, env) =>
+    `Across the ${env}, the escape window disappeared fast. ⚡\n\nThe ${predator.toLowerCase()} committed cleanly, and the ${prey.toLowerCase()} had almost no time to reset. What makes this kind of chase strong on short-form is how readable the pressure feels from the first stride.\n\nDid you think the ${prey.toLowerCase()} ever had enough space? 👇\n\nFollow for original wildlife reels with fast, clear storytelling. 🎬`,
   "Defender stands ground": (predator, prey, env) =>
     `In the ${env}, every instinct said move. This ${predator.toLowerCase()} did the opposite. 🦬\n\nWhen the ${prey.toLowerCase()} kept pressing forward, the encounter changed completely. It stopped feeling like pressure and started feeling like dominance.\n\nDid you expect it to hold position? 👇\n\nFollow for wildlife that breaks expectations. 🔥`,
 
@@ -139,14 +137,14 @@ const CAPTIONS_2026: Partial<Record<Arc, (predator: string, prey: string, env: s
   "Territory dominance battle": (predator, prey, env) =>
     `In the ${env}, territory is never symbolic. 👀\n\nThe ${prey.toLowerCase()} stepped into the wrong space, and the ${predator.toLowerCase()} answered immediately. In the wild, boundaries are enforced, not discussed.\n\nWould you have backed off earlier? 👇\n\nFollow for raw dominance moments in nature. 🔥`,
 
-  "Pack hunting strategy": (predator, prey, env) =>
-    `At first, the ${prey.toLowerCase()} looked free. Then the pattern became obvious. 🧠
+    "Pack hunting strategy": (predator, prey, env) =>
+    `At first, the ${prey.toLowerCase()} looked mobile. Then the space started disappearing. 🧠
 
-In the ${env}, the ${predator.toLowerCase()} is dangerous because the pressure builds before the prey fully reads what is happening. This is not chaos. It is timing, spacing, and control.
+In the ${env}, the ${predator.toLowerCase()} becomes dangerous before full contact because the pressure is already organized. This is not random movement. It is timing, spacing, angle control, and a closing escape lane.
 
-At what second did you realize the escape lane was gone? 👇
+At what second did you realize the ${prey.toLowerCase()} was losing the field? 👇
 
-Follow for wildlife sequences with real tension and clean storytelling. 🎬`,
+Follow for wildlife sequences with real pack pressure and clean storytelling. 🎬`,
 
   "Predator vs predator fight": (predator, prey, env) =>
     `Two apex predators. One territory. No safe outcome. 💥\n\nA ${predator.toLowerCase()} facing a ${prey.toLowerCase()} in the ${env} feels intense because both animals understand the cost of a bad decision. These encounters escalate fast.\n\nWhich animal did you trust more here? 👇\n\nFollow for rare predator-vs-predator tension. 🔥`,
@@ -159,34 +157,34 @@ Follow for wildlife sequences with real tension and clean storytelling. 🎬`,
 // 5. CTAs
 // ─────────────────────────────────────────────────────────────
 const VIRAL_CTAS: Partial<Record<Arc, string>> = {
-  "Ambush attack":
-    "Did you see the turn before it happened? Comment below 👇 Follow for original wildlife reels.",
-  "Chase and takedown":
-    "Did the prey ever have a real chance? Comment below 👇 Follow for daily wildlife tension.",
+    "Ambush attack":
+    "At what second did you realize the danger was already there? Comment below 👇 Follow for original wildlife reels.",
+    "Chase and takedown":
+    "Did the prey ever have enough space to recover? Comment below 👇 Follow for daily wildlife tension.",
   "Defender stands ground":
     "Did you expect that stand? Drop your reaction below 👇 Follow for daily wildlife that breaks expectations.",
   "Giant vs giant clash":
     "Who won this clash? Comment your pick below 👇 Follow for giant-animal encounters.",
   "Territory dominance battle":
     "Would you have backed off earlier? Comment below 👇 Follow for raw dominance moments.",
-  "Pack hunting strategy":
-    "When did you notice the trap forming? Comment below 👇 Follow for smart wildlife tension.",
+    "Pack hunting strategy":
+    "When did you notice the escape lane disappearing? Comment below 👇 Follow for smart wildlife tension.",
   "Predator vs predator fight":
     "Which animal would you trust more here? Comment below 👇 Follow for rare predator encounters.",
-  "Escape from danger":
-    "Did the prey escape in time? Comment below 👇 Follow for instant-impact wildlife reels.",
+    "Escape from danger":
+    "Did the prey read the danger in time? Comment below 👇 Follow for instant-impact wildlife reels.",
 };
 
 // ─────────────────────────────────────────────────────────────
 // 6. HASHTAGS
 // ─────────────────────────────────────────────────────────────
 const USA_HASHTAGS: Partial<Record<Arc, string>> = {
-  "Defender stands ground":
-    "#wildlife #viral #nature #yellowstone #wildlifeencounter #unexpected #animalbattle #naturaldocumentary #wildanimals #viralreels",
-  "Giant vs giant clash":
-    "#wildlife #viral #nature #animalbattle #giantanimals #wildfight #naturaldocumentary #viralvideo #wildanimals #shocking",
-  "Pack hunting strategy":
-    "#wildlife #nature #wolfpack #elk #animalbehavior #wildlifedocumentary #facebookreels #viralreels #predatorprey #yellowstone",
+    "Defender stands ground":
+    "#wildlife #nature #yellowstone #bison #moose #elk #defender #animalbehavior #facebookreels #viralreels",
+    "Giant vs giant clash":
+    "#wildlife #nature #yellowstone #bison #grizzlybear #giantanimals #animalbattle #facebookreels #viralreels #wildlifedocumentary",
+    "Pack hunting strategy":
+    "#wildlife #nature #wolfpack #wolf #elk #yellowstone #animalbehavior #predatorprey #facebookreels #viralreels",
 };
 
 // ─────────────────────────────────────────────────────────────
@@ -315,27 +313,27 @@ export function buildPlatformPack(
     hook: hooks[0],
     caption,
     hashtags: `#Wildlife #${predator.replace(/\s+/g, "")} #${prey.replace(/\s+/g, "")} #NatureDocumentary #AnimalBehavior #FacebookReels #OriginalContent`,
-    bestTime: "Test weekday 8–10 AM ET and 12–3 PM ET first, then refine with Facebook Insights.",
-    cmpNote:
-      "Facebook Content Monetization beta is invite-only. Eligible formats include reels, photos, stories, and text posts. Meta prioritizes original content.",
-    strategyNote:
-      "Use the Page Featured section to pin your strongest welcome reel or conversion asset.",
+        bestTime: "Test weekday 8–10 AM ET and 12–3 PM ET first, then refine with Facebook Insights while prioritizing reels with fast readable openings.",
+        cmpNote:
+      "Facebook Content Monetization beta is invite-only. Eligible formats include reels, photos, stories, and text posts. Meta prioritizes original content and stronger viewer retention signals.",
+        strategyNote:
+      "Use the Page Featured section to pin the reel with the clearest first-frame tension and fastest readable wildlife setup.",
   };
 
   const instagram: InstagramPack = {
     hook: hooks[1],
     caption: `${hooks[1]}\n\n${caption.split("\n\n")[0]}\n\nFollow for daily wildlife cinema.`,
     hashtags: `#wildlife #nature #animalbehavior #reels #documentary #${predator.toLowerCase().replace(/\s+/g, "")}`,
-    bestTime: "Test afternoon and evening windows, then optimize from account Insights.",
-    strategyNote: "Keep the first line punchy and let the visual do most of the work.",
+    bestTime: "Test afternoon and evening windows, then optimize from account Insights while keeping the opening frame instantly readable.",
+    strategyNote: "Keep the first line punchy and make sure the opening frame shows readable pressure immediately.",
   };
 
   const tiktok: TikTokPack = {
     hook: hooks[2],
     caption: `${hooks[2]} Follow for more wildlife cinema.`,
     hashtags: `#wildlife #animals #nature #fyp #documentary #${predator.toLowerCase().replace(/\s+/g, "")}`,
-    bestTime: "Test late afternoon to evening and refine using retention, not only views.",
-    strategyNote: "Use larger caption beats and slightly faster editing language than Facebook.",
+    bestTime: "Test late afternoon to evening and refine using retention, not only views, especially on clips with immediate visible tension.",
+    strategyNote: "Use larger caption beats, faster opening language, and no slow setup before the tension is visible.",
   };
 
   const youtube_shorts: YouTubeShortsPack = {
@@ -343,7 +341,7 @@ export function buildPlatformPack(
     description: `${caption}\n\nSubscribe for more wildlife cinema.`,
     tags: `wildlife, ${predator.toLowerCase()}, ${prey.toLowerCase()}, ${arc.toLowerCase()}, nature documentary, animal behavior, ai wildlife`,
     bestTime: "Keep a consistent cadence and judge by retention plus returning viewers.",
-    strategyNote: "Write a searchable title and make the first description sentence descriptive.",
+    strategyNote: "Write a searchable title and make the opening seconds instantly readable before the sequence escalates.",
   };
 
   return { facebook, instagram, tiktok, youtube_shorts };
