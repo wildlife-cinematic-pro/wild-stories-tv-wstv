@@ -28,12 +28,12 @@ export type Weather =
 
 export type HabitatPreset =
   | "Auto"
-  | "Open Green Grassland"
-  | "Dry Savanna Plain"
-  | "Marsh Wetland"
+  | "Open Prairie Grassland"
+  | "Dry Prairie Plain"
+  | "Everglades Marsh"
   | "Riverbank Reeds"
   | "Forest Clearing"
-  | "Dense Jungle Edge"
+  | "Cypress Swamp Edge"
   | "Rocky Mountain Meadow"
   | "Snow Field Tundra"
   | "Desert Scrubland"

@@ -295,7 +295,6 @@ const [animalVibe, setAnimalVibe] = useState<AnimalVibe>("National Geographic Wi
   // ✅ Custom Predators (user-added)
   const [customPredators, setCustomPredators] = useState<CustomPredatorForm[]>([]);
   const [customModalOpen, setCustomModalOpen] = useState(false);
-  const lastAutoSuggestedArcRef = useRef<Arc | null>(null);
 
   const [customForm, setCustomForm] = useState<{
     name: string;
@@ -557,24 +556,18 @@ useEffect(() => {
   useEffect(() => {
   if (!preset.prey.length) return;
 
-  const preyWasAdjusted = !preset.prey.includes(prey);
-  const nextPrey = preyWasAdjusted ? preset.prey[0] : prey;
+  const nextPrey = preset.prey.includes(prey) ? prey : preset.prey[0];
 
-  if (preyWasAdjusted) {
+  if (prey !== nextPrey) {
     setPrey(nextPrey);
+    return;
   }
 
   const suggestedArc = suggestArc(predator, nextPrey, preset.defaultArc) as Arc;
 
-  const shouldAutoUpdateArc =
-    preyWasAdjusted ||
-    arc === lastAutoSuggestedArcRef.current;
-
-  if (shouldAutoUpdateArc && arc !== suggestedArc) {
+  if (arc !== suggestedArc) {
     setArc(suggestedArc);
   }
-
-  lastAutoSuggestedArcRef.current = suggestedArc;
 }, [predator, prey, arc, preset.prey, preset.defaultArc]);
 
   async function handleGenerate() {
@@ -993,61 +986,55 @@ animalBehavior: animalBehaviorResult ?? undefined,
 
             <div>
               <label className="mb-1 block text-xs font-semibold text-gray-500">Survival Animal</label>
-              <div className="flex gap-2">
-                <input
-                  value={prey}
-                  onChange={(e) => setPrey(e.target.value)}
-                  className="flex-1 rounded-lg border border-gray-300 px-3 py-2 text-sm text-gray-800"
-                  placeholder="Prey animal"
-                />
-                {preset.prey.length > 0 && (
-                  <select
-                    value=""
-                    onChange={(e) => e.target.value && setPrey(e.target.value)}
-                    className="rounded-lg border border-gray-300 bg-white px-2 py-2 text-xs text-gray-600"
-                  >
-                    <option value="">Suggestions</option>
-                    {preset.prey.map((p) => (
-                      <option key={p} value={p}>
-                        {p}
-                      </option>
-                    ))}
-                  </select>
-                )}
-              </div>
+              <select
+                value={prey}
+                onChange={(e) => setPrey(e.target.value)}
+                className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-800"
+              >
+                {preset.prey.map((p) => (
+                  <option key={p} value={p}>
+                    {p}
+                  </option>
+                ))}
+              </select>
             </div>
           </div>
 
           <div className="mt-3 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
   <div>
-    <label className="mb-1 block text-xs font-semibold text-gray-500">Conflict Arc</label>
-    <select
-      value={arc}
-      onChange={(e) => setArc(e.target.value as Arc)}
-      className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-800"
-    >
-      {arcs.map((a) => (
-        <option key={a} value={a}>
-          {a}
-        </option>
-      ))}
-    </select>
-  </div>
+  <label className="mb-1 block text-xs font-semibold text-gray-500">Conflict Arc</label>
+  <select
+    value={arc}
+    disabled
+    className="w-full rounded-lg border border-gray-300 bg-gray-100 px-3 py-2 text-sm text-gray-700"
+  >
+    <option value={arc}>{arc}</option>
+  </select>
+  <p className="mt-1 text-[11px] text-gray-500">
+    Auto-matched from predator + survival animal for cleaner realism.
+  </p>
+</div>
 
   <div>
-    <label className="mb-1 block text-xs font-semibold text-gray-500">Background / Habitat</label>
-    <select
-      value={habitat}
-      onChange={(e) => setHabitat(e.target.value as HabitatPreset)}
-      className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-800"
-    >
-      {habitatOptions.map((h) => (
-        <option key={h} value={h}>
-          {h}
-        </option>
-      ))}
-    </select>
-  </div>
+  <label className="mb-1 block text-xs font-semibold text-gray-500">Habitat Override</label>
+  <select
+    value={habitat}
+    onChange={(e) => setHabitat(e.target.value as HabitatPreset)}
+    className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-800"
+  >
+    {habitatOptions.map((h) => (
+      <option key={h} value={h}>
+        {h}
+      </option>
+    ))}
+  </select>
+  <p className="mt-1 text-[11px] text-gray-500">
+    Auto uses predator-matched habitat. Override only when you want a different but still realistic U.S. setting.
+  </p>
+  <p className="mt-2 text-[11px] leading-relaxed text-gray-600">
+    <span className="font-semibold text-gray-700">Current habitat:</span> {finalEnvironment}
+  </p>
+</div>
 
   <div>
     <label className="mb-1 block text-xs font-semibold text-gray-500">Scene Atmosphere</label>
@@ -1616,13 +1603,19 @@ animalBehavior: animalBehaviorResult ?? undefined,
               </div>
 
               <div>
-                <label className="mb-1 block text-xs font-semibold text-gray-600">Default Arc</label>
-                <input
-                  value={customForm.defaultArc}
-                  onChange={(e) => setCustomForm((p) => ({ ...p, defaultArc: e.target.value }))}
-                  className="w-full rounded-xl border border-gray-300 px-3 py-2 text-sm"
-                />
-              </div>
+  <label className="mb-1 block text-xs font-semibold text-gray-600">Default Arc</label>
+  <select
+    value={customForm.defaultArc}
+    onChange={(e) => setCustomForm((p) => ({ ...p, defaultArc: e.target.value }))}
+    className="w-full rounded-xl border border-gray-300 bg-white px-3 py-2 text-sm"
+  >
+    {arcs.map((a) => (
+      <option key={a} value={a}>
+        {a}
+      </option>
+    ))}
+  </select>
+</div>
 
               <div>
                 <label className="mb-1 block text-xs font-semibold text-gray-600">Drift risk</label>
@@ -1649,23 +1642,51 @@ animalBehavior: animalBehaviorResult ?? undefined,
                 onClick={() => {
                   const name = customForm.name.trim();
                   if (!name) return;
+                 const builtInPredatorExists = Object.prototype.hasOwnProperty.call(predatorData, name);
 
-                  const entry: CustomPredatorForm = {
-                    name,
-                    prey: customForm.prey.trim() || "White-tailed Deer",
-                    environment: customForm.environment.trim() || "Rocky Mountain forest edge and open meadow",
-                    defaultArc: customForm.defaultArc.trim() || "Pack hunting strategy",
-                    driftRisk: customForm.driftRisk,
-                  };
+if (builtInPredatorExists) {
+  alert("This animal already exists in the built-in predator list. Use a different custom name.");
+  return;
+}
+
+const normalizedName = name.toLowerCase();
+
+const normalizedPrey = Array.from(
+  new Set(
+    customForm.prey
+      .split(",")
+      .map((item) => item.trim())
+      .filter(Boolean)
+  )
+);
+
+const entry: CustomPredatorForm = {
+  name,
+  prey: normalizedPrey.length ? normalizedPrey.join(", ") : "White-tailed Deer",
+  environment: customForm.environment.trim() || "Rocky Mountain forest edge and open meadow",
+  defaultArc: customForm.defaultArc || "Pack hunting strategy",
+  driftRisk: customForm.driftRisk,
+};
 
                   setCustomPredators((prev) => {
-                    const next = prev.filter((x) => x.name !== name).concat(entry);
+                    const next = prev
+  .filter((x) => x.name.trim().toLowerCase() !== normalizedName)
+  .concat(entry);
                     writeCustomPredators(next);
                     return next;
                   });
 
                   setPredator(name);
-                  setCustomModalOpen(false);
+setPrey((normalizedPrey[0] || "White-tailed Deer"));
+setArc(
+  suggestArc(
+    name,
+    normalizedPrey[0] || "White-tailed Deer",
+    entry.defaultArc
+  ) as Arc
+);
+setHabitat("Auto");
+setCustomModalOpen(false);
                 }}
                 className="rounded-xl bg-gray-900 px-5 py-2.5 text-sm font-extrabold text-white hover:bg-black active:scale-[0.98]"
               >
@@ -1678,11 +1699,16 @@ animalBehavior: animalBehaviorResult ?? undefined,
                   const name = customForm.name.trim();
                   if (!name) return;
                   setCustomPredators((prev) => {
-                    const next = prev.filter((x) => x.name !== name);
+                    const next = prev.filter((x) => x.name.trim().toLowerCase() !== name.toLowerCase());
                     writeCustomPredators(next);
                     return next;
                   });
-                 if (predator === name) setPredator("Wolf Pack");
+                 if (predator === name) {
+  setPredator("Wolf Pack");
+  setPrey("Elk");
+  setArc("Pack hunting strategy");
+  setHabitat("Auto");
+}
                   setCustomModalOpen(false);
                 }}
                 className="rounded-xl border border-red-200 bg-red-50 px-5 py-2.5 text-sm font-extrabold text-red-700 hover:bg-red-100 active:scale-[0.98]"

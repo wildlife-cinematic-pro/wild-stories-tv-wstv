@@ -195,15 +195,15 @@ export const weatherOptions: Weather[] = [
 export const habitatOptions: HabitatPreset[] = [
   "Auto",
   "Rocky Mountain Meadow",
-  "Riverbank Reeds",
+  "Open Prairie Grassland",
   "Forest Clearing",
+  "Riverbank Reeds",
+  "Cypress Swamp Edge",
+  "Everglades Marsh",
   "Snow Field Tundra",
-  "Open Green Grassland",
-  "Marsh Wetland",
-  "Coastal Cliffline",
-  "Dry Savanna Plain",
-  "Dense Jungle Edge",
+  "Dry Prairie Plain",
   "Desert Scrubland",
+  "Coastal Cliffline",
 ];
 // ─────────────────────────────────────────────────────────────
 // ARC MOTION STRENGTH  (Runway legacy 0–100 scale)
