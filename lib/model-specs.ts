@@ -69,41 +69,30 @@ export const KLING_MODEL_MULT: Record<KlingModel, number> = {
 // ─────────────────────────────────────────────────────────────
 export const RUNWAY_STYLE_NOTE: Record<RunwayModel, string> = {
   "Gen-4.5":
-    // [Official] flagship — strong motion quality, prompt adherence, visual fidelity
-    // [House] camera-first prompting: push, drift, hold, track
-    "Runway Gen-4.5: flagship — best cinematic quality, temporal coherence, camera control. Use rich camera language: push, drift, hold, track.",
+    "Runway Gen-4.5: flagship — best cinematic quality, temporal coherence, camera control. Prioritize strong first-frame readability, immediate visible tension, and clear predator-to-survival-animal spacing. Use rich camera language: push, drift, hold, track.",
 
   "Gen-4 Turbo":
-    // [Official] faster generation, lower cost
-    // [House] iterate motion structure here, upgrade to Gen-4.5 for finals
-    "Runway Gen-4 Turbo: fast cinematic model — prioritise camera motion. Use natural camera language: push, drift, hold.",
+    "Runway Gen-4 Turbo: fast cinematic model — prioritize readable opening composition, clear subject spacing, and simple camera motion. Use natural camera language: push, drift, hold.",
 
   "Gen-4":
-    // [Official] stable model
-    "Runway Gen-4: stable model — describe camera angles explicitly.",
+    "Runway Gen-4: stable model — describe camera angles explicitly and keep the opening clear, readable, and tension-forward.",
 };
 
 export const KLING_STYLE_NOTE: Record<KlingModel, string> = {
   "Kling 3.0 Pro":
-    // [Official] native audio, Start/End Frame, motion control
-    // [House] best for action sequences and body mechanics
-  "Kling 3.0 Pro: WSTV action workflow — describe body mechanics, weight, impact forces, and environmental reaction in full detail.",
+    "Kling 3.0 Pro: WSTV action workflow — prioritize strong opening readability, clear full-subject visibility, body mechanics, weight transfer, impact forces, and environmental reaction in full detail.",
 
   "Kling 3.0 Standard":
-    // [Official] native audio, Start/End Frame
-    "Kling 3.0 Standard: balanced WSTV motion workflow — describe primary action, weight, and environmental reaction.",
+    "Kling 3.0 Standard: balanced WSTV motion workflow — prioritize readable openings, clear subject spacing, primary action, grounded weight, and environmental reaction.",
 
   "Kling 2.6 Pro":
-    // [Official] Image/Text to Video + audio
-    "Kling 2.6 Pro: strong physics + character motion. Image/Text to Video with audio.",
+    "Kling 2.6 Pro: strong physics + character motion. Keep prompts clear, readable, and action-focused with strong subject visibility.",
 
   "Kling 2.5 Turbo Pro":
-    // [Official] Start/End Frame supported
-    "Kling 2.5 Turbo Pro: fast — single primary motion per shot. Start/End Frame supported.",
+    "Kling 2.5 Turbo Pro: fast — single primary motion per shot, readable opening composition, and clean subject spacing. Start/End Frame supported.",
 
   "Kling 2.5 Turbo":
-    // [Official] fast I2V
-    "Kling 2.5 Turbo: fast I2V — keep prompts short and focused.",
+    "Kling 2.5 Turbo: fast I2V — keep prompts short, readable, and focused on one clean motion beat.",
 };
 
 // ─────────────────────────────────────────────────────────────
@@ -119,39 +108,39 @@ export type ModelNote = {
 
 export const RUNWAY_MODEL_NOTES: Record<RunwayModel, ModelNote> = {
   "Gen-4.5": {
-    official: "Flagship. Strong motion quality, prompt adherence, visual fidelity.",   // [Official]
-    house:    "🆕 Best choice for hero shots and final-quality renders.",
+    official: "Flagship. Strong motion quality, prompt adherence, visual fidelity.",
+    house:    "🆕 Best choice for hero shots, strong first-frame readability, and final-quality renders.",
   },
   "Gen-4 Turbo": {
-    official: "Faster generation, lower credit cost.",                                 // [Official]
-    house:    "⚡ Iterate motion structure here — upgrade to Gen-4.5 for finals.",
+    official: "Faster generation, lower credit cost.",
+    house:    "⚡ Best for fast structure tests with clear openings before upgrading to Gen-4.5.",
   },
   "Gen-4": {
-    official: "Stable generation model.",                                              // [Official]
-    house:    "Reliable for standard cinematic shots.",
+    official: "Stable generation model.",
+    house:    "Reliable for standard cinematic shots with simple readable opening composition.",
   },
 };
 
 export const KLING_MODEL_NOTES: Record<KlingModel, ModelNote> = {
   "Kling 3.0 Pro": {
     official: "Action-focused Kling workflow option used in WSTV.",
-    house:    "🆕 Best for action sequences, 15s multi-shot, motion transfer.",
+    house:    "🆕 Best for readable action openings, 15s multi-shot, and strongest body-mechanics control.",
   },
   "Kling 3.0 Standard": {
     official: "Balanced Kling workflow option used in WSTV.",
-    house:    "🆕 Good balance of quality and speed for daily WSTV schedule.",
+    house:    "🆕 Good balance of quality, speed, and clear full-subject readability for daily WSTV output.",
   },
   "Kling 2.6 Pro": {
     official: "Earlier Kling workflow option kept for compatibility.",
-    house:    "Solid fallback if 3.0 queue is long.",
+    house:    "Solid fallback when 3.0 queue is long, but keep prompts simple and readable.",
   },
   "Kling 2.5 Turbo Pro": {
     official: "Fast Kling workflow option for lighter motion tests.",
-    house:    "Quick motion structure tests only.",
+    house:    "Quick motion-structure tests only. Keep one clear action beat and clean spacing.",
   },
   "Kling 2.5 Turbo": {
     official: "Fast draft Kling workflow option.",
-    house:    "Cheapest option — low-stakes drafts only.",
+    house:    "Cheapest option for low-stakes drafts and rough opening tests only.",
   },
 };
 
@@ -164,10 +153,10 @@ export const KLING_MODEL_NOTES: Record<KlingModel, ModelNote> = {
 //   30fps = platform export step only (Facebook/TikTok upload).
 // ─────────────────────────────────────────────────────────────
 export const TIMELINE_BASE_FPS: Record<Engine | "VEO" | "SORA", string> = {
-  RUNWAY: "24fps native — set CapCut project to 24fps to match source",
-  KLING:  "Use 24fps for cinematic editing; higher frame-rate social exports can be used for action clips",
-  VEO:    "24fps cinematic native — match 24fps in editor",
-  SORA:   "24fps standard — export to 30fps at final platform upload step only",
+  RUNWAY: "24fps native — keep edits at 24fps for clean motion continuity and readable wildlife movement",
+  KLING:  "Use 24fps for cinematic wildlife edits; export higher only at final social delivery if needed",
+  VEO:    "24fps cinematic native — match 24fps in editor for stable motion continuity",
+  SORA:   "24fps standard — keep edit timeline clean, export to 30fps only at final platform upload step if required",
 };
 
 // ─────────────────────────────────────────────────────────────
@@ -175,13 +164,13 @@ export const TIMELINE_BASE_FPS: Record<Engine | "VEO" | "SORA", string> = {
 // ─────────────────────────────────────────────────────────────
 // Arc type is defined in @/types — this array must match that union exactly.
 export const arcs: readonly Arc[] = [
-  "Ambush attack",
-  "Predator vs predator fight",
-  "Chase and takedown",
-  "Escape from danger",
-  "Territory dominance battle",
   "Pack hunting strategy",
   "Defender stands ground",
+  "Ambush attack",
+  "Escape from danger",
+  "Territory dominance battle",
+  "Predator vs predator fight",
+  "Chase and takedown",
   "Giant vs giant clash",
 ];
 
@@ -206,15 +195,15 @@ export const weatherOptions: Weather[] = [
 export const habitatOptions: HabitatPreset[] = [
   "Auto",
   "Rocky Mountain Meadow",
-  "Forest Clearing",
-  "Open Green Grassland",
   "Riverbank Reeds",
-  "Marsh Wetland",
-  "Desert Scrubland",
+  "Forest Clearing",
   "Snow Field Tundra",
+  "Open Green Grassland",
+  "Marsh Wetland",
   "Coastal Cliffline",
   "Dry Savanna Plain",
   "Dense Jungle Edge",
+  "Desert Scrubland",
 ];
 // ─────────────────────────────────────────────────────────────
 // ARC MOTION STRENGTH  (Runway legacy 0–100 scale)
@@ -222,14 +211,14 @@ export const habitatOptions: HabitatPreset[] = [
 // Not an official spec. Adjust freely based on results.
 // ─────────────────────────────────────────────────────────────
 export const arcMotionStrength: Record<Arc, number> = {
-  "Ambush attack":              72,
-  "Chase and takedown":         80,
-  "Pack hunting strategy":      68,
-  "Territory dominance battle": 75,
-  "Escape from danger":         85,
-  "Predator vs predator fight": 78,
-  "Defender stands ground":     83,
-  "Giant vs giant clash":       88,
+  "Pack hunting strategy":      62,
+  "Defender stands ground":     58,
+  "Ambush attack":              66,
+  "Escape from danger":         74,
+  "Territory dominance battle": 60,
+  "Predator vs predator fight": 64,
+  "Chase and takedown":         70,
+  "Giant vs giant clash":       68,
 };
 
 // ─────────────────────────────────────────────────────────────
@@ -246,14 +235,14 @@ export const arcMotionStrength: Record<Arc, number> = {
 //     Shot 3 = base − 0.15  (minimal aftermath)
 // ─────────────────────────────────────────────────────────────
 export const arcCfgScale: Record<Arc, number> = {
-  "Ambush attack":              0.55,
-  "Chase and takedown":         0.60,
-  "Pack hunting strategy":      0.50,
-  "Territory dominance battle": 0.55,
-  "Escape from danger":         0.65,
-  "Predator vs predator fight": 0.58,
-  "Defender stands ground":     0.60,
-  "Giant vs giant clash":       0.65,
+  "Pack hunting strategy":      0.46,
+  "Defender stands ground":     0.48,
+  "Ambush attack":              0.50,
+  "Escape from danger":         0.60,
+  "Territory dominance battle": 0.50,
+  "Predator vs predator fight": 0.52,
+  "Chase and takedown":         0.56,
+  "Giant vs giant clash":       0.56,
 };
 
 // ─────────────────────────────────────────────────────────────
