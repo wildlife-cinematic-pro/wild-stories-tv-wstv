@@ -1245,12 +1245,12 @@ animalBehavior: animalBehaviorResult ?? undefined,
                       active={runwayModel === m}
                       title={m}
                       subtitle={
-                        m === "Gen-4.5"
-                          ? "Best realism, prompt adherence, hero shots"
-                          : m === "Gen-4 Turbo"
-                            ? "Fast draft choice — iterate quickly"
-                            : "Stable cinematic shots"
-                      }
+  m === "Gen-4.5"
+    ? "Best realism, strongest first-frame readability, hero shots"
+    : m === "Gen-4 Turbo"
+      ? "Fast draft choice for quick readable opening tests"
+      : "Stable cinematic shots with simple clear openings"
+      }
                       onClick={() => setRunwayModel(m)}
                     />
                   ))}
@@ -1269,16 +1269,16 @@ animalBehavior: animalBehaviorResult ?? undefined,
                       active={klingModel === m}
                       title={m}
                       subtitle={
-                        m === "Kling 3.0 Pro"
-                          ? "Strong action workflow — reference-led continuity, audio-capable, multi-shot friendly"
-                          : m === "Kling 3.0 Standard"
-  ? "Balanced action workflow — strong motion, reference-friendly"
-                            : m === "Kling 2.6 Pro"
-  ? "Earlier Kling workflow option"
-  : m === "Kling 2.5 Turbo Pro"
-    ? "Fast draft workflow"
-    : "Fast image-to-video draft option"
-                      }
+  m === "Kling 3.0 Pro"
+    ? "Strong action workflow, best readable openings, multi-shot friendly"
+    : m === "Kling 3.0 Standard"
+      ? "Balanced action workflow with strong motion and clear subject spacing"
+      : m === "Kling 2.6 Pro"
+        ? "Earlier Kling workflow option for simpler readable action"
+        : m === "Kling 2.5 Turbo Pro"
+          ? "Fast draft workflow for one clean action beat"
+          : "Fast image-to-video draft option for rough motion tests"
+}
                       onClick={() => setKlingModel(m)}
                     />
                   ))}

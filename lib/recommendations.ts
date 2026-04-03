@@ -54,7 +54,6 @@ export function getQualityRecommendations(input: QualityRecommendationInput): Qu
 
   const level: DriftLevel = input.driftRisk;
 
-  // Base recommended defaults (safe baseline)
   const recommended: QualityRecommended = {
     realismMode: "Reference Locked",
     motionOnlyI2V: true,
@@ -64,9 +63,8 @@ export function getQualityRecommendations(input: QualityRecommendationInput): Qu
     heroVeo: false,
   };
 
-  // Heuristics (pro-feel)
   if (level === "HIGH") {
-    why.push("High drift → lock identity + limit motion scope");
+    why.push("High drift → lock identity, simplify motion, and protect opening readability");
     recommended.realismMode = "Reference Locked";
     recommended.motionOnlyI2V = true;
     recommended.referenceLock = true;
@@ -77,7 +75,7 @@ export function getQualityRecommendations(input: QualityRecommendationInput): Qu
       id: "high-drift",
       severity: "danger",
       title: "HIGH Drift detected",
-      detail: "Use Reference Lock + Motion-only I2V + Single Action Rule to keep identity stable.",
+      detail: "Use Reference Lock + Motion-only I2V + Single Action Rule to keep identity stable, spacing clear, and the opening readable.",
     });
 
     if (!input.referenceLock) {
@@ -85,7 +83,7 @@ export function getQualityRecommendations(input: QualityRecommendationInput): Qu
         id: "ref-lock-off",
         severity: "danger",
         title: "Reference Lock is OFF",
-        detail: "Turn it ON to prevent subject morphing across shots.",
+        detail: "Turn it ON to prevent subject morphing, silhouette drift, and weak first-frame clarity across shots.",
       });
     }
 
@@ -94,13 +92,13 @@ export function getQualityRecommendations(input: QualityRecommendationInput): Qu
         id: "motion-only-off",
         severity: "warning",
         title: "Motion-only I2V is OFF",
-        detail: "Turn it ON so the model does not re-describe appearance every shot.",
+        detail: "Turn it ON so the model does not re-describe appearance every shot and weaken motion clarity.",
       });
     }
   }
 
   if (level === "MEDIUM") {
-    why.push("Medium drift → keep reference lock on, micro-motion on");
+    why.push("Medium drift → keep reference lock on, preserve clear openings, and keep micro-motion controlled");
     recommended.referenceLock = true;
     recommended.microMotion = true;
 
@@ -109,60 +107,48 @@ export function getQualityRecommendations(input: QualityRecommendationInput): Qu
         id: "ref-lock-reco",
         severity: "warning",
         title: "Reference Lock recommended",
-        detail: "Medium drift: turning it ON improves consistency.",
+        detail: "Medium drift: turning it ON improves consistency, spacing stability, and subject readability.",
       });
     }
   }
 
   if (level === "LOW") {
-    why.push("Low drift → you can relax settings for speed, but lock is still safe.");
-    // keep recommended baseline
+    why.push("Low drift → you can relax settings for speed, but clear openings and lock are still safer.");
   }
 
-// Model-based hints
-// Show these only when the user is not already dealing with more important warnings.
-if (warnings.length === 0 && level !== "HIGH") {
-  if (!isRunway45(input.runwayModel)) {
+  if (warnings.length === 0 && level !== "HIGH") {
+    if (!isRunway45(input.runwayModel)) {
+      warnings.push({
+        id: "runway-not-45",
+        severity: "info",
+        title: "Runway model tip",
+        detail: "Gen-4.5 usually gives the strongest realism, first-frame readability, and prompt adherence for wildlife hero shots.",
+      });
+    }
+
+    if (!isKlingPro(input.klingModel)) {
+      warnings.push({
+        id: "kling-not-pro",
+        severity: "info",
+        title: "Kling model tip",
+        detail: "Kling Pro is usually better for physics, character interaction, and readable multi-shot stability.",
+      });
+    }
+  }
+
+  const criticalDiverged =
+    input.motionOnlyI2V !== recommended.motionOnlyI2V ||
+    input.referenceLock !== recommended.referenceLock ||
+    input.singleActionRule !== recommended.singleActionRule;
+
+  if ((level === "MEDIUM" || level === "HIGH") && criticalDiverged) {
     warnings.push({
-      id: "runway-not-45",
+      id: "apply-reco",
       severity: "info",
-      title: "Runway model tip",
-      detail: "Gen-4.5 usually gives best realism + prompt adherence for wildlife hero shots.",
+      title: "Apply Recommended available",
+      detail: "Your current settings differ from the safer baseline. Click Apply Recommended to restore stronger clarity and stability.",
     });
   }
-
-  if (!isKlingPro(input.klingModel)) {
-    warnings.push({
-      id: "kling-not-pro",
-      severity: "info",
-      title: "Kling model tip",
-      detail: "Kling Pro is better for physics + character interaction + multi-shot stability.",
-    });
-  }
-}
-
-  // If current settings diverge from recommended, add a “quick fix” warning
-  const diverged =
-  input.realismMode !== recommended.realismMode ||
-  input.motionOnlyI2V !== recommended.motionOnlyI2V ||
-  input.referenceLock !== recommended.referenceLock ||
-  input.singleActionRule !== recommended.singleActionRule ||
-  input.microMotion !== recommended.microMotion ||
-  input.heroVeo !== recommended.heroVeo;
-
-const criticalDiverged =
-  input.motionOnlyI2V !== recommended.motionOnlyI2V ||
-  input.referenceLock !== recommended.referenceLock ||
-  input.singleActionRule !== recommended.singleActionRule;
-
-if ((level === "MEDIUM" || level === "HIGH") && criticalDiverged) {
-  warnings.push({
-    id: "apply-reco",
-    severity: "info",
-    title: "Apply Recommended available",
-    detail: "Your current settings differ from the recommended safe baseline. Click Apply Recommended.",
-  });
-}
 
   return { level, warnings, why, recommended };
 }
