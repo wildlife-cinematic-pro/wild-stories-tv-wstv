@@ -806,8 +806,7 @@ const animalBehaviorResult = getAnimalBehavior(predator);
         klingBundle: [kling?.shot1 ?? "", kling?.shot2 ?? "", kling?.shot3 ?? ""].join(
           "\n\n---\n\n"
         ),
-        routingNote: `Shot 1 → Runway ${runwayModel} | Shot 2 → Kling ${klingModel} | Shot 3 → Runway ${runwayModel}`,
-
+        routingNote: `Shot 1 → Opening Tension (Runway ${runwayModel}) | Shot 2 → Action Pressure (Kling ${klingModel}) | Shot 3 → Resolved Tension (Runway ${runwayModel})`,
         fiveShotCinematic,
         fiveShotViral,
         watchTimeReport,
