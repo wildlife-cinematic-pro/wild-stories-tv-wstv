@@ -777,27 +777,27 @@ const animalBehaviorResult = getAnimalBehavior(predator);
         hashtags,
         tenIdeas,
 
-        shotPlan: [
+                shotPlan: [
           {
             engine: "RUNWAY",
-            title: "Establishing",
+            title: "Opening Tension",
             prompt: runway?.shot1 ?? "",
             motionStrength,
-            why: "Camera-first cinematic intro",
+            why: "Readable first-frame wildlife tension",
           },
           {
             engine: "KLING",
-            title: "Action",
+            title: "Action Pressure",
             prompt: kling?.shot2 ?? "",
             motionStrength,
-            why: "Body mechanics + physics peak",
+            why: "Body mechanics + readable impact pressure",
           },
           {
             engine: "RUNWAY",
-            title: "Aftermath",
+            title: "Resolved Tension",
             prompt: runway?.shot3 ?? "",
             motionStrength,
-            why: "Cinematic resolve pull-back",
+            why: "Clean cinematic resolve with readable spacing",
           },
         ],
         runwayBundle: [runway?.shot1 ?? "", runway?.shot2 ?? "", runway?.shot3 ?? ""].join(
