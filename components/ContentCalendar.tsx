@@ -186,21 +186,26 @@ export default function ContentCalendar({
 
         {/* Right details */}
         <div className="space-y-3">
-          <div className="rounded-xl border border-gray-200 bg-white p-3">
-            <div className="mb-2 flex items-center justify-between gap-2">
+                  <div className="rounded-xl border border-gray-200 bg-white p-3">
+          <div className="mb-2 flex items-center justify-between gap-2">
+            <div>
               <div className="text-xs font-extrabold text-gray-900">Hook</div>
-              <button
-                type="button"
-                onClick={() => handleCopy("hook", selected?.hook ?? "")}
-                className="rounded-lg border border-gray-300 bg-white px-3 py-1.5 text-xs font-extrabold text-gray-800 hover:bg-gray-50 active:scale-95"
-              >
-                {copiedKey === "hook" ? "✅ Copied" : "Copy"}
-              </button>
+              <div className="text-[11px] font-semibold text-gray-500">
+                First line should make the opening frame readable immediately.
+              </div>
             </div>
-            <pre className="max-h-28 overflow-auto whitespace-pre-wrap text-xs leading-relaxed text-gray-800">
-              {selected?.hook || "—"}
-            </pre>
+            <button
+              type="button"
+              onClick={() => handleCopy("hook", selected?.hook ?? "")}
+              className="rounded-lg border border-gray-300 bg-white px-3 py-1.5 text-xs font-extrabold text-gray-800 hover:bg-gray-50 active:scale-95"
+            >
+              {copiedKey === "hook" ? "✅ Copied" : "Copy"}
+            </button>
           </div>
+          <pre className="max-h-28 overflow-auto whitespace-pre-wrap text-xs leading-relaxed text-gray-800">
+            {selected?.hook || "—"}
+          </pre>
+        </div>
 
           <div className="rounded-xl border border-gray-200 bg-white p-3">
             <div className="mb-2 flex items-center justify-between gap-2">
