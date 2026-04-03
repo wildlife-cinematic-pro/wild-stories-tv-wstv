@@ -785,16 +785,16 @@ export function buildFiveShotCinematic(
   const kN   = KLING_STYLE_NOTE[klingModel];
   const qL   = buildQualityLead(quality);
 
-  return {
+    return {
     style: "cinematic",
-    shot1: `[RUNWAY ${runwayModel}] SHOT 1 — OPENING HOOK (0–4s):\n${rN}\n${qL}\nReadable first frame: ${predator} clearly visible with immediate threat presence and ${prey} also readable in the setup, ${env}, ${w}. No empty setup. Clear subject separation, visible pressure instantly, mobile-friendly composition. ${tone.image}. Motion strength: 38.`,
+    shot1: `[RUNWAY ${runwayModel}] SHOT 1 — OPENING TENSION (0–4s):\n${rN}\n${qL}\nReadable first frame: ${predator} clearly visible with immediate threat presence and ${prey} also readable in the setup, ${env}, ${w}. No empty setup. Clear subject separation, visible pressure instantly, mobile-friendly composition. ${tone.image}. Motion strength: 38.`,
     shot2: `[RUNWAY ${runwayModel}] SHOT 2 — PRESSURE BUILD (4–12s):\n${rN}\nWide readable setup — ${predator} and ${prey} both clearly visible in ${env}, ${w}. ${predator} closes pressure once or compresses low once. ${prey} reacts once and loses comfort immediately. Slow cinematic push-in only if subject readability stays clean. ${vibe.camera}. Motion strength: 46.`,
     shot3: `[KLING ${klingModel}] SHOT 3 — TENSION LOCK (12–22s):\n${kN}\nKeep both animals readable in ${env}, ${w}. ${predator} loads forward pressure with grounded weight transfer. ${prey} senses danger once, snaps attention up, and holds in visible survival tension. ${tone.video} Clear body language, no chaotic overlap, tension fully readable. CFG Scale: 0.50.`,
-    shot4: `[KLING ${klingModel}] SHOT 4 — ACTION RELEASE (22–36s):\n${kN}\nKeep the action readable in ${env}, ${w}. ${predator} commits with clear grounded biomechanics, visible weight transfer, and one decisive forward release. ${prey} reacts with full survival motion and readable escape pressure. Ground reacts: dust/snow/leaves scatter. [Audio: impact, breathing, SFX] Fixed wide if needed for clean body readability. CFG Scale: 0.65.`,
-        shot5: `[RUNWAY ${runwayModel}] SHOT 5 — AFTERMATH WINNER FRAME (36–48s):\n${rN}\n${predator} remains clearly readable in ${env}, ${w} after the action beat. Keep the ending simple, dominant, and visually clean for mobile. ${emotionalTone === "Calm Dominance" ? "Absolute stillness. Total ownership." : "Heavy breath. Eyes forward. Pressure still lingers."} ${vibe.camera}. End on a strong readable final frame with loop-ready clarity. Motion strength: 30.`,
-        totalDuration: "38–48 seconds",
-        watchTimeNote: "Balanced story mode: keep the opening instantly readable, keep the middle escalating, and keep the full runtime tight enough for stronger completion on short-form platforms.",
-        captionTip: "Keep burned-in captions very short and readable. The first caption should help the opening frame read instantly: LOOK / DANGER / IMPACT / ESCAPE / WHO WON?",
+    shot4: `[KLING ${klingModel}] SHOT 4 — ACTION PRESSURE (22–36s):\n${kN}\nKeep the action readable in ${env}, ${w}. ${predator} commits with clear grounded biomechanics, visible weight transfer, and one decisive forward release. ${prey} reacts with full survival motion and readable escape pressure. Ground reacts: dust/snow/leaves scatter. [Audio: impact, breathing, SFX] Fixed wide if needed for clean body readability. CFG Scale: 0.65.`,
+    shot5: `[RUNWAY ${runwayModel}] SHOT 5 — RESOLVED TENSION (36–48s):\n${rN}\n${predator} remains clearly readable in ${env}, ${w} after the action beat. Keep the ending simple, dominant, and visually clean for mobile. ${emotionalTone === "Calm Dominance" ? "Absolute stillness. Total ownership." : "Heavy breath. Eyes forward. Pressure still lingers."} ${vibe.camera}. End on a strong readable final frame with loop-ready clarity. Motion strength: 30.`,
+    totalDuration: "38–48 seconds",
+    watchTimeNote: "Balanced story mode: keep the opening instantly readable, keep the middle escalating, and keep the full runtime tight enough for stronger completion on short-form platforms.",
+    captionTip: "Keep burned-in captions very short and readable. The first caption should help the opening frame read instantly: LOOK / DANGER / IMPACT / ESCAPE / WHO WON?",
   };
 }
 
@@ -812,16 +812,16 @@ export function buildFiveShotViral(
   const isWinter = weather === "Winter Blizzard" || weather === "Frozen Dusk";
   const groundFX = isWinter ? "snow exploding, breath clouds colliding" : "dust scattering, earth churning";
 
-  return {
+    return {
     style: "viral",
-    shot1: `[RUNWAY ${runwayModel}] SHOT 1 — OPENING HOOK (0–3s):\n${rN}\n${qL}\nReadable first frame: ${predator} clearly visible with immediate threat presence, ${prey} also readable in the same setup, ${env}, ${w}. No empty setup. Clear subject separation, visible tension instantly, mobile-friendly composition. ${tone.image}. Camera nearly locked. Motion strength: 36.`,
+    shot1: `[RUNWAY ${runwayModel}] SHOT 1 — OPENING TENSION (0–3s):\n${rN}\n${qL}\nReadable first frame: ${predator} clearly visible with immediate threat presence, ${prey} also readable in the same setup, ${env}, ${w}. No empty setup. Clear subject separation, visible tension instantly, mobile-friendly composition. ${tone.image}. Camera nearly locked. Motion strength: 36.`,
     shot2: `[RUNWAY ${runwayModel}] SHOT 2 — PRESSURE BUILD (3–10s):\n${rN}\n${predator} and ${prey} remain clearly readable in ${env}, ${w}. ${predator} closes pressure once or compresses low once. ${prey} reacts once and loses visual comfort. Slow push-in only if composition stays clean on mobile. Build tension immediately. ${vibe.camera}. Motion strength: 50.`,
-        shot3: `[KLING ${klingModel}] SHOT 3 — CLASH (10–20s):\n${kN}\nFixed wide for full-body readability in ${env}, ${w}. Both animals commit with clear biomechanics, grounded weight transfer, and visible impact path. Full body physics: ${groundFX}. [Audio: deep collision, animal sounds, environmental scatter]. Keep the action readable, not chaotic. CFG Scale: 0.65.`,
-        shot4: `[KLING ${klingModel}] SHOT 4 — REVERSAL (20–34s):\n${kN}\nKeep the frame readable in ${env}, ${w}. ${prey} loses balance, space, or forward confidence once. ${predator} holds pressure without chaotic movement. Ground still settling, momentum shift clearly visible, survival tension still active. CFG Scale: 0.50.`,
-        shot5: `[RUNWAY ${runwayModel}] SHOT 5 — AFTERMATH WINNER FRAME (34–48s):\n${rN}\n${predator} remains clearly readable in ${env}, ${w} with calm control after the pressure shift. Keep the ending simple, dominant, and loop-friendly. Low angle only if subject readability stays clean on mobile. ${vibe.camera}. End on a strong readable winner frame. "Who won? Comment 👇" Motion strength: 28.`,
-        totalDuration: "38–48 seconds",
-        watchTimeNote: "This 38–48s version keeps the story readable while protecting short-form retention and first-frame impact.",
-        captionTip: "Use short burned-in caption beats that read instantly: LOOK / PRESSURE / IMPACT / TURN / COMMENT. Keep the first caption readable in the opening second.",
+    shot3: `[KLING ${klingModel}] SHOT 3 — ACTION PRESSURE (10–20s):\n${kN}\nFixed wide for full-body readability in ${env}, ${w}. Both animals commit with clear biomechanics, grounded weight transfer, and visible impact path. Full body physics: ${groundFX}. [Audio: deep collision, animal sounds, environmental scatter]. Keep the action readable, not chaotic. CFG Scale: 0.65.`,
+    shot4: `[KLING ${klingModel}] SHOT 4 — REACTION PRESSURE (20–34s):\n${kN}\nKeep the frame readable in ${env}, ${w}. ${prey} loses balance, space, or forward confidence once. ${predator} holds pressure without chaotic movement. Ground still settling, momentum shift clearly visible, survival tension still active. CFG Scale: 0.50.`,
+    shot5: `[RUNWAY ${runwayModel}] SHOT 5 — RESOLVED TENSION (34–48s):\n${rN}\n${predator} remains clearly readable in ${env}, ${w} with calm control after the pressure shift. Keep the ending simple, dominant, and loop-friendly. Low angle only if subject readability stays clean on mobile. ${vibe.camera}. End on a strong readable winner frame. "Who won? Comment 👇" Motion strength: 28.`,
+    totalDuration: "38–48 seconds",
+    watchTimeNote: "This 38–48s version keeps the story readable while protecting short-form retention and first-frame impact.",
+    captionTip: "Use short burned-in caption beats that read instantly: LOOK / PRESSURE / IMPACT / TURN / COMMENT. Keep the first caption readable in the opening second.",
   };
 }
 
