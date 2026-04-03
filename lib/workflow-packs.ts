@@ -1126,79 +1126,79 @@ export const workflowPipelinePacks: WorkflowPipelinePack[] = [
     name: "3-Shot Pipeline — Fast Viral",
     badge: "15 seconds",
     totalDuration: "0:15",
-    summary: "Fast hook → impact → aftermath. Best for quick Reels / Shorts.",
+    summary: "Opening tension → action pressure → resolved tension. Best for fast readable Reels / Shorts.",
     shots: [
       {
         id: 1,
-        title: "Hook / Establishing",
+        title: "Opening Tension",
         engine: "RUNWAY",
         durationLabel: "0–4s",
-        description: "Extreme close-up tension. Eye lock, body tension, subtle camera push.",
+        description: "Immediate readable tension. Both subjects clear from frame one, subtle camera push.",
         copyText:
-          "SHOT 1 — HOOK CLOSE-UP: close tension, extreme eye lock, subtle muzzle and fur micro-motion, restrained slow push-in, natural wildlife realism, cinematic documentary style.",
+          "SHOT 1 — OPENING TENSION: both subjects readable from frame one, immediate eye-line lock, subtle controlled micro-motion, restrained slow push-in, clear wildlife documentary realism.",
       },
       {
         id: 2,
-        title: "Action / Strike",
+        title: "Action Pressure",
         engine: "KLING",
         durationLabel: "4–10s",
-        description: "Main clash, full-body mechanics, dust / debris / impact.",
+        description: "Main clash or pressure beat, full-body mechanics, clear spacing, readable impact.",
         copyText:
-          "SHOT 2 — ACTION / STRIKE: full-body attack beat, heavy grounded physics, readable impact, dust and debris reaction, dramatic collision, realistic animal mechanics.",
+          "SHOT 2 — ACTION PRESSURE: full-body action beat, heavy grounded physics, readable impact, clear predator-to-prey spacing, debris and terrain reaction, realistic animal mechanics.",
       },
       {
         id: 3,
-        title: "Aftermath",
+        title: "Resolved Tension",
         engine: "RUNWAY",
         durationLabel: "10–15s",
-        description: "Movement settles, winner/loser state, cinematic resolve.",
+        description: "Movement settles, spacing stays readable, cinematic resolve.",
         copyText:
-          "SHOT 3 — AFTERMATH: movement settles, posture resets, dust settling, subtle environmental motion, cinematic documentary resolve, restrained camera.",
+          "SHOT 3 — RESOLVED TENSION: movement settles, posture resolves, spacing remains clear, subtle environmental motion, cinematic documentary resolve, restrained camera.",
       },
     ],
   },
-  {
+    {
     id: "4shot",
     name: "4-Shot Pipeline — Cinematic Story",
     badge: "20 seconds",
     totalDuration: "0:20",
-    summary: "Hook → standoff → clash → aftermath. Best balanced format.",
+    summary: "Opening tension → pressure build → action pressure → resolved tension. Best balanced format.",
     shots: [
       {
         id: 1,
-        title: "Hook Close-up",
+        title: "Opening Tension",
         engine: "RUNWAY",
         durationLabel: "0–4s",
-        description: "Close-up stare, tension, micro-motion.",
+        description: "Clear first-frame readability, direct subject tension, subtle camera push.",
         copyText:
-          "SHOT 1 — HOOK CLOSE-UP: close-up stare, subtle fur-edge micro-motion, micro-muscle tension, very slow push-in, dramatic but restrained documentary realism.",
+          "SHOT 1 — OPENING TENSION: both animals clearly readable from frame one, strong eye-line lock, subtle fur-edge micro-motion, restrained slow push-in, dramatic but controlled wildlife documentary realism.",
       },
       {
         id: 2,
-        title: "Standoff",
+        title: "Pressure Build",
         engine: "RUNWAY",
         durationLabel: "4–9s",
-        description: "Two animals visible, distance and pressure build.",
+        description: "Two animals visible, spacing pressure rises, body language stays readable.",
         copyText:
-          "SHOT 2 — STANDOFF: both animals framed clearly, no sudden movement, tension building, subtle wind or atmosphere, slow camera drift, readable body language.",
+          "SHOT 2 — PRESSURE BUILD: both animals framed clearly, no sudden movement, tension building through spacing and posture, subtle atmosphere, slow camera drift, readable body language.",
       },
       {
         id: 3,
-        title: "Clash",
+        title: "Action Pressure",
         engine: "KLING",
         durationLabel: "9–15s",
-        description: "Main impact with full body physics and terrain reaction.",
+        description: "Main impact or action beat with full-body physics and terrain reaction.",
         copyText:
-          "SHOT 3 — CLASH: full-body impact, maximum readable collision, grounded force transfer, terrain reaction, dust or snow scatter, realistic body mechanics.",
+          "SHOT 3 — ACTION PRESSURE: full-body impact or pressure beat, maximum readable collision, grounded force transfer, terrain reaction, dust or snow scatter, realistic body mechanics.",
       },
       {
         id: 4,
-        title: "Aftermath / Winner Beat",
+        title: "Resolved Tension",
         engine: "RUNWAY",
         durationLabel: "15–20s",
-        description: "Outcome, recoil, dominance or retreat.",
+        description: "Outcome, recoil, dominance or retreat, but final spacing stays clean and readable.",
         copyText:
-          "SHOT 4 — AFTERMATH: momentum shift, body tension, dominance or retreat, subtle environment recovery, restrained cinematic ending.",
+          "SHOT 4 — RESOLVED TENSION: momentum shift, body tension still visible, dominance or retreat, subtle environment recovery, restrained cinematic ending with readable spacing.",
       },
     ],
   },
@@ -1207,56 +1207,56 @@ export const workflowPipelinePacks: WorkflowPipelinePack[] = [
     name: "5-Shot Pipeline — Watch Time Optimizer",
     badge: "45–55 seconds",
     totalDuration: "0:45–0:55",
-    summary: "Hook → build → clash → reaction → ending. Best for Facebook watch time.",
+    summary: "Opening tension → pressure build → action pressure → reaction pressure → resolved tension. Best for Facebook watch time.",
     shots: [
       {
         id: 1,
-        title: "Hook Close-up",
+        title: "Opening Tension",
         engine: "RUNWAY",
         durationLabel: "0–4s",
-        description: "Scroll-stopping tension. Face / eyes / raw dread.",
+        description: "Scroll-stopping tension with immediate readable subject visibility.",
         copyText:
-          "SHOT 1 — HOOK CLOSE-UP: extreme tension, direct eye lock, subtle fur-edge micro-motion, no sudden movement, subtle push-in, immediate scroll-stopping documentary realism.",
+          "SHOT 1 — OPENING TENSION: both subjects immediately readable, direct eye-line tension, subtle fur-edge micro-motion, no sudden movement, subtle push-in, scroll-stopping documentary realism.",
       },
       {
         id: 2,
-        title: "Build Tension / Standoff",
+        title: "Pressure Build",
         engine: "RUNWAY",
         durationLabel: "4–12s",
-        description: "Slow setup, distance pressure, suspense grows.",
+        description: "Slow pressure setup, spacing tightens, suspense grows without losing clarity.",
         copyText:
-          "SHOT 2 — STANDOFF: both animals visible, distance and pressure building, subtle camera movement, slow suspense, no attack yet, environment remains alive.",
+          "SHOT 2 — PRESSURE BUILD: both animals visible, distance pressure building, subtle camera movement, slow suspense, no attack yet, environment remains alive, subject clarity stays strong.",
       },
       {
         id: 3,
-        title: "Clash / Impact",
+        title: "Action Pressure",
         engine: "KLING",
         durationLabel: "12–22s",
-        description: "Main collision. Physics, weight, debris, strongest beat.",
+        description: "Main collision or action beat. Physics, weight, debris, strongest readable payoff.",
         copyText:
-          "SHOT 3 — CLASH: full body collision, realistic weight transfer, dust or snow explosion, strongest impact beat, readable mechanics, cinematic payoff moment.",
+          "SHOT 3 — ACTION PRESSURE: full-body collision or pressure beat, realistic weight transfer, dust or snow explosion, strongest impact beat, readable mechanics, cinematic payoff moment.",
       },
       {
         id: 4,
-        title: "Reaction / Reversal",
+        title: "Reaction Pressure",
         engine: "KLING",
         durationLabel: "22–32s",
-        description: "Stumble, shift, panic, retaliation, unstable momentum.",
+        description: "Stumble, shift, panic, retaliation, unstable momentum, but action remains readable.",
         copyText:
-          "SHOT 4 — REACTION: post-impact reaction, stumble or reversal, visible body tension, tension still active, momentum unclear, layered terrain response.",
+          "SHOT 4 — REACTION PRESSURE: post-impact reaction, stumble or reversal, visible body tension, tension still active, momentum unclear, layered terrain response, clean readable spacing.",
       },
       {
         id: 5,
-        title: "Ending / Dominance",
+        title: "Resolved Tension",
         engine: "RUNWAY",
         durationLabel: "32–55s",
-        description: "Winner walk, retreat, calm, unresolved stare, or final dominance.",
+        description: "Winner walk, retreat, calm, unresolved stare, or final dominance with a clean ending frame.",
         copyText:
-          "SHOT 5 — ENDING: dominance or retreat outcome, movement settles, subtle atmosphere, powerful cinematic resolve, restrained documentary ending.",
+          "SHOT 5 — RESOLVED TENSION: dominance or retreat outcome, movement settles, subtle atmosphere, powerful cinematic resolve, restrained documentary ending, clean final-frame readability.",
       },
     ],
   },
-];
+  ];
 
 export function getWorkflowPipelinePack(mode: ShotMode): WorkflowPipelinePack {
   return workflowPipelinePacks.find((pack) => pack.id === mode) ?? workflowPipelinePacks[2];
