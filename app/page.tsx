@@ -292,7 +292,7 @@ const [animalVibe, setAnimalVibe] = useState<AnimalVibe>("National Geographic Wi
   // Stepper
   const [step, setStep] = useState<Step>(1);
 
-  // ✅ Custom Predators (user-added)
+  // ✅ Custom Animals (user-added)
   const [customPredators, setCustomPredators] = useState<CustomPredatorForm[]>([]);
   const [customModalOpen, setCustomModalOpen] = useState(false);
 
@@ -305,7 +305,7 @@ const [animalVibe, setAnimalVibe] = useState<AnimalVibe>("National Geographic Wi
   }>({
     name: "",
     prey: "",
-    environment: "Rocky Mountain forest edge and open meadow",
+    environment: habitatPromptMap["Rocky Mountain Meadow"],
     defaultArc: "Pack hunting strategy",
     driftRisk: "MEDIUM",
   });
@@ -362,7 +362,7 @@ const [animalVibe, setAnimalVibe] = useState<AnimalVibe>("National Geographic Wi
     const rawLion = (predatorData as Record<string, unknown>)["Lion"];
     return normalizePreset(rawLion, {
       prey: ["White-tailed Deer"],
-      environment: "Rocky Mountain forest edge and open meadow",
+      environment: habitatPromptMap["Rocky Mountain Meadow"],
       lighting: "cold dawn light, pale gold horizon glow, thin ground mist, soft natural side light",
       cameraGear: "Nikon Z9, 400mm wildlife lens, long-lens documentary framing",
       texture: "natural fur, feather, or scale detail, grounded body weight, realistic contact with dirt, grass, brush, and uneven terrain",
@@ -963,7 +963,7 @@ animalBehavior: animalBehaviorResult ?? undefined,
 
           <div className="grid gap-3 sm:grid-cols-2">
             <div>
-              <label className="mb-1 block text-xs font-semibold text-gray-500">Apex Predator</label>
+              <label className="mb-1 block text-xs font-semibold text-gray-500">Lead Animal</label>
               <select
                 value={predator}
                 onChange={(e) => setPredator(e.target.value)}
@@ -985,7 +985,7 @@ animalBehavior: animalBehaviorResult ?? undefined,
             </div>
 
             <div>
-              <label className="mb-1 block text-xs font-semibold text-gray-500">Survival Animal</label>
+              <label className="mb-1 block text-xs font-semibold text-gray-500">Opposing Animal</label>
               <select
                 value={prey}
                 onChange={(e) => setPrey(e.target.value)}
@@ -1011,7 +1011,7 @@ animalBehavior: animalBehaviorResult ?? undefined,
     <option value={arc}>{arc}</option>
   </select>
   <p className="mt-1 text-[11px] text-gray-500">
-    Auto-matched from predator + survival animal for cleaner realism.
+    Auto-matched from lead animal + opposing animal for cleaner realism.
   </p>
 </div>
 
@@ -1029,7 +1029,7 @@ animalBehavior: animalBehaviorResult ?? undefined,
     ))}
   </select>
   <p className="mt-1 text-[11px] text-gray-500">
-    Auto uses predator-matched habitat. Override only when you want a different but still realistic U.S. setting.
+    Auto uses lead-animal-matched habitat. Override only when you want a different but still realistic U.S. setting.
   </p>
   <p className="mt-2 text-[11px] leading-relaxed text-gray-600">
     <span className="font-semibold text-gray-700">Current habitat:</span> {finalEnvironment}
@@ -1310,13 +1310,13 @@ animalBehavior: animalBehaviorResult ?? undefined,
                   </div>
                   <div className="mt-1 space-y-0.5">
                     <div>
-                      • Predator master →{" "}
+                      • Lead animal master →{" "}
                       <code className="rounded bg-white px-1 py-0.5 text-[11px] text-violet-800">
                         @hero_predator
                       </code>
                     </div>
                     <div>
-                      • Prey master →{" "}
+                      • Opposing animal master →{" "}
                       <code className="rounded bg-white px-1 py-0.5 text-[11px] text-violet-800">
                         @hero_prey
                       </code>
@@ -1355,7 +1355,7 @@ animalBehavior: animalBehaviorResult ?? undefined,
 
               <div className="rounded-2xl border border-gray-200 bg-white p-4">
                 <div className="flex items-center justify-between gap-2">
-                  <div className="text-sm font-extrabold text-gray-900">Custom Predator</div>
+                  <div className="text-sm font-extrabold text-gray-900">Custom Animal</div>
                   <div className="flex items-center gap-2">
                     <span className="rounded bg-blue-100 px-2 py-1 text-[11px] font-extrabold text-blue-700">
                       AI-powered — any animal
@@ -1366,7 +1366,7 @@ animalBehavior: animalBehaviorResult ?? undefined,
                         setCustomForm({
                           name: "",
                           prey: "",
-                          environment: finalEnvironment || "Rocky Mountain forest edge and open meadow",
+                          environment: habitatPromptMap["Rocky Mountain Meadow"],
                           defaultArc: arc || "Pack hunting strategy",
                           driftRisk: preset.driftRisk,
                         });
@@ -1374,7 +1374,7 @@ animalBehavior: animalBehaviorResult ?? undefined,
                       }}
                       className="rounded-xl bg-blue-600 px-4 py-2 text-xs font-extrabold text-white hover:bg-blue-700 active:scale-[0.98]"
                     >
-                      + Add Any Animal
+                      + Add Custom Animal
                     </button>
                   </div>
                 </div>
@@ -1554,12 +1554,12 @@ animalBehavior: animalBehaviorResult ?? undefined,
         </div>
       )}
 
-      {/* ✅ Custom Predator Modal */}
+      {/* ✅ Custom Animal Modal */}
       {customModalOpen && (
         <div className="fixed inset-0 z-50 grid place-items-center bg-black/40 p-4">
           <div className="w-full max-w-xl rounded-2xl border border-gray-200 bg-white p-5 shadow-xl">
             <div className="mb-3 flex items-center justify-between gap-2">
-              <div className="text-sm font-extrabold text-gray-900">➕ Add Any Animal</div>
+              <div className="text-sm font-extrabold text-gray-900">➕ Add Custom Animal</div>
               <button
                 type="button"
                 onClick={() => setCustomModalOpen(false)}
@@ -1582,8 +1582,10 @@ animalBehavior: animalBehaviorResult ?? undefined,
 
               <div>
                 <label className="mb-1 block text-xs font-semibold text-gray-600">
-                  Prey (comma separated)
-                </label>
+                Opposing animals (comma separated)
+              </label>
+                  
+          
                 <input
                   value={customForm.prey}
                   onChange={(e) => setCustomForm((p) => ({ ...p, prey: e.target.value }))}
@@ -1594,12 +1596,17 @@ animalBehavior: animalBehaviorResult ?? undefined,
 
               <div className="sm:col-span-2">
                 <label className="mb-1 block text-xs font-semibold text-gray-600">Environment</label>
-                <input
-                  value={customForm.environment}
-                  onChange={(e) => setCustomForm((p) => ({ ...p, environment: e.target.value }))}
-                  placeholder="e.g., Rocky Mountain forest edge, Everglades swamp, Yellowstone grassland"
-                  className="w-full rounded-xl border border-gray-300 px-3 py-2 text-sm"
-                />
+<select
+  value={customForm.environment}
+  onChange={(e) => setCustomForm((p) => ({ ...p, environment: e.target.value }))}
+  className="w-full rounded-xl border border-gray-300 bg-white px-3 py-2 text-sm"
+>
+  {Object.entries(habitatPromptMap).map(([label, prompt]) => (
+    <option key={label} value={prompt}>
+      {label}
+    </option>
+  ))}
+</select>
               </div>
 
               <div>
@@ -1642,12 +1649,13 @@ animalBehavior: animalBehaviorResult ?? undefined,
                 onClick={() => {
                   const name = customForm.name.trim();
                   if (!name) return;
-                 const builtInPredatorExists = Object.prototype.hasOwnProperty.call(predatorData, name);
+                const builtInAnimalExists = Object.prototype.hasOwnProperty.call(predatorData, name);
 
-if (builtInPredatorExists) {
-  alert("This animal already exists in the built-in predator list. Use a different custom name.");
+if (builtInAnimalExists) {
+  alert("This animal already exists in the built-in animal list. Use a different custom name.");
   return;
-}
+} 
+
 
 const normalizedName = name.toLowerCase();
 
@@ -1663,7 +1671,7 @@ const normalizedPrey = Array.from(
 const entry: CustomPredatorForm = {
   name,
   prey: normalizedPrey.length ? normalizedPrey.join(", ") : "White-tailed Deer",
-  environment: customForm.environment.trim() || "Rocky Mountain forest edge and open meadow",
+  environment: customForm.environment.trim() || habitatPromptMap["Rocky Mountain Meadow"],
   defaultArc: customForm.defaultArc || "Pack hunting strategy",
   driftRisk: customForm.driftRisk,
 };
@@ -1713,12 +1721,12 @@ setCustomModalOpen(false);
                 }}
                 className="rounded-xl border border-red-200 bg-red-50 px-5 py-2.5 text-sm font-extrabold text-red-700 hover:bg-red-100 active:scale-[0.98]"
               >
-                Delete If Exists
+                Delete Custom Animal
               </button>
             </div>
 
             <p className="mt-3 text-xs text-gray-500">
-              Save गरेपछि यो predator dropdown मा add हुन्छ र future sessions मा पनि रहन्छ (localStorage).
+              Save गरेपछि यो animal dropdown मा add हुन्छ र future sessions मा पनि रहन्छ (localStorage).
             </p>
           </div>
         </div>

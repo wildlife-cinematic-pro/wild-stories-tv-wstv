@@ -88,7 +88,7 @@ export const predatorData: Record<string, PredatorInfo> = {
   },
   Wolf: {
     prey: ["Elk", "White-tailed Deer", "Mule Deer", "Moose Calf"],
-    environment: "northern Rocky Mountain forest edge, sage valley, and open meadow",
+        environment: "northern Rocky Mountain forest edge, sage valley, and open meadow with clear chase lanes and readable prey spacing",
     lighting:
       "cold dawn light, pale gold horizon glow, thin ground mist, visible breath vapor, soft side light across grass, brush, and tree line",
     cameraGear:
@@ -100,9 +100,9 @@ export const predatorData: Record<string, PredatorInfo> = {
   },
   "Wolf Pack": {
     prey: ["Elk", "White-tailed Deer", "Mule Deer", "Moose Calf"],
-    environment: "northern Rocky Mountain forest edge, sage valley, and open meadow",
-    lighting:
-      "cold dawn light, pale gold horizon glow, thin ground mist, visible breath vapor, soft side light across grass, brush, and tree line",
+        environment: "northern Rocky Mountain forest edge, sage valley, and open meadow with clean pack-pressure lanes and readable elk spacing",
+            lighting:
+      "cold dawn light, pale gold horizon glow, cold clean-air clarity, and soft side light across grass, brush, and tree line",
     cameraGear:
       "Nikon Z9, 400mm wildlife lens, long-lens documentary tracking across meadow and forest edge",
     texture:
@@ -203,12 +203,12 @@ export const predatorData: Record<string, PredatorInfo> = {
     defaultArc: "Ambush attack",
     driftRisk: "LOW",
   },
-  "Grizzly Bear": {
+    "Grizzly Bear": {
     prey: ["Bison", "Moose", "Salmon", "Elk Calf"],
     environment:
-      "Yellowstone meadow, river corridor, and open wilderness in late summer",
+      "Yellowstone meadow, river corridor, and open wilderness with strong clash readability and clean subject spacing",
     lighting:
-      "dramatic overcast mountain light, open-air clarity, dry grass movement, heavy cloud diffusion, natural cold contrast",
+      "dramatic overcast mountain light, open-air clarity, dry grass movement, heavy cloud diffusion, and clean clash readability",
     cameraGear:
       "Canon EOS R3, 400mm wildlife lens, ground-level wildlife documentary framing",
     texture:
@@ -272,10 +272,10 @@ export const predatorData: Record<string, PredatorInfo> = {
   },
   "Bald Eagle": {
     prey: ["Salmon", "Trout", "Duck", "Rabbit"],
-    environment:
-      "Alaskan river mouth, lakeshore, and conifer-lined shallows under cold open sky",
-    lighting:
-      "clean northern daylight, silver-blue water reflections, crisp feather edge light, cold atmospheric clarity, natural contrast",
+        environment:
+      "Alaskan river mouth, lakeshore, and open conifer-lined shallows with strong strike readability and clean subject spacing",
+        lighting:
+      "clean northern daylight, silver-blue water reflections, crisp feather edge light, and strong fish-strike readability",
     cameraGear:
       "Canon EOS R5, 500mm super-telephoto, low-angle riverside wildlife framing",
     texture:
@@ -414,10 +414,10 @@ export const predatorData: Record<string, PredatorInfo> = {
   },
   "Mountain Lion": {
     prey: ["Mule Deer", "White-tailed Deer", "Elk Calf", "Bighorn Sheep"],
-    environment:
-      "Rocky Mountain forest edge, rocky ridgeline, and open meadow at golden hour",
-    lighting:
-      "warm mountain golden hour, long ridge shadows, pine-filtered light, amber highlights on tawny coat, dry high-altitude air clarity",
+        environment:
+      "Rocky Mountain forest edge, rocky ridgeline, and open meadow with clean ambush lanes and readable prey spacing",
+        lighting:
+      "warm mountain golden hour, long ridge shadows, pine-filtered light, amber highlights on tawny coat, and clean ambush readability",
     cameraGear:
       "Canon EOS R5, 400mm super-telephoto, ridge-level long-lens wildlife framing",
     texture:
@@ -427,10 +427,10 @@ export const predatorData: Record<string, PredatorInfo> = {
   },
   Cougar: {
     prey: ["Mule Deer", "Elk Calf", "White-tailed Deer", "Bighorn Sheep"],
-    environment:
-      "Pacific Northwest forest edge with mossy ground and dark conifers",
-    lighting:
-      "cool overcast forest light, soft mist through trees, mossy green bounce light, deep natural shadow separation",
+        environment:
+      "Pacific Northwest forest edge with mossy ground, dark conifers, and clean ambush lanes with readable prey spacing",
+        lighting:
+      "cool overcast forest light, mossy green bounce light, deep natural shadow separation, and clean forest-edge ambush readability",
     cameraGear:
       "Nikon Z8, 300mm wildlife lens, forest-floor documentary framing",
     texture:
@@ -440,9 +440,9 @@ export const predatorData: Record<string, PredatorInfo> = {
   },
   Bobcat: {
     prey: ["Wild Turkey", "Rabbit", "Quail", "Squirrel"],
-    environment: "Southwestern desert scrub and rocky brushland at dusk",
-    lighting:
-      "deep desert dusk light, warm earth tones, cool blue brush shadows, last horizon glow, fine dust in the air",
+        environment: "Southwestern desert scrub and rocky brushland with clean ambush pockets and readable prey spacing at dusk",
+        lighting:
+      "deep desert dusk light, warm earth tones, cool blue brush shadows, last horizon glow, and clean ambush readability through brush openings",
     cameraGear:
       "Sony A1, 300mm wildlife lens, low-angle scrubland wildlife framing",
     texture:
@@ -452,10 +452,10 @@ export const predatorData: Record<string, PredatorInfo> = {
   },
   "Black Bear": {
     prey: ["Salmon", "White-tailed Deer Fawn", "Ground Squirrel", "Rabbit"],
-    environment:
-      "Appalachian forest and Smoky Mountain creekside in morning fog",
-    lighting:
-      "soft fog-filtered dawn light, diffuse forest shadows, green canopy bounce light, damp air and low mist",
+        environment:
+      "Appalachian forest and Smoky Mountain creekside with clean foraging lanes and readable prey spacing",
+        lighting:
+      "soft dawn light, diffuse forest shadows, green canopy bounce light, damp forest detail, and clean creekside readability",
     cameraGear:
       "Nikon Z8, 300mm wildlife lens, forest-edge documentary framing",
     texture:
@@ -465,9 +465,9 @@ export const predatorData: Record<string, PredatorInfo> = {
   },
   Coyote: {
     prey: ["Jackrabbit", "Rabbit", "White-tailed Deer Fawn", "Quail"],
-    environment: "open prairie, sagebrush flats, and scrub desert edge at first light",
-    lighting:
-      "cold dawn light, pale gold horizon glow, soft side light across dry grass, long early-morning shadows",
+        environment: "open prairie, sagebrush flats, and scrub edge with long chase lanes and clear survival-animal spacing",
+        lighting:
+      "cold dawn light, pale gold horizon glow, soft side light across dry grass, and long readable chase shadows",
     cameraGear: "Sony A1, 300mm wildlife lens, ground-level pursuit framing",
     texture:
       "lean grey-brown coat, alert ears, narrow muzzle, dusty paws, wiry tail fur, subtle wind movement through coat",
@@ -476,10 +476,10 @@ export const predatorData: Record<string, PredatorInfo> = {
   },
   Alligator: {
     prey: ["Wild Boar", "White-tailed Deer", "Raccoon", "Large Fish"],
-    environment:
-      "Florida Everglades marsh and cypress-lined swamp with dark tannin water",
-    lighting:
-      "humid wetland light, reflective black water surface, soft rim light through cypress cover, swamp haze and subtle mist",
+        environment:
+      "Florida Everglades marsh and cypress swamp edge with dark tannin water and readable shoreline ambush spacing",
+        lighting:
+      "humid wetland light, reflective dark water surface, soft rim light through cypress cover, and clean water-edge readability",
     cameraGear:
       "Canon EOS R5, 200mm wildlife lens, water-surface ambush framing",
     texture:
@@ -489,10 +489,10 @@ export const predatorData: Record<string, PredatorInfo> = {
   },
   Bison: {
     prey: ["Grizzly Bear", "Wolf Pack", "Wolf", "Mountain Lion"],
-    environment:
-      "Yellowstone grassland with geothermal steam and wide open prairie",
-    lighting:
-      "dramatic golden hour backlight, dust clouds in the air, geothermal haze, strong rim light on horns and shoulder mass",
+        environment:
+      "Yellowstone open prairie grassland with dry field depth, cold clean air, and wide defender-readable spacing",
+            lighting:
+      "dramatic golden hour backlight, dry field dust, cold clean-air clarity, and strong rim light on horns and shoulder mass",
     cameraGear:
       "Nikon Z9, 400mm super-telephoto, wide Yellowstone prairie framing",
     texture:
@@ -502,9 +502,9 @@ export const predatorData: Record<string, PredatorInfo> = {
   },
   Moose: {
     prey: ["Wolf Pack", "Wolf", "Grizzly Bear", "Mountain Lion"],
-    environment: "northern lake edge and willow marsh in cold autumn air",
-    lighting:
-      "low northern golden light, reflected lake glow, visible breath mist, long shadows over wet ground and reeds",
+    environment: "northern lake edge, willow marsh, and open autumn clearing with strong defender-readable spacing",
+        lighting:
+      "low northern golden light, reflected lake glow, cold clean-air clarity, and long shadows over wet ground and reeds",
     cameraGear:
       "Nikon Z9, 500mm wildlife lens, lake-edge long-lens documentary framing",
     texture:
@@ -514,9 +514,9 @@ export const predatorData: Record<string, PredatorInfo> = {
   },
   "Bull Elk": {
     prey: ["Wolf Pack", "Wolf", "Mountain Lion", "Grizzly Bear"],
-    environment: "Rocky Mountain meadow in autumn with frost and distant peaks",
-    lighting:
-      "golden autumn dawn light, amber glow on antlers, visible breath mist, long shadows over frost-covered grass",
+        environment: "Rocky Mountain autumn meadow with frost, distant peaks, and strong defender-readable open spacing",
+        lighting:
+      "golden autumn dawn light, amber glow on antlers, cold clean-air clarity, and long shadows over frost-covered grass",
     cameraGear:
       "Sony A1, 300mm wildlife lens, wide mountain meadow wildlife framing",
     texture:
@@ -610,10 +610,10 @@ export const predatorData: Record<string, PredatorInfo> = {
   },
   Beaver: {
     prey: ["Black Bear", "Coyote", "Wolf", "River Otter"],
-    environment:
-      "freshwater riverbank beside a beaver dam and lodge at golden hour",
-    lighting:
-      "warm golden hour reflections on slow water, backlit spray droplets, soft haze over reeds, realistic shadow falloff under willows",
+        environment:
+      "freshwater riverbank beside a beaver dam and lodge with strong defender-readable spacing at golden hour",
+        lighting:
+      "warm golden hour reflections on slow water, backlit spray droplets, soft reed detail, and clean riverbank readability under willows",
     cameraGear:
       "Canon EOS R5, 200mm wildlife lens, low riverbank framing at waterline",
     texture:
@@ -660,10 +660,10 @@ export const predatorData: Record<string, PredatorInfo> = {
   },
   "White-tailed Deer": {
     prey: ["Mountain Lion", "Alligator", "Coyote", "Bobcat"],
-    environment:
-      "Midwestern forest edge and cornfield at dawn with low ground fog",
-    lighting:
-      "cold dawn fog, warm first sunlight through trees, dew highlights on coat, soft atmospheric haze across fields",
+        environment:
+      "Midwestern forest edge, brush opening, and field transition at dawn with strong escape-lane readability",
+        lighting:
+      "cold dawn light, warm first sunlight through trees, dew highlights on coat, and clean field-edge readability",
     cameraGear:
       "Canon EOS R5, 400mm super-telephoto, field-edge documentary framing",
     texture:
@@ -673,10 +673,10 @@ export const predatorData: Record<string, PredatorInfo> = {
   },
   "Wild Boar": {
     prey: ["Alligator", "Mountain Lion", "Black Bear", "Coyote"],
-    environment:
-      "Southern US pine woods and swamp edge with muddy wallows at dusk",
-    lighting:
-      "humid dusk light, warm amber sidelighting through pine trunks, wet mud reflections, heavy shadow pockets in brush",
+            environment:
+      "Southern U.S. pine woods, scrub edge, and muddy open ground with strong defender-readable spacing",
+            lighting:
+      "humid dusk light, warm amber sidelighting through pine trunks, wet mud reflections, and clean pressure readability through brush openings",
     cameraGear:
       "Sony A1, 300mm wildlife lens, low ground tracking with aggressive motion blur on charge",
     texture:

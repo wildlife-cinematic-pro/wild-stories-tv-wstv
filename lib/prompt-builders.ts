@@ -1574,7 +1574,6 @@ export function buildRunwayShots(
 ): { shot1: string; shot2: string; shot3: string } {
   const note = RUNWAY_STYLE_NOTE[model];
   const tone = emotionalTonePrompt[emotionalTone];
-  const vibe = animalVibePrompt[animalVibe];
   const micro = buildMicroMotionLine(weather, env);
   const habitatMode = getHabitatMode(predator, prey, env);
   const isAquatic = habitatMode === "aquatic";
