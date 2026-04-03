@@ -2334,14 +2334,14 @@ function WorkflowPromptMap({
         >
           <WorkflowCard
             step={2}
-            title="Shot 1 — Establishing"
+            title="Shot 1 — Opening Tension"
             badge="Runway Gen-4.5"
             color={{
               border: "border-green-400",
               bg: "bg-green-50",
               badge: "bg-green-100 text-green-700",
             }}
-            help="Upload master image → paste into Runway Gen-4.5 I2V → generate. Extract last frame after generation."
+            help="Upload master image → paste into Runway Gen-4.5 I2V → generate the opening tension shot. Keep both subjects readable from frame one, then extract the last frame."
             done={done[2]}
             onToggle={() => toggle(2)}
           >
@@ -2560,14 +2560,14 @@ function WorkflowPromptMap({
         >
           <WorkflowCard
             step={4}
-            title="Shot 3 — Aftermath"
+            title="Shot 3 — Resolved Tension"
             badge="Runway Gen-4.5"
             color={{
               border: "border-purple-400",
               bg: "bg-purple-50",
               badge: "bg-purple-100 text-purple-700",
             }}
-            help="Upload Kling last frame → paste into Runway Gen-4.5 I2V → breathing settles, posture resolves."
+            help="Upload Kling last frame → paste into Runway Gen-4.5 I2V → resolve the scene with readable spacing, visible tension, and a clean final frame."
             done={done[4]}
             onToggle={() => toggle(4)}
           >
@@ -3077,7 +3077,7 @@ const klingShots = useMemo(
             </div>
 
             <p className="mb-3 text-xs text-green-800">
-              Shot 1 → establishing, Shot 2 → continuity, Shot 3 → aftermath
+              Shot 1 → opening tension, Shot 2 → action pressure, Shot 3 → resolved tension
               (last frame exports).
             </p>
 
@@ -3207,12 +3207,12 @@ const klingShots = useMemo(
             </div>
           </div>
 
-          <p className="mb-3 text-xs leading-relaxed text-indigo-800">
+                    <p className="mb-3 text-xs leading-relaxed text-indigo-800">
             <span className="font-extrabold">WSTV multi-shot flow:</span>{" "}
-            Macro close-up → Wide establishing → Profile tracking →
-            Shot-reverse-shot → Action wide → Winner aftermath. एकै prompt ले 6
-            cinematic shots generate गर्छ — subject identity सबै shots मा locked
-            हुन्छ।
+            Opening tension → Pressure hold → Profile pressure →
+            Tension reaction cut → Action pressure wide → Resolved tension wide.
+            एकै prompt ले 6 cinematic shots generate गर्छ — subject identity सबै shots मा locked
+            हुन्छ, and the opening starts with clearer full-subject readability.
           </p>
 
           <pre className="max-h-[520px] overflow-auto whitespace-pre-wrap rounded-xl border border-indigo-200 bg-white p-3 text-xs leading-relaxed text-gray-900">
