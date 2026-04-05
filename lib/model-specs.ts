@@ -67,32 +67,44 @@ export const KLING_MODEL_MULT: Record<KlingModel, number> = {
 // Injected at the top of each generated prompt to remind the
 // user which model is active and how to prompt it.
 // ─────────────────────────────────────────────────────────────
+// lib/model-specs.ts
+
+// ... (imports and other constants unchanged)
+
 export const RUNWAY_STYLE_NOTE: Record<RunwayModel, string> = {
   "Gen-4.5":
-    "Runway Gen-4.5: flagship — best cinematic quality, temporal coherence, camera control. Prioritize strong first-frame readability, immediate visible tension, and clear predator-to-survival-animal spacing. Use rich camera language: push, drift, hold, track.",
+    // Emphasize the opening seconds and U.S. audience familiarity.  
+    "Runway Gen-4.5: flagship — best cinematic quality, temporal coherence and camera control. The first 1–3 seconds are critical: prioritize strong first‑frame readability, immediate visible tension and clear predator‑to‑survival‑animal spacing. Choose U.S.‑familiar wildlife and habitats when possible for higher Facebook Reels engagement. Use rich camera language: push, drift, hold and track.",
 
   "Gen-4 Turbo":
-    "Runway Gen-4 Turbo: fast cinematic model — prioritize readable opening composition, clear subject spacing, and simple camera motion. Use natural camera language: push, drift, hold.",
+    // Fast model guidance with new opening‑readability focus.  
+    "Runway Gen-4 Turbo: fast cinematic model — focus on readable openings, clear subject spacing and simple camera motion. Make the opening second compelling with visible predator pressure and full subject visibility. Use natural camera language: push, drift and hold.",
 
   "Gen-4":
-    "Runway Gen-4: stable model — describe camera angles explicitly and keep the opening clear, readable, and tension-forward.",
+    // Legacy model note updated to highlight tension from frame one.  
+    "Runway Gen-4: stable model — describe camera angles explicitly and keep the opening clear, readable and tension‑forward. Ensure that both animals are visible and the threat line is obvious from the first second.",
 };
 
 export const KLING_STYLE_NOTE: Record<KlingModel, string> = {
   "Kling 3.0 Pro":
-    "Kling 3.0 Pro: WSTV action workflow — prioritize strong opening readability, clear full-subject visibility, body mechanics, weight transfer, impact forces, and environmental reaction in full detail.",
+    // Updated note: highlight first‑seconds tension, full‑body clarity and U.S. familiarity.  
+    "Kling 3.0 Pro: WSTV action workflow — the first 1–3 seconds should deliver immediate visible tension and full‑body clarity. Prioritize strong opening readability, clear subject spacing, realistic body mechanics, weight transfer, impact forces and environmental reaction in full detail. Where possible, choose U.S.‑familiar wildlife and habitats to boost Facebook Reels performance.",
 
   "Kling 3.0 Standard":
-    "Kling 3.0 Standard: balanced WSTV motion workflow — prioritize readable openings, clear subject spacing, primary action, grounded weight, and environmental reaction.",
+    // Emphasize first‑frame clarity and immediate predator pressure.  
+    "Kling 3.0 Standard: balanced WSTV motion workflow — prioritize readable openings with both animals visible, clear subject spacing, one primary action and grounded weight. Ensure the threat is obvious from frame one and environments reflect recognizable U.S. habitats for better audience connection.",
 
   "Kling 2.6 Pro":
-    "Kling 2.6 Pro: strong physics + character motion. Keep prompts clear, readable, and action-focused with strong subject visibility.",
+    // Older model with updated guidance for opening tension.  
+    "Kling 2.6 Pro: strong physics and character motion. Keep prompts clear, readable and action‑focused with strong subject visibility. Make the opening frames count by establishing tension instantly and using realistic U.S. wildlife setups.",
 
   "Kling 2.5 Turbo Pro":
-    "Kling 2.5 Turbo Pro: fast — single primary motion per shot, readable opening composition, and clean subject spacing. Start/End Frame supported.",
+    // Speedy model — still respect opening readability.  
+    "Kling 2.5 Turbo Pro: fast — single primary motion per shot, readable opening composition and clean subject spacing. Start/End Frame supported. Even in rapid tests, ensure the opening frames are clear, tense and recognizable to U.S. viewers.",
 
   "Kling 2.5 Turbo":
-    "Kling 2.5 Turbo: fast I2V — keep prompts short, readable, and focused on one clean motion beat.",
+    // Quick draft option — emphasise strong openings.  
+    "Kling 2.5 Turbo: fast I2V — keep prompts short, readable and focused on one clean motion beat. Use it for quick structure checks but still begin with fully visible subjects and immediate tension to simulate final quality.",
 };
 
 // ─────────────────────────────────────────────────────────────
