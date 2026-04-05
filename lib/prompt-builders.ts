@@ -2194,12 +2194,56 @@ export function buildKlingSixShot(
         : "Audio: weight transfer on ground surface, tense animal movement, alert vocalization.";
 
   const sixShotAudio4 = aquatic
-    ? "Audio: alternating water movement, shifting current tension."
-    : shoreline
-      ? "Audio: alternating shallow splash tension, wet-ground disturbance."
-      : isArcticLike
-        ? "Audio: sharp alternating breath, faint frozen forest hush."
-        : "Audio: rapid alternating breathing patterns.";
+  ? "Audio: alternating water movement, shifting current tension."
+  : shoreline
+    ? "Audio: alternating shallow splash tension, wet-ground disturbance."
+    : isArcticLike
+      ? "Audio: sharp alternating breath, faint frozen forest hush."
+      : "Audio: rapid alternating breathing patterns.";
+
+const sixShotAudio5 = buildKlingAudioShort(predator, prey, env, weather, "action");
+const sixShotAudio6 = buildKlingAudioShort(predator, prey, env, weather, "aftermath");
+
+const pasteReadySixShotCore = [
+  quality?.motionOnlyI2V
+    ? `Same ${predator} and ${prey} identities from the input image in the same environment continuity, ${cleanWeather}. Photorealistic wildlife documentary in 9:16 vertical.`
+    : `${predator} and ${prey} remain consistent across all six beats in ${cleanEnv}, ${cleanWeather}. Photorealistic wildlife documentary in 9:16 vertical.`,
+
+  ``,
+
+  `0–2s: Wide opening hold. ${predator} stays on the left and ${prey} stays on the right, both fully visible in the same frame with locked eye-line, clear spacing, and immediate tension from frame one.`,
+  sixShotAudio1,
+
+  ``,
+
+  `2–5s: The pressure holds without overlap. ${predator} keeps visible forward pressure while ${prey} stays fully alert and reactive. Spacing remains clear and readable.`,
+  sixShotAudio2,
+
+  ``,
+
+  `5–8s: Slow side-angle profile pressure. ${predator} shifts weight forward with controlled commitment while ${prey} answers with one readable defensive or escape-ready adjustment.`,
+  sixShotAudio3,
+
+  ``,
+
+  `8–11s: Reaction tension cut. Alternate clean reaction beats between ${predator} intensity and ${prey} survival focus while keeping the frame readable and natural.`,
+  sixShotAudio4,
+
+  ``,
+
+  `11–14s: Fixed wide action read. ${predator} ${s5.predatorBeat}. ${prey} ${s5.preyBeat}. Both subjects fully visible, clear predator-to-prey line, readable spacing, and no overlap. ${micro}.`,
+  sixShotAudio5,
+
+  ``,
+
+  `14–15s: Locked wide resolved tension hold. ${predator} ${s6.predatorBeat}. ${prey} ${s6.preyBeat}. Both subjects stay fully readable, spacing remains clear, and tension holds to the final frame. ${micro}.`,
+  sixShotAudio6,
+].join("\n").trim();
+
+const sixShotValidation = validateKlingPromptLength(pasteReadySixShotCore);
+const sixShotLengthLine = sixShotValidation.isOver
+  ? `PROMPT TOO LONG: ${sixShotValidation.length} / 2500`
+  : `Prompt length OK: ${sixShotValidation.length} / 2500 chars`;
 
   return finalizePrompt(`KLING 6-SHOT MULTI-SCENE [${model}] — Native Single-Prompt Format
 ──────────────────────────────────────────────────────
@@ -2208,7 +2252,11 @@ ${qLead}
 Guidance Scale: ${cfgBase} (0.0–1.0 range)
 ${wideRule}${context}
 
-═══ KLING 3.0 MULTI-SHOT PROMPT (6 shots) ═══
+═══ PASTE INTO KLING — copy this block only ═══
+${sixShotLengthLine}
+${pasteReadySixShotCore}
+
+─── FULL BREAKDOWN — reference only, do NOT paste into Kling ───
 
 ${sixShotSceneLine}
 ${sixShotCharacterLine}
@@ -2260,12 +2308,10 @@ HOW TO USE (Kling 3.0 WSTV 6-Shot Workflow):
 1. Generate master image (Image Prompt).
 2. Upload master image as reference.
 3. Enable "Bind Subject" (Elements 3.0) for identity lock.
-4. Use Multi-Prompt mode: create 6 Shot Prompts with durations.
-   OR paste THIS ENTIRE PROMPT as one single input.
+4. Paste ONLY the block above the FULL BREAKDOWN line into Kling.
 5. Enable native audio for documentary-quality sound.
 6. Output: Native 4K at 60fps.
-✅ One prompt → 6 cinematic shots with consistent identity and audio.`);
-}
+✅ One prompt → 6 cinematic shots with consistent identity and audio.`);  
 
 // ─────────────────────────────────────────────────────────────
 // 10 IDEAS
