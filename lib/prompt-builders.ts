@@ -1423,28 +1423,39 @@ const cleanCameraGear = sanitizeCameraGearForHabitat(cameraGear, env);
   // House structure aligned to Gemini image-generation guidance:
   // start with clear subject/context/action, then add composition,
   // lighting, and style details for stronger visual control.
-  if (target === "NANO_BANANA_2") {
-    const arcPhrase = /^[aeiou]/i.test(getSafeArcLabel(arc))
-      ? `an ${getSafeArcLabel(arc)}`
-      : `a ${getSafeArcLabel(arc)}`;
+    if (target === "NANO_BANANA_2") {
+    const nb2Air = "clear clean air, crisp subject separation, stable atmosphere";
+    const nb2Optics =
+      depthMode === "Cinematic Blur"
+        ? "telephoto compression and strong shallow depth separation"
+        : depthMode === "Balanced Depth"
+          ? "telephoto compression with balanced depth separation and readable midground"
+          : "documentary telephoto perspective with deeper field clarity and readable habitat layers";
 
-    const A_nb2 = buildImageSubjectLine(predator, prey, arcPhrase, arc);
-        const B_nb2 = `Context/background: ${cleanEnv}, ${cleanWeather}, ${cleanAir}. Natural habitat cues, readable terrain, clear background layers, strong first-frame readability, no empty dead space.`;
+    const nb2SceneTail = sceneDesc?.trim() ? ` ${sceneDesc.trim()}` : "";
 
-        const C_nb2 =
+    const subjectLine =
       habitatMode === "aquatic"
-        ? `Pose/action: ${predator} applies visible pre-action pressure through the water column, ${prey} stays fully alert and reactive, authentic aquatic wildlife body language, biologically accurate spacing, both subjects clearly readable, no overlap, tension visible immediately.`
+        ? `${predator} and ${prey} in the same frame at the most tension-rich beat of the ${getSafeArcLabel(arc)} in ${cleanEnv}.`
         : habitatMode === "shoreline"
-          ? `Pose/action: ${predator} holds visible pre-action shoreline pressure at the water's edge, ${prey} stays fully alert and reactive near the bank, authentic wildlife body language, biologically accurate spacing, both subjects clearly readable, no overlap, tension visible immediately.`
-          : `Pose/action: ${predator} holds visible pre-action pressure, ${prey} stays fully alert and reactive, authentic wildlife body language, biologically accurate spacing, both subjects clearly readable, no overlap, tension visible immediately.`;
+          ? `${predator} and ${prey} locked in a shoreline ${getSafeArcLabel(arc)} beat at ${cleanEnv}.`
+          : `${predator} and ${prey} in a tense ${getSafeArcLabel(arc)} moment in ${cleanEnv}.`;
 
-        const D_nb2 = `Composition: wide cinematic wildlife documentary frame, 9:16 vertical, mobile-first opening frame. Camera: top-tier full-frame wildlife documentary camera, ${cam.replace("tracking", "framing")}, premium super-telephoto optics, natural optical compression, authentic perspective, ${depth.lensNote}. Depth of field: ${depth.depth}. Clean subject separation, full-body readability, no overlap, stable silhouette separation, immediate readable tension, no empty dead space.`;
-         const E_nb2 = `Lighting: ${cleanWeather}. Natural rim separation, realistic shadow direction, true-to-life exposure rolloff, realistic dynamic range, natural highlight control, clean first-frame readability, no artificial glow, no synthetic HDR look, no visible steam, no mist, no haze, no atmospheric plumes.`;
+    const actionLine =
+      habitatMode === "aquatic"
+        ? `${predator} applies visible pressure through the water on the left while ${prey} stays fully alert and reactive on the right. Both subjects remain clearly readable with biologically accurate spacing and immediate visible tension.`
+        : habitatMode === "shoreline"
+          ? `${predator} holds visible pre-action pressure at the waterline on the left while ${prey} stays fully alert near the bank on the right. Both subjects remain clearly readable with natural shoreline spacing and immediate visible tension.`
+          : `${predator} holds visible pre-action pressure on the left while ${prey} stays fully alert and reactive on the right. Both subjects remain clearly readable with biologically accurate spacing and immediate visible tension.`;
 
-        const F_nb2 = `Style: ${vibe.style}, photorealistic, true wildlife documentary realism. ${cleanTexture}. ${vibe.texture}. Extremely natural fur, skin, moisture, and clean ground-contact detail. True-to-life color science, realistic micro-contrast, realistic lens rendering, biologically accurate anatomy, no plastic texture, no CGI feel, no over-sharpened artificial look. Prioritize strong opening-frame readability, visible predator pressure, and clear subject separation. ${realismAdd}${descInject}`;
+    const compositionLine = `Wide cinematic wildlife documentary composition in a 9:16 vertical frame, built for a strong mobile-first opening image. Full-body readability, stable silhouette separation, readable terrain layers, and no empty dead space. ${nb2Optics}. Depth of field: ${depth.depth}.`;
+
+    const lightingLine = `${cleanWeather}. ${nb2Air}. Natural rim separation, realistic shadow direction, true-to-life exposure rolloff, and clean first-frame readability.`;
+
+    const styleLine = `Photorealistic wildlife documentary realism. ${cleanTexture}. ${vibe.texture}. Natural fur, skin, feather, moisture, and ground-contact detail. True-to-life color, biologically accurate anatomy, and strong subject clarity. ${realismAdd}${nb2SceneTail}`;
 
     return finalizeImagePrompt(
-      `${qLead} ${A_nb2} ${B_nb2} ${C_nb2} ${D_nb2} ${E_nb2} ${F_nb2}`,
+      `${qLead} ${subjectLine} ${actionLine} ${compositionLine} ${lightingLine} ${styleLine}`,
       target
     );
   }
@@ -1619,29 +1630,29 @@ export function buildRunwayShots(
     preyBeat: sanitizeVideoBeatText(beat3.preyBeat),
   };
 
-  const shot1PasteReady = sanitizeRunwayFPS(
-  isAquatic
-    ? `Wide opening hold with a subtle push-in. Keep both subjects fully readable from frame one. The left subject glides once with controlled forward pressure through the water column. The right subject holds tense position in the current with locked eye-line. Clear spacing, readable threat line, clean motion start. ${micro}. ${seamless}`.trim()
-    : isShoreline
-      ? `Wide opening hold with a subtle push-in. Keep both subjects fully readable from frame one. The left subject holds low at the water's edge with visible forward pressure. The right subject stays tense near the bank with locked eye-line. Clear spacing, readable bank-to-waterline tension, clean motion start. ${micro}. ${seamless}`.trim()
-      : `Wide opening hold with a subtle push-in. Keep both subjects fully readable from frame one. The left subject ${s1.predatorBeat}. The right subject ${s1.preyBeat}. Locked eye-line, clear spacing, readable tension from the first second. ${micro}. ${seamless}`.trim()
-);
+   const shot1PasteReady = sanitizeRunwayFPS(
+    isAquatic
+      ? `Wide opening hold with a subtle push-in. Keep both subjects fully readable from frame one. The left subject glides once with controlled forward pressure through the water. The right subject holds tense position with locked eye-line. Clear spacing, readable threat line, clean motion start. ${micro}. ${seamless}`.trim()
+      : isShoreline
+        ? `Wide opening hold with a subtle push-in. Keep both subjects fully readable from frame one. The left subject holds low at the water's edge with visible pressure. The right subject stays tense near the bank with locked eye-line. Clear spacing, readable tension, clean motion start. ${micro}. ${seamless}`.trim()
+        : `Wide opening hold with a subtle push-in. Keep both subjects fully readable from frame one. The left subject ${s1.predatorBeat}. The right subject ${s1.preyBeat}. Clear spacing, locked eye-line, readable tension from the first second. ${micro}. ${seamless}`.trim()
+  );
 
   const shot2PasteReady = sanitizeRunwayFPS(
-  isAquatic
-    ? `Wide action read with restrained tracking. Keep both subjects fully visible. The left subject commits to one fast water-pressure burst toward the right subject. The right subject reacts with one evasive dart. Clear pursuit line, readable spacing, no overlap. Water displacement, turbulence, and current response. ${micro}. ${seamless}`.trim()
-    : isShoreline
-      ? `Wide action read with restrained tracking. Keep both subjects fully visible. The left subject bursts once from the shoreline toward the right subject. The right subject reacts with one evasive leap and turn. Clear predator-to-prey line, readable spacing, no overlap. Splash, mud scatter, and bank disturbance. ${micro}. ${seamless}`.trim()
-      : `Wide action read with restrained tracking. Keep both subjects fully visible. The left subject ${s2.predatorBeat}. The right subject ${s2.preyBeat}. Clear predator-to-prey line, readable spacing, no overlap. Ground compression, clear body-weight transfer. ${micro}. ${seamless}`.trim()
-);
+    isAquatic
+      ? `Wide action read with restrained tracking. Keep both subjects fully visible. The left subject commits to one fast water-pressure burst. The right subject reacts with one evasive dart. Clear pursuit line, readable spacing, no overlap. Water displacement and current response. ${micro}. ${seamless}`.trim()
+      : isShoreline
+        ? `Wide action read with restrained tracking. Keep both subjects fully visible. The left subject bursts once from the shoreline. The right subject reacts with one evasive leap and turn. Clear predator-to-prey line, readable spacing, no overlap. Splash and bank disturbance. ${micro}. ${seamless}`.trim()
+        : `Wide action read with restrained tracking. Keep both subjects fully visible. The left subject ${s2.predatorBeat}. The right subject ${s2.preyBeat}. Clear predator-to-prey line, readable spacing, no overlap. Ground compression and clean weight transfer. ${micro}. ${seamless}`.trim()
+  );
 
-const shot3PasteReady = sanitizeRunwayFPS(
-  isAquatic
-    ? `Wide aftermath hold with a slow pull-back. Keep both subjects fully readable. The left subject slows and stabilizes in the water. The right subject holds tense eye-line as residual turbulence settles. Clear spacing remains readable to the end. ${micro}. ${seamless}`.trim()
-    : isShoreline
-      ? `Wide aftermath hold with a slow pull-back. Keep both subjects fully readable. The left subject settles low at the waterline. The right subject holds tense eye-line as residual splash and mud disturbance fade. Clear spacing remains readable to the end. ${micro}. ${seamless}`.trim()
-      : `Wide aftermath hold with a slow pull-back. Keep both subjects fully readable. The left subject ${s3.predatorBeat}. The right subject ${s3.preyBeat}. Residual atmosphere settles while spacing stays clear and readable. ${micro}. ${seamless}`.trim()
-);
+  const shot3PasteReady = sanitizeRunwayFPS(
+    isAquatic
+      ? `Wide aftermath hold with a slow pull-back. Keep both subjects fully readable. The left subject slows and stabilizes in the water. The right subject holds tense eye-line as residual turbulence settles. Clear spacing remains readable to the end. ${micro}. ${seamless}`.trim()
+      : isShoreline
+        ? `Wide aftermath hold with a slow pull-back. Keep both subjects fully readable. The left subject settles low at the waterline. The right subject holds tense eye-line as residual splash and bank disturbance fade. Clear spacing remains readable to the end. ${micro}. ${seamless}`.trim()
+        : `Wide aftermath hold with a slow pull-back. Keep both subjects fully readable. The left subject ${s3.predatorBeat}. The right subject ${s3.preyBeat}. Residual atmosphere settles while spacing stays clear to the final frame. ${micro}. ${seamless}`.trim()
+  ); 
 
   return {
         shot1: finalizePrompt(`RUNWAY SHOT 1 — OPENING TENSION [${model}]
@@ -1987,25 +1998,23 @@ const audio3Short = buildKlingAudioShort(predator, prey, env, weather, "aftermat
 // lib/prompt-builders.ts
 
 const pasteReadyCore = [
-  `Same scene and same ${predator}/${prey} identities from input image. Photorealistic wildlife documentary. 9:16 vertical.`,
+  quality?.motionOnlyI2V
+    ? `Same ${predator} and ${prey} identities from the input image in the same environment continuity, ${cleanWeather}. Photorealistic wildlife documentary in 9:16 vertical.`
+    : `${predator} and ${prey} remain consistent across all three beats in ${cleanEnv}, ${cleanWeather}. Photorealistic wildlife documentary in 9:16 vertical.`,
+
   ``,
-  nativeSceneLine,
-  nativeCharacterLine,
-  `Arc: ${getSafeArcPrint(arc)}.`,
-  ``,
-  `Shot 1 — OPENING TENSION (0–5s) | Motion: ${mi1.toFixed(2)}:`,
-  `${formatActionSubject(predator, s1.predatorBeat)}. ${prey} ${s1.preyBeat}. Clear spacing, locked eye-line, both subjects fully readable from frame one.`,
-  `Camera: WIDE opening hold or subtle push-in, full bodies visible from frame one.`,
+
+  `0–5s: Wide opening hold with a subtle push-in. ${formatActionSubject(predator, s1.predatorBeat)}. ${prey} ${s1.preyBeat}. Both subjects fully readable from frame one, locked eye-line, clear spacing, immediate visible tension. ${micro}.`,
   audio1Short,
+
   ``,
-  `Shot 2 — ACTION PRESSURE (5–10s) WIDE | Motion: ${mi2.toFixed(2)}:`,
-  `${formatActionSubject(predator, s2.predatorBeat)}. ${prey} ${s2.preyBeat}. Both subjects fully visible, clear predator-to-prey line, readable spacing, no overlap.`,
-  `Camera: FIXED WIDE — full bodies visible, no crop, action readability first.`,
+
+  `5–10s: Fixed wide action read. ${formatActionSubject(predator, s2.predatorBeat)}. ${prey} ${s2.preyBeat}. Both subjects fully visible, clear predator-to-prey line, readable spacing, and no overlap. ${micro}.`,
   audio2Short,
+
   ``,
-  `Shot 3 — RESOLVED TENSION (10–15s) WIDE | Motion: ${mi3.toFixed(2)}:`,
-  `${formatActionSubject(predator, s3.predatorBeat)}. ${prey} ${s3.preyBeat}. Both subjects remain fully readable, spacing stays clear to the final frame.`,
-  `Camera: LOCKED FIXED WIDE — full bodies visible, end-state readability first.`,
+
+  `10–15s: Locked wide aftermath hold. ${formatActionSubject(predator, s3.predatorBeat)}. ${prey} ${s3.preyBeat}. Both subjects stay fully readable, spacing remains clear, and tension holds to the final frame. ${micro}.`,
   audio3Short,
 ].join("\n").trim();
 
