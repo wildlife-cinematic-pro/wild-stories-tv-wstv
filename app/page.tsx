@@ -45,6 +45,7 @@ import {
   buildFiveShotCinematic,
   buildFiveShotViral,
   buildWatchTimeReport,
+suggestHabitat,
 } from "@/lib/predator-data";
 
 import {
@@ -129,6 +130,18 @@ type QualityState = {
   heroVeo: boolean;
 };
 
+// ─────────────────────────────────────────────────────────────
+// STEP 1 SHARED DEFAULT CONSTANTS
+// ─────────────────────────────────────────────────────────────
+const DEFAULT_PREDATOR = "Wolf Pack";
+const DEFAULT_PREY = "Bull Elk";
+const DEFAULT_ARC: Arc = "Pack hunting strategy";
+const DEFAULT_WEATHER: Weather = "Golden Hour";
+const DEFAULT_HABITAT: HabitatPreset = "Auto";
+const DEFAULT_DEPTH_MODE: DepthMode = "Balanced Depth";
+const DEFAULT_EMOTIONAL_TONE: EmotionalTone = "Raw Tension";
+const DEFAULT_ANIMAL_VIBE: AnimalVibe = "National Geographic Wild";
+
 function toDriftRisk(v: unknown): DriftRisk {
   if (v === "LOW" || v === "MEDIUM" || v === "HIGH") return v;
   if (typeof v === "number" && Number.isFinite(v)) {
@@ -147,7 +160,7 @@ function normalizePreset(input: unknown, fallback: NormalizedPreset): Normalized
       ? (obj.prey as string[])
       : fallback.prey;
 
-    const environment = typeof obj.environment === "string" ? obj.environment : fallback.environment;
+  const environment = typeof obj.environment === "string" ? obj.environment : fallback.environment;
   const lighting = typeof obj.lighting === "string" ? obj.lighting : fallback.lighting;
   const cameraGear = typeof obj.cameraGear === "string" ? obj.cameraGear : fallback.cameraGear;
   const texture = typeof obj.texture === "string" ? obj.texture : fallback.texture;
@@ -253,17 +266,17 @@ function ModelCard({
 
 export default function Page() {
   // STEP 1 (basic inputs)
-  const [predator, setPredator] = useState("Wolf Pack");
-const [prey, setPrey] = useState("Elk");
-const [arc, setArc] = useState<Arc>("Pack hunting strategy");
-  const [weather, setWeather] = useState<Weather>("Dawn");
-const [habitat, setHabitat] = useState<HabitatPreset>("Auto");
-const [depthMode, setDepthMode] = useState<DepthMode>("Balanced Depth");
-const [emotionalTone, setEmotionalTone] = useState<EmotionalTone>("Raw Tension");
-const [animalVibe, setAnimalVibe] = useState<AnimalVibe>("National Geographic Wild");
+  const [predator, setPredator] = useState(DEFAULT_PREDATOR);
+  const [prey, setPrey] = useState(DEFAULT_PREY);
+  const [arc, setArc] = useState<Arc>(DEFAULT_ARC);
+  const [weather, setWeather] = useState<Weather>(DEFAULT_WEATHER);
+  const [habitat, setHabitat] = useState<HabitatPreset>(DEFAULT_HABITAT);
+  const [depthMode, setDepthMode] = useState<DepthMode>(DEFAULT_DEPTH_MODE);
+  const [emotionalTone, setEmotionalTone] = useState<EmotionalTone>(DEFAULT_EMOTIONAL_TONE);
+  const [animalVibe, setAnimalVibe] = useState<AnimalVibe>(DEFAULT_ANIMAL_VIBE);
 
   // STEP 2 (engine + quality)
-    const [runwayModel, setRunwayModel] = useState<RunwayModel>(RUNWAY_MODELS[0]);
+  const [runwayModel, setRunwayModel] = useState<RunwayModel>(RUNWAY_MODELS[0]);
   const [klingModel, setKlingModel] = useState<KlingModel>(KLING_MODELS[0]);
   const [imagePromptTarget, setImagePromptTarget] = useState<ImagePromptTarget>("NANO_BANANA_2");
 
@@ -298,7 +311,7 @@ const [animalVibe, setAnimalVibe] = useState<AnimalVibe>("National Geographic Wi
 
   const [customForm, setCustomForm] = useState<{
     name: string;
-    prey: string; // comma separated
+    prey: string;
     environment: string;
     defaultArc: string;
     driftRisk: "LOW" | "MEDIUM" | "HIGH";
@@ -311,52 +324,52 @@ const [animalVibe, setAnimalVibe] = useState<AnimalVibe>("National Geographic Wi
   });
 
   const predatorOptions = useMemo(() => {
-  const base = Object.keys(predatorData);
-  const extra = customPredators.map((p) => p.name);
+    const base = Object.keys(predatorData);
+    const extra = customPredators.map((p) => p.name);
 
     const usaPriority = [
-    "Wolf Pack",
-    "Mountain Lion",
-    "Alligator",
-    "Bison",
-    "Grizzly Bear",
-    "Bald Eagle",
-    "Moose",
-    "Bull Elk",
-    "Black Bear",
-    "Coyote",
-    "Bobcat",
-    "Cougar",
-    "Wolf",
-    "Wild Boar",
-    "Great Horned Owl",
-    "Red Fox",
-    "Beaver",
-    "River Otter",
-    "Badger",
-    "Raccoon",
-    "White-tailed Deer",
-    "Dolphin",
-    "Orca",
-    "Shark",
-  ];
+      "Wolf Pack",
+      "Mountain Lion",
+      "Alligator",
+      "Bison",
+      "Grizzly Bear",
+      "Bald Eagle",
+      "Moose",
+      "Bull Elk",
+      "Black Bear",
+      "Coyote",
+      "Bobcat",
+      "Cougar",
+      "Wolf",
+      "Wild Boar",
+      "Great Horned Owl",
+      "Red Fox",
+      "Beaver",
+      "River Otter",
+      "Badger",
+      "Raccoon",
+      "White-tailed Deer",
+      "Dolphin",
+      "Orca",
+      "Shark",
+    ];
 
-  const all = Array.from(new Set([...base, ...extra]));
+    const all = Array.from(new Set([...base, ...extra]));
 
-  return all.sort((a, b) => {
-    const ai = usaPriority.indexOf(a);
-    const bi = usaPriority.indexOf(b);
+    return all.sort((a, b) => {
+      const ai = usaPriority.indexOf(a);
+      const bi = usaPriority.indexOf(b);
 
-    const aPinned = ai !== -1;
-    const bPinned = bi !== -1;
+      const aPinned = ai !== -1;
+      const bPinned = bi !== -1;
 
-    if (aPinned && bPinned) return ai - bi;
-    if (aPinned) return -1;
-    if (bPinned) return 1;
+      if (aPinned && bPinned) return ai - bi;
+      if (aPinned) return -1;
+      if (bPinned) return 1;
 
-    return a.localeCompare(b);
-  });
-}, [customPredators]);
+      return a.localeCompare(b);
+    });
+  }, [customPredators]);
 
   const lionFallback = useMemo<NormalizedPreset>(() => {
     const rawLion = (predatorData as Record<string, unknown>)["Lion"];
@@ -365,9 +378,10 @@ const [animalVibe, setAnimalVibe] = useState<AnimalVibe>("National Geographic Wi
       environment: habitatPromptMap["Rocky Mountain Meadow"],
       lighting: "cold dawn light, pale gold horizon glow, thin ground mist, soft natural side light",
       cameraGear: "Nikon Z9, 400mm wildlife lens, long-lens documentary framing",
-      texture: "natural fur, feather, or scale detail, grounded body weight, realistic contact with dirt, grass, brush, and uneven terrain",
+      texture:
+        "natural fur, feather, or scale detail, grounded body weight, realistic contact with dirt, grass, brush, and uneven terrain",
       driftRisk: "MEDIUM",
-            defaultArc: "Ambush attack",
+      defaultArc: "Ambush attack",
     });
   }, []);
 
@@ -390,16 +404,19 @@ const [animalVibe, setAnimalVibe] = useState<AnimalVibe>("National Geographic Wi
         environment: custom.environment || "Rocky Mountain forest edge and open meadow",
         lighting: "cold dawn light, pale gold horizon glow, thin ground mist, soft natural side light",
         cameraGear: "Nikon Z9, 400mm wildlife lens, long-lens documentary framing",
-        texture: "natural fur, feather, or scale detail, grounded body weight, realistic contact with dirt, grass, brush, and uneven terrain",
+        texture:
+          "natural fur, feather, or scale detail, grounded body weight, realistic contact with dirt, grass, brush, and uneven terrain",
         driftRisk: custom.driftRisk || "MEDIUM",
-                     defaultArc: custom.defaultArc || "Pack hunting strategy",
+        defaultArc: custom.defaultArc || "Pack hunting strategy",
       },
       lionFallback
     );
   }, [predator, lionFallback, customPredators]);
 
   const finalEnvironment =
-  habitat === "Auto" ? preset.environment : habitatPromptMap[habitat];
+    habitat === "Auto"
+      ? suggestHabitat(predator, prey, preset.environment)
+      : habitatPromptMap[habitat];
 
   // ✅ Quality recommendations (AFTER preset)
   const qualityReco = useMemo(() => {
@@ -447,7 +464,6 @@ const [animalVibe, setAnimalVibe] = useState<AnimalVibe>("National Geographic Wi
   }
 
   function applyRecommendedQuality() {
-    // ✅ Save "before" so Undo can restore
     setLastQualityBeforeApply(captureCurrentQuality());
 
     const r = qualityReco.recommended;
@@ -465,7 +481,7 @@ const [animalVibe, setAnimalVibe] = useState<AnimalVibe>("National Geographic Wi
     setLastQualityBeforeApply(null);
   }
 
-  // ✅ Auto-apply on HIGH drift (power users) — apply once per combo
+  // ✅ Auto-apply on HIGH drift — apply once per combo
   const lastAutoAppliedKeyRef = useRef<string>("");
 
   useEffect(() => {
@@ -491,12 +507,12 @@ const [animalVibe, setAnimalVibe] = useState<AnimalVibe>("National Geographic Wi
   // Load settings
   useEffect(() => {
     const shared = readShareState();
-if (shared.predator) setPredator(shared.predator);
-if (shared.prey) setPrey(shared.prey);
-if (shared.arc) setArc(shared.arc as Arc);
-if (shared.weather) setWeather(shared.weather);
-if (shared.depthMode) setDepthMode(shared.depthMode);
-if (shared.habitat) setHabitat(shared.habitat);
+    if (shared.predator) setPredator(shared.predator);
+    if (shared.prey) setPrey(shared.prey);
+    if (shared.arc) setArc(shared.arc as Arc);
+    if (shared.weather) setWeather(shared.weather);
+    if (shared.depthMode) setDepthMode(shared.depthMode);
+    if (shared.habitat) setHabitat(shared.habitat);
     const saved = readSettings();
     if (saved?.activeProvider) setActiveProvider(saved.activeProvider);
     if (saved?.realismMode) setRealismMode(saved.realismMode);
@@ -507,13 +523,23 @@ if (shared.habitat) setHabitat(shared.habitat);
     if (saved?.heroVeo !== undefined) setHeroVeo(saved.heroVeo);
     if (saved?.habitat) setHabitat(saved.habitat);
 
-    // ✅ persist auto-apply toggle (safe even if older settings type)
     const aa = (saved as Record<string, unknown>)?.autoApplyHighDrift;
     if (typeof aa === "boolean") setAutoApplyHighDrift(aa);
   }, []);
 
- useEffect(() => {
-  writeSettings({
+  useEffect(() => {
+    writeSettings({
+      activeProvider,
+      realismMode,
+      motionOnlyI2V,
+      referenceLock,
+      singleActionRule,
+      microMotion,
+      heroVeo,
+      autoApplyHighDrift,
+      habitat,
+    });
+  }, [
     activeProvider,
     realismMode,
     motionOnlyI2V,
@@ -523,30 +549,19 @@ if (shared.habitat) setHabitat(shared.habitat);
     heroVeo,
     autoApplyHighDrift,
     habitat,
-  });
-}, [
-  activeProvider,
-  realismMode,
-  motionOnlyI2V,
-  referenceLock,
-  singleActionRule,
-  microMotion,
-  heroVeo,
-  autoApplyHighDrift,
-   habitat,
-]);
+  ]);
 
-useEffect(() => {
-  writeShareState({
-    predator,
-    prey,
-    arc,
-    weather,
-    depthMode,
-    habitat,
-  });
-}, [predator, prey, arc, weather, depthMode, habitat]);
-  
+  useEffect(() => {
+    writeShareState({
+      predator,
+      prey,
+      arc,
+      weather,
+      depthMode,
+      habitat,
+    });
+  }, [predator, prey, arc, weather, depthMode, habitat]);
+
   // ✅ Load custom predators once
   useEffect(() => {
     const savedCustom = readCustomPredators();
@@ -554,31 +569,31 @@ useEffect(() => {
   }, []);
 
   useEffect(() => {
-  if (!preset.prey.length) return;
+    if (!preset.prey.length) return;
 
-  const nextPrey = preset.prey.includes(prey) ? prey : preset.prey[0];
+    const nextPrey = preset.prey.includes(prey) ? prey : preset.prey[0];
 
-  if (prey !== nextPrey) {
-    setPrey(nextPrey);
-    return;
-  }
+    if (prey !== nextPrey) {
+      setPrey(nextPrey);
+      return;
+    }
 
-  const suggestedArc = suggestArc(predator, nextPrey, preset.defaultArc) as Arc;
+    const suggestedArc = suggestArc(predator, nextPrey, preset.defaultArc) as Arc;
 
-  if (arc !== suggestedArc) {
-    setArc(suggestedArc);
-  }
-}, [predator, prey, arc, preset.prey, preset.defaultArc]);
+    if (arc !== suggestedArc) {
+      setArc(suggestedArc);
+    }
+  }, [predator, prey, arc, preset.prey, preset.defaultArc]);
 
   async function handleGenerate() {
-  setIsGenerating(true);
-  setError("");
-  setPkg(null);
+    setIsGenerating(true);
+    setError("");
+    setPkg(null);
 
-  try {
-    console.log("GENERATE PREDATOR =", predator);
+    try {
+      console.log("GENERATE PREDATOR =", predator);
 
-    if (!predator || !prey) throw new Error("Missing predator or prey");
+      if (!predator || !prey) throw new Error("Missing predator or prey");
 
       const finalArc = suggestArc(predator, prey, arc) as Arc;
 
@@ -598,7 +613,7 @@ useEffect(() => {
         heroVeo,
       };
 
-            const imagePrompt = buildImagePrompt(
+      const imagePrompt = buildImagePrompt(
         predator,
         prey,
         finalEnvironment,
@@ -669,14 +684,14 @@ useEffect(() => {
 
       const negativePromptForKling = buildNegativePrompt(predator);
 
-     const thumbnailPrompt = buildThumbnailPrompt(
-  predator,
-  prey,
-  finalEnvironment,
-  weather,
-  emotionalTone,
-  animalVibe
-);
+      const thumbnailPrompt = buildThumbnailPrompt(
+        predator,
+        prey,
+        finalEnvironment,
+        weather,
+        emotionalTone,
+        animalVibe
+      );
       const voiceoverLine = buildVoiceoverLine(predator, prey, finalEnvironment, emotionalTone);
       const capCutPlan = buildCapCutPlan(predator, finalArc, weather);
       const clipChaining = buildClipChaining(predator, preset.driftRisk);
@@ -688,10 +703,10 @@ useEffect(() => {
       const recommendedHookIndex = getRecommendedHookIndex(finalArc);
 
       const presetForIdeas = {
-  ...preset,
-  environment: finalEnvironment,
-};
-    const tenIdeas = build10Ideas(predator, preset.prey, presetForIdeas as never);
+        ...preset,
+        environment: finalEnvironment,
+      };
+      const tenIdeas = build10Ideas(predator, preset.prey, presetForIdeas as never);
 
       const platformPack = buildPlatformPack(predator, prey, finalArc, finalEnvironment);
       const seoTitle = buildSEOTitle(predator, prey, finalArc);
@@ -729,17 +744,17 @@ useEffect(() => {
 
       const watchTimeReport = buildWatchTimeReport("5-shot", 2);
       const motionStrength = arcMotionStrength[finalArc] ?? 70;
-    
-   const soundDesignPack = buildSoundDesignPack(
-  predator,
-  prey,
-  finalEnvironment,
-  finalArc,
-  weather,
-  klingModel
-);
 
-const animalBehaviorResult = getAnimalBehavior(predator);
+      const soundDesignPack = buildSoundDesignPack(
+        predator,
+        prey,
+        finalEnvironment,
+        finalArc,
+        weather,
+        klingModel
+      );
+
+      const animalBehaviorResult = getAnimalBehavior(predator);
 
       const basePkg: GeneratedPackage = {
         predatorName: predator,
@@ -770,7 +785,7 @@ const animalBehaviorResult = getAnimalBehavior(predator);
         hashtags,
         tenIdeas,
 
-                shotPlan: [
+        shotPlan: [
           {
             engine: "RUNWAY",
             title: "Opening Tension",
@@ -811,32 +826,31 @@ const animalBehaviorResult = getAnimalBehavior(predator);
         referenceWorkflow,
         naturalismChecklist,
         modelsUsed: { runway: runwayModel, kling: klingModel },
-sceneDesc: sceneInject,
-soundDesignPack,
-animalBehavior: animalBehaviorResult ?? undefined,
+        sceneDesc: sceneInject,
+        soundDesignPack,
+        animalBehavior: animalBehaviorResult ?? undefined,
       };
-    const capCutScript = buildCapCutScript(
-  predator,
-  prey,
-  finalArc,
-  weather,
-  basePkg,
-  "5-shot"
-);
-    const twoPartViralPreset = shouldBuildTwoPartViralPreset(
-  predator,
-  prey,
-  finalArc
-)
-  ? buildTwoPartViralPreset(
-      predator,
-      prey,
-      finalEnvironment,
-      weather,
-      finalArc,
-      runwayModel
-    )
-  : null;
+
+      const capCutScript = buildCapCutScript(
+        predator,
+        prey,
+        finalArc,
+        weather,
+        basePkg,
+        "5-shot"
+      );
+
+      const twoPartViralPreset = shouldBuildTwoPartViralPreset(predator, prey, finalArc)
+        ? buildTwoPartViralPreset(
+            predator,
+            prey,
+            finalEnvironment,
+            weather,
+            finalArc,
+            runwayModel
+          )
+        : null;
+
       let enhanced: Partial<GeneratedPackage> = {};
 
       if (activeProvider !== "none") {
@@ -863,30 +877,33 @@ animalBehavior: animalBehaviorResult ?? undefined,
 
         const data = await res.json().catch(() => ({} as unknown));
         if (!res.ok)
-          throw new Error(((data as Record<string, unknown>)?.error as string) || `AI enhancement failed (${res.status})`);
+          throw new Error(
+            ((data as Record<string, unknown>)?.error as string) ||
+              `AI enhancement failed (${res.status})`
+          );
 
         enhanced = { ...(data as Partial<GeneratedPackage>), aiEnhanced: true };
       }
 
       const finalPkg: GeneratedPackage = {
-  ...enhanced,
-  ...basePkg,
-  capCutScript,
-  ...(twoPartViralPreset
-    ? {
-        twoPartViralOverview: twoPartViralPreset.overview,
-        twoPartWorkflowGuide: twoPartViralPreset.workflowGuide,
-        twoPartPart1Hook: twoPartViralPreset.part1Hook,
-        twoPartPart1Caption: twoPartViralPreset.part1Caption,
-        twoPartPart1Draft: twoPartViralPreset.part1Draft,
-        twoPartPart1Final: twoPartViralPreset.part1Final,
-        twoPartPart2Hook: twoPartViralPreset.part2Hook,
-        twoPartPart2Caption: twoPartViralPreset.part2Caption,
-        twoPartPart2Draft: twoPartViralPreset.part2Draft,
-        twoPartPart2Final: twoPartViralPreset.part2Final,
-      }
-    : {}),
-};
+        ...enhanced,
+        ...basePkg,
+        capCutScript,
+        ...(twoPartViralPreset
+          ? {
+              twoPartViralOverview: twoPartViralPreset.overview,
+              twoPartWorkflowGuide: twoPartViralPreset.workflowGuide,
+              twoPartPart1Hook: twoPartViralPreset.part1Hook,
+              twoPartPart1Caption: twoPartViralPreset.part1Caption,
+              twoPartPart1Draft: twoPartViralPreset.part1Draft,
+              twoPartPart1Final: twoPartViralPreset.part1Final,
+              twoPartPart2Hook: twoPartViralPreset.part2Hook,
+              twoPartPart2Caption: twoPartViralPreset.part2Caption,
+              twoPartPart2Draft: twoPartViralPreset.part2Draft,
+              twoPartPart2Final: twoPartViralPreset.part2Final,
+            }
+          : {}),
+      };
 
       setPkg(finalPkg);
 
@@ -915,7 +932,6 @@ animalBehavior: animalBehaviorResult ?? undefined,
 
       setStep(3);
     } catch (e) {
-
       console.error("[generate error]", e);
       setError(e instanceof Error ? e.message : "Generation failed");
     } finally {
@@ -930,26 +946,26 @@ animalBehavior: animalBehaviorResult ?? undefined,
           WILD STORIES TV (WSTV)
         </h1>
         <p className="mt-1 text-sm text-white/70 drop-shadow-[0_2px_10px_rgba(0,0,0,0.55)]">
-  Step 1 → viral wildlife setup. Step 2 → visual engine & quality. Step 3 → generate for reels.
-</p>
+          Step 1 → viral wildlife setup. Step 2 → visual engine & quality. Step 3 → generate for reels.
+        </p>
       </div>
 
       {/* Stepper */}
       <div className="mb-6 flex flex-wrap gap-2">
-  <StepPill step={1} active={step === 1} label="Viral Wildlife Setup" onClick={() => setStep(1)} />
-  <StepPill
-    step={2}
-    active={step === 2}
-    label="Visual Engine & Quality"
-    onClick={() => setStep(2)}
-  />
-  <StepPill
-    step={3}
-    active={step === 3}
-    label="Generate for Reels"
-    onClick={() => setStep(3)}
-  />
-</div>
+        <StepPill step={1} active={step === 1} label="Viral Wildlife Setup" onClick={() => setStep(1)} />
+        <StepPill
+          step={2}
+          active={step === 2}
+          label="Visual Engine & Quality"
+          onClick={() => setStep(2)}
+        />
+        <StepPill
+          step={3}
+          active={step === 3}
+          label="Generate for Reels"
+          onClick={() => setStep(3)}
+        />
+      </div>
 
       {/* STEP 1 */}
       {step === 1 && (
@@ -957,9 +973,7 @@ animalBehavior: animalBehaviorResult ?? undefined,
           <div className="mb-3 text-xs font-extrabold uppercase tracking-widest text-gray-600">
             STEP 1
           </div>
-          <h2 className="mb-4 text-lg font-extrabold text-gray-900">
-  Viral Wildlife Setup
-</h2>
+          <h2 className="mb-4 text-lg font-extrabold text-gray-900">Viral Wildlife Setup</h2>
 
           <div className="grid gap-3 sm:grid-cols-2">
             <div>
@@ -975,7 +989,9 @@ animalBehavior: animalBehaviorResult ?? undefined,
                   </option>
                 ))}
               </select>
-
+              <p className="mt-1 text-[11px] text-gray-500">
+                Drives the opening pressure and dominant frame. Pick the animal that controls the encounter.
+              </p>
               {customPredators.length > 0 && (
                 <p className="mt-1 text-[11px] text-gray-500">
                   Custom animals:{" "}
@@ -997,81 +1013,92 @@ animalBehavior: animalBehaviorResult ?? undefined,
                   </option>
                 ))}
               </select>
+              <p className="mt-1 text-[11px] text-gray-500">
+                Filtered from the selected lead animal for cleaner realism. Switch the lead animal to see different options.
+              </p>
             </div>
           </div>
 
           <div className="mt-3 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-  <div>
-  <label className="mb-1 block text-xs font-semibold text-gray-500">Conflict Arc</label>
-  <select
-    value={arc}
-    disabled
-    className="w-full rounded-lg border border-gray-300 bg-gray-100 px-3 py-2 text-sm text-gray-700"
-  >
-    <option value={arc}>{arc}</option>
-  </select>
-  <p className="mt-1 text-[11px] text-gray-500">
-    Auto-matched from lead animal + opposing animal for cleaner realism.
-  </p>
-</div>
+            <div>
+              <label className="mb-1 block text-xs font-semibold text-gray-500">Conflict Arc</label>
+              <select
+                value={arc}
+                disabled
+                className="w-full rounded-lg border border-gray-300 bg-gray-100 px-3 py-2 text-sm text-gray-700"
+              >
+                <option value={arc}>{arc}</option>
+              </select>
+              <p className="mt-1 text-[11px] text-gray-500">
+                Auto-matched from the lead + opposing animal pairing. Keeps realism consistent across prompts.
+              </p>
+            </div>
 
-  <div>
-  <label className="mb-1 block text-xs font-semibold text-gray-500">Habitat Override</label>
-  <select
-    value={habitat}
-    onChange={(e) => setHabitat(e.target.value as HabitatPreset)}
-    className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-800"
-  >
-    {habitatOptions.map((h) => (
-      <option key={h} value={h}>
-        {h}
-      </option>
-    ))}
-  </select>
-  <p className="mt-1 text-[11px] text-gray-500">
-    Auto uses lead-animal-matched habitat. Override only when you want a different but still realistic U.S. setting.
-  </p>
-  <p className="mt-2 text-[11px] leading-relaxed text-gray-600">
-    <span className="font-semibold text-gray-700">Current habitat:</span> {finalEnvironment}
-  </p>
-</div>
+            <div>
+              <label className="mb-1 block text-xs font-semibold text-gray-500">Habitat Override</label>
+              <select
+                value={habitat}
+                onChange={(e) => setHabitat(e.target.value as HabitatPreset)}
+                className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-800"
+              >
+                {habitatOptions.map((h) => (
+                  <option key={h} value={h}>
+                    {h}
+                  </option>
+                ))}
+              </select>
+              <p className="mt-1 text-[11px] text-gray-500">
+                Auto is the safest option for realism. Override only when you intentionally want a different but still realistic setting.
+              </p>
+              <p className="mt-2 text-[11px] leading-relaxed text-gray-600">
+                <span className="font-semibold text-gray-700">Current habitat:</span>{" "}
+                {finalEnvironment}
+              </p>
 
-  <div>
-    <label className="mb-1 block text-xs font-semibold text-gray-500">Scene Atmosphere</label>
-    <select
-      value={weather}
-      onChange={(e) => setWeather(e.target.value as Weather)}
-      className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-800"
-    >
-      {weatherOptions.map((w) => (
-        <option key={w} value={w}>
-          {w}
-        </option>
-      ))}
-    </select>
-  </div>
+              {/* Habitat warning — only when not Auto */}
+              {habitat !== "Auto" && (
+                <div className="mt-2 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2">
+                  <p className="text-[11px] leading-relaxed text-amber-800">
+                    <span className="font-extrabold">⚠️ Manual override active.</span> A mismatched habitat can weaken realism and attract comments. Use Auto for the safest wildlife-environment match.
+                  </p>
+                </div>
+              )}
+            </div>
 
-  <div>
-    <label className="mb-1 block text-xs font-semibold text-gray-500">Cinematic Depth</label>
-    <select
-      value={depthMode}
-      onChange={(e) => setDepthMode(e.target.value as DepthMode)}
-      className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-800"
-    >
-      {depthModes.map((d) => (
-        <option key={d} value={d}>
-          {d}
-        </option>
-      ))}
-    </select>
-  </div>
-</div>
+            <div>
+              <label className="mb-1 block text-xs font-semibold text-gray-500">Scene Atmosphere</label>
+              <select
+                value={weather}
+                onChange={(e) => setWeather(e.target.value as Weather)}
+                className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-800"
+              >
+                {weatherOptions.map((w) => (
+                  <option key={w} value={w}>
+                    {w}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            <div>
+              <label className="mb-1 block text-xs font-semibold text-gray-500">Cinematic Depth</label>
+              <select
+                value={depthMode}
+                onChange={(e) => setDepthMode(e.target.value as DepthMode)}
+                className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-800"
+              >
+                {depthModes.map((d) => (
+                  <option key={d} value={d}>
+                    {d}
+                  </option>
+                ))}
+              </select>
+            </div>
+          </div>
 
           <div className="mt-3 grid gap-3 sm:grid-cols-2">
             <div>
-              <label className="mb-1 block text-xs font-semibold text-gray-500">
-                Tension Level
-              </label>
+              <label className="mb-1 block text-xs font-semibold text-gray-500">Tension Level</label>
               <select
                 value={emotionalTone}
                 onChange={(e) => setEmotionalTone(e.target.value as EmotionalTone)}
@@ -1101,15 +1128,66 @@ animalBehavior: animalBehaviorResult ?? undefined,
             </div>
           </div>
 
-          <div className="mt-5 flex flex-wrap gap-2">
-            <button
-              type="button"
-              onClick={() => setStep(2)}
-              className="rounded-xl bg-gray-900 px-5 py-2.5 text-sm font-extrabold text-white hover:bg-black active:scale-[0.98]"
-            >
-             Continue → Visual Engine & Quality
-            </button>
+          {/* Current Setup Preview */}
+          <div className="mt-5 rounded-xl border border-gray-200 bg-gray-50 px-4 py-3">
+            <div className="mb-2 text-[11px] font-extrabold uppercase tracking-widest text-gray-500">
+              Current Setup
+            </div>
+            <div className="text-sm font-extrabold text-gray-900">
+              {predator} vs {prey}
+            </div>
+            <div className="mt-1 text-xs text-gray-600">
+              {arc} • {weather}
+            </div>
+            <div className="mt-1 text-xs text-gray-600">
+              <span className="font-semibold text-gray-700">Habitat:</span>{" "}
+              {habitat === "Auto" ? "Auto" : habitat}
+            </div>
+            <div className="mt-1 text-[11px] leading-relaxed text-gray-500">
+              <span className="font-semibold text-gray-600">Environment:</span> {finalEnvironment}
+            </div>
+            <div className="mt-1 text-[11px]">
+              <span className="font-semibold text-gray-600">Drift Risk:</span>{" "}
+              <span
+                className={
+                  preset.driftRisk === "HIGH"
+                    ? "font-extrabold text-red-600"
+                    : preset.driftRisk === "MEDIUM"
+                    ? "font-extrabold text-amber-700"
+                    : "font-extrabold text-emerald-700"
+                }
+              >
+                {preset.driftRisk}
+              </span>
+            </div>
           </div>
+
+          <div className="mt-4 flex flex-wrap gap-2">
+  <button
+    type="button"
+    onClick={() => {
+      setPredator(DEFAULT_PREDATOR);
+      setPrey(DEFAULT_PREY);
+      setArc(DEFAULT_ARC);
+      setWeather(DEFAULT_WEATHER);
+      setHabitat(DEFAULT_HABITAT);
+      setDepthMode(DEFAULT_DEPTH_MODE);
+      setEmotionalTone(DEFAULT_EMOTIONAL_TONE);
+      setAnimalVibe(DEFAULT_ANIMAL_VIBE);
+    }}
+    className="rounded-xl border border-gray-300 bg-white px-5 py-2.5 text-sm font-extrabold text-gray-800 hover:bg-gray-50 active:scale-[0.98]"
+  >
+    Reset to USA Defaults
+  </button>
+
+  <button
+    type="button"
+    onClick={() => setStep(2)}
+    className="rounded-xl bg-gray-900 px-5 py-2.5 text-sm font-extrabold text-white hover:bg-black active:scale-[0.98]"
+  >
+    Continue → Visual Engine & Quality
+  </button>
+</div>
         </div>
       )}
 
@@ -1119,9 +1197,7 @@ animalBehavior: animalBehaviorResult ?? undefined,
           <div className="mb-3 text-xs font-extrabold uppercase tracking-widest text-gray-600">
             STEP 2
           </div>
-          <h2 className="mb-4 text-lg font-extrabold text-gray-900">
-  Visual Engine & Quality
-</h2>
+          <h2 className="mb-4 text-lg font-extrabold text-gray-900">Visual Engine & Quality</h2>
 
           {/* ✅ Quality Automation panel */}
           <div className="mb-4 rounded-2xl border border-gray-200 bg-white p-4 shadow-sm">
@@ -1141,7 +1217,6 @@ animalBehavior: animalBehaviorResult ?? undefined,
                 </span>
               </div>
 
-              {/* ✅ Right-side controls: Toggle + Undo + Apply */}
               <div className="flex flex-wrap items-center gap-2">
                 <button
                   type="button"
@@ -1231,12 +1306,12 @@ animalBehavior: animalBehaviorResult ?? undefined,
                       active={runwayModel === m}
                       title={m}
                       subtitle={
-  m === "Gen-4.5"
-    ? "Best realism, strongest first-frame readability, hero shots"
-    : m === "Gen-4 Turbo"
-      ? "Fast draft choice for quick readable opening tests"
-      : "Stable cinematic shots with simple clear openings"
-      }
+                        m === "Gen-4.5"
+                          ? "Best realism, strongest first-frame readability, hero shots"
+                          : m === "Gen-4 Turbo"
+                            ? "Fast draft choice for quick readable opening tests"
+                            : "Stable cinematic shots with simple clear openings"
+                      }
                       onClick={() => setRunwayModel(m)}
                     />
                   ))}
@@ -1255,16 +1330,16 @@ animalBehavior: animalBehaviorResult ?? undefined,
                       active={klingModel === m}
                       title={m}
                       subtitle={
-  m === "Kling 3.0 Pro"
-    ? "Strong action workflow, best readable openings, multi-shot friendly"
-    : m === "Kling 3.0 Standard"
-      ? "Balanced action workflow with strong motion and clear subject spacing"
-      : m === "Kling 2.6 Pro"
-        ? "Earlier Kling workflow option for simpler readable action"
-        : m === "Kling 2.5 Turbo Pro"
-          ? "Fast draft workflow for one clean action beat"
-          : "Fast image-to-video draft option for rough motion tests"
-}
+                        m === "Kling 3.0 Pro"
+                          ? "Strong action workflow, best readable openings, multi-shot friendly"
+                          : m === "Kling 3.0 Standard"
+                            ? "Balanced action workflow with strong motion and clear subject spacing"
+                            : m === "Kling 2.6 Pro"
+                              ? "Earlier Kling workflow option for simpler readable action"
+                              : m === "Kling 2.5 Turbo Pro"
+                                ? "Fast draft workflow for one clean action beat"
+                                : "Fast image-to-video draft option for rough motion tests"
+                      }
                       onClick={() => setKlingModel(m)}
                     />
                   ))}
@@ -1303,7 +1378,7 @@ animalBehavior: animalBehaviorResult ?? undefined,
                   </select>
                 </div>
 
-                {/* ✅ Reference tags helper (place right under Reference Lock controls) */}
+                {/* Reference tags helper */}
                 <div className="mt-2 rounded-lg border border-violet-200 bg-violet-50 p-3 text-xs text-violet-700">
                   <div className="font-semibold">
                     Reference tags (use in Runway/Kling references):
@@ -1582,10 +1657,8 @@ animalBehavior: animalBehaviorResult ?? undefined,
 
               <div>
                 <label className="mb-1 block text-xs font-semibold text-gray-600">
-                Opposing animals (comma separated)
-              </label>
-                  
-          
+                  Opposing animals (comma separated)
+                </label>
                 <input
                   value={customForm.prey}
                   onChange={(e) => setCustomForm((p) => ({ ...p, prey: e.target.value }))}
@@ -1596,33 +1669,33 @@ animalBehavior: animalBehaviorResult ?? undefined,
 
               <div className="sm:col-span-2">
                 <label className="mb-1 block text-xs font-semibold text-gray-600">Environment</label>
-<select
-  value={customForm.environment}
-  onChange={(e) => setCustomForm((p) => ({ ...p, environment: e.target.value }))}
-  className="w-full rounded-xl border border-gray-300 bg-white px-3 py-2 text-sm"
->
-  {Object.entries(habitatPromptMap).map(([label, prompt]) => (
-    <option key={label} value={prompt}>
-      {label}
-    </option>
-  ))}
-</select>
+                <select
+                  value={customForm.environment}
+                  onChange={(e) => setCustomForm((p) => ({ ...p, environment: e.target.value }))}
+                  className="w-full rounded-xl border border-gray-300 bg-white px-3 py-2 text-sm"
+                >
+                  {Object.entries(habitatPromptMap).map(([label, prompt]) => (
+                    <option key={label} value={prompt}>
+                      {label}
+                    </option>
+                  ))}
+                </select>
               </div>
 
               <div>
-  <label className="mb-1 block text-xs font-semibold text-gray-600">Default Arc</label>
-  <select
-    value={customForm.defaultArc}
-    onChange={(e) => setCustomForm((p) => ({ ...p, defaultArc: e.target.value }))}
-    className="w-full rounded-xl border border-gray-300 bg-white px-3 py-2 text-sm"
-  >
-    {arcs.map((a) => (
-      <option key={a} value={a}>
-        {a}
-      </option>
-    ))}
-  </select>
-</div>
+                <label className="mb-1 block text-xs font-semibold text-gray-600">Default Arc</label>
+                <select
+                  value={customForm.defaultArc}
+                  onChange={(e) => setCustomForm((p) => ({ ...p, defaultArc: e.target.value }))}
+                  className="w-full rounded-xl border border-gray-300 bg-white px-3 py-2 text-sm"
+                >
+                  {arcs.map((a) => (
+                    <option key={a} value={a}>
+                      {a}
+                    </option>
+                  ))}
+                </select>
+              </div>
 
               <div>
                 <label className="mb-1 block text-xs font-semibold text-gray-600">Drift risk</label>
@@ -1649,52 +1722,57 @@ animalBehavior: animalBehaviorResult ?? undefined,
                 onClick={() => {
                   const name = customForm.name.trim();
                   if (!name) return;
-                const builtInAnimalExists = Object.prototype.hasOwnProperty.call(predatorData, name);
+                  const builtInAnimalExists = Object.prototype.hasOwnProperty.call(
+                    predatorData,
+                    name
+                  );
 
-if (builtInAnimalExists) {
-  alert("This animal already exists in the built-in animal list. Use a different custom name.");
-  return;
-} 
+                  if (builtInAnimalExists) {
+                    alert(
+                      "This animal already exists in the built-in animal list. Use a different custom name."
+                    );
+                    return;
+                  }
 
+                  const normalizedName = name.toLowerCase();
 
-const normalizedName = name.toLowerCase();
+                  const normalizedPrey = Array.from(
+                    new Set(
+                      customForm.prey
+                        .split(",")
+                        .map((item) => item.trim())
+                        .filter(Boolean)
+                    )
+                  );
 
-const normalizedPrey = Array.from(
-  new Set(
-    customForm.prey
-      .split(",")
-      .map((item) => item.trim())
-      .filter(Boolean)
-  )
-);
-
-const entry: CustomPredatorForm = {
-  name,
-  prey: normalizedPrey.length ? normalizedPrey.join(", ") : "White-tailed Deer",
-  environment: customForm.environment.trim() || habitatPromptMap["Rocky Mountain Meadow"],
-  defaultArc: customForm.defaultArc || "Pack hunting strategy",
-  driftRisk: customForm.driftRisk,
-};
+                  const entry: CustomPredatorForm = {
+                    name,
+                    prey: normalizedPrey.length ? normalizedPrey.join(", ") : "White-tailed Deer",
+                    environment:
+                      customForm.environment.trim() || habitatPromptMap["Rocky Mountain Meadow"],
+                    defaultArc: customForm.defaultArc || "Pack hunting strategy",
+                    driftRisk: customForm.driftRisk,
+                  };
 
                   setCustomPredators((prev) => {
                     const next = prev
-  .filter((x) => x.name.trim().toLowerCase() !== normalizedName)
-  .concat(entry);
+                      .filter((x) => x.name.trim().toLowerCase() !== normalizedName)
+                      .concat(entry);
                     writeCustomPredators(next);
                     return next;
                   });
 
                   setPredator(name);
-setPrey((normalizedPrey[0] || "White-tailed Deer"));
-setArc(
-  suggestArc(
-    name,
-    normalizedPrey[0] || "White-tailed Deer",
-    entry.defaultArc
-  ) as Arc
-);
-setHabitat("Auto");
-setCustomModalOpen(false);
+                  setPrey(normalizedPrey[0] || DEFAULT_PREY);
+                  setArc(
+                    suggestArc(
+                      name,
+                      normalizedPrey[0] || DEFAULT_PREY,
+                      entry.defaultArc
+                    ) as Arc
+                  );
+                  setHabitat(DEFAULT_HABITAT);
+                  setCustomModalOpen(false);
                 }}
                 className="rounded-xl bg-gray-900 px-5 py-2.5 text-sm font-extrabold text-white hover:bg-black active:scale-[0.98]"
               >
@@ -1707,15 +1785,21 @@ setCustomModalOpen(false);
                   const name = customForm.name.trim();
                   if (!name) return;
                   setCustomPredators((prev) => {
-                    const next = prev.filter((x) => x.name.trim().toLowerCase() !== name.toLowerCase());
+                    const next = prev.filter(
+                      (x) => x.name.trim().toLowerCase() !== name.toLowerCase()
+                    );
                     writeCustomPredators(next);
                     return next;
                   });
-                 if (predator === name) {
-  setPredator("Wolf Pack");
-  setPrey("Elk");
-  setArc("Pack hunting strategy");
-  setHabitat("Auto");
+                  if (predator === name) {
+  setPredator(DEFAULT_PREDATOR);
+  setPrey(DEFAULT_PREY);
+  setArc(DEFAULT_ARC);
+  setWeather(DEFAULT_WEATHER);
+  setHabitat(DEFAULT_HABITAT);
+  setDepthMode(DEFAULT_DEPTH_MODE);
+  setEmotionalTone(DEFAULT_EMOTIONAL_TONE);
+  setAnimalVibe(DEFAULT_ANIMAL_VIBE);
 }
                   setCustomModalOpen(false);
                 }}
@@ -1731,7 +1815,7 @@ setCustomModalOpen(false);
           </div>
         </div>
       )}
-    <SettingsDrawer />
+      <SettingsDrawer />
     </main>
   );
 }

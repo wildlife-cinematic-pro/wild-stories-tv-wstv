@@ -99,7 +99,7 @@ export const predatorData: Record<string, PredatorInfo> = {
     driftRisk: "MEDIUM",
   },
   "Wolf Pack": {
-    prey: ["Elk", "White-tailed Deer", "Mule Deer", "Moose Calf"],
+    prey: ["Bull Elk", "Elk", "White-tailed Deer", "Mule Deer", "Moose", "Bison"],
         environment: "northern Rocky Mountain forest edge, sage valley, and open meadow with clean pack-pressure lanes and readable elk spacing",
             lighting:
       "cold dawn light, pale gold horizon glow, cold clean-air clarity, and soft side light across grass, brush, and tree line",
@@ -203,8 +203,8 @@ export const predatorData: Record<string, PredatorInfo> = {
     defaultArc: "Ambush attack",
     driftRisk: "LOW",
   },
-    "Grizzly Bear": {
-    prey: ["Bison", "Moose", "Salmon", "Elk Calf"],
+  "Grizzly Bear": {
+    prey: ["Bison", "Moose", "Bull Elk", "Salmon", "Elk Calf"],
     environment:
       "Yellowstone meadow, river corridor, and open wilderness with strong clash readability and clean subject spacing",
     lighting:
@@ -464,7 +464,7 @@ export const predatorData: Record<string, PredatorInfo> = {
     driftRisk: "LOW",
   },
   Coyote: {
-    prey: ["Jackrabbit", "Rabbit", "White-tailed Deer Fawn", "Quail"],
+    prey: ["Jackrabbit", "Rabbit", "White-tailed Deer", "White-tailed Deer Fawn", "Quail"],
         environment: "open prairie, sagebrush flats, and scrub edge with long chase lanes and clear survival-animal spacing",
         lighting:
       "cold dawn light, pale gold horizon glow, soft side light across dry grass, and long readable chase shadows",
@@ -856,13 +856,32 @@ export function suggestArc(predator: string, prey: string, fallback: string): st
   const p = normalize(predator);
   const r = normalize(prey);
 
+  const predatorIs = (...names: string[]) => names.includes(predator) || names.includes(p);
+  const preyIs = (...names: string[]) => names.includes(prey) || names.includes(r);
+
   if (!p || !r) return fallback;
 
   const info = predatorData[p];
-  const naturalMatch = Boolean(info?.prey.includes(r));
+
+  const preyCandidates = new Set([prey, r]);
+  if (preyIs("Bull Elk", "Elk")) {
+    preyCandidates.add("Bull Elk");
+    preyCandidates.add("Elk");
+  }
+  if (preyIs("White-tailed Deer", "Deer")) {
+    preyCandidates.add("White-tailed Deer");
+    preyCandidates.add("Deer");
+  }
+  if (preyIs("American Alligator", "Alligator")) {
+    preyCandidates.add("American Alligator");
+    preyCandidates.add("Alligator");
+  }
+
+  const naturalMatch = Boolean(info?.prey.some((item) => preyCandidates.has(item)));
 
   const packHunters = new Set([
     "Wolf Pack",
+    "Coyote Pack",
     "African Wild Dog",
     "Orca",
     "Dolphin",
@@ -901,73 +920,131 @@ export function suggestArc(predator: string, prey: string, fallback: string): st
     "Polar Bear",
   ]);
 
-  const defenderAnimals = new Set([
+  const largeDefenders = new Set([
     "Bison",
     "Moose",
     "Bull Elk",
+    "Elk",
     "Musk Ox",
     "Cape Buffalo",
     "Beaver",
     "Skunk",
   ]);
 
-  const escapeAnimals = new Set(["White-tailed Deer", "Opossum"]);
+  const escapePrey = new Set(["White-tailed Deer", "Deer", "Opossum"]);
 
-  if (
-    (p === "Grizzly Bear" && ["Bison", "Moose", "Bull Elk"].includes(r)) ||
-    (["Bison", "Moose", "Bull Elk"].includes(p) && r === "Grizzly Bear")
-  ) {
+  const isPackHunter = packHunters.has(predator) || packHunters.has(p);
+  const isChaseHunter = chaseHunters.has(predator) || chaseHunters.has(p);
+  const isAmbushHunter = ambushHunters.has(predator) || ambushHunters.has(p);
+  const preyDefends = largeDefenders.has(prey) || largeDefenders.has(r);
+  const preyEscapes = escapePrey.has(prey) || escapePrey.has(r);
+
+  if (predatorIs("Grizzly Bear") && preyIs("Bison", "Moose", "Bull Elk", "Elk")) {
     return "Giant vs giant clash";
   }
 
-  if (p === "Lion" && r === "Buffalo") return "Territory dominance battle";
-  if (p === "Jaguar" && r === "Caiman") return "Ambush attack";
+  if (predatorIs("Lion") && preyIs("Buffalo")) return "Territory dominance battle";
+  if (predatorIs("Jaguar") && preyIs("Caiman")) return "Ambush attack";
+
+  if (predator === "Wolf Pack" && preyIs("Bull Elk", "Elk", "White-tailed Deer", "Deer", "Moose", "Bison")) {
+    return "Pack hunting strategy";
+  }
+
+  if (predatorIs("Mountain Lion", "Cougar", "Puma") && preyIs("White-tailed Deer", "Deer")) {
+    return "Ambush attack";
+  }
+
+  if (predatorIs("Coyote") && preyIs("White-tailed Deer", "Deer")) {
+    return "Escape from danger";
+  }
 
   if (!naturalMatch) return fallback;
 
-  if (packHunters.has(p)) return "Pack hunting strategy";
-  if (chaseHunters.has(p)) return "Chase and takedown";
-  if (ambushHunters.has(p)) return "Ambush attack";
-  if (defenderAnimals.has(p)) return "Defender stands ground";
-  if (escapeAnimals.has(p)) return "Escape from danger";
+  if (preyDefends && predatorIs("Grizzly Bear")) return "Giant vs giant clash";
+  if (isPackHunter) return "Pack hunting strategy";
+  if (preyDefends && (isAmbushHunter || isChaseHunter)) return "Defender stands ground";
+  if (preyEscapes && predatorIs("Coyote")) return "Escape from danger";
+  if (preyEscapes && isAmbushHunter) return "Ambush attack";
+  if (preyEscapes && isChaseHunter) return "Chase and takedown";
+  if (isAmbushHunter) return "Ambush attack";
+  if (preyDefends) return "Defender stands ground";
 
-  if (p === "Grizzly Bear") {
-    if (["Salmon", "Elk Calf"].includes(r)) return "Chase and takedown";
+  if (predatorIs("Grizzly Bear")) {
+    if (preyIs("Salmon", "Elk Calf")) return "Chase and takedown";
     return "Territory dominance battle";
   }
 
-  if (p === "Black Bear" || p === "Bear") {
-    if (["Salmon", "Fish", "Rabbit", "Ground Squirrel", "White-tailed Deer Fawn"].includes(r)) {
+  if (predatorIs("Black Bear", "Bear")) {
+    if (preyIs("Salmon", "Fish", "Rabbit", "Ground Squirrel", "White-tailed Deer Fawn")) {
       return "Chase and takedown";
     }
     return "Territory dominance battle";
   }
 
-  if (p === "Wolverine") {
-    if (["Rabbit", "Beaver", "Moose Calf", "Reindeer"].includes(r)) {
+  if (predatorIs("Wolverine")) {
+    if (preyIs("Rabbit", "Beaver", "Moose Calf", "Reindeer")) {
       return "Chase and takedown";
     }
     return "Territory dominance battle";
   }
 
-  if (p === "Wild Boar" || p === "Badger" || p === "African Lion Male") {
+  if (predatorIs("Wild Boar", "Badger", "African Lion Male")) {
     return "Territory dominance battle";
   }
 
-  if (p === "Tasmanian Devil") {
+  if (predatorIs("Tasmanian Devil")) {
     return "Predator vs predator fight";
   }
 
   return info?.defaultArc ?? fallback;
 }
 
-export function capitalizeFirst(t: string): string {
-  return t ? t.charAt(0).toUpperCase() + t.slice(1) : t;
-}
-
 // ─────────────────────────────────────────────────────────────
 // VIRAL SCORE CALCULATOR
 // ─────────────────────────────────────────────────────────────
+export function suggestHabitat(predator: string, prey: string, fallback: string): string {
+  const normalize = (value: string) => {
+    if (value === "American Alligator") return "Alligator";
+    if (value === "Brown Bear") return "Grizzly Bear";
+    if (value === "Coyote Pack") return "Coyote";
+    if (value === "Lion Pack") return "Lion";
+    if (value === "Hyena Pack") return "Hyena";
+    if (value === "Arctic Wolf") return "Wolf";
+    return value;
+  };
+
+  const p = normalize(predator);
+  const r = normalize(prey);
+
+  const predatorIs = (...names: string[]) => names.includes(predator) || names.includes(p);
+  const preyIs = (...names: string[]) => names.includes(prey) || names.includes(r);
+
+  if (predatorIs("Grizzly Bear") && preyIs("Bison", "Moose", "Bull Elk", "Elk")) {
+    return "Yellowstone meadow, river corridor, and open wilderness with strong clash readability and clean subject spacing";
+  }
+
+  if (predatorIs("Grizzly Bear") && preyIs("Salmon", "Fish")) {
+    return "broad northern river corridor with gravel bars, shallow current, and open shoreline visibility";
+  }
+
+  if (predatorIs("Wolf Pack") && preyIs("Bull Elk", "Elk", "White-tailed Deer", "Deer", "Moose")) {
+    return "northern Rocky Mountain forest edge, sage valley, and open meadow with clean pack-pressure lanes and readable prey spacing";
+  }
+
+  if (predatorIs("Mountain Lion", "Cougar", "Puma") && preyIs("White-tailed Deer", "Deer", "Mule Deer")) {
+    return "forest edge, brush opening, and broken ridge cover with clean ambush lanes and readable prey spacing";
+  }
+
+  if (predatorIs("Coyote") && preyIs("White-tailed Deer", "Deer", "White-tailed Deer Fawn")) {
+    return "open prairie, brush edge, and field transition with clear escape lanes and readable survival-animal spacing";
+  }
+
+  if (predatorIs("Alligator") && preyIs("White-tailed Deer", "Deer", "Wild Boar")) {
+    return "Florida Everglades marsh and cypress swamp edge with dark tannin water and readable shoreline ambush spacing";
+  }
+
+  return fallback;
+}
 export function calculateViralScore(
   pkg: GeneratedPackage,
   predator: string,
@@ -1344,7 +1421,7 @@ export function generateMonthlyCalendar(
     },
     { predator: "Bison", prey: "Grizzly Bear", arc: "Giant vs giant clash" },
     { predator: "Alligator", prey: "Wild Boar", arc: "Ambush attack" },
-    { predator: "Wolf Pack", prey: "Elk", arc: "Pack hunting strategy" },
+    { predator: "Wolf Pack", prey: "Bull Elk", arc: "Pack hunting strategy" },
     { predator: "Alligator", prey: "White-tailed Deer", arc: "Ambush attack" },
     { predator: "Coyote", prey: "Jackrabbit", arc: "Chase and takedown" },
     { predator: "Bull Elk", prey: "Mountain Lion", arc: "Defender stands ground" },
@@ -1523,7 +1600,7 @@ export function generateUSAViral30DayCalendar(
       arc: primaryArc || "Ambush attack",
     },
     { predator: "Grizzly Bear", prey: "Bison", arc: "Giant vs giant clash" },
-    { predator: "Wolf Pack", prey: "Elk", arc: "Pack hunting strategy" },
+    { predator: "Wolf Pack", prey: "Bull Elk", arc: "Pack hunting strategy" },
     { predator: "Mountain Lion", prey: "Mule Deer", arc: "Ambush attack" },
     { predator: "Bobcat", prey: "Wild Turkey", arc: "Ambush attack" },
     { predator: "Bald Eagle", prey: "Rabbit", arc: "Chase and takedown" },
