@@ -133,9 +133,11 @@ type QualityState = {
 // ─────────────────────────────────────────────────────────────
 // STEP 1 SHARED DEFAULT CONSTANTS
 // ─────────────────────────────────────────────────────────────
-const DEFAULT_PREDATOR = "Wolf Pack";
-const DEFAULT_PREY = "Bull Elk";
-const DEFAULT_ARC: Arc = "Pack hunting strategy";
+// Updated defaults for stronger US‑centric realism and immediate tension.  
+// Mountain lions and white‑tailed deer are familiar to US audiences and create a readable ambush dynamic.  
+const DEFAULT_PREDATOR = "Mountain Lion";
+const DEFAULT_PREY = "White-tailed Deer";
+const DEFAULT_ARC: Arc = "Ambush attack";
 const DEFAULT_WEATHER: Weather = "Golden Hour";
 const DEFAULT_HABITAT: HabitatPreset = "Auto";
 const DEFAULT_DEPTH_MODE: DepthMode = "Balanced Depth";
@@ -327,19 +329,19 @@ export default function Page() {
     const base = Object.keys(predatorData);
     const extra = customPredators.map((p) => p.name);
 
-    const usaPriority = [
-      "Wolf Pack",
+        const usaPriority = [
       "Mountain Lion",
+      "Wolf Pack",
+      "Grizzly Bear",
       "Alligator",
       "Bison",
-      "Grizzly Bear",
+      "Coyote",
       "Bald Eagle",
       "Moose",
       "Bull Elk",
       "Black Bear",
-      "Coyote",
-      "Bobcat",
       "Cougar",
+      "Bobcat",
       "Wolf",
       "Wild Boar",
       "Great Horned Owl",
