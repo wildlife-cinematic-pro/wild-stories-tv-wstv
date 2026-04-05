@@ -178,13 +178,29 @@ const VIRAL_CTAS: Partial<Record<Arc, string>> = {
 // ─────────────────────────────────────────────────────────────
 // 6. HASHTAGS
 // ─────────────────────────────────────────────────────────────
+// lib/platform-packs.ts
+
+// ... (existing imports and sections unchanged)
+
+// Expanded USA hashtag recommendations for stronger Facebook Reels performance.  
+// Each arc now includes US‑centric wildlife tags and platform‑friendly keywords.  
 const USA_HASHTAGS: Partial<Record<Arc, string>> = {
-    "Defender stands ground":
-    "#wildlife #nature #yellowstone #bison #moose #elk #defender #animalbehavior #facebookreels #viralreels",
-    "Giant vs giant clash":
-    "#wildlife #nature #yellowstone #bison #grizzlybear #giantanimals #animalbattle #facebookreels #viralreels #wildlifedocumentary",
-    "Pack hunting strategy":
-    "#wildlife #nature #wolfpack #wolf #elk #yellowstone #animalbehavior #predatorprey #facebookreels #viralreels",
+  "Ambush attack":
+    "#wildlife #nature #mountainlion #deer #ambush #predator #predatorprey #usawildlife #facebookreels #viralreels",
+  "Chase and takedown":
+    "#wildlife #nature #coyote #deer #chase #takedown #predatorprey #usawildlife #facebookreels #viralreels",
+  "Defender stands ground":
+    "#wildlife #nature #yellowstone #bison #moose #elk #defender #animalbehavior #usawildlife #facebookreels #viralreels",
+  "Giant vs giant clash":
+    "#wildlife #nature #yellowstone #bison #grizzlybear #giantanimals #animalbattle #usawildlife #facebookreels #viralreels #wildlifedocumentary",
+  "Territory dominance battle":
+    "#wildlife #nature #grizzlybear #territory #dominance #animalfight #usawildlife #facebookreels #viralreels",
+  "Pack hunting strategy":
+    "#wildlife #nature #wolfpack #wolf #elk #yellowstone #animalbehavior #predatorprey #usawildlife #facebookreels #viralreels",
+  "Predator vs predator fight":
+    "#wildlife #nature #predator #animalfight #usawildlife #facebookreels #viralreels",
+  "Escape from danger":
+    "#wildlife #nature #deer #escape #predatorprey #usawildlife #facebookreels #viralreels",
 };
 
 // ─────────────────────────────────────────────────────────────
