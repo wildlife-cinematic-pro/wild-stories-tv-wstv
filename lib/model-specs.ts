@@ -87,24 +87,15 @@ export const RUNWAY_STYLE_NOTE: Record<RunwayModel, string> = {
 
 export const KLING_STYLE_NOTE: Record<KlingModel, string> = {
   "Kling 3.0 Pro":
-    // Updated note: highlight first‑seconds tension, full‑body clarity and U.S. familiarity.  
-    "Kling 3.0 Pro: WSTV action workflow — the first 1–3 seconds should deliver immediate visible tension and full‑body clarity. Prioritize strong opening readability, clear subject spacing, realistic body mechanics, weight transfer, impact forces and environmental reaction in full detail. Where possible, choose U.S.‑familiar wildlife and habitats to boost Facebook Reels performance.",
-
+    "Kling 3.0 Pro: WSTV action workflow — write like a director giving scene instructions, not a keyword list. Describe camera, subject motion, and scene intent as one flowing direction. First 1–3 seconds must deliver immediate full-body readability, visible tension, and clear predator-to-survival-animal spacing. Use U.S.-familiar wildlife and habitats for stronger Facebook Reels performance.",
   "Kling 3.0 Standard":
-    // Emphasize first‑frame clarity and immediate predator pressure.  
-    "Kling 3.0 Standard: balanced WSTV motion workflow — prioritize readable openings with both animals visible, clear subject spacing, one primary action and grounded weight. Ensure the threat is obvious from frame one and environments reflect recognizable U.S. habitats for better audience connection.",
-
+    "Kling 3.0 Standard: balanced WSTV motion workflow — director-style prompt, not form fields. Both animals must be clearly readable from frame one with unambiguous subject spacing. One primary action per shot. Environments should reflect recognizable U.S. habitats.",
   "Kling 2.6 Pro":
-    // Older model with updated guidance for opening tension.  
-    "Kling 2.6 Pro: strong physics and character motion. Keep prompts clear, readable and action‑focused with strong subject visibility. Make the opening frames count by establishing tension instantly and using realistic U.S. wildlife setups.",
-
+    "Kling 2.6 Pro: strong physics and character motion. Write as a single clear directing sentence: who is present, what happens, how it is filmed. Make the opening frames establish tension instantly with clear subject readability.",
   "Kling 2.5 Turbo Pro":
-    // Speedy model — still respect opening readability.  
-    "Kling 2.5 Turbo Pro: fast — single primary motion per shot, readable opening composition and clean subject spacing. Start/End Frame supported. Even in rapid tests, ensure the opening frames are clear, tense and recognizable to U.S. viewers.",
-
+    "Kling 2.5 Turbo Pro: fast — one directing sentence, single primary motion, readable opening composition, clean subject spacing. Start/End Frame supported. Opening frames must be clear and tense.",
   "Kling 2.5 Turbo":
-    // Quick draft option — emphasise strong openings.  
-    "Kling 2.5 Turbo: fast I2V — keep prompts short, readable and focused on one clean motion beat. Use it for quick structure checks but still begin with fully visible subjects and immediate tension to simulate final quality.",
+    "Kling 2.5 Turbo: fast I2V draft — one short directing sentence per shot. Quick structure tests only. Still start with fully visible subjects and immediate tension.",
 };
 
 // ─────────────────────────────────────────────────────────────

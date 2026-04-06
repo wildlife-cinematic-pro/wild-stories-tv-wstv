@@ -60,8 +60,9 @@ function extractRunwayPasteReady(shotText: string): string {
 function extractKlingPromptBody(shotText: string): string {
   const s = String(shotText ?? "");
 
-  const markers = [
+    const markers = [
     "═══ PASTE INTO KLING — stays under 2500 chars (copy this block only) ═══",
+    "═══ PASTE-READY KLING PROMPT (copy this block into Kling) ═══",
     "═══ KLING 3.0 PROMPT (SCALE format) ═══",
     "═══ KLING PROMPT (WSTV structured format) ═══",
   ];
@@ -71,7 +72,7 @@ function extractKlingPromptBody(shotText: string): string {
     if (start >= 0) {
       const afterMarker = s.slice(start + marker.length).trim();
 
-      const endCandidates = [
+            const endCandidates = [
         afterMarker.indexOf("\n─── FULL BREAKDOWN"),
         afterMarker.indexOf("\n\n─── FULL BREAKDOWN"),
         afterMarker.indexOf("\nAudio:"),
@@ -79,6 +80,7 @@ function extractKlingPromptBody(shotText: string): string {
         afterMarker.indexOf("\nKling settings:"),
         afterMarker.indexOf("\n\nKling settings:"),
         afterMarker.indexOf("\n────────────────────────────────"),
+        afterMarker.indexOf("\n─── FULL BREAKDOWN (reference only)"),
       ].filter((n) => n >= 0);
 
       const end = endCandidates.length ? Math.min(...endCandidates) : -1;
@@ -168,14 +170,13 @@ export function EngineSpecsPanel() {
                 [action] in [env]
               </p>
               <p>
-                <span className="font-bold">Chaining:</span> Extract last frame
-                → I2V input
-              </p>
+  <span className="font-bold">Chaining:</span> Use last-frame chaining only when the outgoing shot ends on a clean full-body handoff frame. Otherwise reuse the same master still or a manually selected clean frame.
+</p>
             </div>
           </div>
           <div className="rounded-xl border border-blue-200 bg-blue-50 p-3">
             <p className="mb-2 text-xs font-extrabold text-blue-900">
-              🔵 Kling 3.0 (Current WSTV workflow)
+              🔵 Kling 3.0 (Current WSTV action workflow)
             </p>
             <div className="space-y-1.5 text-xs text-blue-800">
               <p>
@@ -187,9 +188,8 @@ export function EngineSpecsPanel() {
                 strike beats, multi-shot experiments
               </p>
               <p>
-                <span className="font-bold">Prompting:</span> SCALE-style action
-                prompting in WSTV
-              </p>
+  <span className="font-bold">Prompting:</span> Director-style narrative paste-ready prompts in WSTV, with structured breakdown kept for reference
+</p>
               <p>
                 <span className="font-bold">Negative prompts:</span> Used in
                 WSTV Kling workflow
@@ -2155,12 +2155,12 @@ function WorkflowPromptMap({
   );
 
   const pipeline = useMemo(() => {
-          const parts = [
+                const parts = [
         "Image Prompt → Master Still",
         "→ Opening Tension (Runway)",
-        "→ last frame",
+        "→ clean handoff frame or master still",
         "→ Action Pressure (Kling)",
-        "→ last frame",
+        "→ clean handoff frame or master still",
         "→ Resolved Tension (Runway)",
         "→ CapCut",
       ];
@@ -2341,7 +2341,7 @@ function WorkflowPromptMap({
               bg: "bg-green-50",
               badge: "bg-green-100 text-green-700",
             }}
-            help="Upload master image → paste into Runway Gen-4.5 I2V → generate the opening tension shot. Keep both subjects readable from frame one, then extract the last frame."
+            help="Upload master image → paste into Runway Gen-4.5 I2V → generate the opening tension shot. Keep both subjects readable from frame one, and end on a clean full-body handoff frame if you want to chain from the last frame."
             done={done[2]}
             onToggle={() => toggle(2)}
           >
@@ -2438,7 +2438,7 @@ function WorkflowPromptMap({
       bg: "bg-blue-50",
       badge: "bg-blue-100 text-blue-700",
     }}
-              help="Upload Runway last frame → paste into Kling I2V → generate the action-pressure beat with readable impact and clear subject spacing. Extract last frame after."
+              help="Upload the previous shot’s last frame only if it remains a clean full-body handoff frame. Otherwise use the same master still or a manually selected clean frame. Then generate the action-pressure beat with readable impact and clear subject spacing."
     done={done[3]}
     onToggle={() => toggle(3)}
   >
@@ -2567,7 +2567,7 @@ function WorkflowPromptMap({
               bg: "bg-purple-50",
               badge: "bg-purple-100 text-purple-700",
             }}
-            help="Upload Kling last frame → paste into Runway Gen-4.5 I2V → resolve the scene with readable spacing, visible tension, and a clean final frame."
+            help="Upload the previous shot’s last frame only if it remains a clean full-body handoff frame. Otherwise use the same master still or a manually selected clean continuity frame, then resolve the scene with readable spacing, visible tension, and a clean final frame."
             done={done[4]}
             onToggle={() => toggle(4)}
           >
@@ -3060,7 +3060,7 @@ const klingShots = useMemo(
   }
   className="rounded-lg border border-blue-200 bg-blue-50 px-3 py-1.5 text-xs font-extrabold text-blue-800 hover:bg-blue-100 active:scale-95"
 >
-  Copy Kling (SCALE Body)
+  Copy Kling (Paste-Ready Body)
 </button>
           </div>
         </div>
@@ -3077,13 +3077,13 @@ const klingShots = useMemo(
             </div>
 
             <p className="mb-3 text-xs text-green-800">
-              Shot 1 → opening tension, Shot 2 → action pressure, Shot 3 → resolved tension
-              (last frame exports).
-            </p>
+  Shot 1 → opening tension, Shot 2 → action pressure, Shot 3 → resolved tension.
+  Use handoff-ready ending frames only when both subjects stay fully readable.
+</p>
 
             <p className="mb-3 text-xs text-green-800">
-              I2V = motion only. No negative prompts. Last frame chaining.
-            </p>
+  I2V = motion only. No negative prompts. Last-frame chaining is recommended only when the outgoing frame remains a clean full-body handoff frame.
+</p>
 
             <div className="space-y-3">
               {runwayShots.map((shot, i) => (
@@ -3109,13 +3109,12 @@ const klingShots = useMemo(
             </div>
 
             <p className="mb-3 text-xs text-blue-800">
-              Best for full-body physics/action beats. Use Runway last frame as
-              reference.
-            </p>
+  Best for full-body physics and action beats. Use the previous shot’s last frame only when it remains a clean full-body handoff frame. Otherwise use the same master still or a manually selected clean reference frame.
+</p>
 
             <p className="mb-3 text-xs text-blue-800">
-              SCALE format. Negative prompts OK. Bind Subject + Start/End Frame.
-            </p>
+  Paste-ready body is director-style narrative. Negative prompts OK. Bind Subject + Start/End Frame. Structured breakdown remains for reference.
+</p>
 
             <div className="space-y-3">
               {klingShots.map((shot, i) => (

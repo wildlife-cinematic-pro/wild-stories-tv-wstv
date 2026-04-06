@@ -1373,8 +1373,8 @@ export default function Page() {
                     onChange={(e) => setImagePromptTarget(e.target.value as ImagePromptTarget)}
                     className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-800"
                   >
-                    <option value="NANO_BANANA_2">Nano Banana 2 (default)</option>
-                    <option value="NB2">NB2 (legacy)</option>
+                                        <option value="NANO_BANANA_2">Nano Banana 2 — Gemini 3.1 Flash Image (default)</option>
+                    <option value="NB2">NB2 (legacy Gemini 2.5 Flash Image)</option>
                     <option value="RUNWAY">Runway Reference</option>
                     <option value="MJ">Midjourney</option>
                   </select>

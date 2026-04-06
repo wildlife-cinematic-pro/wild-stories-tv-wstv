@@ -24,7 +24,7 @@
 //   • Sequential prompting: natural language or timestamps.
 //     "X occurs, then Y occurs. Finally, Z occurs."
 //     Or: [00:01] X. [00:04] Y. [00:08] Z.
-//   • Chaining: Extract last frame → use as I2V input for next gen.
+//   • Chaining: Use last-frame chaining only when the outgoing frame is a clean full-body handoff frame. Otherwise reuse the master still or a manually selected clean frame.
 //   • Simplicity wins. Start simple, iterate by adding detail.
 //   • JSON formatting is ignored by the model.
 //   • Avoid negative phrasing ("the camera doesn't move").
@@ -40,7 +40,7 @@
 //   • Negative prompts: SUPPORTED and recommended.
 //   • Guidance Scale (CFG): 0.0–1.0. Higher = strict, lower = creative.
 //   • Motion intensity: 0.1–1.0 values (specify for predictable results).
-//   • SCALE framework: Shot → Character → Action → Lighting → Extra
+//   • Paste-ready prompt style: director-style narrative for direct paste, with structured breakdown kept below for reference
 //   • Cinematic intent: model understands film language natively.
 //   • Omni mode: processes text, image, audio simultaneously.
 //   • I2V: Image = 3D anchor (not just first frame like older models).
@@ -90,7 +90,7 @@ export const RUNWAY_SPECS = {
   promptStructure: "[Camera] [subject] [action] in [environment]. [Supporting details]",
   sequentialPrompting: true,
   timestampSupport: true,
-  chainingMethod: "Extract last frame → use as I2V input for next generation.",
+    chainingMethod: "Use last-frame chaining only when the outgoing frame is a clean full-body handoff frame. Otherwise reuse the master still or a manually selected clean frame.",
 } as const;
 
 /** Kling 3.0 current WSTV constraints (primary-doc refresh recommended) */
@@ -105,7 +105,8 @@ export const KLING_SPECS = {
   startEndFrameControl: true,
   guidanceScaleRange: { min: 0.0, max: 1.0 } as const,
   motionIntensityRange: { min: 0.1, max: 1.0 } as const,
-  promptFramework: "SCALE: Shot → Character → Action → Lighting & Location → Extra",
+    promptFramework:
+    "Director-style narrative paste block for direct use, with structured Shot / Character / Action / Lighting / Extra breakdown kept for reference",
   multiPromptSystem: true,
   omniMode: true,
 } as const;
@@ -1148,8 +1149,8 @@ STEP 3 — Use that exact image as the reference or first frame for every video 
 STEP 4 — Keep video prompts focused on motion only: subject action, environment motion, camera motion.
 STEP 5 — Change only one main motion beat per shot to preserve identity, anatomy, and spacing.
 STEP 6 — If drift appears:
-  • Runway: Extract previous last frame → use as new I2V input.
-  • Kling: Re-upload master image with Bind Subject enabled.
+  • Runway: Use the previous last frame only if it remains a clean full-body handoff frame. Otherwise reuse the master still or a manually selected clean frame as the new I2V input.
+  • Kling: Use the previous last frame only if it remains a clean full-body handoff frame. Otherwise re-upload the master still or a manually selected clean frame with Bind Subject enabled.
 STEP 7 — For Kling 3.0: Optionally set End Frame to guide the final tension pose.`);
 }
 
@@ -1170,7 +1171,7 @@ export function buildNaturalismChecklist(opts: QualityOptions, weather: Weather,
       ? "One subject action plus one camera move per shot only. Keep spacing readable and avoid overlap."
       : "Avoid more than two simultaneous motion beats or the scene can lose clarity.",
     opts.referenceLock
-      ? "Regenerate from the master frame or previous last frame to preserve silhouette, spacing, and subject readability across clips."
+            ? "Reuse the master frame by default, or chain from the previous last frame only when it remains a clean full-body handoff frame, to preserve silhouette, spacing, and subject readability across clips."
       : "Expect more visual variation and weaker identity stability without reference lock.",
   ].map(finalizePrompt);
 }
@@ -1315,51 +1316,6 @@ function sanitizeVideoBeatText(text: string): string {
 // ─────────────────────────────────────────────────────────────
 // IMAGE PROMPT
 // ─────────────────────────────────────────────────────────────
-function buildImageSubjectLine(
-  predator: string,
-  prey: string,
-  arcPhrase: string,
-  arc: string
-): string {
-  const exactGroupMap: Record<string, string> = {
-    "Wolf Pack": "three wolves",
-  };
-
-  const exactSingleMap: Record<string, string> = {
-    Elk: "one elk",
-  };
-
-  const predatorLabel =
-    exactGroupMap[predator] ?? exactSingleMap[predator] ?? predator;
-
-  const preyLabel =
-    exactGroupMap[prey] ?? exactSingleMap[prey] ?? prey;
-
-  const visibility =
-    exactGroupMap[predator] || exactGroupMap[prey]
-      ? "all fully visible"
-      : "both fully visible";
-
-  const usesPredatorPreyRoles =
-    arc === "Ambush attack" ||
-    arc === "Chase and takedown" ||
-    arc === "Pack hunting strategy" ||
-    arc === "Escape from danger";
-
-  if (usesPredatorPreyRoles) {
-    const predatorSide = exactGroupMap[predator]
-      ? "predator group on the left"
-      : "predator on the left";
-
-    const preySide = exactGroupMap[prey]
-      ? "prey group on the right"
-      : "prey on the right";
-
-    return `Subject: ${predatorLabel} and ${preyLabel}, ${visibility}, ${predatorSide} and ${preySide}, locked in the peak tension beat of ${arcPhrase}.`;
-  }
-
-  return `Subject: ${predatorLabel} on the left and ${preyLabel} on the right, ${visibility}, locked in the peak tension beat of ${arcPhrase}.`;
-}
 
 export function buildImagePrompt(
   predator: string,
@@ -1383,8 +1339,10 @@ export function buildImagePrompt(
 const cleanTexture = sanitizeImageTexture(texture, env);
 const cleanWeather = sanitizeWeatherPhrase(weatherVariants[weather]);
 const cleanCameraGear = sanitizeCameraGearForHabitat(cameraGear, env);
-    const cleanAir =
-    "clear clean air, no visible steam, no smoke plumes, no mist, no airborne haze, clean subject separation";
+const cleanAir =
+  "clear clean air, no visible steam, no smoke plumes, no mist, no airborne haze, clean subject separation";
+const nb2Air =
+  "clear clean air, crisp subject separation, stable atmosphere";
 
   const cam =
   target === "NB2" || target === "NANO_BANANA_2"
@@ -1414,17 +1372,12 @@ const cleanCameraGear = sanitizeCameraGearForHabitat(cameraGear, env);
           const B = `${cleanEnv}, ${cleanWeather}, ${cleanAir}. Layered foreground, readable midground, softened background separation for stable depth maps. Subjects in authentic wildlife behavioral postures, biologically accurate spacing, natural environmental context, immediate readable tension, no empty dead space.`;
         const D = `${cleanTexture}. ${vibe.texture}. Micro-detail visible in fur, skin, feathers, moisture, and clean ground contact. ${realismAdd}`;
 
-    if (target === "NB2") {
-        const B_ref = `${cleanEnv}, ${cleanWeather}, ${nb2Air}. Two-plane composition: foreground subjects fully separated from background, unambiguous silhouettes, stable depth map. Subjects placed for clear biomechanical readability, strong first-frame readability, no overlap, each animal fully visible, no empty dead space.`;
-    const E_ref = `${vibe.style}, photorealistic, 8K RAW. Optimised for I2V reference consistency — distinct silhouettes, locked anatomy, stable depth planes.${descInject}`;
-    return finalizeImagePrompt(`${qLead} ${A} ${B_ref} ${C} ${D} ${E_ref}`, target);
-  }
+          const isNanoBanana = target === "NB2" || target === "NANO_BANANA_2";
 
   // House structure aligned to Gemini image-generation guidance:
   // start with clear subject/context/action, then add composition,
   // lighting, and style details for stronger visual control.
-    if (target === "NANO_BANANA_2") {
-    const nb2Air = "clear clean air, crisp subject separation, stable atmosphere";
+  if (isNanoBanana) {
     const nb2Optics =
       depthMode === "Cinematic Blur"
         ? "telephoto compression and strong shallow depth separation"
@@ -1677,7 +1630,7 @@ Framing: wide opening read, full-body visibility, clean silhouette separation.
 Duration: 5–10 seconds recommended.
 FPS: 24 or 25 (set in Advanced).
 ⚠️ No negative prompt — Runway does not support negatives.
-After generation: extract LAST FRAME for Shot 2 chaining.`),
+After generation: chain from the last frame only if it remains a clean full-body handoff frame. Otherwise reuse the master still or a manually selected clean frame for Shot 2.`),
 
        shot2: finalizePrompt(`RUNWAY SHOT 2 — ACTION PRESSURE [${model}]
 ${note}
@@ -1711,7 +1664,7 @@ Physics: ${
 }
 Framing: wide action readability, full-body visibility, clean silhouette separation.
 Duration: 5–10 seconds recommended.
-⚠️ Upload Shot 1 last frame as I2V input.`),
+⚠️ Use Shot 1 last frame as I2V input only if it remains a clean full-body handoff frame. Otherwise reuse the master still or a manually selected clean frame.`),
 
     shot3: finalizePrompt(`RUNWAY SHOT 3 — RESOLVED TENSION [${model}]
 ${note}
@@ -1733,7 +1686,7 @@ Environment motion: residual atmosphere — ${micro}.
 Mood: ${tone.image}.
 Framing: wide aftermath readability, full-body visibility, clean separation.
 Duration: 5–10 seconds recommended.
-⚠️ Upload Shot 2 last frame as I2V input.`), 
+⚠️ Use Shot 2 last frame as I2V input only if it remains a clean full-body handoff frame. Otherwise reuse the master still or a manually selected clean continuity frame.`), 
   };
 }
 
@@ -1894,7 +1847,7 @@ Extra: ${buildKlingExtraLine(
 
 ${audio2}
 
-Kling settings: Motion intensity ${mi2.toFixed(2)} | WIDE framing enforced | Upload Shot 1 last frame as I2V reference`),
+Kling settings: Motion intensity ${mi2.toFixed(2)} | WIDE framing enforced | Use Shot 1 last frame only if it remains a clean full-body handoff frame; otherwise use the master still or a manually selected clean reference frame`),
 
         shot3: finalizePrompt(`KLING SHOT 3 — RESOLVED TENSION (WIDE${gateOn ? " + ONE-ACTION" : ""}) [${model}]
 ${note}
@@ -1923,7 +1876,7 @@ Extra: ${buildKlingExtraLine(extra3, quality?.motionOnlyI2V)}
 
 ${audio3}
 
-Kling settings: Motion intensity ${mi3.toFixed(2)} | Optionally set End Frame for final pose | Upload Shot 2 last frame as I2V reference`),
+Kling settings: Motion intensity ${mi3.toFixed(2)} | Optionally set End Frame for final pose | Use Shot 2 last frame only if it remains a clean full-body handoff frame; otherwise use the master still or a manually selected clean continuity frame`),
   };
 }
 
@@ -2409,17 +2362,17 @@ export function buildClipChaining(predator: string, driftRisk: PredatorInfo["dri
   return finalizePrompt(`CLIP CHAINING — ${predator.toUpperCase()}
 ${riskLine}
 
-═══ RUNWAY GEN-4.5 CHAINING (Official Method) ═══
+═══ RUNWAY GEN-4.5 CHAINING (WSTV Handoff Rule) ═══
 STEP 1 — Generate Shot 1 (Runway I2V) with strong first-frame readability and both subjects clearly readable.
-  • Move playback scrubber to the very end of the completed video.
-  • Extract the LAST FRAME and use it as the next input.
-STEP 2 — Chain Shot 2: upload Shot 1 last frame as I2V input. Prompt = motion only.
-STEP 3 — Chain Shot 3: upload Shot 2 last frame. Keep end-state tension readable and spacing clear.
-STEP 4 — Combine clips in a video editor. Remove the shared frame.
+  • If the outgoing final frame is a clean full-body handoff frame, use it as the next I2V input.
+  • If readability drops, reuse the master still or manually select a clean continuity frame instead.
+STEP 2 — Chain Shot 2 with the cleanest handoff source available. Prompt = motion only.
+STEP 3 — Chain Shot 3 the same way. Keep end-state tension readable and spacing clear.
+STEP 4 — Combine clips in a video editor. Remove repeated handoff frames if needed.
 
 ═══ KLING 3.0 CHAINING ═══
 STEP 1 — Generate Shot 1 with clear opening tension and readable full-subject visibility.
-STEP 2 — Upload the previous last frame as I2V input + enable Bind Subject.
+STEP 2 — Use the previous last frame only when it remains a clean full-body handoff frame. Otherwise use the master still or a manually selected clean continuity frame, then enable Bind Subject.
 STEP 3 — Optionally set End Frame for precise final-pose control.
 STEP 4 — Alternative: use Multi-Shot mode (up to 6 shots, single prompt).
 

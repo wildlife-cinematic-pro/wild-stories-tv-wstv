@@ -504,10 +504,262 @@ describe("Step 7C — supporting prompt helpers keep readability language", () =
   });
 });
 
-  it("Clip chaining emphasizes readable first frame and clear spacing", () => {
+      it("Clip chaining emphasizes readable first frame and clear spacing", () => {
     const out = buildClipChaining("Wolf", "MEDIUM");
     expect(out).toContain("strong first-frame readability");
-    expect(out).toContain("clear opening tension");
+    expect(out).toContain("both subjects clearly readable");
     expect(out).toContain("spacing");
   });
+
+  describe("Step 8B — latest prompt-side regression guards", () => {
+    const base = {
+      predator: "Wolf Pack",
+      prey: "Elk",
+      env: "Rocky Mountain meadow",
+      arc: "Pack hunting strategy" as const,
+      weather: "Golden Hour" as const,
+      emotionalTone: "Raw Tension" as const,
+      animalVibe: "BBC Earth Documentary" as const,
+      sceneDesc:
+        "Both animals are visible immediately with no empty setup and clean tension from frame one.",
+    };
+
+    const quality = {
+      realismMode: "Reference Locked",
+      motionOnlyI2V: true,
+      referenceLock: true,
+      singleActionRule: true,
+      microMotion: true,
+      heroVeo: false,
+    } as const;
+
+    function extractKlingCardPasteBlock(out: string): string {
+      return (
+        out
+          .split("═══ PASTE-READY KLING PROMPT (copy this block into Kling) ═══")[1]
+          ?.split("─── FULL BREAKDOWN (reference only) ───")[0]
+          ?.trim() ?? ""
+      );
+    }
+
+    it("NB2 and NANO_BANANA_2 use the same image prompt branch", () => {
+      const nb2 = buildImagePrompt(
+        base.predator,
+        base.prey,
+        base.env,
+        base.arc,
+        "golden hour sunlight",
+        "Nikon Z9, 400mm wildlife lens, Kodak Portra 400 film emulation",
+        "ultra detailed fur, frost on guard hairs, clean snow contact around paws",
+        "Balanced Depth",
+        base.weather,
+        base.emotionalTone,
+        base.animalVibe,
+        base.sceneDesc,
+        undefined,
+        "NB2"
+      );
+
+      const nanoBanana2 = buildImagePrompt(
+        base.predator,
+        base.prey,
+        base.env,
+        base.arc,
+        "golden hour sunlight",
+        "Nikon Z9, 400mm wildlife lens, Kodak Portra 400 film emulation",
+        "ultra detailed fur, frost on guard hairs, clean snow contact around paws",
+        "Balanced Depth",
+        base.weather,
+        base.emotionalTone,
+        base.animalVibe,
+        base.sceneDesc,
+        undefined,
+        "NANO_BANANA_2"
+      );
+
+      expect(nb2).toBe(nanoBanana2);
+      expect(nb2).not.toMatch(/\bNikon\b/i);
+      expect(nb2).not.toMatch(/\bKodak\b/i);
+      expect(nb2).not.toMatch(/\bPortra\b/i);
+    });
+
+    it("Kling 3-shot paste-ready block stays narrative instead of reverting to field-list labels", () => {
+      const shots = buildKlingShots(
+        base.predator,
+        base.prey,
+        base.env,
+        base.arc,
+        base.weather,
+        "Kling 3.0 Pro",
+        base.emotionalTone,
+        base.animalVibe,
+        base.sceneDesc,
+        quality
+      );
+
+      const pasteBlock = extractKlingCardPasteBlock(shots.shot1);
+
+      expect(pasteBlock.length).toBeGreaterThan(0);
+      expect(pasteBlock).toContain("Wide opening hold with a subtle push-in.");
+      expect(pasteBlock).toContain("Both subjects fully readable from frame one");
+      expect(pasteBlock).not.toContain("Characters:");
+      expect(pasteBlock).not.toContain("Action:");
+      expect(pasteBlock).not.toContain("Lighting & Location:");
+      expect(pasteBlock).not.toContain("Extra:");
+    });
+
+    it("Runway shot cards keep the clean full-body handoff rule wording", () => {
+      const shots = buildRunwayShots(
+        base.predator,
+        base.prey,
+        base.env,
+        base.arc,
+        base.weather,
+        "Gen-4.5",
+        base.emotionalTone,
+        base.animalVibe,
+        base.sceneDesc,
+        quality
+      );
+
+      expect(shots.shot1).toContain(
+        "chain from the last frame only if it remains a clean full-body handoff frame"
+      );
+      expect(shots.shot2).toContain(
+        "Use Shot 1 last frame as I2V input only if it remains a clean full-body handoff frame"
+      );
+      expect(shots.shot3).toContain(
+        "Use Shot 2 last frame as I2V input only if it remains a clean full-body handoff frame"
+      );
+    });
+
+    it("Kling shot cards keep the clean full-body handoff rule wording", () => {
+      const shots = buildKlingShots(
+        base.predator,
+        base.prey,
+        base.env,
+        base.arc,
+        base.weather,
+        "Kling 3.0 Pro",
+        base.emotionalTone,
+        base.animalVibe,
+        base.sceneDesc,
+        quality
+      );
+
+      expect(shots.shot2).toContain(
+        "Use Shot 1 last frame only if it remains a clean full-body handoff frame"
+      );
+      expect(shots.shot3).toContain(
+        "Use Shot 2 last frame only if it remains a clean full-body handoff frame"
+      );
+    });
+
+    it("Clip chaining keeps the clean full-body handoff rule wording", () => {
+      const out = buildClipChaining("Wolf", "MEDIUM");
+
+      expect(out).toContain("If the outgoing final frame is a clean full-body handoff frame");
+      expect(out).toContain("Chain Shot 2 with the cleanest handoff source available.");
+      expect(out).toContain(
+        "Use the previous last frame only when it remains a clean full-body handoff frame"
+      );
+    });
+  });
+describe("Step 9 — Kling single-shot paste-ready narrative format", () => {
+  const base = {
+    predator: "Mountain Lion",
+    prey: "White-tailed Deer",
+    env: "Rocky Mountain forest edge",
+    arc: "Ambush attack" as const,
+    weather: "Golden Hour" as const,
+    emotionalTone: "Raw Tension" as const,
+    animalVibe: "National Geographic Wild" as const,
+    sceneDesc: "",
+  };
+
+  const quality = {
+    realismMode: "Reference Locked",
+    motionOnlyI2V: true,
+    referenceLock: true,
+    singleActionRule: true,
+    microMotion: true,
+    heroVeo: false,
+  } as const;
+
+  function extractKlingSinglePasteBlock(out: string): string {
+    return (
+      out
+        .split("═══ PASTE-READY KLING PROMPT (copy this block into Kling) ═══")[1]
+        ?.split("─── FULL BREAKDOWN (reference only) ───")[0]
+        ?.trim() ?? ""
+    );
+  }
+
+  it("Kling single-shot paste blocks do not use SCALE field labels", () => {
+    const shots = buildKlingShots(
+      base.predator,
+      base.prey,
+      base.env,
+      base.arc,
+      base.weather,
+      "Kling 3.0 Pro",
+      base.emotionalTone,
+      base.animalVibe,
+      base.sceneDesc,
+      quality
+    );
+
+    for (const shot of [shots.shot1, shots.shot2, shots.shot3]) {
+      const pasteBlock = extractKlingSinglePasteBlock(shot);
+      expect(pasteBlock.length).toBeGreaterThan(0);
+      expect(pasteBlock).not.toContain("Shot:");
+      expect(pasteBlock).not.toContain("Characters:");
+      expect(pasteBlock).not.toContain("Action:");
+      expect(pasteBlock).not.toContain("Lighting & Location:");
+      expect(pasteBlock).not.toContain("Extra:");
+    }
+  });
+
+  it("Kling single-shot paste blocks keep narrative camera openers", () => {
+    const shots = buildKlingShots(
+      base.predator,
+      base.prey,
+      base.env,
+      base.arc,
+      base.weather,
+      "Kling 3.0 Pro",
+      base.emotionalTone,
+      base.animalVibe,
+      base.sceneDesc,
+      quality
+    );
+
+    const paste1 = extractKlingSinglePasteBlock(shots.shot1);
+    const paste2 = extractKlingSinglePasteBlock(shots.shot2);
+    const paste3 = extractKlingSinglePasteBlock(shots.shot3);
+
+    expect(paste1).toContain("Wide opening hold");
+    expect(paste2).toContain("Fixed wide shot");
+    expect(paste3).toContain("Locked wide shot");
+  });
+
+    it("Kling single-shot paste blocks still include motion intensity", () => {
+    const shots = buildKlingShots(
+      base.predator,
+      base.prey,
+      base.env,
+      base.arc,
+      base.weather,
+      "Kling 3.0 Pro",
+      base.emotionalTone,
+      base.animalVibe,
+      base.sceneDesc,
+      quality
+    );
+
+    const paste1 = extractKlingSinglePasteBlock(shots.shot1);
+    expect(paste1).toMatch(/Motion intensity:\s*[\d.]+/i);
+  });
+});
+
 });
