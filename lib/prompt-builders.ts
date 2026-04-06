@@ -2311,7 +2311,8 @@ HOW TO USE (Kling 3.0 WSTV 6-Shot Workflow):
 4. Paste ONLY the block above the FULL BREAKDOWN line into Kling.
 5. Enable native audio for documentary-quality sound.
 6. Output: Native 4K at 60fps.
-✅ One prompt → 6 cinematic shots with consistent identity and audio.`);  
+✅ One prompt → 6 cinematic shots with consistent identity and audio.`);
+}
 
 // ─────────────────────────────────────────────────────────────
 // 10 IDEAS
@@ -2476,4 +2477,4 @@ export function validateEngineConstraints(opts: {
   }
 
   return warnings;
-} //
+}
