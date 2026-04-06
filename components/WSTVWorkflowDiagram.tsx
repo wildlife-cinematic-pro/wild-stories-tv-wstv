@@ -12,28 +12,43 @@ import type { GeneratedPackage } from "@/types";
 
 // ─────────────────────────────────────────────────────────────
 // components/WSTVWorkflowDiagram.tsx
-// WSTV — Enhanced Runway-Style Node Graph
+// WSTV — Strong Final Workflow Diagram (Runway-Aligned Edition)
 //
-// Visual / logic intent:
-// - Runway-style node UI grammar
-// - Text = orange, Image = blue, Audio = yellow, Video = green
-// - Shot flow = Scene → Gemini → JSON Parse → NB2/Ref Framing
-//              → Shot 1 Runway + Shot 2 Kling + Shot 3 Runway
-//              → CapCut
+// Runway official best practices applied (help.runwayml.com):
+//   • Input image quality is critical — artifact-free, high-res
+//   • I2V prompt = motion only — don't restate image content
+//   • Use positional language for multiple subjects
+//   • Sequential timestamps supported for temporal control
+//   • Extract Frame = preferred handoff (choose cleanest frame)
+//   • Last Frame = fallback only (if final frame happens to be clean)
+//   • Fixed Seed available for consistent motion across retries
+//   • JSON formatting ignored by model — plain text prompts only
+//   • Avoid negative phrasing — describe what SHOULD happen
+//   • Duration 2–10s — longer for complex sequential actions
 //
-// Important:
-// - This is a visual workflow graph inside your app
-// - It is NOT the actual embedded official Runway editor
-// - Negative prompt is wired ONLY to Kling
+// Node naming (real Runway Workflows names):
+//   Text, Image, Claude, JSON Parse, Nano Banana 2,
+//   Gen-4.5, Kling 3.0 Pro, Extract Frame, Last Frame, Stitch
+//
+// Workflow:
+//   Text(System) + Text(User) + Image(Ref) → Claude → JSON Parse
+//   → Nano Banana 2 → Master Still
+//   → Gen-4.5 Shot 1 → Extract Frame → Kling Shot 2
+//   → Extract Frame → Gen-4.5 Shot 3 → Stitch
+//
+// Negative prompt wired ONLY to Kling (Runway: not supported).
+// Last Frame nodes have dashed fallback wires to next shots.
 // ─────────────────────────────────────────────────────────────
 
+/* ── Content-type color coding (official Runway Workflows) ── */
 const TC: Record<string, { port: string; wire: string }> = {
-  text: { port: "#f59e0b", wire: "#f59e0b" },
-  image: { port: "#3b82f6", wire: "#3b82f6" },
-  audio: { port: "#eab308", wire: "#eab308" },
-  video: { port: "#22c55e", wire: "#22c55e" },
+  text: { port: "#f59e0b", wire: "#f59e0b" },   // Orange
+  image: { port: "#3b82f6", wire: "#3b82f6" },   // Blue
+  audio: { port: "#eab308", wire: "#eab308" },   // Yellow
+  video: { port: "#22c55e", wire: "#22c55e" },   // Green
 };
 
+/* ── Engine accent colors ──────────────────────────────────── */
 const ENG: Record<
   string,
   {
@@ -51,6 +66,13 @@ const ENG: Record<
     label: "Runway",
     icon: "▶",
   },
+  claude: {
+    accent: "#f97316",
+    badge: "#4a240d",
+    badgeText: "#fdba74",
+    label: "Claude",
+    icon: "✦",
+  },
   kling: {
     accent: "#2563eb",
     badge: "#1e3a5f",
@@ -58,19 +80,13 @@ const ENG: Record<
     label: "Kling",
     icon: "◆",
   },
-  wstv: {
-    accent: "#9333ea",
-    badge: "#3b1764",
-    badgeText: "#d8b4fe",
-    label: "WSTV Custom",
-    icon: "★",
-  },
 };
 
-const NW = 240;
+/* ── Layout constants ──────────────────────────────────────── */
+const NW = 252;
 const PR = 5.5;
 const PS = 26;
-const HH = 40;
+const HH = 42;
 const PY0 = HH + 16;
 
 type Port = {
@@ -85,7 +101,7 @@ type Node = {
   y: number;
   title: string;
   sub: string;
-  engine: string;
+  engine: keyof typeof ENG;
   cat: "input" | "model" | "utility";
   info: string;
   inputs: Port[];
@@ -95,265 +111,323 @@ type Node = {
 type Wire = {
   from: string;
   to: string;
-  type: string;
+  type: keyof typeof TC;
   dashed?: boolean;
 };
 
-const nH = (n: Node) =>
-  PY0 + Math.max(n.inputs.length, n.outputs.length) * PS + 16;
+const nodeHeight = (n: Node) =>
+  PY0 + Math.max(n.inputs.length, n.outputs.length) * PS + 18;
 
+// ─────────────────────────────────────────────────────────────
+// NODE DEFINITIONS
+// Info lines now carry Runway official guidance per node role.
+// ─────────────────────────────────────────────────────────────
 function buildNodes(): Node[] {
   return [
+    /* ══ COLUMN 0 — Input nodes ═══════════════════════════════ */
     {
-      id: "scene_input",
-      x: 30,
-      y: 60,
-      title: "Scene Description",
-      sub: "Text Input",
-      engine: "wstv",
-      cat: "input",
-      info: "Animal pair, arc, weather, environment",
-      inputs: [],
-      outputs: [{ id: "text", type: "text", label: "Scene" }],
-    },
-    {
-      id: "sys_prompt",
-      x: 30,
-      y: 220,
-      title: "System Prompt",
-      sub: "Text Input — LLM Instructions",
+      id: "text_system",
+      x: 40,
+      y: 40,
+      title: "Text",
+      sub: "System Prompt",
       engine: "runway",
       cat: "input",
-      info: "WSTV prompt-engineering rules for Gemini",
+      // System prompt tells Claude HOW to structure its JSON output
+      info: "WSTV rules · JSON schema · motion-only I2V instructions",
       inputs: [],
-      outputs: [{ id: "text", type: "text", label: "Instructions" }],
+      outputs: [{ id: "text", type: "text", label: "Text" }],
+    },
+    {
+      id: "text_user",
+      x: 40,
+      y: 190,
+      title: "Text",
+      sub: "User Story Prompt",
+      engine: "runway",
+      cat: "input",
+      // The creative brief: what animals, what arc, what world
+      info: "Predator · prey · arc · habitat · weather · tone",
+      inputs: [],
+      outputs: [{ id: "text", type: "text", label: "Text" }],
+    },
+    {
+      id: "image_ref",
+      x: 40,
+      y: 340,
+      title: "Image",
+      sub: "Reference Image (optional)",
+      engine: "runway",
+      cat: "input",
+      // Runway: input image quality is critical for I2V output
+      info: "High-res · artifact-free · clear subject separation",
+      inputs: [],
+      outputs: [{ id: "image", type: "image", label: "Image" }],
     },
 
+    /* ══ COLUMN 1 — LLM planning ═════════════════════════════ */
     {
-      id: "gemini_llm",
-      x: 320,
-      y: 80,
-      title: "Gemini Flash 2.5",
-      sub: "LLM Node — Prompt Enhancement",
-      engine: "runway",
+      id: "claude",
+      x: 360,
+      y: 150,
+      title: "Claude",
+      sub: "LLM Prompt Planner",
+      engine: "claude",
       cat: "model",
-      info: "Runway-style LLM step · returns structured JSON",
+      // Claude generates the full structured prompt pack as JSON
+      info: "Returns JSON · image prompt + 3 shots + negative",
       inputs: [
-        { id: "prompt", type: "text", label: "Scene *" },
-        { id: "system", type: "text", label: "System" },
+        { id: "system", type: "text", label: "System Prompt" },
+        { id: "prompt", type: "text", label: "Prompt *" },
+        { id: "image", type: "image", label: "Image" },
       ],
-      outputs: [{ id: "json", type: "text", label: "JSON Output" }],
+      outputs: [{ id: "text", type: "text", label: "Text" }],
     },
 
+    /* ══ COLUMN 2 — JSON Parse ═══════════════════════════════ */
     {
       id: "json_parse",
-      x: 600,
-      y: 30,
+      x: 700,
+      y: 110,
       title: "JSON Parse",
-      sub: "Utility — Extract Fields",
+      sub: "Structured Prompt Split",
       engine: "runway",
       cat: "utility",
-      info: "JSONPath-style field extraction",
+      // Official Runway utility node — JSONPath extraction
+      info: "Official Runway node · splits JSON into typed fields",
       inputs: [{ id: "json", type: "text", label: "JSON *" }],
       outputs: [
-        { id: "img_prompt", type: "text", label: "$.img_prompt" },
-        { id: "s1_motion", type: "text", label: "$.shot1_motion" },
-        { id: "s2_action", type: "text", label: "$.shot2_action" },
-        { id: "s3_motion", type: "text", label: "$.shot3_motion" },
-        { id: "char_lock", type: "text", label: "$.char_lock" },
-        { id: "negative", type: "text", label: "$.negative" },
+        { id: "master", type: "text", label: "master_image_prompt" },
+        { id: "shot1", type: "text", label: "shot1_video_prompt" },
+        { id: "shot2", type: "text", label: "shot2_video_prompt" },
+        { id: "shot3", type: "text", label: "shot3_video_prompt" },
+        { id: "negative", type: "text", label: "kling_negative_prompt" },
       ],
     },
 
+    /* ══ COLUMN 3 — Image generation ════════════════════════= */
     {
-      id: "nb2_gen",
-      x: 900,
-      y: 20,
-      title: "NB2 / Flux / MJ",
+      id: "nano_banana_2",
+      x: 1060,
+      y: 40,
+      title: "Nano Banana 2",
       sub: "Master Still Generator",
-      engine: "wstv",
+      engine: "runway",
       cat: "model",
-      info: "Generates the identity-anchor hero image",
-      inputs: [{ id: "prompt", type: "text", label: "Prompt *" }],
-      outputs: [{ id: "image", type: "image", label: "Master Still" }],
-    },
-    {
-      id: "combine_1",
-      x: 900,
-      y: 170,
-      title: "Combine Text",
-      sub: "Shot 1 — Identity + Motion",
-      engine: "runway",
-      cat: "utility",
-      info: "Merge char lock + shot 1 motion prompt",
+      // Runway: "Use a high-quality input image, free of visual
+      // artifacts, for best results" — this node must produce that
+      info: "High-res · artifact-free · clear full-body · clean BG",
       inputs: [
-        { id: "a", type: "text", label: "Char Lock" },
-        { id: "b", type: "text", label: "S1 Motion" },
+        { id: "text", type: "text", label: "Text *" },
+        { id: "image", type: "image", label: "Image" },
       ],
-      outputs: [{ id: "combined", type: "text", label: "Combined" }],
-    },
-    {
-      id: "combine_2",
-      x: 900,
-      y: 330,
-      title: "Combine Text",
-      sub: "Shot 2 — Identity + Action",
-      engine: "runway",
-      cat: "utility",
-      info: "Merge char lock + shot 2 action prompt",
-      inputs: [
-        { id: "a", type: "text", label: "Char Lock" },
-        { id: "b", type: "text", label: "S2 Action" },
-      ],
-      outputs: [{ id: "combined", type: "text", label: "Combined" }],
-    },
-    {
-      id: "combine_3",
-      x: 900,
-      y: 490,
-      title: "Combine Text",
-      sub: "Shot 3 — Identity + Motion",
-      engine: "runway",
-      cat: "utility",
-      info: "Merge char lock + shot 3 motion prompt",
-      inputs: [
-        { id: "a", type: "text", label: "Char Lock" },
-        { id: "b", type: "text", label: "S3 Motion" },
-      ],
-      outputs: [{ id: "combined", type: "text", label: "Combined" }],
+      outputs: [{ id: "image", type: "image", label: "Image" }],
     },
 
+    /* ══ COLUMN 4 — Shot 1 video generation ═════════════════ */
     {
-      id: "ref_split",
-      x: 1180,
-      y: 100,
-      title: "Reference Framing",
-      sub: "Master → 3 Shot-Specific Refs",
-      engine: "wstv",
-      cat: "utility",
-      info: "Shot-specific framing from one master still",
-      inputs: [{ id: "master", type: "image", label: "Master *" }],
-      outputs: [
-        { id: "ref1", type: "image", label: "Ref 1 — Open" },
-        { id: "ref2", type: "image", label: "Ref 2 — Action" },
-        { id: "ref3", type: "image", label: "Ref 3 — Resolve" },
-      ],
-    },
-
-    {
-      id: "runway_s1",
-      x: 1470,
-      y: 20,
-      title: "Runway Gen-4.5 I2V",
+      id: "gen45_s1",
+      x: 1060,
+      y: 280,
+      title: "Gen-4.5",
       sub: "Shot 1 — Opening Tension",
       engine: "runway",
       cat: "model",
-      info: "5–10s · 24/25fps · 720p · No negatives",
+      // Runway official: "Image carries identity. Prompt = MOTION ONLY.
+      // Restating image elements → reduced motion / unexpected results."
+      info: "I2V motion-only · don't restate image · 5–10s · 24/25fps",
       inputs: [
-        { id: "ref", type: "image", label: "Reference *" },
-        { id: "prompt", type: "text", label: "Combined *" },
-      ],
-      outputs: [
-        { id: "video", type: "video", label: "Video" },
-        { id: "last_frame", type: "image", label: "Last Frame" },
-      ],
-    },
-    {
-      id: "kling_s2",
-      x: 1470,
-      y: 240,
-      title: "Kling 3.0 Pro",
-      sub: "Shot 2 — Action Pressure",
-      engine: "kling",
-      cat: "model",
-      info: "3–15s · 4K/60fps · Bind Subject · Neg OK",
-      inputs: [
-        { id: "ref", type: "image", label: "Reference *" },
-        { id: "prompt", type: "text", label: "Combined *" },
-        { id: "negative", type: "text", label: "Negative" },
-      ],
-      outputs: [
-        { id: "video", type: "video", label: "Video" },
-        { id: "audio", type: "audio", label: "Native Audio" },
-        { id: "last_frame", type: "image", label: "Last Frame" },
-      ],
-    },
-    {
-      id: "runway_s3",
-      x: 1470,
-      y: 510,
-      title: "Runway Gen-4.5 I2V",
-      sub: "Shot 3 — Resolved Tension",
-      engine: "runway",
-      cat: "model",
-      info: "5–10s · 24/25fps · 720p · No negatives",
-      inputs: [
-        { id: "ref", type: "image", label: "Reference *" },
-        { id: "prompt", type: "text", label: "Combined *" },
+        { id: "image", type: "image", label: "Image *" },
+        { id: "text", type: "text", label: "Text *" },
       ],
       outputs: [{ id: "video", type: "video", label: "Video" }],
     },
 
+    /* ══ COLUMN 5 — Handoff: Shot 1 → Shot 2 ═══════════════ */
     {
-      id: "capcut",
-      x: 1780,
-      y: 280,
-      title: "CapCut Stitch",
-      sub: "Final Assembly → 9:16 Export",
-      engine: "wstv",
+      id: "extract_1",
+      x: 1400,
+      y: 250,
+      title: "Extract Frame",
+      sub: "Preferred — Shot 1 → Shot 2",
+      engine: "runway",
       cat: "utility",
-      info: "Audio on · safe zone text · vertical",
+      // Runway: "extracting the last frame of a completed generation
+      // and using that as the image input for a new video" — but we
+      // choose the CLEANEST frame, not blindly the last one
+      info: "Scrub to cleanest full-body frame · main path",
+      inputs: [{ id: "video", type: "video", label: "Video *" }],
+      outputs: [{ id: "image", type: "image", label: "Image" }],
+    },
+    {
+      id: "last_1",
+      x: 1400,
+      y: 420,
+      title: "Last Frame",
+      sub: "Fallback — Shot 1 → Shot 2",
+      engine: "runway",
+      cat: "utility",
+      // Last frame is automatic but may not be the cleanest option
+      info: "Auto final frame · use only if clean full-body",
+      inputs: [{ id: "video", type: "video", label: "Video *" }],
+      outputs: [{ id: "image", type: "image", label: "Image" }],
+    },
+
+    /* ══ COLUMN 6 — Shot 2 (Kling action lane) ═════════════ */
+    {
+      id: "kling_s2",
+      x: 1740,
+      y: 280,
+      title: "Kling 3.0 Pro",
+      sub: "Shot 2 — Action Pressure",
+      engine: "kling",
+      cat: "model",
+      // Kling: supports negative prompts, Bind Subject, native audio
+      info: "I2V · Bind Subject · negative OK · 3–15s · 4K/60fps",
       inputs: [
-        { id: "v1", type: "video", label: "Shot 1 *" },
-        { id: "v2", type: "video", label: "Shot 2 *" },
-        { id: "a2", type: "audio", label: "Audio" },
-        { id: "v3", type: "video", label: "Shot 3 *" },
+        { id: "image", type: "image", label: "Image *" },
+        { id: "text", type: "text", label: "Text *" },
+        { id: "negative", type: "text", label: "Negative" },
       ],
-      outputs: [{ id: "reel", type: "video", label: "Final Reel" }],
+      outputs: [{ id: "video", type: "video", label: "Video" }],
+    },
+
+    /* ══ COLUMN 7 — Handoff: Shot 2 → Shot 3 ═══════════════ */
+    {
+      id: "extract_2",
+      x: 2080,
+      y: 250,
+      title: "Extract Frame",
+      sub: "Preferred — Shot 2 → Shot 3",
+      engine: "runway",
+      cat: "utility",
+      info: "Scrub to cleanest full-body frame · main path",
+      inputs: [{ id: "video", type: "video", label: "Video *" }],
+      outputs: [{ id: "image", type: "image", label: "Image" }],
+    },
+    {
+      id: "last_2",
+      x: 2080,
+      y: 420,
+      title: "Last Frame",
+      sub: "Fallback — Shot 2 → Shot 3",
+      engine: "runway",
+      cat: "utility",
+      info: "Auto final frame · use only if clean full-body",
+      inputs: [{ id: "video", type: "video", label: "Video *" }],
+      outputs: [{ id: "image", type: "image", label: "Image" }],
+    },
+
+    /* ══ COLUMN 8 — Shot 3 video generation ═════════════════ */
+    {
+      id: "gen45_s3",
+      x: 2420,
+      y: 280,
+      title: "Gen-4.5",
+      sub: "Shot 3 — Resolved Tension",
+      engine: "runway",
+      cat: "model",
+      // Same Runway I2V motion-only rule as Shot 1
+      info: "I2V motion-only · don't restate image · 5–10s · 24/25fps",
+      inputs: [
+        { id: "image", type: "image", label: "Image *" },
+        { id: "text", type: "text", label: "Text *" },
+      ],
+      outputs: [{ id: "video", type: "video", label: "Video" }],
+    },
+
+    /* ══ COLUMN 9 — Final assembly ══════════════════════════ */
+    {
+      id: "stitch",
+      x: 2760,
+      y: 290,
+      title: "Stitch",
+      sub: "Final Sequence",
+      engine: "runway",
+      cat: "utility",
+      // Runway: "combine both clips in a video editor to adjust
+      // timing and remove the shared frame"
+      info: "Combine S1+S2+S3 · remove shared handoff frames",
+      inputs: [
+        { id: "input1", type: "video", label: "Input 1 *" },
+        { id: "input2", type: "video", label: "Input 2 *" },
+        { id: "input3", type: "video", label: "Input 3 *" },
+      ],
+      outputs: [{ id: "video", type: "video", label: "Video" }],
     },
   ];
 }
 
+// ─────────────────────────────────────────────────────────────
+// WIRE DEFINITIONS
+//
+// Key change: Last Frame nodes now have dashed fallback wires
+// to the next shot's image input, making the alternative path
+// visible instead of leaving dead-end output ports.
+// ─────────────────────────────────────────────────────────────
 const WIRES: Wire[] = [
-  { from: "scene_input.text", to: "gemini_llm.prompt", type: "text" },
-  { from: "sys_prompt.text", to: "gemini_llm.system", type: "text" },
+  /* ── Inputs → Claude ────────────────────────────────────── */
+  { from: "text_system.text", to: "claude.system", type: "text" },
+  { from: "text_user.text", to: "claude.prompt", type: "text" },
+  { from: "image_ref.image", to: "claude.image", type: "image" },
 
-  { from: "gemini_llm.json", to: "json_parse.json", type: "text" },
+  /* ── Claude → JSON Parse ────────────────────────────────── */
+  { from: "claude.text", to: "json_parse.json", type: "text" },
 
-  { from: "json_parse.img_prompt", to: "nb2_gen.prompt", type: "text" },
+  /* ── JSON Parse → NB2 (master image prompt) ────────────── */
+  { from: "json_parse.master", to: "nano_banana_2.text", type: "text" },
+  // Optional ref image also feeds NB2 for style guidance
+  { from: "image_ref.image", to: "nano_banana_2.image", type: "image" },
 
-  { from: "json_parse.s1_motion", to: "combine_1.b", type: "text" },
-  { from: "json_parse.s2_action", to: "combine_2.b", type: "text" },
-  { from: "json_parse.s3_motion", to: "combine_3.b", type: "text" },
+  /* ── NB2 master still → Gen-4.5 Shot 1 ────────────────── */
+  { from: "nano_banana_2.image", to: "gen45_s1.image", type: "image" },
+  { from: "json_parse.shot1", to: "gen45_s1.text", type: "text" },
 
-  { from: "json_parse.char_lock", to: "combine_1.a", type: "text" },
-  { from: "json_parse.char_lock", to: "combine_2.a", type: "text" },
-  { from: "json_parse.char_lock", to: "combine_3.a", type: "text" },
+  /* ── Shot 1 → Extract Frame (main) + Last Frame (fallback) */
+  { from: "gen45_s1.video", to: "extract_1.video", type: "video" },
+  { from: "gen45_s1.video", to: "last_1.video", type: "video", dashed: true },
 
+  /* ── Extract Frame 1 → Kling Shot 2 (main continuity path) */
+  { from: "extract_1.image", to: "kling_s2.image", type: "image" },
+  // Last Frame 1 → Kling Shot 2 (fallback — dashed)
+  { from: "last_1.image", to: "kling_s2.image", type: "image", dashed: true },
+
+  /* ── JSON Parse → Kling Shot 2 (action prompt + negative) ─ */
+  { from: "json_parse.shot2", to: "kling_s2.text", type: "text" },
   { from: "json_parse.negative", to: "kling_s2.negative", type: "text" },
 
-  { from: "nb2_gen.image", to: "ref_split.master", type: "image" },
+  /* ── Shot 2 → Extract Frame (main) + Last Frame (fallback) */
+  { from: "kling_s2.video", to: "extract_2.video", type: "video" },
+  { from: "kling_s2.video", to: "last_2.video", type: "video", dashed: true },
 
-  { from: "ref_split.ref1", to: "runway_s1.ref", type: "image" },
-  { from: "ref_split.ref2", to: "kling_s2.ref", type: "image" },
-  { from: "ref_split.ref3", to: "runway_s3.ref", type: "image" },
+  /* ── Extract Frame 2 → Gen-4.5 Shot 3 (main continuity) ── */
+  { from: "extract_2.image", to: "gen45_s3.image", type: "image" },
+  // Last Frame 2 → Gen-4.5 Shot 3 (fallback — dashed)
+  { from: "last_2.image", to: "gen45_s3.image", type: "image", dashed: true },
 
-  { from: "combine_1.combined", to: "runway_s1.prompt", type: "text" },
-  { from: "combine_2.combined", to: "kling_s2.prompt", type: "text" },
-  { from: "combine_3.combined", to: "runway_s3.prompt", type: "text" },
+  /* ── JSON Parse → Gen-4.5 Shot 3 (motion prompt) ────────── */
+  { from: "json_parse.shot3", to: "gen45_s3.text", type: "text" },
 
-  { from: "runway_s1.video", to: "capcut.v1", type: "video" },
-  { from: "kling_s2.video", to: "capcut.v2", type: "video" },
-  { from: "kling_s2.audio", to: "capcut.a2", type: "audio" },
-  { from: "runway_s3.video", to: "capcut.v3", type: "video" },
+  /* ── All 3 shot videos → Stitch (final assembly) ────────── */
+  { from: "gen45_s1.video", to: "stitch.input1", type: "video" },
+  { from: "kling_s2.video", to: "stitch.input2", type: "video" },
+  { from: "gen45_s3.video", to: "stitch.input3", type: "video" },
 ];
 
-function pp(nodes: Node[], nid: string, pid: string, side: "in" | "out") {
-  const n = nodes.find((nd) => nd.id === nid);
+// ─────────────────────────────────────────────────────────────
+// SVG HELPERS
+// ─────────────────────────────────────────────────────────────
+function getPortPos(
+  nodes: Node[],
+  nodeId: string,
+  portId: string,
+  side: "in" | "out"
+) {
+  const n = nodes.find((item) => item.id === nodeId);
   if (!n) return { x: 0, y: 0 };
 
   const ports = side === "out" ? n.outputs : n.inputs;
-  const idx = ports.findIndex((p) => p.id === pid);
+  const idx = ports.findIndex((p) => p.id === portId);
   if (idx < 0) return { x: 0, y: 0 };
 
   return {
@@ -362,34 +436,40 @@ function pp(nodes: Node[], nid: string, pid: string, side: "in" | "out") {
   };
 }
 
-function bp(x1: number, y1: number, x2: number, y2: number) {
-  const cp = Math.max(50, Math.abs(x2 - x1) * 0.4);
+function bezierPath(x1: number, y1: number, x2: number, y2: number) {
+  const cp = Math.max(60, Math.abs(x2 - x1) * 0.38);
   return `M${x1},${y1} C${x1 + cp},${y1} ${x2 - cp},${y2} ${x2},${y2}`;
 }
 
-function WireEl({ w, nodes }: { w: Wire; nodes: Node[] }) {
-  const [fn, fp] = w.from.split(".");
-  const [tn, tp] = w.to.split(".");
+// ─────────────────────────────────────────────────────────────
+// SVG COMPONENTS
+// ─────────────────────────────────────────────────────────────
+function WireEl({ wire, nodes }: { wire: Wire; nodes: Node[] }) {
+  const [fromNode, fromPort] = wire.from.split(".");
+  const [toNode, toPort] = wire.to.split(".");
 
-  const a = pp(nodes, fn, fp, "out");
-  const b = pp(nodes, tn, tp, "in");
-  const c = TC[w.type]?.wire || "#555";
-  const d = bp(a.x, a.y, b.x, b.y);
+  const a = getPortPos(nodes, fromNode, fromPort, "out");
+  const b = getPortPos(nodes, toNode, toPort, "in");
+  const c = TC[wire.type].wire;
+  const d = bezierPath(a.x, a.y, b.x, b.y);
 
   return (
     <g>
-      <path d={d} fill="none" stroke={c} strokeWidth={3.5} opacity={0.08} />
+      {/* Soft glow behind the wire */}
+      <path d={d} fill="none" stroke={c} strokeWidth={3.5} opacity={0.09} />
+      {/* Main wire — solid for primary path, dashed for fallback */}
       <path
         d={d}
         fill="none"
         stroke={c}
-        strokeWidth={1.6}
-        opacity={w.dashed ? 0.35 : 0.6}
-        strokeDasharray={w.dashed ? "5 3" : "none"}
+        strokeWidth={1.7}
+        opacity={wire.dashed ? 0.38 : 0.72}
+        strokeDasharray={wire.dashed ? "7 5" : "none"}
       />
-      {!w.dashed && (
-        <circle r={2.2} fill={c} opacity={0.8}>
-          <animateMotion dur="3.5s" repeatCount="indefinite" path={d} />
+      {/* Animated flow dot (primary path only) */}
+      {!wire.dashed && (
+        <circle r={2.1} fill={c} opacity={0.85}>
+          <animateMotion dur="3.4s" repeatCount="indefinite" path={d} />
         </circle>
       )}
     </g>
@@ -405,11 +485,11 @@ function PortEl({
 }: {
   x: number;
   y: number;
-  type: string;
+  type: keyof typeof TC;
   label: string;
   side: "in" | "out";
 }) {
-  const c = TC[type]?.port || "#888";
+  const c = TC[type].port;
 
   return (
     <g>
@@ -431,21 +511,26 @@ function PortEl({
 }
 
 function NodeEl({ node }: { node: Node }) {
-  const h = nH(node);
-  const e = ENG[node.engine] || ENG.wstv;
+  const h = nodeHeight(node);
+  const e = ENG[node.engine];
 
   return (
     <g transform={`translate(${node.x},${node.y})`}>
-      <rect x={2} y={2} width={NW} height={h} rx={8} fill="rgba(0,0,0,0.25)" />
-      <rect width={NW} height={h} rx={8} fill="#181830" stroke="#282848" strokeWidth={1} />
-      <rect width={NW} height={3.5} rx={8} ry={8} fill={e.accent} />
+      {/* Drop shadow */}
+      <rect x={2} y={2} width={NW} height={h} rx={9} fill="rgba(0,0,0,0.26)" />
+      {/* Node body */}
+      <rect width={NW} height={h} rx={9} fill="#181830" stroke="#282848" strokeWidth={1} />
+      {/* Engine accent bar (top edge) */}
+      <rect width={NW} height={3.5} rx={9} ry={9} fill={e.accent} />
       <rect y={1.5} width={NW} height={2} fill={e.accent} />
+      {/* Header background tint */}
       <rect x={0.5} y={3.5} width={NW - 1} height={HH - 4} fill="rgba(255,255,255,0.02)" />
 
-      <rect x={7} y={9} width={e.label.length * 7 + 18} height={16} rx={3.5} fill={e.badge} />
+      {/* Engine badge */}
+      <rect x={8} y={10} width={e.label.length * 7 + 20} height={16} rx={4} fill={e.badge} />
       <text
-        x={16}
-        y={20.5}
+        x={17}
+        y={21}
         fill={e.badgeText}
         fontSize={9}
         fontWeight={700}
@@ -455,112 +540,69 @@ function NodeEl({ node }: { node: Node }) {
         {e.icon} {e.label}
       </text>
 
+      {/* Category tag (INPUT / UTILITY / MODEL) */}
       {node.cat === "input" && (
         <>
-          <rect x={NW - 48} y={9} width={40} height={16} rx={3.5} fill="rgba(255,255,255,0.05)" />
-          <text
-            x={NW - 28}
-            y={20.5}
-            fill="#5b5f73"
-            fontSize={8}
-            fontWeight={600}
-            textAnchor="middle"
-            fontFamily="monospace"
-            style={{ userSelect: "none" }}
-          >
-            INPUT
-          </text>
+          <rect x={NW - 48} y={10} width={40} height={16} rx={4} fill="rgba(255,255,255,0.05)" />
+          <text x={NW - 28} y={21} fill="#5b5f73" fontSize={8} fontWeight={700}
+                textAnchor="middle" fontFamily="monospace" style={{ userSelect: "none" }}>INPUT</text>
         </>
       )}
-
       {node.cat === "utility" && (
         <>
-          <rect x={NW - 55} y={9} width={47} height={16} rx={3.5} fill="rgba(147,51,234,0.1)" />
-          <text
-            x={NW - 32}
-            y={20.5}
-            fill="#a855f7"
-            fontSize={8}
-            fontWeight={600}
-            textAnchor="middle"
-            fontFamily="monospace"
-            style={{ userSelect: "none" }}
-          >
-            UTILITY
-          </text>
+          <rect x={NW - 58} y={10} width={50} height={16} rx={4} fill="rgba(147,51,234,0.11)" />
+          <text x={NW - 33} y={21} fill="#c084fc" fontSize={8} fontWeight={700}
+                textAnchor="middle" fontFamily="monospace" style={{ userSelect: "none" }}>UTILITY</text>
         </>
       )}
-
       {node.cat === "model" && (
         <>
-          <rect x={NW - 52} y={9} width={44} height={16} rx={3.5} fill="rgba(34,197,94,0.08)" />
-          <text
-            x={NW - 30}
-            y={20.5}
-            fill="#4ade80"
-            fontSize={8}
-            fontWeight={600}
-            textAnchor="middle"
-            fontFamily="monospace"
-            style={{ userSelect: "none" }}
-          >
-            MODEL
-          </text>
+          <rect x={NW - 52} y={10} width={44} height={16} rx={4} fill="rgba(34,197,94,0.08)" />
+          <text x={NW - 30} y={21} fill="#4ade80" fontSize={8} fontWeight={700}
+                textAnchor="middle" fontFamily="monospace" style={{ userSelect: "none" }}>MODEL</text>
         </>
       )}
 
-      <text
-        x={8}
-        y={HH}
-        fill="#dcdee6"
-        fontSize={11}
-        fontWeight={700}
-        fontFamily="'Inter', system-ui, sans-serif"
-        style={{ userSelect: "none" }}
-      >
-        {node.title}
-      </text>
+      {/* Node title */}
+      <text x={9} y={42} fill="#e5e7eb" fontSize={11.5} fontWeight={700}
+            fontFamily="'Inter', system-ui, sans-serif" style={{ userSelect: "none" }}>{node.title}</text>
 
+      {/* Subtitle */}
+      <text x={9} y={56} fill="#7b8097" fontSize={8.5} fontWeight={500}
+            fontFamily="'Inter', system-ui, sans-serif" style={{ userSelect: "none" }}>{node.sub}</text>
+
+      {/* Info line (bottom of node — carries the Runway best-practice note) */}
       {node.info && (
-        <text
-          x={8}
-          y={h - 5}
-          fill="#3e4258"
-          fontSize={7.5}
-          fontFamily="monospace"
-          style={{ userSelect: "none" }}
-        >
-          {node.info}
-        </text>
+        <text x={9} y={h - 6} fill="#49506a" fontSize={7.4}
+              fontFamily="'JetBrains Mono', monospace" style={{ userSelect: "none" }}>{node.info}</text>
       )}
 
+      {/* Input ports (left side) */}
       {node.inputs.map((p, i) => (
-        <PortEl key={`i-${p.id}`} x={0} y={PY0 + i * PS} type={p.type} label={p.label} side="in" />
+        <PortEl key={`in-${node.id}-${p.id}`} x={0} y={PY0 + i * PS}
+                type={p.type as keyof typeof TC} label={p.label} side="in" />
       ))}
+
+      {/* Output ports (right side) */}
       {node.outputs.map((p, i) => (
-        <PortEl key={`o-${p.id}`} x={NW} y={PY0 + i * PS} type={p.type} label={p.label} side="out" />
+        <PortEl key={`out-${node.id}-${p.id}`} x={NW} y={PY0 + i * PS}
+                type={p.type as keyof typeof TC} label={p.label} side="out" />
       ))}
     </g>
   );
 }
 
+// ─────────────────────────────────────────────────────────────
+// LEGEND — updated with Runway official notes
+// ─────────────────────────────────────────────────────────────
 function LegendEl({ x, y }: { x: number; y: number }) {
   return (
     <g transform={`translate(${x},${y})`}>
-      <rect width={520} height={88} rx={8} fill="#12122a" stroke="#282848" strokeWidth={0.8} />
+      <rect width={710} height={116} rx={8} fill="#12122a" stroke="#282848" strokeWidth={0.8} />
 
-      <text
-        x={12}
-        y={17}
-        fill="#7b7f96"
-        fontSize={9}
-        fontWeight={700}
-        fontFamily="'Inter', sans-serif"
-        style={{ userSelect: "none" }}
-      >
-        CONTENT TYPES
-      </text>
-
+      {/* Row 1: Content types */}
+      <text x={12} y={18} fill="#7b7f96" fontSize={9} fontWeight={700}
+            fontFamily="'Inter', sans-serif" style={{ userSelect: "none" }}>CONTENT TYPES (Official Runway)</text>
       {(
         [
           ["text", "Text (Orange)"],
@@ -569,60 +611,48 @@ function LegendEl({ x, y }: { x: number; y: number }) {
           ["video", "Video (Green)"],
         ] as const
       ).map(([t, l], i) => (
-        <g key={t} transform={`translate(${12 + i * 125},26)`}>
+        <g key={t} transform={`translate(${12 + i * 100},28)`}>
           <circle cx={5} cy={6} r={4} fill={TC[t].port} />
-          <text
-            x={14}
-            y={10}
-            fill="#a0a4b8"
-            fontSize={8.5}
-            fontFamily="monospace"
-            style={{ userSelect: "none" }}
-          >
-            {l}
-          </text>
+          <text x={14} y={10} fill="#a0a4b8" fontSize={8.5}
+                fontFamily="'JetBrains Mono', monospace" style={{ userSelect: "none" }}>{l}</text>
         </g>
       ))}
 
-      <line x1={12} y1={44} x2={508} y2={44} stroke="#282848" strokeWidth={0.4} />
+      <line x1={12} y1={46} x2={698} y2={46} stroke="#282848" strokeWidth={0.4} />
 
-      <text
-        x={12}
-        y={60}
-        fill="#7b7f96"
-        fontSize={9}
-        fontWeight={700}
-        fontFamily="'Inter', sans-serif"
-        style={{ userSelect: "none" }}
-      >
-        ENGINE TYPES
-      </text>
+      {/* Row 2: Wire logic */}
+      <text x={12} y={62} fill="#7b7f96" fontSize={9} fontWeight={700}
+            fontFamily="'Inter', sans-serif" style={{ userSelect: "none" }}>WIRE LOGIC</text>
+      {[
+        "Solid = main production path",
+        "Dashed = fallback option only",
+        "Dots = data flow direction",
+      ].map((item, i) => (
+        <text key={item} x={12 + i * 195} y={78} fill="#a0a4b8" fontSize={7.2}
+              fontFamily="'JetBrains Mono', monospace" style={{ userSelect: "none" }}>{item}</text>
+      ))}
 
-      {(
-        [
-          ["runway", "Runway Native (LLM, Gen-4.5, JSON Parse, Combine Text)"],
-          ["kling", "Kling (WSTV Action Workflow)"],
-          ["wstv", "WSTV Custom (NB2, Ref Framing, CapCut)"],
-        ] as const
-      ).map(([k, l], i) => (
-        <g key={k} transform={`translate(${12 + i * 175},68)`}>
-          <rect width={8} height={8} rx={2} fill={ENG[k].accent} />
-          <text
-            x={12}
-            y={8}
-            fill="#a0a4b8"
-            fontSize={7}
-            fontFamily="monospace"
-            style={{ userSelect: "none" }}
-          >
-            {l}
-          </text>
-        </g>
+      <line x1={12} y1={88} x2={698} y2={88} stroke="#282848" strokeWidth={0.4} />
+
+      {/* Row 3: Key Runway rules */}
+      <text x={12} y={104} fill="#7b7f96" fontSize={9} fontWeight={700}
+            fontFamily="'Inter', sans-serif" style={{ userSelect: "none" }}>KEY RULES</text>
+      {[
+        "Gen-4.5 I2V = motion-only prompt",
+        "No negative prompts in Runway",
+        "Extract Frame > Last Frame",
+        "Fixed Seed for retries",
+      ].map((item, i) => (
+        <text key={item} x={12 + i * 175} y={114} fill="#a0a4b8" fontSize={6.8}
+              fontFamily="'JetBrains Mono', monospace" style={{ userSelect: "none" }}>{item}</text>
       ))}
     </g>
   );
 }
 
+// ═════════════════════════════════════════════════════════════
+// MAIN COMPONENT
+// ═════════════════════════════════════════════════════════════
 export default function WSTVWorkflowDiagram({
   data: _data,
   onCopy: _onCopy,
@@ -631,11 +661,11 @@ export default function WSTVWorkflowDiagram({
   onCopy?: (t: string) => void;
 }) {
   const [pan, setPan] = useState({ x: 0, y: 0 });
-  const [zoom, setZoom] = useState(0.54);
+  const [zoom, setZoom] = useState(0.46);
   const [drag, setDrag] = useState(false);
-  const [ds, setDs] = useState({ x: 0, y: 0 });
-  const [ps, setPs] = useState({ x: 0, y: 0 });
-  const [isOpen, setIsOpen] = useState(false);
+  const [dragStart, setDragStart] = useState({ x: 0, y: 0 });
+  const [panStart, setPanStart] = useState({ x: 0, y: 0 });
+  const [isOpen, setIsOpen] = useState(true);
 
   const nodes = useMemo(() => buildNodes(), []);
 
@@ -644,87 +674,93 @@ export default function WSTVWorkflowDiagram({
     setZoom((z) => Math.min(2.5, Math.max(0.2, z + (e.deltaY > 0 ? -0.05 : 0.05))));
   }, []);
 
-  const onMD = useCallback(
+  const onMouseDown = useCallback(
     (e: ReactMouseEvent<SVGSVGElement>) => {
       if (e.button !== 0) return;
       setDrag(true);
-      setDs({ x: e.clientX, y: e.clientY });
-      setPs({ ...pan });
+      setDragStart({ x: e.clientX, y: e.clientY });
+      setPanStart({ ...pan });
     },
     [pan]
   );
 
-  const onMM = useCallback(
+  const onMouseMove = useCallback(
     (e: ReactMouseEvent<SVGSVGElement>) => {
       if (!drag) return;
       setPan({
-        x: ps.x + (e.clientX - ds.x),
-        y: ps.y + (e.clientY - ds.y),
+        x: panStart.x + (e.clientX - dragStart.x),
+        y: panStart.y + (e.clientY - dragStart.y),
       });
     },
-    [drag, ds, ps]
+    [drag, dragStart, panStart]
   );
 
-  const onMU = useCallback(() => setDrag(false), []);
+  const onMouseUp = useCallback(() => setDrag(false), []);
 
-  const onTS = useCallback(
+  const onTouchStart = useCallback(
     (e: ReactTouchEvent<SVGSVGElement>) => {
       if (e.touches.length !== 1) return;
       const t = e.touches[0];
       setDrag(true);
-      setDs({ x: t.clientX, y: t.clientY });
-      setPs({ ...pan });
+      setDragStart({ x: t.clientX, y: t.clientY });
+      setPanStart({ ...pan });
     },
     [pan]
   );
 
-  const onTM = useCallback(
+  const onTouchMove = useCallback(
     (e: ReactTouchEvent<SVGSVGElement>) => {
       if (!drag || e.touches.length !== 1) return;
       const t = e.touches[0];
       setPan({
-        x: ps.x + (t.clientX - ds.x),
-        y: ps.y + (t.clientY - ds.y),
+        x: panStart.x + (t.clientX - dragStart.x),
+        y: panStart.y + (t.clientY - dragStart.y),
       });
     },
-    [drag, ds, ps]
+    [drag, dragStart, panStart]
   );
 
   const reset = () => {
     setPan({ x: 0, y: 0 });
-    setZoom(0.54);
+    setZoom(0.46);
   };
 
+  /* Pipeline flow summary badges */
   const flowBadges = [
-    { l: "Scene", c: "#f59e0b" },
+    { l: "Text", c: "#f59e0b" },
     { l: "→", c: "#3e4258" },
-    { l: "Gemini", c: "#16a34a" },
+    { l: "Claude", c: "#f97316" },
     { l: "→", c: "#3e4258" },
-    { l: "JSON", c: "#16a34a" },
+    { l: "JSON Parse", c: "#16a34a" },
     { l: "→", c: "#3e4258" },
-    { l: "NB2", c: "#9333ea" },
+    { l: "NB2", c: "#16a34a" },
     { l: "→", c: "#3e4258" },
-    { l: "3 Refs", c: "#3b82f6" },
+    { l: "Gen-4.5 S1", c: "#16a34a" },
     { l: "→", c: "#3e4258" },
-    { l: "S1 Runway", c: "#16a34a" },
-    { l: "+", c: "#3e4258" },
-    { l: "S2 Kling", c: "#2563eb" },
-    { l: "+", c: "#3e4258" },
-    { l: "S3 Runway", c: "#16a34a" },
+    { l: "Extract", c: "#16a34a" },
     { l: "→", c: "#3e4258" },
-    { l: "CapCut", c: "#9333ea" },
+    { l: "Kling S2", c: "#2563eb" },
+    { l: "→", c: "#3e4258" },
+    { l: "Extract", c: "#16a34a" },
+    { l: "→", c: "#3e4258" },
+    { l: "Gen-4.5 S3", c: "#16a34a" },
+    { l: "→", c: "#3e4258" },
+    { l: "Stitch", c: "#16a34a" },
   ];
 
   return (
     <div className="overflow-hidden rounded-2xl border border-gray-700 bg-[#0b0b1a] shadow-lg">
+      {/* ── Header toggle bar ──────────────────────────────── */}
       <div className="flex flex-wrap items-center justify-between gap-2 border-b border-[#1e1e38] px-4 py-3">
         <div className="flex flex-wrap items-center gap-2">
-          <div className="flex h-7 w-7 items-center justify-center rounded-md bg-gradient-to-br from-green-600 to-purple-600 text-xs font-extrabold text-white">
+          <div className="flex h-7 w-7 items-center justify-center rounded-md bg-gradient-to-br from-green-600 to-blue-600 text-xs font-extrabold text-white">
             W
           </div>
-          <span className="text-sm font-bold text-gray-200">WSTV Pipeline — Node Graph</span>
+          <span className="text-sm font-bold text-gray-200">
+            WSTV Pipeline — Runway-Aligned Node Graph
+          </span>
           <span className="rounded bg-[rgba(255,255,255,0.05)] px-2 py-0.5 text-[9px] font-semibold text-gray-500">
-            LLM → JSON Parse → Combine Text → Ref Framing
+            Extract Frame first · Last Frame fallback · Motion-only I2V
           </span>
         </div>
 
@@ -737,42 +773,33 @@ export default function WSTVWorkflowDiagram({
         </button>
       </div>
 
+      {/* ── Diagram canvas ─────────────────────────────────── */}
       {isOpen && (
-        <div className="relative" style={{ height: 580, cursor: drag ? "grabbing" : "grab" }}>
+        <div className="relative" style={{ height: 620, cursor: drag ? "grabbing" : "grab" }}>
+          {/* Zoom controls (top-right) */}
           <div className="absolute right-3 top-3 z-10 flex items-center gap-1.5 rounded-lg border border-[#282848] bg-[rgba(11,11,26,0.9)] px-2 py-1.5 backdrop-blur-sm">
             <span className="text-[9px] text-gray-500" style={{ fontFamily: "monospace" }}>
               {Math.round(zoom * 100)}%
             </span>
-            <button
-              type="button"
-              onClick={() => setZoom((z) => Math.max(0.2, z - 0.1))}
-              className="flex h-6 w-6 items-center justify-center rounded border border-[#282848] bg-[rgba(255,255,255,0.05)] text-sm font-bold text-gray-400"
-            >
-              −
-            </button>
-            <button
-              type="button"
-              onClick={() => setZoom((z) => Math.min(2.5, z + 0.1))}
-              className="flex h-6 w-6 items-center justify-center rounded border border-[#282848] bg-[rgba(255,255,255,0.05)] text-sm font-bold text-gray-400"
-            >
-              +
-            </button>
-            <button
-              type="button"
-              onClick={reset}
-              className="rounded border border-[#282848] bg-[rgba(255,255,255,0.05)] px-2 py-0.5 text-[9px] font-semibold text-gray-400"
-            >
-              Reset
-            </button>
+            <button type="button" onClick={() => setZoom((z) => Math.max(0.2, z - 0.1))}
+              className="flex h-6 w-6 items-center justify-center rounded border border-[#282848] bg-[rgba(255,255,255,0.05)] text-sm font-bold text-gray-400">−</button>
+            <button type="button" onClick={() => setZoom((z) => Math.min(2.5, z + 0.1))}
+              className="flex h-6 w-6 items-center justify-center rounded border border-[#282848] bg-[rgba(255,255,255,0.05)] text-sm font-bold text-gray-400">+</button>
+            <button type="button" onClick={reset}
+              className="rounded border border-[#282848] bg-[rgba(255,255,255,0.05)] px-2 py-0.5 text-[9px] font-semibold text-gray-400">Reset</button>
           </div>
 
+          {/* Navigation hint (top-left) */}
           <div
             className="absolute left-3 top-3 z-10 rounded-lg border border-[#1e1e38] bg-[rgba(11,11,26,0.88)] px-3 py-2 text-[9px] text-gray-600 backdrop-blur-sm"
             style={{ fontFamily: "monospace", lineHeight: 1.6 }}
           >
             Drag to pan · Scroll to zoom
+            <br />
+            Solid wire = main path · Dashed = fallback only
           </div>
 
+          {/* Pipeline flow bar (bottom-center) */}
           <div className="absolute bottom-3 left-1/2 z-10 flex -translate-x-1/2 items-center gap-1.5 rounded-lg border border-[#1e1e38] bg-[rgba(11,11,26,0.92)] px-3 py-1.5 backdrop-blur-sm">
             {flowBadges.map((s, i) => (
               <span
@@ -781,7 +808,7 @@ export default function WSTVWorkflowDiagram({
                 style={{
                   color: s.c,
                   fontFamily: "monospace",
-                  fontWeight: s.l === "→" || s.l === "+" ? 400 : 700,
+                  fontWeight: s.l === "→" ? 400 : 700,
                 }}
               >
                 {s.l}
@@ -789,17 +816,18 @@ export default function WSTVWorkflowDiagram({
             ))}
           </div>
 
+          {/* SVG canvas */}
           <svg
             width="100%"
             height="100%"
             onWheel={onWheel}
-            onMouseDown={onMD}
-            onMouseMove={onMM}
-            onMouseUp={onMU}
-            onMouseLeave={onMU}
-            onTouchStart={onTS}
-            onTouchMove={onTM}
-            onTouchEnd={onMU}
+            onMouseDown={onMouseDown}
+            onMouseMove={onMouseMove}
+            onMouseUp={onMouseUp}
+            onMouseLeave={onMouseUp}
+            onTouchStart={onTouchStart}
+            onTouchMove={onTouchMove}
+            onTouchEnd={onMouseUp}
           >
             <defs>
               <pattern id="wstv-sg" width="20" height="20" patternUnits="userSpaceOnUse">
@@ -811,16 +839,16 @@ export default function WSTVWorkflowDiagram({
               </pattern>
             </defs>
 
-            <rect width="6000" height="4000" x="-3000" y="-2000" fill="url(#wstv-g)" />
+            <rect width="7000" height="5000" x="-3500" y="-2500" fill="url(#wstv-g)" />
 
-            <g transform={`translate(${pan.x + 24},${pan.y + 16}) scale(${zoom})`}>
-              {WIRES.map((w, i) => (
-                <WireEl key={i} w={w} nodes={nodes} />
+            <g transform={`translate(${pan.x + 20},${pan.y + 18}) scale(${zoom})`}>
+              {WIRES.map((wire, i) => (
+                <WireEl key={i} wire={wire} nodes={nodes} />
               ))}
-              {nodes.map((n) => (
-                <NodeEl key={n.id} node={n} />
+              {nodes.map((node) => (
+                <NodeEl key={node.id} node={node} />
               ))}
-              <LegendEl x={1280} y={680} />
+              <LegendEl x={1120} y={620} />
             </g>
           </svg>
         </div>
