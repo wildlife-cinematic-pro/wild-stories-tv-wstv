@@ -1414,8 +1414,8 @@ const cleanCameraGear = sanitizeCameraGearForHabitat(cameraGear, env);
           const B = `${cleanEnv}, ${cleanWeather}, ${cleanAir}. Layered foreground, readable midground, softened background separation for stable depth maps. Subjects in authentic wildlife behavioral postures, biologically accurate spacing, natural environmental context, immediate readable tension, no empty dead space.`;
         const D = `${cleanTexture}. ${vibe.texture}. Micro-detail visible in fur, skin, feathers, moisture, and clean ground contact. ${realismAdd}`;
 
-  if (target === "NB2") {
-        const B_ref = `${cleanEnv}, ${cleanWeather}, ${cleanAir}. Two-plane composition: foreground subjects fully separated from background, unambiguous silhouettes, stable depth map. Subjects placed for clear biomechanical readability, strong first-frame readability, no overlap, each animal fully visible, no empty dead space.`;
+    if (target === "NB2") {
+        const B_ref = `${cleanEnv}, ${cleanWeather}, ${nb2Air}. Two-plane composition: foreground subjects fully separated from background, unambiguous silhouettes, stable depth map. Subjects placed for clear biomechanical readability, strong first-frame readability, no overlap, each animal fully visible, no empty dead space.`;
     const E_ref = `${vibe.style}, photorealistic, 8K RAW. Optimised for I2V reference consistency — distinct silhouettes, locked anatomy, stable depth planes.${descInject}`;
     return finalizeImagePrompt(`${qLead} ${A} ${B_ref} ${C} ${D} ${E_ref}`, target);
   }
@@ -1832,7 +1832,7 @@ export function buildKlingShots(
     : `${baseExtra3} ${vibe.style}.`;
 
   return {
-        shot1: finalizePrompt(`KLING SHOT 1 — OPENING TENSION [${model}]
+              shot1: finalizePrompt(`KLING SHOT 1 — OPENING TENSION [${model}]
 ${note}
 ${qLead}
 ${refLine}
@@ -1842,9 +1842,16 @@ Motion intensity: ${mi1.toFixed(2)}
 Opening priority: both subjects fully readable from frame one, locked eye-line, clear spacing, immediate visible tension.
 ${maybeGuard(s1.guardLine)}${context}
 
-═══ KLING 3.0 PROMPT (SCALE format) ═══
-Shot: WIDE opening hold or subtle push-in, full bodies visible from frame one.
-${characterLine}
+═══ PASTE-READY KLING PROMPT (copy this block into Kling) ═══
+${sanitizeVideoBeatText(isAquatic
+  ? `Wide opening hold with a subtle push-in. ${predator} holds controlled pressure through the water on the left. ${prey} stays fully alert and reactive on the right. Both subjects fully readable from frame one with locked eye-line, clear spacing, and immediate visible tension. ${buildKlingLocationLine(env, weather, quality?.motionOnlyI2V).replace(/^Lighting & Location:\s*/i, "")}. ${extra1} Motion intensity: ${mi1.toFixed(2)}.`
+  : isShoreline
+    ? `Wide opening hold with a subtle push-in. ${predator} holds visible pressure at the waterline on the left. ${prey} stays fully alert near the bank on the right. Both subjects fully readable from frame one with locked eye-line, clear spacing, and immediate visible tension. ${buildKlingLocationLine(env, weather, quality?.motionOnlyI2V).replace(/^Lighting & Location:\s*/i, "")}. ${extra1} Motion intensity: ${mi1.toFixed(2)}.`
+    : `Wide opening hold with a subtle push-in. ${formatActionSubject(predator, s1.predatorBeat)}. ${prey} ${s1.preyBeat}. Both subjects fully readable from frame one with locked eye-line, clear spacing, and immediate visible tension. ${buildKlingLocationLine(env, weather, quality?.motionOnlyI2V).replace(/^Lighting & Location:\s*/i, "")}. ${extra1} Motion intensity: ${mi1.toFixed(2)}.`
+)}
+
+─── FULL BREAKDOWN (reference only) ───
+Characters: ${characterLine.replace(/^Characters:\s*/i, "")}
 Action: ${formatActionSubject(predator, s1.predatorBeat)}. ${prey} ${s1.preyBeat}.
 ${locationLine}
 Extra: ${buildKlingExtraLine(extra1, quality?.motionOnlyI2V)}
@@ -1853,7 +1860,7 @@ ${audio1}
 
 Kling settings: Motion intensity ${mi1.toFixed(2)} | Enable Bind Subject for identity lock | Negative prompt: use the Kling Negative Prompt card`),
 
- shot2: finalizePrompt(`KLING SHOT 2 — ACTION PRESSURE (WIDE${gateOn ? " + ONE-ACTION" : ""}) [${model}]
+  shot2: finalizePrompt(`KLING SHOT 2 — ACTION PRESSURE (WIDE${gateOn ? " + ONE-ACTION" : ""}) [${model}]
 ${note}
 ${qLead}
 ${refLine}
@@ -1864,9 +1871,16 @@ Motion intensity: ${mi2.toFixed(2)}
 Action priority: both subjects fully visible, clear predator-to-prey line, readable spacing, no overlap.
 ${maybeGuard(s2.guardLine)}${context}
 
-═══ KLING 3.0 PROMPT (SCALE format) ═══
-Shot: FIXED WIDE — full bodies visible, no crop, no close-ups.
-${characterLine}
+═══ PASTE-READY KLING PROMPT (copy this block into Kling) ═══
+${sanitizeVideoBeatText(isAquatic
+  ? `Fixed wide shot, full bodies visible, no crop. ${formatActionSubject(predator, s2.predatorBeat)}. ${prey} ${s2.preyBeat}. Clear predator-to-prey line, readable spacing, no overlap. Water displacement and turbulence. ${buildKlingLocationLine(env, weather, quality?.motionOnlyI2V).replace(/^Lighting & Location:\s*/i, "")}. Motion intensity: ${mi2.toFixed(2)}.`
+  : isShoreline
+    ? `Fixed wide shot, full bodies visible, no crop. ${formatActionSubject(predator, s2.predatorBeat)}. ${prey} ${s2.preyBeat}. Clear predator-to-prey line, readable spacing, no overlap. Splash and muddy bank scatter. ${buildKlingLocationLine(env, weather, quality?.motionOnlyI2V).replace(/^Lighting & Location:\s*/i, "")}. Motion intensity: ${mi2.toFixed(2)}.`
+    : `Fixed wide shot, full bodies visible, no crop. ${formatActionSubject(predator, s2.predatorBeat)}. ${prey} ${s2.preyBeat}. Clear predator-to-prey line, readable spacing, no overlap. Grounded weight transfer and surface response. ${buildKlingLocationLine(env, weather, quality?.motionOnlyI2V).replace(/^Lighting & Location:\s*/i, "")}. Motion intensity: ${mi2.toFixed(2)}.`
+)}
+
+─── FULL BREAKDOWN (reference only) ───
+Characters: ${characterLine.replace(/^Characters:\s*/i, "")}
 Action: ${formatActionSubject(predator, s2.predatorBeat)}. ${prey} ${s2.preyBeat}.
 ${locationLine}
 Extra: ${buildKlingExtraLine(
@@ -1882,7 +1896,7 @@ ${audio2}
 
 Kling settings: Motion intensity ${mi2.toFixed(2)} | WIDE framing enforced | Upload Shot 1 last frame as I2V reference`),
 
-    shot3: finalizePrompt(`KLING SHOT 3 — RESOLVED TENSION (WIDE${gateOn ? " + ONE-ACTION" : ""}) [${model}]
+        shot3: finalizePrompt(`KLING SHOT 3 — RESOLVED TENSION (WIDE${gateOn ? " + ONE-ACTION" : ""}) [${model}]
 ${note}
 ${qLead}
 ${refLine}
@@ -1893,9 +1907,16 @@ Motion intensity: ${mi3.toFixed(2)}
 End-state priority: both subjects fully readable, spacing still clear, tension remains visible to the final frame.
 ${maybeGuard(s3.guardLine)}${context}
 
-═══ KLING 3.0 PROMPT (SCALE format) ═══
-Shot: LOCKED FIXED WIDE — no movement, full bodies visible.
-${characterLine}
+═══ PASTE-READY KLING PROMPT (copy this block into Kling) ═══
+${sanitizeVideoBeatText(isAquatic
+  ? `Locked wide shot, full bodies visible, no movement. ${formatActionSubject(predator, s3.predatorBeat)}. ${prey} ${s3.preyBeat}. Spacing stays clear and readable to the final frame. ${buildKlingLocationLine(env, weather, quality?.motionOnlyI2V).replace(/^Lighting & Location:\s*/i, "")}. ${extra3} Motion intensity: ${mi3.toFixed(2)}.`
+  : isShoreline
+    ? `Locked wide shot, full bodies visible, no movement. ${formatActionSubject(predator, s3.predatorBeat)}. ${prey} ${s3.preyBeat}. Spacing stays clear and readable to the final frame. ${buildKlingLocationLine(env, weather, quality?.motionOnlyI2V).replace(/^Lighting & Location:\s*/i, "")}. ${extra3} Motion intensity: ${mi3.toFixed(2)}.`
+    : `Locked wide shot, full bodies visible, no movement. ${formatActionSubject(predator, s3.predatorBeat)}. ${prey} ${s3.preyBeat}. Spacing stays clear and readable to the final frame. ${buildKlingLocationLine(env, weather, quality?.motionOnlyI2V).replace(/^Lighting & Location:\s*/i, "")}. ${extra3} Motion intensity: ${mi3.toFixed(2)}.`
+)}
+
+─── FULL BREAKDOWN (reference only) ───
+Characters: ${characterLine.replace(/^Characters:\s*/i, "")}
 Action: ${formatActionSubject(predator, s3.predatorBeat)}. ${prey} ${s3.preyBeat}.
 ${locationLine}
 Extra: ${buildKlingExtraLine(extra3, quality?.motionOnlyI2V)}
