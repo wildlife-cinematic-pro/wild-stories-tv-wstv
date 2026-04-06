@@ -20,6 +20,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 
 import PromptVersionsPanel from "@/components/PromptVersionsPanel";
 import { downloadText } from "@/lib/storage";
+import WSTVWorkflowDiagram from "@/components/WSTVWorkflowDiagram";
 
 import type {
   FiveShotPlan,
@@ -2948,6 +2949,8 @@ const klingShots = useMemo(
         inside the safe zone.
       </div>
 
+     <SectionLabel label="WSTV Pipeline — Node Graph" />
+<WSTVWorkflowDiagram data={data} onCopy={onCopy} />
       <SectionLabel label="WSTV Workflow Prompt Map" />
       <WorkflowPromptMap data={data} onCopy={onCopy} />
 
