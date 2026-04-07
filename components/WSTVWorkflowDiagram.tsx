@@ -30,11 +30,16 @@ import type { GeneratedPackage } from "@/types";
 //   Text, Image, Claude, JSON Parse, Nano Banana 2,
 //   Gen-4.5, Kling 3.0 Pro, Extract Frame, Last Frame, Stitch
 //
-// Workflow:
+// Main production lane:
 //   Text(System) + Text(User) + Image(Ref) → Claude → JSON Parse
 //   → Nano Banana 2 → Master Still
 //   → Gen-4.5 Shot 1 → Extract Frame → Kling Shot 2
 //   → Extract Frame → Gen-4.5 Shot 3 → Stitch
+//
+// Helper lane (metadata + copy, below main lane):
+//   JSON Parse → Continuity Notes (character_lock, motion_intensity.*, operator_notes)
+//   JSON Parse → Audio Notes     (shot2_audio_prompt)
+//   JSON Parse → Social Pack     (hook, caption)
 //
 // Negative prompt wired ONLY to Kling (Runway: not supported).
 // Last Frame nodes have dashed fallback wires to next shots.
@@ -42,10 +47,10 @@ import type { GeneratedPackage } from "@/types";
 
 /* ── Content-type color coding (official Runway Workflows) ── */
 const TC: Record<string, { port: string; wire: string }> = {
-  text: { port: "#f59e0b", wire: "#f59e0b" },   // Orange
-  image: { port: "#3b82f6", wire: "#3b82f6" },   // Blue
-  audio: { port: "#eab308", wire: "#eab308" },   // Yellow
-  video: { port: "#22c55e", wire: "#22c55e" },   // Green
+  text:  { port: "#f59e0b", wire: "#f59e0b" },  // Orange
+  image: { port: "#3b82f6", wire: "#3b82f6" },  // Blue
+  audio: { port: "#eab308", wire: "#eab308" },  // Yellow
+  video: { port: "#22c55e", wire: "#22c55e" },  // Green
 };
 
 /* ── Engine accent colors ──────────────────────────────────── */
@@ -83,11 +88,14 @@ const ENG: Record<
 };
 
 /* ── Layout constants ──────────────────────────────────────── */
-const NW = 252;
-const PR = 5.5;
-const PS = 26;
-const HH = 42;
-const PY0 = HH + 16;
+const NW   = 252;
+const PR   = 5.5;
+const PS   = 26;
+const HH   = 42;
+const PY0  = HH + 16;
+
+/* ── Helper lane Y baseline (world coords) ─────────────────── */
+const HELPER_Y = 700;
 
 type Port = {
   id: string;
@@ -113,6 +121,8 @@ type Wire = {
   to: string;
   type: keyof typeof TC;
   dashed?: boolean;
+  /** visually de-emphasised — used for helper-lane wires */
+  helper?: boolean;
 };
 
 const nodeHeight = (n: Node) =>
@@ -120,7 +130,6 @@ const nodeHeight = (n: Node) =>
 
 // ─────────────────────────────────────────────────────────────
 // NODE DEFINITIONS
-// Info lines now carry Runway official guidance per node role.
 // ─────────────────────────────────────────────────────────────
 function buildNodes(): Node[] {
   return [
@@ -133,7 +142,6 @@ function buildNodes(): Node[] {
       sub: "System Prompt",
       engine: "runway",
       cat: "input",
-      // System prompt tells Claude HOW to structure its JSON output
       info: "WSTV rules · JSON schema · motion-only I2V instructions",
       inputs: [],
       outputs: [{ id: "text", type: "text", label: "Text" }],
@@ -146,7 +154,6 @@ function buildNodes(): Node[] {
       sub: "User Story Prompt",
       engine: "runway",
       cat: "input",
-      // The creative brief: what animals, what arc, what world
       info: "Predator · prey · arc · habitat · weather · tone",
       inputs: [],
       outputs: [{ id: "text", type: "text", label: "Text" }],
@@ -159,7 +166,6 @@ function buildNodes(): Node[] {
       sub: "Reference Image (optional)",
       engine: "runway",
       cat: "input",
-      // Runway: input image quality is critical for I2V output
       info: "High-res · artifact-free · clear subject separation",
       inputs: [],
       outputs: [{ id: "image", type: "image", label: "Image" }],
@@ -174,34 +180,42 @@ function buildNodes(): Node[] {
       sub: "LLM Prompt Planner",
       engine: "claude",
       cat: "model",
-      // Claude generates the full structured prompt pack as JSON
-      info: "Returns JSON · image prompt + 3 shots + negative",
+      info: "Returns JSON · image prompt + 3 shots + negative + meta",
       inputs: [
-        { id: "system", type: "text", label: "System Prompt" },
-        { id: "prompt", type: "text", label: "Prompt *" },
-        { id: "image", type: "image", label: "Image" },
+        { id: "system", type: "text",  label: "System Prompt" },
+        { id: "prompt", type: "text",  label: "Prompt *"      },
+        { id: "image",  type: "image", label: "Image"         },
       ],
       outputs: [{ id: "text", type: "text", label: "Text" }],
     },
 
-    /* ══ COLUMN 2 — JSON Parse ═══════════════════════════════ */
+    /* ══ COLUMN 2 — JSON Parse (13 outputs) ══════════════════ */
     {
       id: "json_parse",
       x: 700,
-      y: 110,
+      y: 60,
       title: "JSON Parse",
       sub: "Structured Prompt Split",
       engine: "runway",
       cat: "utility",
-      // Official Runway utility node — JSONPath extraction
       info: "Official Runway node · splits JSON into typed fields",
       inputs: [{ id: "json", type: "text", label: "JSON *" }],
       outputs: [
-        { id: "master", type: "text", label: "master_image_prompt" },
-        { id: "shot1", type: "text", label: "shot1_video_prompt" },
-        { id: "shot2", type: "text", label: "shot2_video_prompt" },
-        { id: "shot3", type: "text", label: "shot3_video_prompt" },
-        { id: "negative", type: "text", label: "kling_negative_prompt" },
+        /* ── render outputs (main lane) ── */
+        { id: "master",       type: "text", label: "master_image_prompt"   },
+        { id: "shot1",        type: "text", label: "shot1_video_prompt"    },
+        { id: "shot2",        type: "text", label: "shot2_video_prompt"    },
+        { id: "audio_prompt", type: "text", label: "shot2_audio_prompt"    },
+        { id: "shot3",        type: "text", label: "shot3_video_prompt"    },
+        { id: "negative",     type: "text", label: "kling_negative_prompt" },
+        /* ── metadata outputs (helper lane) ── */
+        { id: "char_lock",    type: "text", label: "character_lock"        },
+        { id: "mi_s1",        type: "text", label: "motion_intensity.shot1"},
+        { id: "mi_s2",        type: "text", label: "motion_intensity.shot2"},
+        { id: "mi_s3",        type: "text", label: "motion_intensity.shot3"},
+        { id: "op_notes",     type: "text", label: "operator_notes"        },
+        { id: "hook",         type: "text", label: "hook"                  },
+        { id: "caption",      type: "text", label: "caption"               },
       ],
     },
 
@@ -214,12 +228,10 @@ function buildNodes(): Node[] {
       sub: "Master Still Generator",
       engine: "runway",
       cat: "model",
-      // Runway: "Use a high-quality input image, free of visual
-      // artifacts, for best results" — this node must produce that
       info: "High-res · artifact-free · clear full-body · clean BG",
       inputs: [
-        { id: "text", type: "text", label: "Text *" },
-        { id: "image", type: "image", label: "Image" },
+        { id: "text",  type: "text",  label: "Text *" },
+        { id: "image", type: "image", label: "Image"  },
       ],
       outputs: [{ id: "image", type: "image", label: "Image" }],
     },
@@ -233,12 +245,10 @@ function buildNodes(): Node[] {
       sub: "Shot 1 — Opening Tension",
       engine: "runway",
       cat: "model",
-      // Runway official: "Image carries identity. Prompt = MOTION ONLY.
-      // Restating image elements → reduced motion / unexpected results."
       info: "I2V motion-only · don't restate image · 5–10s · 24/25fps",
       inputs: [
         { id: "image", type: "image", label: "Image *" },
-        { id: "text", type: "text", label: "Text *" },
+        { id: "text",  type: "text",  label: "Text *"  },
       ],
       outputs: [{ id: "video", type: "video", label: "Video" }],
     },
@@ -252,12 +262,9 @@ function buildNodes(): Node[] {
       sub: "Preferred — Shot 1 → Shot 2",
       engine: "runway",
       cat: "utility",
-      // Runway: "extracting the last frame of a completed generation
-      // and using that as the image input for a new video" — but we
-      // choose the CLEANEST frame, not blindly the last one
       info: "Scrub to cleanest full-body frame · main path",
-      inputs: [{ id: "video", type: "video", label: "Video *" }],
-      outputs: [{ id: "image", type: "image", label: "Image" }],
+      inputs:  [{ id: "video", type: "video", label: "Video *" }],
+      outputs: [{ id: "image", type: "image", label: "Image"   }],
     },
     {
       id: "last_1",
@@ -267,10 +274,9 @@ function buildNodes(): Node[] {
       sub: "Fallback — Shot 1 → Shot 2",
       engine: "runway",
       cat: "utility",
-      // Last frame is automatic but may not be the cleanest option
       info: "Auto final frame · use only if clean full-body",
-      inputs: [{ id: "video", type: "video", label: "Video *" }],
-      outputs: [{ id: "image", type: "image", label: "Image" }],
+      inputs:  [{ id: "video", type: "video", label: "Video *" }],
+      outputs: [{ id: "image", type: "image", label: "Image"   }],
     },
 
     /* ══ COLUMN 6 — Shot 2 (Kling action lane) ═════════════ */
@@ -282,12 +288,11 @@ function buildNodes(): Node[] {
       sub: "Shot 2 — Action Pressure",
       engine: "kling",
       cat: "model",
-      // Kling: supports negative prompts, Bind Subject, native audio
       info: "I2V · Bind Subject · negative OK · 3–15s · 4K/60fps",
       inputs: [
-        { id: "image", type: "image", label: "Image *" },
-        { id: "text", type: "text", label: "Text *" },
-        { id: "negative", type: "text", label: "Negative" },
+        { id: "image",    type: "image", label: "Image *"  },
+        { id: "text",     type: "text",  label: "Text *"   },
+        { id: "negative", type: "text",  label: "Negative" },
       ],
       outputs: [{ id: "video", type: "video", label: "Video" }],
     },
@@ -302,8 +307,8 @@ function buildNodes(): Node[] {
       engine: "runway",
       cat: "utility",
       info: "Scrub to cleanest full-body frame · main path",
-      inputs: [{ id: "video", type: "video", label: "Video *" }],
-      outputs: [{ id: "image", type: "image", label: "Image" }],
+      inputs:  [{ id: "video", type: "video", label: "Video *" }],
+      outputs: [{ id: "image", type: "image", label: "Image"   }],
     },
     {
       id: "last_2",
@@ -314,8 +319,8 @@ function buildNodes(): Node[] {
       engine: "runway",
       cat: "utility",
       info: "Auto final frame · use only if clean full-body",
-      inputs: [{ id: "video", type: "video", label: "Video *" }],
-      outputs: [{ id: "image", type: "image", label: "Image" }],
+      inputs:  [{ id: "video", type: "video", label: "Video *" }],
+      outputs: [{ id: "image", type: "image", label: "Image"   }],
     },
 
     /* ══ COLUMN 8 — Shot 3 video generation ═════════════════ */
@@ -327,11 +332,10 @@ function buildNodes(): Node[] {
       sub: "Shot 3 — Resolved Tension",
       engine: "runway",
       cat: "model",
-      // Same Runway I2V motion-only rule as Shot 1
       info: "I2V motion-only · don't restate image · 5–10s · 24/25fps",
       inputs: [
         { id: "image", type: "image", label: "Image *" },
-        { id: "text", type: "text", label: "Text *" },
+        { id: "text",  type: "text",  label: "Text *"  },
       ],
       outputs: [{ id: "video", type: "video", label: "Video" }],
     },
@@ -345,8 +349,6 @@ function buildNodes(): Node[] {
       sub: "Final Sequence",
       engine: "runway",
       cat: "utility",
-      // Runway: "combine both clips in a video editor to adjust
-      // timing and remove the shared frame"
       info: "Combine S1+S2+S3 · remove shared handoff frames",
       inputs: [
         { id: "input1", type: "video", label: "Input 1 *" },
@@ -355,63 +357,127 @@ function buildNodes(): Node[] {
       ],
       outputs: [{ id: "video", type: "video", label: "Video" }],
     },
+
+    /* ══ HELPER LANE ════════════════════════════════════════ */
+
+    /* ── Continuity Notes (under JSON Parse / NB2 column) ── */
+    {
+      id: "continuity_notes",
+      x: 1060,
+      y: HELPER_Y,
+      title: "Continuity Notes",
+      sub: "Consistency + Operator Guidance",
+      engine: "runway",
+      cat: "utility",
+      info: "Read before each shot · not wired to model inputs",
+      inputs: [
+        { id: "char_lock", type: "text", label: "character_lock"         },
+        { id: "mi_s1",     type: "text", label: "motion_intensity.shot1" },
+        { id: "mi_s2",     type: "text", label: "motion_intensity.shot2" },
+        { id: "mi_s3",     type: "text", label: "motion_intensity.shot3" },
+        { id: "op_notes",  type: "text", label: "operator_notes"         },
+      ],
+      outputs: [],
+    },
+
+    /* ── Audio Notes (under Kling column) ─────────────────── */
+    {
+      id: "audio_notes",
+      x: 1740,
+      y: HELPER_Y,
+      title: "Audio Notes",
+      sub: "Kling Native Audio Direction",
+      engine: "kling",
+      cat: "utility",
+      info: "Paste into Kling audio field · not a Runway port",
+      inputs: [
+        { id: "audio_prompt", type: "text", label: "shot2_audio_prompt" },
+      ],
+      outputs: [],
+    },
+
+    /* ── Social Pack (under Gen-4.5 S3 column) ─────────────── */
+    {
+      id: "social_pack",
+      x: 2420,
+      y: HELPER_Y,
+      title: "Social Pack",
+      sub: "Reel Copy Output",
+      engine: "runway",
+      cat: "utility",
+      info: "hook · caption → TikTok / Reels / Shorts copy",
+      inputs: [
+        { id: "hook",    type: "text", label: "hook"    },
+        { id: "caption", type: "text", label: "caption" },
+      ],
+      outputs: [],
+    },
   ];
 }
 
 // ─────────────────────────────────────────────────────────────
 // WIRE DEFINITIONS
-//
-// Key change: Last Frame nodes now have dashed fallback wires
-// to the next shot's image input, making the alternative path
-// visible instead of leaving dead-end output ports.
 // ─────────────────────────────────────────────────────────────
 const WIRES: Wire[] = [
   /* ── Inputs → Claude ────────────────────────────────────── */
-  { from: "text_system.text", to: "claude.system", type: "text" },
-  { from: "text_user.text", to: "claude.prompt", type: "text" },
-  { from: "image_ref.image", to: "claude.image", type: "image" },
+  { from: "text_system.text", to: "claude.system", type: "text"  },
+  { from: "text_user.text",   to: "claude.prompt", type: "text"  },
+  { from: "image_ref.image",  to: "claude.image",  type: "image" },
 
-  /* ── Claude → JSON Parse ────────────────────────────────── */
+  /* ── Claude → JSON Parse ─────────────────────────────────── */
   { from: "claude.text", to: "json_parse.json", type: "text" },
 
-  /* ── JSON Parse → NB2 (master image prompt) ────────────── */
-  { from: "json_parse.master", to: "nano_banana_2.text", type: "text" },
-  // Optional ref image also feeds NB2 for style guidance
-  { from: "image_ref.image", to: "nano_banana_2.image", type: "image" },
+  /* ── JSON Parse → NB2 ────────────────────────────────────── */
+  { from: "json_parse.master",  to: "nano_banana_2.text",  type: "text"  },
+  { from: "image_ref.image",    to: "nano_banana_2.image", type: "image" },
 
-  /* ── NB2 master still → Gen-4.5 Shot 1 ────────────────── */
+  /* ── NB2 → Gen-4.5 Shot 1 ────────────────────────────────── */
   { from: "nano_banana_2.image", to: "gen45_s1.image", type: "image" },
-  { from: "json_parse.shot1", to: "gen45_s1.text", type: "text" },
+  { from: "json_parse.shot1",    to: "gen45_s1.text",  type: "text"  },
 
-  /* ── Shot 1 → Extract Frame (main) + Last Frame (fallback) */
-  { from: "gen45_s1.video", to: "extract_1.video", type: "video" },
-  { from: "gen45_s1.video", to: "last_1.video", type: "video", dashed: true },
+  /* ── Shot 1 → Extract Frame (main) + Last Frame (fallback) ─ */
+  { from: "gen45_s1.video", to: "extract_1.video", type: "video"                  },
+  { from: "gen45_s1.video", to: "last_1.video",    type: "video", dashed: true    },
 
-  /* ── Extract Frame 1 → Kling Shot 2 (main continuity path) */
-  { from: "extract_1.image", to: "kling_s2.image", type: "image" },
-  // Last Frame 1 → Kling Shot 2 (fallback — dashed)
-  { from: "last_1.image", to: "kling_s2.image", type: "image", dashed: true },
+  /* ── Extract/Last Frame 1 → Kling Shot 2 ───────────────────  */
+  { from: "extract_1.image", to: "kling_s2.image", type: "image"                  },
+  { from: "last_1.image",    to: "kling_s2.image", type: "image", dashed: true    },
 
-  /* ── JSON Parse → Kling Shot 2 (action prompt + negative) ─ */
-  { from: "json_parse.shot2", to: "kling_s2.text", type: "text" },
+  /* ── JSON Parse → Kling Shot 2 (prompt + negative) ──────── */
+  { from: "json_parse.shot2",    to: "kling_s2.text",     type: "text" },
   { from: "json_parse.negative", to: "kling_s2.negative", type: "text" },
 
-  /* ── Shot 2 → Extract Frame (main) + Last Frame (fallback) */
-  { from: "kling_s2.video", to: "extract_2.video", type: "video" },
-  { from: "kling_s2.video", to: "last_2.video", type: "video", dashed: true },
+  /* ── Shot 2 → Extract Frame (main) + Last Frame (fallback) ─ */
+  { from: "kling_s2.video", to: "extract_2.video", type: "video"               },
+  { from: "kling_s2.video", to: "last_2.video",    type: "video", dashed: true },
 
-  /* ── Extract Frame 2 → Gen-4.5 Shot 3 (main continuity) ── */
-  { from: "extract_2.image", to: "gen45_s3.image", type: "image" },
-  // Last Frame 2 → Gen-4.5 Shot 3 (fallback — dashed)
-  { from: "last_2.image", to: "gen45_s3.image", type: "image", dashed: true },
+  /* ── Extract/Last Frame 2 → Gen-4.5 Shot 3 ─────────────── */
+  { from: "extract_2.image", to: "gen45_s3.image", type: "image"               },
+  { from: "last_2.image",    to: "gen45_s3.image", type: "image", dashed: true },
 
-  /* ── JSON Parse → Gen-4.5 Shot 3 (motion prompt) ────────── */
+  /* ── JSON Parse → Gen-4.5 Shot 3 ───────────────────────── */
   { from: "json_parse.shot3", to: "gen45_s3.text", type: "text" },
 
-  /* ── All 3 shot videos → Stitch (final assembly) ────────── */
+  /* ── All 3 shot videos → Stitch ─────────────────────────── */
   { from: "gen45_s1.video", to: "stitch.input1", type: "video" },
   { from: "kling_s2.video", to: "stitch.input2", type: "video" },
   { from: "gen45_s3.video", to: "stitch.input3", type: "video" },
+
+  /* ══ HELPER LANE WIRES (text, de-emphasised) ══════════════ */
+
+  /* ── JSON Parse → Continuity Notes ─────────────────────── */
+  { from: "json_parse.char_lock", to: "continuity_notes.char_lock", type: "text", helper: true },
+  { from: "json_parse.mi_s1",     to: "continuity_notes.mi_s1",     type: "text", helper: true },
+  { from: "json_parse.mi_s2",     to: "continuity_notes.mi_s2",     type: "text", helper: true },
+  { from: "json_parse.mi_s3",     to: "continuity_notes.mi_s3",     type: "text", helper: true },
+  { from: "json_parse.op_notes",  to: "continuity_notes.op_notes",  type: "text", helper: true },
+
+  /* ── JSON Parse → Audio Notes ───────────────────────────── */
+  { from: "json_parse.audio_prompt", to: "audio_notes.audio_prompt", type: "text", helper: true },
+
+  /* ── JSON Parse → Social Pack ───────────────────────────── */
+  { from: "json_parse.hook",    to: "social_pack.hook",    type: "text", helper: true },
+  { from: "json_parse.caption", to: "social_pack.caption", type: "text", helper: true },
 ];
 
 // ─────────────────────────────────────────────────────────────
@@ -427,7 +493,7 @@ function getPortPos(
   if (!n) return { x: 0, y: 0 };
 
   const ports = side === "out" ? n.outputs : n.inputs;
-  const idx = ports.findIndex((p) => p.id === portId);
+  const idx   = ports.findIndex((p) => p.id === portId);
   if (idx < 0) return { x: 0, y: 0 };
 
   return {
@@ -446,12 +512,26 @@ function bezierPath(x1: number, y1: number, x2: number, y2: number) {
 // ─────────────────────────────────────────────────────────────
 function WireEl({ wire, nodes }: { wire: Wire; nodes: Node[] }) {
   const [fromNode, fromPort] = wire.from.split(".");
-  const [toNode, toPort] = wire.to.split(".");
+  const [toNode,   toPort  ] = wire.to.split(".");
 
   const a = getPortPos(nodes, fromNode, fromPort, "out");
-  const b = getPortPos(nodes, toNode, toPort, "in");
+  const b = getPortPos(nodes, toNode,   toPort,   "in");
   const c = TC[wire.type].wire;
   const d = bezierPath(a.x, a.y, b.x, b.y);
+
+  /* Helper-lane wires: thinner, more transparent, no glow, no dot */
+  if (wire.helper) {
+    return (
+      <path
+        d={d}
+        fill="none"
+        stroke={c}
+        strokeWidth={1.2}
+        opacity={0.28}
+        strokeDasharray="5 4"
+      />
+    );
+  }
 
   return (
     <g>
@@ -540,7 +620,7 @@ function NodeEl({ node }: { node: Node }) {
         {e.icon} {e.label}
       </text>
 
-      {/* Category tag (INPUT / UTILITY / MODEL) */}
+      {/* Category tag */}
       {node.cat === "input" && (
         <>
           <rect x={NW - 48} y={10} width={40} height={16} rx={4} fill="rgba(255,255,255,0.05)" />
@@ -571,19 +651,19 @@ function NodeEl({ node }: { node: Node }) {
       <text x={9} y={56} fill="#7b8097" fontSize={8.5} fontWeight={500}
             fontFamily="'Inter', system-ui, sans-serif" style={{ userSelect: "none" }}>{node.sub}</text>
 
-      {/* Info line (bottom of node — carries the Runway best-practice note) */}
+      {/* Info line */}
       {node.info && (
         <text x={9} y={h - 6} fill="#49506a" fontSize={7.4}
               fontFamily="'JetBrains Mono', monospace" style={{ userSelect: "none" }}>{node.info}</text>
       )}
 
-      {/* Input ports (left side) */}
+      {/* Input ports */}
       {node.inputs.map((p, i) => (
         <PortEl key={`in-${node.id}-${p.id}`} x={0} y={PY0 + i * PS}
                 type={p.type as keyof typeof TC} label={p.label} side="in" />
       ))}
 
-      {/* Output ports (right side) */}
+      {/* Output ports */}
       {node.outputs.map((p, i) => (
         <PortEl key={`out-${node.id}-${p.id}`} x={NW} y={PY0 + i * PS}
                 type={p.type as keyof typeof TC} label={p.label} side="out" />
@@ -593,32 +673,64 @@ function NodeEl({ node }: { node: Node }) {
 }
 
 // ─────────────────────────────────────────────────────────────
-// LEGEND — updated with Runway official notes
+// HELPER LANE DIVIDER — subtle horizontal rule + label
+// ─────────────────────────────────────────────────────────────
+function HelperLaneDivider({ y, xStart, xEnd }: { y: number; xStart: number; xEnd: number }) {
+  return (
+    <g>
+      {/* Dashed rule */}
+      <line
+        x1={xStart} y1={y}
+        x2={xEnd}   y2={y}
+        stroke="#282848"
+        strokeWidth={0.8}
+        strokeDasharray="6 5"
+        opacity={0.6}
+      />
+      {/* Label pill */}
+      <rect x={xStart} y={y - 10} width={190} height={18} rx={5} fill="#12122a" stroke="#282848" strokeWidth={0.6} />
+      <text
+        x={xStart + 10}
+        y={y + 3}
+        fill="#4b5180"
+        fontSize={8.5}
+        fontWeight={700}
+        fontFamily="'JetBrains Mono', monospace"
+        style={{ userSelect: "none" }}
+      >
+        ▼ METADATA + COPY LANE
+      </text>
+    </g>
+  );
+}
+
+// ─────────────────────────────────────────────────────────────
+// LEGEND
 // ─────────────────────────────────────────────────────────────
 function LegendEl({ x, y }: { x: number; y: number }) {
   return (
     <g transform={`translate(${x},${y})`}>
-      <rect width={710} height={116} rx={8} fill="#12122a" stroke="#282848" strokeWidth={0.8} />
+      <rect width={720} height={132} rx={8} fill="#12122a" stroke="#282848" strokeWidth={0.8} />
 
       {/* Row 1: Content types */}
       <text x={12} y={18} fill="#7b7f96" fontSize={9} fontWeight={700}
             fontFamily="'Inter', sans-serif" style={{ userSelect: "none" }}>CONTENT TYPES (Official Runway)</text>
       {(
         [
-          ["text", "Text (Orange)"],
-          ["image", "Image (Blue)"],
+          ["text",  "Text (Orange)" ],
+          ["image", "Image (Blue)"  ],
           ["audio", "Audio (Yellow)"],
-          ["video", "Video (Green)"],
+          ["video", "Video (Green)" ],
         ] as const
       ).map(([t, l], i) => (
-        <g key={t} transform={`translate(${12 + i * 100},28)`}>
+        <g key={t} transform={`translate(${12 + i * 110},28)`}>
           <circle cx={5} cy={6} r={4} fill={TC[t].port} />
           <text x={14} y={10} fill="#a0a4b8" fontSize={8.5}
                 fontFamily="'JetBrains Mono', monospace" style={{ userSelect: "none" }}>{l}</text>
         </g>
       ))}
 
-      <line x1={12} y1={46} x2={698} y2={46} stroke="#282848" strokeWidth={0.4} />
+      <line x1={12} y1={46} x2={708} y2={46} stroke="#282848" strokeWidth={0.4} />
 
       {/* Row 2: Wire logic */}
       <text x={12} y={62} fill="#7b7f96" fontSize={9} fontWeight={700}
@@ -626,24 +738,25 @@ function LegendEl({ x, y }: { x: number; y: number }) {
       {[
         "Solid = main production path",
         "Dashed = fallback option only",
+        "Faint dashed = metadata / copy",
         "Dots = data flow direction",
       ].map((item, i) => (
-        <text key={item} x={12 + i * 195} y={78} fill="#a0a4b8" fontSize={7.2}
+        <text key={item} x={12 + i * 178} y={78} fill="#a0a4b8" fontSize={7.2}
               fontFamily="'JetBrains Mono', monospace" style={{ userSelect: "none" }}>{item}</text>
       ))}
 
-      <line x1={12} y1={88} x2={698} y2={88} stroke="#282848" strokeWidth={0.4} />
+      <line x1={12} y1={88} x2={708} y2={88} stroke="#282848" strokeWidth={0.4} />
 
-      {/* Row 3: Key Runway rules */}
+      {/* Row 3: Key rules */}
       <text x={12} y={104} fill="#7b7f96" fontSize={9} fontWeight={700}
             fontFamily="'Inter', sans-serif" style={{ userSelect: "none" }}>KEY RULES</text>
       {[
         "Gen-4.5 I2V = motion-only prompt",
         "No negative prompts in Runway",
         "Extract Frame > Last Frame",
-        "Fixed Seed for retries",
+        "Helper lane = operator reference only",
       ].map((item, i) => (
-        <text key={item} x={12 + i * 175} y={114} fill="#a0a4b8" fontSize={6.8}
+        <text key={item} x={12 + i * 178} y={120} fill="#a0a4b8" fontSize={6.8}
               fontFamily="'JetBrains Mono', monospace" style={{ userSelect: "none" }}>{item}</text>
       ))}
     </g>
@@ -660,12 +773,12 @@ export default function WSTVWorkflowDiagram({
   data?: GeneratedPackage;
   onCopy?: (t: string) => void;
 }) {
-  const [pan, setPan] = useState({ x: 0, y: 0 });
-  const [zoom, setZoom] = useState(0.46);
-  const [drag, setDrag] = useState(false);
-  const [dragStart, setDragStart] = useState({ x: 0, y: 0 });
-  const [panStart, setPanStart] = useState({ x: 0, y: 0 });
-  const [isOpen, setIsOpen] = useState(true);
+  const [pan,      setPan     ] = useState({ x: 0, y: 0 });
+  const [zoom,     setZoom    ] = useState(0.46);
+  const [drag,     setDrag    ] = useState(false);
+  const [dragStart,setDragStart] = useState({ x: 0, y: 0 });
+  const [panStart, setPanStart ] = useState({ x: 0, y: 0 });
+  const [isOpen,   setIsOpen  ] = useState(true);
 
   const nodes = useMemo(() => buildNodes(), []);
 
@@ -727,25 +840,31 @@ export default function WSTVWorkflowDiagram({
 
   /* Pipeline flow summary badges */
   const flowBadges = [
-    { l: "Text", c: "#f59e0b" },
-    { l: "→", c: "#3e4258" },
-    { l: "Claude", c: "#f97316" },
-    { l: "→", c: "#3e4258" },
+    { l: "Text",       c: "#f59e0b" },
+    { l: "→",          c: "#3e4258" },
+    { l: "Claude",     c: "#f97316" },
+    { l: "→",          c: "#3e4258" },
     { l: "JSON Parse", c: "#16a34a" },
-    { l: "→", c: "#3e4258" },
-    { l: "NB2", c: "#16a34a" },
-    { l: "→", c: "#3e4258" },
+    { l: "→",          c: "#3e4258" },
+    { l: "NB2",        c: "#16a34a" },
+    { l: "→",          c: "#3e4258" },
     { l: "Gen-4.5 S1", c: "#16a34a" },
-    { l: "→", c: "#3e4258" },
-    { l: "Extract", c: "#16a34a" },
-    { l: "→", c: "#3e4258" },
-    { l: "Kling S2", c: "#2563eb" },
-    { l: "→", c: "#3e4258" },
-    { l: "Extract", c: "#16a34a" },
-    { l: "→", c: "#3e4258" },
+    { l: "→",          c: "#3e4258" },
+    { l: "Extract",    c: "#16a34a" },
+    { l: "→",          c: "#3e4258" },
+    { l: "Kling S2",   c: "#2563eb" },
+    { l: "→",          c: "#3e4258" },
+    { l: "Extract",    c: "#16a34a" },
+    { l: "→",          c: "#3e4258" },
     { l: "Gen-4.5 S3", c: "#16a34a" },
-    { l: "→", c: "#3e4258" },
-    { l: "Stitch", c: "#16a34a" },
+    { l: "→",          c: "#3e4258" },
+    { l: "Stitch",     c: "#16a34a" },
+    { l: "↓",          c: "#3e4258" },
+    { l: "Continuity", c: "#c084fc" },
+    { l: "+",          c: "#3e4258" },
+    { l: "Audio",      c: "#c084fc" },
+    { l: "+",          c: "#3e4258" },
+    { l: "Social",     c: "#c084fc" },
   ];
 
   return (
@@ -760,7 +879,7 @@ export default function WSTVWorkflowDiagram({
             WSTV Pipeline — Runway-Aligned Node Graph
           </span>
           <span className="rounded bg-[rgba(255,255,255,0.05)] px-2 py-0.5 text-[9px] font-semibold text-gray-500">
-            Extract Frame first · Last Frame fallback · Motion-only I2V
+            Extract Frame first · Last Frame fallback · Motion-only I2V · Helper lane
           </span>
         </div>
 
@@ -796,11 +915,11 @@ export default function WSTVWorkflowDiagram({
           >
             Drag to pan · Scroll to zoom
             <br />
-            Solid wire = main path · Dashed = fallback only
+            Solid = main path · Dashed = fallback · Faint = metadata
           </div>
 
           {/* Pipeline flow bar (bottom-center) */}
-          <div className="absolute bottom-3 left-1/2 z-10 flex -translate-x-1/2 items-center gap-1.5 rounded-lg border border-[#1e1e38] bg-[rgba(11,11,26,0.92)] px-3 py-1.5 backdrop-blur-sm">
+          <div className="absolute bottom-3 left-1/2 z-10 flex -translate-x-1/2 flex-wrap items-center gap-1 rounded-lg border border-[#1e1e38] bg-[rgba(11,11,26,0.92)] px-3 py-1.5 backdrop-blur-sm">
             {flowBadges.map((s, i) => (
               <span
                 key={i}
@@ -808,7 +927,7 @@ export default function WSTVWorkflowDiagram({
                 style={{
                   color: s.c,
                   fontFamily: "monospace",
-                  fontWeight: s.l === "→" ? 400 : 700,
+                  fontWeight: s.l === "→" || s.l === "↓" || s.l === "+" ? 400 : 700,
                 }}
               >
                 {s.l}
@@ -842,13 +961,25 @@ export default function WSTVWorkflowDiagram({
             <rect width="7000" height="5000" x="-3500" y="-2500" fill="url(#wstv-g)" />
 
             <g transform={`translate(${pan.x + 20},${pan.y + 18}) scale(${zoom})`}>
-              {WIRES.map((wire, i) => (
-                <WireEl key={i} wire={wire} nodes={nodes} />
+              {/* Helper-lane wires drawn first (behind nodes) */}
+              {WIRES.filter((w) => w.helper).map((wire, i) => (
+                <WireEl key={`hw-${i}`} wire={wire} nodes={nodes} />
               ))}
+              {/* Main-lane wires */}
+              {WIRES.filter((w) => !w.helper).map((wire, i) => (
+                <WireEl key={`mw-${i}`} wire={wire} nodes={nodes} />
+              ))}
+
+              {/* Lane divider — sits between the two lanes */}
+              <HelperLaneDivider y={HELPER_Y - 28} xStart={40} xEnd={3050} />
+
+              {/* All nodes */}
               {nodes.map((node) => (
                 <NodeEl key={node.id} node={node} />
               ))}
-              <LegendEl x={1120} y={620} />
+
+              {/* Legend — bottom-left, below helper lane */}
+              <LegendEl x={40} y={HELPER_Y + 260} />
             </g>
           </svg>
         </div>
