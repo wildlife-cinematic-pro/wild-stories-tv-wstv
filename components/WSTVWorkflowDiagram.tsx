@@ -1,320 +1,761 @@
 "use client";
 
-/* ════════════════════════════════════════════════════════════════════
-   WSTVWorkflowDiagram.tsx
-   Wild Stories TV — AI Video Production Pipeline
-
-   Official Runway node names used throughout (per help.runwayml.com):
-     Text · Image · Claude · JSON Parse · Gen-4 Image
-     Gen-4.5 · Extract Frame · First Frame · Trim Video · Last Frame · Stitch
-
-   Third-party nodes available inside Runway Workflows UI:
-     Kling 3.0 Pro · Nano Banana 2
-
-   Node locking and seed discipline are workflow actions, not separate
-   media nodes. They are documented inside Continuity Notes only.
-════════════════════════════════════════════════════════════════════ */
-
 import {
-  useState,
+  useMemo,
   useRef,
+  useState,
   useCallback,
-  type MouseEvent as ReactMouseEvent,
-  type TouchEvent as ReactTouchEvent,
+  type PointerEvent as ReactPointerEvent,
   type WheelEvent as ReactWheelEvent,
 } from "react";
 import type { GeneratedPackage } from "@/types";
 
-// ── Canvas geometry ─────────────────────────────────────────────────
-const CW = 2460;
-const CH = 720;
+type PortKind = "text" | "image" | "audio" | "video";
+type Side = "left" | "right";
+type Point = { x: number; y: number };
 
-// ── Colour palette ───────────────────────────────────────────────────
-const PAL = {
-  input: "#0C1520",
-  ai: "#14092E",
-  json: "#070C18",
-  nano: "#051A0E",
-  anchor: "#1A0544",
-  video: "#060F28",
-  kling: "#1E0B00",
-  util: "#041420",
-  trim: "#071318",
-  last: "#160202",
-  qa: "#100C00",
-  stitch: "#0D0220",
-  note: "#08101C",
-
-  main: "#60A5FA",
-  fall: "#FB923C",
-  anch: "#C084FC",
-  qaW: "#FBBF24",
-  help: "#1D2A3A",
-} as const;
-
-// ── Layout constants ─────────────────────────────────────────────────
-type Rect = { x: number; y: number; w: number; h: number };
-type Pt = [number, number];
-type Side = "right" | "left" | "top" | "bottom";
-
-const N: Record<string, Rect> = {
-  sys: { x: 20, y: 88, w: 122, h: 44 },
-  usr: { x: 20, y: 144, w: 122, h: 44 },
-  imgRef: { x: 20, y: 200, w: 122, h: 44 },
-
-  claude: { x: 196, y: 124, w: 134, h: 74 },
-
-  jsonParse: { x: 382, y: 36, w: 160, h: 290 },
-
-  nano: { x: 600, y: 136, w: 138, h: 58 },
-  gen4img: { x: 796, y: 128, w: 152, h: 72 },
-
-  shot1: { x: 1008, y: 136, w: 140, h: 58 },
-  trim1: { x: 1210, y: 141, w: 124, h: 48 },
-  extract1: { x: 1390, y: 141, w: 124, h: 48 },
-
-  kling: { x: 1572, y: 128, w: 144, h: 72 },
-  trim2: { x: 1774, y: 141, w: 124, h: 48 },
-  extract2: { x: 1954, y: 141, w: 124, h: 48 },
-
-  shot3: { x: 2136, y: 136, w: 140, h: 58 },
-  stitch: { x: 2334, y: 140, w: 106, h: 48 },
-
-  lastFrame1: { x: 1210, y: 330, w: 124, h: 48 },
-  lastFrame2: { x: 1774, y: 330, w: 124, h: 48 },
-
-  qa1: { x: 1008, y: 330, w: 134, h: 48 },
-  qa2: { x: 1572, y: 330, w: 134, h: 48 },
-  qa3: { x: 2136, y: 330, w: 134, h: 48 },
-
-  contNote: { x: 600, y: 510, w: 208, h: 174 },
-  audioNote: { x: 1210, y: 510, w: 162, h: 100 },
-  socialPack: { x: 1774, y: 510, w: 156, h: 100 },
+type PortDef = {
+  id: string;
+  label: string;
+  kind: PortKind;
+  required?: boolean;
 };
 
-// ── Geometry helpers ─────────────────────────────────────────────────
-function port(r: Rect, s: Side): Pt {
-  switch (s) {
-    case "right":
-      return [r.x + r.w, r.y + r.h / 2];
-    case "left":
-      return [r.x, r.y + r.h / 2];
-    case "top":
-      return [r.x + r.w / 2, r.y];
-    case "bottom":
-      return [r.x + r.w / 2, r.y + r.h];
-  }
+type NodeSpec = {
+  id: string;
+  title: string;
+  subtitle?: string;
+  badge?: string;
+  width: number;
+  bg: string;
+  accent?: string;
+  dim?: boolean;
+  inputs: PortDef[];
+  outputs: PortDef[];
+  infoLines?: string[];
+};
+
+type WireStyle = "main" | "fallback" | "anchor" | "qa" | "helper";
+
+type WireDef = {
+  from: [string, string];
+  to: [string, string];
+  style: WireStyle;
+  route?: "h" | "v" | "pipe";
+  pipeY?: number;
+};
+
+const PORT_COLORS: Record<PortKind, string> = {
+  text: "#f59e0b",
+  image: "#3b82f6",
+  audio: "#eab308",
+  video: "#22c55e",
+};
+
+const WIRE_COLORS: Record<WireStyle, string> = {
+  main: "#60a5fa",
+  fallback: "#fb923c",
+  anchor: "#c084fc",
+  qa: "#fbbf24",
+  helper: "#42566f",
+};
+
+const BG = "#060c14";
+const GRID_MINOR = "#101827";
+const GRID_MAJOR = "#172335";
+const BORDER = "rgba(255,255,255,0.08)";
+const TEXT_MAIN = "#edf2f8";
+const TEXT_SUB = "#7b8ca3";
+const TEXT_FAINT = "#526579";
+
+const VIEW_W = 2920;
+const VIEW_H = 980;
+
+const HEADER_H = 44;
+const ROW_H = 20;
+const BODY_TOP = 12;
+const FOOTER_PAD = 10;
+
+function hCurve(a: Point, b: Point, strength = 64) {
+  return `M ${a.x} ${a.y} C ${a.x + strength} ${a.y}, ${b.x - strength} ${b.y}, ${b.x} ${b.y}`;
 }
 
-function hbez(a: Pt, b: Pt, c = 54): string {
-  const [x1, y1] = a;
-  const [x2, y2] = b;
-  return `M ${x1} ${y1} C ${x1 + c} ${y1}, ${x2 - c} ${y2}, ${x2} ${y2}`;
+function vCurve(a: Point, b: Point) {
+  const m = (a.y + b.y) / 2;
+  return `M ${a.x} ${a.y} C ${a.x} ${m}, ${b.x} ${m}, ${b.x} ${b.y}`;
 }
 
-function vbez(a: Pt, b: Pt): string {
-  const [x1, y1] = a;
-  const [x2, y2] = b;
-  const m = (y1 + y2) / 2;
-  return `M ${x1} ${y1} C ${x1} ${m}, ${x2} ${m}, ${x2} ${y2}`;
-}
-
-function pipePath(a: Pt, b: Pt, pipeY: number, r = 36): string {
-  const [x1, y1] = a;
-  const [x2, y2] = b;
+function pipeCurve(a: Point, b: Point, pipeY: number, radius = 34) {
   return [
-    `M ${x1} ${y1}`,
-    `C ${x1} ${y1 + r}, ${x1} ${pipeY - r}, ${x1} ${pipeY}`,
-    `L ${x2} ${pipeY}`,
-    `C ${x2} ${pipeY + r}, ${x2} ${y2 - r}, ${x2} ${y2}`,
+    `M ${a.x} ${a.y}`,
+    `C ${a.x} ${a.y + radius}, ${a.x} ${pipeY - radius}, ${a.x} ${pipeY}`,
+    `L ${b.x} ${pipeY}`,
+    `C ${b.x} ${pipeY + radius}, ${b.x} ${b.y - radius}, ${b.x} ${b.y}`,
   ].join(" ");
 }
 
-// ── Lane section labels ──────────────────────────────────────────────
-function Cap({ x, y, text, color = "#2B3B50" }: { x: number; y: number; text: string; color?: string }) {
-  return (
-    <div
-      style={{
-        position: "absolute",
-        left: x,
-        top: y,
-        fontSize: 8,
-        fontWeight: 700,
-        letterSpacing: "0.12em",
-        textTransform: "uppercase",
-        color,
-        whiteSpace: "nowrap",
-        pointerEvents: "none",
-      }}
-    >
-      {text}
-    </div>
-  );
+function getNodeHeight(spec: NodeSpec) {
+  const rowCount = Math.max(spec.inputs.length, spec.outputs.length, 1);
+  const infoExtra = (spec.infoLines?.length ?? 0) * 11;
+  return HEADER_H + BODY_TOP + rowCount * ROW_H + (infoExtra ? infoExtra + 10 : 0) + FOOTER_PAD;
 }
 
-// ── Node box ─────────────────────────────────────────────────────────
-function Box({
-  r,
-  title,
-  sub,
-  bg,
-  accent,
-  badge,
-  dim,
-  fields,
-  infoLines,
+function makeNode(
+  id: string,
+  cfg: Omit<NodeSpec, "id">
+): NodeSpec {
+  return { id, ...cfg };
+}
+
+const NODE_SPECS: NodeSpec[] = [
+  makeNode("text_system", {
+    title: "Text",
+    subtitle: "System Prompt",
+    badge: "INPUT",
+    width: 176,
+    bg: "#0c1520",
+    inputs: [],
+    outputs: [{ id: "text", label: "Text", kind: "text" }],
+  }),
+  makeNode("text_user", {
+    title: "Text",
+    subtitle: "User Story Prompt",
+    badge: "INPUT",
+    width: 176,
+    bg: "#0c1520",
+    inputs: [],
+    outputs: [{ id: "text", label: "Text", kind: "text" }],
+  }),
+  makeNode("image_ref", {
+    title: "Image",
+    subtitle: "Reference Image",
+    badge: "INPUT",
+    width: 176,
+    bg: "#0c1520",
+    inputs: [],
+    outputs: [{ id: "image", label: "Image", kind: "image" }],
+  }),
+
+  makeNode("claude", {
+    title: "Claude",
+    subtitle: "Prompt Planner",
+    badge: "MODEL",
+    width: 220,
+    bg: "#14092e",
+    accent: "#f97316",
+    inputs: [
+      { id: "system", label: "System Prompt", kind: "text", required: true },
+      { id: "prompt", label: "Prompt", kind: "text", required: true },
+      { id: "image", label: "Image", kind: "image" },
+    ],
+    outputs: [{ id: "json", label: "JSON", kind: "text" }],
+  }),
+
+  makeNode("json_core", {
+    title: "JSON Parse",
+    subtitle: "Core Outputs",
+    badge: "UTILITY",
+    width: 270,
+    bg: "#070c18",
+    accent: "#16a34a",
+    inputs: [{ id: "json", label: "JSON", kind: "text", required: true }],
+    outputs: [
+      { id: "master", label: "master_image_prompt", kind: "text" },
+      { id: "shot1", label: "shot1_video_prompt", kind: "text" },
+      { id: "shot2", label: "shot2_video_prompt", kind: "text" },
+      { id: "audio_prompt", label: "shot2_audio_prompt", kind: "text" },
+      { id: "shot3", label: "shot3_video_prompt", kind: "text" },
+      { id: "negative", label: "kling_negative_prompt", kind: "text" },
+      { id: "char_lock", label: "character_lock", kind: "text" },
+      { id: "op_notes", label: "operator_notes", kind: "text" },
+    ],
+    infoLines: ["Runway-documented JSON Parse max is 12 outputs, so this graph uses two JSON Parse nodes."],
+  }),
+
+  makeNode("json_meta", {
+    title: "JSON Parse",
+    subtitle: "Meta Outputs",
+    badge: "UTILITY",
+    width: 270,
+    bg: "#070c18",
+    accent: "#16a34a",
+    inputs: [{ id: "json", label: "JSON", kind: "text", required: true }],
+    outputs: [
+      { id: "mi1", label: "motion_intensity.shot1", kind: "text" },
+      { id: "mi2", label: "motion_intensity.shot2", kind: "text" },
+      { id: "mi3", label: "motion_intensity.shot3", kind: "text" },
+      { id: "hook", label: "hook", kind: "text" },
+      { id: "caption", label: "caption", kind: "text" },
+    ],
+  }),
+
+  makeNode("nano_banana_2", {
+    title: "Nano Banana 2",
+    subtitle: "Master Still Generator",
+    badge: "MODEL",
+    width: 208,
+    bg: "#051a0e",
+    accent: "#16a34a",
+    inputs: [
+      { id: "prompt", label: "Prompt", kind: "text", required: true },
+      { id: "image", label: "Image", kind: "image" },
+    ],
+    outputs: [{ id: "image", label: "Image", kind: "image" }],
+  }),
+
+  makeNode("gen4_anchor", {
+    title: "Gen-4 Image",
+    subtitle: "Canonical Anchor",
+    badge: "MODEL",
+    width: 220,
+    bg: "#1a0544",
+    accent: "#c084fc",
+    inputs: [{ id: "image", label: "Image", kind: "image", required: true }],
+    outputs: [{ id: "image", label: "Image", kind: "image" }],
+    infoLines: ["Normalized hero anchor used as the strongest fallback for later shots."],
+  }),
+
+  makeNode("shot1", {
+    title: "Gen-4.5",
+    subtitle: "Shot 1 — Opening Tension",
+    badge: "MODEL",
+    width: 220,
+    bg: "#060f28",
+    accent: "#16a34a",
+    inputs: [
+      { id: "image", label: "Image", kind: "image", required: true },
+      { id: "prompt", label: "Prompt", kind: "text", required: true },
+    ],
+    outputs: [{ id: "video", label: "Video", kind: "video" }],
+  }),
+
+  makeNode("trim1", {
+    title: "Trim Video",
+    subtitle: "Clean fallback clip",
+    badge: "UTILITY",
+    width: 188,
+    bg: "#071318",
+    accent: "#16a34a",
+    inputs: [{ id: "video", label: "Video", kind: "video", required: true }],
+    outputs: [{ id: "video", label: "Video", kind: "video" }],
+  }),
+
+  makeNode("extract1", {
+    title: "Extract Frame",
+    subtitle: "Preferred handoff",
+    badge: "UTILITY",
+    width: 188,
+    bg: "#041420",
+    accent: "#16a34a",
+    inputs: [{ id: "video", label: "Video", kind: "video", required: true }],
+    outputs: [{ id: "image", label: "Image", kind: "image" }],
+  }),
+
+  makeNode("kling_s2", {
+    title: "Kling 3.0 Pro",
+    subtitle: "Shot 2 — Action Pressure",
+    badge: "MODEL",
+    width: 236,
+    bg: "#1e0b00",
+    accent: "#2563eb",
+    inputs: [
+      { id: "image", label: "Image", kind: "image", required: true },
+      { id: "prompt", label: "Prompt", kind: "text", required: true },
+      { id: "negative", label: "Negative", kind: "text" },
+    ],
+    outputs: [{ id: "video", label: "Video", kind: "video" }],
+  }),
+
+  makeNode("trim2", {
+    title: "Trim Video",
+    subtitle: "Clean fallback clip",
+    badge: "UTILITY",
+    width: 188,
+    bg: "#071318",
+    accent: "#16a34a",
+    inputs: [{ id: "video", label: "Video", kind: "video", required: true }],
+    outputs: [{ id: "video", label: "Video", kind: "video" }],
+  }),
+
+  makeNode("extract2", {
+    title: "Extract Frame",
+    subtitle: "Preferred handoff",
+    badge: "UTILITY",
+    width: 188,
+    bg: "#041420",
+    accent: "#16a34a",
+    inputs: [{ id: "video", label: "Video", kind: "video", required: true }],
+    outputs: [{ id: "image", label: "Image", kind: "image" }],
+  }),
+
+  makeNode("shot3", {
+    title: "Gen-4.5",
+    subtitle: "Shot 3 — Resolved Tension",
+    badge: "MODEL",
+    width: 220,
+    bg: "#060f28",
+    accent: "#16a34a",
+    inputs: [
+      { id: "image", label: "Image", kind: "image", required: true },
+      { id: "prompt", label: "Prompt", kind: "text", required: true },
+    ],
+    outputs: [{ id: "video", label: "Video", kind: "video" }],
+  }),
+
+  makeNode("stitch", {
+    title: "Stitch",
+    subtitle: "Final Sequence",
+    badge: "UTILITY",
+    width: 196,
+    bg: "#0d0220",
+    accent: "#16a34a",
+    inputs: [
+      { id: "s1", label: "Input 1", kind: "video", required: true },
+      { id: "s2", label: "Input 2", kind: "video", required: true },
+      { id: "s3", label: "Input 3", kind: "video", required: true },
+    ],
+    outputs: [{ id: "video", label: "Video", kind: "video" }],
+  }),
+
+  makeNode("last1", {
+    title: "Last Frame",
+    subtitle: "Fallback only",
+    badge: "UTILITY",
+    width: 184,
+    bg: "#160202",
+    accent: "#fb923c",
+    dim: true,
+    inputs: [{ id: "video", label: "Video", kind: "video", required: true }],
+    outputs: [{ id: "image", label: "Image", kind: "image" }],
+  }),
+
+  makeNode("last2", {
+    title: "Last Frame",
+    subtitle: "Fallback only",
+    badge: "UTILITY",
+    width: 184,
+    bg: "#160202",
+    accent: "#fb923c",
+    dim: true,
+    inputs: [{ id: "video", label: "Video", kind: "video", required: true }],
+    outputs: [{ id: "image", label: "Image", kind: "image" }],
+  }),
+
+  makeNode("qa1", {
+    title: "First Frame",
+    subtitle: "QA — Shot 1 Start",
+    badge: "UTILITY",
+    width: 184,
+    bg: "#100c00",
+    accent: "#fbbf24",
+    dim: true,
+    inputs: [{ id: "video", label: "Video", kind: "video", required: true }],
+    outputs: [{ id: "image", label: "Image", kind: "image" }],
+  }),
+
+  makeNode("qa2", {
+    title: "First Frame",
+    subtitle: "QA — Shot 2 Start",
+    badge: "UTILITY",
+    width: 184,
+    bg: "#100c00",
+    accent: "#fbbf24",
+    dim: true,
+    inputs: [{ id: "video", label: "Video", kind: "video", required: true }],
+    outputs: [{ id: "image", label: "Image", kind: "image" }],
+  }),
+
+  makeNode("qa3", {
+    title: "First Frame",
+    subtitle: "QA — Shot 3 Start",
+    badge: "UTILITY",
+    width: 184,
+    bg: "#100c00",
+    accent: "#fbbf24",
+    dim: true,
+    inputs: [{ id: "video", label: "Video", kind: "video", required: true }],
+    outputs: [{ id: "image", label: "Image", kind: "image" }],
+  }),
+
+  makeNode("continuity_notes", {
+    title: "Continuity Notes",
+    subtitle: "character_lock + motion plan + operator guidance",
+    badge: "NOTES",
+    width: 320,
+    bg: "#08101c",
+    dim: true,
+    inputs: [
+      { id: "char_lock", label: "character_lock", kind: "text" },
+      { id: "mi1", label: "motion_intensity.shot1", kind: "text" },
+      { id: "mi2", label: "motion_intensity.shot2", kind: "text" },
+      { id: "mi3", label: "motion_intensity.shot3", kind: "text" },
+      { id: "op_notes", label: "operator_notes", kind: "text" },
+    ],
+    outputs: [],
+    infoLines: [
+      "Fallback order: Extract Frame → Last Frame after Trim → Canonical Anchor",
+      "Lock good nodes after QA and keep seed discipline on retries.",
+      "Use this panel as the continuity checklist, not as a media node.",
+    ],
+  }),
+
+  makeNode("audio_notes", {
+    title: "Audio Notes",
+    subtitle: "shot2_audio_prompt",
+    badge: "NOTES",
+    width: 250,
+    bg: "#08101c",
+    dim: true,
+    inputs: [{ id: "audio_prompt", label: "shot2_audio_prompt", kind: "text" }],
+    outputs: [],
+    infoLines: [
+      "Paste this into Kling audio if available.",
+      "Keep ambience matched to habitat and action.",
+    ],
+  }),
+
+  makeNode("social_pack", {
+    title: "Social Pack",
+    subtitle: "hook + caption",
+    badge: "NOTES",
+    width: 240,
+    bg: "#08101c",
+    dim: true,
+    inputs: [
+      { id: "hook", label: "hook", kind: "text" },
+      { id: "caption", label: "caption", kind: "text" },
+    ],
+    outputs: [],
+    infoLines: [
+      "Use hook as opening overlay text.",
+      "Use caption as post copy.",
+    ],
+  }),
+
+  makeNode("anchor_guide", {
+    title: "How to use Canonical Anchor",
+    subtitle: "Practical fallback rule",
+    badge: "GUIDE",
+    width: 540,
+    bg: "#08101c",
+    dim: true,
+    inputs: [],
+    outputs: [],
+    infoLines: [
+      "1. Generate the master still, then normalize it into the Gen-4 Image Canonical Anchor.",
+      "2. Use the Canonical Anchor as the main image source for Shot 1.",
+      "3. Between shots, prefer Extract Frame. Use Last Frame only after Trim Video.",
+      "4. If a handoff frame is weak, fall back to the Canonical Anchor instead of forcing drift.",
+      "5. Lock strong nodes after QA and use consistent seeds on retries.",
+    ],
+  }),
+];
+
+const DEFAULT_POSITIONS: Record<string, Point> = {
+  text_system: { x: 28, y: 108 },
+  text_user: { x: 28, y: 210 },
+  image_ref: { x: 28, y: 312 },
+
+  claude: { x: 258, y: 192 },
+
+  json_core: { x: 560, y: 58 },
+  json_meta: { x: 560, y: 370 },
+
+  nano_banana_2: { x: 880, y: 138 },
+  gen4_anchor: { x: 1140, y: 130 },
+
+  shot1: { x: 1435, y: 138 },
+  trim1: { x: 1690, y: 152 },
+  extract1: { x: 1920, y: 152 },
+
+  kling_s2: { x: 2150, y: 130 },
+  trim2: { x: 2440, y: 152 },
+  extract2: { x: 2670, y: 152 },
+
+  shot3: { x: 2900, y: 138 },
+  stitch: { x: 3160, y: 136 },
+
+  last1: { x: 1690, y: 370 },
+  last2: { x: 2440, y: 370 },
+
+  qa1: { x: 1435, y: 370 },
+  qa2: { x: 2150, y: 370 },
+  qa3: { x: 2900, y: 370 },
+
+  continuity_notes: { x: 880, y: 592 },
+  audio_notes: { x: 1690, y: 610 },
+  social_pack: { x: 2440, y: 610 },
+  anchor_guide: { x: 28, y: 760 },
+};
+
+const WIRES: WireDef[] = [
+  { from: ["text_system", "text"], to: ["claude", "system"], style: "main" },
+  { from: ["text_user", "text"], to: ["claude", "prompt"], style: "main" },
+  { from: ["image_ref", "image"], to: ["claude", "image"], style: "main" },
+
+  { from: ["claude", "json"], to: ["json_core", "json"], style: "main" },
+  { from: ["claude", "json"], to: ["json_meta", "json"], style: "helper" },
+
+  { from: ["json_core", "master"], to: ["nano_banana_2", "prompt"], style: "main" },
+  { from: ["image_ref", "image"], to: ["nano_banana_2", "image"], style: "main" },
+
+  { from: ["nano_banana_2", "image"], to: ["gen4_anchor", "image"], style: "main" },
+
+  { from: ["gen4_anchor", "image"], to: ["shot1", "image"], style: "main" },
+  { from: ["json_core", "shot1"], to: ["shot1", "prompt"], style: "main" },
+
+  { from: ["shot1", "video"], to: ["trim1", "video"], style: "main" },
+  { from: ["trim1", "video"], to: ["extract1", "video"], style: "main" },
+  { from: ["extract1", "image"], to: ["kling_s2", "image"], style: "main" },
+
+  { from: ["json_core", "shot2"], to: ["kling_s2", "prompt"], style: "main" },
+  { from: ["json_core", "negative"], to: ["kling_s2", "negative"], style: "main" },
+
+  { from: ["kling_s2", "video"], to: ["trim2", "video"], style: "main" },
+  { from: ["trim2", "video"], to: ["extract2", "video"], style: "main" },
+  { from: ["extract2", "image"], to: ["shot3", "image"], style: "main" },
+  { from: ["json_core", "shot3"], to: ["shot3", "prompt"], style: "main" },
+
+  { from: ["shot1", "video"], to: ["stitch", "s1"], style: "main" },
+  { from: ["kling_s2", "video"], to: ["stitch", "s2"], style: "main" },
+  { from: ["shot3", "video"], to: ["stitch", "s3"], style: "main" },
+
+  { from: ["trim1", "video"], to: ["last1", "video"], style: "fallback", route: "v" },
+  { from: ["trim2", "video"], to: ["last2", "video"], style: "fallback", route: "v" },
+  { from: ["last1", "image"], to: ["kling_s2", "image"], style: "fallback" },
+  { from: ["last2", "image"], to: ["shot3", "image"], style: "fallback" },
+
+  { from: ["gen4_anchor", "image"], to: ["kling_s2", "image"], style: "anchor", route: "pipe", pipeY: 510 },
+  { from: ["gen4_anchor", "image"], to: ["shot3", "image"], style: "anchor", route: "pipe", pipeY: 536 },
+
+  { from: ["shot1", "video"], to: ["qa1", "video"], style: "qa", route: "v" },
+  { from: ["kling_s2", "video"], to: ["qa2", "video"], style: "qa", route: "v" },
+  { from: ["shot3", "video"], to: ["qa3", "video"], style: "qa", route: "v" },
+
+  { from: ["json_core", "audio_prompt"], to: ["audio_notes", "audio_prompt"], style: "helper" },
+  { from: ["json_core", "char_lock"], to: ["continuity_notes", "char_lock"], style: "helper" },
+  { from: ["json_core", "op_notes"], to: ["continuity_notes", "op_notes"], style: "helper" },
+  { from: ["json_meta", "mi1"], to: ["continuity_notes", "mi1"], style: "helper" },
+  { from: ["json_meta", "mi2"], to: ["continuity_notes", "mi2"], style: "helper" },
+  { from: ["json_meta", "mi3"], to: ["continuity_notes", "mi3"], style: "helper" },
+  { from: ["json_meta", "hook"], to: ["social_pack", "hook"], style: "helper" },
+  { from: ["json_meta", "caption"], to: ["social_pack", "caption"], style: "helper" },
+];
+
+function getPortY(index: number) {
+  return HEADER_H + BODY_TOP + index * ROW_H + ROW_H / 2;
+}
+
+function markerId(style: WireStyle) {
+  switch (style) {
+    case "main":
+      return "arr-main";
+    case "fallback":
+      return "arr-fallback";
+    case "anchor":
+      return "arr-anchor";
+    case "qa":
+      return "arr-qa";
+    case "helper":
+      return "arr-helper";
+  }
+}
+
+function NodeBox({
+  spec,
+  pos,
+  onPointerDown,
 }: {
-  r: Rect;
-  title: string;
-  sub?: string;
-  bg: string;
-  accent?: boolean;
-  badge?: string;
-  dim?: boolean;
-  fields?: string[];
-  infoLines?: string[];
+  spec: NodeSpec;
+  pos: Point;
+  onPointerDown: (e: ReactPointerEvent<HTMLDivElement>) => void;
 }) {
+  const height = getNodeHeight(spec);
+  const rows = Math.max(spec.inputs.length, spec.outputs.length, 1);
+
   return (
     <div
+      onPointerDown={onPointerDown}
       style={{
         position: "absolute",
-        left: r.x,
-        top: r.y,
-        width: r.w,
-        height: r.h,
-        background: bg,
-        border: accent
-          ? "1.5px solid rgba(192,132,252,0.55)"
-          : "1px solid rgba(255,255,255,0.07)",
-        borderRadius: 8,
-        boxShadow: accent
-          ? "0 0 0 3px rgba(192,132,252,0.09), 0 4px 20px rgba(0,0,0,0.70)"
-          : "0 2px 10px rgba(0,0,0,0.55)",
-        overflow: "hidden",
-        opacity: dim ? 0.44 : 1,
+        left: pos.x,
+        top: pos.y,
+        width: spec.width,
+        height,
+        background: spec.bg,
+        border: spec.accent
+          ? `1.5px solid ${spec.accent}88`
+          : `1px solid ${BORDER}`,
+        borderRadius: 10,
+        boxShadow: spec.accent
+          ? `0 0 0 3px ${spec.accent}18, 0 8px 26px rgba(0,0,0,0.55)`
+          : "0 8px 22px rgba(0,0,0,0.45)",
+        opacity: spec.dim ? 0.58 : 1,
         userSelect: "none",
+        overflow: "hidden",
       }}
     >
       <div
         style={{
-          height: 3,
-          flexShrink: 0,
-          background: accent
-            ? "linear-gradient(90deg,#C084FC 0%,#818CF8 100%)"
-            : "rgba(255,255,255,0.05)",
+          height: 4,
+          background: spec.accent
+            ? `linear-gradient(90deg, ${spec.accent}, ${spec.accent}99)`
+            : "rgba(255,255,255,0.06)",
         }}
       />
       <div
         style={{
-          padding: "5px 9px 6px",
-          height: "calc(100% - 3px)",
+          padding: "8px 10px 8px",
+          height: `calc(100% - 4px)`,
           boxSizing: "border-box",
-          overflowY: "hidden",
+          cursor: "grab",
         }}
       >
-        {badge && (
-          <span
+        {spec.badge && (
+          <div
             style={{
               display: "inline-block",
-              fontSize: 7,
+              marginBottom: 6,
+              padding: "2px 7px",
+              borderRadius: 999,
+              fontSize: 9,
               fontWeight: 700,
-              letterSpacing: "0.09em",
-              color: "#4A5568",
+              letterSpacing: "0.08em",
+              color: spec.accent ?? "#93c5fd",
               background: "rgba(255,255,255,0.05)",
-              borderRadius: 3,
-              padding: "1px 5px",
-              marginBottom: 3,
             }}
           >
-            {badge}
-          </span>
+            {spec.badge}
+          </div>
+        )}
+        <div
+          style={{
+            color: spec.accent ? "#f5f3ff" : TEXT_MAIN,
+            fontSize: 12.5,
+            fontWeight: 700,
+            lineHeight: 1.15,
+          }}
+        >
+          {spec.title}
+        </div>
+        {spec.subtitle && (
+          <div
+            style={{
+              color: TEXT_SUB,
+              fontSize: 9,
+              marginTop: 2,
+              lineHeight: 1.3,
+            }}
+          >
+            {spec.subtitle}
+          </div>
         )}
 
         <div
           style={{
-            fontSize: 11.5,
-            fontWeight: 700,
-            color: accent ? "#E9D5FF" : "#EDF2F8",
-            lineHeight: 1.25,
-            letterSpacing: "0.01em",
+            position: "relative",
+            marginTop: 10,
+            minHeight: rows * ROW_H,
           }}
         >
-          {title}
-        </div>
-
-        {sub && (
-          <div style={{ fontSize: 9, color: "#3D5068", lineHeight: 1.3, marginTop: 2 }}>
-            {sub}
-          </div>
-        )}
-
-        {fields && (
-          <div style={{ marginTop: 5 }}>
-            {fields.map((f, i) => (
-              <div
-                key={f}
-                style={{
-                  display: "flex",
-                  alignItems: "center",
-                  gap: 4,
-                  fontSize: 8.5,
-                  lineHeight: 1.7,
-                  color: i === 0 ? "#93C5FD" : "#2E3D52",
-                  borderTop: i > 0 ? "1px solid rgba(255,255,255,0.03)" : undefined,
-                }}
-              >
-                <span style={{ color: "#1D2B3A", flexShrink: 0 }}>▸</span>
-                <span style={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
-                  {f}
-                </span>
-              </div>
-            ))}
-          </div>
-        )}
-
-        {infoLines && (
-          <div style={{ marginTop: 5 }}>
-            {infoLines.map((ln, i) => (
+          {Array.from({ length: rows }).map((_, i) => {
+            const input = spec.inputs[i];
+            const output = spec.outputs[i];
+            const y = i * ROW_H;
+            return (
               <div
                 key={i}
                 style={{
-                  fontSize: 8,
-                  lineHeight: 1.6,
-                  color: i === 0 ? "#4A6380" : "#2B3A4C",
+                  position: "absolute",
+                  left: 0,
+                  top: y,
+                  width: "100%",
+                  height: ROW_H,
                 }}
               >
-                {ln}
+                {input && (
+                  <>
+                    <div
+                      style={{
+                        position: "absolute",
+                        left: -15,
+                        top: ROW_H / 2 - 4.5,
+                        width: 9,
+                        height: 9,
+                        borderRadius: 999,
+                        background: PORT_COLORS[input.kind],
+                        border: "1.5px solid #09111b",
+                      }}
+                    />
+                    <div
+                      style={{
+                        position: "absolute",
+                        left: 0,
+                        top: 2,
+                        fontSize: 8.5,
+                        color: TEXT_SUB,
+                        whiteSpace: "nowrap",
+                      }}
+                    >
+                      {input.label}
+                      {input.required ? "*" : ""}
+                    </div>
+                  </>
+                )}
+
+                {output && (
+                  <>
+                    <div
+                      style={{
+                        position: "absolute",
+                        right: -15,
+                        top: ROW_H / 2 - 4.5,
+                        width: 9,
+                        height: 9,
+                        borderRadius: 999,
+                        background: PORT_COLORS[output.kind],
+                        border: "1.5px solid #09111b",
+                      }}
+                    />
+                    <div
+                      style={{
+                        position: "absolute",
+                        right: 0,
+                        top: 2,
+                        fontSize: 8.5,
+                        color: output.kind === "text" ? "#dbeafe" : TEXT_SUB,
+                        whiteSpace: "nowrap",
+                        textAlign: "right",
+                      }}
+                    >
+                      {output.label}
+                    </div>
+                  </>
+                )}
+              </div>
+            );
+          })}
+        </div>
+
+        {spec.infoLines && (
+          <div style={{ marginTop: 8 }}>
+            {spec.infoLines.map((line, i) => (
+              <div
+                key={i}
+                style={{
+                  color: i === 0 ? "#6f86a1" : TEXT_FAINT,
+                  fontSize: 8,
+                  lineHeight: 1.45,
+                  marginTop: i === 0 ? 0 : 2,
+                }}
+              >
+                {line}
               </div>
             ))}
           </div>
         )}
       </div>
     </div>
-  );
-}
-
-// ── Connector dot ────────────────────────────────────────────────────
-function Dot({ pt, color }: { pt: Pt; color: string }) {
-  return <circle cx={pt[0]} cy={pt[1]} r={3.5} fill={color} stroke="#0A0F18" strokeWidth={1.5} />;
-}
-
-// ── Arrow-head marker defs ───────────────────────────────────────────
-function MarkerDefs() {
-  const defs: Array<{ id: string; color: string }> = [
-    { id: "arrMain", color: PAL.main },
-    { id: "arrFall", color: PAL.fall },
-    { id: "arrAnch", color: PAL.anch },
-    { id: "arrQA", color: PAL.qaW },
-    { id: "arrHelp", color: "#364A62" },
-  ];
-  return (
-    <defs>
-      {defs.map(({ id, color }) => (
-        <marker key={id} id={id} markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto">
-          <path d="M0,0 L0,6 L7,3 z" fill={color} />
-        </marker>
-      ))}
-    </defs>
   );
 }
 
@@ -325,545 +766,392 @@ export default function WSTVWorkflowDiagram({
   data?: GeneratedPackage;
   onCopy?: (t: string) => void;
 }) {
-  const [zoom, setZoom] = useState(0.60);
-  const [pan, setPan] = useState<Pt>([0, 0]);
-  const dragging = useRef(false);
-  const lastPos = useRef<Pt>([0, 0]);
+  const specMap = useMemo(
+    () => Object.fromEntries(NODE_SPECS.map((n) => [n.id, n])),
+    []
+  );
+
+  const [positions, setPositions] = useState<Record<string, Point>>(DEFAULT_POSITIONS);
+  const [zoom, setZoom] = useState(0.44);
+  const [pan, setPan] = useState<Point>({ x: 0, y: 0 });
+
+  const dragRef = useRef<
+    | { kind: "canvas"; x: number; y: number }
+    | { kind: "node"; id: string; x: number; y: number }
+    | null
+  >(null);
+
+  const getRect = useCallback(
+    (id: string) => {
+      const spec = specMap[id];
+      const pos = positions[id];
+      return {
+        x: pos.x,
+        y: pos.y,
+        w: spec.width,
+        h: getNodeHeight(spec),
+      };
+    },
+    [positions, specMap]
+  );
+
+  const getPortPoint = useCallback(
+    (nodeId: string, portId: string, side: Side): Point => {
+      const spec = specMap[nodeId];
+      const rect = getRect(nodeId);
+      const ports = side === "left" ? spec.inputs : spec.outputs;
+      const index = ports.findIndex((p) => p.id === portId);
+      const y = rect.y + getPortY(Math.max(index, 0));
+      const x = side === "left" ? rect.x : rect.x + rect.w;
+      return { x, y };
+    },
+    [getRect, specMap]
+  );
+
+  const onCanvasPointerDown = useCallback((e: ReactPointerEvent<HTMLDivElement>) => {
+    dragRef.current = { kind: "canvas", x: e.clientX, y: e.clientY };
+  }, []);
+
+  const onNodePointerDown = useCallback(
+    (id: string) => (e: ReactPointerEvent<HTMLDivElement>) => {
+      e.stopPropagation();
+      dragRef.current = { kind: "node", id, x: e.clientX, y: e.clientY };
+    },
+    []
+  );
+
+  const onPointerMove = useCallback((e: ReactPointerEvent<HTMLDivElement>) => {
+    const drag = dragRef.current;
+    if (!drag) return;
+
+    const dx = e.clientX - drag.x;
+    const dy = e.clientY - drag.y;
+    dragRef.current = { ...drag, x: e.clientX, y: e.clientY } as typeof drag;
+
+    if (drag.kind === "canvas") {
+      setPan((p) => ({ x: p.x + dx, y: p.y + dy }));
+    } else {
+      setPositions((prev) => ({
+        ...prev,
+        [drag.id]: {
+          x: prev[drag.id].x + dx / zoom,
+          y: prev[drag.id].y + dy / zoom,
+        },
+      }));
+    }
+  }, [zoom]);
+
+  const onPointerUp = useCallback(() => {
+    dragRef.current = null;
+  }, []);
 
   const onWheel = useCallback((e: ReactWheelEvent<HTMLDivElement>) => {
     e.preventDefault();
-    setZoom((z) => Math.min(2, Math.max(0.20, z - e.deltaY * 0.0008)));
+    setZoom((z) => Math.max(0.25, Math.min(1.6, z - e.deltaY * 0.0008)));
   }, []);
 
-  const onMouseDown = useCallback((e: ReactMouseEvent<HTMLDivElement>) => {
-    dragging.current = true;
-    lastPos.current = [e.clientX, e.clientY];
+  const resetView = useCallback(() => {
+    setZoom(0.44);
+    setPan({ x: 0, y: 0 });
+    setPositions(DEFAULT_POSITIONS);
   }, []);
-
-  const onMouseMove = useCallback((e: ReactMouseEvent<HTMLDivElement>) => {
-    if (!dragging.current) return;
-    const dx = e.clientX - lastPos.current[0];
-    const dy = e.clientY - lastPos.current[1];
-    lastPos.current = [e.clientX, e.clientY];
-    setPan((p) => [p[0] + dx, p[1] + dy]);
-  }, []);
-
-  const onMouseUp = useCallback(() => {
-    dragging.current = false;
-  }, []);
-
-  const onTouchStart = useCallback((e: ReactTouchEvent<HTMLDivElement>) => {
-    if (e.touches.length !== 1) return;
-    const t = e.touches[0];
-    dragging.current = true;
-    lastPos.current = [t.clientX, t.clientY];
-  }, []);
-
-  const onTouchMove = useCallback((e: ReactTouchEvent<HTMLDivElement>) => {
-    if (!dragging.current || e.touches.length !== 1) return;
-    const t = e.touches[0];
-    const dx = t.clientX - lastPos.current[0];
-    const dy = t.clientY - lastPos.current[1];
-    lastPos.current = [t.clientX, t.clientY];
-    setPan((p) => [p[0] + dx, p[1] + dy]);
-  }, []);
-
-  const onTouchEnd = useCallback(() => {
-    dragging.current = false;
-  }, []);
-
-  const p = (id: keyof typeof N, s: Side) => port(N[id], s);
-  const PIPE_Y = 460;
 
   return (
     <div
       style={{
         width: "100%",
-        height: "100vh",
-        background: "#060C14",
+        height: 760,
+        borderRadius: 18,
         overflow: "hidden",
-        cursor: "grab",
-        fontFamily: "'Inter', 'SF Pro Display', system-ui, sans-serif",
+        border: "1px solid rgba(255,255,255,0.07)",
+        background: BG,
+        position: "relative",
+        cursor: dragRef.current?.kind === "canvas" ? "grabbing" : "grab",
       }}
+      onPointerDown={onCanvasPointerDown}
+      onPointerMove={onPointerMove}
+      onPointerUp={onPointerUp}
+      onPointerLeave={onPointerUp}
       onWheel={onWheel}
-      onMouseDown={onMouseDown}
-      onMouseMove={onMouseMove}
-      onMouseUp={onMouseUp}
-      onMouseLeave={onMouseUp}
-      onTouchStart={onTouchStart}
-      onTouchMove={onTouchMove}
-      onTouchEnd={onTouchEnd}
     >
       <div
         style={{
-          position: "fixed",
-          bottom: 22,
-          right: 22,
-          zIndex: 10,
-          display: "flex",
-          gap: 6,
+          position: "absolute",
+          inset: 0,
+          backgroundImage: `
+            linear-gradient(${GRID_MINOR} 1px, transparent 1px),
+            linear-gradient(90deg, ${GRID_MINOR} 1px, transparent 1px),
+            linear-gradient(${GRID_MAJOR} 1px, transparent 1px),
+            linear-gradient(90deg, ${GRID_MAJOR} 1px, transparent 1px)
+          `,
+          backgroundSize: "24px 24px, 24px 24px, 120px 120px, 120px 120px",
+          backgroundPosition: "0 0, 0 0, 0 0, 0 0",
+          pointerEvents: "none",
+        }}
+      />
+
+      <div
+        style={{
+          position: "absolute",
+          top: 16,
+          left: 16,
+          zIndex: 30,
+          color: TEXT_FAINT,
+          fontSize: 9,
+          lineHeight: 1.45,
+          fontFamily: "ui-monospace, SFMono-Regular, Menlo, monospace",
+          background: "rgba(9,17,27,0.76)",
+          border: `1px solid ${BORDER}`,
+          padding: "10px 12px",
+          borderRadius: 10,
+          backdropFilter: "blur(6px)",
         }}
       >
-        {([
-          ["+", () => setZoom((z) => Math.min(2, z + 0.10))],
-          ["−", () => setZoom((z) => Math.max(0.20, z - 0.10))],
-          ["⊡", () => {
-            setZoom(0.60);
-            setPan([0, 0]);
-          }],
-        ] as [string, () => void][]).map(([lbl, fn]) => (
-          <button
-            key={lbl}
-            onClick={fn}
-            style={{
-              width: 32,
-              height: 32,
-              background: "#0F1928",
-              color: "#607898",
-              border: "1px solid rgba(255,255,255,0.07)",
-              borderRadius: 7,
-              fontSize: 15,
-              cursor: "pointer",
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-            }}
-          >
-            {lbl}
-          </button>
-        ))}
-        <span
-          style={{
-            lineHeight: "32px",
-            fontSize: 10,
-            color: "#2E4055",
-            paddingLeft: 4,
-          }}
-        >
-          {Math.round(zoom * 100)}%
-        </span>
+        Drag canvas to pan · Scroll to zoom
+        <br />
+        Drag nodes to reposition · Wires update live
       </div>
 
       <div
         style={{
+          position: "absolute",
+          top: 16,
+          right: 16,
+          zIndex: 30,
+          display: "flex",
+          alignItems: "center",
+          gap: 6,
+          background: "rgba(9,17,27,0.76)",
+          border: `1px solid ${BORDER}`,
+          padding: "8px 10px",
+          borderRadius: 10,
+          backdropFilter: "blur(6px)",
+        }}
+      >
+        <div style={{ color: TEXT_SUB, fontSize: 10, minWidth: 34, textAlign: "right" }}>
+          {Math.round(zoom * 100)}%
+        </div>
+        <button
+          onClick={() => setZoom((z) => Math.max(0.25, z - 0.08))}
+          style={controlBtnStyle}
+        >
+          −
+        </button>
+        <button
+          onClick={() => setZoom((z) => Math.min(1.6, z + 0.08))}
+          style={controlBtnStyle}
+        >
+          +
+        </button>
+        <button onClick={resetView} style={{ ...controlBtnStyle, width: "auto", padding: "0 12px" }}>
+          Reset
+        </button>
+      </div>
+
+      <div
+        style={{
+          position: "absolute",
+          left: 0,
+          top: 0,
           transformOrigin: "0 0",
-          transform: `translate(${pan[0]}px,${pan[1]}px) scale(${zoom})`,
-          width: CW,
-          height: CH,
-          position: "relative",
+          transform: `translate(${pan.x}px, ${pan.y}px) scale(${zoom})`,
+          width: VIEW_W,
+          height: VIEW_H,
         }}
       >
         <svg
-          style={{ position: "absolute", top: 0, left: 0, overflow: "visible" }}
-          width={CW}
-          height={CH}
+          width={VIEW_W}
+          height={VIEW_H}
+          style={{ position: "absolute", inset: 0, overflow: "visible" }}
         >
-          <MarkerDefs />
+          <defs>
+            {Object.entries({
+              "arr-main": WIRE_COLORS.main,
+              "arr-fallback": WIRE_COLORS.fallback,
+              "arr-anchor": WIRE_COLORS.anchor,
+              "arr-qa": WIRE_COLORS.qa,
+              "arr-helper": WIRE_COLORS.helper,
+            }).map(([id, color]) => (
+              <marker
+                key={id}
+                id={id}
+                markerWidth="8"
+                markerHeight="8"
+                refX="6"
+                refY="3"
+                orient="auto"
+              >
+                <path d="M0,0 L0,6 L7,3 z" fill={color} />
+              </marker>
+            ))}
+          </defs>
 
-          <path d={hbez(p("sys", "right"), p("claude", "left"))} fill="none" stroke={PAL.main} strokeWidth={1.5} markerEnd="url(#arrMain)" />
-          <path d={hbez(p("usr", "right"), p("claude", "left"))} fill="none" stroke={PAL.main} strokeWidth={1.5} markerEnd="url(#arrMain)" />
-          <path d={hbez(p("imgRef", "right"), p("claude", "left"))} fill="none" stroke={PAL.main} strokeWidth={1.5} markerEnd="url(#arrMain)" />
+          {WIRES.map((wire, idx) => {
+            const from = getPortPoint(wire.from[0], wire.from[1], "right");
+            const to = getPortPoint(wire.to[0], wire.to[1], "left");
+            const color = WIRE_COLORS[wire.style];
 
-          <path d={hbez(p("claude", "right"), p("jsonParse", "left"))} fill="none" stroke={PAL.main} strokeWidth={1.5} markerEnd="url(#arrMain)" />
-          <path d={hbez(p("jsonParse", "right"), p("nano", "left"))} fill="none" stroke={PAL.main} strokeWidth={1.5} markerEnd="url(#arrMain)" />
-          <path d={hbez(p("nano", "right"), p("gen4img", "left"))} fill="none" stroke={PAL.main} strokeWidth={2} markerEnd="url(#arrMain)" />
-          <path d={hbez(p("gen4img", "right"), p("shot1", "left"))} fill="none" stroke={PAL.main} strokeWidth={2} markerEnd="url(#arrMain)" />
+            let d = "";
+            if (wire.route === "v") d = vCurve(from, to);
+            else if (wire.route === "pipe") d = pipeCurve(from, to, wire.pipeY ?? 520);
+            else d = hCurve(from, to, 70);
 
-          <path d={hbez(p("shot1", "right"), p("trim1", "left"))} fill="none" stroke={PAL.main} strokeWidth={1.5} markerEnd="url(#arrMain)" />
-          <path d={hbez(p("trim1", "right"), p("extract1", "left"))} fill="none" stroke={PAL.main} strokeWidth={2} markerEnd="url(#arrMain)" />
-          <path d={hbez(p("extract1", "right"), p("kling", "left"))} fill="none" stroke={PAL.main} strokeWidth={2} markerEnd="url(#arrMain)" />
+            const dashed = wire.style !== "main";
+            const opacity =
+              wire.style === "helper" ? 0.45 :
+              wire.style === "qa" ? 0.58 :
+              wire.style === "anchor" ? 0.7 :
+              wire.style === "fallback" ? 0.78 : 1;
 
-          <path d={hbez(p("kling", "right"), p("trim2", "left"))} fill="none" stroke={PAL.main} strokeWidth={1.5} markerEnd="url(#arrMain)" />
-          <path d={hbez(p("trim2", "right"), p("extract2", "left"))} fill="none" stroke={PAL.main} strokeWidth={2} markerEnd="url(#arrMain)" />
-          <path d={hbez(p("extract2", "right"), p("shot3", "left"))} fill="none" stroke={PAL.main} strokeWidth={2} markerEnd="url(#arrMain)" />
-          <path d={hbez(p("shot3", "right"), p("stitch", "left"))} fill="none" stroke={PAL.main} strokeWidth={2} markerEnd="url(#arrMain)" />
+            const strokeWidth =
+              wire.style === "main" ? 2.4 :
+              wire.style === "helper" ? 1.15 :
+              1.35;
 
-          <path
-            d={vbez(p("trim1", "bottom"), p("lastFrame1", "top"))}
-            fill="none"
-            stroke={PAL.fall}
-            strokeWidth={1.2}
-            strokeDasharray="5,3"
-            markerEnd="url(#arrFall)"
-          />
-          <path
-            d={vbez(p("trim2", "bottom"), p("lastFrame2", "top"))}
-            fill="none"
-            stroke={PAL.fall}
-            strokeWidth={1.2}
-            strokeDasharray="5,3"
-            markerEnd="url(#arrFall)"
-          />
-
-          <path
-            d={hbez(p("lastFrame1", "right"), p("kling", "left"), 60)}
-            fill="none"
-            stroke={PAL.fall}
-            strokeWidth={1.2}
-            strokeDasharray="5,3"
-            markerEnd="url(#arrFall)"
-          />
-
-          <path
-            d={hbez(p("lastFrame2", "right"), p("shot3", "left"), 60)}
-            fill="none"
-            stroke={PAL.fall}
-            strokeWidth={1.2}
-            strokeDasharray="5,3"
-            markerEnd="url(#arrFall)"
-          />
-
-          <path
-            d={pipePath(
-              p("gen4img", "bottom"),
-              [N.kling.x + 28, N.kling.y + N.kling.h],
-              PIPE_Y
-            )}
-            fill="none"
-            stroke={PAL.anch}
-            strokeWidth={1.1}
-            strokeDasharray="6,4"
-            markerEnd="url(#arrAnch)"
-          />
-
-          <path
-            d={pipePath(
-              [N.gen4img.x + N.gen4img.w - 28, N.gen4img.y + N.gen4img.h],
-              [N.shot3.x + 28, N.shot3.y + N.shot3.h],
-              PIPE_Y + 18
-            )}
-            fill="none"
-            stroke={PAL.anch}
-            strokeWidth={1.1}
-            strokeDasharray="6,4"
-            markerEnd="url(#arrAnch)"
-          />
-
-          <path
-            d={vbez(p("shot1", "bottom"), p("qa1", "top"))}
-            fill="none"
-            stroke={PAL.qaW}
-            strokeWidth={1}
-            strokeDasharray="4,4"
-            opacity={0.55}
-            markerEnd="url(#arrQA)"
-          />
-          <path
-            d={vbez(p("kling", "bottom"), p("qa2", "top"))}
-            fill="none"
-            stroke={PAL.qaW}
-            strokeWidth={1}
-            strokeDasharray="4,4"
-            opacity={0.55}
-            markerEnd="url(#arrQA)"
-          />
-          <path
-            d={vbez(p("shot3", "bottom"), p("qa3", "top"))}
-            fill="none"
-            stroke={PAL.qaW}
-            strokeWidth={1}
-            strokeDasharray="4,4"
-            opacity={0.55}
-            markerEnd="url(#arrQA)"
-          />
-
-          <path
-            d={vbez(p("jsonParse", "bottom"), p("contNote", "top"))}
-            fill="none"
-            stroke={PAL.help}
-            strokeWidth={1}
-            strokeDasharray="4,4"
-            markerEnd="url(#arrHelp)"
-          />
-          <path
-            d={hbez(p("contNote", "right"), p("audioNote", "left"), 40)}
-            fill="none"
-            stroke={PAL.help}
-            strokeWidth={1}
-            strokeDasharray="4,4"
-            markerEnd="url(#arrHelp)"
-          />
-          <path
-            d={hbez(p("audioNote", "right"), p("socialPack", "left"), 40)}
-            fill="none"
-            stroke={PAL.help}
-            strokeWidth={1}
-            strokeDasharray="4,4"
-            markerEnd="url(#arrHelp)"
-          />
-
-          <Dot pt={p("trim1", "bottom")} color={PAL.fall} />
-          <Dot pt={p("trim2", "bottom")} color={PAL.fall} />
-          <Dot pt={p("gen4img", "bottom")} color={PAL.anch} />
-          <Dot pt={p("shot1", "bottom")} color={PAL.qaW} />
-          <Dot pt={p("kling", "bottom")} color={PAL.qaW} />
-          <Dot pt={p("shot3", "bottom")} color={PAL.qaW} />
+            return (
+              <g key={idx}>
+                {wire.style === "main" && (
+                  <path
+                    d={d}
+                    fill="none"
+                    stroke={color}
+                    strokeWidth={5}
+                    opacity={0.12}
+                  />
+                )}
+                <path
+                  d={d}
+                  fill="none"
+                  stroke={color}
+                  strokeWidth={strokeWidth}
+                  strokeDasharray={dashed ? "6 4" : undefined}
+                  opacity={opacity}
+                  markerEnd={`url(#${markerId(wire.style)})`}
+                />
+              </g>
+            );
+          })}
         </svg>
 
-        <Cap x={20} y={64} text="Inputs" />
-        <Cap x={196} y={100} text="AI Director" />
-        <Cap x={382} y={14} text="Structured Output" />
-        <Cap x={600} y={112} text="Image Chain" />
-        <Cap x={796} y={104} text="Canonical Anchor" color="#7B5EA7" />
-        <Cap x={1008} y={112} text="Shot 1 — Gen-4.5" />
-        <Cap x={1572} y={104} text="Shot 2 — Kling 3.0 Pro" />
-        <Cap x={2136} y={112} text="Shot 3 — Gen-4.5" />
-        <Cap x={2334} y={116} text="Output" />
-        <Cap x={1008} y={308} text="Fallback · QA Lane" color="#4A3A10" />
-        <Cap x={600} y={488} text="Helper Notes" color="#1D2A3A" />
+        <SectionLabel x={28} y={86} text="Inputs" />
+        <SectionLabel x={258} y={170} text="AI Director" />
+        <SectionLabel x={560} y={34} text="Structured Output" />
+        <SectionLabel x={880} y={116} text="Image Chain" />
+        <SectionLabel x={1140} y={106} text="Canonical Anchor" color="#9d71ff" />
+        <SectionLabel x={1435} y={116} text="Shot 1 — Gen-4.5" />
+        <SectionLabel x={2150} y={108} text="Shot 2 — Kling 3.0 Pro" />
+        <SectionLabel x={2900} y={116} text="Shot 3 — Gen-4.5" />
+        <SectionLabel x={1435} y={348} text="Fallback · QA Lane" color="#8c6a10" />
+        <SectionLabel x={880} y={570} text="Helper Lane" color="#3f5772" />
 
-        <Box r={N.sys} bg={PAL.input} badge="Text" title="System" sub="Director persona · rules" />
-        <Box r={N.usr} bg={PAL.input} badge="Text" title="User" sub="Scene brief · keywords" />
-        <Box r={N.imgRef} bg={PAL.input} badge="Image" title="Reference" sub="Hero subject ref image" />
-
-        <Box r={N.claude} bg={PAL.ai} badge="Claude" title="Claude" sub="Cinematic Sequence Generator" />
-
-        <Box
-          r={N.jsonParse}
-          bg={PAL.json}
-          badge="JSON Parse"
-          title="JSON Parse"
-          sub="13 structured outputs"
-          fields={[
-            "master_image_prompt",
-            "shot1_video_prompt",
-            "shot2_video_prompt",
-            "shot2_audio_prompt",
-            "shot3_video_prompt",
-            "kling_negative_prompt",
-            "character_lock",
-            "motion_intensity.shot1",
-            "motion_intensity.shot2",
-            "motion_intensity.shot3",
-            "operator_notes",
-            "hook",
-            "caption",
-          ]}
-        />
-
-        <Box
-          r={N.nano}
-          bg={PAL.nano}
-          badge="Nano Banana 2"
-          title="Nano Banana 2"
-          sub="Image gen · master still"
-        />
-
-        <Box
-          r={N.gen4img}
-          bg={PAL.anchor}
-          accent
-          badge="Gen-4 Image"
-          title="Gen-4 Image"
-          sub="Canonical Anchor · hero frame"
-        />
-
-        <Box
-          r={N.shot1}
-          bg={PAL.video}
-          badge="Gen-4.5"
-          title="Gen-4.5  Shot 1"
-          sub="I2V · anchor image input"
-        />
-
-        <Box
-          r={N.trim1}
-          bg={PAL.trim}
-          badge="Trim Video"
-          title="Trim Video"
-          sub="Clean clip before frame extract"
-        />
-
-        <Box
-          r={N.extract1}
-          bg={PAL.util}
-          badge="Extract Frame"
-          title="Extract Frame"
-          sub="Preferred continuity handoff →"
-        />
-
-        <Box
-          r={N.kling}
-          bg={PAL.kling}
-          badge="Kling 3.0 Pro"
-          title="Kling 3.0 Pro"
-          sub="Shot 2 · I2V"
-        />
-
-        <Box
-          r={N.trim2}
-          bg={PAL.trim}
-          badge="Trim Video"
-          title="Trim Video"
-          sub="Clean clip before frame extract"
-        />
-
-        <Box
-          r={N.extract2}
-          bg={PAL.util}
-          badge="Extract Frame"
-          title="Extract Frame"
-          sub="Preferred continuity handoff →"
-        />
-
-        <Box
-          r={N.shot3}
-          bg={PAL.video}
-          badge="Gen-4.5"
-          title="Gen-4.5  Shot 3"
-          sub="I2V · closing beat"
-        />
-
-        <Box
-          r={N.stitch}
-          bg={PAL.stitch}
-          badge="Stitch"
-          title="Stitch"
-          sub="Final sequence"
-        />
-
-        <Box
-          r={N.lastFrame1}
-          bg={PAL.last}
-          badge="Last Frame"
-          title="Last Frame"
-          sub="Fallback after Trim Video"
-          dim
-        />
-        <Box
-          r={N.lastFrame2}
-          bg={PAL.last}
-          badge="Last Frame"
-          title="Last Frame"
-          sub="Fallback after Trim Video"
-          dim
-        />
-
-        <Box
-          r={N.qa1}
-          bg={PAL.qa}
-          badge="First Frame"
-          title="First Frame"
-          sub="QA — Shot 1 Start"
-          dim
-        />
-        <Box
-          r={N.qa2}
-          bg={PAL.qa}
-          badge="First Frame"
-          title="First Frame"
-          sub="QA — Shot 2 Start"
-          dim
-        />
-        <Box
-          r={N.qa3}
-          bg={PAL.qa}
-          badge="First Frame"
-          title="First Frame"
-          sub="QA — Shot 3 Start"
-          dim
-        />
-
-        <Box
-          r={N.contNote}
-          bg={PAL.note}
-          badge="Notes"
-          dim
-          title="Continuity Notes"
-          sub="Character lock · motion plan · operator guidance"
-          infoLines={[
-            "character_lock  ·  verify before each shot",
-            "motion_intensity.shot1 / .shot2 / .shot3",
-            "operator_notes  ·  read before retry",
-            "─────────────────────────────────",
-            "Lock good nodes via ⋯ menu after QA pass.",
-            "Seed-consistent retries: note seed in operator_notes.",
-            "Anchor fallback order:",
-            "  1 Extract Frame  (preferred)",
-            "  2 Last Frame after Trim Video",
-            "  3 Return to Gen-4 Image anchor",
-          ]}
-        />
-
-        <Box
-          r={N.audioNote}
-          bg={PAL.note}
-          badge="Notes"
-          dim
-          title="Audio Notes"
-          sub="Kling native audio direction"
-          infoLines={[
-            "Use shot2_audio_prompt for Kling Shot 2.",
-            "Paste into Kling audio field if available.",
-            "Match ambience to habitat and action beat.",
-          ]}
-        />
-
-        <Box
-          r={N.socialPack}
-          bg={PAL.note}
-          badge="Notes"
-          dim
-          title="Social Pack"
-          sub="hook · caption · format"
-          infoLines={[
-            "hook  →  first 1.5 s overlay text",
-            "caption  →  post body copy",
-            "Export: 9:16 · 1080p · ≤ 60 s",
-          ]}
-        />
+        {NODE_SPECS.map((spec) => (
+          <NodeBox
+            key={spec.id}
+            spec={spec}
+            pos={positions[spec.id]}
+            onPointerDown={onNodePointerDown(spec.id)}
+          />
+        ))}
 
         <div
           style={{
             position: "absolute",
-            left: 20,
-            bottom: 18,
-            display: "flex",
-            gap: 20,
-            alignItems: "center",
+            left: 28,
+            top: 18,
+            color: "#1e2f42",
+            fontSize: 11,
+            fontWeight: 700,
+            letterSpacing: "0.12em",
+            textTransform: "uppercase",
           }}
         >
-          {(
-            [
-              { color: PAL.main, dash: false, label: "Main pipeline" },
-              { color: PAL.fall, dash: true, label: "Last Frame fallback" },
-              { color: PAL.anch, dash: true, label: "Canonical Anchor fallback" },
-              { color: PAL.qaW, dash: true, label: "First Frame QA" },
-              { color: PAL.help, dash: true, label: "Helper notes" },
-            ] as { color: string; dash: boolean; label: string }[]
-          ).map(({ color, dash, label }) => (
-            <div key={label} style={{ display: "flex", alignItems: "center", gap: 6 }}>
-              <svg width={28} height={10}>
-                <line
-                  x1={0}
-                  y1={5}
-                  x2={28}
-                  y2={5}
-                  stroke={color}
-                  strokeWidth={dash ? 1.2 : 1.8}
-                  strokeDasharray={dash ? "5,3" : undefined}
-                />
-              </svg>
-              <span style={{ fontSize: 8.5, color: "#2C3D50" }}>{label}</span>
-            </div>
-          ))}
+          Wild Stories TV · AI Cinematic Pipeline
         </div>
 
         <div
           style={{
             position: "absolute",
-            left: 20,
-            top: 14,
-            fontSize: 11,
-            fontWeight: 700,
-            letterSpacing: "0.12em",
-            textTransform: "uppercase",
-            color: "#1E2F42",
+            left: 28,
+            bottom: 24,
+            display: "flex",
+            alignItems: "center",
+            gap: 18,
+            flexWrap: "wrap",
+            padding: "10px 12px",
+            borderRadius: 12,
+            background: "rgba(9,17,27,0.78)",
+            border: `1px solid ${BORDER}`,
           }}
         >
-          Wild Stories TV · AI Cinematic Pipeline
+          {([
+            { label: "Main pipeline", color: WIRE_COLORS.main, dashed: false },
+            { label: "Last Frame fallback", color: WIRE_COLORS.fallback, dashed: true },
+            { label: "Canonical Anchor fallback", color: WIRE_COLORS.anchor, dashed: true },
+            { label: "First Frame QA", color: WIRE_COLORS.qa, dashed: true },
+            { label: "Helper notes", color: WIRE_COLORS.helper, dashed: true },
+          ] as const).map((item) => (
+            <div key={item.label} style={{ display: "flex", alignItems: "center", gap: 7 }}>
+              <svg width={34} height={10}>
+                <line
+                  x1={0}
+                  y1={5}
+                  x2={34}
+                  y2={5}
+                  stroke={item.color}
+                  strokeWidth={item.dashed ? 1.3 : 2.1}
+                  strokeDasharray={item.dashed ? "6 4" : undefined}
+                />
+              </svg>
+              <span style={{ color: TEXT_SUB, fontSize: 9 }}>{item.label}</span>
+            </div>
+          ))}
         </div>
       </div>
     </div>
   );
 }
+
+function SectionLabel({
+  x,
+  y,
+  text,
+  color = "#2b3b50",
+}: {
+  x: number;
+  y: number;
+  text: string;
+  color?: string;
+}) {
+  return (
+    <div
+      style={{
+        position: "absolute",
+        left: x,
+        top: y,
+        color,
+        fontSize: 8,
+        fontWeight: 700,
+        letterSpacing: "0.12em",
+        textTransform: "uppercase",
+        pointerEvents: "none",
+        whiteSpace: "nowrap",
+      }}
+    >
+      {text}
+    </div>
+  );
+}
+
+const controlBtnStyle: React.CSSProperties = {
+  width: 30,
+  height: 30,
+  borderRadius: 8,
+  border: `1px solid ${BORDER}`,
+  background: "#0f1928",
+  color: "#607898",
+  cursor: "pointer",
+  fontSize: 16,
+  display: "flex",
+  alignItems: "center",
+  justifyContent: "center",
+};
