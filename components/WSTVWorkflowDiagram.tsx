@@ -1,771 +1,323 @@
 "use client";
 
+/* ════════════════════════════════════════════════════════════════════
+   WSTVWorkflowDiagram.tsx
+   Wild Stories TV — AI Video Production Pipeline
+
+   Official Runway node names used throughout (per help.runwayml.com):
+     Text · Image · Claude · JSON Parse · Gen-4 Image
+     Gen-4.5 · Extract Frame · First Frame · Trim Video · Last Frame · Stitch
+
+   Third-party nodes available inside Runway Workflows UI:
+     Kling 3.0 Pro · Nano Banana 2
+
+   Node locking and seed discipline are workflow actions, not separate
+   media nodes. They are documented inside Continuity Notes only.
+════════════════════════════════════════════════════════════════════ */
+
 import {
-  useCallback,
-  useMemo,
   useState,
+  useRef,
+  useCallback,
   type MouseEvent as ReactMouseEvent,
   type TouchEvent as ReactTouchEvent,
   type WheelEvent as ReactWheelEvent,
 } from "react";
 import type { GeneratedPackage } from "@/types";
 
-// ─────────────────────────────────────────────────────────────
-// components/WSTVWorkflowDiagram.tsx
-// WSTV — Strong Final Workflow Diagram (Runway-Aligned Edition)
-//
-// Runway official best practices applied (help.runwayml.com):
-//   • Input image quality is critical — artifact-free, high-res
-//   • I2V prompt = motion only — don't restate image content
-//   • Use positional language for multiple subjects
-//   • Sequential timestamps supported for temporal control
-//   • Extract Frame = preferred handoff (choose cleanest frame)
-//   • Last Frame = fallback only (if final frame happens to be clean)
-//   • Fixed Seed available for consistent motion across retries
-//   • JSON formatting ignored by model — plain text prompts only
-//   • Avoid negative phrasing — describe what SHOULD happen
-//   • Duration 2–10s — longer for complex sequential actions
-//
-// Node naming (real Runway Workflows names):
-//   Text, Image, Claude, JSON Parse, Nano Banana 2,
-//   Gen-4.5, Kling 3.0 Pro, Extract Frame, Last Frame, Stitch
-//
-// Main production lane:
-//   Text(System) + Text(User) + Image(Ref) → Claude → JSON Parse
-//   → Nano Banana 2 → Master Still
-//   → Gen-4.5 Shot 1 → Extract Frame → Kling Shot 2
-//   → Extract Frame → Gen-4.5 Shot 3 → Stitch
-//
-// Helper lane (metadata + copy, below main lane):
-//   JSON Parse → Continuity Notes (character_lock, motion_intensity.*, operator_notes)
-//   JSON Parse → Audio Notes     (shot2_audio_prompt)
-//   JSON Parse → Social Pack     (hook, caption)
-//
-// Negative prompt wired ONLY to Kling (Runway: not supported).
-// Last Frame nodes have dashed fallback wires to next shots.
-// ─────────────────────────────────────────────────────────────
+// ── Canvas geometry ─────────────────────────────────────────────────
+const CW = 2460;
+const CH = 720;
 
-/* ── Content-type color coding (official Runway Workflows) ── */
-const TC: Record<string, { port: string; wire: string }> = {
-  text:  { port: "#f59e0b", wire: "#f59e0b" },  // Orange
-  image: { port: "#3b82f6", wire: "#3b82f6" },  // Blue
-  audio: { port: "#eab308", wire: "#eab308" },  // Yellow
-  video: { port: "#22c55e", wire: "#22c55e" },  // Green
+// ── Colour palette ───────────────────────────────────────────────────
+const PAL = {
+  input: "#0C1520",
+  ai: "#14092E",
+  json: "#070C18",
+  nano: "#051A0E",
+  anchor: "#1A0544",
+  video: "#060F28",
+  kling: "#1E0B00",
+  util: "#041420",
+  trim: "#071318",
+  last: "#160202",
+  qa: "#100C00",
+  stitch: "#0D0220",
+  note: "#08101C",
+
+  main: "#60A5FA",
+  fall: "#FB923C",
+  anch: "#C084FC",
+  qaW: "#FBBF24",
+  help: "#1D2A3A",
+} as const;
+
+// ── Layout constants ─────────────────────────────────────────────────
+type Rect = { x: number; y: number; w: number; h: number };
+type Pt = [number, number];
+type Side = "right" | "left" | "top" | "bottom";
+
+const N: Record<string, Rect> = {
+  sys: { x: 20, y: 88, w: 122, h: 44 },
+  usr: { x: 20, y: 144, w: 122, h: 44 },
+  imgRef: { x: 20, y: 200, w: 122, h: 44 },
+
+  claude: { x: 196, y: 124, w: 134, h: 74 },
+
+  jsonParse: { x: 382, y: 36, w: 160, h: 290 },
+
+  nano: { x: 600, y: 136, w: 138, h: 58 },
+  gen4img: { x: 796, y: 128, w: 152, h: 72 },
+
+  shot1: { x: 1008, y: 136, w: 140, h: 58 },
+  trim1: { x: 1210, y: 141, w: 124, h: 48 },
+  extract1: { x: 1390, y: 141, w: 124, h: 48 },
+
+  kling: { x: 1572, y: 128, w: 144, h: 72 },
+  trim2: { x: 1774, y: 141, w: 124, h: 48 },
+  extract2: { x: 1954, y: 141, w: 124, h: 48 },
+
+  shot3: { x: 2136, y: 136, w: 140, h: 58 },
+  stitch: { x: 2334, y: 140, w: 106, h: 48 },
+
+  lastFrame1: { x: 1210, y: 330, w: 124, h: 48 },
+  lastFrame2: { x: 1774, y: 330, w: 124, h: 48 },
+
+  qa1: { x: 1008, y: 330, w: 134, h: 48 },
+  qa2: { x: 1572, y: 330, w: 134, h: 48 },
+  qa3: { x: 2136, y: 330, w: 134, h: 48 },
+
+  contNote: { x: 600, y: 510, w: 208, h: 174 },
+  audioNote: { x: 1210, y: 510, w: 162, h: 100 },
+  socialPack: { x: 1774, y: 510, w: 156, h: 100 },
 };
 
-/* ── Engine accent colors ──────────────────────────────────── */
-const ENG: Record<
-  string,
-  {
-    accent: string;
-    badge: string;
-    badgeText: string;
-    label: string;
-    icon: string;
+// ── Geometry helpers ─────────────────────────────────────────────────
+function port(r: Rect, s: Side): Pt {
+  switch (s) {
+    case "right":
+      return [r.x + r.w, r.y + r.h / 2];
+    case "left":
+      return [r.x, r.y + r.h / 2];
+    case "top":
+      return [r.x + r.w / 2, r.y];
+    case "bottom":
+      return [r.x + r.w / 2, r.y + r.h];
   }
-> = {
-  runway: {
-    accent: "#16a34a",
-    badge: "#14532d",
-    badgeText: "#bbf7d0",
-    label: "Runway",
-    icon: "▶",
-  },
-  claude: {
-    accent: "#f97316",
-    badge: "#4a240d",
-    badgeText: "#fdba74",
-    label: "Claude",
-    icon: "✦",
-  },
-  kling: {
-    accent: "#2563eb",
-    badge: "#1e3a5f",
-    badgeText: "#93c5fd",
-    label: "Kling",
-    icon: "◆",
-  },
-};
+}
 
-/* ── Layout constants ──────────────────────────────────────── */
-const NW   = 252;
-const PR   = 5.5;
-const PS   = 26;
-const HH   = 42;
-const PY0  = HH + 16;
+function hbez(a: Pt, b: Pt, c = 54): string {
+  const [x1, y1] = a;
+  const [x2, y2] = b;
+  return `M ${x1} ${y1} C ${x1 + c} ${y1}, ${x2 - c} ${y2}, ${x2} ${y2}`;
+}
 
-/* ── Helper lane Y baseline (world coords) ─────────────────── */
-const HELPER_Y = 700;
+function vbez(a: Pt, b: Pt): string {
+  const [x1, y1] = a;
+  const [x2, y2] = b;
+  const m = (y1 + y2) / 2;
+  return `M ${x1} ${y1} C ${x1} ${m}, ${x2} ${m}, ${x2} ${y2}`;
+}
 
-type Port = {
-  id: string;
-  type: string;
-  label: string;
-};
-
-type Node = {
-  id: string;
-  x: number;
-  y: number;
-  title: string;
-  sub: string;
-  engine: keyof typeof ENG;
-  cat: "input" | "model" | "utility";
-  info: string;
-  inputs: Port[];
-  outputs: Port[];
-};
-
-type Wire = {
-  from: string;
-  to: string;
-  type: keyof typeof TC;
-  dashed?: boolean;
-  /** visually de-emphasised — used for helper-lane wires */
-  helper?: boolean;
-};
-
-const nodeHeight = (n: Node) =>
-  PY0 + Math.max(n.inputs.length, n.outputs.length) * PS + 18;
-
-// ─────────────────────────────────────────────────────────────
-// NODE DEFINITIONS
-// ─────────────────────────────────────────────────────────────
-function buildNodes(): Node[] {
+function pipePath(a: Pt, b: Pt, pipeY: number, r = 36): string {
+  const [x1, y1] = a;
+  const [x2, y2] = b;
   return [
-    /* ══ COLUMN 0 — Input nodes ═══════════════════════════════ */
-    {
-      id: "text_system",
-      x: 40,
-      y: 40,
-      title: "Text",
-      sub: "System Prompt",
-      engine: "runway",
-      cat: "input",
-      info: "WSTV rules · JSON schema · motion-only I2V instructions",
-      inputs: [],
-      outputs: [{ id: "text", type: "text", label: "Text" }],
-    },
-    {
-      id: "text_user",
-      x: 40,
-      y: 190,
-      title: "Text",
-      sub: "User Story Prompt",
-      engine: "runway",
-      cat: "input",
-      info: "Predator · prey · arc · habitat · weather · tone",
-      inputs: [],
-      outputs: [{ id: "text", type: "text", label: "Text" }],
-    },
-    {
-      id: "image_ref",
-      x: 40,
-      y: 340,
-      title: "Image",
-      sub: "Reference Image (optional)",
-      engine: "runway",
-      cat: "input",
-      info: "High-res · artifact-free · clear subject separation",
-      inputs: [],
-      outputs: [{ id: "image", type: "image", label: "Image" }],
-    },
-
-    /* ══ COLUMN 1 — LLM planning ═════════════════════════════ */
-    {
-      id: "claude",
-      x: 360,
-      y: 150,
-      title: "Claude",
-      sub: "LLM Prompt Planner",
-      engine: "claude",
-      cat: "model",
-      info: "Returns JSON · image prompt + 3 shots + negative + meta",
-      inputs: [
-        { id: "system", type: "text",  label: "System Prompt" },
-        { id: "prompt", type: "text",  label: "Prompt *"      },
-        { id: "image",  type: "image", label: "Image"         },
-      ],
-      outputs: [{ id: "text", type: "text", label: "Text" }],
-    },
-
-    /* ══ COLUMN 2 — JSON Parse (13 outputs) ══════════════════ */
-    {
-      id: "json_parse",
-      x: 700,
-      y: 60,
-      title: "JSON Parse",
-      sub: "Structured Prompt Split",
-      engine: "runway",
-      cat: "utility",
-      info: "Official Runway node · splits JSON into typed fields",
-      inputs: [{ id: "json", type: "text", label: "JSON *" }],
-      outputs: [
-        /* ── render outputs (main lane) ── */
-        { id: "master",       type: "text", label: "master_image_prompt"   },
-        { id: "shot1",        type: "text", label: "shot1_video_prompt"    },
-        { id: "shot2",        type: "text", label: "shot2_video_prompt"    },
-        { id: "audio_prompt", type: "text", label: "shot2_audio_prompt"    },
-        { id: "shot3",        type: "text", label: "shot3_video_prompt"    },
-        { id: "negative",     type: "text", label: "kling_negative_prompt" },
-        /* ── metadata outputs (helper lane) ── */
-        { id: "char_lock",    type: "text", label: "character_lock"        },
-        { id: "mi_s1",        type: "text", label: "motion_intensity.shot1"},
-        { id: "mi_s2",        type: "text", label: "motion_intensity.shot2"},
-        { id: "mi_s3",        type: "text", label: "motion_intensity.shot3"},
-        { id: "op_notes",     type: "text", label: "operator_notes"        },
-        { id: "hook",         type: "text", label: "hook"                  },
-        { id: "caption",      type: "text", label: "caption"               },
-      ],
-    },
-
-    /* ══ COLUMN 3 — Image generation ════════════════════════= */
-    {
-      id: "nano_banana_2",
-      x: 1060,
-      y: 40,
-      title: "Nano Banana 2",
-      sub: "Master Still Generator",
-      engine: "runway",
-      cat: "model",
-      info: "High-res · artifact-free · clear full-body · clean BG",
-      inputs: [
-        { id: "text",  type: "text",  label: "Text *" },
-        { id: "image", type: "image", label: "Image"  },
-      ],
-      outputs: [{ id: "image", type: "image", label: "Image" }],
-    },
-
-    /* ══ COLUMN 4 — Shot 1 video generation ═════════════════ */
-    {
-      id: "gen45_s1",
-      x: 1060,
-      y: 280,
-      title: "Gen-4.5",
-      sub: "Shot 1 — Opening Tension",
-      engine: "runway",
-      cat: "model",
-      info: "I2V motion-only · don't restate image · 5–10s · 24/25fps",
-      inputs: [
-        { id: "image", type: "image", label: "Image *" },
-        { id: "text",  type: "text",  label: "Text *"  },
-      ],
-      outputs: [{ id: "video", type: "video", label: "Video" }],
-    },
-
-    /* ══ COLUMN 5 — Handoff: Shot 1 → Shot 2 ═══════════════ */
-    {
-      id: "extract_1",
-      x: 1400,
-      y: 250,
-      title: "Extract Frame",
-      sub: "Preferred — Shot 1 → Shot 2",
-      engine: "runway",
-      cat: "utility",
-      info: "Scrub to cleanest full-body frame · main path",
-      inputs:  [{ id: "video", type: "video", label: "Video *" }],
-      outputs: [{ id: "image", type: "image", label: "Image"   }],
-    },
-    {
-      id: "last_1",
-      x: 1400,
-      y: 420,
-      title: "Last Frame",
-      sub: "Fallback — Shot 1 → Shot 2",
-      engine: "runway",
-      cat: "utility",
-      info: "Auto final frame · use only if clean full-body",
-      inputs:  [{ id: "video", type: "video", label: "Video *" }],
-      outputs: [{ id: "image", type: "image", label: "Image"   }],
-    },
-
-    /* ══ COLUMN 6 — Shot 2 (Kling action lane) ═════════════ */
-    {
-      id: "kling_s2",
-      x: 1740,
-      y: 280,
-      title: "Kling 3.0 Pro",
-      sub: "Shot 2 — Action Pressure",
-      engine: "kling",
-      cat: "model",
-      info: "I2V · Bind Subject · negative OK · 3–15s · 4K/60fps",
-      inputs: [
-        { id: "image",    type: "image", label: "Image *"  },
-        { id: "text",     type: "text",  label: "Text *"   },
-        { id: "negative", type: "text",  label: "Negative" },
-      ],
-      outputs: [{ id: "video", type: "video", label: "Video" }],
-    },
-
-    /* ══ COLUMN 7 — Handoff: Shot 2 → Shot 3 ═══════════════ */
-    {
-      id: "extract_2",
-      x: 2080,
-      y: 250,
-      title: "Extract Frame",
-      sub: "Preferred — Shot 2 → Shot 3",
-      engine: "runway",
-      cat: "utility",
-      info: "Scrub to cleanest full-body frame · main path",
-      inputs:  [{ id: "video", type: "video", label: "Video *" }],
-      outputs: [{ id: "image", type: "image", label: "Image"   }],
-    },
-    {
-      id: "last_2",
-      x: 2080,
-      y: 420,
-      title: "Last Frame",
-      sub: "Fallback — Shot 2 → Shot 3",
-      engine: "runway",
-      cat: "utility",
-      info: "Auto final frame · use only if clean full-body",
-      inputs:  [{ id: "video", type: "video", label: "Video *" }],
-      outputs: [{ id: "image", type: "image", label: "Image"   }],
-    },
-
-    /* ══ COLUMN 8 — Shot 3 video generation ═════════════════ */
-    {
-      id: "gen45_s3",
-      x: 2420,
-      y: 280,
-      title: "Gen-4.5",
-      sub: "Shot 3 — Resolved Tension",
-      engine: "runway",
-      cat: "model",
-      info: "I2V motion-only · don't restate image · 5–10s · 24/25fps",
-      inputs: [
-        { id: "image", type: "image", label: "Image *" },
-        { id: "text",  type: "text",  label: "Text *"  },
-      ],
-      outputs: [{ id: "video", type: "video", label: "Video" }],
-    },
-
-    /* ══ COLUMN 9 — Final assembly ══════════════════════════ */
-    {
-      id: "stitch",
-      x: 2760,
-      y: 290,
-      title: "Stitch",
-      sub: "Final Sequence",
-      engine: "runway",
-      cat: "utility",
-      info: "Combine S1+S2+S3 · remove shared handoff frames",
-      inputs: [
-        { id: "input1", type: "video", label: "Input 1 *" },
-        { id: "input2", type: "video", label: "Input 2 *" },
-        { id: "input3", type: "video", label: "Input 3 *" },
-      ],
-      outputs: [{ id: "video", type: "video", label: "Video" }],
-    },
-
-    /* ══ HELPER LANE ════════════════════════════════════════ */
-
-    /* ── Continuity Notes (under JSON Parse / NB2 column) ── */
-    {
-      id: "continuity_notes",
-      x: 1060,
-      y: HELPER_Y,
-      title: "Continuity Notes",
-      sub: "Consistency + Operator Guidance",
-      engine: "runway",
-      cat: "utility",
-      info: "Read before each shot · not wired to model inputs",
-      inputs: [
-        { id: "char_lock", type: "text", label: "character_lock"         },
-        { id: "mi_s1",     type: "text", label: "motion_intensity.shot1" },
-        { id: "mi_s2",     type: "text", label: "motion_intensity.shot2" },
-        { id: "mi_s3",     type: "text", label: "motion_intensity.shot3" },
-        { id: "op_notes",  type: "text", label: "operator_notes"         },
-      ],
-      outputs: [],
-    },
-
-    /* ── Audio Notes (under Kling column) ─────────────────── */
-    {
-      id: "audio_notes",
-      x: 1740,
-      y: HELPER_Y,
-      title: "Audio Notes",
-      sub: "Kling Native Audio Direction",
-      engine: "kling",
-      cat: "utility",
-      info: "Paste into Kling audio field · not a Runway port",
-      inputs: [
-        { id: "audio_prompt", type: "text", label: "shot2_audio_prompt" },
-      ],
-      outputs: [],
-    },
-
-    /* ── Social Pack (under Gen-4.5 S3 column) ─────────────── */
-    {
-      id: "social_pack",
-      x: 2420,
-      y: HELPER_Y,
-      title: "Social Pack",
-      sub: "Reel Copy Output",
-      engine: "runway",
-      cat: "utility",
-      info: "hook · caption → TikTok / Reels / Shorts copy",
-      inputs: [
-        { id: "hook",    type: "text", label: "hook"    },
-        { id: "caption", type: "text", label: "caption" },
-      ],
-      outputs: [],
-    },
-  ];
+    `M ${x1} ${y1}`,
+    `C ${x1} ${y1 + r}, ${x1} ${pipeY - r}, ${x1} ${pipeY}`,
+    `L ${x2} ${pipeY}`,
+    `C ${x2} ${pipeY + r}, ${x2} ${y2 - r}, ${x2} ${y2}`,
+  ].join(" ");
 }
 
-// ─────────────────────────────────────────────────────────────
-// WIRE DEFINITIONS
-// ─────────────────────────────────────────────────────────────
-const WIRES: Wire[] = [
-  /* ── Inputs → Claude ────────────────────────────────────── */
-  { from: "text_system.text", to: "claude.system", type: "text"  },
-  { from: "text_user.text",   to: "claude.prompt", type: "text"  },
-  { from: "image_ref.image",  to: "claude.image",  type: "image" },
-
-  /* ── Claude → JSON Parse ─────────────────────────────────── */
-  { from: "claude.text", to: "json_parse.json", type: "text" },
-
-  /* ── JSON Parse → NB2 ────────────────────────────────────── */
-  { from: "json_parse.master",  to: "nano_banana_2.text",  type: "text"  },
-  { from: "image_ref.image",    to: "nano_banana_2.image", type: "image" },
-
-  /* ── NB2 → Gen-4.5 Shot 1 ────────────────────────────────── */
-  { from: "nano_banana_2.image", to: "gen45_s1.image", type: "image" },
-  { from: "json_parse.shot1",    to: "gen45_s1.text",  type: "text"  },
-
-  /* ── Shot 1 → Extract Frame (main) + Last Frame (fallback) ─ */
-  { from: "gen45_s1.video", to: "extract_1.video", type: "video"                  },
-  { from: "gen45_s1.video", to: "last_1.video",    type: "video", dashed: true    },
-
-  /* ── Extract/Last Frame 1 → Kling Shot 2 ───────────────────  */
-  { from: "extract_1.image", to: "kling_s2.image", type: "image"                  },
-  { from: "last_1.image",    to: "kling_s2.image", type: "image", dashed: true    },
-
-  /* ── JSON Parse → Kling Shot 2 (prompt + negative) ──────── */
-  { from: "json_parse.shot2",    to: "kling_s2.text",     type: "text" },
-  { from: "json_parse.negative", to: "kling_s2.negative", type: "text" },
-
-  /* ── Shot 2 → Extract Frame (main) + Last Frame (fallback) ─ */
-  { from: "kling_s2.video", to: "extract_2.video", type: "video"               },
-  { from: "kling_s2.video", to: "last_2.video",    type: "video", dashed: true },
-
-  /* ── Extract/Last Frame 2 → Gen-4.5 Shot 3 ─────────────── */
-  { from: "extract_2.image", to: "gen45_s3.image", type: "image"               },
-  { from: "last_2.image",    to: "gen45_s3.image", type: "image", dashed: true },
-
-  /* ── JSON Parse → Gen-4.5 Shot 3 ───────────────────────── */
-  { from: "json_parse.shot3", to: "gen45_s3.text", type: "text" },
-
-  /* ── All 3 shot videos → Stitch ─────────────────────────── */
-  { from: "gen45_s1.video", to: "stitch.input1", type: "video" },
-  { from: "kling_s2.video", to: "stitch.input2", type: "video" },
-  { from: "gen45_s3.video", to: "stitch.input3", type: "video" },
-
-  /* ══ HELPER LANE WIRES (text, de-emphasised) ══════════════ */
-
-  /* ── JSON Parse → Continuity Notes ─────────────────────── */
-  { from: "json_parse.char_lock", to: "continuity_notes.char_lock", type: "text", helper: true },
-  { from: "json_parse.mi_s1",     to: "continuity_notes.mi_s1",     type: "text", helper: true },
-  { from: "json_parse.mi_s2",     to: "continuity_notes.mi_s2",     type: "text", helper: true },
-  { from: "json_parse.mi_s3",     to: "continuity_notes.mi_s3",     type: "text", helper: true },
-  { from: "json_parse.op_notes",  to: "continuity_notes.op_notes",  type: "text", helper: true },
-
-  /* ── JSON Parse → Audio Notes ───────────────────────────── */
-  { from: "json_parse.audio_prompt", to: "audio_notes.audio_prompt", type: "text", helper: true },
-
-  /* ── JSON Parse → Social Pack ───────────────────────────── */
-  { from: "json_parse.hook",    to: "social_pack.hook",    type: "text", helper: true },
-  { from: "json_parse.caption", to: "social_pack.caption", type: "text", helper: true },
-];
-
-// ─────────────────────────────────────────────────────────────
-// SVG HELPERS
-// ─────────────────────────────────────────────────────────────
-function getPortPos(
-  nodes: Node[],
-  nodeId: string,
-  portId: string,
-  side: "in" | "out"
-) {
-  const n = nodes.find((item) => item.id === nodeId);
-  if (!n) return { x: 0, y: 0 };
-
-  const ports = side === "out" ? n.outputs : n.inputs;
-  const idx   = ports.findIndex((p) => p.id === portId);
-  if (idx < 0) return { x: 0, y: 0 };
-
-  return {
-    x: side === "out" ? n.x + NW : n.x,
-    y: n.y + PY0 + idx * PS,
-  };
-}
-
-function bezierPath(x1: number, y1: number, x2: number, y2: number) {
-  const cp = Math.max(60, Math.abs(x2 - x1) * 0.38);
-  return `M${x1},${y1} C${x1 + cp},${y1} ${x2 - cp},${y2} ${x2},${y2}`;
-}
-
-// ─────────────────────────────────────────────────────────────
-// SVG COMPONENTS
-// ─────────────────────────────────────────────────────────────
-function WireEl({ wire, nodes }: { wire: Wire; nodes: Node[] }) {
-  const [fromNode, fromPort] = wire.from.split(".");
-  const [toNode,   toPort  ] = wire.to.split(".");
-
-  const a = getPortPos(nodes, fromNode, fromPort, "out");
-  const b = getPortPos(nodes, toNode,   toPort,   "in");
-  const c = TC[wire.type].wire;
-  const d = bezierPath(a.x, a.y, b.x, b.y);
-
-  /* Helper-lane wires: thinner, more transparent, no glow, no dot */
-  if (wire.helper) {
-    return (
-      <path
-        d={d}
-        fill="none"
-        stroke={c}
-        strokeWidth={1.2}
-        opacity={0.28}
-        strokeDasharray="5 4"
-      />
-    );
-  }
-
+// ── Lane section labels ──────────────────────────────────────────────
+function Cap({ x, y, text, color = "#2B3B50" }: { x: number; y: number; text: string; color?: string }) {
   return (
-    <g>
-      {/* Soft glow behind the wire */}
-      <path d={d} fill="none" stroke={c} strokeWidth={3.5} opacity={0.09} />
-      {/* Main wire — solid for primary path, dashed for fallback */}
-      <path
-        d={d}
-        fill="none"
-        stroke={c}
-        strokeWidth={1.7}
-        opacity={wire.dashed ? 0.38 : 0.72}
-        strokeDasharray={wire.dashed ? "7 5" : "none"}
-      />
-      {/* Animated flow dot (primary path only) */}
-      {!wire.dashed && (
-        <circle r={2.1} fill={c} opacity={0.85}>
-          <animateMotion dur="3.4s" repeatCount="indefinite" path={d} />
-        </circle>
-      )}
-    </g>
+    <div
+      style={{
+        position: "absolute",
+        left: x,
+        top: y,
+        fontSize: 8,
+        fontWeight: 700,
+        letterSpacing: "0.12em",
+        textTransform: "uppercase",
+        color,
+        whiteSpace: "nowrap",
+        pointerEvents: "none",
+      }}
+    >
+      {text}
+    </div>
   );
 }
 
-function PortEl({
-  x,
-  y,
-  type,
-  label,
-  side,
+// ── Node box ─────────────────────────────────────────────────────────
+function Box({
+  r,
+  title,
+  sub,
+  bg,
+  accent,
+  badge,
+  dim,
+  fields,
+  infoLines,
 }: {
-  x: number;
-  y: number;
-  type: keyof typeof TC;
-  label: string;
-  side: "in" | "out";
+  r: Rect;
+  title: string;
+  sub?: string;
+  bg: string;
+  accent?: boolean;
+  badge?: string;
+  dim?: boolean;
+  fields?: string[];
+  infoLines?: string[];
 }) {
-  const c = TC[type].port;
-
   return (
-    <g>
-      <circle cx={x} cy={y} r={PR} fill="#171728" stroke={c} strokeWidth={1.8} />
-      <circle cx={x} cy={y} r={2.5} fill={c} opacity={0.5} />
-      <text
-        x={side === "in" ? x + 12 : x - 12}
-        y={y + 3.5}
-        fill="#8b8fa3"
-        fontSize={9}
-        fontFamily="'JetBrains Mono', monospace"
-        textAnchor={side === "in" ? "start" : "end"}
-        style={{ userSelect: "none" }}
-      >
-        {label}
-      </text>
-    </g>
-  );
-}
-
-function NodeEl({ node }: { node: Node }) {
-  const h = nodeHeight(node);
-  const e = ENG[node.engine];
-
-  return (
-    <g transform={`translate(${node.x},${node.y})`}>
-      {/* Drop shadow */}
-      <rect x={2} y={2} width={NW} height={h} rx={9} fill="rgba(0,0,0,0.26)" />
-      {/* Node body */}
-      <rect width={NW} height={h} rx={9} fill="#181830" stroke="#282848" strokeWidth={1} />
-      {/* Engine accent bar (top edge) */}
-      <rect width={NW} height={3.5} rx={9} ry={9} fill={e.accent} />
-      <rect y={1.5} width={NW} height={2} fill={e.accent} />
-      {/* Header background tint */}
-      <rect x={0.5} y={3.5} width={NW - 1} height={HH - 4} fill="rgba(255,255,255,0.02)" />
-
-      {/* Engine badge */}
-      <rect x={8} y={10} width={e.label.length * 7 + 20} height={16} rx={4} fill={e.badge} />
-      <text
-        x={17}
-        y={21}
-        fill={e.badgeText}
-        fontSize={9}
-        fontWeight={700}
-        fontFamily="'JetBrains Mono', monospace"
-        style={{ userSelect: "none" }}
-      >
-        {e.icon} {e.label}
-      </text>
-
-      {/* Category tag */}
-      {node.cat === "input" && (
-        <>
-          <rect x={NW - 48} y={10} width={40} height={16} rx={4} fill="rgba(255,255,255,0.05)" />
-          <text x={NW - 28} y={21} fill="#5b5f73" fontSize={8} fontWeight={700}
-                textAnchor="middle" fontFamily="monospace" style={{ userSelect: "none" }}>INPUT</text>
-        </>
-      )}
-      {node.cat === "utility" && (
-        <>
-          <rect x={NW - 58} y={10} width={50} height={16} rx={4} fill="rgba(147,51,234,0.11)" />
-          <text x={NW - 33} y={21} fill="#c084fc" fontSize={8} fontWeight={700}
-                textAnchor="middle" fontFamily="monospace" style={{ userSelect: "none" }}>UTILITY</text>
-        </>
-      )}
-      {node.cat === "model" && (
-        <>
-          <rect x={NW - 52} y={10} width={44} height={16} rx={4} fill="rgba(34,197,94,0.08)" />
-          <text x={NW - 30} y={21} fill="#4ade80" fontSize={8} fontWeight={700}
-                textAnchor="middle" fontFamily="monospace" style={{ userSelect: "none" }}>MODEL</text>
-        </>
-      )}
-
-      {/* Node title */}
-      <text x={9} y={42} fill="#e5e7eb" fontSize={11.5} fontWeight={700}
-            fontFamily="'Inter', system-ui, sans-serif" style={{ userSelect: "none" }}>{node.title}</text>
-
-      {/* Subtitle */}
-      <text x={9} y={56} fill="#7b8097" fontSize={8.5} fontWeight={500}
-            fontFamily="'Inter', system-ui, sans-serif" style={{ userSelect: "none" }}>{node.sub}</text>
-
-      {/* Info line */}
-      {node.info && (
-        <text x={9} y={h - 6} fill="#49506a" fontSize={7.4}
-              fontFamily="'JetBrains Mono', monospace" style={{ userSelect: "none" }}>{node.info}</text>
-      )}
-
-      {/* Input ports */}
-      {node.inputs.map((p, i) => (
-        <PortEl key={`in-${node.id}-${p.id}`} x={0} y={PY0 + i * PS}
-                type={p.type as keyof typeof TC} label={p.label} side="in" />
-      ))}
-
-      {/* Output ports */}
-      {node.outputs.map((p, i) => (
-        <PortEl key={`out-${node.id}-${p.id}`} x={NW} y={PY0 + i * PS}
-                type={p.type as keyof typeof TC} label={p.label} side="out" />
-      ))}
-    </g>
-  );
-}
-
-// ─────────────────────────────────────────────────────────────
-// HELPER LANE DIVIDER — subtle horizontal rule + label
-// ─────────────────────────────────────────────────────────────
-function HelperLaneDivider({ y, xStart, xEnd }: { y: number; xStart: number; xEnd: number }) {
-  return (
-    <g>
-      {/* Dashed rule */}
-      <line
-        x1={xStart} y1={y}
-        x2={xEnd}   y2={y}
-        stroke="#282848"
-        strokeWidth={0.8}
-        strokeDasharray="6 5"
-        opacity={0.6}
+    <div
+      style={{
+        position: "absolute",
+        left: r.x,
+        top: r.y,
+        width: r.w,
+        height: r.h,
+        background: bg,
+        border: accent
+          ? "1.5px solid rgba(192,132,252,0.55)"
+          : "1px solid rgba(255,255,255,0.07)",
+        borderRadius: 8,
+        boxShadow: accent
+          ? "0 0 0 3px rgba(192,132,252,0.09), 0 4px 20px rgba(0,0,0,0.70)"
+          : "0 2px 10px rgba(0,0,0,0.55)",
+        overflow: "hidden",
+        opacity: dim ? 0.44 : 1,
+        userSelect: "none",
+      }}
+    >
+      <div
+        style={{
+          height: 3,
+          flexShrink: 0,
+          background: accent
+            ? "linear-gradient(90deg,#C084FC 0%,#818CF8 100%)"
+            : "rgba(255,255,255,0.05)",
+        }}
       />
-      {/* Label pill */}
-      <rect x={xStart} y={y - 10} width={190} height={18} rx={5} fill="#12122a" stroke="#282848" strokeWidth={0.6} />
-      <text
-        x={xStart + 10}
-        y={y + 3}
-        fill="#4b5180"
-        fontSize={8.5}
-        fontWeight={700}
-        fontFamily="'JetBrains Mono', monospace"
-        style={{ userSelect: "none" }}
+      <div
+        style={{
+          padding: "5px 9px 6px",
+          height: "calc(100% - 3px)",
+          boxSizing: "border-box",
+          overflowY: "hidden",
+        }}
       >
-        ▼ METADATA + COPY LANE
-      </text>
-    </g>
+        {badge && (
+          <span
+            style={{
+              display: "inline-block",
+              fontSize: 7,
+              fontWeight: 700,
+              letterSpacing: "0.09em",
+              color: "#4A5568",
+              background: "rgba(255,255,255,0.05)",
+              borderRadius: 3,
+              padding: "1px 5px",
+              marginBottom: 3,
+            }}
+          >
+            {badge}
+          </span>
+        )}
+
+        <div
+          style={{
+            fontSize: 11.5,
+            fontWeight: 700,
+            color: accent ? "#E9D5FF" : "#EDF2F8",
+            lineHeight: 1.25,
+            letterSpacing: "0.01em",
+          }}
+        >
+          {title}
+        </div>
+
+        {sub && (
+          <div style={{ fontSize: 9, color: "#3D5068", lineHeight: 1.3, marginTop: 2 }}>
+            {sub}
+          </div>
+        )}
+
+        {fields && (
+          <div style={{ marginTop: 5 }}>
+            {fields.map((f, i) => (
+              <div
+                key={f}
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  gap: 4,
+                  fontSize: 8.5,
+                  lineHeight: 1.7,
+                  color: i === 0 ? "#93C5FD" : "#2E3D52",
+                  borderTop: i > 0 ? "1px solid rgba(255,255,255,0.03)" : undefined,
+                }}
+              >
+                <span style={{ color: "#1D2B3A", flexShrink: 0 }}>▸</span>
+                <span style={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                  {f}
+                </span>
+              </div>
+            ))}
+          </div>
+        )}
+
+        {infoLines && (
+          <div style={{ marginTop: 5 }}>
+            {infoLines.map((ln, i) => (
+              <div
+                key={i}
+                style={{
+                  fontSize: 8,
+                  lineHeight: 1.6,
+                  color: i === 0 ? "#4A6380" : "#2B3A4C",
+                }}
+              >
+                {ln}
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+    </div>
   );
 }
 
-// ─────────────────────────────────────────────────────────────
-// LEGEND
-// ─────────────────────────────────────────────────────────────
-function LegendEl({ x, y }: { x: number; y: number }) {
+// ── Connector dot ────────────────────────────────────────────────────
+function Dot({ pt, color }: { pt: Pt; color: string }) {
+  return <circle cx={pt[0]} cy={pt[1]} r={3.5} fill={color} stroke="#0A0F18" strokeWidth={1.5} />;
+}
+
+// ── Arrow-head marker defs ───────────────────────────────────────────
+function MarkerDefs() {
+  const defs: Array<{ id: string; color: string }> = [
+    { id: "arrMain", color: PAL.main },
+    { id: "arrFall", color: PAL.fall },
+    { id: "arrAnch", color: PAL.anch },
+    { id: "arrQA", color: PAL.qaW },
+    { id: "arrHelp", color: "#364A62" },
+  ];
   return (
-    <g transform={`translate(${x},${y})`}>
-      <rect width={720} height={132} rx={8} fill="#12122a" stroke="#282848" strokeWidth={0.8} />
-
-      {/* Row 1: Content types */}
-      <text x={12} y={18} fill="#7b7f96" fontSize={9} fontWeight={700}
-            fontFamily="'Inter', sans-serif" style={{ userSelect: "none" }}>CONTENT TYPES (Official Runway)</text>
-      {(
-        [
-          ["text",  "Text (Orange)" ],
-          ["image", "Image (Blue)"  ],
-          ["audio", "Audio (Yellow)"],
-          ["video", "Video (Green)" ],
-        ] as const
-      ).map(([t, l], i) => (
-        <g key={t} transform={`translate(${12 + i * 110},28)`}>
-          <circle cx={5} cy={6} r={4} fill={TC[t].port} />
-          <text x={14} y={10} fill="#a0a4b8" fontSize={8.5}
-                fontFamily="'JetBrains Mono', monospace" style={{ userSelect: "none" }}>{l}</text>
-        </g>
+    <defs>
+      {defs.map(({ id, color }) => (
+        <marker key={id} id={id} markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto">
+          <path d="M0,0 L0,6 L7,3 z" fill={color} />
+        </marker>
       ))}
-
-      <line x1={12} y1={46} x2={708} y2={46} stroke="#282848" strokeWidth={0.4} />
-
-      {/* Row 2: Wire logic */}
-      <text x={12} y={62} fill="#7b7f96" fontSize={9} fontWeight={700}
-            fontFamily="'Inter', sans-serif" style={{ userSelect: "none" }}>WIRE LOGIC</text>
-      {[
-        "Solid = main production path",
-        "Dashed = fallback option only",
-        "Faint dashed = metadata / copy",
-        "Dots = data flow direction",
-      ].map((item, i) => (
-        <text key={item} x={12 + i * 178} y={78} fill="#a0a4b8" fontSize={7.2}
-              fontFamily="'JetBrains Mono', monospace" style={{ userSelect: "none" }}>{item}</text>
-      ))}
-
-      <line x1={12} y1={88} x2={708} y2={88} stroke="#282848" strokeWidth={0.4} />
-
-      {/* Row 3: Key rules */}
-      <text x={12} y={104} fill="#7b7f96" fontSize={9} fontWeight={700}
-            fontFamily="'Inter', sans-serif" style={{ userSelect: "none" }}>KEY RULES</text>
-      {[
-        "Gen-4.5 I2V = motion-only prompt",
-        "No negative prompts in Runway",
-        "Extract Frame > Last Frame",
-        "Helper lane = operator reference only",
-      ].map((item, i) => (
-        <text key={item} x={12 + i * 178} y={120} fill="#a0a4b8" fontSize={6.8}
-              fontFamily="'JetBrains Mono', monospace" style={{ userSelect: "none" }}>{item}</text>
-      ))}
-    </g>
+    </defs>
   );
 }
 
-// ═════════════════════════════════════════════════════════════
-// MAIN COMPONENT
-// ═════════════════════════════════════════════════════════════
 export default function WSTVWorkflowDiagram({
   data: _data,
   onCopy: _onCopy,
@@ -773,217 +325,545 @@ export default function WSTVWorkflowDiagram({
   data?: GeneratedPackage;
   onCopy?: (t: string) => void;
 }) {
-  const [pan,      setPan     ] = useState({ x: 0, y: 0 });
-  const [zoom,     setZoom    ] = useState(0.46);
-  const [drag,     setDrag    ] = useState(false);
-  const [dragStart,setDragStart] = useState({ x: 0, y: 0 });
-  const [panStart, setPanStart ] = useState({ x: 0, y: 0 });
-  const [isOpen,   setIsOpen  ] = useState(true);
+  const [zoom, setZoom] = useState(0.60);
+  const [pan, setPan] = useState<Pt>([0, 0]);
+  const dragging = useRef(false);
+  const lastPos = useRef<Pt>([0, 0]);
 
-  const nodes = useMemo(() => buildNodes(), []);
-
-  const onWheel = useCallback((e: ReactWheelEvent<SVGSVGElement>) => {
+  const onWheel = useCallback((e: ReactWheelEvent<HTMLDivElement>) => {
     e.preventDefault();
-    setZoom((z) => Math.min(2.5, Math.max(0.2, z + (e.deltaY > 0 ? -0.05 : 0.05))));
+    setZoom((z) => Math.min(2, Math.max(0.20, z - e.deltaY * 0.0008)));
   }, []);
 
-  const onMouseDown = useCallback(
-    (e: ReactMouseEvent<SVGSVGElement>) => {
-      if (e.button !== 0) return;
-      setDrag(true);
-      setDragStart({ x: e.clientX, y: e.clientY });
-      setPanStart({ ...pan });
-    },
-    [pan]
-  );
+  const onMouseDown = useCallback((e: ReactMouseEvent<HTMLDivElement>) => {
+    dragging.current = true;
+    lastPos.current = [e.clientX, e.clientY];
+  }, []);
 
-  const onMouseMove = useCallback(
-    (e: ReactMouseEvent<SVGSVGElement>) => {
-      if (!drag) return;
-      setPan({
-        x: panStart.x + (e.clientX - dragStart.x),
-        y: panStart.y + (e.clientY - dragStart.y),
-      });
-    },
-    [drag, dragStart, panStart]
-  );
+  const onMouseMove = useCallback((e: ReactMouseEvent<HTMLDivElement>) => {
+    if (!dragging.current) return;
+    const dx = e.clientX - lastPos.current[0];
+    const dy = e.clientY - lastPos.current[1];
+    lastPos.current = [e.clientX, e.clientY];
+    setPan((p) => [p[0] + dx, p[1] + dy]);
+  }, []);
 
-  const onMouseUp = useCallback(() => setDrag(false), []);
+  const onMouseUp = useCallback(() => {
+    dragging.current = false;
+  }, []);
 
-  const onTouchStart = useCallback(
-    (e: ReactTouchEvent<SVGSVGElement>) => {
-      if (e.touches.length !== 1) return;
-      const t = e.touches[0];
-      setDrag(true);
-      setDragStart({ x: t.clientX, y: t.clientY });
-      setPanStart({ ...pan });
-    },
-    [pan]
-  );
+  const onTouchStart = useCallback((e: ReactTouchEvent<HTMLDivElement>) => {
+    if (e.touches.length !== 1) return;
+    const t = e.touches[0];
+    dragging.current = true;
+    lastPos.current = [t.clientX, t.clientY];
+  }, []);
 
-  const onTouchMove = useCallback(
-    (e: ReactTouchEvent<SVGSVGElement>) => {
-      if (!drag || e.touches.length !== 1) return;
-      const t = e.touches[0];
-      setPan({
-        x: panStart.x + (t.clientX - dragStart.x),
-        y: panStart.y + (t.clientY - dragStart.y),
-      });
-    },
-    [drag, dragStart, panStart]
-  );
+  const onTouchMove = useCallback((e: ReactTouchEvent<HTMLDivElement>) => {
+    if (!dragging.current || e.touches.length !== 1) return;
+    const t = e.touches[0];
+    const dx = t.clientX - lastPos.current[0];
+    const dy = t.clientY - lastPos.current[1];
+    lastPos.current = [t.clientX, t.clientY];
+    setPan((p) => [p[0] + dx, p[1] + dy]);
+  }, []);
 
-  const reset = () => {
-    setPan({ x: 0, y: 0 });
-    setZoom(0.46);
-  };
+  const onTouchEnd = useCallback(() => {
+    dragging.current = false;
+  }, []);
 
-  /* Pipeline flow summary badges */
-  const flowBadges = [
-    { l: "Text",       c: "#f59e0b" },
-    { l: "→",          c: "#3e4258" },
-    { l: "Claude",     c: "#f97316" },
-    { l: "→",          c: "#3e4258" },
-    { l: "JSON Parse", c: "#16a34a" },
-    { l: "→",          c: "#3e4258" },
-    { l: "NB2",        c: "#16a34a" },
-    { l: "→",          c: "#3e4258" },
-    { l: "Gen-4.5 S1", c: "#16a34a" },
-    { l: "→",          c: "#3e4258" },
-    { l: "Extract",    c: "#16a34a" },
-    { l: "→",          c: "#3e4258" },
-    { l: "Kling S2",   c: "#2563eb" },
-    { l: "→",          c: "#3e4258" },
-    { l: "Extract",    c: "#16a34a" },
-    { l: "→",          c: "#3e4258" },
-    { l: "Gen-4.5 S3", c: "#16a34a" },
-    { l: "→",          c: "#3e4258" },
-    { l: "Stitch",     c: "#16a34a" },
-    { l: "↓",          c: "#3e4258" },
-    { l: "Continuity", c: "#c084fc" },
-    { l: "+",          c: "#3e4258" },
-    { l: "Audio",      c: "#c084fc" },
-    { l: "+",          c: "#3e4258" },
-    { l: "Social",     c: "#c084fc" },
-  ];
+  const p = (id: keyof typeof N, s: Side) => port(N[id], s);
+  const PIPE_Y = 460;
 
   return (
-    <div className="overflow-hidden rounded-2xl border border-gray-700 bg-[#0b0b1a] shadow-lg">
-      {/* ── Header toggle bar ──────────────────────────────── */}
-      <div className="flex flex-wrap items-center justify-between gap-2 border-b border-[#1e1e38] px-4 py-3">
-        <div className="flex flex-wrap items-center gap-2">
-          <div className="flex h-7 w-7 items-center justify-center rounded-md bg-gradient-to-br from-green-600 to-blue-600 text-xs font-extrabold text-white">
-            W
-          </div>
-          <span className="text-sm font-bold text-gray-200">
-            WSTV Pipeline — Runway-Aligned Node Graph
-          </span>
-          <span className="rounded bg-[rgba(255,255,255,0.05)] px-2 py-0.5 text-[9px] font-semibold text-gray-500">
-            Extract Frame first · Last Frame fallback · Motion-only I2V · Helper lane
-          </span>
-        </div>
-
-        <button
-          type="button"
-          onClick={() => setIsOpen((o) => !o)}
-          className="rounded-lg border border-[#282848] bg-[rgba(255,255,255,0.05)] px-3 py-1.5 text-xs font-semibold text-gray-400 hover:bg-[rgba(255,255,255,0.08)] active:scale-95"
+    <div
+      style={{
+        width: "100%",
+        height: "100vh",
+        background: "#060C14",
+        overflow: "hidden",
+        cursor: "grab",
+        fontFamily: "'Inter', 'SF Pro Display', system-ui, sans-serif",
+      }}
+      onWheel={onWheel}
+      onMouseDown={onMouseDown}
+      onMouseMove={onMouseMove}
+      onMouseUp={onMouseUp}
+      onMouseLeave={onMouseUp}
+      onTouchStart={onTouchStart}
+      onTouchMove={onTouchMove}
+      onTouchEnd={onTouchEnd}
+    >
+      <div
+        style={{
+          position: "fixed",
+          bottom: 22,
+          right: 22,
+          zIndex: 10,
+          display: "flex",
+          gap: 6,
+        }}
+      >
+        {([
+          ["+", () => setZoom((z) => Math.min(2, z + 0.10))],
+          ["−", () => setZoom((z) => Math.max(0.20, z - 0.10))],
+          ["⊡", () => {
+            setZoom(0.60);
+            setPan([0, 0]);
+          }],
+        ] as [string, () => void][]).map(([lbl, fn]) => (
+          <button
+            key={lbl}
+            onClick={fn}
+            style={{
+              width: 32,
+              height: 32,
+              background: "#0F1928",
+              color: "#607898",
+              border: "1px solid rgba(255,255,255,0.07)",
+              borderRadius: 7,
+              fontSize: 15,
+              cursor: "pointer",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+            }}
+          >
+            {lbl}
+          </button>
+        ))}
+        <span
+          style={{
+            lineHeight: "32px",
+            fontSize: 10,
+            color: "#2E4055",
+            paddingLeft: 4,
+          }}
         >
-          {isOpen ? "Hide Diagram ▲" : "Show Node Graph ▼"}
-        </button>
+          {Math.round(zoom * 100)}%
+        </span>
       </div>
 
-      {/* ── Diagram canvas ─────────────────────────────────── */}
-      {isOpen && (
-        <div className="relative" style={{ height: 620, cursor: drag ? "grabbing" : "grab" }}>
-          {/* Zoom controls (top-right) */}
-          <div className="absolute right-3 top-3 z-10 flex items-center gap-1.5 rounded-lg border border-[#282848] bg-[rgba(11,11,26,0.9)] px-2 py-1.5 backdrop-blur-sm">
-            <span className="text-[9px] text-gray-500" style={{ fontFamily: "monospace" }}>
-              {Math.round(zoom * 100)}%
-            </span>
-            <button type="button" onClick={() => setZoom((z) => Math.max(0.2, z - 0.1))}
-              className="flex h-6 w-6 items-center justify-center rounded border border-[#282848] bg-[rgba(255,255,255,0.05)] text-sm font-bold text-gray-400">−</button>
-            <button type="button" onClick={() => setZoom((z) => Math.min(2.5, z + 0.1))}
-              className="flex h-6 w-6 items-center justify-center rounded border border-[#282848] bg-[rgba(255,255,255,0.05)] text-sm font-bold text-gray-400">+</button>
-            <button type="button" onClick={reset}
-              className="rounded border border-[#282848] bg-[rgba(255,255,255,0.05)] px-2 py-0.5 text-[9px] font-semibold text-gray-400">Reset</button>
-          </div>
+      <div
+        style={{
+          transformOrigin: "0 0",
+          transform: `translate(${pan[0]}px,${pan[1]}px) scale(${zoom})`,
+          width: CW,
+          height: CH,
+          position: "relative",
+        }}
+      >
+        <svg
+          style={{ position: "absolute", top: 0, left: 0, overflow: "visible" }}
+          width={CW}
+          height={CH}
+        >
+          <MarkerDefs />
 
-          {/* Navigation hint (top-left) */}
-          <div
-            className="absolute left-3 top-3 z-10 rounded-lg border border-[#1e1e38] bg-[rgba(11,11,26,0.88)] px-3 py-2 text-[9px] text-gray-600 backdrop-blur-sm"
-            style={{ fontFamily: "monospace", lineHeight: 1.6 }}
-          >
-            Drag to pan · Scroll to zoom
-            <br />
-            Solid = main path · Dashed = fallback · Faint = metadata
-          </div>
+          <path d={hbez(p("sys", "right"), p("claude", "left"))} fill="none" stroke={PAL.main} strokeWidth={1.5} markerEnd="url(#arrMain)" />
+          <path d={hbez(p("usr", "right"), p("claude", "left"))} fill="none" stroke={PAL.main} strokeWidth={1.5} markerEnd="url(#arrMain)" />
+          <path d={hbez(p("imgRef", "right"), p("claude", "left"))} fill="none" stroke={PAL.main} strokeWidth={1.5} markerEnd="url(#arrMain)" />
 
-          {/* Pipeline flow bar (bottom-center) */}
-          <div className="absolute bottom-3 left-1/2 z-10 flex -translate-x-1/2 flex-wrap items-center gap-1 rounded-lg border border-[#1e1e38] bg-[rgba(11,11,26,0.92)] px-3 py-1.5 backdrop-blur-sm">
-            {flowBadges.map((s, i) => (
-              <span
-                key={i}
-                className="text-[9px]"
-                style={{
-                  color: s.c,
-                  fontFamily: "monospace",
-                  fontWeight: s.l === "→" || s.l === "↓" || s.l === "+" ? 400 : 700,
-                }}
-              >
-                {s.l}
-              </span>
-            ))}
-          </div>
+          <path d={hbez(p("claude", "right"), p("jsonParse", "left"))} fill="none" stroke={PAL.main} strokeWidth={1.5} markerEnd="url(#arrMain)" />
+          <path d={hbez(p("jsonParse", "right"), p("nano", "left"))} fill="none" stroke={PAL.main} strokeWidth={1.5} markerEnd="url(#arrMain)" />
+          <path d={hbez(p("nano", "right"), p("gen4img", "left"))} fill="none" stroke={PAL.main} strokeWidth={2} markerEnd="url(#arrMain)" />
+          <path d={hbez(p("gen4img", "right"), p("shot1", "left"))} fill="none" stroke={PAL.main} strokeWidth={2} markerEnd="url(#arrMain)" />
 
-          {/* SVG canvas */}
-          <svg
-            width="100%"
-            height="100%"
-            onWheel={onWheel}
-            onMouseDown={onMouseDown}
-            onMouseMove={onMouseMove}
-            onMouseUp={onMouseUp}
-            onMouseLeave={onMouseUp}
-            onTouchStart={onTouchStart}
-            onTouchMove={onTouchMove}
-            onTouchEnd={onMouseUp}
-          >
-            <defs>
-              <pattern id="wstv-sg" width="20" height="20" patternUnits="userSpaceOnUse">
-                <path d="M20 0L0 0 0 20" fill="none" stroke="#151530" strokeWidth="0.4" />
-              </pattern>
-              <pattern id="wstv-g" width="100" height="100" patternUnits="userSpaceOnUse">
-                <rect width="100" height="100" fill="url(#wstv-sg)" />
-                <path d="M100 0L0 0 0 100" fill="none" stroke="#1a1a35" strokeWidth="0.6" />
-              </pattern>
-            </defs>
+          <path d={hbez(p("shot1", "right"), p("trim1", "left"))} fill="none" stroke={PAL.main} strokeWidth={1.5} markerEnd="url(#arrMain)" />
+          <path d={hbez(p("trim1", "right"), p("extract1", "left"))} fill="none" stroke={PAL.main} strokeWidth={2} markerEnd="url(#arrMain)" />
+          <path d={hbez(p("extract1", "right"), p("kling", "left"))} fill="none" stroke={PAL.main} strokeWidth={2} markerEnd="url(#arrMain)" />
 
-            <rect width="7000" height="5000" x="-3500" y="-2500" fill="url(#wstv-g)" />
+          <path d={hbez(p("kling", "right"), p("trim2", "left"))} fill="none" stroke={PAL.main} strokeWidth={1.5} markerEnd="url(#arrMain)" />
+          <path d={hbez(p("trim2", "right"), p("extract2", "left"))} fill="none" stroke={PAL.main} strokeWidth={2} markerEnd="url(#arrMain)" />
+          <path d={hbez(p("extract2", "right"), p("shot3", "left"))} fill="none" stroke={PAL.main} strokeWidth={2} markerEnd="url(#arrMain)" />
+          <path d={hbez(p("shot3", "right"), p("stitch", "left"))} fill="none" stroke={PAL.main} strokeWidth={2} markerEnd="url(#arrMain)" />
 
-            <g transform={`translate(${pan.x + 20},${pan.y + 18}) scale(${zoom})`}>
-              {/* Helper-lane wires drawn first (behind nodes) */}
-              {WIRES.filter((w) => w.helper).map((wire, i) => (
-                <WireEl key={`hw-${i}`} wire={wire} nodes={nodes} />
-              ))}
-              {/* Main-lane wires */}
-              {WIRES.filter((w) => !w.helper).map((wire, i) => (
-                <WireEl key={`mw-${i}`} wire={wire} nodes={nodes} />
-              ))}
+          <path
+            d={vbez(p("trim1", "bottom"), p("lastFrame1", "top"))}
+            fill="none"
+            stroke={PAL.fall}
+            strokeWidth={1.2}
+            strokeDasharray="5,3"
+            markerEnd="url(#arrFall)"
+          />
+          <path
+            d={vbez(p("trim2", "bottom"), p("lastFrame2", "top"))}
+            fill="none"
+            stroke={PAL.fall}
+            strokeWidth={1.2}
+            strokeDasharray="5,3"
+            markerEnd="url(#arrFall)"
+          />
 
-              {/* Lane divider — sits between the two lanes */}
-              <HelperLaneDivider y={HELPER_Y - 28} xStart={40} xEnd={3050} />
+          <path
+            d={hbez(p("lastFrame1", "right"), p("kling", "left"), 60)}
+            fill="none"
+            stroke={PAL.fall}
+            strokeWidth={1.2}
+            strokeDasharray="5,3"
+            markerEnd="url(#arrFall)"
+          />
 
-              {/* All nodes */}
-              {nodes.map((node) => (
-                <NodeEl key={node.id} node={node} />
-              ))}
+          <path
+            d={hbez(p("lastFrame2", "right"), p("shot3", "left"), 60)}
+            fill="none"
+            stroke={PAL.fall}
+            strokeWidth={1.2}
+            strokeDasharray="5,3"
+            markerEnd="url(#arrFall)"
+          />
 
-              {/* Legend — bottom-left, below helper lane */}
-              <LegendEl x={40} y={HELPER_Y + 260} />
-            </g>
-          </svg>
+          <path
+            d={pipePath(
+              p("gen4img", "bottom"),
+              [N.kling.x + 28, N.kling.y + N.kling.h],
+              PIPE_Y
+            )}
+            fill="none"
+            stroke={PAL.anch}
+            strokeWidth={1.1}
+            strokeDasharray="6,4"
+            markerEnd="url(#arrAnch)"
+          />
+
+          <path
+            d={pipePath(
+              [N.gen4img.x + N.gen4img.w - 28, N.gen4img.y + N.gen4img.h],
+              [N.shot3.x + 28, N.shot3.y + N.shot3.h],
+              PIPE_Y + 18
+            )}
+            fill="none"
+            stroke={PAL.anch}
+            strokeWidth={1.1}
+            strokeDasharray="6,4"
+            markerEnd="url(#arrAnch)"
+          />
+
+          <path
+            d={vbez(p("shot1", "bottom"), p("qa1", "top"))}
+            fill="none"
+            stroke={PAL.qaW}
+            strokeWidth={1}
+            strokeDasharray="4,4"
+            opacity={0.55}
+            markerEnd="url(#arrQA)"
+          />
+          <path
+            d={vbez(p("kling", "bottom"), p("qa2", "top"))}
+            fill="none"
+            stroke={PAL.qaW}
+            strokeWidth={1}
+            strokeDasharray="4,4"
+            opacity={0.55}
+            markerEnd="url(#arrQA)"
+          />
+          <path
+            d={vbez(p("shot3", "bottom"), p("qa3", "top"))}
+            fill="none"
+            stroke={PAL.qaW}
+            strokeWidth={1}
+            strokeDasharray="4,4"
+            opacity={0.55}
+            markerEnd="url(#arrQA)"
+          />
+
+          <path
+            d={vbez(p("jsonParse", "bottom"), p("contNote", "top"))}
+            fill="none"
+            stroke={PAL.help}
+            strokeWidth={1}
+            strokeDasharray="4,4"
+            markerEnd="url(#arrHelp)"
+          />
+          <path
+            d={hbez(p("contNote", "right"), p("audioNote", "left"), 40)}
+            fill="none"
+            stroke={PAL.help}
+            strokeWidth={1}
+            strokeDasharray="4,4"
+            markerEnd="url(#arrHelp)"
+          />
+          <path
+            d={hbez(p("audioNote", "right"), p("socialPack", "left"), 40)}
+            fill="none"
+            stroke={PAL.help}
+            strokeWidth={1}
+            strokeDasharray="4,4"
+            markerEnd="url(#arrHelp)"
+          />
+
+          <Dot pt={p("trim1", "bottom")} color={PAL.fall} />
+          <Dot pt={p("trim2", "bottom")} color={PAL.fall} />
+          <Dot pt={p("gen4img", "bottom")} color={PAL.anch} />
+          <Dot pt={p("shot1", "bottom")} color={PAL.qaW} />
+          <Dot pt={p("kling", "bottom")} color={PAL.qaW} />
+          <Dot pt={p("shot3", "bottom")} color={PAL.qaW} />
+        </svg>
+
+        <Cap x={20} y={64} text="Inputs" />
+        <Cap x={196} y={100} text="AI Director" />
+        <Cap x={382} y={14} text="Structured Output" />
+        <Cap x={600} y={112} text="Image Chain" />
+        <Cap x={796} y={104} text="Canonical Anchor" color="#7B5EA7" />
+        <Cap x={1008} y={112} text="Shot 1 — Gen-4.5" />
+        <Cap x={1572} y={104} text="Shot 2 — Kling 3.0 Pro" />
+        <Cap x={2136} y={112} text="Shot 3 — Gen-4.5" />
+        <Cap x={2334} y={116} text="Output" />
+        <Cap x={1008} y={308} text="Fallback · QA Lane" color="#4A3A10" />
+        <Cap x={600} y={488} text="Helper Notes" color="#1D2A3A" />
+
+        <Box r={N.sys} bg={PAL.input} badge="Text" title="System" sub="Director persona · rules" />
+        <Box r={N.usr} bg={PAL.input} badge="Text" title="User" sub="Scene brief · keywords" />
+        <Box r={N.imgRef} bg={PAL.input} badge="Image" title="Reference" sub="Hero subject ref image" />
+
+        <Box r={N.claude} bg={PAL.ai} badge="Claude" title="Claude" sub="Cinematic Sequence Generator" />
+
+        <Box
+          r={N.jsonParse}
+          bg={PAL.json}
+          badge="JSON Parse"
+          title="JSON Parse"
+          sub="13 structured outputs"
+          fields={[
+            "master_image_prompt",
+            "shot1_video_prompt",
+            "shot2_video_prompt",
+            "shot2_audio_prompt",
+            "shot3_video_prompt",
+            "kling_negative_prompt",
+            "character_lock",
+            "motion_intensity.shot1",
+            "motion_intensity.shot2",
+            "motion_intensity.shot3",
+            "operator_notes",
+            "hook",
+            "caption",
+          ]}
+        />
+
+        <Box
+          r={N.nano}
+          bg={PAL.nano}
+          badge="Nano Banana 2"
+          title="Nano Banana 2"
+          sub="Image gen · master still"
+        />
+
+        <Box
+          r={N.gen4img}
+          bg={PAL.anchor}
+          accent
+          badge="Gen-4 Image"
+          title="Gen-4 Image"
+          sub="Canonical Anchor · hero frame"
+        />
+
+        <Box
+          r={N.shot1}
+          bg={PAL.video}
+          badge="Gen-4.5"
+          title="Gen-4.5  Shot 1"
+          sub="I2V · anchor image input"
+        />
+
+        <Box
+          r={N.trim1}
+          bg={PAL.trim}
+          badge="Trim Video"
+          title="Trim Video"
+          sub="Clean clip before frame extract"
+        />
+
+        <Box
+          r={N.extract1}
+          bg={PAL.util}
+          badge="Extract Frame"
+          title="Extract Frame"
+          sub="Preferred continuity handoff →"
+        />
+
+        <Box
+          r={N.kling}
+          bg={PAL.kling}
+          badge="Kling 3.0 Pro"
+          title="Kling 3.0 Pro"
+          sub="Shot 2 · I2V"
+        />
+
+        <Box
+          r={N.trim2}
+          bg={PAL.trim}
+          badge="Trim Video"
+          title="Trim Video"
+          sub="Clean clip before frame extract"
+        />
+
+        <Box
+          r={N.extract2}
+          bg={PAL.util}
+          badge="Extract Frame"
+          title="Extract Frame"
+          sub="Preferred continuity handoff →"
+        />
+
+        <Box
+          r={N.shot3}
+          bg={PAL.video}
+          badge="Gen-4.5"
+          title="Gen-4.5  Shot 3"
+          sub="I2V · closing beat"
+        />
+
+        <Box
+          r={N.stitch}
+          bg={PAL.stitch}
+          badge="Stitch"
+          title="Stitch"
+          sub="Final sequence"
+        />
+
+        <Box
+          r={N.lastFrame1}
+          bg={PAL.last}
+          badge="Last Frame"
+          title="Last Frame"
+          sub="Fallback after Trim Video"
+          dim
+        />
+        <Box
+          r={N.lastFrame2}
+          bg={PAL.last}
+          badge="Last Frame"
+          title="Last Frame"
+          sub="Fallback after Trim Video"
+          dim
+        />
+
+        <Box
+          r={N.qa1}
+          bg={PAL.qa}
+          badge="First Frame"
+          title="First Frame"
+          sub="QA — Shot 1 Start"
+          dim
+        />
+        <Box
+          r={N.qa2}
+          bg={PAL.qa}
+          badge="First Frame"
+          title="First Frame"
+          sub="QA — Shot 2 Start"
+          dim
+        />
+        <Box
+          r={N.qa3}
+          bg={PAL.qa}
+          badge="First Frame"
+          title="First Frame"
+          sub="QA — Shot 3 Start"
+          dim
+        />
+
+        <Box
+          r={N.contNote}
+          bg={PAL.note}
+          badge="Notes"
+          dim
+          title="Continuity Notes"
+          sub="Character lock · motion plan · operator guidance"
+          infoLines={[
+            "character_lock  ·  verify before each shot",
+            "motion_intensity.shot1 / .shot2 / .shot3",
+            "operator_notes  ·  read before retry",
+            "─────────────────────────────────",
+            "Lock good nodes via ⋯ menu after QA pass.",
+            "Seed-consistent retries: note seed in operator_notes.",
+            "Anchor fallback order:",
+            "  1 Extract Frame  (preferred)",
+            "  2 Last Frame after Trim Video",
+            "  3 Return to Gen-4 Image anchor",
+          ]}
+        />
+
+        <Box
+          r={N.audioNote}
+          bg={PAL.note}
+          badge="Notes"
+          dim
+          title="Audio Notes"
+          sub="Kling native audio direction"
+          infoLines={[
+            "Use shot2_audio_prompt for Kling Shot 2.",
+            "Paste into Kling audio field if available.",
+            "Match ambience to habitat and action beat.",
+          ]}
+        />
+
+        <Box
+          r={N.socialPack}
+          bg={PAL.note}
+          badge="Notes"
+          dim
+          title="Social Pack"
+          sub="hook · caption · format"
+          infoLines={[
+            "hook  →  first 1.5 s overlay text",
+            "caption  →  post body copy",
+            "Export: 9:16 · 1080p · ≤ 60 s",
+          ]}
+        />
+
+        <div
+          style={{
+            position: "absolute",
+            left: 20,
+            bottom: 18,
+            display: "flex",
+            gap: 20,
+            alignItems: "center",
+          }}
+        >
+          {(
+            [
+              { color: PAL.main, dash: false, label: "Main pipeline" },
+              { color: PAL.fall, dash: true, label: "Last Frame fallback" },
+              { color: PAL.anch, dash: true, label: "Canonical Anchor fallback" },
+              { color: PAL.qaW, dash: true, label: "First Frame QA" },
+              { color: PAL.help, dash: true, label: "Helper notes" },
+            ] as { color: string; dash: boolean; label: string }[]
+          ).map(({ color, dash, label }) => (
+            <div key={label} style={{ display: "flex", alignItems: "center", gap: 6 }}>
+              <svg width={28} height={10}>
+                <line
+                  x1={0}
+                  y1={5}
+                  x2={28}
+                  y2={5}
+                  stroke={color}
+                  strokeWidth={dash ? 1.2 : 1.8}
+                  strokeDasharray={dash ? "5,3" : undefined}
+                />
+              </svg>
+              <span style={{ fontSize: 8.5, color: "#2C3D50" }}>{label}</span>
+            </div>
+          ))}
         </div>
-      )}
+
+        <div
+          style={{
+            position: "absolute",
+            left: 20,
+            top: 14,
+            fontSize: 11,
+            fontWeight: 700,
+            letterSpacing: "0.12em",
+            textTransform: "uppercase",
+            color: "#1E2F42",
+          }}
+        >
+          Wild Stories TV · AI Cinematic Pipeline
+        </div>
+      </div>
     </div>
   );
 }
