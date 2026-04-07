@@ -5,6 +5,7 @@ import {
   useRef,
   useState,
   useCallback,
+  type CSSProperties,
   type PointerEvent as ReactPointerEvent,
   type WheelEvent as ReactWheelEvent,
 } from "react";
@@ -68,8 +69,8 @@ const TEXT_MAIN = "#edf2f8";
 const TEXT_SUB = "#7b8ca3";
 const TEXT_FAINT = "#526579";
 
-const VIEW_W = 2920;
-const VIEW_H = 980;
+const VIEW_W = 3560;
+const VIEW_H = 1120;
 
 const HEADER_H = 44;
 const ROW_H = 20;
@@ -100,10 +101,7 @@ function getNodeHeight(spec: NodeSpec) {
   return HEADER_H + BODY_TOP + rowCount * ROW_H + (infoExtra ? infoExtra + 10 : 0) + FOOTER_PAD;
 }
 
-function makeNode(
-  id: string,
-  cfg: Omit<NodeSpec, "id">
-): NodeSpec {
+function makeNode(id: string, cfg: Omit<NodeSpec, "id">): NodeSpec {
   return { id, ...cfg };
 }
 
@@ -155,7 +153,7 @@ const NODE_SPECS: NodeSpec[] = [
     title: "JSON Parse",
     subtitle: "Core Outputs",
     badge: "UTILITY",
-    width: 270,
+    width: 282,
     bg: "#070c18",
     accent: "#16a34a",
     inputs: [{ id: "json", label: "JSON", kind: "text", required: true }],
@@ -169,14 +167,14 @@ const NODE_SPECS: NodeSpec[] = [
       { id: "char_lock", label: "character_lock", kind: "text" },
       { id: "op_notes", label: "operator_notes", kind: "text" },
     ],
-    infoLines: ["Runway-documented JSON Parse max is 12 outputs, so this graph uses two JSON Parse nodes."],
+    infoLines: ["Core prompt pack fields"],
   }),
 
   makeNode("json_meta", {
     title: "JSON Parse",
     subtitle: "Meta Outputs",
     badge: "UTILITY",
-    width: 270,
+    width: 282,
     bg: "#070c18",
     accent: "#16a34a",
     inputs: [{ id: "json", label: "JSON", kind: "text", required: true }],
@@ -187,13 +185,14 @@ const NODE_SPECS: NodeSpec[] = [
       { id: "hook", label: "hook", kind: "text" },
       { id: "caption", label: "caption", kind: "text" },
     ],
+    infoLines: ["Second JSON Parse keeps the full pack within the documented JSON Parse output limit."],
   }),
 
   makeNode("nano_banana_2", {
     title: "Nano Banana 2",
     subtitle: "Master Still Generator",
     badge: "MODEL",
-    width: 208,
+    width: 214,
     bg: "#051a0e",
     accent: "#16a34a",
     inputs: [
@@ -207,19 +206,19 @@ const NODE_SPECS: NodeSpec[] = [
     title: "Gen-4 Image",
     subtitle: "Canonical Anchor",
     badge: "MODEL",
-    width: 220,
+    width: 232,
     bg: "#1a0544",
     accent: "#c084fc",
     inputs: [{ id: "image", label: "Image", kind: "image", required: true }],
     outputs: [{ id: "image", label: "Image", kind: "image" }],
-    infoLines: ["Normalized hero anchor used as the strongest fallback for later shots."],
+    infoLines: ["Strongest identity fallback for the full sequence."],
   }),
 
   makeNode("shot1", {
     title: "Gen-4.5",
     subtitle: "Shot 1 — Opening Tension",
     badge: "MODEL",
-    width: 220,
+    width: 228,
     bg: "#060f28",
     accent: "#16a34a",
     inputs: [
@@ -231,7 +230,7 @@ const NODE_SPECS: NodeSpec[] = [
 
   makeNode("trim1", {
     title: "Trim Video",
-    subtitle: "Clean fallback clip",
+    subtitle: "Fallback prep",
     badge: "UTILITY",
     width: 188,
     bg: "#071318",
@@ -255,7 +254,7 @@ const NODE_SPECS: NodeSpec[] = [
     title: "Kling 3.0 Pro",
     subtitle: "Shot 2 — Action Pressure",
     badge: "MODEL",
-    width: 236,
+    width: 244,
     bg: "#1e0b00",
     accent: "#2563eb",
     inputs: [
@@ -268,7 +267,7 @@ const NODE_SPECS: NodeSpec[] = [
 
   makeNode("trim2", {
     title: "Trim Video",
-    subtitle: "Clean fallback clip",
+    subtitle: "Fallback prep",
     badge: "UTILITY",
     width: 188,
     bg: "#071318",
@@ -292,7 +291,7 @@ const NODE_SPECS: NodeSpec[] = [
     title: "Gen-4.5",
     subtitle: "Shot 3 — Resolved Tension",
     badge: "MODEL",
-    width: 220,
+    width: 228,
     bg: "#060f28",
     accent: "#16a34a",
     inputs: [
@@ -306,7 +305,7 @@ const NODE_SPECS: NodeSpec[] = [
     title: "Stitch",
     subtitle: "Final Sequence",
     badge: "UTILITY",
-    width: 196,
+    width: 198,
     bg: "#0d0220",
     accent: "#16a34a",
     inputs: [
@@ -381,7 +380,7 @@ const NODE_SPECS: NodeSpec[] = [
     title: "Continuity Notes",
     subtitle: "character_lock + motion plan + operator guidance",
     badge: "NOTES",
-    width: 320,
+    width: 338,
     bg: "#08101c",
     dim: true,
     inputs: [
@@ -394,8 +393,8 @@ const NODE_SPECS: NodeSpec[] = [
     outputs: [],
     infoLines: [
       "Fallback order: Extract Frame → Last Frame after Trim → Canonical Anchor",
-      "Lock good nodes after QA and keep seed discipline on retries.",
-      "Use this panel as the continuity checklist, not as a media node.",
+      "Lock good nodes after QA and keep seeds consistent on retries.",
+      "This is guidance only, not a fake media node.",
     ],
   }),
 
@@ -403,13 +402,13 @@ const NODE_SPECS: NodeSpec[] = [
     title: "Audio Notes",
     subtitle: "shot2_audio_prompt",
     badge: "NOTES",
-    width: 250,
+    width: 260,
     bg: "#08101c",
     dim: true,
     inputs: [{ id: "audio_prompt", label: "shot2_audio_prompt", kind: "text" }],
     outputs: [],
     infoLines: [
-      "Paste this into Kling audio if available.",
+      "Paste into Kling audio if available.",
       "Keep ambience matched to habitat and action.",
     ],
   }),
@@ -418,7 +417,7 @@ const NODE_SPECS: NodeSpec[] = [
     title: "Social Pack",
     subtitle: "hook + caption",
     badge: "NOTES",
-    width: 240,
+    width: 248,
     bg: "#08101c",
     dim: true,
     inputs: [
@@ -436,7 +435,7 @@ const NODE_SPECS: NodeSpec[] = [
     title: "How to use Canonical Anchor",
     subtitle: "Practical fallback rule",
     badge: "GUIDE",
-    width: 540,
+    width: 640,
     bg: "#08101c",
     dim: true,
     inputs: [],
@@ -452,40 +451,40 @@ const NODE_SPECS: NodeSpec[] = [
 ];
 
 const DEFAULT_POSITIONS: Record<string, Point> = {
-  text_system: { x: 28, y: 108 },
-  text_user: { x: 28, y: 210 },
-  image_ref: { x: 28, y: 312 },
+  text_system: { x: 30, y: 120 },
+  text_user: { x: 30, y: 228 },
+  image_ref: { x: 30, y: 336 },
 
-  claude: { x: 258, y: 192 },
+  claude: { x: 270, y: 200 },
 
-  json_core: { x: 560, y: 58 },
-  json_meta: { x: 560, y: 370 },
+  json_core: { x: 590, y: 68 },
+  json_meta: { x: 590, y: 412 },
 
-  nano_banana_2: { x: 880, y: 138 },
-  gen4_anchor: { x: 1140, y: 130 },
+  nano_banana_2: { x: 930, y: 152 },
+  gen4_anchor: { x: 1195, y: 144 },
 
-  shot1: { x: 1435, y: 138 },
-  trim1: { x: 1690, y: 152 },
-  extract1: { x: 1920, y: 152 },
+  shot1: { x: 1508, y: 152 },
+  trim1: { x: 1770, y: 166 },
+  extract1: { x: 2012, y: 166 },
 
-  kling_s2: { x: 2150, y: 130 },
-  trim2: { x: 2440, y: 152 },
-  extract2: { x: 2670, y: 152 },
+  kling_s2: { x: 2254, y: 144 },
+  trim2: { x: 2558, y: 166 },
+  extract2: { x: 2800, y: 166 },
 
-  shot3: { x: 2900, y: 138 },
-  stitch: { x: 3160, y: 136 },
+  shot3: { x: 3042, y: 152 },
+  stitch: { x: 3306, y: 150 },
 
-  last1: { x: 1690, y: 370 },
-  last2: { x: 2440, y: 370 },
+  last1: { x: 1770, y: 410 },
+  last2: { x: 2558, y: 410 },
 
-  qa1: { x: 1435, y: 370 },
-  qa2: { x: 2150, y: 370 },
-  qa3: { x: 2900, y: 370 },
+  qa1: { x: 1508, y: 410 },
+  qa2: { x: 2254, y: 410 },
+  qa3: { x: 3042, y: 410 },
 
-  continuity_notes: { x: 880, y: 592 },
-  audio_notes: { x: 1690, y: 610 },
-  social_pack: { x: 2440, y: 610 },
-  anchor_guide: { x: 28, y: 760 },
+  continuity_notes: { x: 930, y: 660 },
+  audio_notes: { x: 1770, y: 686 },
+  social_pack: { x: 2558, y: 686 },
+  anchor_guide: { x: 30, y: 900 },
 };
 
 const WIRES: WireDef[] = [
@@ -525,8 +524,8 @@ const WIRES: WireDef[] = [
   { from: ["last1", "image"], to: ["kling_s2", "image"], style: "fallback" },
   { from: ["last2", "image"], to: ["shot3", "image"], style: "fallback" },
 
-  { from: ["gen4_anchor", "image"], to: ["kling_s2", "image"], style: "anchor", route: "pipe", pipeY: 510 },
-  { from: ["gen4_anchor", "image"], to: ["shot3", "image"], style: "anchor", route: "pipe", pipeY: 536 },
+  { from: ["gen4_anchor", "image"], to: ["kling_s2", "image"], style: "anchor", route: "pipe", pipeY: 556 },
+  { from: ["gen4_anchor", "image"], to: ["shot3", "image"], style: "anchor", route: "pipe", pipeY: 584 },
 
   { from: ["shot1", "video"], to: ["qa1", "video"], style: "qa", route: "v" },
   { from: ["kling_s2", "video"], to: ["qa2", "video"], style: "qa", route: "v" },
@@ -662,6 +661,7 @@ function NodeBox({
             const input = spec.inputs[i];
             const output = spec.outputs[i];
             const y = i * ROW_H;
+
             return (
               <div
                 key={i}
@@ -759,6 +759,51 @@ function NodeBox({
   );
 }
 
+function SectionLabel({
+  x,
+  y,
+  text,
+  color = "#2b3b50",
+}: {
+  x: number;
+  y: number;
+  text: string;
+  color?: string;
+}) {
+  return (
+    <div
+      style={{
+        position: "absolute",
+        left: x,
+        top: y,
+        color,
+        fontSize: 8,
+        fontWeight: 700,
+        letterSpacing: "0.12em",
+        textTransform: "uppercase",
+        pointerEvents: "none",
+        whiteSpace: "nowrap",
+      }}
+    >
+      {text}
+    </div>
+  );
+}
+
+const controlBtnStyle: CSSProperties = {
+  width: 30,
+  height: 30,
+  borderRadius: 8,
+  border: `1px solid ${BORDER}`,
+  background: "#0f1928",
+  color: "#607898",
+  cursor: "pointer",
+  fontSize: 16,
+  display: "flex",
+  alignItems: "center",
+  justifyContent: "center",
+};
+
 export default function WSTVWorkflowDiagram({
   data: _data,
   onCopy: _onCopy,
@@ -767,13 +812,17 @@ export default function WSTVWorkflowDiagram({
   onCopy?: (t: string) => void;
 }) {
   const specMap = useMemo(
-    () => Object.fromEntries(NODE_SPECS.map((n) => [n.id, n])),
+    () => Object.fromEntries(NODE_SPECS.map((n) => [n.id, n] as const)),
     []
   );
 
   const [positions, setPositions] = useState<Record<string, Point>>(DEFAULT_POSITIONS);
-  const [zoom, setZoom] = useState(0.44);
+  const [zoom, setZoom] = useState(0.40);
   const [pan, setPan] = useState<Point>({ x: 0, y: 0 });
+  const [dragKind, setDragKind] = useState<"canvas" | "node" | null>(null);
+
+  void _data;
+  void _onCopy;
 
   const dragRef = useRef<
     | { kind: "canvas"; x: number; y: number }
@@ -810,63 +859,73 @@ export default function WSTVWorkflowDiagram({
 
   const onCanvasPointerDown = useCallback((e: ReactPointerEvent<HTMLDivElement>) => {
     dragRef.current = { kind: "canvas", x: e.clientX, y: e.clientY };
+    setDragKind("canvas");
   }, []);
 
   const onNodePointerDown = useCallback(
     (id: string) => (e: ReactPointerEvent<HTMLDivElement>) => {
       e.stopPropagation();
       dragRef.current = { kind: "node", id, x: e.clientX, y: e.clientY };
+      setDragKind("node");
     },
     []
   );
 
-  const onPointerMove = useCallback((e: ReactPointerEvent<HTMLDivElement>) => {
-    const drag = dragRef.current;
-    if (!drag) return;
+  const onPointerMove = useCallback(
+    (e: ReactPointerEvent<HTMLDivElement>) => {
+      const drag = dragRef.current;
+      if (!drag) return;
 
-    const dx = e.clientX - drag.x;
-    const dy = e.clientY - drag.y;
-    dragRef.current = { ...drag, x: e.clientX, y: e.clientY } as typeof drag;
+      const dx = e.clientX - drag.x;
+      const dy = e.clientY - drag.y;
 
-    if (drag.kind === "canvas") {
-      setPan((p) => ({ x: p.x + dx, y: p.y + dy }));
-    } else {
-      setPositions((prev) => ({
-        ...prev,
-        [drag.id]: {
-          x: prev[drag.id].x + dx / zoom,
-          y: prev[drag.id].y + dy / zoom,
-        },
-      }));
-    }
-  }, [zoom]);
+      dragRef.current = { ...drag, x: e.clientX, y: e.clientY };
+
+      if (drag.kind === "canvas") {
+        setPan((p) => ({ x: p.x + dx, y: p.y + dy }));
+      } else {
+        setPositions((prev) => ({
+          ...prev,
+          [drag.id]: {
+            x: prev[drag.id].x + dx / zoom,
+            y: prev[drag.id].y + dy / zoom,
+          },
+        }));
+      }
+    },
+    [zoom]
+  );
 
   const onPointerUp = useCallback(() => {
     dragRef.current = null;
+    setDragKind(null);
   }, []);
 
   const onWheel = useCallback((e: ReactWheelEvent<HTMLDivElement>) => {
     e.preventDefault();
-    setZoom((z) => Math.max(0.25, Math.min(1.6, z - e.deltaY * 0.0008)));
+    setZoom((z) => Math.max(0.24, Math.min(1.4, z - e.deltaY * 0.0008)));
   }, []);
 
   const resetView = useCallback(() => {
-    setZoom(0.44);
+    setZoom(0.40);
     setPan({ x: 0, y: 0 });
     setPositions(DEFAULT_POSITIONS);
+    setDragKind(null);
+    dragRef.current = null;
   }, []);
 
   return (
     <div
       style={{
         width: "100%",
-        height: 760,
+        height: 780,
         borderRadius: 18,
         overflow: "hidden",
         border: "1px solid rgba(255,255,255,0.07)",
         background: BG,
         position: "relative",
-        cursor: dragRef.current?.kind === "canvas" ? "grabbing" : "grab",
+        cursor: dragKind === "canvas" ? "grabbing" : "grab",
+        touchAction: "none",
       }}
       onPointerDown={onCanvasPointerDown}
       onPointerMove={onPointerMove}
@@ -885,7 +944,6 @@ export default function WSTVWorkflowDiagram({
             linear-gradient(90deg, ${GRID_MAJOR} 1px, transparent 1px)
           `,
           backgroundSize: "24px 24px, 24px 24px, 120px 120px, 120px 120px",
-          backgroundPosition: "0 0, 0 0, 0 0, 0 0",
           pointerEvents: "none",
         }}
       />
@@ -927,20 +985,15 @@ export default function WSTVWorkflowDiagram({
           borderRadius: 10,
           backdropFilter: "blur(6px)",
         }}
+        onPointerDown={(e) => e.stopPropagation()}
       >
         <div style={{ color: TEXT_SUB, fontSize: 10, minWidth: 34, textAlign: "right" }}>
           {Math.round(zoom * 100)}%
         </div>
-        <button
-          onClick={() => setZoom((z) => Math.max(0.25, z - 0.08))}
-          style={controlBtnStyle}
-        >
+        <button onClick={() => setZoom((z) => Math.max(0.24, z - 0.08))} style={controlBtnStyle}>
           −
         </button>
-        <button
-          onClick={() => setZoom((z) => Math.min(1.6, z + 0.08))}
-          style={controlBtnStyle}
-        >
+        <button onClick={() => setZoom((z) => Math.min(1.4, z + 0.08))} style={controlBtnStyle}>
           +
         </button>
         <button onClick={resetView} style={{ ...controlBtnStyle, width: "auto", padding: "0 12px" }}>
@@ -993,18 +1046,18 @@ export default function WSTVWorkflowDiagram({
 
             let d = "";
             if (wire.route === "v") d = vCurve(from, to);
-            else if (wire.route === "pipe") d = pipeCurve(from, to, wire.pipeY ?? 520);
-            else d = hCurve(from, to, 70);
+            else if (wire.route === "pipe") d = pipeCurve(from, to, wire.pipeY ?? 560);
+            else d = hCurve(from, to, 72);
 
             const dashed = wire.style !== "main";
             const opacity =
-              wire.style === "helper" ? 0.45 :
-              wire.style === "qa" ? 0.58 :
-              wire.style === "anchor" ? 0.7 :
-              wire.style === "fallback" ? 0.78 : 1;
+              wire.style === "helper" ? 0.46 :
+              wire.style === "qa" ? 0.60 :
+              wire.style === "anchor" ? 0.74 :
+              wire.style === "fallback" ? 0.80 : 1;
 
             const strokeWidth =
-              wire.style === "main" ? 2.4 :
+              wire.style === "main" ? 2.35 :
               wire.style === "helper" ? 1.15 :
               1.35;
 
@@ -1033,16 +1086,16 @@ export default function WSTVWorkflowDiagram({
           })}
         </svg>
 
-        <SectionLabel x={28} y={86} text="Inputs" />
-        <SectionLabel x={258} y={170} text="AI Director" />
-        <SectionLabel x={560} y={34} text="Structured Output" />
-        <SectionLabel x={880} y={116} text="Image Chain" />
-        <SectionLabel x={1140} y={106} text="Canonical Anchor" color="#9d71ff" />
-        <SectionLabel x={1435} y={116} text="Shot 1 — Gen-4.5" />
-        <SectionLabel x={2150} y={108} text="Shot 2 — Kling 3.0 Pro" />
-        <SectionLabel x={2900} y={116} text="Shot 3 — Gen-4.5" />
-        <SectionLabel x={1435} y={348} text="Fallback · QA Lane" color="#8c6a10" />
-        <SectionLabel x={880} y={570} text="Helper Lane" color="#3f5772" />
+        <SectionLabel x={30} y={96} text="Inputs" />
+        <SectionLabel x={270} y={178} text="AI Director" />
+        <SectionLabel x={590} y={42} text="Structured Output" />
+        <SectionLabel x={930} y={126} text="Image Chain" />
+        <SectionLabel x={1195} y={116} text="Canonical Anchor" color="#9d71ff" />
+        <SectionLabel x={1508} y={126} text="Shot 1 — Gen-4.5" />
+        <SectionLabel x={2254} y={118} text="Shot 2 — Kling 3.0 Pro" />
+        <SectionLabel x={3042} y={126} text="Shot 3 — Gen-4.5" />
+        <SectionLabel x={1508} y={388} text="Fallback · QA Lane" color="#8c6a10" />
+        <SectionLabel x={930} y={638} text="Helper Lane" color="#3f5772" />
 
         {NODE_SPECS.map((spec) => (
           <NodeBox
@@ -1056,8 +1109,8 @@ export default function WSTVWorkflowDiagram({
         <div
           style={{
             position: "absolute",
-            left: 28,
-            top: 18,
+            left: 30,
+            top: 20,
             color: "#1e2f42",
             fontSize: 11,
             fontWeight: 700,
@@ -1071,8 +1124,8 @@ export default function WSTVWorkflowDiagram({
         <div
           style={{
             position: "absolute",
-            left: 28,
-            bottom: 24,
+            left: 30,
+            bottom: 30,
             display: "flex",
             alignItems: "center",
             gap: 18,
@@ -1110,48 +1163,3 @@ export default function WSTVWorkflowDiagram({
     </div>
   );
 }
-
-function SectionLabel({
-  x,
-  y,
-  text,
-  color = "#2b3b50",
-}: {
-  x: number;
-  y: number;
-  text: string;
-  color?: string;
-}) {
-  return (
-    <div
-      style={{
-        position: "absolute",
-        left: x,
-        top: y,
-        color,
-        fontSize: 8,
-        fontWeight: 700,
-        letterSpacing: "0.12em",
-        textTransform: "uppercase",
-        pointerEvents: "none",
-        whiteSpace: "nowrap",
-      }}
-    >
-      {text}
-    </div>
-  );
-}
-
-const controlBtnStyle: React.CSSProperties = {
-  width: 30,
-  height: 30,
-  borderRadius: 8,
-  border: `1px solid ${BORDER}`,
-  background: "#0f1928",
-  color: "#607898",
-  cursor: "pointer",
-  fontSize: 16,
-  display: "flex",
-  alignItems: "center",
-  justifyContent: "center",
-};
