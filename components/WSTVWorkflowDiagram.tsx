@@ -36,7 +36,7 @@ type NodeSpec = {
   infoLines?: string[];
 };
 
-type WireStyle = "main" | "fallback" | "anchor" | "qa" | "helper";
+type WireStyle = "main" | "fallback" | "anchor" | "qa" | "audio";
 
 type WireDef = {
   from: [string, string];
@@ -58,7 +58,7 @@ const WIRE_COLORS: Record<WireStyle, string> = {
   fallback: "#fb923c",
   anchor: "#c084fc",
   qa: "#fbbf24",
-  helper: "#42566f",
+  audio: "#eab308",
 };
 
 const BG = "#060c14";
@@ -69,8 +69,9 @@ const TEXT_MAIN = "#edf2f8";
 const TEXT_SUB = "#7b8ca3";
 const TEXT_FAINT = "#526579";
 
-const VIEW_W = 3560;
-const VIEW_H = 1120;
+// Extended canvas to accommodate audio lane
+const VIEW_W = 3880;
+const VIEW_H = 960;
 
 const HEADER_H = 44;
 const ROW_H = 20;
@@ -105,40 +106,50 @@ function makeNode(id: string, cfg: Omit<NodeSpec, "id">): NodeSpec {
   return { id, ...cfg };
 }
 
+// ─── NODE SPECS ──────────────────────────────────────────────────────────────
+// All nodes here are real nodes present in the operator's actual Runway canvas.
+// Node titles reflect what is visible in the operator's UI.
+// Some names (e.g. Combine Text, Upscale Video - Topaz AI) are grounded in the
+// operator's actual UI workflow and are NOT citations from Runway public help docs.
+// Audio node names use real node names with workflow labels in parentheses.
+// ─────────────────────────────────────────────────────────────────────────────
+
 const NODE_SPECS: NodeSpec[] = [
+  // ── INPUTS ──
   makeNode("text_system", {
     title: "Text",
-    subtitle: "System Prompt",
+    subtitle: "(System Prompt)",
     badge: "INPUT",
-    width: 176,
+    width: 178,
     bg: "#0c1520",
     inputs: [],
     outputs: [{ id: "text", label: "Text", kind: "text" }],
   }),
   makeNode("text_user", {
     title: "Text",
-    subtitle: "User Story Prompt",
+    subtitle: "(User Story Prompt)",
     badge: "INPUT",
-    width: 176,
+    width: 178,
     bg: "#0c1520",
     inputs: [],
     outputs: [{ id: "text", label: "Text", kind: "text" }],
   }),
   makeNode("image_ref", {
     title: "Image",
-    subtitle: "Reference Image",
+    subtitle: "(Reference)",
     badge: "INPUT",
-    width: 176,
+    width: 178,
     bg: "#0c1520",
     inputs: [],
     outputs: [{ id: "image", label: "Image", kind: "image" }],
   }),
 
+  // ── AI DIRECTOR ──
   makeNode("claude", {
     title: "Claude",
     subtitle: "Prompt Planner",
     badge: "MODEL",
-    width: 220,
+    width: 222,
     bg: "#14092e",
     accent: "#f97316",
     inputs: [
@@ -149,163 +160,350 @@ const NODE_SPECS: NodeSpec[] = [
     outputs: [{ id: "json", label: "JSON", kind: "text" }],
   }),
 
+  // ── STRUCTURED OUTPUT ──
   makeNode("json_core", {
     title: "JSON Parse",
-    subtitle: "Core Outputs",
+    subtitle: "(Core Outputs)",
     badge: "UTILITY",
-    width: 282,
+    width: 284,
     bg: "#070c18",
     accent: "#16a34a",
     inputs: [{ id: "json", label: "JSON", kind: "text", required: true }],
     outputs: [
-      { id: "master", label: "master_image_prompt", kind: "text" },
-      { id: "shot1", label: "shot1_video_prompt", kind: "text" },
-      { id: "shot2", label: "shot2_video_prompt", kind: "text" },
-      { id: "audio_prompt", label: "shot2_audio_prompt", kind: "text" },
-      { id: "shot3", label: "shot3_video_prompt", kind: "text" },
-      { id: "negative", label: "kling_negative_prompt", kind: "text" },
-      { id: "char_lock", label: "character_lock", kind: "text" },
-      { id: "op_notes", label: "operator_notes", kind: "text" },
+      { id: "master",       label: "master_image_prompt",   kind: "text" },
+      { id: "shot1",        label: "shot1_video_prompt",    kind: "text" },
+      { id: "shot2",        label: "shot2_video_prompt",    kind: "text" },
+      { id: "audio_prompt", label: "shot2_audio_prompt",    kind: "text" },
+      { id: "shot3",        label: "shot3_video_prompt",    kind: "text" },
+      { id: "negative",     label: "kling_negative_prompt", kind: "text" },
+      { id: "char_lock",    label: "character_lock",        kind: "text" },
+      { id: "op_notes",     label: "operator_notes",        kind: "text" },
     ],
-    infoLines: ["Core prompt pack fields"],
   }),
-
   makeNode("json_meta", {
     title: "JSON Parse",
-    subtitle: "Meta Outputs",
+    subtitle: "(Meta Outputs)",
     badge: "UTILITY",
-    width: 282,
+    width: 284,
     bg: "#070c18",
     accent: "#16a34a",
     inputs: [{ id: "json", label: "JSON", kind: "text", required: true }],
     outputs: [
-      { id: "mi1", label: "motion_intensity.shot1", kind: "text" },
-      { id: "mi2", label: "motion_intensity.shot2", kind: "text" },
-      { id: "mi3", label: "motion_intensity.shot3", kind: "text" },
-      { id: "hook", label: "hook", kind: "text" },
-      { id: "caption", label: "caption", kind: "text" },
+      { id: "mi1",     label: "motion_intensity.shot1", kind: "text" },
+      { id: "mi2",     label: "motion_intensity.shot2", kind: "text" },
+      { id: "mi3",     label: "motion_intensity.shot3", kind: "text" },
+      { id: "hook",    label: "hook",                   kind: "text" },
+      { id: "caption", label: "caption",                kind: "text" },
     ],
-    infoLines: ["Second JSON Parse keeps the full pack within the documented JSON Parse output limit."],
   }),
 
+  // ── IMAGE CHAIN ──
   makeNode("nano_banana_2", {
     title: "Nano Banana 2",
     subtitle: "Master Still Generator",
     badge: "MODEL",
-    width: 214,
+    width: 216,
     bg: "#051a0e",
     accent: "#16a34a",
     inputs: [
-      { id: "prompt", label: "Prompt", kind: "text", required: true },
-      { id: "image", label: "Image", kind: "image" },
+      { id: "prompt", label: "Prompt", kind: "text",  required: true },
+      { id: "image",  label: "Image",  kind: "image" },
     ],
     outputs: [{ id: "image", label: "Image", kind: "image" }],
   }),
 
+  // ── CANONICAL ANCHOR ──
   makeNode("gen4_anchor", {
     title: "Gen-4 Image",
-    subtitle: "Canonical Anchor",
+    subtitle: "(Canonical Anchor)",
     badge: "MODEL",
     width: 232,
     bg: "#1a0544",
     accent: "#c084fc",
-    inputs: [{ id: "image", label: "Image", kind: "image", required: true }],
+    inputs:  [{ id: "image", label: "Image", kind: "image", required: true }],
     outputs: [{ id: "image", label: "Image", kind: "image" }],
-    infoLines: ["Strongest identity fallback for the full sequence."],
   }),
 
+  // ── SHOT 1 ──
   makeNode("shot1", {
     title: "Gen-4.5",
-    subtitle: "Shot 1 — Opening Tension",
+    subtitle: "(Shot 1)",
     badge: "MODEL",
     width: 228,
     bg: "#060f28",
     accent: "#16a34a",
     inputs: [
-      { id: "image", label: "Image", kind: "image", required: true },
-      { id: "prompt", label: "Prompt", kind: "text", required: true },
+      { id: "image",  label: "Image",  kind: "image", required: true },
+      { id: "prompt", label: "Prompt", kind: "text",  required: true },
+    ],
+    outputs: [{ id: "video", label: "Video", kind: "video" }],
+  }),
+  // Extract Frame — preferred handoff from shot1 to shot2 input
+  makeNode("extract1", {
+    title: "Extract Frame",
+    subtitle: "(Shot 1 Handoff)",
+    badge: "UTILITY",
+    width: 190,
+    bg: "#041420",
+    accent: "#16a34a",
+    inputs:  [{ id: "video", label: "Video", kind: "video", required: true }],
+    outputs: [{ id: "image", label: "Image", kind: "image" }],
+  }),
+  // Trim Video — fallback only; must run before Last Frame
+  makeNode("trim1", {
+    title: "Trim Video",
+    subtitle: "(Shot 1 Fallback)",
+    badge: "UTILITY",
+    width: 190,
+    bg: "#071318",
+    accent: "#16a34a",
+    inputs:  [{ id: "video", label: "Video", kind: "video", required: true }],
+    outputs: [{ id: "video", label: "Video", kind: "video" }],
+  }),
+  // Last Frame — fallback only; receives trimmed video
+  makeNode("last1", {
+    title: "Last Frame",
+    subtitle: "(Shot 1 Fallback)",
+    badge: "UTILITY",
+    width: 186,
+    bg: "#160202",
+    accent: "#fb923c",
+    dim: true,
+    inputs:  [{ id: "video", label: "Video", kind: "video", required: true }],
+    outputs: [{ id: "image", label: "Image", kind: "image" }],
+  }),
+
+  // ── SHOT 1 AUDIO LANE ──
+  makeNode("sfx1", {
+    title: "Text to SFX",
+    subtitle: "(Shot 1 Ambience)",
+    badge: "AUDIO",
+    width: 200,
+    bg: "#0e0d00",
+    accent: "#eab308",
+    inputs:  [{ id: "text", label: "Text", kind: "text" }],
+    outputs: [{ id: "audio", label: "Audio", kind: "audio" }],
+  }),
+  makeNode("add_audio1", {
+    title: "Add Audio",
+    subtitle: "(Shot 1)",
+    badge: "UTILITY",
+    width: 190,
+    bg: "#0a0c00",
+    accent: "#eab308",
+    inputs: [
+      { id: "video", label: "Video", kind: "video", required: true },
+      { id: "audio", label: "Audio", kind: "audio", required: true },
     ],
     outputs: [{ id: "video", label: "Video", kind: "video" }],
   }),
 
-  makeNode("trim1", {
-    title: "Trim Video",
-    subtitle: "Fallback prep",
+  // ── SHOT 2 — KLING ──
+  // Combine Text — node name grounded in operator's actual Runway UI workflow.
+  // Not cited in Runway public help documentation.
+  makeNode("combine_text", {
+    title: "Combine Text",
+    subtitle: "(Kling Prompt)",
     badge: "UTILITY",
-    width: 188,
-    bg: "#071318",
-    accent: "#16a34a",
-    inputs: [{ id: "video", label: "Video", kind: "video", required: true }],
-    outputs: [{ id: "video", label: "Video", kind: "video" }],
+    width: 212,
+    bg: "#09111e",
+    accent: "#2563eb",
+    inputs: [
+      { id: "shot2_prompt", label: "shot2_video_prompt",    kind: "text", required: true },
+      { id: "audio",        label: "shot2_audio_prompt",    kind: "text" },
+      { id: "negative",     label: "kling_negative_prompt", kind: "text" },
+    ],
+    outputs: [{ id: "text", label: "Text", kind: "text" }],
   }),
-
-  makeNode("extract1", {
-    title: "Extract Frame",
-    subtitle: "Preferred handoff",
-    badge: "UTILITY",
-    width: 188,
-    bg: "#041420",
-    accent: "#16a34a",
-    inputs: [{ id: "video", label: "Video", kind: "video", required: true }],
-    outputs: [{ id: "image", label: "Image", kind: "image" }],
-  }),
-
   makeNode("kling_s2", {
     title: "Kling 3.0 Pro",
-    subtitle: "Shot 2 — Action Pressure",
+    subtitle: "(Shot 2)",
     badge: "MODEL",
     width: 244,
     bg: "#1e0b00",
     accent: "#2563eb",
     inputs: [
-      { id: "image", label: "Image", kind: "image", required: true },
-      { id: "prompt", label: "Prompt", kind: "text", required: true },
-      { id: "negative", label: "Negative", kind: "text" },
+      { id: "image",  label: "Image",  kind: "image", required: true },
+      { id: "prompt", label: "Prompt", kind: "text",  required: true },
+    ],
+    outputs: [{ id: "video", label: "Video", kind: "video" }],
+  }),
+  // Extract Frame — preferred handoff from shot2 to shot3 input
+  makeNode("extract2", {
+    title: "Extract Frame",
+    subtitle: "(Shot 2 Handoff)",
+    badge: "UTILITY",
+    width: 190,
+    bg: "#041420",
+    accent: "#16a34a",
+    inputs:  [{ id: "video", label: "Video", kind: "video", required: true }],
+    outputs: [{ id: "image", label: "Image", kind: "image" }],
+  }),
+  // Trim Video — fallback only; must run before Last Frame
+  makeNode("trim2", {
+    title: "Trim Video",
+    subtitle: "(Shot 2 Fallback)",
+    badge: "UTILITY",
+    width: 190,
+    bg: "#071318",
+    accent: "#16a34a",
+    inputs:  [{ id: "video", label: "Video", kind: "video", required: true }],
+    outputs: [{ id: "video", label: "Video", kind: "video" }],
+  }),
+  // Last Frame — fallback only; receives trimmed video
+  makeNode("last2", {
+    title: "Last Frame",
+    subtitle: "(Shot 2 Fallback)",
+    badge: "UTILITY",
+    width: 186,
+    bg: "#160202",
+    accent: "#fb923c",
+    dim: true,
+    inputs:  [{ id: "video", label: "Video", kind: "video", required: true }],
+    outputs: [{ id: "image", label: "Image", kind: "image" }],
+  }),
+
+  // ── SHOT 2 AUDIO LANE ──
+  makeNode("extract_audio2", {
+    title: "Extract Audio",
+    subtitle: "(Shot 2 Native Sound)",
+    badge: "AUDIO",
+    width: 210,
+    bg: "#0e0d00",
+    accent: "#eab308",
+    inputs:  [{ id: "video", label: "Video", kind: "video", required: true }],
+    outputs: [{ id: "audio", label: "Audio", kind: "audio" }],
+  }),
+  makeNode("add_audio2", {
+    title: "Add Audio",
+    subtitle: "(Shot 2)",
+    badge: "UTILITY",
+    width: 190,
+    bg: "#0a0c00",
+    accent: "#eab308",
+    inputs: [
+      { id: "video", label: "Video", kind: "video", required: true },
+      { id: "audio", label: "Audio", kind: "audio", required: true },
     ],
     outputs: [{ id: "video", label: "Video", kind: "video" }],
   }),
 
-  makeNode("trim2", {
-    title: "Trim Video",
-    subtitle: "Fallback prep",
-    badge: "UTILITY",
-    width: 188,
-    bg: "#071318",
-    accent: "#16a34a",
-    inputs: [{ id: "video", label: "Video", kind: "video", required: true }],
-    outputs: [{ id: "video", label: "Video", kind: "video" }],
-  }),
-
-  makeNode("extract2", {
-    title: "Extract Frame",
-    subtitle: "Preferred handoff",
-    badge: "UTILITY",
-    width: 188,
-    bg: "#041420",
-    accent: "#16a34a",
-    inputs: [{ id: "video", label: "Video", kind: "video", required: true }],
-    outputs: [{ id: "image", label: "Image", kind: "image" }],
-  }),
-
+  // ── SHOT 3 ──
   makeNode("shot3", {
     title: "Gen-4.5",
-    subtitle: "Shot 3 — Resolved Tension",
+    subtitle: "(Shot 3)",
     badge: "MODEL",
     width: 228,
     bg: "#060f28",
     accent: "#16a34a",
     inputs: [
-      { id: "image", label: "Image", kind: "image", required: true },
-      { id: "prompt", label: "Prompt", kind: "text", required: true },
+      { id: "image",  label: "Image",  kind: "image", required: true },
+      { id: "prompt", label: "Prompt", kind: "text",  required: true },
     ],
     outputs: [{ id: "video", label: "Video", kind: "video" }],
   }),
 
+  // ── SHOT 3 AUDIO LANE ──
+  makeNode("sfx3", {
+    title: "Text to SFX",
+    subtitle: "(Shot 3 Ambience)",
+    badge: "AUDIO",
+    width: 200,
+    bg: "#0e0d00",
+    accent: "#eab308",
+    inputs:  [{ id: "text", label: "Text", kind: "text" }],
+    outputs: [{ id: "audio", label: "Audio", kind: "audio" }],
+  }),
+  makeNode("add_audio3", {
+    title: "Add Audio",
+    subtitle: "(Shot 3)",
+    badge: "UTILITY",
+    width: 190,
+    bg: "#0a0c00",
+    accent: "#eab308",
+    inputs: [
+      { id: "video", label: "Video", kind: "video", required: true },
+      { id: "audio", label: "Audio", kind: "audio", required: true },
+    ],
+    outputs: [{ id: "video", label: "Video", kind: "video" }],
+  }),
+
+  // ── QA ──
+  makeNode("qa1", {
+    title: "First Frame",
+    subtitle: "(QA Shot 1)",
+    badge: "UTILITY",
+    width: 184,
+    bg: "#100c00",
+    accent: "#fbbf24",
+    dim: true,
+    inputs:  [{ id: "video", label: "Video", kind: "video", required: true }],
+    outputs: [{ id: "image", label: "Image", kind: "image" }],
+  }),
+  makeNode("qa2", {
+    title: "First Frame",
+    subtitle: "(QA Shot 2)",
+    badge: "UTILITY",
+    width: 184,
+    bg: "#100c00",
+    accent: "#fbbf24",
+    dim: true,
+    inputs:  [{ id: "video", label: "Video", kind: "video", required: true }],
+    outputs: [{ id: "image", label: "Image", kind: "image" }],
+  }),
+  makeNode("qa3", {
+    title: "First Frame",
+    subtitle: "(QA Shot 3)",
+    badge: "UTILITY",
+    width: 184,
+    bg: "#100c00",
+    accent: "#fbbf24",
+    dim: true,
+    inputs:  [{ id: "video", label: "Video", kind: "video", required: true }],
+    outputs: [{ id: "image", label: "Image", kind: "image" }],
+  }),
+
+  // ── UPSCALE ──
+  // Node title "Upscale Video - Topaz AI" is grounded in the operator's actual
+  // Runway UI. Runway publicly documents video upscaling support in workflows,
+  // but the exact node label below is NOT cited from Runway public help articles.
+  makeNode("upscale1", {
+    title: "Upscale Video - Topaz AI",
+    subtitle: "(Shot 1)",
+    badge: "UTILITY",
+    width: 238,
+    bg: "#030d1a",
+    accent: "#38bdf8",
+    inputs:  [{ id: "video", label: "Video", kind: "video", required: true }],
+    outputs: [{ id: "video", label: "Video", kind: "video" }],
+  }),
+  makeNode("upscale2", {
+    title: "Upscale Video - Topaz AI",
+    subtitle: "(Shot 2)",
+    badge: "UTILITY",
+    width: 238,
+    bg: "#030d1a",
+    accent: "#38bdf8",
+    inputs:  [{ id: "video", label: "Video", kind: "video", required: true }],
+    outputs: [{ id: "video", label: "Video", kind: "video" }],
+  }),
+  makeNode("upscale3", {
+    title: "Upscale Video - Topaz AI",
+    subtitle: "(Shot 3)",
+    badge: "UTILITY",
+    width: 238,
+    bg: "#030d1a",
+    accent: "#38bdf8",
+    inputs:  [{ id: "video", label: "Video", kind: "video", required: true }],
+    outputs: [{ id: "video", label: "Video", kind: "video" }],
+  }),
+
+  // ── FINAL ──
   makeNode("stitch", {
     title: "Stitch",
     subtitle: "Final Sequence",
     badge: "UTILITY",
-    width: 198,
+    width: 200,
     bg: "#0d0220",
     accent: "#16a34a",
     inputs: [
@@ -315,231 +513,167 @@ const NODE_SPECS: NodeSpec[] = [
     ],
     outputs: [{ id: "video", label: "Video", kind: "video" }],
   }),
-
-  makeNode("last1", {
-    title: "Last Frame",
-    subtitle: "Fallback only",
-    badge: "UTILITY",
-    width: 184,
-    bg: "#160202",
-    accent: "#fb923c",
-    dim: true,
-    inputs: [{ id: "video", label: "Video", kind: "video", required: true }],
-    outputs: [{ id: "image", label: "Image", kind: "image" }],
-  }),
-
-  makeNode("last2", {
-    title: "Last Frame",
-    subtitle: "Fallback only",
-    badge: "UTILITY",
-    width: 184,
-    bg: "#160202",
-    accent: "#fb923c",
-    dim: true,
-    inputs: [{ id: "video", label: "Video", kind: "video", required: true }],
-    outputs: [{ id: "image", label: "Image", kind: "image" }],
-  }),
-
-  makeNode("qa1", {
-    title: "First Frame",
-    subtitle: "QA — Shot 1 Start",
-    badge: "UTILITY",
-    width: 184,
-    bg: "#100c00",
-    accent: "#fbbf24",
-    dim: true,
-    inputs: [{ id: "video", label: "Video", kind: "video", required: true }],
-    outputs: [{ id: "image", label: "Image", kind: "image" }],
-  }),
-
-  makeNode("qa2", {
-    title: "First Frame",
-    subtitle: "QA — Shot 2 Start",
-    badge: "UTILITY",
-    width: 184,
-    bg: "#100c00",
-    accent: "#fbbf24",
-    dim: true,
-    inputs: [{ id: "video", label: "Video", kind: "video", required: true }],
-    outputs: [{ id: "image", label: "Image", kind: "image" }],
-  }),
-
-  makeNode("qa3", {
-    title: "First Frame",
-    subtitle: "QA — Shot 3 Start",
-    badge: "UTILITY",
-    width: 184,
-    bg: "#100c00",
-    accent: "#fbbf24",
-    dim: true,
-    inputs: [{ id: "video", label: "Video", kind: "video", required: true }],
-    outputs: [{ id: "image", label: "Image", kind: "image" }],
-  }),
-
-  makeNode("continuity_notes", {
-    title: "Continuity Notes",
-    subtitle: "character_lock + motion plan + operator guidance",
-    badge: "NOTES",
-    width: 338,
-    bg: "#08101c",
-    dim: true,
-    inputs: [
-      { id: "char_lock", label: "character_lock", kind: "text" },
-      { id: "mi1", label: "motion_intensity.shot1", kind: "text" },
-      { id: "mi2", label: "motion_intensity.shot2", kind: "text" },
-      { id: "mi3", label: "motion_intensity.shot3", kind: "text" },
-      { id: "op_notes", label: "operator_notes", kind: "text" },
-    ],
-    outputs: [],
-    infoLines: [
-      "Fallback order: Extract Frame → Last Frame after Trim → Canonical Anchor",
-      "Lock good nodes after QA and keep seeds consistent on retries.",
-      "This is guidance only, not a fake media node.",
-    ],
-  }),
-
-  makeNode("audio_notes", {
-    title: "Audio Notes",
-    subtitle: "shot2_audio_prompt",
-    badge: "NOTES",
-    width: 260,
-    bg: "#08101c",
-    dim: true,
-    inputs: [{ id: "audio_prompt", label: "shot2_audio_prompt", kind: "text" }],
-    outputs: [],
-    infoLines: [
-      "Paste into Kling audio if available.",
-      "Keep ambience matched to habitat and action.",
-    ],
-  }),
-
-  makeNode("social_pack", {
-    title: "Social Pack",
-    subtitle: "hook + caption",
-    badge: "NOTES",
-    width: 248,
-    bg: "#08101c",
-    dim: true,
-    inputs: [
-      { id: "hook", label: "hook", kind: "text" },
-      { id: "caption", label: "caption", kind: "text" },
-    ],
-    outputs: [],
-    infoLines: [
-      "Use hook as opening overlay text.",
-      "Use caption as post copy.",
-    ],
-  }),
-
-  makeNode("anchor_guide", {
-    title: "How to use Canonical Anchor",
-    subtitle: "Practical fallback rule",
-    badge: "GUIDE",
-    width: 640,
-    bg: "#08101c",
-    dim: true,
-    inputs: [],
-    outputs: [],
-    infoLines: [
-      "1. Generate the master still, then normalize it into the Gen-4 Image Canonical Anchor.",
-      "2. Use the Canonical Anchor as the main image source for Shot 1.",
-      "3. Between shots, prefer Extract Frame. Use Last Frame only after Trim Video.",
-      "4. If a handoff frame is weak, fall back to the Canonical Anchor instead of forcing drift.",
-      "5. Lock strong nodes after QA and use consistent seeds on retries.",
-    ],
-  }),
 ];
+
+// ─── POSITIONS ───────────────────────────────────────────────────────────────
 
 const DEFAULT_POSITIONS: Record<string, Point> = {
-  text_system: { x: 30, y: 120 },
-  text_user: { x: 30, y: 228 },
-  image_ref: { x: 30, y: 336 },
+  // Inputs
+  text_system: { x: 30,  y: 112 },
+  text_user:   { x: 30,  y: 228 },
+  image_ref:   { x: 30,  y: 344 },
 
-  claude: { x: 270, y: 200 },
+  // AI Director
+  claude: { x: 276, y: 196 },
 
-  json_core: { x: 590, y: 68 },
-  json_meta: { x: 590, y: 412 },
+  // Structured Output
+  json_core: { x: 596, y: 58  },
+  json_meta: { x: 596, y: 510 },
 
-  nano_banana_2: { x: 930, y: 152 },
-  gen4_anchor: { x: 1195, y: 144 },
+  // Image Chain
+  nano_banana_2: { x: 938,  y: 152 },
+  gen4_anchor:   { x: 1204, y: 144 },
 
-  shot1: { x: 1508, y: 152 },
-  trim1: { x: 1770, y: 166 },
-  extract1: { x: 2012, y: 166 },
+  // Shot 1 — main lane
+  shot1:    { x: 1514, y: 152 },
+  extract1: { x: 1784, y: 166 }, // preferred handoff; comes directly from shot1
 
-  kling_s2: { x: 2254, y: 144 },
-  trim2: { x: 2558, y: 166 },
-  extract2: { x: 2800, y: 166 },
+  // Shot 1 — audio lane (below main)
+  sfx1:      { x: 1514, y: 700 },
+  add_audio1: { x: 1780, y: 700 },
 
-  shot3: { x: 3042, y: 152 },
-  stitch: { x: 3306, y: 150 },
+  // Shot 1 — fallback lane
+  trim1: { x: 1784, y: 520 },
+  last1: { x: 1984, y: 520 },
 
-  last1: { x: 1770, y: 410 },
-  last2: { x: 2558, y: 410 },
+  // Kling Prompt Combiner
+  combine_text: { x: 2060, y: 440 },
 
-  qa1: { x: 1508, y: 410 },
-  qa2: { x: 2254, y: 410 },
-  qa3: { x: 3042, y: 410 },
+  // Shot 2 — Kling — main lane
+  kling_s2: { x: 2268, y: 144 },
+  extract2: { x: 2570, y: 166 }, // preferred handoff; comes directly from kling_s2
 
-  continuity_notes: { x: 930, y: 660 },
-  audio_notes: { x: 1770, y: 686 },
-  social_pack: { x: 2558, y: 686 },
-  anchor_guide: { x: 30, y: 900 },
+  // Shot 2 — audio lane
+  extract_audio2: { x: 2268, y: 700 },
+  add_audio2:     { x: 2548, y: 700 },
+
+  // Shot 2 — fallback lane
+  trim2: { x: 2570, y: 520 },
+  last2: { x: 2766, y: 520 },
+
+  // Shot 3
+  shot3: { x: 3054, y: 152 },
+
+  // Shot 3 — audio lane
+  sfx3:      { x: 3054, y: 700 },
+  add_audio3: { x: 3280, y: 700 },
+
+  // Upscale column (one per shot) — receives audio-merged video
+  upscale1: { x: 3550, y: 68  },
+  upscale2: { x: 3550, y: 310 },
+  upscale3: { x: 3550, y: 552 },
+
+  // Final
+  stitch: { x: 3840, y: 310 },
+
+  // QA
+  qa1: { x: 1514, y: 612 },
+  qa2: { x: 2268, y: 612 },
+  qa3: { x: 3054, y: 612 },
 };
 
+// ─── WIRES ───────────────────────────────────────────────────────────────────
+
 const WIRES: WireDef[] = [
-  { from: ["text_system", "text"], to: ["claude", "system"], style: "main" },
-  { from: ["text_user", "text"], to: ["claude", "prompt"], style: "main" },
-  { from: ["image_ref", "image"], to: ["claude", "image"], style: "main" },
+  // ── Inputs → Claude ──
+  { from: ["text_system", "text"],  to: ["claude", "system"], style: "main" },
+  { from: ["text_user",   "text"],  to: ["claude", "prompt"], style: "main" },
+  { from: ["image_ref",   "image"], to: ["claude", "image"],  style: "main" },
 
+  // ── Claude → JSON Parse nodes ──
   { from: ["claude", "json"], to: ["json_core", "json"], style: "main" },
-  { from: ["claude", "json"], to: ["json_meta", "json"], style: "helper" },
+  { from: ["claude", "json"], to: ["json_meta", "json"], style: "main" },
 
-  { from: ["json_core", "master"], to: ["nano_banana_2", "prompt"], style: "main" },
-  { from: ["image_ref", "image"], to: ["nano_banana_2", "image"], style: "main" },
+  // ── JSON Core → Image Chain ──
+  { from: ["json_core",     "master"], to: ["nano_banana_2", "prompt"], style: "main" },
+  { from: ["image_ref",     "image"],  to: ["nano_banana_2", "image"],  style: "main" },
+  { from: ["nano_banana_2", "image"],  to: ["gen4_anchor",   "image"],  style: "main" },
 
-  { from: ["nano_banana_2", "image"], to: ["gen4_anchor", "image"], style: "main" },
+  // ── Canonical Anchor → Shot 1 ──
+  { from: ["gen4_anchor", "image"], to: ["shot1",   "image"],  style: "main" },
+  { from: ["json_core",   "shot1"], to: ["shot1",   "prompt"], style: "main" },
 
-  { from: ["gen4_anchor", "image"], to: ["shot1", "image"], style: "main" },
-  { from: ["json_core", "shot1"], to: ["shot1", "prompt"], style: "main" },
-
-  { from: ["shot1", "video"], to: ["trim1", "video"], style: "main" },
-  { from: ["trim1", "video"], to: ["extract1", "video"], style: "main" },
+  // ── Shot 1: preferred handoff (Extract Frame direct from shot1) ──
+  { from: ["shot1",    "video"], to: ["extract1", "video"], style: "main" },
   { from: ["extract1", "image"], to: ["kling_s2", "image"], style: "main" },
 
-  { from: ["json_core", "shot2"], to: ["kling_s2", "prompt"], style: "main" },
-  { from: ["json_core", "negative"], to: ["kling_s2", "negative"], style: "main" },
+  // ── Shot 1: fallback path (Trim Video → Last Frame) ──
+  { from: ["shot1", "video"], to: ["trim1", "video"], style: "fallback" },
+  { from: ["trim1", "video"], to: ["last1", "video"], style: "fallback" },
 
-  { from: ["kling_s2", "video"], to: ["trim2", "video"], style: "main" },
-  { from: ["trim2", "video"], to: ["extract2", "video"], style: "main" },
-  { from: ["extract2", "image"], to: ["shot3", "image"], style: "main" },
+  // ── Shot 1: QA (direct from shot1, before audio) ──
+  { from: ["shot1", "video"], to: ["qa1", "video"], style: "qa", route: "v" },
+
+  // ── Shot 1: audio lane ──
+  { from: ["shot1",    "video"], to: ["add_audio1", "video"], style: "audio" },
+  { from: ["sfx1",     "audio"], to: ["add_audio1", "audio"], style: "audio" },
+
+  // ── Shot 1: Add Audio → Upscale ──
+  { from: ["add_audio1", "video"], to: ["upscale1", "video"], style: "main" },
+
+  // ── Combine Text for Kling prompt ──
+  { from: ["json_core",    "shot2"],        to: ["combine_text", "shot2_prompt"], style: "main" },
+  { from: ["json_core",    "audio_prompt"], to: ["combine_text", "audio"],        style: "main" },
+  { from: ["json_core",    "negative"],     to: ["combine_text", "negative"],     style: "main" },
+  { from: ["combine_text", "text"],         to: ["kling_s2",     "prompt"],       style: "main" },
+
+  // ── Shot 2 — Kling: preferred handoff (Extract Frame direct from kling_s2) ──
+  { from: ["kling_s2", "video"], to: ["extract2", "video"], style: "main" },
+  { from: ["extract2", "image"], to: ["shot3",    "image"], style: "main" },
+
+  // ── Shot 2 — Kling: fallback path (Trim Video → Last Frame) ──
+  { from: ["kling_s2", "video"], to: ["trim2", "video"], style: "fallback" },
+  { from: ["trim2",    "video"], to: ["last2", "video"], style: "fallback" },
+
+  // ── Shot 2: QA (direct from kling_s2, before audio) ──
+  { from: ["kling_s2", "video"], to: ["qa2", "video"], style: "qa", route: "v" },
+
+  // ── Shot 2: audio lane (Extract Audio from Kling, re-attach via Add Audio) ──
+  { from: ["kling_s2",       "video"], to: ["extract_audio2", "video"], style: "audio" },
+  { from: ["extract_audio2", "audio"], to: ["add_audio2",     "audio"], style: "audio" },
+  { from: ["kling_s2",       "video"], to: ["add_audio2",     "video"], style: "audio" },
+
+  // ── Shot 2: Add Audio → Upscale ──
+  { from: ["add_audio2", "video"], to: ["upscale2", "video"], style: "main" },
+
+  // ── Shot 3 prompt ──
   { from: ["json_core", "shot3"], to: ["shot3", "prompt"], style: "main" },
 
-  { from: ["shot1", "video"], to: ["stitch", "s1"], style: "main" },
-  { from: ["kling_s2", "video"], to: ["stitch", "s2"], style: "main" },
-  { from: ["shot3", "video"], to: ["stitch", "s3"], style: "main" },
-
-  { from: ["trim1", "video"], to: ["last1", "video"], style: "fallback", route: "v" },
-  { from: ["trim2", "video"], to: ["last2", "video"], style: "fallback", route: "v" },
-  { from: ["last1", "image"], to: ["kling_s2", "image"], style: "fallback" },
-  { from: ["last2", "image"], to: ["shot3", "image"], style: "fallback" },
-
-  { from: ["gen4_anchor", "image"], to: ["kling_s2", "image"], style: "anchor", route: "pipe", pipeY: 556 },
-  { from: ["gen4_anchor", "image"], to: ["shot3", "image"], style: "anchor", route: "pipe", pipeY: 584 },
-
-  { from: ["shot1", "video"], to: ["qa1", "video"], style: "qa", route: "v" },
-  { from: ["kling_s2", "video"], to: ["qa2", "video"], style: "qa", route: "v" },
+  // ── Shot 3: QA (direct from shot3, before audio) ──
   { from: ["shot3", "video"], to: ["qa3", "video"], style: "qa", route: "v" },
 
-  { from: ["json_core", "audio_prompt"], to: ["audio_notes", "audio_prompt"], style: "helper" },
-  { from: ["json_core", "char_lock"], to: ["continuity_notes", "char_lock"], style: "helper" },
-  { from: ["json_core", "op_notes"], to: ["continuity_notes", "op_notes"], style: "helper" },
-  { from: ["json_meta", "mi1"], to: ["continuity_notes", "mi1"], style: "helper" },
-  { from: ["json_meta", "mi2"], to: ["continuity_notes", "mi2"], style: "helper" },
-  { from: ["json_meta", "mi3"], to: ["continuity_notes", "mi3"], style: "helper" },
-  { from: ["json_meta", "hook"], to: ["social_pack", "hook"], style: "helper" },
-  { from: ["json_meta", "caption"], to: ["social_pack", "caption"], style: "helper" },
+  // ── Shot 3: audio lane ──
+  { from: ["shot3",    "video"], to: ["add_audio3", "video"], style: "audio" },
+  { from: ["sfx3",     "audio"], to: ["add_audio3", "audio"], style: "audio" },
+
+  // ── Shot 3: Add Audio → Upscale ──
+  { from: ["add_audio3", "video"], to: ["upscale3", "video"], style: "main" },
+
+  // ── Upscale → Stitch ──
+  { from: ["upscale1", "video"], to: ["stitch", "s1"], style: "main" },
+  { from: ["upscale2", "video"], to: ["stitch", "s2"], style: "main" },
+  { from: ["upscale3", "video"], to: ["stitch", "s3"], style: "main" },
+
+  // ── Last Frame fallbacks feed next shot ──
+  { from: ["last1", "image"], to: ["kling_s2", "image"], style: "fallback" },
+  { from: ["last2", "image"], to: ["shot3",    "image"], style: "fallback" },
+
+  // ── Canonical Anchor: strongest identity fallback for shots 2 & 3 ──
+  { from: ["gen4_anchor", "image"], to: ["kling_s2", "image"], style: "anchor", route: "pipe", pipeY: 840 },
+  { from: ["gen4_anchor", "image"], to: ["shot3",    "image"], style: "anchor", route: "pipe", pipeY: 870 },
 ];
+
+// ─── HELPERS ─────────────────────────────────────────────────────────────────
 
 function getPortY(index: number) {
   return HEADER_H + BODY_TOP + index * ROW_H + ROW_H / 2;
@@ -547,18 +681,15 @@ function getPortY(index: number) {
 
 function markerId(style: WireStyle) {
   switch (style) {
-    case "main":
-      return "arr-main";
-    case "fallback":
-      return "arr-fallback";
-    case "anchor":
-      return "arr-anchor";
-    case "qa":
-      return "arr-qa";
-    case "helper":
-      return "arr-helper";
+    case "main":     return "arr-main";
+    case "fallback": return "arr-fallback";
+    case "anchor":   return "arr-anchor";
+    case "qa":       return "arr-qa";
+    case "audio":    return "arr-audio";
   }
 }
+
+// ─── NODE BOX ────────────────────────────────────────────────────────────────
 
 function NodeBox({
   spec,
@@ -658,7 +789,7 @@ function NodeBox({
           }}
         >
           {Array.from({ length: rows }).map((_, i) => {
-            const input = spec.inputs[i];
+            const input  = spec.inputs[i];
             const output = spec.outputs[i];
             const y = i * ROW_H;
 
@@ -759,6 +890,8 @@ function NodeBox({
   );
 }
 
+// ─── SECTION LABEL ───────────────────────────────────────────────────────────
+
 function SectionLabel({
   x,
   y,
@@ -790,6 +923,8 @@ function SectionLabel({
   );
 }
 
+// ─── CONTROL BUTTON STYLE ────────────────────────────────────────────────────
+
 const controlBtnStyle: CSSProperties = {
   width: 30,
   height: 30,
@@ -804,6 +939,124 @@ const controlBtnStyle: CSSProperties = {
   justifyContent: "center",
 };
 
+// ─── INFO PANEL ──────────────────────────────────────────────────────────────
+
+function InfoPanel() {
+  const panelBg = "rgba(9,17,27,0.88)";
+  const headStyle: CSSProperties = {
+    color: "#93b8d8",
+    fontSize: 10,
+    fontWeight: 700,
+    letterSpacing: "0.10em",
+    textTransform: "uppercase",
+    marginBottom: 6,
+  };
+  const bodyStyle: CSSProperties = {
+    color: TEXT_SUB,
+    fontSize: 10,
+    lineHeight: 1.65,
+    margin: 0,
+  };
+  const dividerStyle: CSSProperties = {
+    width: 1,
+    background: BORDER,
+    alignSelf: "stretch",
+  };
+
+  return (
+    <div
+      style={{
+        display: "flex",
+        gap: 0,
+        borderRadius: 14,
+        overflow: "hidden",
+        border: `1px solid ${BORDER}`,
+        background: panelBg,
+        fontFamily: "ui-monospace, SFMono-Regular, Menlo, monospace",
+      }}
+    >
+      {/* Col 1: Canonical Anchor */}
+      <div style={{ flex: "1 1 0", padding: "16px 18px" }}>
+        <div style={headStyle}>Canonical Anchor</div>
+        <p style={bodyStyle}>
+          Gen-4 Image (Canonical Anchor) is a Runway-generated reference still derived from the
+          Nano Banana 2 master image. It serves as the strongest identity fallback for the entire
+          sequence. Use it as the primary image source for Shot 1, and fall back to it for Shot 2
+          or Shot 3 whenever a handoff frame is too weak or drifted.
+        </p>
+        <p style={{ ...bodyStyle, marginTop: 8 }}>
+          Always lock this node after a good QA result and reuse its seed on retries.
+        </p>
+      </div>
+
+      <div style={dividerStyle} />
+
+      {/* Col 2: Audio Routing */}
+      <div style={{ flex: "1 1 0", padding: "16px 18px" }}>
+        <div style={headStyle}>Audio Routing</div>
+        <p style={bodyStyle}>
+          <span style={{ color: "#eab308" }}>Shot 1 &amp; Shot 3</span> — Text to SFX generates
+          ambient audio, which is merged into the video via Add Audio before Upscale.
+        </p>
+        <p style={{ ...bodyStyle, marginTop: 6 }}>
+          <span style={{ color: "#eab308" }}>Shot 2</span> — Kling 3.0 Pro embeds native sound.
+          Extract Audio pulls the track from the Kling output, then Add Audio re-attaches it to a
+          clean video copy before Upscale.
+        </p>
+        <p style={{ ...bodyStyle, marginTop: 6 }}>
+          QA (First Frame) taps the raw shot output <em>before</em> the audio lane, so QA is
+          never blocked by audio processing.
+        </p>
+      </div>
+
+      <div style={dividerStyle} />
+
+      {/* Col 3: Fallback Order */}
+      <div style={{ flex: "1 1 0", padding: "16px 18px" }}>
+        <div style={headStyle}>Fallback Order</div>
+        <p style={bodyStyle}>
+          <span style={{ color: "#60a5fa" }}>①</span> Extract Frame — preferred handoff between shots. Wired directly from the shot output.
+          <br />
+          <span style={{ color: "#fb923c" }}>②</span> Last Frame after Trim — use only when Extract Frame is unavailable. Trim Video must run first.
+          <br />
+          <span style={{ color: "#c084fc" }}>③</span> Canonical Anchor — strongest fallback; resets character to a clean reference still.
+        </p>
+        <p style={{ ...bodyStyle, marginTop: 8 }}>
+          Trim Video must always run before Last Frame. It is a fallback-only branch, not part of the main handoff path.
+        </p>
+      </div>
+
+      <div style={dividerStyle} />
+
+      {/* Col 4: Upscale + Stitch */}
+      <div style={{ flex: "1 1 0", padding: "16px 18px" }}>
+        <div style={headStyle}>Upscale · Stitch</div>
+        <p style={bodyStyle}>
+          Upscale happens <em>after</em> audio is attached and <em>before</em> Stitch. Each shot
+          enters the upscale node as a fully audio-merged clip.
+        </p>
+        <p style={{ ...bodyStyle, marginTop: 6, color: TEXT_FAINT }}>
+          <em>Publicly documented:</em> Runway workflows support video upscaling as a node step.{" "}
+          <em>Actual UI:</em> the node is labeled "Upscale Video - Topaz AI" in this operator's
+          Runway canvas — this exact name is not cited from Runway public help articles.
+        </p>
+        <ul style={{ ...bodyStyle, marginTop: 6, paddingLeft: 14 }}>
+          <li>Add Audio (Shot 1) → Upscale (Shot 1) → Stitch Input 1</li>
+          <li>Add Audio (Shot 2) → Upscale (Shot 2) → Stitch Input 2</li>
+          <li>Add Audio (Shot 3) → Upscale (Shot 3) → Stitch Input 3</li>
+        </ul>
+        <p style={{ ...bodyStyle, marginTop: 8, color: TEXT_FAINT }}>
+          Reference-only JSON outputs (no render wires needed) —{" "}
+          <em>from JSON Parse (Core):</em> character_lock · operator_notes ·{" "}
+          <em>from JSON Parse (Meta):</em> motion_intensity.shot1 · .shot2 · .shot3 · hook · caption
+        </p>
+      </div>
+    </div>
+  );
+}
+
+// ─── MAIN COMPONENT ──────────────────────────────────────────────────────────
+
 export default function WSTVWorkflowDiagram({
   data: _data,
   onCopy: _onCopy,
@@ -817,9 +1070,9 @@ export default function WSTVWorkflowDiagram({
   );
 
   const [positions, setPositions] = useState<Record<string, Point>>(DEFAULT_POSITIONS);
-  const [zoom, setZoom] = useState(0.40);
-  const [pan, setPan] = useState<Point>({ x: 0, y: 0 });
-  const [dragKind, setDragKind] = useState<"canvas" | "node" | null>(null);
+  const [zoom, setZoom]           = useState(0.4);
+  const [pan, setPan]             = useState<Point>({ x: 0, y: 0 });
+  const [dragKind, setDragKind]   = useState<"canvas" | "node" | null>(null);
 
   void _data;
   void _onCopy;
@@ -833,21 +1086,16 @@ export default function WSTVWorkflowDiagram({
   const getRect = useCallback(
     (id: string) => {
       const spec = specMap[id];
-      const pos = positions[id];
-      return {
-        x: pos.x,
-        y: pos.y,
-        w: spec.width,
-        h: getNodeHeight(spec),
-      };
+      const pos  = positions[id];
+      return { x: pos.x, y: pos.y, w: spec.width, h: getNodeHeight(spec) };
     },
     [positions, specMap]
   );
 
   const getPortPoint = useCallback(
     (nodeId: string, portId: string, side: Side): Point => {
-      const spec = specMap[nodeId];
-      const rect = getRect(nodeId);
+      const spec  = specMap[nodeId];
+      const rect  = getRect(nodeId);
       const ports = side === "left" ? spec.inputs : spec.outputs;
       const index = ports.findIndex((p) => p.id === portId);
       const y = rect.y + getPortY(Math.max(index, 0));
@@ -878,7 +1126,6 @@ export default function WSTVWorkflowDiagram({
 
       const dx = e.clientX - drag.x;
       const dy = e.clientY - drag.y;
-
       dragRef.current = { ...drag, x: e.clientX, y: e.clientY };
 
       if (drag.kind === "canvas") {
@@ -907,7 +1154,7 @@ export default function WSTVWorkflowDiagram({
   }, []);
 
   const resetView = useCallback(() => {
-    setZoom(0.40);
+    setZoom(0.4);
     setPan({ x: 0, y: 0 });
     setPositions(DEFAULT_POSITIONS);
     setDragKind(null);
@@ -915,251 +1162,263 @@ export default function WSTVWorkflowDiagram({
   }, []);
 
   return (
-    <div
-      style={{
-        width: "100%",
-        height: 780,
-        borderRadius: 18,
-        overflow: "hidden",
-        border: "1px solid rgba(255,255,255,0.07)",
-        background: BG,
-        position: "relative",
-        cursor: dragKind === "canvas" ? "grabbing" : "grab",
-        touchAction: "none",
-      }}
-      onPointerDown={onCanvasPointerDown}
-      onPointerMove={onPointerMove}
-      onPointerUp={onPointerUp}
-      onPointerLeave={onPointerUp}
-      onWheel={onWheel}
-    >
+    <div style={{ display: "flex", flexDirection: "column", gap: 14, width: "100%" }}>
+      {/* ── Canvas ── */}
       <div
         style={{
-          position: "absolute",
-          inset: 0,
-          backgroundImage: `
-            linear-gradient(${GRID_MINOR} 1px, transparent 1px),
-            linear-gradient(90deg, ${GRID_MINOR} 1px, transparent 1px),
-            linear-gradient(${GRID_MAJOR} 1px, transparent 1px),
-            linear-gradient(90deg, ${GRID_MAJOR} 1px, transparent 1px)
-          `,
-          backgroundSize: "24px 24px, 24px 24px, 120px 120px, 120px 120px",
-          pointerEvents: "none",
+          width: "100%",
+          height: 820,
+          borderRadius: 18,
+          overflow: "hidden",
+          border: "1px solid rgba(255,255,255,0.07)",
+          background: BG,
+          position: "relative",
+          cursor: dragKind === "canvas" ? "grabbing" : "grab",
+          touchAction: "none",
         }}
-      />
-
-      <div
-        style={{
-          position: "absolute",
-          top: 16,
-          left: 16,
-          zIndex: 30,
-          color: TEXT_FAINT,
-          fontSize: 9,
-          lineHeight: 1.45,
-          fontFamily: "ui-monospace, SFMono-Regular, Menlo, monospace",
-          background: "rgba(9,17,27,0.76)",
-          border: `1px solid ${BORDER}`,
-          padding: "10px 12px",
-          borderRadius: 10,
-          backdropFilter: "blur(6px)",
-        }}
+        onPointerDown={onCanvasPointerDown}
+        onPointerMove={onPointerMove}
+        onPointerUp={onPointerUp}
+        onPointerLeave={onPointerUp}
+        onWheel={onWheel}
       >
-        Drag canvas to pan · Scroll to zoom
-        <br />
-        Drag nodes to reposition · Wires update live
-      </div>
+        {/* Grid */}
+        <div
+          style={{
+            position: "absolute",
+            inset: 0,
+            backgroundImage: `
+              linear-gradient(${GRID_MINOR} 1px, transparent 1px),
+              linear-gradient(90deg, ${GRID_MINOR} 1px, transparent 1px),
+              linear-gradient(${GRID_MAJOR} 1px, transparent 1px),
+              linear-gradient(90deg, ${GRID_MAJOR} 1px, transparent 1px)
+            `,
+            backgroundSize: "24px 24px, 24px 24px, 120px 120px, 120px 120px",
+            pointerEvents: "none",
+          }}
+        />
 
-      <div
-        style={{
-          position: "absolute",
-          top: 16,
-          right: 16,
-          zIndex: 30,
-          display: "flex",
-          alignItems: "center",
-          gap: 6,
-          background: "rgba(9,17,27,0.76)",
-          border: `1px solid ${BORDER}`,
-          padding: "8px 10px",
-          borderRadius: 10,
-          backdropFilter: "blur(6px)",
-        }}
-        onPointerDown={(e) => e.stopPropagation()}
-      >
-        <div style={{ color: TEXT_SUB, fontSize: 10, minWidth: 34, textAlign: "right" }}>
-          {Math.round(zoom * 100)}%
-        </div>
-        <button onClick={() => setZoom((z) => Math.max(0.24, z - 0.08))} style={controlBtnStyle}>
-          −
-        </button>
-        <button onClick={() => setZoom((z) => Math.min(1.4, z + 0.08))} style={controlBtnStyle}>
-          +
-        </button>
-        <button onClick={resetView} style={{ ...controlBtnStyle, width: "auto", padding: "0 12px" }}>
-          Reset
-        </button>
-      </div>
-
-      <div
-        style={{
-          position: "absolute",
-          left: 0,
-          top: 0,
-          transformOrigin: "0 0",
-          transform: `translate(${pan.x}px, ${pan.y}px) scale(${zoom})`,
-          width: VIEW_W,
-          height: VIEW_H,
-        }}
-      >
-        <svg
-          width={VIEW_W}
-          height={VIEW_H}
-          style={{ position: "absolute", inset: 0, overflow: "visible" }}
+        {/* Hint overlay */}
+        <div
+          style={{
+            position: "absolute",
+            top: 16,
+            left: 16,
+            zIndex: 30,
+            color: TEXT_FAINT,
+            fontSize: 9,
+            lineHeight: 1.45,
+            fontFamily: "ui-monospace, SFMono-Regular, Menlo, monospace",
+            background: "rgba(9,17,27,0.76)",
+            border: `1px solid ${BORDER}`,
+            padding: "10px 12px",
+            borderRadius: 10,
+            backdropFilter: "blur(6px)",
+          }}
         >
-          <defs>
-            {Object.entries({
-              "arr-main": WIRE_COLORS.main,
-              "arr-fallback": WIRE_COLORS.fallback,
-              "arr-anchor": WIRE_COLORS.anchor,
-              "arr-qa": WIRE_COLORS.qa,
-              "arr-helper": WIRE_COLORS.helper,
-            }).map(([id, color]) => (
-              <marker
-                key={id}
-                id={id}
-                markerWidth="8"
-                markerHeight="8"
-                refX="6"
-                refY="3"
-                orient="auto"
-              >
-                <path d="M0,0 L0,6 L7,3 z" fill={color} />
-              </marker>
-            ))}
-          </defs>
+          Drag canvas to pan · Scroll to zoom
+          <br />
+          Drag nodes to reposition · Wires update live
+        </div>
 
-          {WIRES.map((wire, idx) => {
-            const from = getPortPoint(wire.from[0], wire.from[1], "right");
-            const to = getPortPoint(wire.to[0], wire.to[1], "left");
-            const color = WIRE_COLORS[wire.style];
+        {/* Zoom controls */}
+        <div
+          style={{
+            position: "absolute",
+            top: 16,
+            right: 16,
+            zIndex: 30,
+            display: "flex",
+            alignItems: "center",
+            gap: 6,
+            background: "rgba(9,17,27,0.76)",
+            border: `1px solid ${BORDER}`,
+            padding: "8px 10px",
+            borderRadius: 10,
+            backdropFilter: "blur(6px)",
+          }}
+          onPointerDown={(e) => e.stopPropagation()}
+        >
+          <div style={{ color: TEXT_SUB, fontSize: 10, minWidth: 34, textAlign: "right" }}>
+            {Math.round(zoom * 100)}%
+          </div>
+          <button onClick={() => setZoom((z) => Math.max(0.24, z - 0.08))} style={controlBtnStyle}>
+            −
+          </button>
+          <button onClick={() => setZoom((z) => Math.min(1.4, z + 0.08))} style={controlBtnStyle}>
+            +
+          </button>
+          <button onClick={resetView} style={{ ...controlBtnStyle, width: "auto", padding: "0 12px" }}>
+            Reset
+          </button>
+        </div>
 
-            let d = "";
-            if (wire.route === "v") d = vCurve(from, to);
-            else if (wire.route === "pipe") d = pipeCurve(from, to, wire.pipeY ?? 560);
-            else d = hCurve(from, to, 72);
+        {/* Pannable / zoomable canvas */}
+        <div
+          style={{
+            position: "absolute",
+            left: 0,
+            top: 0,
+            transformOrigin: "0 0",
+            transform: `translate(${pan.x}px, ${pan.y}px) scale(${zoom})`,
+            width: VIEW_W,
+            height: VIEW_H,
+          }}
+        >
+          {/* ── SVG wire layer ── */}
+          <svg
+            width={VIEW_W}
+            height={VIEW_H}
+            style={{ position: "absolute", inset: 0, overflow: "visible" }}
+          >
+            <defs>
+              {(
+                [
+                  ["arr-main",     WIRE_COLORS.main],
+                  ["arr-fallback", WIRE_COLORS.fallback],
+                  ["arr-anchor",   WIRE_COLORS.anchor],
+                  ["arr-qa",       WIRE_COLORS.qa],
+                  ["arr-audio",    WIRE_COLORS.audio],
+                ] as const
+              ).map(([id, color]) => (
+                <marker
+                  key={id}
+                  id={id}
+                  markerWidth="8"
+                  markerHeight="8"
+                  refX="6"
+                  refY="3"
+                  orient="auto"
+                >
+                  <path d="M0,0 L0,6 L7,3 z" fill={color} />
+                </marker>
+              ))}
+            </defs>
 
-            const dashed = wire.style !== "main";
-            const opacity =
-              wire.style === "helper" ? 0.46 :
-              wire.style === "qa" ? 0.60 :
-              wire.style === "anchor" ? 0.74 :
-              wire.style === "fallback" ? 0.80 : 1;
+            {WIRES.map((wire, idx) => {
+              const from  = getPortPoint(wire.from[0], wire.from[1], "right");
+              const to    = getPortPoint(wire.to[0],   wire.to[1],   "left");
+              const color = WIRE_COLORS[wire.style];
 
-            const strokeWidth =
-              wire.style === "main" ? 2.35 :
-              wire.style === "helper" ? 1.15 :
-              1.35;
+              let d = "";
+              if (wire.route === "v")         d = vCurve(from, to);
+              else if (wire.route === "pipe") d = pipeCurve(from, to, wire.pipeY ?? 840);
+              else                            d = hCurve(from, to, 72);
 
-            return (
-              <g key={idx}>
-                {wire.style === "main" && (
+              const dashed      = wire.style !== "main";
+              const opacity =
+                wire.style === "qa"       ? 0.55 :
+                wire.style === "anchor"   ? 0.68 :
+                wire.style === "fallback" ? 0.78 :
+                wire.style === "audio"    ? 0.80 : 1;
+              const strokeWidth =
+                wire.style === "main"  ? 2.35 :
+                wire.style === "audio" ? 1.65 : 1.35;
+
+              return (
+                <g key={idx}>
+                  {wire.style === "main" && (
+                    <path d={d} fill="none" stroke={color} strokeWidth={5} opacity={0.12} />
+                  )}
+                  {wire.style === "audio" && (
+                    <path d={d} fill="none" stroke={color} strokeWidth={4} opacity={0.09} />
+                  )}
                   <path
                     d={d}
                     fill="none"
                     stroke={color}
-                    strokeWidth={5}
-                    opacity={0.12}
+                    strokeWidth={strokeWidth}
+                    strokeDasharray={dashed ? "6 4" : undefined}
+                    opacity={opacity}
+                    markerEnd={`url(#${markerId(wire.style)})`}
                   />
-                )}
-                <path
-                  d={d}
-                  fill="none"
-                  stroke={color}
-                  strokeWidth={strokeWidth}
-                  strokeDasharray={dashed ? "6 4" : undefined}
-                  opacity={opacity}
-                  markerEnd={`url(#${markerId(wire.style)})`}
-                />
-              </g>
-            );
-          })}
-        </svg>
+                </g>
+              );
+            })}
+          </svg>
 
-        <SectionLabel x={30} y={96} text="Inputs" />
-        <SectionLabel x={270} y={178} text="AI Director" />
-        <SectionLabel x={590} y={42} text="Structured Output" />
-        <SectionLabel x={930} y={126} text="Image Chain" />
-        <SectionLabel x={1195} y={116} text="Canonical Anchor" color="#9d71ff" />
-        <SectionLabel x={1508} y={126} text="Shot 1 — Gen-4.5" />
-        <SectionLabel x={2254} y={118} text="Shot 2 — Kling 3.0 Pro" />
-        <SectionLabel x={3042} y={126} text="Shot 3 — Gen-4.5" />
-        <SectionLabel x={1508} y={388} text="Fallback · QA Lane" color="#8c6a10" />
-        <SectionLabel x={930} y={638} text="Helper Lane" color="#3f5772" />
+          {/* ── Section labels ── */}
+          <SectionLabel x={30}   y={88}  text="Inputs" />
+          <SectionLabel x={276}  y={170} text="AI Director" />
+          <SectionLabel x={596}  y={36}  text="Structured Output" />
+          <SectionLabel x={938}  y={126} text="Image Chain" />
+          <SectionLabel x={1204} y={116} text="Canonical Anchor" color="#9d71ff" />
+          <SectionLabel x={1514} y={126} text="Shot 1 — Gen-4.5" />
+          <SectionLabel x={2268} y={118} text="Shot 2 — Kling 3.0 Pro" />
+          <SectionLabel x={3054} y={126} text="Shot 3 — Gen-4.5" />
+          <SectionLabel x={1514} y={490} text="Fallback · QA Lane" color="#8c6a10" />
+          <SectionLabel x={1514} y={672} text="Audio Lane" color="#8a7200" />
+          <SectionLabel x={3550} y={44}  text="Upscale · Stitch" color="#1e5a70" />
 
-        {NODE_SPECS.map((spec) => (
-          <NodeBox
-            key={spec.id}
-            spec={spec}
-            pos={positions[spec.id]}
-            onPointerDown={onNodePointerDown(spec.id)}
-          />
-        ))}
+          {/* ── Title watermark ── */}
+          <div
+            style={{
+              position: "absolute",
+              left: 30,
+              top: 20,
+              color: "#1e2f42",
+              fontSize: 11,
+              fontWeight: 700,
+              letterSpacing: "0.12em",
+              textTransform: "uppercase",
+            }}
+          >
+            Wild Stories TV · AI Cinematic Pipeline
+          </div>
 
-        <div
-          style={{
-            position: "absolute",
-            left: 30,
-            top: 20,
-            color: "#1e2f42",
-            fontSize: 11,
-            fontWeight: 700,
-            letterSpacing: "0.12em",
-            textTransform: "uppercase",
-          }}
-        >
-          Wild Stories TV · AI Cinematic Pipeline
-        </div>
-
-        <div
-          style={{
-            position: "absolute",
-            left: 30,
-            bottom: 30,
-            display: "flex",
-            alignItems: "center",
-            gap: 18,
-            flexWrap: "wrap",
-            padding: "10px 12px",
-            borderRadius: 12,
-            background: "rgba(9,17,27,0.78)",
-            border: `1px solid ${BORDER}`,
-          }}
-        >
-          {([
-            { label: "Main pipeline", color: WIRE_COLORS.main, dashed: false },
-            { label: "Last Frame fallback", color: WIRE_COLORS.fallback, dashed: true },
-            { label: "Canonical Anchor fallback", color: WIRE_COLORS.anchor, dashed: true },
-            { label: "First Frame QA", color: WIRE_COLORS.qa, dashed: true },
-            { label: "Helper notes", color: WIRE_COLORS.helper, dashed: true },
-          ] as const).map((item) => (
-            <div key={item.label} style={{ display: "flex", alignItems: "center", gap: 7 }}>
-              <svg width={34} height={10}>
-                <line
-                  x1={0}
-                  y1={5}
-                  x2={34}
-                  y2={5}
-                  stroke={item.color}
-                  strokeWidth={item.dashed ? 1.3 : 2.1}
-                  strokeDasharray={item.dashed ? "6 4" : undefined}
-                />
-              </svg>
-              <span style={{ color: TEXT_SUB, fontSize: 9 }}>{item.label}</span>
-            </div>
+          {/* ── Nodes ── */}
+          {NODE_SPECS.map((spec) => (
+            <NodeBox
+              key={spec.id}
+              spec={spec}
+              pos={positions[spec.id]}
+              onPointerDown={onNodePointerDown(spec.id)}
+            />
           ))}
+
+          {/* ── Legend ── */}
+          <div
+            style={{
+              position: "absolute",
+              left: 30,
+              bottom: 30,
+              display: "flex",
+              alignItems: "center",
+              gap: 18,
+              flexWrap: "wrap",
+              padding: "10px 12px",
+              borderRadius: 12,
+              background: "rgba(9,17,27,0.78)",
+              border: `1px solid ${BORDER}`,
+            }}
+          >
+            {(
+              [
+                { label: "Main pipeline",            color: WIRE_COLORS.main,     dashed: false },
+                { label: "Audio flow",                color: WIRE_COLORS.audio,    dashed: true  },
+                { label: "Last Frame fallback",       color: WIRE_COLORS.fallback, dashed: true  },
+                { label: "Canonical Anchor fallback", color: WIRE_COLORS.anchor,   dashed: true  },
+                { label: "First Frame QA",            color: WIRE_COLORS.qa,       dashed: true  },
+              ] as const
+            ).map((item) => (
+              <div key={item.label} style={{ display: "flex", alignItems: "center", gap: 7 }}>
+                <svg width={34} height={10}>
+                  <line
+                    x1={0} y1={5} x2={34} y2={5}
+                    stroke={item.color}
+                    strokeWidth={item.dashed ? 1.3 : 2.1}
+                    strokeDasharray={item.dashed ? "6 4" : undefined}
+                  />
+                </svg>
+                <span style={{ color: TEXT_SUB, fontSize: 9 }}>{item.label}</span>
+              </div>
+            ))}
+          </div>
         </div>
       </div>
+
+      {/* ── Info Panel (below canvas, not part of the draggable graph) ── */}
+      <InfoPanel />
     </div>
   );
 }
