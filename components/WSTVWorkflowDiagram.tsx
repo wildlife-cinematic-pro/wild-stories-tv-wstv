@@ -1036,10 +1036,10 @@ function InfoPanel() {
           enters the upscale node as a fully audio-merged clip.
         </p>
         <p style={{ ...bodyStyle, marginTop: 6, color: TEXT_FAINT }}>
-          <em>Publicly documented:</em> Runway workflows support video upscaling as a node step.{" "}
-          <em>Actual UI:</em> the node is labeled "Upscale Video - Topaz AI" in this operator's
-          Runway canvas — this exact name is not cited from Runway public help articles.
-        </p>
+  <em>Publicly documented:</em> Runway workflows support video upscaling as a node step.{" "}
+  <em>Actual UI:</em> the node is labeled &quot;Upscale Video - Topaz AI&quot; in this operator&apos;s
+  Runway canvas — this exact name is not cited from Runway public help articles.
+</p>
         <ul style={{ ...bodyStyle, marginTop: 6, paddingLeft: 14 }}>
           <li>Add Audio (Shot 1) → Upscale (Shot 1) → Stitch Input 1</li>
           <li>Add Audio (Shot 2) → Upscale (Shot 2) → Stitch Input 2</li>
