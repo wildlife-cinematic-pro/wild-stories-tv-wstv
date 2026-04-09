@@ -69,14 +69,73 @@ const TEXT_MAIN = "#edf2f8";
 const TEXT_SUB = "#7b8ca3";
 const TEXT_FAINT = "#526579";
 
-// Extended canvas to accommodate audio lane
-const VIEW_W = 3880;
+// FIX #1: VIEW_W expanded from 3880 → 4200.
+// Stitch node sits at x:3840 with width:200, so right edge = 4040.
+// Previous VIEW_W of 3880 clipped the node. 4200 gives a clean 160px margin.
+const VIEW_W = 4200;
 const VIEW_H = 960;
 
-const HEADER_H = 44;
-const ROW_H = 20;
-const BODY_TOP = 12;
-const FOOTER_PAD = 10;
+// ─── LAYOUT CONSTANTS ────────────────────────────────────────────────────────
+// FIX #2: Replace single flat HEADER_H constant with per-node calculation.
+// Old approach used HEADER_H=44 + BODY_TOP=12 = 56px as a fixed base for all
+// nodes, but actual header height differs significantly:
+//   • badge + subtitle node  → ~71px header
+//   • badge, no subtitle     → ~57px header
+//   • no badge, has subtitle → ~50px header
+//   • no badge, no subtitle  → ~36px header
+// This delta caused wires to miss port dots by up to ±20px.
+//
+// New approach: nodeHeaderH(spec) computes the exact header height per node,
+// which is then used by both getNodeHeight() and getPortY().
+// ─────────────────────────────────────────────────────────────────────────────
+
+const ROW_H      = 20;  // height of each port row
+const FOOTER_PAD = 10;  // padding below last port row
+
+// Measured component sub-heights (based on CSS in NodeBox):
+const BAR_H       = 4;   // top accent color bar
+const PAD_TOP     = 8;   // padding-top inside the content div
+const BADGE_H     = 21;  // badge inline-block: fontSize9*lineHeight1.2 + pad2+2 + marginBottom6
+const TITLE_H     = 14;  // title: fontSize12.5 * lineHeight1.15
+const SUBTITLE_H  = 14;  // subtitle: marginTop2 + fontSize9 * lineHeight1.3
+const PORT_MARGIN = 10;  // marginTop before the port row container
+// Dot sits at top: ROW_H/2 - 4.5 = 5.5 within its row div → dot center offset:
+const DOT_OFFSET  = 5.5;
+
+/**
+ * Returns the total header height from node top to the start of the port
+ * container. This is what getPortY adds before the per-row offset.
+ */
+function nodeHeaderH(spec: NodeSpec): number {
+  return (
+    BAR_H +
+    PAD_TOP +
+    (spec.badge ? BADGE_H : 0) +
+    TITLE_H +
+    (spec.subtitle ? SUBTITLE_H : 0) +
+    PORT_MARGIN
+  );
+}
+
+/** Total pixel height for a node box. */
+function getNodeHeight(spec: NodeSpec): number {
+  const rowCount  = Math.max(spec.inputs.length, spec.outputs.length, 1);
+  const infoExtra = (spec.infoLines?.length ?? 0) * 11;
+  return (
+    nodeHeaderH(spec) +
+    rowCount * ROW_H +
+    (infoExtra ? infoExtra + 10 : 0) +
+    FOOTER_PAD
+  );
+}
+
+/**
+ * Y offset of a port dot's center from the node's top edge.
+ * Spec is required so we can compute the correct header height.
+ */
+function getPortDotY(spec: NodeSpec, index: number): number {
+  return nodeHeaderH(spec) + index * ROW_H + DOT_OFFSET;
+}
 
 function hCurve(a: Point, b: Point, strength = 64) {
   return `M ${a.x} ${a.y} C ${a.x + strength} ${a.y}, ${b.x - strength} ${b.y}, ${b.x} ${b.y}`;
@@ -94,12 +153,6 @@ function pipeCurve(a: Point, b: Point, pipeY: number, radius = 34) {
     `L ${b.x} ${pipeY}`,
     `C ${b.x} ${pipeY + radius}, ${b.x} ${b.y - radius}, ${b.x} ${b.y}`,
   ].join(" ");
-}
-
-function getNodeHeight(spec: NodeSpec) {
-  const rowCount = Math.max(spec.inputs.length, spec.outputs.length, 1);
-  const infoExtra = (spec.infoLines?.length ?? 0) * 11;
-  return HEADER_H + BODY_TOP + rowCount * ROW_H + (infoExtra ? infoExtra + 10 : 0) + FOOTER_PAD;
 }
 
 function makeNode(id: string, cfg: Omit<NodeSpec, "id">): NodeSpec {
@@ -154,8 +207,8 @@ const NODE_SPECS: NodeSpec[] = [
     accent: "#f97316",
     inputs: [
       { id: "system", label: "System Prompt", kind: "text", required: true },
-      { id: "prompt", label: "Prompt", kind: "text", required: true },
-      { id: "image", label: "Image", kind: "image" },
+      { id: "prompt", label: "Prompt",        kind: "text", required: true },
+      { id: "image",  label: "Image",          kind: "image" },
     ],
     outputs: [{ id: "json", label: "JSON", kind: "text" }],
   }),
@@ -274,6 +327,10 @@ const NODE_SPECS: NodeSpec[] = [
   }),
 
   // ── SHOT 1 AUDIO LANE ──
+  // FIX #3: sfx1 text input is now wired from json_core.shot1 (shot1_video_prompt).
+  // The shot prompt describes the action and environment, which directly drives
+  // ambient SFX generation in Runway Text to SFX. Previously this input was
+  // shown but had no wire, leaving it as a floating unconnected port.
   makeNode("sfx1", {
     title: "Text to SFX",
     subtitle: "(Shot 1 Ambience)",
@@ -404,6 +461,7 @@ const NODE_SPECS: NodeSpec[] = [
   }),
 
   // ── SHOT 3 AUDIO LANE ──
+  // FIX #3 (continued): sfx3 text input wired from json_core.shot3.
   makeNode("sfx3", {
     title: "Text to SFX",
     subtitle: "(Shot 3 Ambience)",
@@ -536,10 +594,10 @@ const DEFAULT_POSITIONS: Record<string, Point> = {
 
   // Shot 1 — main lane
   shot1:    { x: 1514, y: 152 },
-  extract1: { x: 1784, y: 166 }, // preferred handoff; comes directly from shot1
+  extract1: { x: 1784, y: 166 },
 
   // Shot 1 — audio lane (below main)
-  sfx1:      { x: 1514, y: 700 },
+  sfx1:       { x: 1514, y: 700 },
   add_audio1: { x: 1780, y: 700 },
 
   // Shot 1 — fallback lane
@@ -551,7 +609,7 @@ const DEFAULT_POSITIONS: Record<string, Point> = {
 
   // Shot 2 — Kling — main lane
   kling_s2: { x: 2268, y: 144 },
-  extract2: { x: 2570, y: 166 }, // preferred handoff; comes directly from kling_s2
+  extract2: { x: 2570, y: 166 },
 
   // Shot 2 — audio lane
   extract_audio2: { x: 2268, y: 700 },
@@ -565,15 +623,15 @@ const DEFAULT_POSITIONS: Record<string, Point> = {
   shot3: { x: 3054, y: 152 },
 
   // Shot 3 — audio lane
-  sfx3:      { x: 3054, y: 700 },
+  sfx3:       { x: 3054, y: 700 },
   add_audio3: { x: 3280, y: 700 },
 
-  // Upscale column (one per shot) — receives audio-merged video
+  // Upscale column — receives audio-merged video
   upscale1: { x: 3550, y: 68  },
   upscale2: { x: 3550, y: 310 },
   upscale3: { x: 3550, y: 552 },
 
-  // Final
+  // Final — x:3840, right edge:4040. Now safely inside VIEW_W:4200.
   stitch: { x: 3840, y: 310 },
 
   // QA
@@ -615,8 +673,12 @@ const WIRES: WireDef[] = [
   { from: ["shot1", "video"], to: ["qa1", "video"], style: "qa", route: "v" },
 
   // ── Shot 1: audio lane ──
-  { from: ["shot1",    "video"], to: ["add_audio1", "video"], style: "audio" },
-  { from: ["sfx1",     "audio"], to: ["add_audio1", "audio"], style: "audio" },
+  // FIX #3: json_core.shot1 (shot1_video_prompt) → sfx1.text now wired.
+  // This gives Text to SFX the action/environment context to generate
+  // matching ambient audio without a manual text entry in Runway.
+  { from: ["json_core",  "shot1"], to: ["sfx1",       "text"],  style: "audio" },
+  { from: ["shot1",      "video"], to: ["add_audio1", "video"], style: "audio" },
+  { from: ["sfx1",       "audio"], to: ["add_audio1", "audio"], style: "audio" },
 
   // ── Shot 1: Add Audio → Upscale ──
   { from: ["add_audio1", "video"], to: ["upscale1", "video"], style: "main" },
@@ -653,8 +715,10 @@ const WIRES: WireDef[] = [
   { from: ["shot3", "video"], to: ["qa3", "video"], style: "qa", route: "v" },
 
   // ── Shot 3: audio lane ──
-  { from: ["shot3",    "video"], to: ["add_audio3", "video"], style: "audio" },
-  { from: ["sfx3",     "audio"], to: ["add_audio3", "audio"], style: "audio" },
+  // FIX #3 (continued): json_core.shot3 → sfx3.text wired.
+  { from: ["json_core",  "shot3"], to: ["sfx3",       "text"],  style: "audio" },
+  { from: ["shot3",      "video"], to: ["add_audio3", "video"], style: "audio" },
+  { from: ["sfx3",       "audio"], to: ["add_audio3", "audio"], style: "audio" },
 
   // ── Shot 3: Add Audio → Upscale ──
   { from: ["add_audio3", "video"], to: ["upscale3", "video"], style: "main" },
@@ -669,15 +733,13 @@ const WIRES: WireDef[] = [
   { from: ["last2", "image"], to: ["shot3",    "image"], style: "fallback" },
 
   // ── Canonical Anchor: strongest identity fallback for shots 2 & 3 ──
+  // Use this when Extract Frame produces a frame with two subjects visible
+  // (predator + prey both prominent) — anchor resets to clean single-subject ref.
   { from: ["gen4_anchor", "image"], to: ["kling_s2", "image"], style: "anchor", route: "pipe", pipeY: 840 },
   { from: ["gen4_anchor", "image"], to: ["shot3",    "image"], style: "anchor", route: "pipe", pipeY: 870 },
 ];
 
 // ─── HELPERS ─────────────────────────────────────────────────────────────────
-
-function getPortY(index: number) {
-  return HEADER_H + BODY_TOP + index * ROW_H + ROW_H / 2;
-}
 
 function markerId(style: WireStyle) {
   switch (style) {
@@ -701,7 +763,7 @@ function NodeBox({
   onPointerDown: (e: ReactPointerEvent<HTMLDivElement>) => void;
 }) {
   const height = getNodeHeight(spec);
-  const rows = Math.max(spec.inputs.length, spec.outputs.length, 1);
+  const rows   = Math.max(spec.inputs.length, spec.outputs.length, 1);
 
   return (
     <div
@@ -725,18 +787,20 @@ function NodeBox({
         overflow: "hidden",
       }}
     >
+      {/* Accent color bar — BAR_H = 4px */}
       <div
         style={{
-          height: 4,
+          height: BAR_H,
           background: spec.accent
             ? `linear-gradient(90deg, ${spec.accent}, ${spec.accent}99)`
             : "rgba(255,255,255,0.06)",
         }}
       />
+      {/* Content area — PAD_TOP = 8px matching our nodeHeaderH calculation */}
       <div
         style={{
           padding: "8px 10px 8px",
-          height: `calc(100% - 4px)`,
+          height: `calc(100% - ${BAR_H}px)`,
           boxSizing: "border-box",
           cursor: "grab",
         }}
@@ -781,10 +845,11 @@ function NodeBox({
           </div>
         )}
 
+        {/* Port rows — marginTop: PORT_MARGIN = 10px, matching nodeHeaderH */}
         <div
           style={{
             position: "relative",
-            marginTop: 10,
+            marginTop: PORT_MARGIN,
             minHeight: rows * ROW_H,
           }}
         >
@@ -810,6 +875,7 @@ function NodeBox({
                       style={{
                         position: "absolute",
                         left: -15,
+                        // Dot center matches DOT_OFFSET = ROW_H/2 - 4.5 = 5.5
                         top: ROW_H / 2 - 4.5,
                         width: 9,
                         height: 9,
@@ -985,7 +1051,9 @@ function InfoPanel() {
           or Shot 3 whenever a handoff frame is too weak or drifted.
         </p>
         <p style={{ ...bodyStyle, marginTop: 8 }}>
-          Always lock this node after a good QA result and reuse its seed on retries.
+          If a Last Frame or Extract Frame contains both predator and prey prominently (two competing
+          subjects), route the anchor directly to the next shot to reset to a clean single-subject
+          reference. Always lock this node after a good QA result and reuse its seed on retries.
         </p>
       </div>
 
@@ -995,8 +1063,10 @@ function InfoPanel() {
       <div style={{ flex: "1 1 0", padding: "16px 18px" }}>
         <div style={headStyle}>Audio Routing</div>
         <p style={bodyStyle}>
-          <span style={{ color: "#eab308" }}>Shot 1 &amp; Shot 3</span> — Text to SFX generates
-          ambient audio, which is merged into the video via Add Audio before Upscale.
+          <span style={{ color: "#eab308" }}>Shot 1 &amp; Shot 3</span> — Text to SFX receives the
+          shot video prompt (fan-out from JSON Parse Core) as its text input, giving it the
+          action and environment context to generate matching ambient audio. The generated audio
+          is then merged into the video via Add Audio before Upscale.
         </p>
         <p style={{ ...bodyStyle, marginTop: 6 }}>
           <span style={{ color: "#eab308" }}>Shot 2</span> — Kling 3.0 Pro embeds native sound.
@@ -1022,6 +1092,12 @@ function InfoPanel() {
           <span style={{ color: "#c084fc" }}>③</span> Canonical Anchor — strongest fallback; resets character to a clean reference still.
         </p>
         <p style={{ ...bodyStyle, marginTop: 8 }}>
+          If the handoff frame contains two prominent subjects (predator and prey both fully
+          visible), skip ② entirely and use ③ Canonical Anchor directly. The anchor provides a
+          predator-only, clean-lit reference that prevents Kling or Gen-4.5 from tracking both
+          animals as equal subjects.
+        </p>
+        <p style={{ ...bodyStyle, marginTop: 6, color: TEXT_FAINT }}>
           Trim Video must always run before Last Frame. It is a fallback-only branch, not part of the main handoff path.
         </p>
       </div>
@@ -1036,10 +1112,10 @@ function InfoPanel() {
           enters the upscale node as a fully audio-merged clip.
         </p>
         <p style={{ ...bodyStyle, marginTop: 6, color: TEXT_FAINT }}>
-  <em>Publicly documented:</em> Runway workflows support video upscaling as a node step.{" "}
-  <em>Actual UI:</em> the node is labeled &quot;Upscale Video - Topaz AI&quot; in this operator&apos;s
-  Runway canvas — this exact name is not cited from Runway public help articles.
-</p>
+          <em>Publicly documented:</em> Runway workflows support video upscaling as a node step.{" "}
+          <em>Actual UI:</em> the node is labeled &quot;Upscale Video - Topaz AI&quot; in this operator&apos;s
+          Runway canvas — this exact name is not cited from Runway public help articles.
+        </p>
         <ul style={{ ...bodyStyle, marginTop: 6, paddingLeft: 14 }}>
           <li>Add Audio (Shot 1) → Upscale (Shot 1) → Stitch Input 1</li>
           <li>Add Audio (Shot 2) → Upscale (Shot 2) → Stitch Input 2</li>
@@ -1092,13 +1168,16 @@ export default function WSTVWorkflowDiagram({
     [positions, specMap]
   );
 
+  // FIX #2 (applied here): getPortPoint now passes spec to getPortDotY() so
+  // that wire endpoints use the per-node header height rather than a flat constant.
   const getPortPoint = useCallback(
     (nodeId: string, portId: string, side: Side): Point => {
       const spec  = specMap[nodeId];
       const rect  = getRect(nodeId);
       const ports = side === "left" ? spec.inputs : spec.outputs;
       const index = ports.findIndex((p) => p.id === portId);
-      const y = rect.y + getPortY(Math.max(index, 0));
+      // Use Math.max so unknown portId defaults to row 0 rather than -1
+      const y = rect.y + getPortDotY(spec, Math.max(index, 0));
       const x = side === "left" ? rect.x : rect.x + rect.w;
       return { x, y };
     },
@@ -1305,7 +1384,7 @@ export default function WSTVWorkflowDiagram({
               else if (wire.route === "pipe") d = pipeCurve(from, to, wire.pipeY ?? 840);
               else                            d = hCurve(from, to, 72);
 
-              const dashed      = wire.style !== "main";
+              const dashed = wire.style !== "main";
               const opacity =
                 wire.style === "qa"       ? 0.55 :
                 wire.style === "anchor"   ? 0.68 :
