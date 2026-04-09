@@ -1,6 +1,14 @@
 "use client";
 
-import React from "react";
+import {
+  useMemo,
+  useRef,
+  useState,
+  useCallback,
+  type CSSProperties,
+  type PointerEvent as ReactPointerEvent,
+  type WheelEvent as ReactWheelEvent,
+} from "react";
 
 type PortKind = "text" | "image" | "audio" | "video";
 type Side = "left" | "right";
@@ -306,7 +314,7 @@ const NODE_SPECS: NodeSpec[] = [
   }),
 ];
 
-const POSITIONS: Record<string, Point> = {
+const DEFAULT_POSITIONS: Record<string, Point> = {
   text_system: { x: 30, y: 134 },
   text_user: { x: 30, y: 250 },
   image_input: { x: 30, y: 366 },
@@ -371,29 +379,6 @@ function markerId(style: WireStyle) {
   }
 }
 
-function getRect(spec: NodeSpec, pos: Point) {
-  return { x: pos.x, y: pos.y, w: spec.width, h: getNodeHeight(spec) };
-}
-
-function getPortPoint(
-  specMap: Record<string, NodeSpec>,
-  positions: Record<string, Point>,
-  nodeId: string,
-  portId: string,
-  side: Side
-): Point {
-  const spec = specMap[nodeId];
-  const rect = getRect(spec, positions[nodeId]);
-  const ports = side === "left" ? spec.inputs : spec.outputs;
-  const index = Math.max(
-    0,
-    ports.findIndex((p) => p.id === portId)
-  );
-  const y = rect.y + getPortDotY(spec, index);
-  const x = side === "left" ? rect.x : rect.x + rect.w;
-  return { x, y };
-}
-
 function SectionLabel({
   x,
   y,
@@ -425,12 +410,21 @@ function SectionLabel({
   );
 }
 
-function NodeBox({ spec, pos }: { spec: NodeSpec; pos: Point }) {
+function NodeBox({
+  spec,
+  pos,
+  onPointerDown,
+}: {
+  spec: NodeSpec;
+  pos: Point;
+  onPointerDown: (e: ReactPointerEvent<HTMLDivElement>) => void;
+}) {
   const height = getNodeHeight(spec);
   const rows = Math.max(spec.inputs.length, spec.outputs.length, 1);
 
   return (
     <div
+      onPointerDown={onPointerDown}
       style={{
         position: "absolute",
         left: pos.x,
@@ -461,6 +455,7 @@ function NodeBox({ spec, pos }: { spec: NodeSpec; pos: Point }) {
           padding: "8px 10px 8px",
           height: `calc(100% - ${BAR_H}px)`,
           boxSizing: "border-box",
+          cursor: "grab",
         }}
       >
         {spec.badge && (
@@ -594,6 +589,20 @@ function NodeBox({ spec, pos }: { spec: NodeSpec; pos: Point }) {
   );
 }
 
+const controlBtnStyle: CSSProperties = {
+  width: 30,
+  height: 30,
+  borderRadius: 8,
+  border: `1px solid ${BORDER}`,
+  background: "#0f1928",
+  color: "#607898",
+  cursor: "pointer",
+  fontSize: 16,
+  display: "flex",
+  alignItems: "center",
+  justifyContent: "center",
+};
+
 function InfoCard({ title, children }: { title: string; children: React.ReactNode }) {
   return (
     <div
@@ -621,25 +630,127 @@ function InfoCard({ title, children }: { title: string; children: React.ReactNod
 }
 
 export default function RunwayOfficialWorkflowDiagram() {
-  const specMap = Object.fromEntries(NODE_SPECS.map((n) => [n.id, n] as const));
+  const specMap = useMemo(
+    () => Object.fromEntries(NODE_SPECS.map((n) => [n.id, n] as const)),
+    []
+  );
+
+  const [positions, setPositions] = useState<Record<string, Point>>(DEFAULT_POSITIONS);
+  const [zoom, setZoom] = useState(0.42);
+  const [pan, setPan] = useState<Point>({ x: 0, y: 0 });
+  const [dragKind, setDragKind] = useState<"canvas" | "node" | null>(null);
+
+  const dragRef = useRef<
+    | { kind: "canvas"; x: number; y: number }
+    | { kind: "node"; id: string; x: number; y: number }
+    | null
+  >(null);
+
+  const getRect = useCallback(
+    (id: string) => {
+      const spec = specMap[id];
+      const pos = positions[id];
+      return { x: pos.x, y: pos.y, w: spec.width, h: getNodeHeight(spec) };
+    },
+    [positions, specMap]
+  );
+
+  const getPortPoint = useCallback(
+    (nodeId: string, portId: string, side: Side): Point => {
+      const spec = specMap[nodeId];
+      const rect = getRect(nodeId);
+      const ports = side === "left" ? spec.inputs : spec.outputs;
+      const index = Math.max(
+        0,
+        ports.findIndex((p) => p.id === portId)
+      );
+      const y = rect.y + getPortDotY(spec, index);
+      const x = side === "left" ? rect.x : rect.x + rect.w;
+      return { x, y };
+    },
+    [getRect, specMap]
+  );
+
+  const onCanvasPointerDown = useCallback((e: ReactPointerEvent<HTMLDivElement>) => {
+    dragRef.current = { kind: "canvas", x: e.clientX, y: e.clientY };
+    setDragKind("canvas");
+  }, []);
+
+  const onNodePointerDown = useCallback(
+    (id: string) => (e: ReactPointerEvent<HTMLDivElement>) => {
+      e.stopPropagation();
+      dragRef.current = { kind: "node", id, x: e.clientX, y: e.clientY };
+      setDragKind("node");
+    },
+    []
+  );
+
+  const onPointerMove = useCallback(
+    (e: ReactPointerEvent<HTMLDivElement>) => {
+      const drag = dragRef.current;
+      if (!drag) return;
+
+      const dx = e.clientX - drag.x;
+      const dy = e.clientY - drag.y;
+      dragRef.current = { ...drag, x: e.clientX, y: e.clientY };
+
+      if (drag.kind === "canvas") {
+        setPan((p) => ({ x: p.x + dx, y: p.y + dy }));
+      } else {
+        setPositions((prev) => ({
+          ...prev,
+          [drag.id]: {
+            x: prev[drag.id].x + dx / zoom,
+            y: prev[drag.id].y + dy / zoom,
+          },
+        }));
+      }
+    },
+    [zoom]
+  );
+
+  const onPointerUp = useCallback(() => {
+    dragRef.current = null;
+    setDragKind(null);
+  }, []);
+
+  const onWheel = useCallback((e: ReactWheelEvent<HTMLDivElement>) => {
+    e.preventDefault();
+    setZoom((z) => Math.max(0.24, Math.min(1.4, z - e.deltaY * 0.0008)));
+  }, []);
+
+  const resetView = useCallback(() => {
+    setZoom(0.42);
+    setPan({ x: 0, y: 0 });
+    setPositions(DEFAULT_POSITIONS);
+    setDragKind(null);
+    dragRef.current = null;
+  }, []);
 
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: 14, width: "100%" }}>
       <div
         style={{
           width: "100%",
-          overflowX: "auto",
+          height: 820,
           borderRadius: 18,
+          overflow: "hidden",
           border: "1px solid rgba(255,255,255,0.07)",
           background: BG,
           position: "relative",
+          cursor: dragKind === "canvas" ? "grabbing" : "grab",
+          touchAction: "none",
         }}
+        onPointerDown={onCanvasPointerDown}
+        onPointerMove={onPointerMove}
+        onPointerUp={onPointerUp}
+        onPointerLeave={onPointerUp}
+        onWheel={onWheel}
       >
         <div
           style={{
-            position: "relative",
-            width: VIEW_W,
-            height: VIEW_H,
+            position: "absolute",
+            inset: 0,
             backgroundImage: `
               linear-gradient(${GRID_MINOR} 1px, transparent 1px),
               linear-gradient(90deg, ${GRID_MINOR} 1px, transparent 1px),
@@ -647,6 +758,72 @@ export default function RunwayOfficialWorkflowDiagram() {
               linear-gradient(90deg, ${GRID_MAJOR} 1px, transparent 1px)
             `,
             backgroundSize: "24px 24px, 24px 24px, 120px 120px, 120px 120px",
+            pointerEvents: "none",
+          }}
+        />
+
+        <div
+          style={{
+            position: "absolute",
+            top: 16,
+            left: 16,
+            zIndex: 30,
+            color: TEXT_FAINT,
+            fontSize: 9,
+            lineHeight: 1.45,
+            fontFamily: "ui-monospace, SFMono-Regular, Menlo, monospace",
+            background: "rgba(9,17,27,0.76)",
+            border: `1px solid ${BORDER}`,
+            padding: "10px 12px",
+            borderRadius: 10,
+            backdropFilter: "blur(6px)",
+          }}
+        >
+          Drag canvas to pan · Scroll to zoom
+          <br />
+          Drag nodes to reposition · Wires update live
+        </div>
+
+        <div
+          style={{
+            position: "absolute",
+            top: 16,
+            right: 16,
+            zIndex: 30,
+            display: "flex",
+            alignItems: "center",
+            gap: 6,
+            background: "rgba(9,17,27,0.76)",
+            border: `1px solid ${BORDER}`,
+            padding: "8px 10px",
+            borderRadius: 10,
+            backdropFilter: "blur(6px)",
+          }}
+          onPointerDown={(e) => e.stopPropagation()}
+        >
+          <div style={{ color: TEXT_SUB, fontSize: 10, minWidth: 34, textAlign: "right" }}>
+            {Math.round(zoom * 100)}%
+          </div>
+          <button onClick={() => setZoom((z) => Math.max(0.24, z - 0.08))} style={controlBtnStyle}>
+            −
+          </button>
+          <button onClick={() => setZoom((z) => Math.min(1.4, z + 0.08))} style={controlBtnStyle}>
+            +
+          </button>
+          <button onClick={resetView} style={{ ...controlBtnStyle, width: "auto", padding: "0 12px" }}>
+            Reset
+          </button>
+        </div>
+
+        <div
+          style={{
+            position: "absolute",
+            left: 0,
+            top: 0,
+            transformOrigin: "0 0",
+            transform: `translate(${pan.x}px, ${pan.y}px) scale(${zoom})`,
+            width: VIEW_W,
+            height: VIEW_H,
           }}
         >
           <div
@@ -693,8 +870,8 @@ export default function RunwayOfficialWorkflowDiagram() {
             </defs>
 
             {WIRES.map((wire, idx) => {
-              const from = getPortPoint(specMap, POSITIONS, wire.from[0], wire.from[1], "right");
-              const to = getPortPoint(specMap, POSITIONS, wire.to[0], wire.to[1], "left");
+              const from = getPortPoint(wire.from[0], wire.from[1], "right");
+              const to = getPortPoint(wire.to[0], wire.to[1], "left");
               const color = WIRE_COLORS[wire.style];
 
               let d = "";
@@ -741,7 +918,12 @@ export default function RunwayOfficialWorkflowDiagram() {
           <SectionLabel x={2544} y={226} text="Final Assembly" color="#1e5a70" />
 
           {NODE_SPECS.map((spec) => (
-            <NodeBox key={spec.id} spec={spec} pos={POSITIONS[spec.id]} />
+            <NodeBox
+              key={spec.id}
+              spec={spec}
+              pos={positions[spec.id]}
+              onPointerDown={onNodePointerDown(spec.id)}
+            />
           ))}
 
           <div
