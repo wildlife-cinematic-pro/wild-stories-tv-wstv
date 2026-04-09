@@ -1,9 +1,5 @@
 "use client";
 
-export default function RunwayOfficialWorkflowDiagram() {
-  return <div>Official Runway workflow</div>;
-}
-
 import React from "react";
 
 type PortKind = "text" | "image" | "audio" | "video";

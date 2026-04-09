@@ -100,6 +100,8 @@ import QualityPanel from "@/components/QualityPanel";
 import OutputCards from "@/components/OutputCards";
 import MediaAnalyzer from "@/components/MediaAnalyzer";
 import SettingsDrawer from "@/components/SettingsDrawer";
+import WSTVWorkflowDiagram from "@/components/WSTVWorkflowDiagram";
+import RunwayOfficialWorkflowDiagram from "@/components/RunwayOfficialWorkflowDiagram";
 
 type SafeMediaAnalysis = MediaAnalysisResult & {
   imagePromptInject?: string;
@@ -1817,6 +1819,27 @@ export default function Page() {
           </div>
         </div>
       )}
+      <div className="mt-8 space-y-8">
+  <div className="rounded-2xl border border-gray-200 bg-white p-5 shadow-sm">
+    <div className="mb-3 text-xs font-extrabold uppercase tracking-widest text-gray-600">
+      WORKFLOW DIAGRAM
+    </div>
+    <h2 className="mb-4 text-lg font-extrabold text-gray-900">
+      WSTV Custom Workflow
+    </h2>
+    <WSTVWorkflowDiagram />
+  </div>
+
+  <div className="rounded-2xl border border-gray-200 bg-white p-5 shadow-sm">
+    <div className="mb-3 text-xs font-extrabold uppercase tracking-widest text-gray-600">
+      WORKFLOW DIAGRAM
+    </div>
+    <h2 className="mb-4 text-lg font-extrabold text-gray-900">
+      Runway Official Workflow
+    </h2>
+    <RunwayOfficialWorkflowDiagram />
+  </div>
+</div>
       <SettingsDrawer />
     </main>
   );
