@@ -32,9 +32,10 @@ type NodeSpec = {
   dim?: boolean;
   inputs: PortDef[];
   outputs: PortDef[];
+  infoLines?: string[];
 };
 
-type WireStyle = "main" | "qa" | "continuity" | "optional";
+type WireStyle = "main" | "reference" | "continuity" | "qa" | "audio" | "post" | "optional";
 
 type WireDef = {
   from: [string, string];
@@ -53,8 +54,11 @@ const PORT_COLORS: Record<PortKind, string> = {
 
 const WIRE_COLORS: Record<WireStyle, string> = {
   main: "#60a5fa",
-  qa: "#fbbf24",
+  reference: "#34d399",
   continuity: "#c084fc",
+  qa: "#fbbf24",
+  audio: "#eab308",
+  post: "#38bdf8",
   optional: "#94a3b8",
 };
 
@@ -66,8 +70,8 @@ const TEXT_MAIN = "#edf2f8";
 const TEXT_SUB = "#8fa3bd";
 const TEXT_FAINT = "#5f738e";
 
-const VIEW_W = 3600;
-const VIEW_H = 980;
+const VIEW_W = 4300;
+const VIEW_H = 1080;
 
 const ROW_H = 20;
 const FOOTER_PAD = 10;
@@ -92,7 +96,8 @@ function nodeHeaderH(spec: NodeSpec): number {
 
 function getNodeHeight(spec: NodeSpec): number {
   const rows = Math.max(spec.inputs.length, spec.outputs.length, 1);
-  return nodeHeaderH(spec) + rows * ROW_H + FOOTER_PAD;
+  const infoExtra = (spec.infoLines?.length ?? 0) * 11;
+  return nodeHeaderH(spec) + rows * ROW_H + (infoExtra ? infoExtra + 10 : 0) + FOOTER_PAD;
 }
 
 function getPortDotY(spec: NodeSpec, index: number): number {
@@ -124,80 +129,118 @@ function makeNode(id: string, cfg: Omit<NodeSpec, "id">): NodeSpec {
 const NODE_SPECS: NodeSpec[] = [
   makeNode("text_system", {
     title: "Text",
-    subtitle: "System Prompt",
+    subtitle: "System Rules",
     badge: "INPUT",
-    width: 170,
+    width: 180,
     bg: "#0c1520",
     inputs: [],
     outputs: [{ id: "text", label: "Text", kind: "text" }],
+    infoLines: ["JSON schema, style, safety"],
   }),
-  makeNode("text_user", {
+  makeNode("text_story", {
     title: "Text",
-    subtitle: "User Prompt",
+    subtitle: "Story Brief",
     badge: "INPUT",
-    width: 170,
+    width: 180,
     bg: "#0c1520",
     inputs: [],
     outputs: [{ id: "text", label: "Text", kind: "text" }],
+    infoLines: ["Predator, prey, action arc"],
   }),
-  makeNode("image_input", {
+  makeNode("image_ref", {
     title: "Image",
-    subtitle: "Optional Reference",
+    subtitle: "Character Reference",
     badge: "INPUT",
-    width: 176,
+    width: 180,
     bg: "#0c1520",
     inputs: [],
     outputs: [{ id: "image", label: "Image", kind: "image" }],
+    infoLines: ["Clean subject identity lock"],
+  }),
+  makeNode("audio_mix", {
+    title: "Audio",
+    subtitle: "Optional Final Mix",
+    badge: "INPUT",
+    width: 180,
+    bg: "#0c1520",
+    inputs: [],
+    outputs: [{ id: "audio", label: "Audio", kind: "audio" }],
+    infoLines: ["VO, music, or mastered SFX"],
   }),
 
   makeNode("llm", {
-    title: "LLM",
-    subtitle: "Prompt Planning",
+    title: "Claude Sonnet 4.5",
+    subtitle: "Runway LLM Planner",
     badge: "LLM",
-    width: 210,
+    width: 238,
     bg: "#14092e",
     accent: "#f97316",
     inputs: [
-      { id: "system", label: "System Prompt", kind: "text", required: true },
-      { id: "prompt", label: "Prompt", kind: "text", required: true },
+      { id: "system", label: "Rules", kind: "text", required: true },
+      { id: "brief", label: "Story Brief", kind: "text", required: true },
+      { id: "image", label: "Reference Image", kind: "image" },
     ],
     outputs: [{ id: "json", label: "Text (JSON)", kind: "text" }],
+    infoLines: ["Plan shots, prompts, QA, audio"],
   }),
-  makeNode("json", {
+  makeNode("json_plan", {
     title: "JSON Parse",
-    subtitle: "Scene Prompts",
+    subtitle: "Workflow Fields",
     badge: "UTILITY",
-    width: 280,
+    width: 306,
     bg: "#07121d",
     accent: "#16a34a",
     inputs: [{ id: "json", label: "Text (JSON)", kind: "text", required: true }],
     outputs: [
-      { id: "image_prompt", label: "scene.0.image_prompt", kind: "text" },
-      { id: "shot1", label: "scene.0.video_prompt", kind: "text" },
-      { id: "shot2", label: "scene.1.video_prompt", kind: "text" },
-      { id: "shot3", label: "scene.2.video_prompt", kind: "text" },
+      { id: "character", label: "character_lock_prompt", kind: "text" },
+      { id: "hero", label: "hero_image_prompt", kind: "text" },
+      { id: "shot1", label: "shot_01_motion_prompt", kind: "text" },
+      { id: "shot2", label: "shot_02_motion_prompt", kind: "text" },
+      { id: "shot3", label: "shot_03_motion_prompt", kind: "text" },
+      { id: "sfx", label: "sfx_ambience_prompt", kind: "text" },
+      { id: "caption", label: "caption / title", kind: "text" },
+      { id: "qc", label: "qa_notes", kind: "text" },
+      { id: "seed", label: "seed_policy", kind: "text" },
+      { id: "aspect", label: "aspect_ratio", kind: "text" },
     ],
+    infoLines: ["Up to 12 editable JSON paths"],
+  }),
+
+  makeNode("segment_subject", {
+    title: "Segment Image",
+    subtitle: "Subject / Character Lock",
+    badge: "UTILITY",
+    width: 226,
+    bg: "#041420",
+    accent: "#34d399",
+    inputs: [
+      { id: "image", label: "Reference Image", kind: "image", required: true },
+      { id: "prompt", label: "Lock Prompt", kind: "text", required: true },
+    ],
+    outputs: [{ id: "image", label: "Clean Subject", kind: "image" }],
+    infoLines: ["Isolate animal before generation"],
   }),
 
   makeNode("gen4_image", {
     title: "Gen-4 Image",
-    subtitle: "Reference Still",
+    subtitle: "Reference Anchor",
     badge: "MODEL",
-    width: 210,
+    width: 226,
     bg: "#051a0e",
     accent: "#16a34a",
     inputs: [
       { id: "prompt", label: "Prompt", kind: "text", required: true },
-      { id: "image", label: "Image", kind: "image" },
+      { id: "image", label: "Clean Subject", kind: "image", required: true },
     ],
     outputs: [{ id: "image", label: "Image", kind: "image" }],
+    infoLines: ["Use References for consistency"],
   }),
 
   makeNode("shot1", {
-    title: "Gen-4 Video",
-    subtitle: "Scene 1",
+    title: "Gen-4.5 / Gen-4 Video",
+    subtitle: "Shot 1 · Hook",
     badge: "MODEL",
-    width: 208,
+    width: 238,
     bg: "#060f28",
     accent: "#60a5fa",
     inputs: [
@@ -205,34 +248,37 @@ const NODE_SPECS: NodeSpec[] = [
       { id: "prompt", label: "Prompt", kind: "text", required: true },
     ],
     outputs: [{ id: "video", label: "Video", kind: "video" }],
+    infoLines: ["Image is first frame", "Motion-focused prompt"],
   }),
-  makeNode("qa1", {
+  makeNode("first1", {
     title: "First Frame",
-    subtitle: "QA Scene 1",
+    subtitle: "QA Shot 1",
     badge: "UTILITY",
-    width: 180,
+    width: 184,
     bg: "#100c00",
     accent: "#fbbf24",
     dim: true,
     inputs: [{ id: "video", label: "Video", kind: "video", required: true }],
     outputs: [{ id: "image", label: "Image", kind: "image" }],
+    infoLines: ["Opening frame QA"],
   }),
   makeNode("last1", {
     title: "Last Frame",
-    subtitle: "Scene 1 → 2",
+    subtitle: "Handoff to Shot 2",
     badge: "UTILITY",
-    width: 184,
+    width: 192,
     bg: "#1a0544",
     accent: "#c084fc",
     inputs: [{ id: "video", label: "Video", kind: "video", required: true }],
     outputs: [{ id: "image", label: "Image", kind: "image" }],
+    infoLines: ["Next shot starts here"],
   }),
 
   makeNode("shot2", {
-    title: "Gen-4 Video",
-    subtitle: "Scene 2",
+    title: "Gen-4.5 / Gen-4 Video",
+    subtitle: "Shot 2 · Action",
     badge: "MODEL",
-    width: 208,
+    width: 238,
     bg: "#060f28",
     accent: "#60a5fa",
     inputs: [
@@ -240,34 +286,37 @@ const NODE_SPECS: NodeSpec[] = [
       { id: "prompt", label: "Prompt", kind: "text", required: true },
     ],
     outputs: [{ id: "video", label: "Video", kind: "video" }],
+    infoLines: ["Keep action simple", "Reuse similar seed if needed"],
   }),
-  makeNode("qa2", {
+  makeNode("first2", {
     title: "First Frame",
-    subtitle: "QA Scene 2",
+    subtitle: "QA Shot 2",
     badge: "UTILITY",
-    width: 180,
+    width: 184,
     bg: "#100c00",
     accent: "#fbbf24",
     dim: true,
     inputs: [{ id: "video", label: "Video", kind: "video", required: true }],
     outputs: [{ id: "image", label: "Image", kind: "image" }],
+    infoLines: ["Reject drift before stitch"],
   }),
   makeNode("last2", {
     title: "Last Frame",
-    subtitle: "Scene 2 → 3",
+    subtitle: "Handoff to Shot 3",
     badge: "UTILITY",
-    width: 184,
+    width: 192,
     bg: "#1a0544",
     accent: "#c084fc",
     inputs: [{ id: "video", label: "Video", kind: "video", required: true }],
     outputs: [{ id: "image", label: "Image", kind: "image" }],
+    infoLines: ["Handoff for payoff shot"],
   }),
 
   makeNode("shot3", {
-    title: "Gen-4 Video",
-    subtitle: "Scene 3",
+    title: "Gen-4.5 / Gen-4 Video",
+    subtitle: "Shot 3 · Payoff",
     badge: "MODEL",
-    width: 208,
+    width: 238,
     bg: "#060f28",
     accent: "#60a5fa",
     inputs: [
@@ -275,24 +324,38 @@ const NODE_SPECS: NodeSpec[] = [
       { id: "prompt", label: "Prompt", kind: "text", required: true },
     ],
     outputs: [{ id: "video", label: "Video", kind: "video" }],
+    infoLines: ["Final action beat", "5s for simple, 10s for complex"],
   }),
-  makeNode("qa3", {
+  makeNode("first3", {
     title: "First Frame",
-    subtitle: "QA Scene 3",
+    subtitle: "QA Shot 3",
     badge: "UTILITY",
-    width: 180,
+    width: 184,
     bg: "#100c00",
     accent: "#fbbf24",
     dim: true,
     inputs: [{ id: "video", label: "Video", kind: "video", required: true }],
     outputs: [{ id: "image", label: "Image", kind: "image" }],
+    infoLines: ["Final identity check"],
+  }),
+
+  makeNode("sfx", {
+    title: "Text to SFX",
+    subtitle: "Wildlife Ambience",
+    badge: "AUDIO",
+    width: 202,
+    bg: "#0e0d00",
+    accent: "#eab308",
+    inputs: [{ id: "text", label: "Text", kind: "text", required: true }],
+    outputs: [{ id: "audio", label: "Audio", kind: "audio" }],
+    infoLines: ["Roars, wind, water, impacts"],
   }),
 
   makeNode("stitch", {
     title: "Stitch",
-    subtitle: "Final Sequence",
+    subtitle: "Ordered Shots",
     badge: "UTILITY",
-    width: 190,
+    width: 196,
     bg: "#0d0220",
     accent: "#16a34a",
     inputs: [
@@ -301,8 +364,49 @@ const NODE_SPECS: NodeSpec[] = [
       { id: "s3", label: "Input 3", kind: "video", required: true },
     ],
     outputs: [{ id: "video", label: "Video", kind: "video" }],
+    infoLines: ["Approved clips only"],
   }),
-  makeNode("extract", {
+
+  makeNode("trim_final", {
+    title: "Trim Video",
+    subtitle: "Platform Runtime",
+    badge: "UTILITY",
+    width: 196,
+    bg: "#071318",
+    accent: "#38bdf8",
+    inputs: [{ id: "video", label: "Video", kind: "video", required: true }],
+    outputs: [{ id: "video", label: "Video", kind: "video" }],
+    infoLines: ["Remove weak heads/tails"],
+  }),
+
+  makeNode("add_audio", {
+    title: "Add Audio",
+    subtitle: "SFX / VO / Music",
+    badge: "UTILITY",
+    width: 196,
+    bg: "#0a0c00",
+    accent: "#eab308",
+    inputs: [
+      { id: "video", label: "Video", kind: "video", required: true },
+      { id: "audio", label: "Audio", kind: "audio", required: true },
+    ],
+    outputs: [{ id: "video", label: "Video", kind: "video" }],
+    infoLines: ["One chosen audio source"],
+  }),
+
+  makeNode("upscale", {
+    title: "Upscale to 4K",
+    subtitle: "Final Master",
+    badge: "POST",
+    width: 190,
+    bg: "#030d1a",
+    accent: "#38bdf8",
+    inputs: [{ id: "video", label: "Video", kind: "video", required: true }],
+    outputs: [{ id: "video", label: "Video", kind: "video" }],
+    infoLines: ["Generate first, upscale last"],
+  }),
+
+  makeNode("extract_thumb", {
     title: "Extract Frame",
     subtitle: "Thumbnail / Reuse",
     badge: "UTILITY",
@@ -311,69 +415,92 @@ const NODE_SPECS: NodeSpec[] = [
     accent: "#94a3b8",
     inputs: [{ id: "video", label: "Video", kind: "video", required: true }],
     outputs: [{ id: "image", label: "Image", kind: "image" }],
+    infoLines: ["Hero still for upload package"],
   }),
 ];
 
 const DEFAULT_POSITIONS: Record<string, Point> = {
-  text_system: { x: 30, y: 134 },
-  text_user: { x: 30, y: 250 },
-  image_input: { x: 30, y: 366 },
+  text_system: { x: 30, y: 92 },
+  text_story: { x: 30, y: 234 },
+  image_ref: { x: 30, y: 376 },
+  audio_mix: { x: 30, y: 518 },
 
-  llm: { x: 262, y: 192 },
-  json: { x: 560, y: 160 },
-  gen4_image: { x: 892, y: 160 },
+  llm: { x: 286, y: 218 },
+  json_plan: { x: 594, y: 80 },
+  segment_subject: { x: 960, y: 80 },
+  gen4_image: { x: 960, y: 280 },
 
-  shot1: { x: 1188, y: 118 },
-  qa1: { x: 1188, y: 520 },
-  last1: { x: 1450, y: 118 },
+  shot1: { x: 1260, y: 96 },
+  first1: { x: 1260, y: 480 },
+  last1: { x: 1548, y: 96 },
 
-  shot2: { x: 1718, y: 118 },
-  qa2: { x: 1718, y: 520 },
-  last2: { x: 1980, y: 118 },
+  shot2: { x: 1812, y: 96 },
+  first2: { x: 1812, y: 480 },
+  last2: { x: 2100, y: 96 },
 
-  shot3: { x: 2248, y: 118 },
-  qa3: { x: 2248, y: 520 },
+  shot3: { x: 2364, y: 96 },
+  first3: { x: 2364, y: 480 },
 
-  stitch: { x: 2544, y: 250 },
-  extract: { x: 2820, y: 250 },
+  sfx: { x: 2364, y: 720 },
+  stitch: { x: 2652, y: 252 },
+  trim_final: { x: 2924, y: 252 },
+  add_audio: { x: 3194, y: 252 },
+  upscale: { x: 3466, y: 252 },
+  extract_thumb: { x: 3720, y: 252 },
 };
 
 const WIRES: WireDef[] = [
   { from: ["text_system", "text"], to: ["llm", "system"], style: "main" },
-  { from: ["text_user", "text"], to: ["llm", "prompt"], style: "main" },
-  { from: ["llm", "json"], to: ["json", "json"], style: "main" },
+  { from: ["text_story", "text"], to: ["llm", "brief"], style: "main" },
+  { from: ["image_ref", "image"], to: ["llm", "image"], style: "reference" },
+  { from: ["llm", "json"], to: ["json_plan", "json"], style: "main" },
 
-  { from: ["json", "image_prompt"], to: ["gen4_image", "prompt"], style: "main" },
-  { from: ["image_input", "image"], to: ["gen4_image", "image"], style: "optional" },
+  { from: ["image_ref", "image"], to: ["segment_subject", "image"], style: "reference" },
+  { from: ["json_plan", "character"], to: ["segment_subject", "prompt"], style: "main" },
+  { from: ["segment_subject", "image"], to: ["gen4_image", "image"], style: "reference", route: "v" },
+  { from: ["json_plan", "hero"], to: ["gen4_image", "prompt"], style: "main" },
 
-  { from: ["gen4_image", "image"], to: ["shot1", "image"], style: "main" },
-  { from: ["json", "shot1"], to: ["shot1", "prompt"], style: "main" },
-  { from: ["shot1", "video"], to: ["qa1", "video"], style: "qa", route: "v" },
+  { from: ["gen4_image", "image"], to: ["shot1", "image"], style: "reference" },
+  { from: ["json_plan", "shot1"], to: ["shot1", "prompt"], style: "main" },
+  { from: ["shot1", "video"], to: ["first1", "video"], style: "qa", route: "v" },
   { from: ["shot1", "video"], to: ["last1", "video"], style: "continuity" },
 
   { from: ["last1", "image"], to: ["shot2", "image"], style: "continuity" },
-  { from: ["json", "shot2"], to: ["shot2", "prompt"], style: "main" },
-  { from: ["shot2", "video"], to: ["qa2", "video"], style: "qa", route: "v" },
+  { from: ["json_plan", "shot2"], to: ["shot2", "prompt"], style: "main" },
+  { from: ["shot2", "video"], to: ["first2", "video"], style: "qa", route: "v" },
   { from: ["shot2", "video"], to: ["last2", "video"], style: "continuity" },
 
   { from: ["last2", "image"], to: ["shot3", "image"], style: "continuity" },
-  { from: ["json", "shot3"], to: ["shot3", "prompt"], style: "main" },
-  { from: ["shot3", "video"], to: ["qa3", "video"], style: "qa", route: "v" },
+  { from: ["json_plan", "shot3"], to: ["shot3", "prompt"], style: "main" },
+  { from: ["shot3", "video"], to: ["first3", "video"], style: "qa", route: "v" },
 
-  { from: ["shot1", "video"], to: ["stitch", "s1"], style: "main", route: "pipe", pipeY: 420 },
-  { from: ["shot2", "video"], to: ["stitch", "s2"], style: "main", route: "pipe", pipeY: 454 },
-  { from: ["shot3", "video"], to: ["stitch", "s3"], style: "main", route: "pipe", pipeY: 488 },
-  { from: ["stitch", "video"], to: ["extract", "video"], style: "optional" },
+  { from: ["json_plan", "sfx"], to: ["sfx", "text"], style: "audio", route: "pipe", pipeY: 662 },
+  { from: ["sfx", "audio"], to: ["add_audio", "audio"], style: "audio", route: "pipe", pipeY: 790 },
+  { from: ["audio_mix", "audio"], to: ["add_audio", "audio"], style: "optional", route: "pipe", pipeY: 930 },
+
+  { from: ["shot1", "video"], to: ["stitch", "s1"], style: "main", route: "pipe", pipeY: 540 },
+  { from: ["shot2", "video"], to: ["stitch", "s2"], style: "main", route: "pipe", pipeY: 574 },
+  { from: ["shot3", "video"], to: ["stitch", "s3"], style: "main", route: "pipe", pipeY: 608 },
+  { from: ["stitch", "video"], to: ["trim_final", "video"], style: "post" },
+  { from: ["trim_final", "video"], to: ["add_audio", "video"], style: "post" },
+  { from: ["add_audio", "video"], to: ["upscale", "video"], style: "post" },
+  { from: ["upscale", "video"], to: ["extract_thumb", "video"], style: "optional" },
 ];
 
 function markerId(style: WireStyle) {
   switch (style) {
     case "main":
       return "arr-main";
+    case "reference":
+      return "arr-reference";
     case "qa":
       return "arr-qa";
     case "continuity":
       return "arr-continuity";
+    case "audio":
+      return "arr-audio";
+    case "post":
+      return "arr-post";
     case "optional":
       return "arr-optional";
   }
@@ -584,6 +711,24 @@ function NodeBox({
             );
           })}
         </div>
+
+        {spec.infoLines && (
+          <div style={{ marginTop: 8 }}>
+            {spec.infoLines.map((line, i) => (
+              <div
+                key={i}
+                style={{
+                  color: i === 0 ? "#6f86a1" : TEXT_FAINT,
+                  fontSize: 8,
+                  lineHeight: 1.45,
+                  marginTop: i === 0 ? 0 : 2,
+                }}
+              >
+                {line}
+              </div>
+            ))}
+          </div>
+        )}
       </div>
     </div>
   );
@@ -636,7 +781,7 @@ export default function RunwayOfficialWorkflowDiagram() {
   );
 
   const [positions, setPositions] = useState<Record<string, Point>>(DEFAULT_POSITIONS);
-  const [zoom, setZoom] = useState(0.42);
+  const [zoom, setZoom] = useState(0.4);
   const [pan, setPan] = useState<Point>({ x: 0, y: 0 });
   const [dragKind, setDragKind] = useState<"canvas" | "node" | null>(null);
 
@@ -720,7 +865,7 @@ export default function RunwayOfficialWorkflowDiagram() {
   }, []);
 
   const resetView = useCallback(() => {
-    setZoom(0.42);
+    setZoom(0.4);
     setPan({ x: 0, y: 0 });
     setPositions(DEFAULT_POSITIONS);
     setDragKind(null);
@@ -838,7 +983,7 @@ export default function RunwayOfficialWorkflowDiagram() {
               textTransform: "uppercase",
             }}
           >
-            Runway Workflows · docs-only reference diagram
+            Runway Workflows · character-locked production graph
           </div>
 
           <svg
@@ -850,8 +995,11 @@ export default function RunwayOfficialWorkflowDiagram() {
               {(
                 [
                   ["arr-main", WIRE_COLORS.main],
+                  ["arr-reference", WIRE_COLORS.reference],
                   ["arr-qa", WIRE_COLORS.qa],
                   ["arr-continuity", WIRE_COLORS.continuity],
+                  ["arr-audio", WIRE_COLORS.audio],
+                  ["arr-post", WIRE_COLORS.post],
                   ["arr-optional", WIRE_COLORS.optional],
                 ] as const
               ).map(([id, color]) => (
@@ -879,15 +1027,31 @@ export default function RunwayOfficialWorkflowDiagram() {
               else if (wire.route === "pipe") d = pipeCurve(from, to, wire.pipeY ?? 420);
               else d = hCurve(from, to, 72);
 
-              const dashed = wire.style !== "main";
+              const dashed =
+                wire.style === "continuity" ||
+                wire.style === "qa" ||
+                wire.style === "audio" ||
+                wire.style === "optional";
               const opacity =
-                wire.style === "qa" ? 0.64 : wire.style === "optional" ? 0.58 : 0.92;
+                wire.style === "qa"
+                  ? 0.64
+                  : wire.style === "optional"
+                    ? 0.58
+                    : wire.style === "audio"
+                      ? 0.72
+                      : 0.92;
               const strokeWidth =
-                wire.style === "main" ? 2.35 : wire.style === "continuity" ? 1.8 : 1.35;
+                wire.style === "main" || wire.style === "post"
+                  ? 2.35
+                  : wire.style === "reference" || wire.style === "continuity"
+                    ? 1.8
+                    : 1.35;
 
               return (
                 <g key={idx}>
-                  {wire.style === "main" && (
+                  {(wire.style === "main" ||
+                    wire.style === "reference" ||
+                    wire.style === "post") && (
                     <path d={d} fill="none" stroke={color} strokeWidth={5} opacity={0.12} />
                   )}
                   {wire.style === "continuity" && (
@@ -907,15 +1071,17 @@ export default function RunwayOfficialWorkflowDiagram() {
             })}
           </svg>
 
-          <SectionLabel x={30} y={110} text="Inputs" />
-          <SectionLabel x={262} y={168} text="LLM + Structured Prompting" />
-          <SectionLabel x={892} y={136} text="Initial Reference Generation" />
-          <SectionLabel x={1188} y={94} text="Scene 1" />
-          <SectionLabel x={1718} y={94} text="Scene 2" />
-          <SectionLabel x={2248} y={94} text="Scene 3" />
-          <SectionLabel x={1188} y={494} text="First Frame QA" color="#8c6a10" />
-          <SectionLabel x={1450} y={94} text="Last Frame Continuity" color="#9d71ff" />
-          <SectionLabel x={2544} y={226} text="Final Assembly" color="#1e5a70" />
+          <SectionLabel x={30} y={68} text="Inputs" />
+          <SectionLabel x={286} y={192} text="LLM + JSON Parse" />
+          <SectionLabel x={960} y={56} text="Character Lock" color="#1f6b4d" />
+          <SectionLabel x={960} y={256} text="Reference Anchor" color="#1f6b4d" />
+          <SectionLabel x={1260} y={72} text="Shot 1" />
+          <SectionLabel x={1812} y={72} text="Shot 2" />
+          <SectionLabel x={2364} y={72} text="Shot 3" />
+          <SectionLabel x={1260} y={456} text="First Frame QA" color="#8c6a10" />
+          <SectionLabel x={1548} y={72} text="Last Frame Continuity" color="#9d71ff" />
+          <SectionLabel x={2364} y={696} text="Audio Generation" color="#a67c00" />
+          <SectionLabel x={2652} y={228} text="Assembly + Post" color="#1e5a70" />
 
           {NODE_SPECS.map((spec) => (
             <NodeBox
@@ -944,9 +1110,12 @@ export default function RunwayOfficialWorkflowDiagram() {
             {(
               [
                 { label: "Primary documented flow", color: WIRE_COLORS.main, dashed: false },
+                { label: "Reference image flow", color: WIRE_COLORS.reference, dashed: false },
                 { label: "Scene continuity (Last Frame)", color: WIRE_COLORS.continuity, dashed: true },
                 { label: "First-frame QA check", color: WIRE_COLORS.qa, dashed: true },
-                { label: "Optional / reusable branch", color: WIRE_COLORS.optional, dashed: true },
+                { label: "Audio lane", color: WIRE_COLORS.audio, dashed: true },
+                { label: "Post processing", color: WIRE_COLORS.post, dashed: false },
+                { label: "Optional / reusable output", color: WIRE_COLORS.optional, dashed: true },
               ] as const
             ).map((item) => (
               <div key={item.label} style={{ display: "flex", alignItems: "center", gap: 7 }}>
@@ -981,26 +1150,31 @@ export default function RunwayOfficialWorkflowDiagram() {
         }}
       >
         <InfoCard title="What is guaranteed here">
-          This component uses only node categories, node names, and relationships that Runway publicly documents: input nodes, LLM nodes, JSON Parse, Gen-4 Image, Gen-4 Video, First Frame, Last Frame, Stitch, and Extract Frame.
+          This diagram is built from public Runway workflow primitives: input nodes, LLM nodes, JSON Parse, Segment Image, Gen-4 Image, Gen-4/Gen-4.5 video, First Frame, Last Frame, Stitch, Trim Video, Add Audio, Text to SFX, Upscale to 4K, and Extract Frame.
         </InfoCard>
         <div style={{ width: 1, background: BORDER, alignSelf: "stretch" }} />
-        <InfoCard title="Continuity rule shown">
-          Last Frame is used as the handoff from one generated scene to the next. Runway explicitly documents this as a way to create seamless scene-to-scene continuity for longer narratives.
+        <InfoCard title="Character lock">
+          The reference image is first isolated with Segment Image, then passed into Gen-4 Image as the clean subject anchor. Runway References guidance supports using high-quality, neutral, evenly lit references for consistent characters and scenes.
         </InfoCard>
         <div style={{ width: 1, background: BORDER, alignSelf: "stretch" }} />
-        <InfoCard title="Why First Frame is separate">
-          First Frame is shown as a QA branch rather than a continuity branch. Runway documents it as useful for checking whether your opening frame or variation starting point was applied correctly.
+        <InfoCard title="Best motion quality">
+          The Gen-4/Gen-4.5 shot prompts stay motion-focused because the image already carries subject, lighting, composition, and style. Use 5 seconds for a simple beat and 10 seconds when the motion sequence is more complex.
         </InfoCard>
         <div style={{ width: 1, background: BORDER, alignSelf: "stretch" }} />
-        <InfoCard title="What was intentionally removed">
-          No custom operator labels, no third-party-model-specific routing, no undocumented “canonical anchor” node, and no claim that Trim Video must run before Last Frame. Those were removed to keep this version docs-only.
+        <InfoCard title="Continuity QA">
+          First Frame checks whether the opening image survived correctly. Last Frame becomes the next shot&apos;s image input, which is Runway&apos;s documented longer-sequence continuity method.
         </InfoCard>
         <div style={{ width: 1, background: BORDER, alignSelf: "stretch" }} />
-        <InfoCard title="How to extend it safely">
-          You can add more scene outputs from JSON Parse, branch to additional Gen-4 Video nodes, and expand Stitch inputs. You can also use Extract Frame from any video when you need a hero still, thumbnail, or reusable starting image.
-          <div style={{ marginTop: 8, color: TEXT_FAINT }}>
-            Not shown here, but also officially supported in Workflows: additional media utility nodes such as Trim Video, Add Audio, and Extract Audio.
-          </div>
+        <InfoCard title="Best audio path">
+          Use Text to SFX for natural ambience, roars, wind, water, and impact layers. Add Audio accepts one chosen audio source, so use the generated SFX or upload a final premixed VO/music/SFX track.
+        </InfoCard>
+        <div style={{ width: 1, background: BORDER, alignSelf: "stretch" }} />
+        <InfoCard title="Final master">
+          Stitch approved clips in order, trim weak heads and tails, attach the final audio, upscale only after the edit is locked, then Extract Frame for the thumbnail or a reusable future reference still.
+        </InfoCard>
+        <div style={{ width: 1, background: BORDER, alignSelf: "stretch" }} />
+        <InfoCard title="Source basis">
+          Based on Runway Help Center pages for Workflows, Utility Nodes, JSON Parse, Gen-4 Image References, Gen-4 Video, Image-to-Video prompting, credits, 4K upscaling, and Runway&apos;s official Gen-4.5 Image to Video YouTube release.
         </InfoCard>
       </div>
     </div>
