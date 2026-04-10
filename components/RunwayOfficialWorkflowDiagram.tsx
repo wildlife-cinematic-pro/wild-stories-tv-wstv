@@ -43,7 +43,8 @@ type WireStyle =
   | "qa"
   | "audio"
   | "post"
-  | "optional";
+  | "optional"
+  | "manual";
 
 type WireDef = {
   from: [string, string];
@@ -74,6 +75,7 @@ const WIRE_COLORS: Record<WireStyle, string> = {
   audio: "#eab308",
   post: "#38bdf8",
   optional: "#94a3b8",
+  manual: "#f97316",
 };
 
 const BG = "#060c14";
@@ -84,8 +86,8 @@ const TEXT_MAIN = "#edf2f8";
 const TEXT_SUB = "#8fa3bd";
 const TEXT_FAINT = "#5f738e";
 
-const VIEW_W = 4700;
-const VIEW_H = 1320;
+const VIEW_W = 5200;
+const VIEW_H = 1380;
 
 const ROW_H = 20;
 const FOOTER_PAD = 10;
@@ -100,13 +102,13 @@ const DOT_OFFSET = 5.5;
 const JSON_EXAMPLE = `{
   "shots": [
     {
-      "motion_prompt": "Same exact elk identity as the handoff image. Both animals remain fully visible. Clean readable spacing. Motion stays simple and controlled. End on a stable readable hold."
+      "motion_prompt": "Same exact subjects as the handoff image. Both animals remain fully visible. Clean readable spacing. One controlled action only. End on a stable readable hold."
     },
     {
-      "motion_prompt": "Same exact elk identity and same opposing animal continuity as the handoff image. Both animals remain visible in frame. Preserve spacing, orientation, proportions, antler shape, coat colors, and frost meadow continuity."
+      "motion_prompt": "Same exact subjects and continuity as the prior handoff image. Both animals remain visible in frame. Preserve proportions, spacing, coat detail, antler shape, and environment continuity."
     },
     {
-      "motion_prompt": "Same exact subjects and continuity as the prior shot. Final payoff beat. Keep both animals readable. No subject exits frame. End clean for stitch."
+      "motion_prompt": "Same exact subjects and continuity as the prior handoff image. Final payoff beat. Keep both animals readable. No subject exits frame. End clean for stitch."
     }
   ],
   "audio": {
@@ -114,40 +116,16 @@ const JSON_EXAMPLE = `{
   }
 }`;
 
-const JSON_ROUTES: JsonRoute[] = [
-  { path: "shots.0.motion_prompt", target: "Shot 1.prompt" },
-  { path: "shots.1.motion_prompt", target: "Shot 2.prompt" },
-  { path: "shots.2.motion_prompt", target: "Shot 3.prompt" },
-  { path: "audio.sfx_prompt", target: "Text to SFX.text" },
-];
-
-const WORKFLOW_NOTES = [
-  "Main handoff path uses Trim Video -> Extract Frame -> next shot image.",
-  "That lets you scrub and pick a frame where both animals are still visible.",
-  "Last Frame is kept as a fast optional continuity path, not the safest main handoff.",
-  "If the raw ending loses one subject, do not pass that frame forward.",
-  "Only pass forward a frame where both subjects are readable and spacing is clear.",
-];
-
-const PROMPT_GUIDE = [
-  "Keep prompts motion-focused, but repeat identity anchors in every shot.",
-  "Always state that both animals remain visible and readable.",
-  "Ask for clean spacing and no subject leaving frame at the end.",
-  "Prefer one clear action per shot instead of multiple aggressive sequences.",
-  "End each shot on a stable hold for easier handoff.",
-  "Avoid contradictory motion against the input image posture.",
-];
-
 const SYSTEM_PROMPT_TEMPLATE = `You are building motion prompts for a multi-shot wildlife continuity workflow.
 
 Rules:
 - Preserve the exact subject identities from the provided handoff image.
-- Preserve species correctness, body proportions, coat pattern, antler or horn shape, scale, and environment continuity.
 - Keep both animals visible unless the user explicitly asks for a single-subject shot.
-- Prioritize readable subject spacing and full-body clarity.
+- Preserve proportions, coat pattern, antler or horn shape, scale, and environment continuity.
+- Prioritize readable spacing and full-body clarity.
 - Never let a subject leave frame in the final moment of the shot.
-- Write prompts for image-to-video, so focus mainly on motion and shot behavior.
-- Use simple, realistic wildlife motion.
+- Write image-to-video prompts, so focus mainly on motion and shot behavior.
+- Use simple realistic wildlife motion.
 - Prefer one primary action per shot.
 - End each shot on a stable readable hold suitable for handoff.
 
@@ -162,6 +140,40 @@ Output JSON:
     "sfx_prompt": "..."
   }
 }`;
+
+const MANUAL_PROMPT_TEMPLATE = `Same exact subjects as the handoff image. Both animals remain visible in frame. Clean readable spacing. One clear action only. Natural realistic motion. End on a stable readable hold. No subject exits frame.`;
+
+const JSON_ROUTES: JsonRoute[] = [
+  { path: "shots.0.motion_prompt", target: "Shot 1.prompt" },
+  { path: "shots.1.motion_prompt", target: "Shot 2.prompt" },
+  { path: "shots.2.motion_prompt", target: "Shot 3.prompt" },
+  { path: "audio.sfx_prompt", target: "Text to SFX.text" },
+];
+
+const WORKFLOW_NOTES = [
+  "Main handoff path uses Trim Video -> Extract Frame -> next shot image.",
+  "That lets you choose a frame where both animals are still visible.",
+  "Last Frame is kept as a fast optional continuity path, not the safest main handoff.",
+  "If the ending loses one subject, do not pass that frame forward.",
+  "Use one prompt source per shot at a time: auto JSON route or manual text route.",
+];
+
+const PROMPT_GUIDE = [
+  "Keep prompts motion-focused, but repeat identity anchors in every shot.",
+  "Always state that both animals remain visible and readable.",
+  "Ask for clean spacing and no subject leaving frame at the end.",
+  "Prefer one clear action per shot instead of stacked actions.",
+  "End each shot on a stable hold for easier handoff.",
+  "Avoid contradictory motion against the input image posture.",
+];
+
+const MANUAL_MODE_GUIDE = [
+  "Manual Shot 1/2/3 nodes are for hand-written prompts.",
+  "Manual SFX node is for your own ambience prompt.",
+  "When using manual mode, ignore the auto JSON prompt lane for that shot.",
+  "When using auto mode, ignore the manual prompt lane for that shot.",
+  "Visually both lanes are shown, but only one should be active in actual use.",
+];
 
 const MANUAL_SETTINGS = [
   "Set Aspect Ratio, Duration, FPS, and Seed in node settings.",
@@ -222,7 +234,7 @@ const NODE_SPECS: NodeSpec[] = [
     bg: "#0c1520",
     inputs: [],
     outputs: [{ id: "text", label: "Text", kind: "text" }],
-    infoLines: ["Shot rules + JSON output format"],
+    infoLines: ["Auto mode rules + JSON format"],
   }),
   makeNode("text_story", {
     title: "Text",
@@ -242,7 +254,7 @@ const NODE_SPECS: NodeSpec[] = [
     bg: "#0c1520",
     inputs: [],
     outputs: [{ id: "image", label: "Image", kind: "image" }],
-    infoLines: ["Use clean two-subject setup image"],
+    infoLines: ["Use a clean two-subject setup image"],
   }),
   makeNode("audio_alt", {
     title: "Audio",
@@ -267,11 +279,11 @@ const NODE_SPECS: NodeSpec[] = [
       { id: "brief", label: "Prompt", kind: "text", required: true },
     ],
     outputs: [{ id: "json", label: "Text (JSON)", kind: "text" }],
-    infoLines: ["Builds shot prompts and SFX prompt"],
+    infoLines: ["Builds auto shot prompts and SFX prompt"],
   }),
   makeNode("json_parse", {
     title: "JSON Parse",
-    subtitle: "Prompt routes",
+    subtitle: "Auto prompt routes",
     badge: "UTILITY",
     width: 324,
     bg: "#07121d",
@@ -283,7 +295,52 @@ const NODE_SPECS: NodeSpec[] = [
       { id: "shot3", label: "shots.2.motion_prompt", kind: "text" },
       { id: "sfx", label: "audio.sfx_prompt", kind: "text" },
     ],
-    infoLines: ["Only wired paths shown"],
+    infoLines: ["Auto mode only"],
+  }),
+
+  makeNode("manual_shot1", {
+    title: "Text",
+    subtitle: "Manual Shot 1 Prompt",
+    badge: "MANUAL",
+    width: 210,
+    bg: "#1a1207",
+    accent: "#f97316",
+    inputs: [],
+    outputs: [{ id: "text", label: "Text", kind: "text" }],
+    infoLines: ["Use instead of auto Shot 1 prompt"],
+  }),
+  makeNode("manual_shot2", {
+    title: "Text",
+    subtitle: "Manual Shot 2 Prompt",
+    badge: "MANUAL",
+    width: 210,
+    bg: "#1a1207",
+    accent: "#f97316",
+    inputs: [],
+    outputs: [{ id: "text", label: "Text", kind: "text" }],
+    infoLines: ["Use instead of auto Shot 2 prompt"],
+  }),
+  makeNode("manual_shot3", {
+    title: "Text",
+    subtitle: "Manual Shot 3 Prompt",
+    badge: "MANUAL",
+    width: 210,
+    bg: "#1a1207",
+    accent: "#f97316",
+    inputs: [],
+    outputs: [{ id: "text", label: "Text", kind: "text" }],
+    infoLines: ["Use instead of auto Shot 3 prompt"],
+  }),
+  makeNode("manual_sfx", {
+    title: "Text",
+    subtitle: "Manual SFX Prompt",
+    badge: "MANUAL",
+    width: 210,
+    bg: "#1a1207",
+    accent: "#f97316",
+    inputs: [],
+    outputs: [{ id: "text", label: "Text", kind: "text" }],
+    infoLines: ["Use instead of auto SFX prompt"],
   }),
 
   makeNode("shot1", {
@@ -519,6 +576,11 @@ const DEFAULT_POSITIONS: Record<string, Point> = {
   llm: { x: 330, y: 210 },
   json_parse: { x: 660, y: 140 },
 
+  manual_shot1: { x: 1060, y: 690 },
+  manual_shot2: { x: 1880, y: 690 },
+  manual_shot3: { x: 2700, y: 690 },
+  manual_sfx: { x: 2700, y: 950 },
+
   shot1: { x: 1060, y: 94 },
   first1: { x: 1060, y: 492 },
   trim_h1: { x: 1340, y: 94 },
@@ -534,13 +596,13 @@ const DEFAULT_POSITIONS: Record<string, Point> = {
   shot3: { x: 2700, y: 94 },
   first3: { x: 2700, y: 492 },
 
-  sfx: { x: 2700, y: 770 },
+  sfx: { x: 3005, y: 950 },
 
-  stitch: { x: 3005, y: 252 },
-  trim_final: { x: 3290, y: 252 },
-  add_audio: { x: 3585, y: 252 },
-  upscale: { x: 3875, y: 252 },
-  extract_thumb: { x: 4145, y: 252 },
+  stitch: { x: 3305, y: 252 },
+  trim_final: { x: 3590, y: 252 },
+  add_audio: { x: 3885, y: 252 },
+  upscale: { x: 4175, y: 252 },
+  extract_thumb: { x: 4445, y: 252 },
 };
 
 const WIRES: WireDef[] = [
@@ -550,6 +612,7 @@ const WIRES: WireDef[] = [
 
   { from: ["handoff_anchor", "image"], to: ["shot1", "image"], style: "reference" },
   { from: ["json_parse", "shot1"], to: ["shot1", "prompt"], style: "main" },
+  { from: ["manual_shot1", "text"], to: ["shot1", "prompt"], style: "manual", route: "v" },
 
   { from: ["shot1", "video"], to: ["first1", "video"], style: "qa", route: "v" },
   { from: ["shot1", "video"], to: ["trim_h1", "video"], style: "main" },
@@ -559,6 +622,7 @@ const WIRES: WireDef[] = [
   { from: ["pick_h1", "image"], to: ["shot2", "image"], style: "continuity" },
   { from: ["last1", "image"], to: ["shot2", "image"], style: "optional" },
   { from: ["json_parse", "shot2"], to: ["shot2", "prompt"], style: "main" },
+  { from: ["manual_shot2", "text"], to: ["shot2", "prompt"], style: "manual", route: "v" },
 
   { from: ["shot2", "video"], to: ["first2", "video"], style: "qa", route: "v" },
   { from: ["shot2", "video"], to: ["trim_h2", "video"], style: "main" },
@@ -568,12 +632,14 @@ const WIRES: WireDef[] = [
   { from: ["pick_h2", "image"], to: ["shot3", "image"], style: "continuity" },
   { from: ["last2", "image"], to: ["shot3", "image"], style: "optional" },
   { from: ["json_parse", "shot3"], to: ["shot3", "prompt"], style: "main" },
+  { from: ["manual_shot3", "text"], to: ["shot3", "prompt"], style: "manual", route: "v" },
 
   { from: ["shot3", "video"], to: ["first3", "video"], style: "qa", route: "v" },
 
-  { from: ["json_parse", "sfx"], to: ["sfx", "text"], style: "audio", route: "pipe", pipeY: 700 },
-  { from: ["sfx", "audio"], to: ["add_audio", "audio"], style: "audio", route: "pipe", pipeY: 865 },
-  { from: ["audio_alt", "audio"], to: ["add_audio", "audio"], style: "optional", route: "pipe", pipeY: 1000 },
+  { from: ["json_parse", "sfx"], to: ["sfx", "text"], style: "audio", route: "pipe", pipeY: 880 },
+  { from: ["manual_sfx", "text"], to: ["sfx", "text"], style: "manual", route: "h" },
+  { from: ["sfx", "audio"], to: ["add_audio", "audio"], style: "audio", route: "pipe", pipeY: 1045 },
+  { from: ["audio_alt", "audio"], to: ["add_audio", "audio"], style: "optional", route: "pipe", pipeY: 1140 },
 
   { from: ["shot1", "video"], to: ["stitch", "s1"], style: "main", route: "pipe", pipeY: 560 },
   { from: ["shot2", "video"], to: ["stitch", "s2"], style: "main", route: "pipe", pipeY: 595 },
@@ -601,6 +667,8 @@ function markerId(style: WireStyle) {
       return "arr-post";
     case "optional":
       return "arr-optional";
+    case "manual":
+      return "arr-manual";
   }
 }
 
@@ -894,14 +962,14 @@ function RouteRow({ route }: { route: JsonRoute }) {
   );
 }
 
-export default function RunwaySafeHandoffWorkflowDiagram() {
+export default function RunwaySafeHandoffManualWorkflowDiagram() {
   const specMap = useMemo(
     () => Object.fromEntries(NODE_SPECS.map((n) => [n.id, n] as const)),
     []
   );
 
   const [positions, setPositions] = useState<Record<string, Point>>(DEFAULT_POSITIONS);
-  const [zoom, setZoom] = useState(0.34);
+  const [zoom, setZoom] = useState(0.31);
   const [pan, setPan] = useState<Point>({ x: 0, y: 0 });
   const [dragKind, setDragKind] = useState<"canvas" | "node" | null>(null);
 
@@ -981,11 +1049,11 @@ export default function RunwaySafeHandoffWorkflowDiagram() {
 
   const onWheel = useCallback((e: ReactWheelEvent<HTMLDivElement>) => {
     e.preventDefault();
-    setZoom((z) => Math.max(0.22, Math.min(1.4, z - e.deltaY * 0.0008)));
+    setZoom((z) => Math.max(0.2, Math.min(1.4, z - e.deltaY * 0.0008)));
   }, []);
 
   const resetView = useCallback(() => {
-    setZoom(0.34);
+    setZoom(0.31);
     setPan({ x: 0, y: 0 });
     setPositions(DEFAULT_POSITIONS);
     setDragKind(null);
@@ -997,7 +1065,7 @@ export default function RunwaySafeHandoffWorkflowDiagram() {
       <div
         style={{
           width: "100%",
-          height: 860,
+          height: 900,
           borderRadius: 18,
           overflow: "hidden",
           border: "1px solid rgba(255,255,255,0.07)",
@@ -1069,7 +1137,7 @@ export default function RunwaySafeHandoffWorkflowDiagram() {
           <div style={{ color: TEXT_SUB, fontSize: 10, minWidth: 34, textAlign: "right" }}>
             {Math.round(zoom * 100)}%
           </div>
-          <button onClick={() => setZoom((z) => Math.max(0.22, z - 0.08))} style={controlBtnStyle}>
+          <button onClick={() => setZoom((z) => Math.max(0.2, z - 0.08))} style={controlBtnStyle}>
             −
           </button>
           <button onClick={() => setZoom((z) => Math.min(1.4, z + 0.08))} style={controlBtnStyle}>
@@ -1103,7 +1171,7 @@ export default function RunwaySafeHandoffWorkflowDiagram() {
               textTransform: "uppercase",
             }}
           >
-            Runway safe handoff workflow · trim + extract-frame continuity for multi-subject wildlife shots
+            Runway safe handoff workflow · auto prompt lane + manual prompt lane
           </div>
 
           <svg
@@ -1121,6 +1189,7 @@ export default function RunwaySafeHandoffWorkflowDiagram() {
                   ["arr-audio", WIRE_COLORS.audio],
                   ["arr-post", WIRE_COLORS.post],
                   ["arr-optional", WIRE_COLORS.optional],
+                  ["arr-manual", WIRE_COLORS.manual],
                 ] as const
               ).map(([id, color]) => (
                 <marker
@@ -1151,7 +1220,8 @@ export default function RunwaySafeHandoffWorkflowDiagram() {
                 wire.style === "continuity" ||
                 wire.style === "qa" ||
                 wire.style === "audio" ||
-                wire.style === "optional";
+                wire.style === "optional" ||
+                wire.style === "manual";
 
               const opacity =
                 wire.style === "qa"
@@ -1160,20 +1230,25 @@ export default function RunwaySafeHandoffWorkflowDiagram() {
                     ? 0.58
                     : wire.style === "audio"
                       ? 0.72
-                      : 0.92;
+                      : wire.style === "manual"
+                        ? 0.82
+                        : 0.92;
 
               const strokeWidth =
                 wire.style === "main" || wire.style === "post"
                   ? 2.35
                   : wire.style === "reference" || wire.style === "continuity"
                     ? 1.8
-                    : 1.35;
+                    : wire.style === "manual"
+                      ? 1.8
+                      : 1.35;
 
               return (
                 <g key={idx}>
                   {(wire.style === "main" ||
                     wire.style === "reference" ||
-                    wire.style === "post") && (
+                    wire.style === "post" ||
+                    wire.style === "manual") && (
                     <path d={d} fill="none" stroke={color} strokeWidth={5} opacity={0.12} />
                   )}
                   {wire.style === "continuity" && (
@@ -1194,17 +1269,17 @@ export default function RunwaySafeHandoffWorkflowDiagram() {
           </svg>
 
           <SectionLabel x={30} y={72} text="Inputs" />
-          <SectionLabel x={330} y={184} text="LLM + JSON Parse" />
-          <SectionLabel x={1060} y={70} text="Shot 1" />
-          <SectionLabel x={1340} y={70} text="Safe Handoff 1" color="#1e5a70" />
+          <SectionLabel x={330} y={184} text="Auto prompt lane" color="#1e5a70" />
+          <SectionLabel x={1060} y={72} text="Shot 1" />
+          <SectionLabel x={1340} y={72} text="Safe Handoff 1" color="#1e5a70" />
           <SectionLabel x={1580} y={286} text="Fast optional Last Frame" color="#9d71ff" />
-          <SectionLabel x={1880} y={70} text="Shot 2" />
-          <SectionLabel x={2160} y={70} text="Safe Handoff 2" color="#1e5a70" />
+          <SectionLabel x={1880} y={72} text="Shot 2" />
+          <SectionLabel x={2160} y={72} text="Safe Handoff 2" color="#1e5a70" />
           <SectionLabel x={2400} y={286} text="Fast optional Last Frame" color="#9d71ff" />
-          <SectionLabel x={2700} y={70} text="Shot 3" />
-          <SectionLabel x={1060} y={468} text="First Frame QA" color="#8c6a10" />
-          <SectionLabel x={2700} y={746} text="Audio Generation" color="#a67c00" />
-          <SectionLabel x={3005} y={228} text="Assembly + Post" color="#1e5a70" />
+          <SectionLabel x={2700} y={72} text="Shot 3" />
+          <SectionLabel x={1060} y={664} text="Manual prompt lane" color="#b45309" />
+          <SectionLabel x={3005} y={925} text="Audio generation" color="#a67c00" />
+          <SectionLabel x={3305} y={228} text="Assembly + Post" color="#1e5a70" />
 
           {NODE_SPECS.map((spec) => (
             <NodeBox
@@ -1232,13 +1307,14 @@ export default function RunwaySafeHandoffWorkflowDiagram() {
           >
             {(
               [
-                { label: "Primary example flow", color: WIRE_COLORS.main, dashed: false },
+                { label: "Primary auto flow", color: WIRE_COLORS.main, dashed: false },
                 { label: "Reference / anchor image", color: WIRE_COLORS.reference, dashed: false },
                 { label: "Chosen continuity frame", color: WIRE_COLORS.continuity, dashed: true },
                 { label: "First-frame QA", color: WIRE_COLORS.qa, dashed: true },
                 { label: "Audio lane", color: WIRE_COLORS.audio, dashed: true },
                 { label: "Post processing", color: WIRE_COLORS.post, dashed: false },
-                { label: "Optional alternative", color: WIRE_COLORS.optional, dashed: true },
+                { label: "Optional / fast path", color: WIRE_COLORS.optional, dashed: true },
+                { label: "Manual prompt lane", color: WIRE_COLORS.manual, dashed: true },
               ] as const
             ).map((item) => (
               <div key={item.label} style={{ display: "flex", alignItems: "center", gap: 7 }}>
@@ -1276,16 +1352,16 @@ export default function RunwaySafeHandoffWorkflowDiagram() {
           The main handoff path is not raw Last Frame. It is Trim Video, then Extract Frame, then the chosen image goes into the next shot.
         </InfoCard>
         <div style={{ width: 1, background: BORDER, alignSelf: "stretch" }} />
-        <InfoCard title="Why this fixes your issue">
-          When one animal disappears near the ending, the final frame becomes unsafe. Trimming and manually choosing a frame lets you pass forward a clean two-subject handoff instead.
+        <InfoCard title="Manual mode">
+          Use the orange manual text nodes when you want to write your own prompts instead of generating them from the LLM + JSON Parse lane.
         </InfoCard>
         <div style={{ width: 1, background: BORDER, alignSelf: "stretch" }} />
-        <InfoCard title="Fast option">
-          Last Frame is still shown, but only as a quick optional continuity path. Use it only when the actual final frame is already clean.
+        <InfoCard title="Auto mode">
+          Use System Prompt plus Story Brief when you want the LLM to generate structured prompts automatically through JSON Parse.
         </InfoCard>
         <div style={{ width: 1, background: BORDER, alignSelf: "stretch" }} />
-        <InfoCard title="Audio rule">
-          Add Audio expects one chosen audio source. Use generated SFX or your uploaded mix, not both together.
+        <InfoCard title="Prompt source rule">
+          For each shot, use only one prompt source at a time: auto route or manual route.
         </InfoCard>
       </div>
 
@@ -1362,6 +1438,38 @@ export default function RunwaySafeHandoffWorkflowDiagram() {
           fontFamily: "ui-monospace, SFMono-Regular, Menlo, monospace",
         }}
       >
+        <div style={{ padding: "16px 18px" }}>
+          <div
+            style={{
+              color: "#93b8d8",
+              fontSize: 10,
+              fontWeight: 700,
+              letterSpacing: "0.10em",
+              textTransform: "uppercase",
+              marginBottom: 8,
+            }}
+          >
+            Manual mode guide
+          </div>
+          <div style={{ display: "grid", gap: 8 }}>
+            {MANUAL_MODE_GUIDE.map((line, idx) => (
+              <div key={idx} style={{ color: TEXT_SUB, fontSize: 10, lineHeight: 1.6 }}>
+                {idx + 1}. {line}
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+
+      <div
+        style={{
+          borderRadius: 14,
+          overflow: "hidden",
+          border: `1px solid ${BORDER}`,
+          background: "rgba(9,17,27,0.88)",
+          fontFamily: "ui-monospace, SFMono-Regular, Menlo, monospace",
+        }}
+      >
         <div style={{ padding: "16px 18px 10px" }}>
           <div
             style={{
@@ -1389,6 +1497,46 @@ export default function RunwaySafeHandoffWorkflowDiagram() {
             }}
           >
             {SYSTEM_PROMPT_TEMPLATE}
+          </pre>
+        </div>
+      </div>
+
+      <div
+        style={{
+          borderRadius: 14,
+          overflow: "hidden",
+          border: `1px solid ${BORDER}`,
+          background: "rgba(9,17,27,0.88)",
+          fontFamily: "ui-monospace, SFMono-Regular, Menlo, monospace",
+        }}
+      >
+        <div style={{ padding: "16px 18px 10px" }}>
+          <div
+            style={{
+              color: "#93b8d8",
+              fontSize: 10,
+              fontWeight: 700,
+              letterSpacing: "0.10em",
+              textTransform: "uppercase",
+              marginBottom: 8,
+            }}
+          >
+            Manual prompt template
+          </div>
+          <pre
+            style={{
+              margin: 0,
+              padding: 12,
+              borderRadius: 10,
+              background: "rgba(255,255,255,0.03)",
+              color: "#dbeafe",
+              fontSize: 10,
+              lineHeight: 1.55,
+              overflowX: "auto",
+              whiteSpace: "pre-wrap",
+            }}
+          >
+            {MANUAL_PROMPT_TEMPLATE}
           </pre>
         </div>
       </div>
