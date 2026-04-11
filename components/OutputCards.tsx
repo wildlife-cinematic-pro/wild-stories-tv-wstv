@@ -2507,7 +2507,7 @@ function WorkflowPromptMap({
     stepRefs.current[3] = el;
   }}
 >
-      <WorkflowCard
+            <WorkflowCard
     step={3}
     title="Shot 3 — Peak Action"
     badge="Kling 3.0 Pro"
@@ -2520,7 +2520,7 @@ function WorkflowPromptMap({
     done={done[3]}
     onToggle={() => toggle(3)}
   >
-  >
+    
     <div className="mb-2 flex items-center justify-between gap-2">
       <span className="text-xs font-bold text-gray-700">Kling shots</span>
       <span className="rounded bg-amber-100 px-2 py-0.5 text-[11px] font-bold text-amber-700">
