@@ -800,27 +800,34 @@ export default function Page() {
         hashtags,
         tenIdeas,
 
-        shotPlan: [
+                shotPlan: [
           {
             engine: "RUNWAY",
-            title: "Opening Tension",
+            title: "Shot 1 — Opening Tension",
             prompt: runway?.shot1 ?? "",
             motionStrength,
-            why: "Readable first-frame wildlife tension",
+            why: "Use Image 1 from the master image for the clean first-frame opening.",
+          },
+          {
+            engine: "RUNWAY",
+            title: "Shot 2 — Pressure Build",
+            prompt: runway?.shot2 ?? "",
+            motionStrength,
+            why: "Use Image 2 edited from Shot 1 image to build pressure without identity drift.",
           },
           {
             engine: "KLING",
-            title: "Action Pressure",
+            title: "Shot 3 — Peak Action",
             prompt: kling?.shot2 ?? "",
             motionStrength,
-            why: "Body mechanics + readable impact pressure",
+            why: "Use Image 3 edited from Shot 2 image for the strongest full-body action beat.",
           },
           {
             engine: "RUNWAY",
-            title: "Resolved Tension",
+            title: "Shot 4 — Resolved Tension",
             prompt: runway?.shot3 ?? "",
             motionStrength,
-            why: "Clean cinematic resolve with readable spacing",
+            why: "Use Image 4 edited from Shot 3 image for the readable aftermath or final tension hold.",
           },
         ],
         runwayBundle: [runway?.shot1 ?? "", runway?.shot2 ?? "", runway?.shot3 ?? ""].join(
@@ -829,7 +836,8 @@ export default function Page() {
         klingBundle: [kling?.shot1 ?? "", kling?.shot2 ?? "", kling?.shot3 ?? ""].join(
           "\n\n---\n\n"
         ),
-        routingNote: `Shot 1 → Opening Tension (Runway ${runwayModel}) | Shot 2 → Action Pressure (Kling ${klingModel}) | Shot 3 → Resolved Tension (Runway ${runwayModel})`,
+        routingNote: `4-shot routing: Image 1 → Shot 1 Opening Tension (Runway ${runwayModel}) | Image 2 → Shot 2 Pressure Build (Runway ${runwayModel}) | Image 3 → Shot 3 Peak Action (Kling ${klingModel}) | Image 4 → Shot 4 Resolved Tension (Runway ${runwayModel})`,
+        pipelineStyle: "4-shot",
         fiveShotCinematic,
         fiveShotViral,
         watchTimeReport,
