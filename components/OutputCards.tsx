@@ -2507,7 +2507,7 @@ function WorkflowPromptMap({
     stepRefs.current[3] = el;
   }}
 >
-    <WorkflowCard
+      <WorkflowCard
     step={3}
     title="Shot 3 — Peak Action"
     badge="Kling 3.0 Pro"
@@ -2637,7 +2637,7 @@ function WorkflowPromptMap({
             stepRefs.current[4] = el;
           }}
         >
-                    <WorkflowCard
+                              <WorkflowCard
             step={4}
             title="Shot 4 — Resolved Tension"
             badge="Runway Gen-4.5"
@@ -2649,7 +2649,6 @@ function WorkflowPromptMap({
             help="Use Image 4 from the previous-image edit chain. Resolve the sequence with a readable aftermath or final tension hold while preserving spacing and anatomy."
             done={done[4]}
             onToggle={() => toggle(4)}
-          >
           >
             <div className="mb-2 flex items-center justify-between gap-2">
               <span className="text-xs font-bold text-gray-700">
