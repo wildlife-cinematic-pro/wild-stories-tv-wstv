@@ -122,6 +122,12 @@ export type ShotPlan = {
   why: string;
 };
 
+export type ShotImagePlan = {
+  title: string;
+  source: "master" | "previous_image";
+  prompt: string;
+};
+
 export type ViralShotPlan = {
   shot1_closeup: string;
   shot2_standoff: string;
@@ -190,9 +196,10 @@ export type GeneratedPackage = {
   negativePrompt: string;
   thumbnailPrompt: string;
   voiceoverLine: string;
-  runwayShots: [string, string, string];
-  klingShots: [string, string, string];
-  veo3Shots?: [string, string, string];
+    runwayShots: string[];
+  klingShots: string[];
+  veo3Shots?: string[];
+  shotImagePlan?: ShotImagePlan[];
   motionStrength: number;
   capCutPlan: string;
   clipChaining: string;
@@ -217,7 +224,7 @@ export type GeneratedPackage = {
   tenIdeas: string[];
 
   // ── Shot routing ──
-  shotPlan: [ShotPlan, ShotPlan, ShotPlan];
+  shotPlan: ShotPlan[];
   runwayBundle: string;
   klingBundle: string;
   routingNote: string;
@@ -250,7 +257,7 @@ export type GeneratedPackage = {
   capCutScript?: CapCutScript;
   soundDesignPack?: SoundDesignPack;
   animalBehavior?: AnimalBehavior;
-  pipelineStyle?: "3-shot" | "5-shot";
+  pipelineStyle?: "3-shot" | "4-shot" | "5-shot";
 
   // ── Runway workflow ──
   runwayCameraPlan?: string;
