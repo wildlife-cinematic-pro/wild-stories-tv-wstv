@@ -2837,17 +2837,29 @@ const klingShots = useMemo(
     .map((s, i) => `Kling Shot ${i + 1}\n${safeStr(s)}`)
     .join("\n\n---\n\n");
 
-  const calendar = buildCalendarText();
+    const calendar = buildCalendarText();
   const twoPart = buildTwoPartText();
   const capCutScript = buildCapCutScriptText();
   const animalBehavior = buildAnimalBehaviorText();
   const soundDesign = buildSoundDesignText();
+  const shotImagePlanText = (data.shotImagePlan ?? [])
+    .map(
+      (plan, i) =>
+        `Image ${i + 1} — ${safeStr(plan.title)}\nSource: ${
+          plan.source === "master" ? "Master image" : "Previous shot image"
+        }\n${safeStr(plan.prompt)}`
+    )
+    .join("\n\n---\n\n");
 
   return [
-    `WSTV EXPORT PACK (Pro 2026)`,
+        `WSTV EXPORT PACK (Pro 2026)`,
     `Predator: ${safeStr(data.predatorName)}`,
     `Prey: ${safeStr(data.preyName)}`,
     `Arc: ${safeStr(data.arcName)}`,
+    data.routingNote ? `Routing: ${safeStr(data.routingNote)}` : "",
+    "",
+    `=== 4-SHOT IMAGE PLAN ===`,
+    shotImagePlanText || "(none)",
     "",
     `=== RUNWAY PACK (Gen-4.5 | 24/25fps | 720p | NO negatives) ===`,
     runway || "(none)",
@@ -3114,8 +3126,8 @@ const klingShots = useMemo(
 
       <div className="rounded-2xl border border-gray-200 bg-white p-4 shadow-sm">
         <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
-          <div className="text-sm font-extrabold text-gray-900">
-            Raw Shot Lists
+                    <div className="text-sm font-extrabold text-gray-900">
+            Raw Shot Lists + 4-Shot Routing
           </div>
 
           <div className="flex flex-wrap gap-2">
@@ -3163,9 +3175,9 @@ const klingShots = useMemo(
               </span>
             </div>
 
-            <p className="mb-3 text-xs text-green-800">
-  Shot 1 → opening tension, Shot 2 → action pressure, Shot 3 → resolved tension.
-  Use handoff-ready ending frames only when both subjects stay fully readable.
+                        <p className="mb-3 text-xs text-green-800">
+  Shot 1 = opening tension from Image 1, Shot 2 = pressure build from Image 2, and Shot 4 = resolved tension from Image 4.
+  Runway handles the readable opening, pressure-build bridge, and final resolve.
 </p>
 
             <p className="mb-3 text-xs text-green-800">
@@ -3195,8 +3207,8 @@ const klingShots = useMemo(
               </span>
             </div>
 
-            <p className="mb-3 text-xs text-blue-800">
-  Best for full-body physics and action beats. Use the previous shot’s last frame only when it remains a clean full-body handoff frame. Otherwise use the same master still or a manually selected clean reference frame.
+                        <p className="mb-3 text-xs text-blue-800">
+  Best for full-body physics and peak action beats. Use Image 3 from the previous-image edit chain for the strongest action moment, then return to Runway for Shot 4.
 </p>
 
             <p className="mb-3 text-xs text-blue-800">
