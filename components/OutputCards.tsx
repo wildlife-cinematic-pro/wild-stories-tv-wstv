@@ -368,6 +368,84 @@ export function Card({
 // ─────────────────────────────────────────────────────────────
 // SECTION LABEL — divider with uppercase label
 // ─────────────────────────────────────────────────────────────
+function ShotImagePlanPanel({
+  plans,
+  onCopy,
+}: {
+  plans: NonNullable<GeneratedPackage["shotImagePlan"]>;
+  onCopy: (t: string) => void;
+}) {
+  return (
+    <div className="rounded-xl border border-amber-200 bg-amber-50 p-4 shadow-sm">
+      <div className="mb-3 flex flex-wrap items-center gap-2">
+        <span className="text-sm font-bold text-gray-900">
+          🖼️ 4-Shot Image Plan
+        </span>
+        <span className="rounded bg-amber-100 px-2 py-0.5 text-xs font-bold text-amber-700">
+          1 master image → 4 edited shot images
+        </span>
+      </div>
+
+      <p className="mb-3 text-xs leading-5 text-amber-800">
+        Generate one master hero image first. Then create each shot image by
+        editing from the master or the previous shot image instead of starting
+        from scratch.
+      </p>
+
+      <div className="space-y-3">
+        {plans.map((plan, i) => (
+          <div
+            key={`${plan.title}-${i}`}
+            className="rounded-lg border border-amber-200 bg-white p-3"
+          >
+            <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
+              <div className="flex flex-wrap items-center gap-2">
+                <span className="text-xs font-extrabold text-gray-900">
+                  {plan.title}
+                </span>
+                <span className="rounded bg-gray-100 px-2 py-0.5 text-[10px] font-bold text-gray-700">
+                  Source: {plan.source === "master" ? "Master image" : "Previous shot image"}
+                </span>
+              </div>
+
+              <button
+                type="button"
+                onClick={() => onCopy(plan.prompt)}
+                className="rounded bg-gray-900 px-2 py-1 text-[11px] font-bold text-white hover:bg-black active:scale-95"
+              >
+                Copy
+              </button>
+            </div>
+
+            <pre className="max-h-40 overflow-auto whitespace-pre-wrap text-xs leading-relaxed text-gray-800">
+              {plan.prompt}
+            </pre>
+          </div>
+        ))}
+      </div>
+
+      <button
+        type="button"
+        onClick={() =>
+          onCopy(
+            plans
+              .map(
+                (plan, i) =>
+                  `IMAGE ${i + 1} — ${plan.title}\nSource: ${
+                    plan.source === "master" ? "Master image" : "Previous shot image"
+                  }\n${plan.prompt}`
+              )
+              .join("\n\n---\n\n")
+          )
+        }
+        className="mt-3 w-full rounded-lg bg-amber-600 py-2 text-sm font-bold text-white hover:bg-amber-700 active:scale-95"
+      >
+        Copy All 4 Image Prompts
+      </button>
+    </div>
+  );
+}
+
 export function SectionLabel({ label }: { label: string }) {
   return (
     <div className="mb-3 mt-8 flex items-center gap-3">
@@ -2984,7 +3062,7 @@ const klingShots = useMemo(
 
       <SectionLabel label="Core Prompts" />
 
-      <Card
+            <Card
         title="📸 Image Prompt"
         value={data.imagePrompt}
         onCopy={onCopy}
@@ -2999,6 +3077,11 @@ const klingShots = useMemo(
           },
         ]}
       />
+
+      {data.shotImagePlan && data.shotImagePlan.length > 0 && (
+        <ShotImagePlanPanel plans={data.shotImagePlan} onCopy={onCopy} />
+      )}
+  
 
       {data.negativePrompt && (
         <Card
