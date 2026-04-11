@@ -59,7 +59,8 @@ import {
 } from "@/lib/model-specs";
 
 import {
-  buildImagePrompt,
+    buildImagePrompt,
+  buildShotImagePlan,
   buildRunwayShots,
   buildKlingShots,
   buildKlingNative15s,
@@ -634,6 +635,15 @@ export default function Page() {
         imagePromptTarget
       );
 
+            const shotImagePlan = buildShotImagePlan(
+        predator,
+        prey,
+        finalEnvironment,
+        finalArc,
+        weather,
+        quality
+      );
+
       const runway = buildRunwayShots(
         predator,
         prey,
@@ -765,10 +775,11 @@ export default function Page() {
         preyName: prey,
         arcName: finalArc,
 
-        imagePrompt,
+                imagePrompt,
         negativePrompt: negativePromptForKling,
         thumbnailPrompt,
         voiceoverLine,
+        shotImagePlan,
 
         runwayShots: [runway?.shot1 ?? "", runway?.shot2 ?? "", runway?.shot3 ?? ""],
         klingShots: [kling?.shot1 ?? "", kling?.shot2 ?? "", kling?.shot3 ?? ""],
