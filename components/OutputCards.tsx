@@ -2233,16 +2233,15 @@ function WorkflowPromptMap({
     [done]
   );
 
-  const pipeline = useMemo(() => {
-                const parts = [
-        "Image Prompt → Master Still",
-        "→ Opening Tension (Runway)",
-        "→ clean handoff frame or master still",
-        "→ Action Pressure (Kling)",
-        "→ clean handoff frame or master still",
-        "→ Resolved Tension (Runway)",
-        "→ CapCut",
-      ];
+    const pipeline = useMemo(() => {
+    const parts = [
+      "Image Prompt → Master Still",
+      "→ Image 1 / Shot 1 Opening Tension (Runway)",
+      "→ Image 2 / Shot 2 Pressure Build (Runway)",
+      "→ Image 3 / Shot 3 Peak Action (Kling)",
+      "→ Image 4 / Shot 4 Resolved Tension (Runway)",
+      "→ CapCut",
+    ];
     return parts.join(" ");
   }, []);
 
@@ -2283,16 +2282,16 @@ function WorkflowPromptMap({
     window.setTimeout(() => scrollToStep(1), 50);
   }
 
-  const recommended = useMemo(() => {
+    const recommended = useMemo(() => {
     return {
-      runway: new Set([0, 2]),
+      runway: new Set([0, 1, 2]),
       kling: new Set([1]),
     };
   }, []);
 
   const runwaySelected = useMemo(() => {
     if (!onlyPipelineShots) return [true, true, true];
-    return [true, false, false];
+    return [true, true, true];
   }, [onlyPipelineShots]);
 
   const klingSelected = useMemo(() => {
@@ -2411,16 +2410,16 @@ function WorkflowPromptMap({
             stepRefs.current[2] = el;
           }}
         >
-          <WorkflowCard
+                    <WorkflowCard
             step={2}
-            title="Shot 1 — Opening Tension"
+            title="Shots 1–2 — Opening Tension + Pressure Build"
             badge="Runway Gen-4.5"
             color={{
               border: "border-green-400",
               bg: "bg-green-50",
               badge: "bg-green-100 text-green-700",
             }}
-            help="Upload master image → paste into Runway Gen-4.5 I2V → generate the opening tension shot. Keep both subjects readable from frame one, and end on a clean full-body handoff frame if you want to chain from the last frame."
+            help="Use Image 1 for Runway Shot 1 opening tension, then use Image 2 for Runway Shot 2 pressure build. Both images should come from the master-image edit chain, not from scratch."
             done={done[2]}
             onToggle={() => toggle(2)}
           >
@@ -2429,7 +2428,7 @@ function WorkflowPromptMap({
                 Runway shots
               </span>
               <span className="rounded bg-amber-100 px-2 py-0.5 text-[11px] font-bold text-amber-700">
-                Recommended: Runway Shot 1
+                Recommended: Runway Shot 1 + Shot 2 + Shot 3
               </span>
             </div>
 
@@ -2508,18 +2507,19 @@ function WorkflowPromptMap({
     stepRefs.current[3] = el;
   }}
 >
-  <WorkflowCard
+    <WorkflowCard
     step={3}
-              title="Shot 2 — Action Pressure"
+    title="Shot 3 — Peak Action"
     badge="Kling 3.0 Pro"
     color={{
       border: "border-blue-400",
       bg: "bg-blue-50",
       badge: "bg-blue-100 text-blue-700",
     }}
-              help="Upload the previous shot’s last frame only if it remains a clean full-body handoff frame. Otherwise use the same master still or a manually selected clean frame. Then generate the action-pressure beat with readable impact and clear subject spacing."
+    help="Use Image 3 from the previous-image edit chain. Generate the strongest full-body action beat here with clear spacing, readable impact, and stable identity."
     done={done[3]}
     onToggle={() => toggle(3)}
+  >
   >
     <div className="mb-2 flex items-center justify-between gap-2">
       <span className="text-xs font-bold text-gray-700">Kling shots</span>
@@ -2637,18 +2637,19 @@ function WorkflowPromptMap({
             stepRefs.current[4] = el;
           }}
         >
-          <WorkflowCard
+                    <WorkflowCard
             step={4}
-            title="Shot 3 — Resolved Tension"
+            title="Shot 4 — Resolved Tension"
             badge="Runway Gen-4.5"
             color={{
               border: "border-purple-400",
               bg: "bg-purple-50",
               badge: "bg-purple-100 text-purple-700",
             }}
-            help="Upload the previous shot’s last frame only if it remains a clean full-body handoff frame. Otherwise use the same master still or a manually selected clean continuity frame, then resolve the scene with readable spacing, visible tension, and a clean final frame."
+            help="Use Image 4 from the previous-image edit chain. Resolve the sequence with a readable aftermath or final tension hold while preserving spacing and anatomy."
             done={done[4]}
             onToggle={() => toggle(4)}
+          >
           >
             <div className="mb-2 flex items-center justify-between gap-2">
               <span className="text-xs font-bold text-gray-700">
