@@ -57,8 +57,9 @@ import type {
   QualityOptions,
   RunwayModel,
   KlingModel,
-  PredatorInfo,
+    PredatorInfo,
   ImagePromptTarget,
+  ShotImagePlan,
 } from "@/types";
 
 // ─── DATA IMPORTS ─────────────────────────────────────────────
@@ -1420,6 +1421,95 @@ const nb2Air =
 
   const E = `${vibe.style}, photorealistic, cinematic grade.${descInject}`;
   return finalizeImagePrompt(`${qLead} ${A} ${B} ${C} ${D} ${E}`, target);
+}
+
+// ─────────────────────────────────────────────────────────────
+// SHOT IMAGE PLAN — 4-image continuity workflow
+// ─────────────────────────────────────────────────────────────
+export function buildShotImagePlan(
+  predator: string,
+  prey: string,
+  env: string,
+  arc: Arc,
+  weather: Weather,
+  quality?: QualityOptions
+): ShotImagePlan[] {
+  const habitatMode = getHabitatMode(predator, prey, env);
+  const cleanEnv = sanitizeImageEnv(env);
+  const cleanWeather = sanitizeWeatherPhrase(weatherVariants[weather]);
+  const micro = buildMicroMotionLine(weather, env);
+  const gateOn = !!quality?.singleActionRule;
+
+  const establish = oneActionArcBeat(arc, "establish", gateOn, habitatMode);
+  const action = oneActionArcBeat(arc, "action", gateOn, habitatMode);
+  const aftermath = oneActionArcBeat(arc, "aftermath", gateOn, habitatMode);
+
+  const openingPredator =
+    habitatMode === "aquatic"
+      ? "holds controlled pressure through the water on the left"
+      : habitatMode === "shoreline"
+        ? "holds low visible pressure at the waterline on the left"
+        : "holds readable pre-action pressure on the left";
+
+  const openingPrey =
+    habitatMode === "aquatic"
+      ? "stays fully alert and reactive on the right"
+      : habitatMode === "shoreline"
+        ? "stays fully alert near the bank on the right"
+        : "stays fully alert and reactive on the right";
+
+  const pressurePredator =
+    habitatMode === "aquatic"
+      ? "leans into stronger forward water pressure without breaking spacing"
+      : habitatMode === "shoreline"
+        ? "leans farther forward from the bank with stronger visible ambush pressure"
+        : "leans farther forward with stronger visible pressure";
+
+  const pressurePrey =
+    habitatMode === "aquatic"
+      ? "makes one tighter defensive adjustment in the current"
+      : habitatMode === "shoreline"
+        ? "lowers into one readable defensive footing adjustment near the bank"
+        : "lowers into one readable defensive adjustment";
+
+  const peakPredator = sanitizeVideoBeatText(action.predatorBeat);
+  const peakPrey = sanitizeVideoBeatText(action.preyBeat);
+  const resolvePredator = sanitizeVideoBeatText(aftermath.predatorBeat);
+  const resolvePrey = sanitizeVideoBeatText(aftermath.preyBeat);
+
+  const continuityLock = `Keep the same ${predator}, the same ${prey}, the same anatomy, markings, scale, lighting, habitat, and overall 9:16 documentary composition family in ${cleanEnv}, ${cleanWeather}. Preserve realistic subject spacing, grounded contact, clean silhouette separation, and stable environmental continuity.`;
+  const atmosphereLock = `Keep the same environmental continuity with ${micro}.`;
+
+  return [
+    {
+      title: "Shot 1 Image — Opening Tension",
+      source: "master",
+      prompt: finalizePrompt(
+        `Using the provided master image, ${continuityLock} Change only the framing into a wide opening shot with both subjects fully visible from frame one. The ${predator} ${openingPredator}. The ${prey} ${openingPrey}. Preserve immediate visible tension, full-body readability, and the original aspect ratio. ${atmosphereLock}`
+      ),
+    },
+    {
+      title: "Shot 2 Image — Pressure Build",
+      source: "previous_image",
+      prompt: finalizePrompt(
+        `Using the provided image, ${continuityLock} Change only the framing into a slightly tighter pressure-build shot. The ${predator} ${pressurePredator}. The ${prey} ${pressurePrey}. Keep the scene natural, readable, and continuity-safe. Preserve the original aspect ratio. ${atmosphereLock}`
+      ),
+    },
+    {
+      title: "Shot 3 Image — Peak Action",
+      source: "previous_image",
+      prompt: finalizePrompt(
+        `Using the provided image, ${continuityLock} Change only the pose into the peak action beat. The ${predator} ${peakPredator}. The ${prey} ${peakPrey}. Preserve full-body readability, clear predator-to-prey spacing, believable traction, and strong biomechanical clarity. Keep the original aspect ratio. ${atmosphereLock}`
+      ),
+    },
+    {
+      title: "Shot 4 Image — Resolved Tension",
+      source: "previous_image",
+      prompt: finalizePrompt(
+        `Using the provided image, ${continuityLock} Change only the scene into the immediate aftermath or resolved tension beat. The ${predator} ${resolvePredator}. The ${prey} ${resolvePrey}. Preserve readable spacing to the final frame, stable anatomy, and clean continuity. Keep the original aspect ratio. ${atmosphereLock}`
+      ),
+    },
+  ];
 }
 
 // ─────────────────────────────────────────────────────────────
