@@ -436,12 +436,10 @@ describe("Step 7C — supporting prompt helpers keep readability language", () =
   } as const;
 
   function extractKlingPasteBlock(out: string): string {
-    return (
-      out
-        .split("═══ PASTE INTO KLING — stays under 2500 chars (copy this block only) ═══")[1]
-        ?.split("─── FULL BREAKDOWN — reference only, do NOT paste into Kling ───")[0]
-        ?.trim() ?? ""
+    const match = out.match(
+      /═══ PASTE INTO KLING — .*copy this block only\) ═══\n([\s\S]*?)\n\n─── FULL BREAKDOWN — reference only, do NOT paste into Kling ───/
     );
+    return match?.[1]?.trim() ?? "";
   }
 
   function extractKlingSixShotPasteBlock(out: string): string {
@@ -911,7 +909,7 @@ describe("Step 9 — Kling single-shot paste-ready narrative format", () => {
     expect(paste4).toContain("Locked wide aftermath hold");
   });
 
-    it("Kling single-shot paste blocks still include motion intensity", () => {
+  it("Kling single-shot paste blocks exclude literal motion intensity while keeping operator metadata", () => {
     const shots = buildKlingShots(
       base.predator,
       base.prey,
@@ -925,8 +923,16 @@ describe("Step 9 — Kling single-shot paste-ready narrative format", () => {
       quality
     );
 
-    const paste1 = extractKlingSinglePasteBlock(shots.shot1);
-    expect(paste1).toMatch(/Motion intensity:\s*[\d.]+/i);
+    const pasteBlocks = [shots.shot1, shots.shot2, shots.shot3, shots.shot4].map(extractKlingSinglePasteBlock);
+
+    for (const pasteBlock of pasteBlocks) {
+      expect(pasteBlock).not.toMatch(/Motion intensity:\s*[\d.]+/i);
+    }
+
+    expect(shots.shot1).toMatch(/Motion intensity:\s*[\d.]+/i);
+    expect(shots.shot2).toMatch(/Motion intensity:\s*[\d.]+/i);
+    expect(shots.shot3).toMatch(/Motion intensity:\s*[\d.]+/i);
+    expect(shots.shot4).toMatch(/Motion intensity:\s*[\d.]+/i);
   });
 });
 

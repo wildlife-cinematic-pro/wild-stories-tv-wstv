@@ -58,7 +58,7 @@ A smaller number of clear beats is better than overloaded instructions.
 
 6. Use one main camera move and one main action beat per shot.
 
-7. Chaining between shots:
+7. Chaining between shots (WSTV workflow / house guidance):
 Prefer extracting the cleanest full-body frame from the previous shot.
 Only use the automatic final frame if it is clean and continuity-safe.
 If the previous shot does not provide a good handoff frame, fall back to the master still.
@@ -93,7 +93,7 @@ Do not stack many overlapping actions in the same shot.
 6. Include a separate audio direction line for Kling native audio.
 Use ambient environment, grounded animal sound, and no music.
 
-7. Motion intensity:
+7. Motion intensity (WSTV operator guidance):
 Return a value between 0.1 and 1.0.
 Use lower values for restrained beats and higher values for strong action beats.
 

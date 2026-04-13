@@ -784,7 +784,7 @@ export default function Page() {
         quality
       );
 
-      const negativePromptForKling = buildNegativePrompt(predator);
+      const negativePromptForKling = buildNegativePrompt(predator, "KLING");
 
       const thumbnailPrompt = buildThumbnailPrompt(
         predator,
