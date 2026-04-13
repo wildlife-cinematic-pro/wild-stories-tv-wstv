@@ -382,7 +382,7 @@ export default function SettingsDrawer() {
           onPointerUp={onPanelPointerUp}
           onPointerCancel={onPanelPointerCancel}
           className={[
-            "absolute left-0 top-0 flex h-full w-[360px] max-w-[92vw] flex-col",
+            "fixed inset-y-0 left-0 z-[60] flex h-dvh w-[360px] max-w-[92vw] flex-col overflow-hidden",
             "border-r border-black/10 bg-white text-slate-900 shadow-2xl",
             "dark:border-white/10 dark:bg-slate-950 dark:text-slate-50",
             reduceMotion ? "" : "transition-transform duration-300 ease-out",

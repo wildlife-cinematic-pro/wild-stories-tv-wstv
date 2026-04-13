@@ -4,17 +4,17 @@
  * RunwayOfficialWorkflowDiagram.tsx
  * Runway Safe Handoff Workflow — Auto Prompt Lane + Manual Prompt Lane
  *
- * Node names verified against official Runway documentation (April 2026):
- *   Utility nodes : Extract Frame, Last Frame, First Frame, Trim Video,
- *                   Add Audio, Stitch, JSON Parse
- *   Audio nodes   : Text to SFX, Text to Speech, Voice Dubbing, Voice Isolation
- *   LLM node      : Claude Opus 4.5  ← official Runway LLM node name
- *                   (confirmed in Runway "Introduction to Workflows" help article)
- *   Model nodes   : Gen-4.5 (Image to Video)
- *   Input nodes   : Text, Image, Audio
- *
- * "Combine Text" is NOT an official Runway node name. The manual prompt Text
- * nodes are standard Text input nodes used by the operator for hand-written prompts.
+ * Verification notes:
+ *   • Official Runway help docs were used to live-verify Workflows semantics,
+ *     available LLM models, and utility-node behavior for Extract Frame,
+ *     First Frame, Last Frame, Trim, Stitch Videos, and Add Audio.
+ *   • Current picker-label wording in this diagram follows the attached
+ *     screenshots / user-provided picker list where the help center still uses
+ *     older names such as JSON Parse, Trim Video, Stitch, and Claude Opus 4.5.
+ *   • This diagram intentionally stays Runway-native in the main shot lane:
+ *     Gen-4.5 handles Shot 1 → Shot 4, and First Frame remains QA-only.
+ *   • A small side Parse JSON lane exposes export-only social fields from the
+ *     same structured Claude response without becoming part of the render path.
  *
  * UX improvements vs previous version
  *   • Zoom pivots around the mouse cursor (Figma-style — world position
@@ -63,7 +63,7 @@ type NodeSpec = {
   infoLines?:  string[];
 };
 
-type WireStyle = "main" | "reference" | "continuity" | "qa" | "audio" | "post" | "optional" | "manual";
+type WireStyle = "main" | "reference" | "continuity" | "qa" | "audio" | "post" | "optional" | "manual" | "meta";
 
 type WireDef = {
   from:    [string, string];
@@ -96,6 +96,19 @@ const WIRE_COLORS: Record<WireStyle, string> = {
   post:        "#38bdf8",
   optional:    "#94a3b8",
   manual:      "#f97316",
+  meta:        "#22d3ee",
+};
+
+const WIRE_STYLE_LABELS: Record<WireStyle, string> = {
+  main: "Primary auto flow",
+  reference: "Reference / anchor image",
+  continuity: "Chosen continuity frame",
+  qa: "First Frame QA",
+  audio: "Audio lane",
+  post: "Post processing",
+  optional: "Optional / fast path",
+  manual: "Optional manual override",
+  meta: "Social export only",
 };
 
 const BG         = "#060c14";
@@ -106,7 +119,7 @@ const TEXT_MAIN  = "#edf2f8";
 const TEXT_SUB   = "#8fa3bd";
 const TEXT_FAINT = "#5f738e";
 
-const VIEW_W = 5200;
+const VIEW_W = 6000;
 const VIEW_H = 1380;
 
 // ─── LAYOUT CONSTANTS ────────────────────────────────────────────────────────
@@ -164,8 +177,8 @@ function makeNode(id: string, cfg: Omit<NodeSpec, "id">): NodeSpec {
 }
 
 // ─── NODE SPECS ──────────────────────────────────────────────────────────────
-// "Manual Shot 1/2/3 Prompt" and "Manual SFX Prompt" nodes are standard Text
-// input nodes (official Runway Input node type) — the labels are operator-named.
+// "Manual Shot 1/2/3/4 Prompt" and "Manual SFX Prompt" nodes are standard Text
+// input nodes (official Runway Input node type) used only as optional operator overrides.
 const NODE_SPECS: NodeSpec[] = [
   // ── INPUT NODES (official Runway type) ──
   makeNode("text_system", {
@@ -197,10 +210,10 @@ const NODE_SPECS: NodeSpec[] = [
     infoLines: ["Use instead of generated SFX"],
   }),
 
-  // ── LLM NODE — official name: Claude Opus 4.5 ──
-  // Source: Runway "Introduction to Workflows" help article (confirmed Apr 2026)
+  // ── LLM NODE — picker label follows current screenshots ──
+  // Official Runway docs still list Claude Opus 4.5 as an available LLM model.
   makeNode("llm", {
-    title: "Claude Opus 4.5",   // ← official Runway LLM node name
+    title: "Claude",
     subtitle: "LLM Node",
     badge: "LLM", width: 248, bg: "#14092e", accent: "#f97316",
     inputs: [
@@ -208,51 +221,99 @@ const NODE_SPECS: NodeSpec[] = [
       { id: "brief",  label: "Prompt", kind: "text",  required: true },
     ],
     outputs: [{ id: "json", label: "Text (JSON)", kind: "text" }],
-    infoLines: ["Builds auto shot prompts and SFX prompt"],
+    infoLines: ["Picker label follows current screenshots"],
   }),
 
-  // ── JSON PARSE — official Runway utility node ──
+  // ── PARSE JSON — picker label follows current screenshots ──
   makeNode("json_parse", {
-    title: "JSON Parse", subtitle: "Auto prompt routes",
+    title: "Parse JSON", subtitle: "Core Prompt Routes",
     badge: "UTILITY", width: 328, bg: "#07121d", accent: "#16a34a",
     inputs:  [{ id: "json", label: "Text (JSON)", kind: "text", required: true }],
     outputs: [
       { id: "shot1", label: "shots.0.motion_prompt", kind: "text" },
       { id: "shot2", label: "shots.1.motion_prompt", kind: "text" },
       { id: "shot3", label: "shots.2.motion_prompt", kind: "text" },
+      { id: "shot4", label: "shots.3.motion_prompt", kind: "text" },
       { id: "sfx",   label: "audio.sfx_prompt",       kind: "text" },
     ],
-    infoLines: ["Official Runway utility node — auto mode only"],
+    infoLines: ["Primary render-pipeline outputs only"],
+  }),
+  makeNode("json_parse_meta", {
+    title: "Parse JSON", subtitle: "Meta / Social Outputs",
+    badge: "UTILITY", width: 300, bg: "#071520", accent: "#22d3ee",
+    inputs:  [{ id: "json", label: "Text (JSON)", kind: "text", required: true }],
+    outputs: [
+      { id: "hook", label: "hook", kind: "text" },
+      { id: "caption", label: "caption", kind: "text" },
+      { id: "hashtags", label: "hashtags", kind: "text" },
+      { id: "tags", label: "tags", kind: "text" },
+    ],
+    infoLines: ["Export only — not part of the render pipeline"],
   }),
 
   // ── MANUAL PROMPT NODES (operator-named Text input nodes) ──
   makeNode("manual_shot1", {
-    title: "Text", subtitle: "Manual Shot 1 Prompt",
+    title: "Text", subtitle: "Optional Manual Shot 1 Prompt",
     badge: "MANUAL", width: 214, bg: "#1a1207", accent: "#f97316",
     inputs:  [],
     outputs: [{ id: "text", label: "Text", kind: "text" }],
-    infoLines: ["Use instead of auto Shot 1 prompt"],
+    infoLines: ["Optional override — use instead of auto Shot 1 prompt"],
   }),
   makeNode("manual_shot2", {
-    title: "Text", subtitle: "Manual Shot 2 Prompt",
+    title: "Text", subtitle: "Optional Manual Shot 2 Prompt",
     badge: "MANUAL", width: 214, bg: "#1a1207", accent: "#f97316",
     inputs:  [],
     outputs: [{ id: "text", label: "Text", kind: "text" }],
-    infoLines: ["Use instead of auto Shot 2 prompt"],
+    infoLines: ["Optional override — use instead of auto Shot 2 prompt"],
   }),
   makeNode("manual_shot3", {
-    title: "Text", subtitle: "Manual Shot 3 Prompt",
+    title: "Text", subtitle: "Optional Manual Shot 3 Prompt",
     badge: "MANUAL", width: 214, bg: "#1a1207", accent: "#f97316",
     inputs:  [],
     outputs: [{ id: "text", label: "Text", kind: "text" }],
-    infoLines: ["Use instead of auto Shot 3 prompt"],
+    infoLines: ["Optional override — use instead of auto Shot 3 prompt"],
+  }),
+  makeNode("manual_shot4", {
+    title: "Text", subtitle: "Optional Manual Shot 4 Prompt",
+    badge: "MANUAL", width: 214, bg: "#1a1207", accent: "#f97316",
+    inputs:  [],
+    outputs: [{ id: "text", label: "Text", kind: "text" }],
+    infoLines: ["Optional override — use instead of auto Shot 4 prompt"],
   }),
   makeNode("manual_sfx", {
-    title: "Text", subtitle: "Manual SFX Prompt",
+    title: "Text", subtitle: "Optional Manual SFX Prompt",
     badge: "MANUAL", width: 214, bg: "#1a1207", accent: "#f97316",
     inputs:  [],
     outputs: [{ id: "text", label: "Text", kind: "text" }],
-    infoLines: ["Use instead of auto SFX prompt"],
+    infoLines: ["Optional override — use instead of auto SFX prompt"],
+  }),
+  makeNode("manual_hook", {
+    title: "Text", subtitle: "Optional Manual Hook",
+    badge: "MANUAL", width: 214, bg: "#1a1207", accent: "#f97316",
+    inputs:  [],
+    outputs: [{ id: "text", label: "Text", kind: "text" }],
+    infoLines: ["Optional export-text override — type hook directly here"],
+  }),
+  makeNode("manual_caption", {
+    title: "Text", subtitle: "Optional Manual Caption",
+    badge: "MANUAL", width: 214, bg: "#1a1207", accent: "#f97316",
+    inputs:  [],
+    outputs: [{ id: "text", label: "Text", kind: "text" }],
+    infoLines: ["Optional export-text override — type caption directly here"],
+  }),
+  makeNode("manual_hashtags", {
+    title: "Text", subtitle: "Optional Manual Hashtags",
+    badge: "MANUAL", width: 214, bg: "#1a1207", accent: "#f97316",
+    inputs:  [],
+    outputs: [{ id: "text", label: "Text", kind: "text" }],
+    infoLines: ["Optional export-text override — type hashtags directly here"],
+  }),
+  makeNode("manual_tags", {
+    title: "Text", subtitle: "Optional Manual Tags",
+    badge: "MANUAL", width: 214, bg: "#1a1207", accent: "#f97316",
+    inputs:  [],
+    outputs: [{ id: "text", label: "Text", kind: "text" }],
+    infoLines: ["Optional export-text override — type tags directly here"],
   }),
 
   // ── GEN-4.5 SHOTS — official Runway model ──
@@ -277,9 +338,9 @@ const NODE_SPECS: NodeSpec[] = [
     infoLines: ["Check opening identity — official node"],
   }),
 
-  // ── TRIM VIDEO — official Runway utility node ──
+  // ── TRIM — picker label follows current screenshots ──
   makeNode("trim_h1", {
-    title: "Trim Video", subtitle: "Safe Handoff Prep 1",
+    title: "Trim", subtitle: "Safe Handoff Prep 1",
     badge: "UTILITY", width: 206, bg: "#071318", accent: "#38bdf8",
     inputs:  [{ id: "video", label: "Video", kind: "video", required: true }],
     outputs: [{ id: "video", label: "Video", kind: "video" }],
@@ -325,7 +386,7 @@ const NODE_SPECS: NodeSpec[] = [
     infoLines: ["Check continuity before Shot 3"],
   }),
   makeNode("trim_h2", {
-    title: "Trim Video", subtitle: "Safe Handoff Prep 2",
+    title: "Trim", subtitle: "Safe Handoff Prep 2",
     badge: "UTILITY", width: 206, bg: "#071318", accent: "#38bdf8",
     inputs:  [{ id: "video", label: "Video", kind: "video", required: true }],
     outputs: [{ id: "video", label: "Video", kind: "video" }],
@@ -366,6 +427,48 @@ const NODE_SPECS: NodeSpec[] = [
     outputs: [{ id: "image", label: "Image", kind: "image" }],
     infoLines: ["Final opening-frame check"],
   }),
+  makeNode("trim_h3", {
+    title: "Trim", subtitle: "Safe Handoff Prep 3",
+    badge: "UTILITY", width: 206, bg: "#071318", accent: "#38bdf8",
+    inputs:  [{ id: "video", label: "Video", kind: "video", required: true }],
+    outputs: [{ id: "video", label: "Video", kind: "video" }],
+    infoLines: ["Remove weak ending before handoff"],
+  }),
+  makeNode("pick_h3", {
+    title: "Extract Frame", subtitle: "Manual Handoff 3",
+    badge: "UTILITY", width: 216, bg: "#041420", accent: "#34d399",
+    inputs:  [{ id: "video", label: "Video", kind: "video", required: true }],
+    outputs: [{ id: "image", label: "Image", kind: "image" }],
+    infoLines: ["Pick clean two-subject frame"],
+  }),
+  makeNode("last3", {
+    title: "Last Frame", subtitle: "Fast Optional Handoff 3",
+    badge: "UTILITY", width: 220, bg: "#1a0544", accent: "#c084fc",
+    dim: true,
+    inputs:  [{ id: "video", label: "Video", kind: "video", required: true }],
+    outputs: [{ id: "image", label: "Image", kind: "image" }],
+    infoLines: ["Use only if final frame is clean"],
+  }),
+
+  // ── SHOT 4 ──
+  makeNode("shot4", {
+    title: "Gen-4.5", subtitle: "Image to Video · Shot 4",
+    badge: "MODEL", width: 250, bg: "#060f28", accent: "#60a5fa",
+    inputs: [
+      { id: "image",  label: "Image",  kind: "image", required: true },
+      { id: "prompt", label: "Prompt", kind: "text",  required: true },
+    ],
+    outputs: [{ id: "video", label: "Video", kind: "video" }],
+    infoLines: ["Final beat with clean end for stitch"],
+  }),
+  makeNode("first4", {
+    title: "First Frame", subtitle: "Shot 4 QA",
+    badge: "UTILITY", width: 192, bg: "#100c00", accent: "#fbbf24",
+    dim: true,
+    inputs:  [{ id: "video", label: "Video", kind: "video", required: true }],
+    outputs: [{ id: "image", label: "Image", kind: "image" }],
+    infoLines: ["Final opening-frame check"],
+  }),
 
   // ── TEXT TO SFX — official Runway audio node ──
   makeNode("sfx", {
@@ -378,12 +481,13 @@ const NODE_SPECS: NodeSpec[] = [
 
   // ── STITCH — official Runway utility node ──
   makeNode("stitch", {
-    title: "Stitch", subtitle: "Ordered shots",
-    badge: "UTILITY", width: 202, bg: "#0d0220", accent: "#16a34a",
+    title: "Stitch Videos", subtitle: "Ordered shots",
+    badge: "UTILITY", width: 232, bg: "#0d0220", accent: "#16a34a",
     inputs: [
       { id: "s1", label: "Input 1", kind: "video", required: true },
       { id: "s2", label: "Input 2", kind: "video", required: true },
       { id: "s3", label: "Input 3", kind: "video", required: true },
+      { id: "s4", label: "Input 4", kind: "video", required: true },
     ],
     outputs: [{ id: "video", label: "Video", kind: "video" }],
     infoLines: ["Input order is playback order — official node"],
@@ -391,7 +495,7 @@ const NODE_SPECS: NodeSpec[] = [
 
   // ── TRIM VIDEO (final) ──
   makeNode("trim_final", {
-    title: "Trim Video", subtitle: "Final Runtime Cleanup",
+    title: "Trim", subtitle: "Final Runtime Cleanup",
     badge: "UTILITY", width: 214, bg: "#071318", accent: "#38bdf8",
     inputs:  [{ id: "video", label: "Video", kind: "video", required: true }],
     outputs: [{ id: "video", label: "Video", kind: "video" }],
@@ -410,13 +514,13 @@ const NODE_SPECS: NodeSpec[] = [
     infoLines: ["Official Runway utility node"],
   }),
 
-  // ── UPSCALE VIDEO — confirmed in Runway changelog as "video upscaling nodes" ──
+  // ── UPSCALE VIDEO — current picker wording from screenshots ──
   makeNode("upscale", {
-    title: "Upscale Video", subtitle: "Final Master",
-    badge: "POST", width: 200, bg: "#030d1a", accent: "#38bdf8",
+    title: "Upscale Video - Topaz AI", subtitle: "Final Master",
+    badge: "POST", width: 270, bg: "#030d1a", accent: "#38bdf8",
     inputs:  [{ id: "video", label: "Video", kind: "video", required: true }],
     outputs: [{ id: "video", label: "Video", kind: "video" }],
-    infoLines: ["Do this after edit lock — confirmed in changelog"],
+    infoLines: ["Picker wording follows current screenshots"],
   }),
 
   // ── EXTRACT FRAME (thumbnail) — official node ──
@@ -438,11 +542,17 @@ const DEFAULT_POSITIONS: Record<string, Point> = {
 
   llm:       { x: 330, y: 210 },
   json_parse:{ x: 664, y: 140 },
+  json_parse_meta:{ x: 664, y: 460 },
+  manual_hook:     { x: 980, y: 458 },
+  manual_caption:  { x: 980, y: 570 },
+  manual_hashtags: { x: 980, y: 682 },
+  manual_tags:     { x: 980, y: 794 },
 
   manual_shot1: { x: 1064, y: 690 },
   manual_shot2: { x: 1884, y: 690 },
   manual_shot3: { x: 2704, y: 690 },
-  manual_sfx:   { x: 2704, y: 950 },
+  manual_shot4: { x: 3524, y: 690 },
+  manual_sfx:   { x: 3828, y: 950 },
 
   shot1:   { x: 1064, y: 94  },
   first1:  { x: 1064, y: 492 },
@@ -458,14 +568,20 @@ const DEFAULT_POSITIONS: Record<string, Point> = {
 
   shot3:  { x: 2704, y: 94  },
   first3: { x: 2704, y: 492 },
+  trim_h3:{ x: 2984, y: 94  },
+  pick_h3:{ x: 3224, y: 94  },
+  last3:  { x: 3224, y: 310 },
 
-  sfx: { x: 3008, y: 950 },
+  shot4:  { x: 3524, y: 94  },
+  first4: { x: 3524, y: 492 },
 
-  stitch:      { x: 3308, y: 252 },
-  trim_final:  { x: 3594, y: 252 },
-  add_audio:   { x: 3888, y: 252 },
-  upscale:     { x: 4178, y: 252 },
-  extract_thumb:{ x: 4452, y: 252 },
+  sfx: { x: 3828, y: 950 },
+
+  stitch:      { x: 4128, y: 252 },
+  trim_final:  { x: 4414, y: 252 },
+  add_audio:   { x: 4708, y: 252 },
+  upscale:     { x: 4998, y: 252 },
+  extract_thumb:{ x: 5272, y: 252 },
 };
 
 // ─── WIRES ───────────────────────────────────────────────────────────────────
@@ -474,21 +590,22 @@ const WIRES: WireDef[] = [
   { from: ["text_system", "text"], to: ["llm", "system"], style: "main" },
   { from: ["text_story",  "text"], to: ["llm", "brief"],  style: "main" },
 
-  // LLM → JSON Parse
+  // LLM → Parse JSON
   { from: ["llm", "json"], to: ["json_parse", "json"], style: "main" },
+  { from: ["llm", "json"], to: ["json_parse_meta", "json"], style: "meta", route: "v" },
 
   // Anchor image → Shot 1
   { from: ["handoff_anchor", "image"], to: ["shot1", "image"], style: "reference" },
 
-  // JSON Parse auto prompt → Shot 1
+  // Parse JSON auto prompt → Shot 1
   { from: ["json_parse",   "shot1"], to: ["shot1",   "prompt"], style: "main"   },
-  // Manual prompt → Shot 1 (operator can use either, not both)
+  // Manual prompt → Shot 1 (optional override; use either auto or manual, not both)
   { from: ["manual_shot1", "text"],  to: ["shot1",   "prompt"], style: "manual", route: "v" },
 
   // Shot 1 → QA (First Frame)
   { from: ["shot1", "video"], to: ["first1", "video"], style: "qa",       route: "v" },
 
-  // Shot 1 → Main handoff path (Trim Video → Extract Frame)
+  // Shot 1 → Main handoff path (Trim → Extract Frame)
   { from: ["shot1",   "video"], to: ["trim_h1", "video"], style: "main" },
   { from: ["trim_h1", "video"], to: ["pick_h1", "video"], style: "post" },
 
@@ -499,7 +616,7 @@ const WIRES: WireDef[] = [
   { from: ["pick_h1", "image"], to: ["shot2", "image"], style: "continuity" },
   { from: ["last1",   "image"], to: ["shot2", "image"], style: "optional"   },
 
-  // JSON Parse auto prompt → Shot 2
+  // Parse JSON auto prompt → Shot 2
   { from: ["json_parse",   "shot2"], to: ["shot2", "prompt"], style: "main"   },
   { from: ["manual_shot2", "text"],  to: ["shot2", "prompt"], style: "manual", route: "v" },
 
@@ -517,14 +634,32 @@ const WIRES: WireDef[] = [
   { from: ["pick_h2", "image"], to: ["shot3", "image"], style: "continuity" },
   { from: ["last2",   "image"], to: ["shot3", "image"], style: "optional"   },
 
-  // JSON Parse auto prompt → Shot 3
+  // Parse JSON auto prompt → Shot 3
   { from: ["json_parse",   "shot3"], to: ["shot3", "prompt"], style: "main"   },
   { from: ["manual_shot3", "text"],  to: ["shot3", "prompt"], style: "manual", route: "v" },
 
   // Shot 3 → QA
   { from: ["shot3", "video"], to: ["first3", "video"], style: "qa", route: "v" },
 
-  // Audio lane — Text to SFX (from JSON Parse or manual)
+  // Shot 3 → Main handoff path
+  { from: ["shot3",   "video"], to: ["trim_h3", "video"], style: "main" },
+  { from: ["trim_h3", "video"], to: ["pick_h3", "video"], style: "post" },
+
+  // Shot 3 → Fast optional Last Frame
+  { from: ["shot3", "video"], to: ["last3", "video"], style: "optional", route: "v" },
+
+  // Chosen handoff → Shot 4 image
+  { from: ["pick_h3", "image"], to: ["shot4", "image"], style: "continuity" },
+  { from: ["last3",   "image"], to: ["shot4", "image"], style: "optional"   },
+
+  // Parse JSON auto prompt → Shot 4
+  { from: ["json_parse",   "shot4"], to: ["shot4", "prompt"], style: "main"   },
+  { from: ["manual_shot4", "text"],  to: ["shot4", "prompt"], style: "manual", route: "v" },
+
+  // Shot 4 → QA
+  { from: ["shot4", "video"], to: ["first4", "video"], style: "qa", route: "v" },
+
+  // Audio lane — Text to SFX (from Parse JSON or manual)
   { from: ["json_parse", "sfx"],   to: ["sfx", "text"], style: "audio",  route: "pipe", pipeY: 880 },
   { from: ["manual_sfx", "text"],  to: ["sfx", "text"], style: "manual", route: "h"                },
 
@@ -533,10 +668,11 @@ const WIRES: WireDef[] = [
   // Alternative audio input
   { from: ["audio_alt", "audio"], to: ["add_audio", "audio"], style: "optional", route: "pipe", pipeY: 1140 },
 
-  // Shots → Stitch (pipe routes bring three video streams into stitch)
+  // Shots → Stitch Videos (pipe routes bring four video streams into stitch)
   { from: ["shot1", "video"], to: ["stitch", "s1"], style: "main", route: "pipe", pipeY: 560 },
   { from: ["shot2", "video"], to: ["stitch", "s2"], style: "main", route: "pipe", pipeY: 595 },
   { from: ["shot3", "video"], to: ["stitch", "s3"], style: "main", route: "pipe", pipeY: 630 },
+  { from: ["shot4", "video"], to: ["stitch", "s4"], style: "main", route: "pipe", pipeY: 665 },
 
   // Post-processing chain
   { from: ["stitch",     "video"], to: ["trim_final", "video"], style: "post" },
@@ -556,6 +692,7 @@ function markerId(style: WireStyle): string {
     post:       "arr-post",
     optional:   "arr-optional",
     manual:     "arr-manual",
+    meta:       "arr-meta",
   };
   return m[style];
 }
@@ -699,14 +836,21 @@ const JSON_EXAMPLE = `{
     },
     {
       "motion_prompt": "Same exact subjects. Final payoff beat. Keep both animals readable. No subject exits frame. End clean for stitch."
+    },
+    {
+      "motion_prompt": "Same exact subjects. Closing payoff beat. Keep both animals readable, preserve identity, and end on a stable final hold for stitch."
     }
   ],
   "audio": {
     "sfx_prompt": "cold mountain meadow ambience, light winter wind, frosted grass movement, subtle hoof steps"
-  }
+  },
+  "hook": "A mountain lion freezes the moment the deer finally spots the ambush.",
+  "caption": "Four linked wildlife shots built for clean safe handoffs, readable spacing, and a stitched final payoff.",
+  "hashtags": "#wildlife #cinematic #runway #storytelling",
+  "tags": "mountain lion, deer, meadow, predator, prey"
 }`;
 
-const SYSTEM_PROMPT_TEMPLATE = `You are building motion prompts for a multi-shot wildlife continuity workflow.
+const SYSTEM_PROMPT_TEMPLATE = `You are building motion prompts and social export text for a multi-shot wildlife continuity workflow.
 
 Rules:
 - Preserve exact subject identities from the provided handoff image.
@@ -724,11 +868,16 @@ Output JSON:
   "shots": [
     { "motion_prompt": "..." },
     { "motion_prompt": "..." },
+    { "motion_prompt": "..." },
     { "motion_prompt": "..." }
   ],
   "audio": {
     "sfx_prompt": "..."
-  }
+  },
+  "hook": "...",
+  "caption": "...",
+  "hashtags": "...",
+  "tags": "..."
 }`;
 
 const MANUAL_PROMPT_TEMPLATE = `Same exact subjects as the handoff image. Both animals remain visible in frame. Clean readable spacing. One clear action only. Natural realistic motion. End on a stable readable hold. No subject exits frame.`;
@@ -737,15 +886,24 @@ const JSON_ROUTES: JsonRoute[] = [
   { path: "shots.0.motion_prompt", target: "Shot 1 · prompt input"   },
   { path: "shots.1.motion_prompt", target: "Shot 2 · prompt input"   },
   { path: "shots.2.motion_prompt", target: "Shot 3 · prompt input"   },
+  { path: "shots.3.motion_prompt", target: "Shot 4 · prompt input"   },
   { path: "audio.sfx_prompt",       target: "Text to SFX · text input" },
+  { path: "hook",                   target: "Social export side lane", note: "hook · export only" },
+  { path: "caption",                target: "Social export side lane", note: "caption · export only" },
+  { path: "hashtags",               target: "Social export side lane", note: "hashtags · export only" },
+  { path: "tags",                   target: "Social export side lane", note: "optional tags · export only" },
 ];
 
 const WORKFLOW_NOTES = [
-  "Main handoff path: Shot → Trim Video → Extract Frame → next shot's Image input.",
+  "This file is the Runway-native 4-shot safe-handoff reference workflow.",
+  "Main handoff path: Shot → Trim → Extract Frame → next shot's Image input.",
   "Extract Frame lets you choose a frame where both animals are still clearly visible.",
   "Last Frame is the fast optional path — only use it when the final frame is already clean.",
+  "First Frame nodes are QA only and never feed the next shot.",
   "If the ending loses one subject, do not pass that frame forward. Use the anchor or re-generate.",
-  "Use one prompt source per shot at a time: auto JSON route OR manual text node.",
+  "Use one source per target at a time: auto JSON route OR the matching optional manual Text node.",
+  "Optional manual Text nodes also cover SFX plus hook, caption, hashtags, and tags when you want direct operator entry.",
+  "hook, caption, hashtags, and tags are export-only side outputs from the same Claude JSON response.",
 ];
 
 const PROMPT_GUIDE = [
@@ -768,6 +926,8 @@ export default function RunwayOfficialWorkflowDiagram() {
   const [zoom, setZoom]           = useState(0.30);
   const [pan,  setPan]            = useState<Point>({ x: 10, y: 10 });
   const [dragKind, setDragKind]   = useState<"canvas" | "node" | null>(null);
+  const [hoveredWireIdx, setHoveredWireIdx] = useState<number | null>(null);
+  const [selectedWireIdx, setSelectedWireIdx] = useState<number | null>(null);
 
   const containerRef = useRef<HTMLDivElement>(null);
   const zoomRef      = useRef(0.30);
@@ -798,6 +958,34 @@ export default function RunwayOfficialWorkflowDiagram() {
       y: rect.y + getPortDotY(spec, index),
     };
   }, [getRect, specMap]);
+
+  const getNodeLabel = useCallback((nodeId: string) => {
+    const spec = specMap[nodeId];
+    return spec.subtitle ? `${spec.title} — ${spec.subtitle}` : spec.title;
+  }, [specMap]);
+
+  const getPortLabel = useCallback((nodeId: string, portId: string, side: Side) => {
+    const ports = side === "left" ? specMap[nodeId].inputs : specMap[nodeId].outputs;
+    return ports.find((port) => port.id === portId)?.label ?? portId;
+  }, [specMap]);
+
+  const activeWireIdx = hoveredWireIdx ?? selectedWireIdx;
+  const activeWireDetails = useMemo(() => {
+    if (activeWireIdx == null) return null;
+
+    const wire = WIRES[activeWireIdx];
+
+    return {
+      color: WIRE_COLORS[wire.style],
+      styleLabel: WIRE_STYLE_LABELS[wire.style],
+      from: getPortPoint(wire.from[0], wire.from[1], "right"),
+      to: getPortPoint(wire.to[0], wire.to[1], "left"),
+      fromNode: getNodeLabel(wire.from[0]),
+      fromPort: getPortLabel(wire.from[0], wire.from[1], "right"),
+      toNode: getNodeLabel(wire.to[0]),
+      toPort: getPortLabel(wire.to[0], wire.to[1], "left"),
+    };
+  }, [activeWireIdx, getNodeLabel, getPortLabel, getPortPoint]);
 
   // ── Fit screen ─────────────────────────────────────────────────────────────
   const fitScreen = useCallback(() => {
@@ -832,6 +1020,8 @@ export default function RunwayOfficialWorkflowDiagram() {
 
   // ── Pointer handlers ────────────────────────────────────────────────────────
   const onCanvasPointerDown = useCallback((e: ReactPointerEvent<HTMLDivElement>) => {
+    setSelectedWireIdx(null);
+    setHoveredWireIdx(null);
     dragRef.current = { kind: "canvas", x: e.clientX, y: e.clientY };
     setDragKind("canvas");
   }, []);
@@ -894,6 +1084,8 @@ export default function RunwayOfficialWorkflowDiagram() {
     const z = 0.30, p = { x: 10, y: 10 };
     zoomRef.current = z; panRef.current = p;
     setZoom(z); setPan(p); setPositions(DEFAULT_POSITIONS);
+    setHoveredWireIdx(null);
+    setSelectedWireIdx(null);
     setDragKind(null); dragRef.current = null;
   }, []);
 
@@ -948,8 +1140,37 @@ export default function RunwayOfficialWorkflowDiagram() {
         }}>
           Scroll to zoom (pivots at cursor) · Drag to pan
           <br />
-          Drag nodes to reposition · Wires update live
+          Drag nodes to reposition · Hover or click a wire to trace its route
         </div>
+
+        {activeWireDetails && (
+          <div style={{
+            position: "absolute", top: 88, left: 16, zIndex: 30,
+            width: 320, color: TEXT_MAIN,
+            fontFamily: "ui-monospace, SFMono-Regular, Menlo, monospace",
+            background: "rgba(9,17,27,0.82)", border: `1px solid ${BORDER}`,
+            padding: "10px 12px", borderRadius: 10, backdropFilter: "blur(6px)",
+            boxShadow: `0 0 0 1px ${activeWireDetails.color}33, 0 8px 24px rgba(0,0,0,0.28)`,
+          }}>
+            <div style={{ color: activeWireDetails.color, fontSize: 9, fontWeight: 700, letterSpacing: "0.08em", textTransform: "uppercase" }}>
+              {activeWireDetails.styleLabel}
+            </div>
+            <div style={{ marginTop: 7, fontSize: 10.5, lineHeight: 1.5 }}>
+              <div>
+                <span style={{ color: "#cbd5e1" }}>From:</span> {activeWireDetails.fromNode}
+              </div>
+              <div style={{ color: TEXT_SUB }}>Output: {activeWireDetails.fromPort}</div>
+              <div style={{ margin: "5px 0", color: activeWireDetails.color }}>→</div>
+              <div>
+                <span style={{ color: "#cbd5e1" }}>To:</span> {activeWireDetails.toNode}
+              </div>
+              <div style={{ color: TEXT_SUB }}>Input: {activeWireDetails.toPort}</div>
+            </div>
+            <div style={{ marginTop: 8, color: TEXT_FAINT, fontSize: 8.5 }}>
+              Hover to preview · Click wire to pin · Click empty canvas to clear
+            </div>
+          </div>
+        )}
 
         {/* Controls */}
         <div
@@ -983,13 +1204,13 @@ export default function RunwayOfficialWorkflowDiagram() {
             color: "#1e2f42", fontSize: 11, fontWeight: 700,
             letterSpacing: "0.12em", textTransform: "uppercase",
           }}>
-            Runway safe handoff workflow · auto prompt lane + manual prompt lane · node names verified Apr 2026
+            Runway safe handoff workflow · 4-shot core lane + social side outputs · picker labels refreshed Apr 2026
           </div>
 
           {/* SVG wires */}
           <svg width={VIEW_W} height={VIEW_H} style={{ position: "absolute", inset: 0, overflow: "visible" }}>
             <defs>
-              {(["main","reference","qa","continuity","audio","post","optional","manual"] as WireStyle[]).map((style) => (
+              {(["main","reference","qa","continuity","audio","post","optional","manual","meta"] as WireStyle[]).map((style) => (
                 <marker key={style} id={`arr-${style}`} markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto">
                   <path d="M0,0 L0,6 L7,3 z" fill={WIRE_COLORS[style]} />
                 </marker>
@@ -1000,6 +1221,8 @@ export default function RunwayOfficialWorkflowDiagram() {
               const from  = getPortPoint(wire.from[0], wire.from[1], "right");
               const to    = getPortPoint(wire.to[0],   wire.to[1],   "left");
               const color = WIRE_COLORS[wire.style];
+              const isActive = activeWireIdx === idx;
+              const hasFocus = activeWireIdx !== null;
 
               let d = "";
               if      (wire.route === "v")    d = vCurve(from, to);
@@ -1011,45 +1234,108 @@ export default function RunwayOfficialWorkflowDiagram() {
                 wire.style === "qa"       ? 0.64 :
                 wire.style === "optional" ? 0.58 :
                 wire.style === "audio"    ? 0.72 :
+                wire.style === "meta"     ? 0.76 :
                 wire.style === "manual"   ? 0.82 : 0.92;
               const strokeWidth =
-                wire.style === "main" || wire.style === "post"           ? 2.35 :
-                wire.style === "reference" || wire.style === "continuity" ? 1.8  :
-                wire.style === "manual"                                   ? 1.8  : 1.35;
+                wire.style === "main" || wire.style === "post"            ? 1.9 :
+                wire.style === "reference" || wire.style === "continuity" ? 1.45 :
+                wire.style === "manual"                                   ? 1.45 : 1.05;
+              const visibleOpacity = hasFocus && !isActive ? Math.max(0.06, opacity * 0.16) : opacity;
+              const currentStrokeWidth = isActive ? strokeWidth + 1.15 : strokeWidth;
+              const glowWidth = isActive ? currentStrokeWidth + 6 : currentStrokeWidth + (wire.style === "main" ? 2.2 : 1.4);
+              const glowOpacity = isActive ? 0.24 : hasFocus ? 0.015 : wire.style === "continuity" ? 0.035 : 0.05;
 
               return (
                 <g key={idx}>
-                  {(wire.style === "main" || wire.style === "reference" || wire.style === "post" || wire.style === "manual") && (
-                    <path d={d} fill="none" stroke={color} strokeWidth={5} opacity={0.12} />
+                  {(wire.style === "main" || wire.style === "reference" || wire.style === "post" || wire.style === "manual" || isActive) && (
+                    <path
+                      d={d}
+                      fill="none"
+                      stroke={color}
+                      strokeWidth={glowWidth}
+                      opacity={glowOpacity}
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                    />
                   )}
                   {wire.style === "continuity" && (
-                    <path d={d} fill="none" stroke={color} strokeWidth={4} opacity={0.10} />
+                    <path
+                      d={d}
+                      fill="none"
+                      stroke={color}
+                      strokeWidth={glowWidth}
+                      opacity={glowOpacity}
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                    />
                   )}
                   <path d={d} fill="none" stroke={color}
-                    strokeWidth={strokeWidth}
+                    strokeWidth={currentStrokeWidth}
                     strokeDasharray={dashed ? "6 4" : undefined}
-                    opacity={opacity}
+                    opacity={visibleOpacity}
                     markerEnd={`url(#${markerId(wire.style)})`}
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    style={{
+                      filter: isActive ? `drop-shadow(0 0 8px ${color})` : undefined,
+                      transition: "opacity 120ms ease, stroke-width 120ms ease, filter 120ms ease",
+                    }}
                   />
+                  <path
+                    d={d}
+                    fill="none"
+                    stroke="transparent"
+                    strokeWidth={Math.max(12, currentStrokeWidth + 10)}
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    style={{ cursor: "pointer" }}
+                    onPointerDown={(e) => e.stopPropagation()}
+                    onPointerEnter={(e) => {
+                      e.stopPropagation();
+                      setHoveredWireIdx(idx);
+                    }}
+                    onPointerLeave={(e) => {
+                      e.stopPropagation();
+                      setHoveredWireIdx((prev) => (prev === idx ? null : prev));
+                    }}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setSelectedWireIdx((prev) => (prev === idx ? null : idx));
+                      setHoveredWireIdx(idx);
+                    }}
+                  />
+                  {isActive && (
+                    <>
+                      <circle cx={from.x} cy={from.y} r={8} fill={color} opacity={0.16} />
+                      <circle cx={to.x} cy={to.y} r={8} fill={color} opacity={0.16} />
+                      <circle cx={from.x} cy={from.y} r={4.2} fill={color} stroke="#f8fafc" strokeWidth={1.1} />
+                      <circle cx={to.x} cy={to.y} r={4.2} fill={color} stroke="#f8fafc" strokeWidth={1.1} />
+                    </>
+                  )}
                 </g>
               );
             })}
           </svg>
 
           {/* Section labels */}
-          <SectionLabel x={30}   y={72}  text="Inputs" />
-          <SectionLabel x={330}  y={184} text="LLM — Claude Opus 4.5 (official)" color="#1e5a70" />
-          <SectionLabel x={664}  y={116} text="JSON Parse" color="#1e5a70" />
-          <SectionLabel x={1064} y={72}  text="Shot 1 — Gen-4.5" />
-          <SectionLabel x={1344} y={72}  text="Safe Handoff 1" color="#1e5a70" />
+          <SectionLabel x={30} y={72} text="Inputs" />
+          <SectionLabel x={330} y={184} text="LLM + Prompt Routing" color="#1e5a70" />
+          <SectionLabel x={664} y={116} text="Parse JSON" color="#1e5a70" />
+          <SectionLabel x={664} y={436} text="Social / export only" color="#0ea5b7" />
+          <SectionLabel x={980} y={436} text="Optional manual social text" color="#b45309" />
+          <SectionLabel x={1064} y={72} text="Shot 1" />
+          <SectionLabel x={1344} y={72} text="Safe Handoff 1" color="#1e5a70" />
           <SectionLabel x={1584} y={286} text="Fast optional Last Frame" color="#9d71ff" />
-          <SectionLabel x={1884} y={72}  text="Shot 2 — Gen-4.5" />
-          <SectionLabel x={2164} y={72}  text="Safe Handoff 2" color="#1e5a70" />
+          <SectionLabel x={1884} y={72} text="Shot 2" />
+          <SectionLabel x={2164} y={72} text="Safe Handoff 2" color="#1e5a70" />
           <SectionLabel x={2404} y={286} text="Fast optional Last Frame" color="#9d71ff" />
-          <SectionLabel x={2704} y={72}  text="Shot 3 — Gen-4.5" />
-          <SectionLabel x={1064} y={664} text="Manual prompt lane (Text input nodes)" color="#b45309" />
-          <SectionLabel x={3008} y={925} text="Audio — Text to SFX (official)" color="#a67c00" />
-          <SectionLabel x={3308} y={228} text="Assembly + Post" color="#1e5a70" />
+          <SectionLabel x={2704} y={72} text="Shot 3" />
+          <SectionLabel x={2984} y={72} text="Safe Handoff 3" color="#1e5a70" />
+          <SectionLabel x={3224} y={286} text="Fast optional Last Frame" color="#9d71ff" />
+          <SectionLabel x={3524} y={72} text="Shot 4" />
+          <SectionLabel x={1064} y={664} text="Optional manual Text override lane" color="#b45309" />
+          <SectionLabel x={3828} y={925} text="Audio" color="#a67c00" />
+          <SectionLabel x={4128} y={228} text="Assembly + Post" color="#1e5a70" />
 
           {/* Nodes */}
           {NODE_SPECS.map((spec) => (
@@ -1076,12 +1362,13 @@ export default function RunwayOfficialWorkflowDiagram() {
               { label: "Audio lane",                 color: WIRE_COLORS.audio,       dashed: true  },
               { label: "Post processing",            color: WIRE_COLORS.post,        dashed: false },
               { label: "Optional / fast path",       color: WIRE_COLORS.optional,    dashed: true  },
-              { label: "Manual prompt lane",         color: WIRE_COLORS.manual,      dashed: true  },
+              { label: "Optional manual override",   color: WIRE_COLORS.manual,      dashed: true  },
+              { label: "Social export only",         color: WIRE_COLORS.meta,        dashed: true  },
             ] as const).map((item) => (
               <div key={item.label} style={{ display: "flex", alignItems: "center", gap: 7 }}>
                 <svg width={34} height={10}>
                   <line x1={0} y1={5} x2={34} y2={5} stroke={item.color}
-                    strokeWidth={item.dashed ? 1.3 : 2.1}
+                    strokeWidth={item.dashed ? 1.1 : 1.7}
                     strokeDasharray={item.dashed ? "6 4" : undefined}
                   />
                 </svg>
@@ -1098,20 +1385,24 @@ export default function RunwayOfficialWorkflowDiagram() {
         border: `1px solid ${BORDER}`, background: "rgba(9,17,27,0.88)",
         fontFamily: "ui-monospace, SFMono-Regular, Menlo, monospace", flexWrap: "wrap",
       }}>
-        <InfoCard title="Main fix">
-          The main handoff is not raw Last Frame. It goes: Shot → Trim Video → Extract Frame → next shot&apos;s Image input. This lets you select a frame where both animals are still clearly visible.
+        <InfoCard title="Runway-native 4-shot reference">
+          This file stays Runway-native. The preferred safe handoff is Shot → Trim → Extract Frame, the faster optional path is Last Frame, and First Frame stays QA-only.
         </InfoCard>
         <div style={{ width: 1, background: BORDER, alignSelf: "stretch" }} />
-        <InfoCard title="Manual mode">
-          Manual Text nodes (standard Runway Input nodes, operator-named) let you write prompts by hand instead of routing from the LLM + JSON Parse lane. Use one source per shot at a time — not both.
+        <InfoCard title="Primary vs override">
+          The primary path is Claude → Parse JSON. Matching optional manual Text nodes stay available as operator overrides for shot prompts, SFX, and social export text whenever you want to type directly into Text nodes instead of using the auto route.
         </InfoCard>
         <div style={{ width: 1, background: BORDER, alignSelf: "stretch" }} />
-        <InfoCard title="Node names verified">
-          All node names checked against official Runway docs (April 2026). Gen-4.5, First Frame, Last Frame, Extract Frame, Trim Video, Add Audio, Stitch, JSON Parse, and Text to SFX are confirmed official Runway node names. The LLM node is &quot;Claude Opus 4.5&quot; per the Runway Introduction to Workflows article.
+        <InfoCard title="Social outputs">
+          hook, caption, hashtags, and optional tags are exported from the same structured Claude response in a small side Parse JSON lane. Matching optional manual Text nodes let you type those publishing fields directly when you want to skip the auto export text. They are still publishing outputs only, not part of the video render path.
+        </InfoCard>
+        <div style={{ width: 1, background: BORDER, alignSelf: "stretch" }} />
+        <InfoCard title="Picker labels">
+          Utility behavior and available LLM models were live-checked against official Runway docs, but the label wording shown here follows the current picker screenshots: Parse JSON, Trim, Stitch Videos, and Claude. The help center still uses older JSON Parse / Trim Video / Stitch / Claude Opus 4.5 wording.
         </InfoCard>
         <div style={{ width: 1, background: BORDER, alignSelf: "stretch" }} />
         <InfoCard title="Prompt source rule">
-          For each shot, activate only one prompt source: auto route from JSON Parse OR the manual Text node. Running both simultaneously causes undefined behaviour — one will silently override the other.
+          For each shot, SFX field, or social export field, use only one source at a time: either the auto Parse JSON output or the matching optional manual Text node. Do not run both simultaneously.
         </InfoCard>
       </div>
 

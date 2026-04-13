@@ -1,7 +1,17 @@
+import path from "node:path";
+import { fileURLToPath } from "node:url";
 import type { NextConfig } from "next";
 
+const configDir = path.dirname(fileURLToPath(import.meta.url));
+
 const nextConfig: NextConfig = {
-  /* Add config options here as needed */
+  outputFileTracingRoot: configDir,
+  experimental: {
+    devtoolSegmentExplorer: false,
+  },
+  turbopack: {
+    root: configDir,
+  },
 };
 
 export default nextConfig;

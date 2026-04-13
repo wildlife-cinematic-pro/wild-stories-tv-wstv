@@ -34,6 +34,26 @@ export const enhanceResponseSchema = z.object({
 
 export type EnhanceResponse = z.infer<typeof enhanceResponseSchema>;
 
+export const mediaAnalysisSchema = z
+  .object({
+    animalName: z.string().min(1),
+    coatDescription: z.string().min(1),
+    environment: z.string().min(1),
+    lighting: z.string().min(1),
+    suggestedArc: z.string().min(1),
+    suggestedDepth: z.enum(["Cinematic Blur", "Balanced Depth", "Detailed Background"]),
+    weather: z.string().min(1),
+    timeOfDay: z.string().min(1),
+    driftRisk: z.enum(["HIGH", "MEDIUM", "LOW"]),
+    isVideo: z.boolean(),
+    videoAction: z.string().optional(),
+    imagePromptInject: z.string().min(1),
+    videoMotionInject: z.string().min(1),
+  })
+  .strict();
+
+export type MediaAnalysisPayload = z.infer<typeof mediaAnalysisSchema>;
+
 export const uiSelectionSchema = z.object({
   predator: z.string().min(1),
   prey: z.string().min(1),

@@ -9,6 +9,8 @@
 //   import type { GeneratedPackage, Arc, Weather } from "@/types";
 // ─────────────────────────────────────────────────────────────
 
+export type { MediaAnalysisPayload as MediaAnalysisResult } from "@/lib/schemas";
+
 // ─────────────────────────────────────────────────────────────
 // PRIMITIVE / UNION TYPES
 // ─────────────────────────────────────────────────────────────
@@ -479,26 +481,4 @@ export type RunwayNode = {
   settings: string;
   wire: string;
   tip: string;
-};
-
-export type MediaAnalysisResult = {
-  animalName: string;
-  animalSpecies: string;
-  coatDescription: string;
-  physicalDetails: string;
-  distinctiveMarkings: string;
-  environment: string;
-  lighting: string;
-  weather: string;
-  timeOfDay: string;
-  cameraGear: string;
-  texture: string;
-  driftRisk: "LOW" | "MEDIUM" | "HIGH";
-  suggestedArc: string;
-  suggestedDepth: string;
-  imagePromptInject: string;
-  videoMotionInject: string;
-  isVideo: boolean;
-  videoAction?: string;
-  videoDuration?: string;
 };

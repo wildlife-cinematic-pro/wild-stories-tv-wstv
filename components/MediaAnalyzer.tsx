@@ -11,7 +11,7 @@ import type { AIProvider, MediaAnalysisResult } from "@/types";
 // ─────────────────────────────────────────────────────────────
 // CONSTANTS
 // ─────────────────────────────────────────────────────────────
-const SUPPORTED_IMAGE_TYPES = ["image/jpeg", "image/jpg", "image/png", "image/webp"];
+const SUPPORTED_IMAGE_TYPES = ["image/jpeg", "image/jpg", "image/png", "image/gif", "image/webp"];
 const SUPPORTED_VIDEO_TYPES = ["video/mp4", "video/webm", "video/quicktime"];
 
 const MAX_IMAGE_BYTES = 10 * 1024 * 1024; // 10 MB
@@ -95,7 +95,7 @@ export default function MediaAnalyzer({
   function validateFile(f: File): string | null {
     const isImg = SUPPORTED_IMAGE_TYPES.includes(f.type);
     const isVid = SUPPORTED_VIDEO_TYPES.includes(f.type);
-    if (!isImg && !isVid) return `Unsupported: ${f.type}. JPG, PNG, WebP, MP4, WebM मात्र।`;
+    if (!isImg && !isVid) return `Unsupported: ${f.type}. JPG, PNG, GIF, WebP, MP4, WebM मात्र।`;
     if (isImg && f.size > MAX_IMAGE_BYTES) return `Image too large: ${formatFileSize(f.size)}. Max 10MB।`;
     if (isVid && f.size > MAX_VIDEO_BYTES) return `Video too large: ${formatFileSize(f.size)}. Max 50MB।`;
     return null;
@@ -217,13 +217,13 @@ export default function MediaAnalyzer({
             <div className="mb-2 text-4xl">🦁</div>
             <p className="mb-1 text-sm font-semibold text-gray-700">Drop your wildlife photo or video here</p>
             <p className="mb-3 text-xs text-gray-400">
-              JPG, PNG, WebP (max 10MB) &nbsp;|&nbsp; MP4, WebM (max 50MB)
+              JPG, PNG, GIF, WebP (max 10MB) &nbsp;|&nbsp; MP4, WebM (max 50MB)
             </p>
             <span className="rounded-lg bg-violet-600 px-4 py-2 text-sm font-medium text-white">Browse Files</span>
             <input
               ref={fileInputRef}
               type="file"
-              accept="image/jpeg,image/png,image/webp,video/mp4,video/webm,video/quicktime"
+              accept="image/jpeg,image/jpg,image/png,image/gif,image/webp,video/mp4,video/webm,video/quicktime"
               onChange={(e) => {
                 const f = e.target.files?.[0];
                 if (f) handleFileSelect(f);

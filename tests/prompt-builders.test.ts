@@ -8,6 +8,10 @@ import {
   buildKlingSixShot,
   buildCapCutPlan,
   buildClipChaining,
+  build10Ideas,
+  finalizeGenerationText,
+  sanitizeSocialCopyText,
+  validateEngineConstraints,
 } from "@/lib/prompt-builders";
 
 describe("buildImagePrompt – engine-aware MJ params", () => {
@@ -131,102 +135,42 @@ describe("buildImagePrompt – engine-aware MJ params", () => {
   });
 });
 
-describe("Step 6 — One-action hard gate (Runway + Kling)", () => {
-  const base = {
-    predator: "Lion",
-    prey: "Zebra",
-    env: "African savanna",
-    arc: "Chase and takedown" as const,
-    weather: "Golden Hour" as const,
-    emotionalTone: "Raw Tension" as const,
-    animalVibe: "BBC Earth Documentary" as const,
-    sceneDesc: "A tense standoff before the chase begins, dust in backlight.",
-  };
-
-  const quality = {
-    realismMode: "Reference Locked",
-    motionOnlyI2V: true,
-    referenceLock: true,
-    singleActionRule: true,
-    microMotion: true,
-    heroVeo: false,
-  } as const;
-
-  const banned = (s: string) => {
-    const t = s.toLowerCase();
-    expect(t).not.toMatch(/\bbite\b/);
-    expect(t).not.toMatch(/\btakedown\b/);
-    expect(t).not.toMatch(/\broll\b/);
-  };
-
-  it("Runway Shot2/Shot3/Shot4: no bite/takedown/roll when singleActionRule ON", () => {
-    const shots = buildRunwayShots(
-      base.predator,
-      base.prey,
-      base.env,
-      base.arc,
-      base.weather,
-      "Gen-4.5",
-      base.emotionalTone,
-      base.animalVibe,
-      base.sceneDesc,
-      quality
-    );
-    banned(shots.shot2);
-    banned(shots.shot3);
-    banned(shots.shot4);
+describe("Step 6 — prompt sanitization split", () => {
+  it("generation cleanup keeps realistic behavioral wording intact", () => {
+    const line = finalizeGenerationText("The wolf bite triggers a takedown roll.");
+    expect(line).toContain("bite");
+    expect(line).toContain("takedown");
+    expect(line).toContain("roll");
   });
 
-  it("Kling Shot2/Shot3/Shot4: no bite/takedown/roll when singleActionRule ON", () => {
-    const shots = buildKlingShots(
-      base.predator,
-      base.prey,
-      base.env,
-      base.arc,
-      base.weather,
-      "Kling 3.0 Pro",
-      base.emotionalTone,
-      base.animalVibe,
-      base.sceneDesc,
-      quality
-    );
-    banned(shots.shot2);
-    banned(shots.shot3);
-    banned(shots.shot4);
+  it("social-copy cleanup softens risky wording separately", () => {
+    const safe = sanitizeSocialCopyText("The wolf bite triggers a takedown roll.");
+    expect(safe).toContain("grip");
+    expect(safe).toContain("capture");
+    expect(safe).toContain("tumble");
+    expect(safe).not.toContain("bite");
+    expect(safe).not.toContain("takedown");
   });
 
-  it("KlingNative15s: Shot2 should not include bite/takedown/roll when singleActionRule ON", () => {
-    const out = buildKlingNative15s(
-      base.predator,
-      base.prey,
-      base.env,
-      base.arc,
-      base.weather,
-      "Kling 3.0 Pro",
-      base.emotionalTone,
-      base.animalVibe,
-      base.sceneDesc,
-      quality
-    );
-    // Native prompt text मा पनि banned शब्द आउनु हुँदैन
-    banned(out);
+  it("generation cleanup does not inject social-safe replacements", () => {
+    const line = finalizeGenerationText("The wolf bite triggers a takedown roll.");
+    expect(line).not.toContain("grip");
+    expect(line).not.toContain("capture");
+    expect(line).not.toContain("tumble");
   });
 
-  it("Seedance Shot2/Shot3/Shot4: no bite/takedown/roll when singleActionRule ON", () => {
-    const shots = buildSeedanceShots(
-      base.predator,
-      base.prey,
-      base.env,
-      base.arc,
-      base.weather,
-      base.emotionalTone,
-      base.animalVibe,
-      base.sceneDesc,
-      quality
-    );
-    banned(shots.shot2);
-    banned(shots.shot3);
-    banned(shots.shot4);
+  it("idea generation keeps social-safe wording", () => {
+    const ideas = build10Ideas("Wolf", ["Elk"], {
+      prey: ["Elk"],
+      environment: "Rocky Mountain Meadow",
+      lighting: "Golden hour",
+      cameraGear: "Nikon Z9",
+      texture: "Detailed fur",
+      defaultArc: "Chase and takedown",
+      driftRisk: "MEDIUM",
+    });
+
+    expect(ideas.some((idea) => /takedown/i.test(idea))).toBe(false);
   });
 });
 
@@ -240,7 +184,7 @@ describe("Seedance prompt builder", () => {
     heroVeo: false,
   } as const;
 
-  it("keeps official Seedance guidance visible in the prompt pack", () => {
+  it("keeps Seedance guidance visible in the prompt pack", () => {
     const shots = buildSeedanceShots(
       "Mountain Lion",
       "White-tailed Deer",
@@ -253,7 +197,7 @@ describe("Seedance prompt builder", () => {
       quality
     );
 
-    expect(shots.shot1).toContain("Official Seedance 2.0 rule");
+    expect(shots.shot1).toContain("Seedance 2.0 guidance");
     expect(shots.shot1).toContain("negative prompts");
     expect(shots.shot2).toContain("═══ PASTE-READY SEEDANCE PROMPT");
     expect(shots.shot4).toContain("Suggested duration: 5 seconds.");
@@ -829,6 +773,8 @@ describe("Step 7C — supporting prompt helpers keep readability language", () =
       expect(shots.multiShotPrompt).not.toContain("Cut to mountain Lion");
     });
   });
+});
+
 describe("Step 9 — Kling single-shot paste-ready narrative format", () => {
   const base = {
     predator: "Mountain Lion",
@@ -936,4 +882,19 @@ describe("Step 9 — Kling single-shot paste-ready narrative format", () => {
   });
 });
 
+describe("engine constraint regression guards", () => {
+  it("validateEngineConstraints flags invalid Runway settings clearly", () => {
+    const warnings = validateEngineConstraints({
+      engine: "runway",
+      duration: 1,
+      fps: 30,
+      hasNegativePrompt: true,
+      hasAppearanceInPrompt: true,
+    });
+
+    expect(warnings).toHaveLength(4);
+    expect(warnings.filter((w) => w.level === "error")).toHaveLength(3);
+    expect(warnings.some((w) => /24fps or 25fps only/i.test(w.message))).toBe(true);
+    expect(warnings.some((w) => /does not support negative prompts/i.test(w.message))).toBe(true);
+  });
 });

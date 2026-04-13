@@ -64,8 +64,8 @@ export const KLING_MODEL_MULT: Record<KlingModel, number> = {
 
 // ─────────────────────────────────────────────────────────────
 // PROMPT STYLE NOTES
-// Injected at the top of each generated prompt to remind the
-// user which model is active and how to prompt it.
+// Injected at the top of each generated prompt as WSTV house guidance.
+// These are not vendor-confirmed spec strings.
 // ─────────────────────────────────────────────────────────────
 // lib/model-specs.ts
 
@@ -154,6 +154,8 @@ export const KLING_MODEL_NOTES: Record<KlingModel, ModelNote> = {
 //   Runway Gen-4.5 outputs at 24fps / 25fps native.
 //   Do NOT write 30fps in Runway/Veo/Sora prompts.
 //   30fps = platform export step only (Facebook/TikTok upload).
+// [House]:
+//   Kling/Veo/Sora lines below are editor workflow recommendations, not provider-locked export rules.
 // ─────────────────────────────────────────────────────────────
 export const TIMELINE_BASE_FPS: Record<Engine | "VEO" | "SORA", string> = {
   RUNWAY: "24fps native — keep edits at 24fps for clean motion continuity and readable wildlife movement",

@@ -8,7 +8,7 @@
 //   • All data comes from predator-data.ts and model-specs.ts
 //
 // ═══════════════════════════════════════════════════════════════
-// OFFICIAL ENGINE RULES (verified from official documentation)
+// ENGINE RULES (official / house / estimate labels noted inline)
 // ═══════════════════════════════════════════════════════════════
 //
 // RUNWAY GEN-4.5 [Official — help.runwayml.com, Jan 2026]:
@@ -30,7 +30,7 @@
 //   • Avoid negative phrasing ("the camera doesn't move").
 //   • Runway Characters feature available for consistency.
 //
-// KLING 3.0 [WSTV current workflow notes — primary-doc refresh recommended]:
+// KLING 3.0 [House + estimate — primary-doc refresh recommended]:
 //   • Resolution: Native 4K (3840×2160) at up to 60fps.
 //   • Duration: 3–15 seconds per generation.
 //   • Multi-shot: Up to 6 shots in a single prompt.
@@ -91,7 +91,7 @@ import { buildQualityLead } from "@/lib/quality-lead";
 export { buildQualityLead };
 
 // ─────────────────────────────────────────────────────────────
-// ENGINE SPEC CONSTANTS (from official docs — 2026)
+// ENGINE SPEC CONSTANTS (official / house / estimate labels preserved below)
 // ─────────────────────────────────────────────────────────────
 
 /** Runway Gen-4.5 official constraints */
@@ -107,7 +107,7 @@ export const RUNWAY_SPECS = {
     chainingMethod: "Use last-frame chaining only when the outgoing frame is a clean full-body handoff frame. Otherwise reuse the master still or a manually selected clean frame.",
 } as const;
 
-/** Kling 3.0 current WSTV constraints (primary-doc refresh recommended) */
+/** Kling 3.0 current WSTV house guidance (primary-doc refresh recommended) */
 export const KLING_SPECS = {
   resolution: "Native 4K (3840×2160)" as const,
   fpsMax: 60 as const,
@@ -150,9 +150,9 @@ export function validateKlingPromptLength(prompt: string): {
 }
 
 // ─────────────────────────────────────────────────────────────
-// Banned-words sanitizer (platform-safe)
+// Social-copy sanitizer (platform-safe)
 // ─────────────────────────────────────────────────────────────
-const BANNED_WORDS: Array<[RegExp, string]> = [
+const SOCIAL_COPY_REPLACEMENTS: Array<[RegExp, string]> = [
   [/\btakedown\b/gi, "capture"],
   [/\bbite\b/gi, "grip"],
   [/\bmaul\b/gi, "overpower"],
@@ -160,18 +160,22 @@ const BANNED_WORDS: Array<[RegExp, string]> = [
   [/\broll\b/gi, "tumble"],
 ];
 
-function sanitizeBannedWords(input: string): string {
-  let out = String(input ?? "");
-  for (const [re, repl] of BANNED_WORDS) out = out.replace(re, repl);
-  return out;
-}
-
-function finalizePrompt(input: string): string {
-  return sanitizeBannedWords(input)
+export function finalizeGenerationText(input: string): string {
+  return String(input ?? "")
     .replace(/\.\s*\./g, ". ")
     .replace(/([!?])\s*([!?])/g, "$1 ")
     .replace(/[ \t]{2,}/g, " ")
     .trim();
+}
+
+export function sanitizeSocialCopyText(input: string): string {
+  let out = finalizeGenerationText(input);
+  for (const [re, repl] of SOCIAL_COPY_REPLACEMENTS) out = out.replace(re, repl);
+  return finalizeGenerationText(out);
+}
+
+function finalizePrompt(input: string): string {
+  return finalizeGenerationText(input);
 }
 
 // ─────────────────────────────────────────────────────────────
@@ -1440,7 +1444,7 @@ export function buildSeedanceShots(
     ? "Seedance 2.0 I2V rule — prompt moving parts only: subject movement, background movement, camera movement. Minimize static look description."
     : "Keep static description light and prioritize motion wording.";
   const officialRule =
-    "Official Seedance 2.0 rule — keep wording simple and direct, follow the input image/reference content, and do not use negative prompts.";
+    "Seedance 2.0 guidance — keep wording simple and direct, follow the input image/reference content, and do not use negative prompts.";
   const cameraRule =
     'Camera rule — if the prompt includes camera movement, use a non-fixed camera. For multi-shot continuity, connect scenes with "Cut to".';
 
@@ -2763,7 +2767,7 @@ export function build10Ideas(predator: string, preyList: string[], preset: Preda
   const seen = new Set<string>();
 
   const add = (idea: string) => {
-    const safe = finalizePrompt(idea);
+    const safe = sanitizeSocialCopyText(idea);
     if (!seen.has(safe) && ideas.length < 10) {
       seen.add(safe);
       ideas.push(safe);

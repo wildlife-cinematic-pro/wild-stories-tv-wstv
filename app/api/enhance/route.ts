@@ -1,7 +1,16 @@
 // file: app/api/enhance/route.ts
 import { NextResponse } from "next/server";
 import { z } from "zod";
-import { enhanceRequestSchema, enhanceResponseSchema } from "@/lib/schemas";
+import {
+  enhanceRequestSchema,
+  enhanceResponseSchema,
+  mediaAnalysisSchema,
+} from "@/lib/schemas";
+import {
+  normalizeClaudeVisionMimeType,
+  parseProviderJsonObject,
+} from "@/lib/enhance-provider";
+import { hasUsableGeneratedPackageEnhancements } from "@/lib/generated-package";
 
 /**
  * Rate limit (simple in-memory)
@@ -62,24 +71,7 @@ type Provider = "gemini" | "claude";
 /**
  * Text enhance response schema (existing)
  */
-const providerResponseSchema = enhanceResponseSchema
-  .extend({
-    improvements: z.union([z.string(), z.array(z.string())]).optional(),
-  })
-  .passthrough();
-
-function safeParseProviderText(text: string): Record<string, unknown> {
-  const trimmed = (text || "").trim();
-  if (!trimmed) return { improvements: "" };
-
-  try {
-    const parsed = JSON.parse(trimmed) as unknown;
-    if (parsed && typeof parsed === "object") return parsed as Record<string, unknown>;
-    return { improvements: trimmed };
-  } catch {
-    return { improvements: trimmed };
-  }
-}
+const providerResponseSchema = enhanceResponseSchema.strict();
 
 /**
  * ─────────────────────────────────────────────────────────────
@@ -100,26 +92,6 @@ const analyzeMediaRequestSchema = z.object({
   base64Data: z.string().min(16),
   mimeType: z.string().min(3),
   provider: z.enum(["gemini", "claude"]).optional(),
-});
-
-/**
- * Shape expected by your MediaAnalyzer UI
- * (If your types differ, adjust keys here)
- */
-const mediaAnalysisSchema = z.object({
-  animalName: z.string(),
-  coatDescription: z.string(),
-  environment: z.string(),
-  lighting: z.string(),
-  suggestedArc: z.string(),
-  suggestedDepth: z.string(),
-  weather: z.string(),
-  timeOfDay: z.string(),
-  driftRisk: z.enum(["HIGH", "MEDIUM", "LOW"]),
-  isVideo: z.boolean(),
-  videoAction: z.string().optional(),
-  imagePromptInject: z.string(),
-  videoMotionInject: z.string(),
 });
 
 function getGeminiModelStable(): string {
@@ -254,6 +226,7 @@ async function callClaudeVision(
   return { res, data };
 }
 
+
 function extractGeminiText(data: Record<string, unknown>): string {
   const candidates = data?.candidates as
     | { content?: { parts?: { text?: string }[] } }[]
@@ -350,7 +323,17 @@ export async function POST(req: Request) {
         if (!res.ok) return jsonError("Gemini vision request failed", 500, data);
 
         const text = extractGeminiText(data);
-        const obj = safeParseProviderText(text);
+        let obj: Record<string, unknown>;
+        try {
+          obj = parseProviderJsonObject(text, "Gemini media analysis");
+        } catch (error) {
+          return jsonError(
+            error instanceof Error
+              ? error.message
+              : "Gemini media analysis returned invalid JSON",
+            502
+          );
+        }
 
         const out = mediaAnalysisSchema.safeParse({
           ...obj,
@@ -368,16 +351,31 @@ export async function POST(req: Request) {
       const apiKey = process.env.ANTHROPIC_API_KEY;
       if (!apiKey) return jsonError("Missing ANTHROPIC_API_KEY", 500);
 
+      const claudeMimeType = normalizeClaudeVisionMimeType(mimeType);
+      if (!claudeMimeType) {
+        return jsonError("Claude vision supports JPEG, PNG, GIF, or WebP images only.", 400);
+      }
+
       const { res, data } = await callClaudeVision(apiKey, {
         prompt: analysisPrompt,
-        mimeType,
+        mimeType: claudeMimeType,
         base64Data,
       });
 
       if (!res.ok) return jsonError("Claude vision request failed", 500, data);
 
       const text = extractClaudeText(data);
-      const obj = safeParseProviderText(text);
+      let obj: Record<string, unknown>;
+      try {
+        obj = parseProviderJsonObject(text, "Claude media analysis");
+      } catch (error) {
+        return jsonError(
+          error instanceof Error
+            ? error.message
+            : "Claude media analysis returned invalid JSON",
+          502
+        );
+      }
 
       const out = mediaAnalysisSchema.safeParse({
         ...obj,
@@ -458,10 +456,21 @@ export async function POST(req: Request) {
       if (!res.ok) return jsonError("Gemini request failed", 500, data);
 
       const text = extractGeminiText(data);
-      const obj = safeParseProviderText(text);
+      let obj: Record<string, unknown>;
+      try {
+        obj = parseProviderJsonObject(text, "Gemini enhancement");
+      } catch (error) {
+        return jsonError(
+          error instanceof Error ? error.message : "Gemini returned invalid JSON",
+          502
+        );
+      }
 
       const out = providerResponseSchema.safeParse(obj);
       if (!out.success) return jsonError("Invalid Gemini response format", 502, out.error.flatten());
+      if (!hasUsableGeneratedPackageEnhancements(out.data)) {
+        return jsonError("Gemini returned no usable enhancement fields", 502);
+      }
 
       return NextResponse.json({ ...out.data, aiEnhanced: true }, { status: 200 });
     }
@@ -474,10 +483,21 @@ export async function POST(req: Request) {
     if (!res.ok) return jsonError("Claude request failed", 500, data);
 
     const text = extractClaudeText(data);
-    const obj = safeParseProviderText(text);
+    let obj: Record<string, unknown>;
+    try {
+      obj = parseProviderJsonObject(text, "Claude enhancement");
+    } catch (error) {
+      return jsonError(
+        error instanceof Error ? error.message : "Claude returned invalid JSON",
+        502
+      );
+    }
 
     const out = providerResponseSchema.safeParse(obj);
     if (!out.success) return jsonError("Invalid Claude response format", 502, out.error.flatten());
+    if (!hasUsableGeneratedPackageEnhancements(out.data)) {
+      return jsonError("Claude returned no usable enhancement fields", 502);
+    }
 
     return NextResponse.json({ ...out.data, aiEnhanced: true }, { status: 200 });
   } catch (err) {

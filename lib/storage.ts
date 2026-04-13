@@ -36,7 +36,7 @@ import type {
   HabitatPreset,
 } from "@/types";
 
-import { weatherOptions, depthModes } from "@/lib/model-specs";
+import { weatherOptions, depthModes, habitatOptions } from "@/lib/model-specs";
 
 // ─────────────────────────────────────────────────────────────
 // KEYS & LIMITS
@@ -320,19 +320,7 @@ function isDepth(x: string): x is DepthMode {
 }
 
 function isHabitatPreset(x: string): x is HabitatPreset {
-  return [
-    "Auto",
-    "Open Green Grassland",
-    "Dry Savanna Plain",
-    "Marsh Wetland",
-    "Riverbank Reeds",
-    "Forest Clearing",
-    "Dense Jungle Edge",
-    "Rocky Mountain Meadow",
-    "Snow Field Tundra",
-    "Desert Scrubland",
-    "Coastal Cliffline",
-  ].includes(x);
+  return (habitatOptions as readonly string[]).includes(x);
 }
 
 /** Read predator / prey / arc / weather / depth from URL params */
