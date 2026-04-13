@@ -128,7 +128,7 @@ export const KLING_SPECS = {
 // ─────────────────────────────────────────────────────────────
 // KLING PROMPT LENGTH VALIDATOR
 // ─────────────────────────────────────────────────────────────
-export const KLING_CHAR_LIMIT = 2500;
+export const KLING_CHAR_LIMIT = 2500; // [House] Observed practical prompt budget; vendor hard limit not yet confirmed.
 
 export function validateKlingPromptLength(prompt: string): {
   length: number;
@@ -1621,7 +1621,7 @@ const cleanWeather = sanitizeWeatherPhrase(weatherVariants[weather]);
 const cleanLighting = sanitizeLightingPhrase(lighting, weather);
 const cleanCameraGear = sanitizeCameraGearForHabitat(cameraGear, env);
 const cleanAir =
-  "clear clean air, no visible steam, no smoke plumes, no mist, no airborne haze, clean subject separation";
+  "clear clean air, crisp subject separation, stable atmosphere, clean depth readability";
 const nb2Air =
   "clear clean air, crisp subject separation, stable atmosphere";
 
@@ -1649,7 +1649,7 @@ const nb2Air =
         ? `${predator} and ${prey} both clearly readable near the waterline at the most tension-rich beat of the ${getSafeArcLabel(arc)} scene. ${predator} stays low at the bank, ${prey} holds full survival awareness, immediate visible tension, no empty setup.`
         : `${predator} and ${prey} both clearly readable in the same frame at the most tension-rich beat of the ${getSafeArcLabel(arc)} scene. ${predator} holds a controlled pre-action posture, ${prey} stays fully alert and reactive, immediate visible tension, no empty setup.`;
 
-        const C = `Wide cinematic wildlife documentary composition, 9:16 vertical frame. Camera: ${cam}, ${depth.lensNote}. ${vibe.camera}. Depth of field: ${depth.depth}. Telephoto compression and documentary framing. Lighting: ${cleanLighting}. Natural rim separation, realistic shadow direction, crisp visibility, true-to-life exposure rolloff, no atmospheric plumes.`;
+        const C = `Wide cinematic wildlife documentary composition, 9:16 vertical frame. Camera: ${cam}, ${depth.lensNote}. ${vibe.camera}. Depth of field: ${depth.depth}. Telephoto compression and documentary framing. Lighting: ${cleanLighting}. Natural rim separation, realistic shadow direction, crisp visibility, true-to-life exposure rolloff, and stable atmospheric clarity.`;
           const B = `${cleanEnv}, ${cleanWeather}, ${cleanAir}. Layered foreground, readable midground, softened background separation for stable depth maps. Subjects in authentic wildlife behavioral postures, biologically accurate spacing, natural environmental context, immediate readable tension, no empty dead space.`;
         const D = `${cleanTexture}. ${vibe.texture}. Micro-detail visible in fur, skin, feathers, moisture, and clean ground contact. ${realismAdd}`;
 
@@ -1794,7 +1794,14 @@ export function buildShotImagePlan(
 // ─────────────────────────────────────────────────────────────
 // NEGATIVE PROMPT
 // ─────────────────────────────────────────────────────────────
-export function buildNegativePrompt(predator: string): string {
+export function buildNegativePrompt(
+  predator: string,
+  engine: "KLING" | "RUNWAY" | "SEEDANCE" = "KLING"
+): string {
+  if (engine !== "KLING") {
+    return "";
+  }
+
   const base =
     "cartoon, CGI look, anime style, illustration, game render, unnatural motion, morphing artifacts, " +
     "split screen, floating limbs, jerky movement, watermark, text overlay, subtitle burn-in, " +
@@ -2228,10 +2235,10 @@ ${maybeGuard(s1.guardLine)}${context}
 
 ═══ PASTE-READY KLING PROMPT (copy this block into Kling) ═══
 ${sanitizeVideoBeatText(isAquatic
-  ? `Wide opening hold with a subtle push-in. ${predator} holds controlled pressure through the water on the left. ${prey} stays fully alert and reactive on the right. Both subjects are fully readable from frame one with locked eye-line, clear spacing, and immediate visible tension. ${buildKlingLocationLine(env, weather, quality?.motionOnlyI2V).replace(/^Lighting & Location:\s*/i, "")}. ${extra1} Motion intensity: ${mi1.toFixed(2)}.`
+  ? `Wide opening hold with a subtle push-in. ${predator} holds controlled pressure through the water on the left. ${prey} stays fully alert and reactive on the right. Both subjects are fully readable from frame one with locked eye-line, clear spacing, and immediate visible tension. ${buildKlingLocationLine(env, weather, quality?.motionOnlyI2V).replace(/^Lighting & Location:\s*/i, "")}. ${extra1}`
   : isShoreline
-    ? `Wide opening hold with a subtle push-in. ${predator} holds visible pressure at the waterline on the left. ${prey} stays fully alert near the bank on the right. Both subjects are fully readable from frame one with locked eye-line, clear spacing, and immediate visible tension. ${buildKlingLocationLine(env, weather, quality?.motionOnlyI2V).replace(/^Lighting & Location:\s*/i, "")}. ${extra1} Motion intensity: ${mi1.toFixed(2)}.`
-    : `Wide opening hold with a subtle push-in. ${formatActionSubject(predator, s1.predatorBeat)}. ${prey} ${s1.preyBeat}. Both subjects are fully readable from frame one with locked eye-line, clear spacing, and immediate visible tension. ${buildKlingLocationLine(env, weather, quality?.motionOnlyI2V).replace(/^Lighting & Location:\s*/i, "")}. ${extra1} Motion intensity: ${mi1.toFixed(2)}.`
+    ? `Wide opening hold with a subtle push-in. ${predator} holds visible pressure at the waterline on the left. ${prey} stays fully alert near the bank on the right. Both subjects are fully readable from frame one with locked eye-line, clear spacing, and immediate visible tension. ${buildKlingLocationLine(env, weather, quality?.motionOnlyI2V).replace(/^Lighting & Location:\s*/i, "")}. ${extra1}`
+    : `Wide opening hold with a subtle push-in. ${formatActionSubject(predator, s1.predatorBeat)}. ${prey} ${s1.preyBeat}. Both subjects are fully readable from frame one with locked eye-line, clear spacing, and immediate visible tension. ${buildKlingLocationLine(env, weather, quality?.motionOnlyI2V).replace(/^Lighting & Location:\s*/i, "")}. ${extra1}`
 )}
 
 ─── FULL BREAKDOWN (reference only) ───
@@ -2257,10 +2264,10 @@ ${maybeGuard(s3.guardLine)}${context}
 
 ═══ PASTE-READY KLING PROMPT (copy this block into Kling) ═══
 ${sanitizeVideoBeatText(isAquatic
-  ? `Wide pressure-build tracking shot with a subtle forward creep. ${pressurePredator}. ${pressurePrey}. Clear predator-to-prey line, readable spacing, no overlap. Water displacement and current pressure build naturally. ${buildKlingLocationLine(env, weather, quality?.motionOnlyI2V).replace(/^Lighting & Location:\s*/i, "")}. Motion intensity: ${mi2.toFixed(2)}.`
+  ? `Wide pressure-build tracking shot with a subtle forward creep. ${pressurePredator}. ${pressurePrey}. Clear predator-to-prey line, readable spacing, no overlap. Water displacement and current pressure build naturally. ${buildKlingLocationLine(env, weather, quality?.motionOnlyI2V).replace(/^Lighting & Location:\s*/i, "")}.`
   : isShoreline
-    ? `Wide pressure-build tracking shot with a subtle forward creep. ${pressurePredator}. ${pressurePrey}. Clear predator-to-prey line, readable spacing, no overlap. Splash and muddy bank response build naturally. ${buildKlingLocationLine(env, weather, quality?.motionOnlyI2V).replace(/^Lighting & Location:\s*/i, "")}. Motion intensity: ${mi2.toFixed(2)}.`
-    : `Wide pressure-build tracking shot with a subtle forward creep. ${pressurePredator}. ${pressurePrey}. Clear predator-to-prey line, readable spacing, no overlap. Grounded weight transfer and surface response stay controlled. ${buildKlingLocationLine(env, weather, quality?.motionOnlyI2V).replace(/^Lighting & Location:\s*/i, "")}. Motion intensity: ${mi2.toFixed(2)}.`
+    ? `Wide pressure-build tracking shot with a subtle forward creep. ${pressurePredator}. ${pressurePrey}. Clear predator-to-prey line, readable spacing, no overlap. Splash and muddy bank response build naturally. ${buildKlingLocationLine(env, weather, quality?.motionOnlyI2V).replace(/^Lighting & Location:\s*/i, "")}.`
+    : `Wide pressure-build tracking shot with a subtle forward creep. ${pressurePredator}. ${pressurePrey}. Clear predator-to-prey line, readable spacing, no overlap. Grounded weight transfer and surface response stay controlled. ${buildKlingLocationLine(env, weather, quality?.motionOnlyI2V).replace(/^Lighting & Location:\s*/i, "")}.`
 )}
 
 ─── FULL BREAKDOWN (reference only) ───
@@ -2293,10 +2300,10 @@ ${maybeGuard(s3.guardLine)}${context}
 
 ═══ PASTE-READY KLING PROMPT (copy this block into Kling) ═══
 ${sanitizeVideoBeatText(isAquatic
-  ? `Wide peak-action read with restrained handheld energy. ${formatActionSubject(predator, s3.predatorBeat)}. ${prey} ${s3.preyBeat}. Clear predator-to-prey spacing stays readable, no overlap. Water displacement and turbulence stay forceful but controlled. ${buildKlingLocationLine(env, weather, quality?.motionOnlyI2V).replace(/^Lighting & Location:\s*/i, "")}. Motion intensity: ${mi3.toFixed(2)}.`
+  ? `Wide peak-action read with restrained handheld energy. ${formatActionSubject(predator, s3.predatorBeat)}. ${prey} ${s3.preyBeat}. Clear predator-to-prey spacing stays readable, no overlap. Water displacement and turbulence stay forceful but controlled. ${buildKlingLocationLine(env, weather, quality?.motionOnlyI2V).replace(/^Lighting & Location:\s*/i, "")}.`
   : isShoreline
-    ? `Wide peak-action read with restrained handheld energy. ${formatActionSubject(predator, s3.predatorBeat)}. ${prey} ${s3.preyBeat}. Clear predator-to-prey spacing stays readable, no overlap. Splash and muddy bank response stay forceful but controlled. ${buildKlingLocationLine(env, weather, quality?.motionOnlyI2V).replace(/^Lighting & Location:\s*/i, "")}. Motion intensity: ${mi3.toFixed(2)}.`
-    : `Wide peak-action read with restrained handheld energy. ${formatActionSubject(predator, s3.predatorBeat)}. ${prey} ${s3.preyBeat}. Clear predator-to-prey spacing stays readable, no overlap. Grounded weight transfer and surface response stay forceful but controlled. ${buildKlingLocationLine(env, weather, quality?.motionOnlyI2V).replace(/^Lighting & Location:\s*/i, "")}. Motion intensity: ${mi3.toFixed(2)}.`
+    ? `Wide peak-action read with restrained handheld energy. ${formatActionSubject(predator, s3.predatorBeat)}. ${prey} ${s3.preyBeat}. Clear predator-to-prey spacing stays readable, no overlap. Splash and muddy bank response stay forceful but controlled. ${buildKlingLocationLine(env, weather, quality?.motionOnlyI2V).replace(/^Lighting & Location:\s*/i, "")}.`
+    : `Wide peak-action read with restrained handheld energy. ${formatActionSubject(predator, s3.predatorBeat)}. ${prey} ${s3.preyBeat}. Clear predator-to-prey spacing stays readable, no overlap. Grounded weight transfer and surface response stay forceful but controlled. ${buildKlingLocationLine(env, weather, quality?.motionOnlyI2V).replace(/^Lighting & Location:\s*/i, "")}.`
 )}
 
 ─── FULL BREAKDOWN (reference only) ───
@@ -2322,10 +2329,10 @@ ${maybeGuard(s4.guardLine)}${context}
 
 ═══ PASTE-READY KLING PROMPT (copy this block into Kling) ═══
 ${sanitizeVideoBeatText(isAquatic
-  ? `Locked wide aftermath hold with a subtle pull-back. ${formatActionSubject(predator, s4.predatorBeat)}. ${prey} ${s4.preyBeat}. Spacing stays clear and readable to the final frame. ${buildKlingLocationLine(env, weather, quality?.motionOnlyI2V).replace(/^Lighting & Location:\s*/i, "")}. ${extra3} Motion intensity: ${mi4.toFixed(2)}.`
+  ? `Locked wide aftermath hold with a subtle pull-back. ${formatActionSubject(predator, s4.predatorBeat)}. ${prey} ${s4.preyBeat}. Spacing stays clear and readable to the final frame. ${buildKlingLocationLine(env, weather, quality?.motionOnlyI2V).replace(/^Lighting & Location:\s*/i, "")}. ${extra3}`
   : isShoreline
-    ? `Locked wide aftermath hold with a subtle pull-back. ${formatActionSubject(predator, s4.predatorBeat)}. ${prey} ${s4.preyBeat}. Spacing stays clear and readable to the final frame. ${buildKlingLocationLine(env, weather, quality?.motionOnlyI2V).replace(/^Lighting & Location:\s*/i, "")}. ${extra3} Motion intensity: ${mi4.toFixed(2)}.`
-    : `Locked wide aftermath hold with a subtle pull-back. ${formatActionSubject(predator, s4.predatorBeat)}. ${prey} ${s4.preyBeat}. Spacing stays clear and readable to the final frame. ${buildKlingLocationLine(env, weather, quality?.motionOnlyI2V).replace(/^Lighting & Location:\s*/i, "")}. ${extra3} Motion intensity: ${mi4.toFixed(2)}.`
+    ? `Locked wide aftermath hold with a subtle pull-back. ${formatActionSubject(predator, s4.predatorBeat)}. ${prey} ${s4.preyBeat}. Spacing stays clear and readable to the final frame. ${buildKlingLocationLine(env, weather, quality?.motionOnlyI2V).replace(/^Lighting & Location:\s*/i, "")}. ${extra3}`
+    : `Locked wide aftermath hold with a subtle pull-back. ${formatActionSubject(predator, s4.predatorBeat)}. ${prey} ${s4.preyBeat}. Spacing stays clear and readable to the final frame. ${buildKlingLocationLine(env, weather, quality?.motionOnlyI2V).replace(/^Lighting & Location:\s*/i, "")}. ${extra3}`
 )}
 
 ─── FULL BREAKDOWN (reference only) ───
@@ -2426,7 +2433,7 @@ const audio3Short = buildKlingAudioShort(predator, prey, env, weather, "aftermat
     ? `Characters: same ${predator} identity from input frame. Same ${prey} identity from input frame.`
     : `Characters: ${predator} (predator — drives scene pressure). ${prey} (prey — fully reactive throughout).`;
 
-    // Paste-ready core — trimmed to stay under Kling's 2500-char textPrompt limit.
+    // Paste-ready core — trimmed to fit WSTV's observed practical Kling prompt budget (~2500 chars).
 // Short audio lines used here; full audio kept in body below for reference display only.
   
 // lib/prompt-builders.ts
@@ -2454,8 +2461,8 @@ const pasteReadyCore = [
 
 const klingValidation = validateKlingPromptLength(pasteReadyCore);
 const klingLengthLine = klingValidation.isOver
-  ? `PROMPT TOO LONG: ${klingValidation.length} / 2500`
-  : `Prompt length OK: ${klingValidation.length} / 2500 chars`;
+  ? `PROMPT TOO LONG for WSTV house budget: ${klingValidation.length} / ~${KLING_CHAR_LIMIT}`
+  : `Prompt length within WSTV house budget: ${klingValidation.length} / ~${KLING_CHAR_LIMIT} chars`;
 
 const body = `═══ KLING 3.0 MULTI-SHOT PROMPT (SCALE format) ═══
 
@@ -2508,7 +2515,7 @@ ${cfgLine}
 Motion intensities: Shot 1 → ${mi1.toFixed(2)} | Shot 2 → ${mi2.toFixed(2)} | Shot 3 → ${mi3.toFixed(2)}${context}
 
 ${klingLengthLine}
-═══ PASTE INTO KLING — stays under 2500 chars (copy this block only) ═══
+═══ PASTE INTO KLING — kept near WSTV house prompt budget (~${KLING_CHAR_LIMIT} chars) (copy this block only) ═══
 ${pasteReadyCore}
 
 ─── FULL BREAKDOWN — reference only, do NOT paste into Kling ───
@@ -2676,8 +2683,8 @@ const pasteReadySixShotCore = [
 
 const sixShotValidation = validateKlingPromptLength(pasteReadySixShotCore);
 const sixShotLengthLine = sixShotValidation.isOver
-  ? `PROMPT TOO LONG: ${sixShotValidation.length} / 2500`
-  : `Prompt length OK: ${sixShotValidation.length} / 2500 chars`;
+  ? `PROMPT TOO LONG for WSTV house budget: ${sixShotValidation.length} / ~${KLING_CHAR_LIMIT}`
+  : `Prompt length within WSTV house budget: ${sixShotValidation.length} / ~${KLING_CHAR_LIMIT} chars`;
 
   return finalizePrompt(`KLING 6-SHOT MULTI-SCENE [${model}] — Native Single-Prompt Format
 ──────────────────────────────────────────────────────

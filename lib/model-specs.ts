@@ -126,23 +126,23 @@ export const RUNWAY_MODEL_NOTES: Record<RunwayModel, ModelNote> = {
 
 export const KLING_MODEL_NOTES: Record<KlingModel, ModelNote> = {
   "Kling 3.0 Pro": {
-    official: "Action-focused Kling workflow option used in WSTV.",
+    official: "Current Kling 3.0 Pro model option.",
     house:    "🆕 Best for readable action openings, 15s multi-shot, and strongest body-mechanics control.",
   },
   "Kling 3.0 Standard": {
-    official: "Balanced Kling workflow option used in WSTV.",
+    official: "Current Kling 3.0 Standard model option.",
     house:    "🆕 Good balance of quality, speed, and clear full-subject readability for daily WSTV output.",
   },
   "Kling 2.6 Pro": {
-    official: "Earlier Kling workflow option kept for compatibility.",
+    official: "Earlier Kling model option retained for compatibility.",
     house:    "Solid fallback when 3.0 queue is long, but keep prompts simple and readable.",
   },
   "Kling 2.5 Turbo Pro": {
-    official: "Fast Kling workflow option for lighter motion tests.",
+    official: "Turbo-oriented Kling model option for faster generations.",
     house:    "Quick motion-structure tests only. Keep one clear action beat and clean spacing.",
   },
   "Kling 2.5 Turbo": {
-    official: "Fast draft Kling workflow option.",
+    official: "Fast draft-oriented Kling model option.",
     house:    "Cheapest option for low-stakes drafts and rough opening tests only.",
   },
 };
