@@ -82,7 +82,6 @@ export type ImagePromptEngine = "MJ" | "NB2" | "NANO_BANANA_2" | "FLUX" | "RUNWA
 export type VeoModel = "Veo 3.1";
 export type PlatformTarget = "facebook" | "instagram" | "tiktok" | "youtube_shorts";
 export type RealismMode = "Balanced" | "High Naturalism" | "Reference Locked";
-export type CalendarMode = "monthly" | "usa30";
 export type FiveShotStyle = "cinematic" | "viral";
 
 // ─────────────────────────────────────────────────────────────
@@ -196,8 +195,11 @@ export type GeneratedPackage = {
   negativePrompt: string;
   thumbnailPrompt: string;
   voiceoverLine: string;
-    runwayShots: string[];
+  runwayShots: string[];
   klingShots: string[];
+  seedanceShots?: string[];
+  seedanceMultiShotPrompt?: string;
+  seedanceWorkflowGuide?: string;
   veo3Shots?: string[];
   shotImagePlan?: ShotImagePlan[];
   motionStrength: number;

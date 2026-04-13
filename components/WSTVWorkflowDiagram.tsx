@@ -849,10 +849,10 @@ function InfoPanel() {
       <div style={{ flex: "1 1 0", padding: "16px 18px", minWidth: 220 }}>
         <div style={headStyle}>Operator / external labels</div>
         <p style={bodyStyle}>
-          "Nano Banana 2" is an external image model (not a native Runway node) accessed via the
-          Image input node. "Combine Text" is the operator&apos;s label for a text-assembly utility
+          &quot;Nano Banana 2&quot; is an external image model (not a native Runway node) accessed via the
+          Image input node. &quot;Combine Text&quot; is the operator&apos;s label for a text-assembly utility
           node — not an officially documented Runway node name.
-          "Upscale Video (Topaz AI)" is the operator-observed UI label; Runway confirms
+          &quot;Upscale Video (Topaz AI)&quot; is the operator-observed UI label; Runway confirms
           video upscaling nodes exist but does not publicly document the exact label.
         </p>
       </div>

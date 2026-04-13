@@ -7,7 +7,7 @@
 // Contains every display panel rendered after Generate:
 //   Card, SectionLabel, SkeletonCard
 //   FiveShotPanel, Hook2026Panel, Caption2026Panel
-//   PostingTimesPanel, WatchTimePanel, CalendarPanel
+//   PostingTimesPanel, WatchTimePanel
 //   CapCutScriptPanel, AnimalBehaviorPanel, SoundDesignPanel
 //   PlatformPackPanel, BulkGeneratePanel, VersionControlPanel
 //   WorkflowPromptMap (6-Step pipeline tracker)
@@ -16,7 +16,7 @@
 // Zero prompt building logic here — import from lib/ for that.
 // ─────────────────────────────────────────────────────────────
 
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useMemo, useRef, useState } from "react";
 
 import PromptVersionsPanel from "@/components/PromptVersionsPanel";
 import { downloadText } from "@/lib/storage";
@@ -25,7 +25,6 @@ import WSTVWorkflowDiagram from "@/components/WSTVWorkflowDiagram";
 import type {
   FiveShotPlan,
   WatchTimeReport,
-  CalendarMode,
   CapCutScript,
   AnimalBehavior,
   SoundDesignPack,
@@ -39,8 +38,6 @@ import type {
 import { extractMotionOnlyPrompt } from "@/lib/workflow-packs";
 import {
   getUSAPostingTimes,
-  generateMonthlyCalendar,
-  generateUSAViral30DayCalendar,
   getCMPEarningsTable,
 } from "@/lib/predator-data";
 
@@ -102,6 +99,23 @@ function extractKlingPromptBody(shotText: string): string {
   }
 
   return cleaned.replace(/\n\s*[─—\-═]{5,}\s*$/g, "").trim();
+}
+
+function extractSeedancePromptBody(shotText: string): string {
+  const s = String(shotText ?? "");
+  const pasteBlock = s
+    .split("═══ PASTE-READY SEEDANCE PROMPT (copy this block into Seedance) ═══")[1]
+    ?.split("─── BREAKDOWN (reference only) ───")[0]
+    ?.trim();
+
+  if (pasteBlock) return pasteBlock;
+
+  const multiShotBlock = s
+    .split("═══ PASTE-READY SEEDANCE MULTI-SHOT PROMPT (copy this block into Seedance) ═══")[1]
+    ?.split("─── BREAKDOWN (reference only) ───")[0]
+    ?.trim();
+
+  return multiShotBlock || s.trim();
 }
 
 function extractImagePromptBody(promptText: string): string {
@@ -218,24 +232,33 @@ function ProShotCard({
   shot,
   onCopy,
 }: {
-  engine: "runway" | "kling";
+  engine: "runway" | "kling" | "seedance";
   index: number;
   shot: string;
   onCopy: (t: string) => void;
 }) {
   const isRunway = engine === "runway";
+  const isSeedance = engine === "seedance";
   const pasteReady = isRunway
     ? extractRunwayPasteReady(shot)
-    : extractKlingPromptBody(shot);
+    : isSeedance
+      ? extractSeedancePromptBody(shot)
+      : extractKlingPromptBody(shot);
 
-  const audioPrompt = !isRunway ? extractKlingAudioPrompt(shot) : "";
+  const audioPrompt = !isRunway && !isSeedance ? extractKlingAudioPrompt(shot) : "";
   const miMatch = shot.match(/Motion intensity:\s*([\d.]+)/);
   const motionIntensity = miMatch ? parseFloat(miMatch[1]) : null;
-  const borderColor = isRunway ? "border-green-200" : "border-blue-200";
+  const borderColor = isRunway
+    ? "border-green-200"
+    : isSeedance
+      ? "border-orange-200"
+      : "border-blue-200";
   const btnColor = isRunway
     ? "bg-green-700 hover:bg-green-800"
-    : "bg-blue-700 hover:bg-blue-800";
-  const engineLabel = isRunway ? "Runway" : "Kling";
+    : isSeedance
+      ? "bg-orange-700 hover:bg-orange-800"
+      : "bg-blue-700 hover:bg-blue-800";
+  const engineLabel = isRunway ? "Runway" : isSeedance ? "Seedance" : "Kling";
 
   return (
     <div className={`rounded-xl border ${borderColor} bg-white p-3`}>
@@ -252,6 +275,11 @@ function ProShotCard({
           {isRunway && (
             <span className="rounded-full bg-yellow-100 px-1.5 py-0.5 text-[10px] font-bold text-yellow-700">
               No negative prompt
+            </span>
+          )}
+          {isSeedance && (
+            <span className="rounded-full bg-orange-100 px-1.5 py-0.5 text-[10px] font-bold text-orange-700">
+              Simple motion-first prompt
             </span>
           )}
         </div>
@@ -1003,249 +1031,6 @@ export function WatchTimePanel({ report }: { report: WatchTimeReport }) {
             Use your Professional Dashboard as the source of truth once you gain
             access.
           </p>
-        </div>
-      )}
-    </div>
-  );
-}
-
-// ─────────────────────────────────────────────────────────────
-// CALENDAR PANEL
-// ─────────────────────────────────────────────────────────────
-export function CalendarPanel({
-  predator,
-  prey,
-  arc,
-}: {
-  predator: string;
-  prey: string;
-  arc: string;
-}) {
-  const [open, setOpen] = useState(false);
-  const [week, setWeek] = useState(0);
-  const [mode, setMode] = useState<CalendarMode>("monthly");
-  const [monthCursor, setMonthCursor] = useState(
-    () => new Date(new Date().getFullYear(), new Date().getMonth(), 1)
-  );
-
-  const inputKey = `${predator}|${prey}|${arc}|${monthCursor.getTime()}|${mode}`;
-
-  useEffect(() => {
-    if (week !== 0) {
-      const id = window.setTimeout(() => setWeek(0), 0);
-      return () => window.clearTimeout(id);
-    }
-  }, [inputKey, week]);
-
-  useEffect(() => {
-    const timer = window.setInterval(() => {
-      const now = new Date();
-      const fresh = new Date(now.getFullYear(), now.getMonth(), 1);
-      setMonthCursor((prev) =>
-        prev.getFullYear() === fresh.getFullYear() &&
-        prev.getMonth() === fresh.getMonth()
-          ? prev
-          : fresh
-      );
-    }, 60_000);
-
-    return () => window.clearInterval(timer);
-  }, []);
-
-  const calendar =
-    mode === "monthly"
-      ? generateMonthlyCalendar(
-          predator || "Tiger",
-          prey || "Deer",
-          arc || "Ambush attack",
-          monthCursor
-        )
-      : generateUSAViral30DayCalendar(
-          predator || "Mountain Lion",
-          prey || "Deer",
-          arc || "Ambush attack",
-          monthCursor
-        );
-
-  const weeks = Array.from(
-    { length: Math.ceil(calendar.length / 7) },
-    (_, i) => calendar.slice(i * 7, i * 7 + 7)
-  );
-
-  const safeWeek = Math.min(week, Math.max(weeks.length - 1, 0));
-
-  const weekLabels = weeks.map(
-    (w, i) =>
-      `Week ${i + 1} (${w[0]?.dateLabel ?? ""}–${w[w.length - 1]?.dateLabel ?? ""})`
-  );
-
-  const monthLabel = monthCursor.toLocaleDateString(undefined, {
-    month: "long",
-    year: "numeric",
-  });
-
-  return (
-    <div className="rounded-xl border border-teal-200 bg-teal-50 p-4 shadow-sm">
-      <div className="flex flex-wrap items-center justify-between gap-2">
-        <div className="flex flex-wrap items-center gap-2">
-          <span className="text-sm font-bold text-gray-900">
-            {mode === "monthly"
-              ? "📅 Monthly Content Calendar"
-              : "🇺🇸 Fixed 30-Day USA Viral Calendar"}
-          </span>
-          <span className="rounded bg-teal-100 px-2 py-0.5 text-xs font-bold text-teal-700">
-            {monthLabel}
-          </span>
-          <span className="rounded bg-teal-100 px-2 py-0.5 text-xs font-bold text-teal-700">
-            2 Reels/Day
-          </span>
-          <span className="rounded bg-green-100 px-2 py-0.5 text-xs font-bold text-green-700">
-            {calendar.length * 2} Total Reels
-          </span>
-        </div>
-
-        <div className="flex flex-wrap items-center gap-2">
-          <div className="flex overflow-hidden rounded-lg border border-teal-300 bg-white">
-            <button
-              onClick={() => setMode("monthly")}
-              className={`px-3 py-1.5 text-xs font-semibold ${
-                mode === "monthly"
-                  ? "bg-teal-600 text-white"
-                  : "text-teal-700 hover:bg-teal-50"
-              }`}
-              type="button"
-            >
-              Monthly
-            </button>
-            <button
-              onClick={() => setMode("usa30")}
-              className={`px-3 py-1.5 text-xs font-semibold ${
-                mode === "usa30"
-                  ? "bg-rose-600 text-white"
-                  : "text-rose-700 hover:bg-rose-50"
-              }`}
-              type="button"
-            >
-              USA Viral 30D
-            </button>
-          </div>
-
-          <button
-            onClick={() =>
-              setMonthCursor((p) => new Date(p.getFullYear(), p.getMonth() - 1, 1))
-            }
-            className="rounded-lg border border-teal-300 bg-white px-3 py-1.5 text-xs font-semibold text-teal-700 hover:bg-teal-50 active:scale-95"
-            type="button"
-          >
-            ← Prev
-          </button>
-
-          <button
-            onClick={() => {
-              const n = new Date();
-              setMonthCursor(new Date(n.getFullYear(), n.getMonth(), 1));
-            }}
-            className="rounded-lg border border-teal-300 bg-white px-3 py-1.5 text-xs font-semibold text-teal-700 hover:bg-teal-50 active:scale-95"
-            type="button"
-          >
-            Today
-          </button>
-
-          <button
-            onClick={() =>
-              setMonthCursor((p) => new Date(p.getFullYear(), p.getMonth() + 1, 1))
-            }
-            className="rounded-lg border border-teal-300 bg-white px-3 py-1.5 text-xs font-semibold text-teal-700 hover:bg-teal-50 active:scale-95"
-            type="button"
-          >
-            Next →
-          </button>
-
-          <button
-            onClick={() => setOpen((o) => !o)}
-            className="rounded-lg border border-teal-300 bg-white px-3 py-1.5 text-xs font-semibold text-teal-700 hover:bg-teal-50 active:scale-95"
-            type="button"
-          >
-            {open ? "Hide ▲" : "View ▼"}
-          </button>
-        </div>
-      </div>
-
-      {open && (
-        <div className="mt-3">
-          <div className="mb-3 flex flex-wrap gap-1">
-            {weekLabels.map((label, i) => (
-              <button
-                key={i}
-                onClick={() => setWeek(i)}
-                className={`rounded-lg px-3 py-1.5 text-xs font-semibold transition-all ${
-                  safeWeek === i
-                    ? "bg-teal-600 text-white"
-                    : "border border-teal-200 bg-white text-teal-700 hover:bg-teal-50"
-                }`}
-                type="button"
-              >
-                {label}
-              </button>
-            ))}
-          </div>
-
-          <div className="mb-2 text-xs font-bold text-teal-700">
-            {weeks[safeWeek]?.[0]?.theme}
-          </div>
-
-          <div className="space-y-2">
-            {weeks[safeWeek]?.map((day) => (
-              <div
-                key={`${mode}-${day.day}`}
-                className="rounded-lg border border-teal-100 bg-white p-3"
-              >
-                <div className="mb-2 flex flex-wrap items-center gap-2">
-                  <span className="rounded bg-teal-100 px-2 py-0.5 text-xs font-bold text-teal-700">
-                    Day {day.day}
-                  </span>
-                  <span className="rounded bg-slate-100 px-2 py-0.5 text-xs font-semibold text-slate-700">
-                    {day.weekday}
-                  </span>
-                  <span className="rounded bg-amber-100 px-2 py-0.5 text-xs font-semibold text-amber-700">
-                    {day.dateLabel}
-                  </span>
-                </div>
-
-                <div className="grid gap-2 md:grid-cols-2">
-                  <div className="rounded-lg bg-teal-50 p-2">
-                    <p className="mb-1 text-xs font-bold text-teal-700">🎬 Reel 1</p>
-                    <p className="text-xs text-gray-700">
-                      {day.reel1.predator} vs {day.reel1.prey}
-                    </p>
-                    <p className="text-xs text-gray-500">
-                      {day.reel1.arc} · {day.reel1.duration}
-                    </p>
-                    <p className="mt-1 text-xs font-medium italic text-gray-800">
-                      &quot;{day.reel1.hook}&quot;
-                    </p>
-                  </div>
-
-                  <div className="rounded-lg bg-indigo-50 p-2">
-                    <p className="mb-1 text-xs font-bold text-indigo-700">🎬 Reel 2</p>
-                    <p className="text-xs text-gray-700">
-                      {day.reel2.predator} vs {day.reel2.prey}
-                    </p>
-                    <p className="text-xs text-gray-500">
-                      {day.reel2.arc} · {day.reel2.duration}
-                    </p>
-                    <p className="mt-1 text-xs font-medium italic text-gray-800">
-                      &quot;{day.reel2.hook}&quot;
-                    </p>
-                  </div>
-                </div>
-
-                <div className="mt-2 rounded bg-yellow-50 px-2 py-1 text-[11px] font-medium text-yellow-800">
-                  {day.cmpNote}
-                </div>
-              </div>
-            ))}
-          </div>
         </div>
       )}
     </div>
@@ -2098,88 +1883,8 @@ function TextBox({ value }: { value: string }) {
   );
 }
 
-function CopyBtn({
-  label,
-  onCopy,
-}: {
-  label: string;
-  onCopy: () => void;
-}) {
-  return (
-    <button
-      type="button"
-      onClick={onCopy}
-      className="mt-3 w-full rounded-lg bg-gray-900 py-2 text-xs font-bold text-white hover:bg-black active:scale-[0.99]"
-    >
-      📋 {label}
-    </button>
-  );
-}
-
-function SubShot({
-  title,
-  text,
-  onCopy,
-  recommended = false,
-  selected = true,
-  onToggleSelected,
-}: {
-  title: string;
-  text: string;
-  onCopy: () => void;
-  recommended?: boolean;
-  selected?: boolean;
-  onToggleSelected?: () => void;
-}) {
-  if (!selected) return null;
-
-  return (
-    <div
-      className={`rounded-xl border bg-white p-3 ${
-        recommended ? "border-amber-300 ring-1 ring-amber-200" : "border-gray-200"
-      }`}
-    >
-      <div className="mb-2 flex items-center justify-between gap-2">
-        <div className="flex items-center gap-2">
-          <p className="text-[11px] font-extrabold text-gray-700">{title}</p>
-          {recommended && (
-            <span className="rounded-full bg-amber-100 px-2 py-0.5 text-[10px] font-bold text-amber-700">
-              Recommended
-            </span>
-          )}
-        </div>
-
-        <div className="flex items-center gap-2">
-          {onToggleSelected && (
-            <button
-              type="button"
-              onClick={onToggleSelected}
-              className="rounded border border-gray-300 bg-white px-2 py-1 text-[11px] font-bold text-gray-600 hover:bg-gray-50 active:scale-95"
-              title="Hide this shot"
-            >
-              Hide
-            </button>
-          )}
-          <button
-            type="button"
-            onClick={onCopy}
-            className="rounded bg-gray-900 px-2 py-1 text-[11px] font-bold text-white hover:bg-black active:scale-95"
-          >
-            Copy
-          </button>
-        </div>
-      </div>
-
-      <pre className="max-h-28 overflow-auto whitespace-pre-wrap text-xs leading-relaxed text-gray-800">
-        {text || "—"}
-      </pre>
-    </div>
-  );
-}
-
 // ─────────────────────────────────────────────────────────────
-// WorkflowPromptMap — Enhanced version with pipeline toggles,
-// auto-scroll, per-shot visibility, and recommended badges
+// WorkflowPromptMap — multi-engine prompt tracker
 // ─────────────────────────────────────────────────────────────
 function WorkflowPromptMap({
   data,
@@ -2188,35 +1893,58 @@ function WorkflowPromptMap({
   data: GeneratedPackage;
   onCopy: (t: string) => void;
 }) {
+  type WorkflowMode = "seedance" | "runway" | "kling" | "hybrid";
+  type WorkflowAction = {
+    label: string;
+    value: string;
+    secondary?: boolean;
+  };
+  type WorkflowItem = {
+    step: number;
+    title: string;
+    badge: string;
+    color: { border: string; bg: string; badge: string };
+    help: string;
+    value: string;
+    actions: WorkflowAction[];
+  };
+  type WorkflowConfig = {
+    pipeline: string;
+    bannerTitle: string;
+    bannerBody: string;
+    steps: WorkflowItem[];
+  };
+
+  const seedanceShots = (data.seedanceShots ?? []).map(safeText);
   const runwayShots = (data.runwayShots ?? []).map(safeText);
   const klingShots = (data.klingShots ?? []).map(safeText);
-
   const imagePrompt = safeText(data.imagePrompt);
-  const negativePrompt = safeText(data.negativePrompt ?? "");
-  const characterLock = safeText(data.referenceWorkflow ?? "");
-  const shot3Aftermath =
-    runwayShots[2] ?? runwayShots[runwayShots.length - 1] ?? "";
+  const seedanceWorkflowGuide = safeText(data.seedanceWorkflowGuide ?? "");
+  const routingNote = safeText(data.routingNote ?? "");
 
   const drift = deriveDriftLabel(data.clipChaining);
 
-  const [done, setDone] = useState<Record<number, boolean>>({
+  const emptyDone = {
     1: false,
     2: false,
     3: false,
     4: false,
     5: false,
     6: false,
+  };
+
+  const [mode, setMode] = useState<WorkflowMode>("seedance");
+  const [doneByMode, setDoneByMode] = useState<Record<WorkflowMode, Record<number, boolean>>>({
+    seedance: { ...emptyDone },
+    runway: { ...emptyDone },
+    kling: { ...emptyDone },
+    hybrid: { ...emptyDone },
   });
-
-  const [activeStep, setActiveStep] = useState<number>(1);
-  const [onlyPipelineShots, setOnlyPipelineShots] = useState<boolean>(true);
-
-  const [shotVisible, setShotVisible] = useState<{
-    runway: boolean[];
-    kling: boolean[];
-  }>({
-    runway: [true, true, true],
-    kling: [true, true, true],
+  const [activeStepByMode, setActiveStepByMode] = useState<Record<WorkflowMode, number>>({
+    seedance: 1,
+    runway: 1,
+    kling: 1,
+    hybrid: 1,
   });
 
   const stepRefs = useRef<Record<number, HTMLDivElement | null>>({
@@ -2228,22 +1956,317 @@ function WorkflowPromptMap({
     6: null,
   });
 
+  const done = doneByMode[mode];
+
   const copiedCount = useMemo(
     () => Object.values(done).filter(Boolean).length,
     [done]
   );
 
-    const pipeline = useMemo(() => {
-    const parts = [
-      "Image Prompt → Master Still",
-      "→ Image 1 / Shot 1 Opening Tension (Runway)",
-      "→ Image 2 / Shot 2 Pressure Build (Runway)",
-      "→ Image 3 / Shot 3 Peak Action (Kling)",
-      "→ Image 4 / Shot 4 Resolved Tension (Runway)",
-      "→ CapCut",
-    ];
-    return parts.join(" ");
-  }, []);
+  const workflows = useMemo<Record<WorkflowMode, WorkflowConfig>>(() => {
+    const imageCardColor = {
+      border: "border-amber-400",
+      bg: "bg-amber-50",
+      badge: "bg-amber-100 text-amber-700",
+    };
+    const seedanceColor = {
+      border: "border-orange-400",
+      bg: "bg-orange-50",
+      badge: "bg-orange-100 text-orange-700",
+    };
+    const runwayColor = {
+      border: "border-green-400",
+      bg: "bg-green-50",
+      badge: "bg-green-100 text-green-700",
+    };
+    const klingColor = {
+      border: "border-blue-400",
+      bg: "bg-blue-50",
+      badge: "bg-blue-100 text-blue-700",
+    };
+    const guideColor = {
+      border: "border-sky-400",
+      bg: "bg-sky-50",
+      badge: "bg-sky-100 text-sky-700",
+    };
+    const hybridColor = {
+      border: "border-indigo-400",
+      bg: "bg-indigo-50",
+      badge: "bg-indigo-100 text-indigo-700",
+    };
+
+    const imageStep: WorkflowItem = {
+      step: 1,
+      title: "Image Prompt",
+      badge: "NB2 / Flux / Midjourney",
+      color: imageCardColor,
+      help: "Generate the master hero still first, then use that image or a continuity-safe edited frame as the visual base for the next engine.",
+      value: imagePrompt,
+      actions: [
+        { label: "Copy Image Prompt", value: imagePrompt },
+        { label: "Copy BODY", value: extractImagePromptBody(imagePrompt), secondary: true },
+      ],
+    };
+
+    const runwayGuide = [
+      "RUNWAY 4-SHOT WORKFLOW",
+      "1. Upload the master still or a clean continuity-safe handoff frame into Runway I2V.",
+      "2. Keep the prompt motion-first: motion, camera, physics, and spacing.",
+      "3. Default WSTV Runway flow is 4 separate shots at 5 seconds each.",
+      "4. Use Shot 1 for opening tension, Shot 2 for pressure build, Shot 3 for peak action, Shot 4 for resolved tension.",
+      "5. Chain from the previous last frame only when the outgoing frame is still a clean full-body handoff frame.",
+      "6. Use 24 or 25 FPS.",
+      "7. Negative prompts do not work in Runway.",
+    ].join("\n");
+
+    const klingGuide = [
+      "KLING 4-SHOT WORKFLOW",
+      "1. Use the continuity image as the visual 3D anchor and keep visual restatement light.",
+      "2. Enable Bind Subject when identity lock matters.",
+      "3. Default WSTV Kling flow is 4 separate shots at 5 seconds each.",
+      "4. Keep framing wide and full-body readable across all four shots.",
+      "5. Shot 1 = opening tension, Shot 2 = pressure build, Shot 3 = peak action, Shot 4 = resolved tension.",
+      "6. Motion intensity can rise from Shot 1 to Shot 3, then settle in Shot 4.",
+      "7. Kling negative prompts are optional, but only use them when actually needed.",
+    ].join("\n");
+
+    const hybridGuide = [
+      "HYBRID 4-SHOT ROUTING",
+      "1. Generate the master still first.",
+      "2. Shot 1 uses Runway for the clean readable opening tension.",
+      "3. Shot 2 uses Kling for pressure build.",
+      "4. Shot 3 uses Kling for peak action.",
+      "5. Shot 4 returns to Runway for the clean readable resolved tension.",
+      "6. Keep continuity-safe edited images between every shot handoff.",
+      routingNote || "Routing note: Runway 1 → Kling 2-3 → Runway 4.",
+    ].join("\n");
+
+    return {
+      seedance: {
+        pipeline:
+          "Image Prompt → Master Still → Seedance Shot 1 Opening Tension → Seedance Shot 2 Pressure Build → Seedance Shot 3 Peak Action → Seedance Shot 4 Resolved Tension → CapCut",
+        bannerTitle: "Seedance 2.0 rule",
+        bannerBody:
+          "Keep prompts motion-first, simple, and direct. Use Prompt + First Frame as the base, add Ref Image / Ref Video only when needed, and default to 4 separate 5-second shots.",
+        steps: [
+          imageStep,
+          {
+            step: 2,
+            title: "Seedance Shot 1 — Opening Tension",
+            badge: "Seedance 2.0",
+            color: seedanceColor,
+            help: "Use the clean opening frame in First Frame. Keep Prompt focused on subject movement, background movement, and camera movement only.",
+            value: seedanceShots[0] ?? "",
+            actions: [{ label: "Copy Seedance Shot 1 BODY", value: extractSeedancePromptBody(seedanceShots[0] ?? "") }],
+          },
+          {
+            step: 3,
+            title: "Seedance Shot 2 — Pressure Build",
+            badge: "Seedance 2.0",
+            color: seedanceColor,
+            help: "Let the tension rise without chaotic overlap. Use clear motion adverbs and camera language so the pressure build stays readable and forceful.",
+            value: seedanceShots[1] ?? "",
+            actions: [{ label: "Copy Seedance Shot 2 BODY", value: extractSeedancePromptBody(seedanceShots[1] ?? "") }],
+          },
+          {
+            step: 4,
+            title: "Seedance Shot 3 — Peak Action",
+            badge: "Seedance 2.0",
+            color: seedanceColor,
+            help: "This is the strongest action beat. Keep body mechanics readable, motion grounded, and spacing clear even when the scene speeds up.",
+            value: seedanceShots[2] ?? "",
+            actions: [{ label: "Copy Seedance Shot 3 BODY", value: extractSeedancePromptBody(seedanceShots[2] ?? "") }],
+          },
+          {
+            step: 5,
+            title: "Seedance Shot 4 — Resolved Tension",
+            badge: "Seedance 2.0",
+            color: seedanceColor,
+            help: "Resolve the motion cleanly and keep the closing frame continuity-safe. Use a simple readable settle instead of adding a new major action.",
+            value: seedanceShots[3] ?? "",
+            actions: [{ label: "Copy Seedance Shot 4 BODY", value: extractSeedancePromptBody(seedanceShots[3] ?? "") }],
+          },
+          {
+            step: 6,
+            title: "Seedance Prompt Rules",
+            badge: "Official guide",
+            color: guideColor,
+            help: "Use these rules while editing Seedance 2.0 prompts. Negative prompts do not work.",
+            value: seedanceWorkflowGuide,
+            actions: [{ label: "Copy Seedance Rules", value: seedanceWorkflowGuide }],
+          },
+        ],
+      },
+      runway: {
+        pipeline:
+          "Image Prompt → Master Still → Runway Shot 1 Opening Tension → Runway Shot 2 Pressure Build → Runway Shot 3 Peak Action → Runway Shot 4 Resolved Tension → CapCut",
+        bannerTitle: "Runway rule",
+        bannerBody:
+          "Runway I2V is motion-first and identity comes from the uploaded image. Keep prompts continuity-safe, use 4 separate 5-second shots, and do not use negative prompts.",
+        steps: [
+          imageStep,
+          {
+            step: 2,
+            title: "Runway Shot 1 — Opening Tension",
+            badge: "Runway",
+            color: runwayColor,
+            help: "Use the clean master still or opening continuity frame. Keep both subjects readable from frame one.",
+            value: runwayShots[0] ?? "",
+            actions: [{ label: "Copy Runway Shot 1 BODY", value: extractRunwayPasteReady(runwayShots[0] ?? "") }],
+          },
+          {
+            step: 3,
+            title: "Runway Shot 2 — Pressure Build",
+            badge: "Runway",
+            color: runwayColor,
+            help: "Build forward pressure gradually with clean spacing and a controlled tracking move.",
+            value: runwayShots[1] ?? "",
+            actions: [{ label: "Copy Runway Shot 2 BODY", value: extractRunwayPasteReady(runwayShots[1] ?? "") }],
+          },
+          {
+            step: 4,
+            title: "Runway Shot 3 — Peak Action",
+            badge: "Runway",
+            color: runwayColor,
+            help: "This is the strongest Runway action beat. Keep motion forceful but still readable and continuity-safe.",
+            value: runwayShots[2] ?? "",
+            actions: [{ label: "Copy Runway Shot 3 BODY", value: extractRunwayPasteReady(runwayShots[2] ?? "") }],
+          },
+          {
+            step: 5,
+            title: "Runway Shot 4 — Resolved Tension",
+            badge: "Runway",
+            color: runwayColor,
+            help: "Use a clean readable settle with stable spacing for the final frame family.",
+            value: runwayShots[3] ?? "",
+            actions: [{ label: "Copy Runway Shot 4 BODY", value: extractRunwayPasteReady(runwayShots[3] ?? "") }],
+          },
+          {
+            step: 6,
+            title: "Runway Prompt Rules",
+            badge: "WSTV guide",
+            color: guideColor,
+            help: "Use these rules while editing Runway prompts. Identity lives in the image and negative prompts do not work.",
+            value: runwayGuide,
+            actions: [{ label: "Copy Runway Rules", value: runwayGuide }],
+          },
+        ],
+      },
+      kling: {
+        pipeline:
+          "Image Prompt → Master Still → Kling Shot 1 Opening Tension → Kling Shot 2 Pressure Build → Kling Shot 3 Peak Action → Kling Shot 4 Resolved Tension → CapCut",
+        bannerTitle: "Kling rule",
+        bannerBody:
+          "Kling uses the image as a 3D anchor. Keep wide full-body readability, enable Bind Subject when needed, and use 4 separate 5-second shots.",
+        steps: [
+          imageStep,
+          {
+            step: 2,
+            title: "Kling Shot 1 — Opening Tension",
+            badge: "Kling",
+            color: klingColor,
+            help: "Start with a readable wide opening and immediate visible tension from frame one.",
+            value: klingShots[0] ?? "",
+            actions: [{ label: "Copy Kling Shot 1 BODY", value: extractKlingPromptBody(klingShots[0] ?? "") }],
+          },
+          {
+            step: 3,
+            title: "Kling Shot 2 — Pressure Build",
+            badge: "Kling",
+            color: klingColor,
+            help: "Use Kling for stronger physics-safe pressure build while keeping full-body readability.",
+            value: klingShots[1] ?? "",
+            actions: [{ label: "Copy Kling Shot 2 BODY", value: extractKlingPromptBody(klingShots[1] ?? "") }],
+          },
+          {
+            step: 4,
+            title: "Kling Shot 3 — Peak Action",
+            badge: "Kling",
+            color: klingColor,
+            help: "This is the strongest Kling action beat. Let the force rise, but keep spacing and body mechanics readable.",
+            value: klingShots[2] ?? "",
+            actions: [{ label: "Copy Kling Shot 3 BODY", value: extractKlingPromptBody(klingShots[2] ?? "") }],
+          },
+          {
+            step: 5,
+            title: "Kling Shot 4 — Resolved Tension",
+            badge: "Kling",
+            color: klingColor,
+            help: "Settle the action cleanly and keep the end pose readable and continuity-safe.",
+            value: klingShots[3] ?? "",
+            actions: [{ label: "Copy Kling Shot 4 BODY", value: extractKlingPromptBody(klingShots[3] ?? "") }],
+          },
+          {
+            step: 6,
+            title: "Kling Prompt Rules",
+            badge: "WSTV guide",
+            color: guideColor,
+            help: "Use these rules while editing Kling prompts. Keep it wide, readable, and continuity-safe.",
+            value: klingGuide,
+            actions: [{ label: "Copy Kling Rules", value: klingGuide }],
+          },
+        ],
+      },
+      hybrid: {
+        pipeline:
+          "Image Prompt → Master Still → Runway Shot 1 Opening Tension → Kling Shot 2 Pressure Build → Kling Shot 3 Peak Action → Runway Shot 4 Resolved Tension → CapCut",
+        bannerTitle: "Hybrid route",
+        bannerBody:
+          "Hybrid WSTV route uses Runway for the clean opening and final settle, and Kling for Shot 2-3 pressure/action physics. This is the current recommended hybrid routing.",
+        steps: [
+          imageStep,
+          {
+            step: 2,
+            title: "Hybrid Shot 1 — Runway Opening Tension",
+            badge: "Runway",
+            color: runwayColor,
+            help: "Start with Runway for the cleanest first-frame readability and opening tension.",
+            value: runwayShots[0] ?? "",
+            actions: [{ label: "Copy Hybrid Shot 1 BODY", value: extractRunwayPasteReady(runwayShots[0] ?? "") }],
+          },
+          {
+            step: 3,
+            title: "Hybrid Shot 2 — Kling Pressure Build",
+            badge: "Kling",
+            color: klingColor,
+            help: "Switch to Kling here for pressure build with stronger physics and readable body mechanics.",
+            value: klingShots[1] ?? "",
+            actions: [{ label: "Copy Hybrid Shot 2 BODY", value: extractKlingPromptBody(klingShots[1] ?? "") }],
+          },
+          {
+            step: 4,
+            title: "Hybrid Shot 3 — Kling Peak Action",
+            badge: "Kling",
+            color: klingColor,
+            help: "Keep Kling for the strongest action beat before handing the final settle back to Runway.",
+            value: klingShots[2] ?? "",
+            actions: [{ label: "Copy Hybrid Shot 3 BODY", value: extractKlingPromptBody(klingShots[2] ?? "") }],
+          },
+          {
+            step: 5,
+            title: "Hybrid Shot 4 — Runway Resolved Tension",
+            badge: "Runway",
+            color: runwayColor,
+            help: "Return to Runway for the clean readable final resolve and stable continuity-safe ending.",
+            value: runwayShots[3] ?? "",
+            actions: [{ label: "Copy Hybrid Shot 4 BODY", value: extractRunwayPasteReady(runwayShots[3] ?? "") }],
+          },
+          {
+            step: 6,
+            title: "Hybrid Routing Rules",
+            badge: "Hybrid guide",
+            color: hybridColor,
+            help: "This pane shows the recommended engine handoff for the current WSTV hybrid workflow.",
+            value: hybridGuide,
+            actions: [{ label: "Copy Hybrid Rules", value: hybridGuide }],
+          },
+        ],
+      },
+    };
+  }, [imagePrompt, klingShots, runwayShots, routingNote, seedanceShots, seedanceWorkflowGuide]);
+
+  const currentWorkflow = workflows[mode];
+  const pipeline = currentWorkflow.pipeline;
 
   function scrollToStep(step: number) {
     const el = stepRefs.current[step];
@@ -2257,55 +2280,28 @@ function WorkflowPromptMap({
   }
 
   function toggle(step: number) {
-    setDone((p) => {
-      const nextVal = !p[step];
-      const next = { ...p, [step]: nextVal };
+    const nextVal = !done[step];
+    setDoneByMode((prev) => ({
+      ...prev,
+      [mode]: { ...prev[mode], [step]: nextVal },
+    }));
 
-      if (nextVal) {
-        const ns = nextStepOf(step);
-        setActiveStep(ns);
-        window.setTimeout(() => scrollToStep(ns), 50);
-      } else {
-        setActiveStep(step);
-        window.setTimeout(() => scrollToStep(step), 50);
-      }
-
-      return next;
-    });
+    const nextStep = nextVal ? nextStepOf(step) : step;
+    setActiveStepByMode((prev) => ({ ...prev, [mode]: nextStep }));
+    window.setTimeout(() => scrollToStep(nextStep), 50);
   }
 
   function resetAll() {
-    setDone({ 1: false, 2: false, 3: false, 4: false, 5: false, 6: false });
-    setActiveStep(1);
-    setOnlyPipelineShots(true);
-    setShotVisible({ runway: [true, true, true], kling: [true, true, true] });
+    setDoneByMode((prev) => ({ ...prev, [mode]: { ...emptyDone } }));
+    setActiveStepByMode((prev) => ({ ...prev, [mode]: 1 }));
     window.setTimeout(() => scrollToStep(1), 50);
   }
-
-    const recommended = useMemo(() => {
-    return {
-      runway: new Set([0, 1, 2]),
-      kling: new Set([1]),
-    };
-  }, []);
-
-  const runwaySelected = useMemo(() => {
-    if (!onlyPipelineShots) return [true, true, true];
-    return [true, true, true];
-  }, [onlyPipelineShots]);
-
-  const klingSelected = useMemo(() => {
-    if (!onlyPipelineShots) return [true, true, true];
-    return [false, true, false];
-  }, [onlyPipelineShots]);
 
   return (
     <div className="rounded-2xl border border-gray-200 bg-white p-5 shadow-sm">
       <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
         <div className="flex flex-wrap items-center gap-2">
-          <h2 className="text-sm font-extrabold text-gray-900">
-                      WSTV Prompt Workflow Tracker
-          </h2>
+          <h2 className="text-sm font-extrabold text-gray-900">WSTV Prompt Workflow Tracker</h2>
           <span className="rounded bg-gray-100 px-2 py-0.5 text-xs font-semibold text-gray-700">
             {copiedCount}/6 done
           </span>
@@ -2330,413 +2326,73 @@ function WorkflowPromptMap({
         <strong>Pipeline:</strong> {pipeline}
       </div>
 
-      <div className="mb-4 flex flex-wrap items-center justify-between gap-2 rounded-xl border border-gray-200 bg-gray-50 p-3">
-        <div className="flex flex-wrap items-center gap-2">
-          <span className="text-xs font-bold text-gray-800">Shots View</span>
-          <span className="text-xs text-gray-500">
-            {onlyPipelineShots
-              ? "Only pipeline shots highlighted"
-              : "All shots visible"}
-          </span>
-        </div>
-
-        <div className="flex overflow-hidden rounded-lg border border-gray-300 bg-white">
-          <button
-            type="button"
-            onClick={() => setOnlyPipelineShots(true)}
-            className={`px-3 py-1.5 text-xs font-bold ${
-              onlyPipelineShots
-                ? "bg-gray-900 text-white"
-                : "text-gray-700 hover:bg-gray-50"
-            }`}
-          >
-            Only Pipeline
-          </button>
-          <button
-            type="button"
-            onClick={() => setOnlyPipelineShots(false)}
-            className={`px-3 py-1.5 text-xs font-bold ${
-              !onlyPipelineShots
-                ? "bg-gray-900 text-white"
-                : "text-gray-700 hover:bg-gray-50"
-            }`}
-          >
-            Show All
-          </button>
-        </div>
+      <div className="mb-4 rounded-xl border border-orange-200 bg-orange-50 p-3 text-xs text-orange-800">
+        <strong>{currentWorkflow.bannerTitle}:</strong> {currentWorkflow.bannerBody}
       </div>
 
       <div className="grid gap-4 md:grid-cols-3">
-        <div
-          ref={(el) => {
-            stepRefs.current[1] = el;
-          }}
-        >
-          <WorkflowCard
-            step={1}
-            title="Image Prompt"
-            badge="NB2 / Flux / Midjourney"
-            color={{
-              border: "border-amber-400",
-              bg: "bg-amber-50",
-              badge: "bg-amber-100 text-amber-700",
+        {currentWorkflow.steps.map((item) => (
+          <div
+            key={`${mode}-${item.step}`}
+            ref={(el) => {
+              stepRefs.current[item.step] = el;
             }}
-            help="Paste into NB2/Flux/MJ → generate master hero still → download PNG → upload to Runway as reference image."
-            done={done[1]}
-            onToggle={() => toggle(1)}
           >
-            <TextBox value={imagePrompt} />
-            <div className="mt-3 flex gap-2">
-              <button
-                type="button"
-                onClick={() => onCopy(imagePrompt)}
-                className="flex-1 rounded-lg bg-gray-900 py-2 text-xs font-bold text-white hover:bg-black active:scale-[0.99]"
-              >
-                📋 Copy Image Prompt
-              </button>
-              <button
-                type="button"
-                onClick={() => onCopy(extractImagePromptBody(imagePrompt))}
-                className="flex-1 rounded-lg border border-amber-300 bg-white py-2 text-xs font-bold text-amber-800 hover:bg-amber-50 active:scale-[0.99]"
-              >
-                📋 Copy BODY
-              </button>
-            </div>
-          </WorkflowCard>
-        </div>
-
-        <div
-          ref={(el) => {
-            stepRefs.current[2] = el;
-          }}
-        >
-                    <WorkflowCard
-            step={2}
-            title="Shots 1–2 — Opening Tension + Pressure Build"
-            badge="Runway Gen-4.5"
-            color={{
-              border: "border-green-400",
-              bg: "bg-green-50",
-              badge: "bg-green-100 text-green-700",
-            }}
-            help="Use Image 1 for Runway Shot 1 opening tension, then use Image 2 for Runway Shot 2 pressure build. Both images should come from the master-image edit chain, not from scratch."
-            done={done[2]}
-            onToggle={() => toggle(2)}
-          >
-            <div className="mb-2 flex items-center justify-between gap-2">
-              <span className="text-xs font-bold text-gray-700">
-                Runway shots
-              </span>
-              <span className="rounded bg-amber-100 px-2 py-0.5 text-[11px] font-bold text-amber-700">
-                Recommended: Runway Shot 1 + Shot 2 + Shot 3
-              </span>
-            </div>
-
-            <div className="space-y-2">
-              <SubShot
-                title="Runway Shot 1"
-                text={runwayShots[0] ?? ""}
-                onCopy={() =>
-                  onCopy(extractRunwayPasteReady(runwayShots[0] ?? ""))
-                }
-                recommended={recommended.runway.has(0)}
-                selected={runwaySelected[0] && shotVisible.runway[0]}
-                onToggleSelected={
-                  !onlyPipelineShots
-                    ? () =>
-                        setShotVisible((p) => ({
-                          ...p,
-                          runway: [false, p.runway[1], p.runway[2]],
-                        }))
-                    : undefined
-                }
-              />
-              <SubShot
-                title="Runway Shot 2"
-                text={runwayShots[1] ?? ""}
-                onCopy={() => onCopy(runwayShots[1] ?? "")}
-                recommended={recommended.runway.has(1)}
-                selected={runwaySelected[1] && shotVisible.runway[1]}
-                onToggleSelected={
-                  !onlyPipelineShots
-                    ? () =>
-                        setShotVisible((p) => ({
-                          ...p,
-                          runway: [p.runway[0], false, p.runway[2]],
-                        }))
-                    : undefined
-                }
-              />
-              <SubShot
-                title="Runway Shot 3"
-                text={runwayShots[2] ?? ""}
-                onCopy={() => onCopy(runwayShots[2] ?? "")}
-                recommended={recommended.runway.has(2)}
-                selected={runwaySelected[2] && shotVisible.runway[2]}
-                onToggleSelected={
-                  !onlyPipelineShots
-                    ? () =>
-                        setShotVisible((p) => ({
-                          ...p,
-                          runway: [p.runway[0], p.runway[1], false],
-                        }))
-                    : undefined
-                }
-              />
-            </div>
-
-            <CopyBtn
-              label="Copy Visible Runway Shots"
-              onCopy={() =>
-                onCopy(
-                  [runwayShots[0], runwayShots[1], runwayShots[2]]
-                    .filter(Boolean)
-                    .filter((_, i) =>
-                      onlyPipelineShots ? runwaySelected[i] : shotVisible.runway[i]
-                    )
-                    .join("\n\n---\n\n")
-                )
-              }
-            />
-          </WorkflowCard>
-        </div>
-
-       
-       <div
-  ref={(el) => {
-    stepRefs.current[3] = el;
-  }}
->
             <WorkflowCard
-    step={3}
-    title="Shot 3 — Peak Action"
-    badge="Kling 3.0 Pro"
-    color={{
-      border: "border-blue-400",
-      bg: "bg-blue-50",
-      badge: "bg-blue-100 text-blue-700",
-    }}
-    help="Use Image 3 from the previous-image edit chain. Generate the strongest full-body action beat here with clear spacing, readable impact, and stable identity."
-    done={done[3]}
-    onToggle={() => toggle(3)}
-  >
-    
-    <div className="mb-2 flex items-center justify-between gap-2">
-      <span className="text-xs font-bold text-gray-700">Kling shots</span>
-      <span className="rounded bg-amber-100 px-2 py-0.5 text-[11px] font-bold text-amber-700">
-        Recommended: Kling Shot 2
-      </span>
-    </div>
-
-    <div className="space-y-2">
-      <SubShot
-        title="Kling Shot 1"
-        text={klingShots[0] ?? ""}
-        onCopy={() =>
-          onCopy(
-            [
-              extractKlingPromptBody(klingShots[0] ?? ""),
-              extractKlingAudioPrompt(klingShots[0] ?? "")
-                ? `\n\nAudio:\n${extractKlingAudioPrompt(klingShots[0] ?? "")}`
-                : "",
-            ].join("")
-          )
-        }
-        recommended={recommended.kling.has(0)}
-        selected={klingSelected[0] && shotVisible.kling[0]}
-        onToggleSelected={
-          !onlyPipelineShots
-            ? () =>
-                setShotVisible((p) => ({
-                  ...p,
-                  kling: [false, p.kling[1], p.kling[2]],
-                }))
-            : undefined
-        }
-      />
-
-      <SubShot
-        title="Kling Shot 2"
-        text={klingShots[1] ?? ""}
-        onCopy={() =>
-          onCopy(
-            [
-              extractKlingPromptBody(klingShots[1] ?? ""),
-              extractKlingAudioPrompt(klingShots[1] ?? "")
-                ? `\n\nAudio:\n${extractKlingAudioPrompt(klingShots[1] ?? "")}`
-                : "",
-            ].join("")
-          )
-        }
-        recommended={recommended.kling.has(1)}
-        selected={klingSelected[1] && shotVisible.kling[1]}
-        onToggleSelected={
-          !onlyPipelineShots
-            ? () =>
-                setShotVisible((p) => ({
-                  ...p,
-                  kling: [p.kling[0], false, p.kling[2]],
-                }))
-            : undefined
-        }
-      />
-
-      <SubShot
-        title="Kling Shot 3"
-        text={klingShots[2] ?? ""}
-        onCopy={() =>
-          onCopy(
-            [
-              extractKlingPromptBody(klingShots[2] ?? ""),
-              extractKlingAudioPrompt(klingShots[2] ?? "")
-                ? `\n\nAudio:\n${extractKlingAudioPrompt(klingShots[2] ?? "")}`
-                : "",
-            ].join("")
-          )
-        }
-        recommended={recommended.kling.has(2)}
-        selected={klingSelected[2] && shotVisible.kling[2]}
-        onToggleSelected={
-          !onlyPipelineShots
-            ? () =>
-                setShotVisible((p) => ({
-                  ...p,
-                  kling: [p.kling[0], p.kling[1], false],
-                }))
-            : undefined
-        }
-      />
-    </div>
-
-    <CopyBtn
-      label="Copy Visible Kling Shots"
-      onCopy={() =>
-        onCopy(
-          [klingShots[0], klingShots[1], klingShots[2]]
-            .filter(Boolean)
-            .filter((_, i) =>
-              onlyPipelineShots ? klingSelected[i] : shotVisible.kling[i]
-            )
-            .map((shot) =>
-              [
-                extractKlingPromptBody(shot),
-                extractKlingAudioPrompt(shot)
-                  ? `\n\nAudio:\n${extractKlingAudioPrompt(shot)}`
-                  : "",
-              ].join("")
-            )
-            .join("\n\n---\n\n")
-        )
-      }
-    />
-  </WorkflowCard>
-</div>
-
-        <div
-          ref={(el) => {
-            stepRefs.current[4] = el;
-          }}
-        >
-                              <WorkflowCard
-            step={4}
-            title="Shot 4 — Resolved Tension"
-            badge="Runway Gen-4.5"
-            color={{
-              border: "border-purple-400",
-              bg: "bg-purple-50",
-              badge: "bg-purple-100 text-purple-700",
-            }}
-            help="Use Image 4 from the previous-image edit chain. Resolve the sequence with a readable aftermath or final tension hold while preserving spacing and anatomy."
-            done={done[4]}
-            onToggle={() => toggle(4)}
-          >
-            <div className="mb-2 flex items-center justify-between gap-2">
-              <span className="text-xs font-bold text-gray-700">
-                Runway3 (Recommended)
-              </span>
-              <span className="rounded bg-amber-100 px-2 py-0.5 text-[11px] font-bold text-amber-700">
-                Recommended: Runway Shot 3
-              </span>
-            </div>
-            <TextBox value={shot3Aftermath} />
-            <CopyBtn
-              label="Copy Shot 3 Motion"
-              onCopy={() => onCopy(extractRunwayPasteReady(shot3Aftermath))}
-            />
-          </WorkflowCard>
-        </div>
-
-        <div
-          ref={(el) => {
-            stepRefs.current[5] = el;
-          }}
-        >
-          <WorkflowCard
-            step={5}
-            title="Character Lock"
-            badge="Runway Combine Text (T5)"
-            color={{
-              border: "border-teal-400",
-              bg: "bg-teal-50",
-              badge: "bg-teal-100 text-teal-700",
-            }}
-            help="Paste into Runway Workflow Text Node (T5) → lock identities between clips. Keep permanently."
-            done={done[5]}
-            onToggle={() => toggle(5)}
-          >
-            <TextBox value={characterLock} />
-            <CopyBtn
-              label="Copy Character Lock"
-              onCopy={() => onCopy(characterLock)}
-            />
-          </WorkflowCard>
-        </div>
-
-        <div
-          ref={(el) => {
-            stepRefs.current[6] = el;
-          }}
-        >
-          <WorkflowCard
-            step={6}
-            title={`Negative Prompt — ${
-              (data as Record<string, unknown>).predator ?? "Predator"
-            }`}
-            badge="Kling / image models only"
-            color={{
-              border: "border-red-400",
-              bg: "bg-red-50",
-              badge: "bg-red-100 text-red-700",
-            }}
-            help="Use in Kling or supported image-model negative prompt fields. Do NOT use in Runway Gen-4.5."
-            done={done[6]}
-            onToggle={() => toggle(6)}
-          >
-            <TextBox value={negativePrompt} />
-            <CopyBtn
-              label="Copy Negative Prompt"
-              onCopy={() => onCopy(negativePrompt)}
-            />
-          </WorkflowCard>
-        </div>
+              step={item.step}
+              title={item.title}
+              badge={item.badge}
+              color={item.color}
+              help={item.help}
+              done={done[item.step]}
+              onToggle={() => toggle(item.step)}
+            >
+              <TextBox value={item.value} />
+              <div className={`mt-3 flex flex-wrap gap-2 ${item.actions.length === 1 ? "" : ""}`}>
+                {item.actions.map((action) => (
+                  <button
+                    key={`${mode}-${item.step}-${action.label}`}
+                    type="button"
+                    onClick={() => onCopy(action.value)}
+                    className={
+                      action.secondary
+                        ? "flex-1 rounded-lg border border-amber-300 bg-white py-2 text-xs font-bold text-amber-800 hover:bg-amber-50 active:scale-[0.99]"
+                        : `${item.actions.length > 1 ? "flex-1 " : "w-full "}rounded-lg bg-gray-900 py-2 text-xs font-bold text-white hover:bg-black active:scale-[0.99]`
+                    }
+                  >
+                    📋 {action.label}
+                  </button>
+                ))}
+              </div>
+            </WorkflowCard>
+          </div>
+        ))}
       </div>
 
       <div className="mt-4 flex flex-wrap gap-2">
-        {[1, 2, 3, 4, 5, 6].map((s) => (
+        {[
+          { key: "seedance", label: "Seedance" },
+          { key: "runway", label: "Runway" },
+          { key: "kling", label: "Kling" },
+          { key: "hybrid", label: "Hybrid" },
+        ].map((item) => (
           <button
-            key={s}
+            key={item.key}
             type="button"
             onClick={() => {
-              setActiveStep(s);
-              scrollToStep(s);
+              const nextMode = item.key as WorkflowMode;
+              setMode(nextMode);
+              window.setTimeout(() => {
+                scrollToStep(activeStepByMode[nextMode] ?? 1);
+              }, 50);
             }}
             className={`rounded-lg border px-3 py-1.5 text-xs font-bold ${
-              activeStep === s
+              mode === item.key
                 ? "border-gray-900 bg-gray-900 text-white"
                 : "border-gray-300 bg-white text-gray-700 hover:bg-gray-50"
             }`}
           >
-            Go Step {s}
+            {item.label}
           </button>
         ))}
       </div>
@@ -2754,6 +2410,112 @@ function copyToClipboard(text: string) {
   }
 }
 
+type OutputWorkspaceTab =
+  | "overview"
+  | "prompts"
+  | "video"
+  | "direct"
+  | "publishing"
+  | "advanced";
+
+type VideoWorkspaceTab = "hybrid" | "seedance" | "runway" | "kling";
+type DirectWorkspaceTab = "seedance" | "kling15" | "kling6";
+
+function WorkspaceTabButton({
+  label,
+  detail,
+  badge,
+  active,
+  onClick,
+}: {
+  label: string;
+  detail: string;
+  badge: string;
+  active: boolean;
+  onClick: () => void;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className={`min-w-[180px] rounded-2xl border px-4 py-3 text-left transition ${
+        active
+          ? "border-gray-900 bg-gray-900 text-white shadow-sm"
+          : "border-gray-200 bg-white text-gray-700 hover:border-gray-300 hover:bg-gray-50"
+      }`}
+    >
+      <div className="flex items-center justify-between gap-2">
+        <div className="text-sm font-extrabold">{label}</div>
+        <span
+          className={`rounded-full px-2 py-0.5 text-[10px] font-black uppercase tracking-wide ${
+            active ? "bg-white/15 text-white" : "bg-gray-100 text-gray-500"
+          }`}
+        >
+          {badge}
+        </span>
+      </div>
+      <div
+        className={`mt-1 text-xs leading-relaxed ${
+          active ? "text-white/80" : "text-gray-500"
+        }`}
+      >
+        {detail}
+      </div>
+    </button>
+  );
+}
+
+function WorkspaceJumpCard({
+  eyebrow,
+  title,
+  detail,
+  footer,
+  active,
+  onClick,
+}: {
+  eyebrow: string;
+  title: string;
+  detail: string;
+  footer: string;
+  active: boolean;
+  onClick: () => void;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className={`rounded-2xl border p-4 text-left transition ${
+        active
+          ? "border-gray-900 bg-gray-900 text-white shadow-sm"
+          : "border-gray-200 bg-white/90 text-gray-900 hover:-translate-y-0.5 hover:border-gray-300 hover:shadow-sm"
+      }`}
+    >
+      <div
+        className={`text-[11px] font-black uppercase tracking-[0.18em] ${
+          active ? "text-white/60" : "text-gray-400"
+        }`}
+      >
+        {eyebrow}
+      </div>
+      <div className="mt-2 text-lg font-black">{title}</div>
+      <p
+        className={`mt-2 text-sm leading-relaxed ${
+          active ? "text-white/80" : "text-gray-600"
+        }`}
+      >
+        {detail}
+      </p>
+      <div
+        className={`mt-4 text-xs font-extrabold uppercase tracking-wide ${
+          active ? "text-white" : "text-gray-500"
+        }`}
+      >
+        {footer}
+      </div>
+    </button>
+  );
+}
+
 export default function OutputCards({
   data,
   onRestoreVersion,
@@ -2762,16 +2524,28 @@ export default function OutputCards({
   onRestoreVersion?: (v: PromptVersion) => void;
 }) {
   const onCopy = copyToClipboard;
+  const [showWSTVWorkflowDiagram, setShowWSTVWorkflowDiagram] = useState(false);
+  const [activeWorkspace, setActiveWorkspace] =
+    useState<OutputWorkspaceTab>("overview");
+  const [videoWorkspace, setVideoWorkspace] =
+    useState<VideoWorkspaceTab>("hybrid");
+  const [directWorkspace, setDirectWorkspace] =
+    useState<DirectWorkspaceTab>("seedance");
 
   const runwayShots = useMemo(
   () => (data.runwayShots ?? []).map((s) => String(s ?? "")),
   [data.runwayShots]
 );
 
-const klingShots = useMemo(
-  () => (data.klingShots ?? []).map((s) => String(s ?? "")),
-  [data.klingShots]
-);
+  const klingShots = useMemo(
+    () => (data.klingShots ?? []).map((s) => String(s ?? "")),
+    [data.klingShots]
+  );
+
+  const seedanceShots = useMemo(
+    () => (data.seedanceShots ?? []).map((s) => String(s ?? "")),
+    [data.seedanceShots]
+  );
 
   const versionKey = useMemo(() => {
     const p = data.predatorName ?? "";
@@ -2787,56 +2561,19 @@ const klingShots = useMemo(
     return String(v ?? "").trim();
   }
 
-  function buildCalendarText() {
-    try {
-      const predator = data.predatorName ?? "Tiger";
-      const prey = data.preyName ?? "Deer";
-      const arc = String(data.arcName ?? "Ambush attack");
-      const today = new Date();
+  function buildCopyAllPacksText() {
+    const seedance = seedanceShots
+      .map((s, i) => `Seedance Shot ${i + 1}\n${safeStr(s)}`)
+      .join("\n\n---\n\n");
 
-      if (typeof generateMonthlyCalendar === "function") {
-        const cal = generateMonthlyCalendar(predator, prey, arc, today);
-        return cal
-          .map((d: Record<string, unknown>) => {
-            const reel1 = (d.reel1 ?? {}) as Record<string, unknown>;
-            const reel2 = (d.reel2 ?? {}) as Record<string, unknown>;
+    const runway = runwayShots
+      .map((s, i) => `Runway Shot ${i + 1}\n${safeStr(s)}`)
+      .join("\n\n---\n\n");
 
-            const lines = [
-              `${safeStr(d.dateLabel) || safeStr(d.dateISO)}`,
-              safeStr(reel1.hook) ? `Reel 1 Hook: ${safeStr(reel1.hook)}` : "",
-              safeStr(reel1.caption)
-                ? `Reel 1 Caption: ${safeStr(reel1.caption)}`
-                : "",
-              safeStr(reel1.hashtags)
-                ? `Reel 1 Hashtags: ${safeStr(reel1.hashtags)}`
-                : "",
-              safeStr(reel2.hook) ? `Reel 2 Hook: ${safeStr(reel2.hook)}` : "",
-              safeStr(reel2.caption)
-                ? `Reel 2 Caption: ${safeStr(reel2.caption)}`
-                : "",
-              safeStr(reel2.hashtags)
-                ? `Reel 2 Hashtags: ${safeStr(reel2.hashtags)}`
-                : "",
-            ].filter(Boolean);
+    const kling = klingShots
+      .map((s, i) => `Kling Shot ${i + 1}\n${safeStr(s)}`)
+      .join("\n\n---\n\n");
 
-            return lines.join(" | ");
-          })
-          .join("\n");
-      }
-    } catch {}
-    return "";
-  }
-
- function buildCopyAllPacksText() {
-  const runway = runwayShots
-    .map((s, i) => `Runway Shot ${i + 1}\n${safeStr(s)}`)
-    .join("\n\n---\n\n");
-
-  const kling = klingShots
-    .map((s, i) => `Kling Shot ${i + 1}\n${safeStr(s)}`)
-    .join("\n\n---\n\n");
-
-    const calendar = buildCalendarText();
   const twoPart = buildTwoPartText();
   const capCutScript = buildCapCutScriptText();
   const animalBehavior = buildAnimalBehaviorText();
@@ -2851,7 +2588,7 @@ const klingShots = useMemo(
     .join("\n\n---\n\n");
 
   return [
-        `WSTV EXPORT PACK (Pro 2026)`,
+    `WSTV EXPORT PACK (Pro 2026)`,
     `Predator: ${safeStr(data.predatorName)}`,
     `Prey: ${safeStr(data.preyName)}`,
     `Arc: ${safeStr(data.arcName)}`,
@@ -2859,6 +2596,12 @@ const klingShots = useMemo(
     "",
     `=== 4-SHOT IMAGE PLAN ===`,
     shotImagePlanText || "(none)",
+    "",
+    `=== SEEDANCE PACK (I2V | simple motion-first prompting | NO negatives) ===`,
+    seedance || "(none)",
+    "",
+    `=== SEEDANCE MULTI-SHOT ===`,
+    safeStr((data as Record<string, unknown>).seedanceMultiShotPrompt) || "(none)",
     "",
     `=== RUNWAY PACK (Gen-4.5 | 24/25fps | 720p | NO negatives) ===`,
     runway || "(none)",
@@ -2872,9 +2615,6 @@ const klingShots = useMemo(
     `=== KLING 6-SHOT (DIRECT) ===`,
     safeStr((data as Record<string, unknown>).klingSixShot) || "(none)",
     "",
-    `=== CONTENT CALENDAR (THIS MONTH) ===`,
-    calendar || "(calendar generator not available)",
-    "",
     twoPart,
     "",
     capCutScript,
@@ -2885,7 +2625,7 @@ const klingShots = useMemo(
   ]
     .filter(Boolean)
     .join("\n");
-}
+  }
   function buildTwoPartText() {
     if (!data.twoPartViralOverview) return "";
 
@@ -3030,470 +2770,1062 @@ const klingShots = useMemo(
     downloadText(`wstv-export-${p}-vs-${r}-${a}.txt`, text);
   }
 
+  const hasSeedanceDirect =
+    data.seedanceMultiShotPrompt !== undefined &&
+    data.seedanceMultiShotPrompt !== null;
+  const hasKling15Direct =
+    data.klingNative15s !== undefined && data.klingNative15s !== null;
+  const hasKling6Direct =
+    data.klingSixShot !== undefined && data.klingSixShot !== null;
+
+  const resolvedDirectWorkspace: DirectWorkspaceTab =
+    directWorkspace === "seedance" && hasSeedanceDirect
+      ? "seedance"
+      : directWorkspace === "kling15" && hasKling15Direct
+        ? "kling15"
+        : directWorkspace === "kling6" && hasKling6Direct
+          ? "kling6"
+          : hasSeedanceDirect
+            ? "seedance"
+            : hasKling15Direct
+              ? "kling15"
+              : "kling6";
+
+  const workspaceTabs: {
+    key: OutputWorkspaceTab;
+    label: string;
+    detail: string;
+    badge: string;
+  }[] = [
+    {
+      key: "overview",
+      label: "Overview",
+      detail: "Diagram, routing, prompt map, versions",
+      badge: "Start",
+    },
+    {
+      key: "prompts",
+      label: "Prompts",
+      detail: "Image, thumbnail, negative, image plan",
+      badge: "Core",
+    },
+    {
+      key: "video",
+      label: "Video",
+      detail: "Seedance, Runway, Kling, hybrid route",
+      badge: "4 shots",
+    },
+    {
+      key: "direct",
+      label: "Direct",
+      detail: "Single-paste multi-shot prompt blocks",
+      badge: "Fast",
+    },
+    {
+      key: "publishing",
+      label: "Publishing",
+      detail: "Hooks, caption, packs, posting",
+      badge: "Post",
+    },
+    {
+      key: "advanced",
+      label: "Advanced",
+      detail: "CapCut, sound, behavior, analytics",
+      badge: "Pro",
+    },
+  ];
+
+  const workspaceOverviewCards = [
+    {
+      key: "overview" as const,
+      eyebrow: "Story",
+      title: `${safeStr(data.predatorName || "Predator")} vs ${safeStr(
+        data.preyName || "Prey"
+      )}`,
+      detail:
+        safeStr(data.arcName || "") ||
+        "Core story arc appears here once a package is generated.",
+      footer: data.routingNote
+        ? `Routing: ${safeStr(data.routingNote)}`
+        : "Open routing and workflow map",
+    },
+    {
+      key: "prompts" as const,
+      eyebrow: "Prompts",
+      title: `${data.shotImagePlan?.length ?? 0} image prompts ready`,
+      detail:
+        "Image prompt, thumbnail prompt, and continuity image plan are grouped together here.",
+      footer: "Open core prompt workspace",
+    },
+    {
+      key: "video" as const,
+      eyebrow: "Video",
+      title: `${seedanceShots.length}/${runwayShots.length}/${klingShots.length} engine packs`,
+      detail:
+        "Switch between Hybrid, Seedance, Runway, and Kling instead of scrolling through every shot at once.",
+      footer: "Open video workspace",
+    },
+    {
+      key: "direct" as const,
+      eyebrow: "Direct",
+      title: `${
+        [hasSeedanceDirect, hasKling15Direct, hasKling6Direct].filter(Boolean)
+          .length
+      } direct prompts available`,
+      detail:
+        "Single-paste multi-shot prompt blocks live here for faster testing inside the generation tools.",
+      footer: "Open direct prompt workspace",
+    },
+    {
+      key: "publishing" as const,
+      eyebrow: "Publishing",
+      title: "Hook, caption, CTA, posting",
+      detail:
+        "Social copy, platform packs, and final posting guidance are separated from the build phase.",
+      footer: "Open publishing workspace",
+    },
+    {
+      key: "advanced" as const,
+      eyebrow: "Advanced",
+      title: "CapCut, sound, behavior, analytics",
+      detail:
+        "Keep research-heavy and polish-heavy assets in one place so daily work stays lighter.",
+      footer: "Open advanced workspace",
+    },
+  ];
+
   return (
     <div className="space-y-6">
-      <EngineSpecsPanel />
-
-      <div className="mt-3 rounded-lg border border-blue-200 bg-blue-50 p-3 text-xs text-blue-800">
-        Meta Reels export: 9:16 vertical, audio on, and keep important text
-        inside the safe zone.
-      </div>
-
-     <SectionLabel label="WSTV Pipeline — Node Graph" />
-<WSTVWorkflowDiagram data={data} onCopy={onCopy} />
-      <SectionLabel label="WSTV Workflow Prompt Map" />
-      <WorkflowPromptMap data={data} onCopy={onCopy} />
-
-      <div className="flex flex-wrap gap-2">
-        <button
-          type="button"
-          onClick={copyAllPacks}
-          className="rounded-xl bg-gray-900 px-4 py-2 text-xs font-extrabold text-white hover:bg-black active:scale-95"
-        >
-          📋 Copy All (Runway/Kling/Calendar)
-        </button>
-
-        <button
-          type="button"
-          onClick={exportTxt}
-          className="rounded-xl border border-gray-300 bg-white px-4 py-2 text-xs font-extrabold text-gray-800 hover:bg-gray-50 active:scale-95"
-        >
-          ⬇ Export TXT
-        </button>
-      </div>
-
-      {versionKey && (
-        <>
-          <SectionLabel label="🕘 Prompt Versions" />
-          <PromptVersionsPanel
-            versionKey={versionKey}
-            onRestoreVersion={onRestoreVersion}
-          />
-        </>
-      )}
-
-      <SectionLabel label="Core Prompts" />
-
-            <Card
-        title="📸 Image Prompt"
-        value={data.imagePrompt}
-        onCopy={onCopy}
-        accent="border-l-amber-500"
-        aiEnhanced={data.aiEnhanced}
-        extraActions={[
-          {
-            label: "Copy BODY",
-            onClick: () => onCopy(extractImagePromptBody(data.imagePrompt)),
-            className:
-              "rounded border border-amber-300 bg-amber-50 px-3 py-1 text-sm font-semibold text-amber-800 hover:bg-amber-100 active:scale-95",
-          },
-        ]}
-      />
-
-      {data.shotImagePlan && data.shotImagePlan.length > 0 && (
-        <ShotImagePlanPanel plans={data.shotImagePlan} onCopy={onCopy} />
-      )}
-  
-
-      {data.negativePrompt && (
-        <Card
-          title="🚫 Negative Prompt (Kling / image models only, not Runway)"
-          value={data.negativePrompt}
-          onCopy={onCopy}
-          accent="border-l-red-400"
-          extraActions={[
-            {
-              label: "⚠️ NOT for Runway",
-              onClick: () => {},
-              className:
-                "rounded border border-red-200 bg-red-50 px-2 py-1 text-[10px] font-bold text-red-600 cursor-default",
-            },
-          ]}
-        />
-      )}
-
-      {data.thumbnailPrompt && (
-        <Card
-          title="🖼️ Thumbnail Prompt"
-          value={data.thumbnailPrompt}
-          onCopy={onCopy}
-          accent="border-l-purple-400"
-        />
-      )}
-
-      <SectionLabel label="🎬 Video Shots (Pro Layout)" />
-
-      <div className="rounded-2xl border border-gray-200 bg-white p-4 shadow-sm">
-        <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
-                    <div className="text-sm font-extrabold text-gray-900">
-            Raw Shot Lists + 4-Shot Routing
+      <div className="rounded-3xl border border-slate-200 bg-gradient-to-br from-white via-slate-50 to-amber-50 p-5 shadow-sm">
+        <div className="flex flex-wrap items-start justify-between gap-4">
+          <div className="max-w-3xl">
+            <div className="text-[11px] font-black uppercase tracking-[0.24em] text-slate-500">
+              WSTV Output Workspace
+            </div>
+            <h2 className="mt-1 text-2xl font-black text-slate-900">
+              Compact dashboard view
+            </h2>
+            <p className="mt-2 text-sm leading-relaxed text-slate-600">
+              Long-scroll कम गर्न outputs लाई focused workspaces मा छुट्याइएको छ.
+              Daily काम गर्दा main prompt, video engine, direct prompt, publishing,
+              र advanced tools अब छुट्टै switch गरेर खोल्न मिल्छ.
+            </p>
+            {data.routingNote && (
+              <div className="mt-3 inline-flex rounded-full border border-amber-200 bg-amber-50 px-3 py-1 text-xs font-bold text-amber-800">
+                Current routing: {safeStr(data.routingNote)}
+              </div>
+            )}
           </div>
 
           <div className="flex flex-wrap gap-2">
             <button
               type="button"
-              onClick={() =>
-  onCopy(
-    runwayShots
-      .map((s) => extractRunwayPasteReady(s))
-      .filter(Boolean)
-      .join("\n\n---\n\n")
-  )
-}
-              
-              className="rounded-lg border border-green-200 bg-green-50 px-3 py-1.5 text-xs font-extrabold text-green-800 hover:bg-green-100 active:scale-95"
+              onClick={copyAllPacks}
+              className="rounded-xl bg-gray-900 px-4 py-2 text-xs font-extrabold text-white hover:bg-black active:scale-95"
             >
-              Copy Runway (Paste-Ready)
+              📋 Copy All Packs
             </button>
 
             <button
-  type="button"
-  onClick={() =>
-    onCopy(
-      klingShots
-        .map((s) => extractKlingPromptBody(s))
-        .filter(Boolean)
-        .join("\n\n---\n\n")
-    )
-  }
-  className="rounded-lg border border-blue-200 bg-blue-50 px-3 py-1.5 text-xs font-extrabold text-blue-800 hover:bg-blue-100 active:scale-95"
->
-  Copy Kling (Paste-Ready Body)
-</button>
+              type="button"
+              onClick={exportTxt}
+              className="rounded-xl border border-gray-300 bg-white px-4 py-2 text-xs font-extrabold text-gray-800 hover:bg-gray-50 active:scale-95"
+            >
+              ⬇ Export TXT
+            </button>
           </div>
         </div>
 
-        <div className="grid gap-4 md:grid-cols-2">
-          <div className="rounded-2xl border border-green-200 bg-green-50 p-4">
-            <div className="mb-2 flex items-center justify-between gap-2">
-              <div className="text-sm font-extrabold text-green-900">
-                Runway Shots
-              </div>
-              <span className="rounded-full bg-white px-2 py-0.5 text-[11px] font-bold text-green-700 ring-1 ring-green-200">
-                Gen-4.5 | 24/25fps | 720p
-              </span>
-            </div>
-
-                        <p className="mb-3 text-xs text-green-800">
-  Shot 1 = opening tension from Image 1, Shot 2 = pressure build from Image 2, and Shot 4 = resolved tension from Image 4.
-  Runway handles the readable opening, pressure-build bridge, and final resolve.
-</p>
-
-            <p className="mb-3 text-xs text-green-800">
-  I2V = motion only. No negative prompts. Last-frame chaining is recommended only when the outgoing frame remains a clean full-body handoff frame.
-</p>
-
-            <div className="space-y-3">
-              {runwayShots.map((shot, i) => (
-                <ProShotCard
-                  key={`runway-pro-${i}`}
-                  engine="runway"
-                  index={i}
-                  shot={shot}
-                  onCopy={onCopy}
-                />
-              ))}
-            </div>
-          </div>
-
-          <div className="rounded-2xl border border-blue-200 bg-blue-50 p-4">
-            <div className="mb-2 flex items-center justify-between gap-2">
-              <div className="text-sm font-extrabold text-blue-900">
-                Kling Shots
-              </div>
-              <span className="rounded-full bg-white px-2 py-0.5 text-[11px] font-bold text-blue-700 ring-1 ring-blue-200">
-                Kling 3.0 | Action workflow | Audio-capable
-              </span>
-            </div>
-
-                        <p className="mb-3 text-xs text-blue-800">
-  Best for full-body physics and peak action beats. Use Image 3 from the previous-image edit chain for the strongest action moment, then return to Runway for Shot 4.
-</p>
-
-            <p className="mb-3 text-xs text-blue-800">
-  Paste-ready body is director-style narrative. Negative prompts OK. Bind Subject + Start/End Frame. Structured breakdown remains for reference.
-</p>
-
-            <div className="space-y-3">
-              {klingShots.map((shot, i) => (
-                <ProShotCard
-                  key={`kling-pro-${i}`}
-                  engine="kling"
-                  index={i}
-                  shot={shot}
-                  onCopy={onCopy}
-                />
-              ))}
-            </div>
-          </div>
+        <div className="mt-5 grid gap-3 md:grid-cols-2 xl:grid-cols-3">
+          {workspaceOverviewCards.map((item) => (
+            <WorkspaceJumpCard
+              key={item.key}
+              eyebrow={item.eyebrow}
+              title={item.title}
+              detail={item.detail}
+              footer={item.footer}
+              active={activeWorkspace === item.key}
+              onClick={() => setActiveWorkspace(item.key)}
+            />
+          ))}
         </div>
       </div>
 
-      {data.klingNative15s !== undefined && data.klingNative15s !== null && (
-        <div className="rounded-2xl border border-blue-300 bg-blue-50 p-4 shadow-sm">
-          <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
-            <div className="flex flex-wrap items-center gap-2">
-              <div className="text-sm font-extrabold text-blue-900">
-                Kling 15-Second Native Multi-Shot
-              </div>
+      <div className="sticky top-3 z-20 overflow-x-auto rounded-2xl border border-slate-200 bg-white/95 p-2 shadow-sm backdrop-blur">
+        <div className="flex gap-2">
+          {workspaceTabs.map((item) => (
+            <WorkspaceTabButton
+              key={item.key}
+              label={item.label}
+              detail={item.detail}
+              badge={item.badge}
+              active={activeWorkspace === item.key}
+              onClick={() => setActiveWorkspace(item.key)}
+            />
+          ))}
+        </div>
+      </div>
 
-              <span className="rounded-full bg-white px-2 py-0.5 text-[11px] font-bold text-blue-700 ring-1 ring-blue-200">
-                Kling 3.0 Pro / Standard
-              </span>
+      {activeWorkspace === "overview" && (
+        <div className="space-y-6">
+          <EngineSpecsPanel />
 
-              <span className="rounded-full bg-green-100 px-2 py-0.5 text-[11px] font-extrabold text-green-700 ring-1 ring-green-200">
-                ✓ Zero inter-clip drift
-              </span>
+          <div className="rounded-lg border border-blue-200 bg-blue-50 p-3 text-xs text-blue-800">
+            Meta Reels export: 9:16 vertical, audio on, and keep important text
+            inside the safe zone.
+          </div>
 
-              <span className="rounded-full bg-amber-100 px-2 py-0.5 text-[11px] font-extrabold text-amber-800 ring-1 ring-amber-200">
-                Action-ready | Audio-capable
-              </span>
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <SectionLabel label="WSTV Pipeline — Node Graph" />
+            <button
+              type="button"
+              onClick={() => setShowWSTVWorkflowDiagram((prev) => !prev)}
+              className="rounded-xl border border-gray-300 bg-white px-4 py-2 text-xs font-extrabold text-gray-800 hover:bg-gray-50 active:scale-95"
+            >
+              {showWSTVWorkflowDiagram ? "Hide Diagram" : "Show Diagram"}
+            </button>
+          </div>
+          {showWSTVWorkflowDiagram ? (
+            <WSTVWorkflowDiagram data={data} onCopy={onCopy} />
+          ) : (
+            <div className="rounded-xl border border-dashed border-gray-300 bg-gray-50 p-4 text-sm text-gray-600">
+              Node graph hidden by default. Click &quot;Show Diagram&quot; to
+              open it.
             </div>
-          </div>
+          )}
 
-          <p className="mb-3 text-xs leading-relaxed text-blue-800">
-            यो एउटै prompt Kling 3.0 Pro/Standard मा paste गर्दा 15 seconds को
-            continuous video आउँछ। 3 अलग shots generate हुन्छन्, subject
-            identity automatically locked हुन्छ।
-          </p>
+          <SectionLabel label="WSTV Workflow Prompt Map" />
+          <WorkflowPromptMap data={data} onCopy={onCopy} />
 
-          <pre className="max-h-[420px] overflow-auto whitespace-pre-wrap rounded-xl border border-blue-200 bg-white p-3 text-xs leading-relaxed text-gray-900">
-            {String(data.klingNative15s)}
-          </pre>
-
-          <div className="mt-3 flex flex-wrap gap-2">
-            <button
-              type="button"
-              onClick={() => onCopy(String(data.klingNative15s))}
-              className="rounded-xl bg-blue-700 px-4 py-2 text-sm font-extrabold text-white hover:bg-blue-800 active:scale-[0.98]"
-            >
-              📋 Copy Full 15s Prompt
-            </button>
-            <button
-              type="button"
-              onClick={() =>
-                onCopy(extractKlingPromptBody(String(data.klingNative15s)))
-              }
-              className="rounded-xl border border-blue-300 bg-white px-4 py-2 text-sm font-extrabold text-blue-700 hover:bg-blue-50 active:scale-[0.98]"
-            >
-              📋 Copy BODY Only
-            </button>
-          </div>
+          {versionKey && (
+            <>
+              <SectionLabel label="🕘 Prompt Versions" />
+              <PromptVersionsPanel
+                versionKey={versionKey}
+                onRestoreVersion={onRestoreVersion}
+              />
+            </>
+          )}
         </div>
       )}
 
-      {data.klingSixShot !== undefined && data.klingSixShot !== null && (
-        <div className="rounded-2xl border border-indigo-300 bg-indigo-50 p-4 shadow-sm">
-          <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
-            <div className="flex flex-wrap items-center gap-2">
-              <div className="text-sm font-extrabold text-indigo-900">
-                Kling 6-Shot Multi-Scene
-              </div>
-
-              <span className="rounded-full bg-white px-2 py-0.5 text-[11px] font-bold text-indigo-700 ring-1 ring-indigo-200">
-                Kling 3.0 Pro / Standard
-              </span>
-
-              <span className="rounded-full bg-green-100 px-2 py-0.5 text-[11px] font-extrabold text-green-700 ring-1 ring-green-200">
-                ✓ 6 shots — 1 prompt
-              </span>
-
-              <span className="rounded-full bg-amber-100 px-2 py-0.5 text-[11px] font-extrabold text-amber-800 ring-1 ring-amber-200">
-                Current WSTV workflow
-              </span>
-            </div>
+      {activeWorkspace === "prompts" && (
+        <div className="space-y-6">
+          <div className="rounded-2xl border border-amber-200 bg-amber-50 p-4 text-sm text-amber-900 shadow-sm">
+            Core prompt workspace मा image prompt, thumbnail prompt, negative
+            prompt, र continuity image plan grouped छन् so setup गर्दा यही tab
+            enough हुन्छ.
           </div>
 
-                    <p className="mb-3 text-xs leading-relaxed text-indigo-800">
-            <span className="font-extrabold">WSTV multi-shot flow:</span>{" "}
-            Opening tension → Pressure hold → Profile pressure →
-            Tension reaction cut → Action pressure wide → Resolved tension wide.
-            एकै prompt ले 6 cinematic shots generate गर्छ — subject identity सबै shots मा locked
-            हुन्छ, and the opening starts with clearer full-subject readability.
-          </p>
+          <SectionLabel label="Core Prompts" />
 
-          <pre className="max-h-[520px] overflow-auto whitespace-pre-wrap rounded-xl border border-indigo-200 bg-white p-3 text-xs leading-relaxed text-gray-900">
-            {String(data.klingSixShot)}
-          </pre>
-
-          <div className="mt-3 flex flex-wrap gap-2">
-            <button
-              type="button"
-              onClick={() => onCopy(String(data.klingSixShot))}
-              className="rounded-xl bg-indigo-700 px-4 py-2 text-sm font-extrabold text-white hover:bg-indigo-800 active:scale-[0.98]"
-            >
-              📋 Copy Full 6-Shot Prompt
-            </button>
-            <button
-              type="button"
-              onClick={() =>
-                onCopy(extractKlingPromptBody(String(data.klingSixShot)))
-              }
-              className="rounded-xl border border-indigo-300 bg-white px-4 py-2 text-sm font-extrabold text-indigo-700 hover:bg-indigo-50 active:scale-[0.98]"
-            >
-              📋 Copy BODY Only
-            </button>
-          </div>
-        </div>
-      )}
-
-      <SectionLabel label="📅 Content Calendar" />
-      <CalendarPanel
-        predator={data.predatorName ?? "Tiger"}
-        prey={data.preyName ?? "Deer"}
-        arc={data.arcName ?? "Ambush attack"}
-      />
-
-      <SectionLabel label="Hooks & Copy" />
-
-      {data.hook2026 && data.hook2026.length > 0 ? (
-        <Hook2026Panel
-          hooks={data.hook2026}
-          oldHook={data.hook}
-          onCopy={onCopy}
-          recommendedIndex={data.recommendedHookIndex}
-        />
-      ) : data.hook ? (
-        <Card
-          title="🔥 Hook"
-          value={data.hook}
-          onCopy={onCopy}
-          accent="border-l-orange-500"
-        />
-      ) : null}
-
-      {data.caption2026 ? (
-        <Caption2026Panel
-          caption2026={data.caption2026}
-          captionOld={data.caption}
-          onCopy={onCopy}
-        />
-      ) : data.caption ? (
-        <Card
-          title="📝 Caption"
-          value={data.caption}
-          onCopy={onCopy}
-          accent="border-l-emerald-500"
-        />
-      ) : null}
-
-      {data.voiceoverLine && (
-        <Card
-          title="🎙️ Voiceover"
-          value={data.voiceoverLine}
-          onCopy={onCopy}
-          accent="border-l-indigo-500"
-          aiEnhanced={data.aiEnhanced}
-        />
-      )}
-
-      {data.cta && <Card title="📢 CTA" value={data.cta} onCopy={onCopy} />}
-
-      {data.hashtags && (
-        <Card title="# Hashtags" value={data.hashtags} onCopy={onCopy} />
-      )}
-
-      {data.fiveShotCinematic && data.fiveShotViral && (
-        <>
-          <SectionLabel label="5-Shot Pipeline" />
-          <FiveShotPanel
-            cinematic={data.fiveShotCinematic}
-            viral={data.fiveShotViral}
+          <Card
+            title="📸 Image Prompt"
+            value={data.imagePrompt}
             onCopy={onCopy}
+            accent="border-l-amber-500"
+            aiEnhanced={data.aiEnhanced}
+            extraActions={[
+              {
+                label: "Copy BODY",
+                onClick: () => onCopy(extractImagePromptBody(data.imagePrompt)),
+                className:
+                  "rounded border border-amber-300 bg-amber-50 px-3 py-1 text-sm font-semibold text-amber-800 hover:bg-amber-100 active:scale-95",
+              },
+            ]}
           />
-        </>
+
+          {data.shotImagePlan && data.shotImagePlan.length > 0 && (
+            <ShotImagePlanPanel plans={data.shotImagePlan} onCopy={onCopy} />
+          )}
+
+          {data.negativePrompt && (
+            <Card
+              title="🚫 Negative Prompt (Kling / image models only, not Runway)"
+              value={data.negativePrompt}
+              onCopy={onCopy}
+              accent="border-l-red-400"
+              extraActions={[
+                {
+                  label: "⚠️ NOT for Runway",
+                  onClick: () => {},
+                  className:
+                    "cursor-default rounded border border-red-200 bg-red-50 px-2 py-1 text-[10px] font-bold text-red-600",
+                },
+              ]}
+            />
+          )}
+
+          {data.thumbnailPrompt && (
+            <Card
+              title="🖼️ Thumbnail Prompt"
+              value={data.thumbnailPrompt}
+              onCopy={onCopy}
+              accent="border-l-purple-400"
+            />
+          )}
+        </div>
       )}
 
-      {data.watchTimeReport && (
-        <>
-          <SectionLabel label="Watch Time & Earnings" />
-          <WatchTimePanel report={data.watchTimeReport} />
-        </>
+      {activeWorkspace === "video" && (
+        <div className="space-y-6">
+          <div className="rounded-2xl border border-gray-200 bg-white p-4 shadow-sm">
+            <div className="flex flex-wrap items-start justify-between gap-3">
+              <div>
+                <div className="text-sm font-extrabold text-gray-900">
+                  Video workspace
+                </div>
+                <p className="mt-1 max-w-3xl text-xs leading-relaxed text-gray-600">
+                  Default WSTV video setup is 4 shots at 5 seconds each. Instead
+                  of showing every engine stack at once, choose one engine view
+                  or the hybrid route below.
+                </p>
+              </div>
+
+              <div className="flex flex-wrap gap-2">
+                {[
+                  {
+                    key: "hybrid" as const,
+                    label: "Hybrid Route",
+                  },
+                  {
+                    key: "seedance" as const,
+                    label: "Seedance",
+                  },
+                  {
+                    key: "runway" as const,
+                    label: "Runway",
+                  },
+                  {
+                    key: "kling" as const,
+                    label: "Kling",
+                  },
+                ].map((item) => (
+                  <button
+                    key={item.key}
+                    type="button"
+                    onClick={() => setVideoWorkspace(item.key)}
+                    className={`rounded-xl border px-3 py-2 text-xs font-extrabold ${
+                      videoWorkspace === item.key
+                        ? "border-gray-900 bg-gray-900 text-white"
+                        : "border-gray-300 bg-white text-gray-700 hover:bg-gray-50"
+                    }`}
+                  >
+                    {item.label}
+                  </button>
+                ))}
+              </div>
+            </div>
+          </div>
+
+          <SectionLabel label="🎬 Video Shots (Pro Layout)" />
+
+          {videoWorkspace === "hybrid" && (
+            <div className="space-y-4">
+              <div className="rounded-2xl border border-violet-200 bg-violet-50 p-4 shadow-sm">
+                <div className="flex flex-wrap items-center justify-between gap-2">
+                  <div className="text-sm font-extrabold text-violet-900">
+                    Hybrid route summary
+                  </div>
+                  <span className="rounded-full bg-white px-2 py-0.5 text-[11px] font-bold text-violet-700 ring-1 ring-violet-200">
+                    Runway 1 → Kling 2-3 → Runway 4
+                  </span>
+                </div>
+
+                <p className="mt-2 text-xs leading-relaxed text-violet-800">
+                  This route keeps the opening and resolve cleaner in Runway,
+                  while using Kling for the middle pressure/action beats. It is
+                  the fastest way to review the mixed-engine story flow without
+                  scrolling through all engine packs together.
+                </p>
+
+                <div className="mt-4 grid gap-3 md:grid-cols-2 xl:grid-cols-4">
+                  {[
+                    {
+                      title: "Shot 1",
+                      engine: "Runway",
+                      note: "Opening tension",
+                      color:
+                        "border-green-200 bg-green-50 text-green-900",
+                    },
+                    {
+                      title: "Shot 2",
+                      engine: "Kling",
+                      note: "Pressure build",
+                      color: "border-blue-200 bg-blue-50 text-blue-900",
+                    },
+                    {
+                      title: "Shot 3",
+                      engine: "Kling",
+                      note: "Peak action",
+                      color: "border-blue-200 bg-blue-50 text-blue-900",
+                    },
+                    {
+                      title: "Shot 4",
+                      engine: "Runway",
+                      note: "Resolved tension",
+                      color:
+                        "border-green-200 bg-green-50 text-green-900",
+                    },
+                  ].map((item) => (
+                    <div
+                      key={item.title}
+                      className={`rounded-2xl border p-3 ${item.color}`}
+                    >
+                      <div className="text-[11px] font-black uppercase tracking-wide">
+                        {item.title}
+                      </div>
+                      <div className="mt-2 text-base font-black">
+                        {item.engine}
+                      </div>
+                      <div className="mt-1 text-xs font-medium opacity-80">
+                        {item.note}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              <div className="grid gap-4 xl:grid-cols-2">
+                {runwayShots[0] && (
+                  <ProShotCard
+                    engine="runway"
+                    index={0}
+                    shot={runwayShots[0]}
+                    onCopy={onCopy}
+                  />
+                )}
+                {klingShots[1] && (
+                  <ProShotCard
+                    engine="kling"
+                    index={1}
+                    shot={klingShots[1]}
+                    onCopy={onCopy}
+                  />
+                )}
+                {klingShots[2] && (
+                  <ProShotCard
+                    engine="kling"
+                    index={2}
+                    shot={klingShots[2]}
+                    onCopy={onCopy}
+                  />
+                )}
+                {runwayShots[3] && (
+                  <ProShotCard
+                    engine="runway"
+                    index={3}
+                    shot={runwayShots[3]}
+                    onCopy={onCopy}
+                  />
+                )}
+              </div>
+            </div>
+          )}
+
+          {videoWorkspace === "seedance" && (
+            <div className="rounded-2xl border border-orange-200 bg-orange-50 p-4 shadow-sm">
+              <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
+                <div className="text-sm font-extrabold text-orange-900">
+                  Seedance Shots
+                </div>
+                <span className="rounded-full bg-white px-2 py-0.5 text-[11px] font-bold text-orange-700 ring-1 ring-orange-200">
+                  Seedance 2.0 | multimodal refs | Cut to for multi-shot
+                </span>
+              </div>
+
+              <p className="mb-3 text-xs text-orange-800">
+                Best for simple direct video prompting. Base workflow: `Prompt`
+                + `First Frame`, then add `Ref Image` or `Ref Video` only when
+                useful. Default WSTV setup is 4 separate shots at 5 seconds
+                each. Keep static description light, describe subject movement +
+                background movement + camera movement, and avoid negative
+                prompts.
+              </p>
+
+              <div className="mb-3 flex flex-wrap gap-2">
+                <button
+                  type="button"
+                  onClick={() =>
+                    onCopy(
+                      seedanceShots
+                        .map((s) => extractSeedancePromptBody(s))
+                        .filter(Boolean)
+                        .join("\n\n---\n\n")
+                    )
+                  }
+                  className="rounded-lg border border-orange-200 bg-orange-100 px-3 py-1.5 text-xs font-extrabold text-orange-900 hover:bg-orange-200 active:scale-95"
+                >
+                  Copy Seedance Bodies
+                </button>
+
+                {data.seedanceMultiShotPrompt && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setDirectWorkspace("seedance");
+                      setActiveWorkspace("direct");
+                    }}
+                    className="rounded-lg border border-orange-300 bg-white px-3 py-1.5 text-xs font-extrabold text-orange-800 hover:bg-orange-50 active:scale-95"
+                  >
+                    Open Direct Seedance Prompt
+                  </button>
+                )}
+              </div>
+
+              <div className="space-y-3">
+                {seedanceShots.map((shot, i) => (
+                  <ProShotCard
+                    key={`seedance-pro-${i}`}
+                    engine="seedance"
+                    index={i}
+                    shot={shot}
+                    onCopy={onCopy}
+                  />
+                ))}
+              </div>
+            </div>
+          )}
+
+          {videoWorkspace === "runway" && (
+            <div className="rounded-2xl border border-green-200 bg-green-50 p-4 shadow-sm">
+              <div className="mb-2 flex items-center justify-between gap-2">
+                <div className="text-sm font-extrabold text-green-900">
+                  Runway Shots
+                </div>
+                <span className="rounded-full bg-white px-2 py-0.5 text-[11px] font-bold text-green-700 ring-1 ring-green-200">
+                  Gen-4.5 | 24/25fps | 720p
+                </span>
+              </div>
+
+              <p className="mb-3 text-xs text-green-800">
+                Full Runway pack now supports 4 separate shots: opening tension,
+                pressure build, peak action, and resolved tension. In the hybrid
+                route, Runway is used for Shot 1 and Shot 4.
+              </p>
+
+              <p className="mb-3 text-xs text-green-800">
+                I2V = motion only. No negative prompts. Last-frame chaining is
+                recommended only when the outgoing frame remains a clean
+                full-body handoff frame.
+              </p>
+
+              <div className="mb-3 flex flex-wrap gap-2">
+                <button
+                  type="button"
+                  onClick={() =>
+                    onCopy(
+                      runwayShots
+                        .map((s) => extractRunwayPasteReady(s))
+                        .filter(Boolean)
+                        .join("\n\n---\n\n")
+                    )
+                  }
+                  className="rounded-lg border border-green-200 bg-green-100 px-3 py-1.5 text-xs font-extrabold text-green-900 hover:bg-green-200 active:scale-95"
+                >
+                  Copy Runway Bodies
+                </button>
+              </div>
+
+              <div className="space-y-3">
+                {runwayShots.map((shot, i) => (
+                  <ProShotCard
+                    key={`runway-pro-${i}`}
+                    engine="runway"
+                    index={i}
+                    shot={shot}
+                    onCopy={onCopy}
+                  />
+                ))}
+              </div>
+            </div>
+          )}
+
+          {videoWorkspace === "kling" && (
+            <div className="rounded-2xl border border-blue-200 bg-blue-50 p-4 shadow-sm">
+              <div className="mb-2 flex items-center justify-between gap-2">
+                <div className="text-sm font-extrabold text-blue-900">
+                  Kling Shots
+                </div>
+                <span className="rounded-full bg-white px-2 py-0.5 text-[11px] font-bold text-blue-700 ring-1 ring-blue-200">
+                  Kling 3.0 | Action workflow | Audio-capable
+                </span>
+              </div>
+
+              <p className="mb-3 text-xs text-blue-800">
+                Full Kling pack now supports 4 separate shots too. It works
+                especially well for pressure build and peak action, and the
+                hybrid route uses Kling for Shot 2 and Shot 3.
+              </p>
+
+              <p className="mb-3 text-xs text-blue-800">
+                Paste-ready body is director-style narrative. Negative prompts
+                OK. Bind Subject + Start/End Frame. Structured breakdown remains
+                for reference.
+              </p>
+
+              <div className="mb-3 flex flex-wrap gap-2">
+                <button
+                  type="button"
+                  onClick={() =>
+                    onCopy(
+                      klingShots
+                        .map((s) => extractKlingPromptBody(s))
+                        .filter(Boolean)
+                        .join("\n\n---\n\n")
+                    )
+                  }
+                  className="rounded-lg border border-blue-200 bg-blue-100 px-3 py-1.5 text-xs font-extrabold text-blue-900 hover:bg-blue-200 active:scale-95"
+                >
+                  Copy Kling Bodies
+                </button>
+                {data.klingNative15s && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setDirectWorkspace("kling15");
+                      setActiveWorkspace("direct");
+                    }}
+                    className="rounded-lg border border-blue-300 bg-white px-3 py-1.5 text-xs font-extrabold text-blue-800 hover:bg-blue-50 active:scale-95"
+                  >
+                    Open Kling 15s Direct Prompt
+                  </button>
+                )}
+              </div>
+
+              <div className="space-y-3">
+                {klingShots.map((shot, i) => (
+                  <ProShotCard
+                    key={`kling-pro-${i}`}
+                    engine="kling"
+                    index={i}
+                    shot={shot}
+                    onCopy={onCopy}
+                  />
+                ))}
+              </div>
+            </div>
+          )}
+        </div>
       )}
 
-      {data.platformPack && (
-        <>
-          <SectionLabel label="Platform Packs" />
-          <PlatformPackPanel pack={data.platformPack} onCopy={onCopy} />
-        </>
+      {activeWorkspace === "direct" && (
+        <div className="space-y-6">
+          <div className="rounded-2xl border border-gray-200 bg-white p-4 shadow-sm">
+            <div className="flex flex-wrap items-start justify-between gap-3">
+              <div>
+                <div className="text-sm font-extrabold text-gray-900">
+                  Direct prompt workspace
+                </div>
+                <p className="mt-1 max-w-3xl text-xs leading-relaxed text-gray-600">
+                  One-click multi-shot prompts live here. Use this tab when you
+                  want to paste one full block directly into Seedance or Kling.
+                </p>
+              </div>
+
+              <div className="flex flex-wrap gap-2">
+                {data.seedanceMultiShotPrompt && (
+                  <button
+                    type="button"
+                    onClick={() => setDirectWorkspace("seedance")}
+                    className={`rounded-xl border px-3 py-2 text-xs font-extrabold ${
+                      resolvedDirectWorkspace === "seedance"
+                        ? "border-orange-700 bg-orange-700 text-white"
+                        : "border-orange-200 bg-white text-orange-800 hover:bg-orange-50"
+                    }`}
+                  >
+                    Seedance 2.0
+                  </button>
+                )}
+                {data.klingNative15s && (
+                  <button
+                    type="button"
+                    onClick={() => setDirectWorkspace("kling15")}
+                    className={`rounded-xl border px-3 py-2 text-xs font-extrabold ${
+                      resolvedDirectWorkspace === "kling15"
+                        ? "border-blue-700 bg-blue-700 text-white"
+                        : "border-blue-200 bg-white text-blue-800 hover:bg-blue-50"
+                    }`}
+                  >
+                    Kling 15s
+                  </button>
+                )}
+                {data.klingSixShot && (
+                  <button
+                    type="button"
+                    onClick={() => setDirectWorkspace("kling6")}
+                    className={`rounded-xl border px-3 py-2 text-xs font-extrabold ${
+                      resolvedDirectWorkspace === "kling6"
+                        ? "border-indigo-700 bg-indigo-700 text-white"
+                        : "border-indigo-200 bg-white text-indigo-800 hover:bg-indigo-50"
+                    }`}
+                  >
+                    Kling 6-Shot
+                  </button>
+                )}
+              </div>
+            </div>
+          </div>
+
+          {resolvedDirectWorkspace === "seedance" &&
+            data.seedanceMultiShotPrompt !== undefined &&
+            data.seedanceMultiShotPrompt !== null && (
+              <div className="rounded-2xl border border-orange-300 bg-orange-50 p-4 shadow-sm">
+                <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
+                  <div className="flex flex-wrap items-center gap-2">
+                    <div className="text-sm font-extrabold text-orange-900">
+                      Seedance 2.0 Direct Multi-Shot
+                    </div>
+
+                    <span className="rounded-full bg-white px-2 py-0.5 text-[11px] font-bold text-orange-700 ring-1 ring-orange-200">
+                      Seedance 2.0
+                    </span>
+
+                    <span className="rounded-full bg-green-100 px-2 py-0.5 text-[11px] font-extrabold text-green-700 ring-1 ring-green-200">
+                      ✓ 4 shots — 1 prompt
+                    </span>
+
+                    <span className="rounded-full bg-amber-100 px-2 py-0.5 text-[11px] font-extrabold text-amber-800 ring-1 ring-amber-200">
+                      Prompt + First Frame
+                    </span>
+                  </div>
+                </div>
+
+                <p className="mb-3 text-xs leading-relaxed text-orange-800">
+                  यो Kling ko direct multi-shot pane जस्तै Seedance 2.0 ko लागि
+                  हो. एउटै continuity prompt लाई direct paste गर्न मिल्छ.
+                  Current WSTV flow मा 4 linked shots छन्: opening tension →
+                  pressure build → peak action → resolved tension. Best result ka
+                  lagi `Prompt` + `First Frame` base राख्नुस्, ani चाहियो भने
+                  मात्र `Ref Image` / `Ref Video` थप्नुस्.
+                </p>
+
+                <pre className="max-h-[420px] overflow-auto whitespace-pre-wrap rounded-xl border border-orange-200 bg-white p-3 text-xs leading-relaxed text-gray-900">
+                  {String(data.seedanceMultiShotPrompt)}
+                </pre>
+
+                <div className="mt-3 flex flex-wrap gap-2">
+                  <button
+                    type="button"
+                    onClick={() => onCopy(String(data.seedanceMultiShotPrompt))}
+                    className="rounded-xl bg-orange-700 px-4 py-2 text-sm font-extrabold text-white hover:bg-orange-800 active:scale-[0.98]"
+                  >
+                    📋 Copy Full Seedance Prompt
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() =>
+                      onCopy(
+                        extractSeedancePromptBody(
+                          String(data.seedanceMultiShotPrompt)
+                        )
+                      )
+                    }
+                    className="rounded-xl border border-orange-300 bg-white px-4 py-2 text-sm font-extrabold text-orange-700 hover:bg-orange-50 active:scale-[0.98]"
+                  >
+                    📋 Copy BODY Only
+                  </button>
+                </div>
+              </div>
+            )}
+
+          {resolvedDirectWorkspace === "kling15" &&
+            data.klingNative15s !== undefined &&
+            data.klingNative15s !== null && (
+              <div className="rounded-2xl border border-blue-300 bg-blue-50 p-4 shadow-sm">
+                <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
+                  <div className="flex flex-wrap items-center gap-2">
+                    <div className="text-sm font-extrabold text-blue-900">
+                      Kling 15-Second Native Multi-Shot
+                    </div>
+
+                    <span className="rounded-full bg-white px-2 py-0.5 text-[11px] font-bold text-blue-700 ring-1 ring-blue-200">
+                      Kling 3.0 Pro / Standard
+                    </span>
+
+                    <span className="rounded-full bg-green-100 px-2 py-0.5 text-[11px] font-extrabold text-green-700 ring-1 ring-green-200">
+                      ✓ Zero inter-clip drift
+                    </span>
+
+                    <span className="rounded-full bg-amber-100 px-2 py-0.5 text-[11px] font-extrabold text-amber-800 ring-1 ring-amber-200">
+                      Action-ready | Audio-capable
+                    </span>
+                  </div>
+                </div>
+
+                <p className="mb-3 text-xs leading-relaxed text-blue-800">
+                  यो एउटै prompt Kling 3.0 Pro/Standard मा paste गर्दा 15
+                  seconds को continuous video आउँछ। 3 अलग shots generate
+                  हुन्छन्, subject identity automatically locked हुन्छ।
+                </p>
+
+                <pre className="max-h-[420px] overflow-auto whitespace-pre-wrap rounded-xl border border-blue-200 bg-white p-3 text-xs leading-relaxed text-gray-900">
+                  {String(data.klingNative15s)}
+                </pre>
+
+                <div className="mt-3 flex flex-wrap gap-2">
+                  <button
+                    type="button"
+                    onClick={() => onCopy(String(data.klingNative15s))}
+                    className="rounded-xl bg-blue-700 px-4 py-2 text-sm font-extrabold text-white hover:bg-blue-800 active:scale-[0.98]"
+                  >
+                    📋 Copy Full 15s Prompt
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() =>
+                      onCopy(extractKlingPromptBody(String(data.klingNative15s)))
+                    }
+                    className="rounded-xl border border-blue-300 bg-white px-4 py-2 text-sm font-extrabold text-blue-700 hover:bg-blue-50 active:scale-[0.98]"
+                  >
+                    📋 Copy BODY Only
+                  </button>
+                </div>
+              </div>
+            )}
+
+          {resolvedDirectWorkspace === "kling6" &&
+            data.klingSixShot !== undefined &&
+            data.klingSixShot !== null && (
+              <div className="rounded-2xl border border-indigo-300 bg-indigo-50 p-4 shadow-sm">
+                <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
+                  <div className="flex flex-wrap items-center gap-2">
+                    <div className="text-sm font-extrabold text-indigo-900">
+                      Kling 6-Shot Multi-Scene
+                    </div>
+
+                    <span className="rounded-full bg-white px-2 py-0.5 text-[11px] font-bold text-indigo-700 ring-1 ring-indigo-200">
+                      Kling 3.0 Pro / Standard
+                    </span>
+
+                    <span className="rounded-full bg-green-100 px-2 py-0.5 text-[11px] font-extrabold text-green-700 ring-1 ring-green-200">
+                      ✓ 6 shots — 1 prompt
+                    </span>
+
+                    <span className="rounded-full bg-amber-100 px-2 py-0.5 text-[11px] font-extrabold text-amber-800 ring-1 ring-amber-200">
+                      Current WSTV workflow
+                    </span>
+                  </div>
+                </div>
+
+                <p className="mb-3 text-xs leading-relaxed text-indigo-800">
+                  <span className="font-extrabold">WSTV multi-shot flow:</span>{" "}
+                  Opening tension → Pressure hold → Profile pressure → Tension
+                  reaction cut → Action pressure wide → Resolved tension wide.
+                  एकै prompt ले 6 cinematic shots generate गर्छ — subject
+                  identity सबै shots मा locked हुन्छ, and the opening starts
+                  with clearer full-subject readability.
+                </p>
+
+                <pre className="max-h-[520px] overflow-auto whitespace-pre-wrap rounded-xl border border-indigo-200 bg-white p-3 text-xs leading-relaxed text-gray-900">
+                  {String(data.klingSixShot)}
+                </pre>
+
+                <div className="mt-3 flex flex-wrap gap-2">
+                  <button
+                    type="button"
+                    onClick={() => onCopy(String(data.klingSixShot))}
+                    className="rounded-xl bg-indigo-700 px-4 py-2 text-sm font-extrabold text-white hover:bg-indigo-800 active:scale-[0.98]"
+                  >
+                    📋 Copy Full 6-Shot Prompt
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() =>
+                      onCopy(extractKlingPromptBody(String(data.klingSixShot)))
+                    }
+                    className="rounded-xl border border-indigo-300 bg-white px-4 py-2 text-sm font-extrabold text-indigo-700 hover:bg-indigo-50 active:scale-[0.98]"
+                  >
+                    📋 Copy BODY Only
+                  </button>
+                </div>
+              </div>
+            )}
+        </div>
       )}
-      {data.twoPartViralOverview && (
-  <>
-    <SectionLabel label="Two-Part Viral Preset" />
 
-    <Card
-      title="🎯 Two-Part Viral Overview"
-      value={data.twoPartViralOverview}
-      onCopy={onCopy}
-      accent="border-l-rose-500"
-    />
+      {activeWorkspace === "publishing" && (
+        <div className="space-y-6">
+          <div className="rounded-2xl border border-emerald-200 bg-emerald-50 p-4 text-sm text-emerald-900 shadow-sm">
+            Posting ready assets यहाँ राखिएको छ: hook, caption, voiceover, CTA,
+            hashtags, platform pack, अनि posting time guidance.
+          </div>
 
-    {data.twoPartWorkflowGuide && (
-      <Card
-        title="🧭 Two-Part Workflow Guide"
-        value={data.twoPartWorkflowGuide}
-        onCopy={onCopy}
-        accent="border-l-pink-500"
-      />
-    )}
+          <SectionLabel label="Hooks & Copy" />
 
-    <Card
-      title="🔥 Part 1 — Hook + Collision Cliffhanger"
-      value={[
-        data.twoPartPart1Hook ? `Hook:\n${data.twoPartPart1Hook}` : "",
-        data.twoPartPart1Caption ? `Caption:\n${data.twoPartPart1Caption}` : "",
-        data.twoPartPart1Draft ? `Draft Prompt:\n${data.twoPartPart1Draft}` : "",
-        data.twoPartPart1Final ? `Final Prompt:\n${data.twoPartPart1Final}` : "",
-      ]
-        .filter(Boolean)
-        .join("\n\n")}
-      onCopy={onCopy}
-      accent="border-l-orange-500"
-    />
+          {data.hook2026 && data.hook2026.length > 0 ? (
+            <Hook2026Panel
+              hooks={data.hook2026}
+              oldHook={data.hook}
+              onCopy={onCopy}
+              recommendedIndex={data.recommendedHookIndex}
+            />
+          ) : data.hook ? (
+            <Card
+              title="🔥 Hook"
+              value={data.hook}
+              onCopy={onCopy}
+              accent="border-l-orange-500"
+            />
+          ) : null}
 
-    <Card
-      title="👑 Part 2 — Payoff + Winner Walk"
-      value={[
-        data.twoPartPart2Hook ? `Hook:\n${data.twoPartPart2Hook}` : "",
-        data.twoPartPart2Caption ? `Caption:\n${data.twoPartPart2Caption}` : "",
-        data.twoPartPart2Draft ? `Draft Prompt:\n${data.twoPartPart2Draft}` : "",
-        data.twoPartPart2Final ? `Final Prompt:\n${data.twoPartPart2Final}` : "",
-      ]
-        .filter(Boolean)
-        .join("\n\n")}
-      onCopy={onCopy}
-      accent="border-l-amber-500"
-    />
-  </>
-)}
+          {data.caption2026 ? (
+            <Caption2026Panel
+              caption2026={data.caption2026}
+              captionOld={data.caption}
+              onCopy={onCopy}
+            />
+          ) : data.caption ? (
+            <Card
+              title="📝 Caption"
+              value={data.caption}
+              onCopy={onCopy}
+              accent="border-l-emerald-500"
+            />
+          ) : null}
 
-      {data.capCutScript && (
-        <>
-          <SectionLabel label="CapCut Script" />
-          <CapCutScriptPanel script={data.capCutScript} onCopy={onCopy} />
-        </>
+          {data.voiceoverLine && (
+            <Card
+              title="🎙️ Voiceover"
+              value={data.voiceoverLine}
+              onCopy={onCopy}
+              accent="border-l-indigo-500"
+              aiEnhanced={data.aiEnhanced}
+            />
+          )}
+
+          {data.cta && <Card title="📢 CTA" value={data.cta} onCopy={onCopy} />}
+
+          {data.hashtags && (
+            <Card title="# Hashtags" value={data.hashtags} onCopy={onCopy} />
+          )}
+
+          {data.platformPack && (
+            <>
+              <SectionLabel label="Platform Packs" />
+              <PlatformPackPanel pack={data.platformPack} onCopy={onCopy} />
+            </>
+          )}
+
+          <SectionLabel label="Posting Strategy" />
+          <PostingTimesPanel />
+        </div>
       )}
 
-      {data.animalBehavior && (
-        <>
-          <SectionLabel label="Animal Behavior" />
-         <AnimalBehaviorPanel
-  behavior={data.animalBehavior}
-  predator={data.predatorName ?? "Subject"}
-  onCopy={onCopy}
-/>
-        </>
-      )}
+      {activeWorkspace === "advanced" && (
+        <div className="space-y-6">
+          <div className="rounded-2xl border border-indigo-200 bg-indigo-50 p-4 text-sm text-indigo-900 shadow-sm">
+            Advanced workspace research, polish, and packaging ko लागि हो.
+            Daily execution tab हरू भन्दा अलग राखिएको छ so main workflow light
+            रहोस्.
+          </div>
 
-      {data.soundDesignPack && (
-        <>
-          <SectionLabel label="Sound Design" />
-          <SoundDesignPanel pack={data.soundDesignPack} onCopy={onCopy} />
-        </>
-      )}
+          {data.fiveShotCinematic && data.fiveShotViral && (
+            <>
+              <SectionLabel label="5-Shot Pipeline" />
+              <FiveShotPanel
+                cinematic={data.fiveShotCinematic}
+                viral={data.fiveShotViral}
+                onCopy={onCopy}
+              />
+            </>
+          )}
 
-      <SectionLabel label="Posting Strategy" />
-      <PostingTimesPanel />
+          {data.watchTimeReport && (
+            <>
+              <SectionLabel label="Watch Time & Earnings" />
+              <WatchTimePanel report={data.watchTimeReport} />
+            </>
+          )}
+
+          {data.twoPartViralOverview && (
+            <>
+              <SectionLabel label="Two-Part Viral Preset" />
+
+              <Card
+                title="🎯 Two-Part Viral Overview"
+                value={data.twoPartViralOverview}
+                onCopy={onCopy}
+                accent="border-l-rose-500"
+              />
+
+              {data.twoPartWorkflowGuide && (
+                <Card
+                  title="🧭 Two-Part Workflow Guide"
+                  value={data.twoPartWorkflowGuide}
+                  onCopy={onCopy}
+                  accent="border-l-pink-500"
+                />
+              )}
+
+              <Card
+                title="🔥 Part 1 — Hook + Collision Cliffhanger"
+                value={[
+                  data.twoPartPart1Hook ? `Hook:\n${data.twoPartPart1Hook}` : "",
+                  data.twoPartPart1Caption
+                    ? `Caption:\n${data.twoPartPart1Caption}`
+                    : "",
+                  data.twoPartPart1Draft
+                    ? `Draft Prompt:\n${data.twoPartPart1Draft}`
+                    : "",
+                  data.twoPartPart1Final
+                    ? `Final Prompt:\n${data.twoPartPart1Final}`
+                    : "",
+                ]
+                  .filter(Boolean)
+                  .join("\n\n")}
+                onCopy={onCopy}
+                accent="border-l-orange-500"
+              />
+
+              <Card
+                title="👑 Part 2 — Payoff + Winner Walk"
+                value={[
+                  data.twoPartPart2Hook ? `Hook:\n${data.twoPartPart2Hook}` : "",
+                  data.twoPartPart2Caption
+                    ? `Caption:\n${data.twoPartPart2Caption}`
+                    : "",
+                  data.twoPartPart2Draft
+                    ? `Draft Prompt:\n${data.twoPartPart2Draft}`
+                    : "",
+                  data.twoPartPart2Final
+                    ? `Final Prompt:\n${data.twoPartPart2Final}`
+                    : "",
+                ]
+                  .filter(Boolean)
+                  .join("\n\n")}
+                onCopy={onCopy}
+                accent="border-l-amber-500"
+              />
+            </>
+          )}
+
+          {data.capCutScript && (
+            <>
+              <SectionLabel label="CapCut Script" />
+              <CapCutScriptPanel script={data.capCutScript} onCopy={onCopy} />
+            </>
+          )}
+
+          {data.animalBehavior && (
+            <>
+              <SectionLabel label="Animal Behavior" />
+              <AnimalBehaviorPanel
+                behavior={data.animalBehavior}
+                predator={data.predatorName ?? "Subject"}
+                onCopy={onCopy}
+              />
+            </>
+          )}
+
+          {data.soundDesignPack && (
+            <>
+              <SectionLabel label="Sound Design" />
+              <SoundDesignPanel pack={data.soundDesignPack} onCopy={onCopy} />
+            </>
+          )}
+        </div>
+      )}
     </div>
   );
 }
