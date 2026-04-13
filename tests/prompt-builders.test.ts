@@ -3,6 +3,7 @@ import {
   buildImagePrompt,
   buildRunwayShots,
   buildKlingShots,
+  buildSeedanceShots,
   buildKlingNative15s,
   buildKlingSixShot,
   buildCapCutPlan,
@@ -158,7 +159,7 @@ describe("Step 6 — One-action hard gate (Runway + Kling)", () => {
     expect(t).not.toMatch(/\broll\b/);
   };
 
-  it("Runway Shot2/Shot3: no bite/takedown/roll when singleActionRule ON", () => {
+  it("Runway Shot2/Shot3/Shot4: no bite/takedown/roll when singleActionRule ON", () => {
     const shots = buildRunwayShots(
       base.predator,
       base.prey,
@@ -173,9 +174,10 @@ describe("Step 6 — One-action hard gate (Runway + Kling)", () => {
     );
     banned(shots.shot2);
     banned(shots.shot3);
+    banned(shots.shot4);
   });
 
-  it("Kling Shot2/Shot3: no bite/takedown/roll when singleActionRule ON", () => {
+  it("Kling Shot2/Shot3/Shot4: no bite/takedown/roll when singleActionRule ON", () => {
     const shots = buildKlingShots(
       base.predator,
       base.prey,
@@ -190,6 +192,7 @@ describe("Step 6 — One-action hard gate (Runway + Kling)", () => {
     );
     banned(shots.shot2);
     banned(shots.shot3);
+    banned(shots.shot4);
   });
 
   it("KlingNative15s: Shot2 should not include bite/takedown/roll when singleActionRule ON", () => {
@@ -207,6 +210,74 @@ describe("Step 6 — One-action hard gate (Runway + Kling)", () => {
     );
     // Native prompt text मा पनि banned शब्द आउनु हुँदैन
     banned(out);
+  });
+
+  it("Seedance Shot2/Shot3/Shot4: no bite/takedown/roll when singleActionRule ON", () => {
+    const shots = buildSeedanceShots(
+      base.predator,
+      base.prey,
+      base.env,
+      base.arc,
+      base.weather,
+      base.emotionalTone,
+      base.animalVibe,
+      base.sceneDesc,
+      quality
+    );
+    banned(shots.shot2);
+    banned(shots.shot3);
+    banned(shots.shot4);
+  });
+});
+
+describe("Seedance prompt builder", () => {
+  const quality = {
+    realismMode: "Reference Locked",
+    motionOnlyI2V: true,
+    referenceLock: true,
+    singleActionRule: true,
+    microMotion: true,
+    heroVeo: false,
+  } as const;
+
+  it("keeps official Seedance guidance visible in the prompt pack", () => {
+    const shots = buildSeedanceShots(
+      "Mountain Lion",
+      "White-tailed Deer",
+      "Rocky Mountain meadow",
+      "Ambush attack",
+      "Golden Hour",
+      "Raw Tension",
+      "BBC Earth Documentary",
+      "A tense opening in tall grass.",
+      quality
+    );
+
+    expect(shots.shot1).toContain("Official Seedance 2.0 rule");
+    expect(shots.shot1).toContain("negative prompts");
+    expect(shots.shot2).toContain("═══ PASTE-READY SEEDANCE PROMPT");
+    expect(shots.shot4).toContain("Suggested duration: 5 seconds.");
+    expect(shots.workflowGuide).toContain("subject movement + background movement + camera movement");
+    expect(shots.workflowGuide).toContain("4 separate video shots");
+    expect(shots.workflowGuide).toContain("Cut to");
+  });
+
+  it("builds a combined multi-shot prompt with explicit Cut to transitions", () => {
+    const shots = buildSeedanceShots(
+      "Wolf",
+      "Elk",
+      "Forest clearing",
+      "Pack hunting strategy",
+      "Overcast",
+      "Raw Tension",
+      "National Geographic Wild",
+      "Fast pressure through the trees.",
+      quality
+    );
+
+    expect(shots.multiShotPrompt).toContain("SEEDANCE 4-SHOT CONTINUITY PROMPT");
+    expect(shots.multiShotPrompt).toContain("Shot 4: resolved tension");
+    expect(shots.multiShotPrompt).toMatch(/\bCut to\b/g);
   });
 });
 describe("Step 7 — Opening readability and tension clarity", () => {
@@ -373,6 +444,15 @@ describe("Step 7C — supporting prompt helpers keep readability language", () =
     );
   }
 
+  function extractKlingSixShotPasteBlock(out: string): string {
+    return (
+      out
+        .split("═══ PASTE INTO KLING — copy this block only ═══")[1]
+        ?.split("─── FULL BREAKDOWN — reference only, do NOT paste into Kling ───")[0]
+        ?.trim() ?? ""
+    );
+  }
+
   function extractRunwayPasteBlock(out: string): string {
     return (
       out
@@ -439,6 +519,28 @@ describe("Step 7C — supporting prompt helpers keep readability language", () =
     expect(firstSentence).toMatch(/Rocky Mountain meadow/i);
   });
 
+  it("NB2 prompt preserves explicit user lighting direction", () => {
+    const out = buildImagePrompt(
+      nb2Args.predator,
+      nb2Args.prey,
+      nb2Args.env,
+      nb2Args.arc,
+      "hard side light with a cool rim light",
+      nb2Args.cameraGear,
+      nb2Args.texture,
+      nb2Args.depthMode,
+      nb2Args.weather,
+      nb2Args.emotionalTone,
+      nb2Args.animalVibe,
+      nb2Args.sceneDesc,
+      undefined,
+      "NANO_BANANA_2"
+    );
+
+    expect(out).toMatch(/hard side light/i);
+    expect(out).toMatch(/cool rim light/i);
+  });
+
   it("Kling native paste-ready block is narrative style without field labels", () => {
     const out = buildKlingNative15s(
       klingBase.predator,
@@ -480,7 +582,45 @@ describe("Step 7C — supporting prompt helpers keep readability language", () =
     expect(pasteBlock.length).toBeLessThanOrEqual(2500);
   });
 
-  it("Runway paste-ready Shot 1/2/3 blocks stay under 120 words", () => {
+  it("Kling native paste-ready block excludes validator metadata", () => {
+    const out = buildKlingNative15s(
+      klingBase.predator,
+      klingBase.prey,
+      klingBase.env,
+      klingBase.arc,
+      klingBase.weather,
+      "Kling 3.0 Pro",
+      klingBase.emotionalTone,
+      klingBase.animalVibe,
+      klingBase.sceneDesc,
+      quality
+    );
+
+    const pasteBlock = extractKlingPasteBlock(out);
+    expect(pasteBlock).not.toContain("Prompt length OK:");
+    expect(pasteBlock).not.toContain("PROMPT TOO LONG:");
+  });
+
+  it("Kling 6-shot paste-ready block excludes validator metadata", () => {
+    const out = buildKlingSixShot(
+      klingBase.predator,
+      klingBase.prey,
+      klingBase.env,
+      klingBase.arc,
+      klingBase.weather,
+      "Kling 3.0 Pro",
+      klingBase.emotionalTone,
+      klingBase.animalVibe,
+      klingBase.sceneDesc,
+      quality
+    );
+
+    const pasteBlock = extractKlingSixShotPasteBlock(out);
+    expect(pasteBlock).not.toContain("Prompt length OK:");
+    expect(pasteBlock).not.toContain("PROMPT TOO LONG:");
+  });
+
+  it("Runway paste-ready Shot 1/2/3/4 blocks stay under 120 words", () => {
     const shots = buildRunwayShots(
       klingBase.predator,
       klingBase.prey,
@@ -497,10 +637,13 @@ describe("Step 7C — supporting prompt helpers keep readability language", () =
     const shot1Paste = extractRunwayPasteBlock(shots.shot1);
     const shot2Paste = extractRunwayPasteBlock(shots.shot2);
     const shot3Paste = extractRunwayPasteBlock(shots.shot3);
+    const shot4Paste = extractRunwayPasteBlock(shots.shot4);
 
     expect(wordCount(shot1Paste)).toBeLessThanOrEqual(120);
     expect(wordCount(shot2Paste)).toBeLessThanOrEqual(120);
     expect(wordCount(shot3Paste)).toBeLessThanOrEqual(120);
+    expect(wordCount(shot4Paste)).toBeLessThanOrEqual(120);
+    expect(shot1Paste).not.toContain("Keep both subjects");
   });
 });
 
@@ -583,7 +726,7 @@ describe("Step 7C — supporting prompt helpers keep readability language", () =
       expect(nb2).not.toMatch(/\bPortra\b/i);
     });
 
-    it("Kling 3-shot paste-ready block stays narrative instead of reverting to field-list labels", () => {
+    it("Kling 4-shot paste-ready block stays narrative instead of reverting to field-list labels", () => {
       const shots = buildKlingShots(
         base.predator,
         base.prey,
@@ -601,7 +744,7 @@ describe("Step 7C — supporting prompt helpers keep readability language", () =
 
       expect(pasteBlock.length).toBeGreaterThan(0);
       expect(pasteBlock).toContain("Wide opening hold with a subtle push-in.");
-      expect(pasteBlock).toContain("Both subjects fully readable from frame one");
+      expect(pasteBlock).toContain("Both subjects are fully readable from frame one");
       expect(pasteBlock).not.toContain("Characters:");
       expect(pasteBlock).not.toContain("Action:");
       expect(pasteBlock).not.toContain("Lighting & Location:");
@@ -631,6 +774,9 @@ describe("Step 7C — supporting prompt helpers keep readability language", () =
       expect(shots.shot3).toContain(
         "Use Shot 2 last frame as I2V input only if it remains a clean full-body handoff frame"
       );
+      expect(shots.shot4).toContain(
+        "Use Shot 3 last frame as I2V input only if it remains a clean full-body handoff frame"
+      );
     });
 
     it("Kling shot cards keep the clean full-body handoff rule wording", () => {
@@ -653,6 +799,9 @@ describe("Step 7C — supporting prompt helpers keep readability language", () =
       expect(shots.shot3).toContain(
         "Use Shot 2 last frame only if it remains a clean full-body handoff frame"
       );
+      expect(shots.shot4).toContain(
+        "Use Shot 3 last frame only if it remains a clean full-body handoff frame"
+      );
     });
 
     it("Clip chaining keeps the clean full-body handoff rule wording", () => {
@@ -663,6 +812,23 @@ describe("Step 7C — supporting prompt helpers keep readability language", () =
       expect(out).toContain(
         "Use the previous last frame only when it remains a clean full-body handoff frame"
       );
+    });
+
+    it("Seedance multi-shot keeps subject capitalization after Cut to for multi-word animal names", () => {
+      const shots = buildSeedanceShots(
+        "Mountain Lion",
+        "Bighorn Sheep",
+        "Rocky Mountain ledge",
+        "Ambush attack",
+        "Golden Hour",
+        "Raw Tension",
+        "BBC Earth Documentary",
+        "Both animals are visible immediately with strong readability from frame one.",
+        quality
+      );
+
+      expect(shots.multiShotPrompt).toContain("Cut to Mountain Lion");
+      expect(shots.multiShotPrompt).not.toContain("Cut to mountain Lion");
     });
   });
 describe("Step 9 — Kling single-shot paste-ready narrative format", () => {
@@ -709,7 +875,7 @@ describe("Step 9 — Kling single-shot paste-ready narrative format", () => {
       quality
     );
 
-    for (const shot of [shots.shot1, shots.shot2, shots.shot3]) {
+    for (const shot of [shots.shot1, shots.shot2, shots.shot3, shots.shot4]) {
       const pasteBlock = extractKlingSinglePasteBlock(shot);
       expect(pasteBlock.length).toBeGreaterThan(0);
       expect(pasteBlock).not.toContain("Shot:");
@@ -737,10 +903,12 @@ describe("Step 9 — Kling single-shot paste-ready narrative format", () => {
     const paste1 = extractKlingSinglePasteBlock(shots.shot1);
     const paste2 = extractKlingSinglePasteBlock(shots.shot2);
     const paste3 = extractKlingSinglePasteBlock(shots.shot3);
+    const paste4 = extractKlingSinglePasteBlock(shots.shot4);
 
     expect(paste1).toContain("Wide opening hold");
-    expect(paste2).toContain("Fixed wide shot");
-    expect(paste3).toContain("Locked wide shot");
+    expect(paste2).toContain("Wide pressure-build tracking shot");
+    expect(paste3).toContain("Wide peak-action read");
+    expect(paste4).toContain("Locked wide aftermath hold");
   });
 
     it("Kling single-shot paste blocks still include motion intensity", () => {

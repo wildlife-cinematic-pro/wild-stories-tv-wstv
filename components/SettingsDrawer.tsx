@@ -6,15 +6,33 @@ import React, { useEffect, useMemo, useRef, useState } from "react";
 type ThemeMode = "light" | "dark";
 type FontSize = "sm" | "md" | "lg";
 type Density = "compact" | "comfortable";
+type MotionMode = "system" | "smooth" | "reduced";
+type ContrastMode = "normal" | "high";
+type RadiusMode = "sharp" | "rounded" | "soft";
+type PageWidthMode = "standard" | "wide" | "full";
 
 type UISettings = {
   theme: ThemeMode;
   accent: string;
   fontSize: FontSize;
   density: Density;
+  motion: MotionMode;
+  contrast: ContrastMode;
+  radius: RadiusMode;
+  pageWidth: PageWidthMode;
 };
 
-const STORAGE_KEY = "ui-settings-v1";
+const STORAGE_KEY = "ui-settings-v2";
+const DEFAULT_SETTINGS: UISettings = {
+  theme: "dark",
+  accent: "#6366f1",
+  fontSize: "md",
+  density: "comfortable",
+  motion: "system",
+  contrast: "normal",
+  radius: "rounded",
+  pageWidth: "standard",
+};
 
 const ACCENTS: Array<{ name: string; value: string }> = [
   { name: "Indigo", value: "#6366f1" },
@@ -64,7 +82,15 @@ function safeLoadSettings(): UISettings | null {
         ? parsed.accent.trim()
         : "#6366f1";
 
-    return { theme, accent, fontSize, density };
+    const motion: MotionMode =
+      parsed.motion === "smooth" || parsed.motion === "reduced" ? parsed.motion : "system";
+    const contrast: ContrastMode = parsed.contrast === "high" ? "high" : "normal";
+    const radius: RadiusMode =
+      parsed.radius === "sharp" || parsed.radius === "soft" ? parsed.radius : "rounded";
+    const pageWidth: PageWidthMode =
+      parsed.pageWidth === "wide" || parsed.pageWidth === "full" ? parsed.pageWidth : "standard";
+
+    return { theme, accent, fontSize, density, motion, contrast, radius, pageWidth };
   } catch {
     return null;
   }
@@ -78,11 +104,22 @@ function safeSaveSettings(settings: UISettings) {
   }
 }
 
-function applySettingsToDOM(settings: UISettings) {
+function applySettingsToDOM(settings: UISettings, systemReduceMotion = false) {
   const root = document.documentElement;
 
   root.dataset.theme = settings.theme;
   root.dataset.density = settings.density;
+  root.dataset.contrast = settings.contrast;
+  root.dataset.radius = settings.radius;
+  root.dataset.pageWidth = settings.pageWidth;
+
+  const effectiveMotion =
+    settings.motion === "system"
+      ? systemReduceMotion
+        ? "reduced"
+        : "smooth"
+      : settings.motion;
+  root.dataset.motion = effectiveMotion;
 
   const fontPx = settings.fontSize === "sm" ? 14 : settings.fontSize === "lg" ? 18 : 16;
   root.style.setProperty("--base-font-size", `${fontPx}px`);
@@ -121,12 +158,7 @@ export default function SettingsDrawer() {
   const [open, setOpen] = useState(false);
   const [reduceMotion, setReduceMotion] = useState(false);
 
-  const [settings, setSettings] = useState<UISettings>(() => ({
-    theme: "dark",
-    accent: "#6366f1",
-    fontSize: "md",
-    density: "comfortable",
-  }));
+  const [settings, setSettings] = useState<UISettings>(() => DEFAULT_SETTINGS);
 
   const triggerRef = useRef<HTMLButtonElement | null>(null);
   const panelRef = useRef<HTMLDivElement | null>(null);
@@ -141,6 +173,13 @@ export default function SettingsDrawer() {
     return rgb ? `${rgb[0]} ${rgb[1]} ${rgb[2]}` : "99 102 241";
   }, [settings.accent]);
 
+  const effectiveMotionLabel = useMemo(() => {
+    if (settings.motion === "system") {
+      return reduceMotion ? "System prefers reduced motion" : "System allows smooth motion";
+    }
+    return settings.motion === "reduced" ? "Reduced motion forced" : "Smooth motion forced";
+  }, [reduceMotion, settings.motion]);
+
   useEffect(() => {
     const mq = window.matchMedia("(prefers-reduced-motion: reduce)");
     const apply = () => setReduceMotion(mq.matches);
@@ -153,17 +192,17 @@ export default function SettingsDrawer() {
     const loaded = safeLoadSettings();
     if (loaded) {
       setSettings(loaded);
-      applySettingsToDOM(loaded);
+      applySettingsToDOM(loaded, reduceMotion);
     } else {
-      applySettingsToDOM(settings);
+      applySettingsToDOM(settings, reduceMotion);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   useEffect(() => {
-    applySettingsToDOM(settings);
+    applySettingsToDOM(settings, reduceMotion);
     safeSaveSettings(settings);
-  }, [settings]);
+  }, [reduceMotion, settings]);
 
   useEffect(() => {
     if (!open) return;
@@ -225,6 +264,11 @@ export default function SettingsDrawer() {
   const setAccent = (accent: string) => setSettings((s) => ({ ...s, accent }));
   const setFontSize = (fontSize: FontSize) => setSettings((s) => ({ ...s, fontSize }));
   const setDensity = (density: Density) => setSettings((s) => ({ ...s, density }));
+  const setMotion = (motion: MotionMode) => setSettings((s) => ({ ...s, motion }));
+  const setContrast = (contrast: ContrastMode) => setSettings((s) => ({ ...s, contrast }));
+  const setRadius = (radius: RadiusMode) => setSettings((s) => ({ ...s, radius }));
+  const setPageWidth = (pageWidth: PageWidthMode) => setSettings((s) => ({ ...s, pageWidth }));
+  const resetSettings = () => setSettings(DEFAULT_SETTINGS);
 
   const close = () => setOpen(false);
   const toggle = () => setOpen((v) => !v);
@@ -338,7 +382,7 @@ export default function SettingsDrawer() {
           onPointerUp={onPanelPointerUp}
           onPointerCancel={onPanelPointerCancel}
           className={[
-            "absolute left-0 top-0 h-full w-[320px] max-w-[90vw]",
+            "absolute left-0 top-0 flex h-full w-[360px] max-w-[92vw] flex-col",
             "border-r border-black/10 bg-white text-slate-900 shadow-2xl",
             "dark:border-white/10 dark:bg-slate-950 dark:text-slate-50",
             reduceMotion ? "" : "transition-transform duration-300 ease-out",
@@ -362,7 +406,7 @@ export default function SettingsDrawer() {
             </button>
           </div>
 
-          <div className="space-y-6 px-4 py-4">
+          <div className="flex-1 space-y-6 overflow-y-auto px-4 py-4">
             <section className="space-y-2">
               <div className="text-sm font-medium">Theme</div>
               <div className="flex gap-2">
@@ -481,6 +525,132 @@ export default function SettingsDrawer() {
               <div className="text-xs opacity-70">
                 Compact mode also tightens <span className="font-mono">space-y-*</span> and{" "}
                 <span className="font-mono">gap-*</span> via CSS vars.
+              </div>
+            </section>
+
+            <section className="space-y-2">
+              <div className="text-sm font-medium">Motion</div>
+              <div className="grid grid-cols-3 gap-2">
+                {([
+                  ["system", "System"],
+                  ["smooth", "Smooth"],
+                  ["reduced", "Reduced"],
+                ] as const).map(([value, label]) => (
+                  <button
+                    key={value}
+                    type="button"
+                    onClick={() => setMotion(value)}
+                    className={[
+                      "rounded-lg border px-3 py-2 text-sm",
+                      settings.motion === value
+                        ? "border-[rgb(var(--accent-rgb))] bg-[rgb(var(--accent-rgb)/0.12)]"
+                        : "border-black/10 hover:bg-black/5 dark:border-white/10 dark:hover:bg-white/10",
+                    ].join(" ")}
+                  >
+                    {label}
+                  </button>
+                ))}
+              </div>
+              <div className="text-xs opacity-70">{effectiveMotionLabel}</div>
+            </section>
+
+            <section className="space-y-2">
+              <div className="text-sm font-medium">Contrast</div>
+              <div className="flex gap-2">
+                {([
+                  ["normal", "Normal"],
+                  ["high", "High"],
+                ] as const).map(([value, label]) => (
+                  <button
+                    key={value}
+                    type="button"
+                    onClick={() => setContrast(value)}
+                    className={[
+                      "flex-1 rounded-lg border px-3 py-2 text-sm",
+                      settings.contrast === value
+                        ? "border-[rgb(var(--accent-rgb))] bg-[rgb(var(--accent-rgb)/0.12)]"
+                        : "border-black/10 hover:bg-black/5 dark:border-white/10 dark:hover:bg-white/10",
+                    ].join(" ")}
+                  >
+                    {label}
+                  </button>
+                ))}
+              </div>
+            </section>
+
+            <section className="space-y-2">
+              <div className="text-sm font-medium">Corners</div>
+              <div className="grid grid-cols-3 gap-2">
+                {([
+                  ["sharp", "Sharp"],
+                  ["rounded", "Rounded"],
+                  ["soft", "Soft"],
+                ] as const).map(([value, label]) => (
+                  <button
+                    key={value}
+                    type="button"
+                    onClick={() => setRadius(value)}
+                    className={[
+                      "rounded-lg border px-3 py-2 text-sm",
+                      settings.radius === value
+                        ? "border-[rgb(var(--accent-rgb))] bg-[rgb(var(--accent-rgb)/0.12)]"
+                        : "border-black/10 hover:bg-black/5 dark:border-white/10 dark:hover:bg-white/10",
+                    ].join(" ")}
+                  >
+                    {label}
+                  </button>
+                ))}
+              </div>
+            </section>
+
+            <section className="space-y-2">
+              <div className="text-sm font-medium">Page width</div>
+              <div className="grid grid-cols-3 gap-2">
+                {([
+                  ["standard", "Standard"],
+                  ["wide", "Wide"],
+                  ["full", "Full"],
+                ] as const).map(([value, label]) => (
+                  <button
+                    key={value}
+                    type="button"
+                    onClick={() => setPageWidth(value)}
+                    className={[
+                      "rounded-lg border px-3 py-2 text-sm",
+                      settings.pageWidth === value
+                        ? "border-[rgb(var(--accent-rgb))] bg-[rgb(var(--accent-rgb)/0.12)]"
+                        : "border-black/10 hover:bg-black/5 dark:border-white/10 dark:hover:bg-white/10",
+                    ].join(" ")}
+                  >
+                    {label}
+                  </button>
+                ))}
+              </div>
+              <div className="text-xs opacity-70">
+                Wide and Full make the localhost page use more horizontal space.
+              </div>
+            </section>
+
+            <section className="space-y-2">
+              <div className="text-sm font-medium">Quick actions</div>
+              <div className="grid grid-cols-2 gap-2">
+                <button
+                  type="button"
+                  onClick={resetSettings}
+                  className="rounded-lg border border-black/10 px-3 py-2 text-sm hover:bg-black/5 dark:border-white/10 dark:hover:bg-white/10"
+                >
+                  Reset UI
+                </button>
+                <button
+                  type="button"
+                  onClick={close}
+                  className="rounded-lg border border-black/10 px-3 py-2 text-sm hover:bg-black/5 dark:border-white/10 dark:hover:bg-white/10"
+                >
+                  Close Drawer
+                </button>
+              </div>
+              <div className="rounded-xl border border-black/10 bg-black/[0.03] p-3 text-xs opacity-80 dark:border-white/10 dark:bg-white/[0.04]">
+                Active profile: {settings.theme}, {settings.fontSize}, {settings.density}, {settings.motion}, {settings.contrast}, {settings.radius}, {settings.pageWidth}
               </div>
             </section>
           </div>

@@ -315,7 +315,7 @@ export async function POST(req: Request) {
       "Rules:",
       "- Keep outputs practical for generating 'same look' prompts.",
       "- driftRisk: HIGH if markings/identity likely to drift (busy patterns / low light / motion blur).",
-      "- suggestedDepth: one of: 'Cinematic Blur' | 'Balanced Depth' | 'Deep Focus'.",
+      "- suggestedDepth: one of: 'Cinematic Blur' | 'Balanced Depth' | 'Detailed Background'.",
       "- suggestedArc: short arc label like 'Ambush attack', 'Chase and takedown', 'Standoff', etc.",
       "- imagePromptInject: concise look-lock text (animal identity + environment + lighting).",
       "- videoMotionInject: concise motion-only line (camera + subject motion + env micro-motion).",

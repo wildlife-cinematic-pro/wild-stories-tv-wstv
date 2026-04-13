@@ -59,7 +59,8 @@ import {
 } from "@/lib/model-specs";
 
 import {
-    buildImagePrompt,
+  buildImagePrompt,
+  buildSeedanceShots,
   buildShotImagePlan,
   buildRunwayShots,
   buildKlingShots,
@@ -184,6 +185,59 @@ function normalizePreset(input: unknown, fallback: NormalizedPreset): Normalized
   };
 }
 
+function normalizeWeatherSuggestion(value: string | undefined): Weather | null {
+  if (!value) return null;
+  if ((weatherOptions as readonly string[]).includes(value)) return value as Weather;
+
+  const normalized = value.toLowerCase();
+
+  if (normalized.includes("golden") || normalized.includes("sunset")) return "Golden Hour";
+  if (normalized.includes("overcast") || normalized.includes("cloud")) return "Overcast";
+  if (normalized.includes("storm") || normalized.includes("rain") || normalized.includes("thunder")) return "Storm";
+  if (normalized.includes("dawn") || normalized.includes("sunrise")) return "Dawn";
+  if (normalized.includes("midday") || normalized.includes("noon") || normalized.includes("heat")) return "Midday Heat";
+  if (normalized.includes("blizzard") || normalized.includes("whiteout")) return "Winter Blizzard";
+  if (normalized.includes("frozen dusk") || normalized.includes("blue hour")) return "Frozen Dusk";
+  if (normalized.includes("snow") || normalized.includes("winter")) return "Winter Blizzard";
+
+  return null;
+}
+
+function normalizeDepthSuggestion(value: string | undefined): DepthMode | null {
+  if (!value) return null;
+  if ((depthModes as readonly string[]).includes(value)) return value as DepthMode;
+
+  const normalized = value.toLowerCase();
+
+  if (normalized.includes("cinematic blur") || normalized.includes("shallow")) return "Cinematic Blur";
+  if (normalized.includes("balanced")) return "Balanced Depth";
+  if (normalized.includes("deep focus") || normalized.includes("detailed") || normalized.includes("deep")) {
+    return "Detailed Background";
+  }
+
+  return null;
+}
+
+function normalizeArcSuggestion(value: string | undefined): Arc | null {
+  if (!value) return null;
+  if ((arcs as readonly string[]).includes(value)) return value as Arc;
+
+  const normalized = value.toLowerCase();
+
+  if (normalized.includes("ambush")) return "Ambush attack";
+  if (normalized.includes("pack")) return "Pack hunting strategy";
+  if (normalized.includes("escape")) return "Escape from danger";
+  if (normalized.includes("territory") || normalized.includes("dominance")) return "Territory dominance battle";
+  if (normalized.includes("predator") && normalized.includes("fight")) return "Predator vs predator fight";
+  if (normalized.includes("standoff") || normalized.includes("stands ground") || normalized.includes("defender")) {
+    return "Defender stands ground";
+  }
+  if (normalized.includes("giant") || normalized.includes("clash")) return "Giant vs giant clash";
+  if (normalized.includes("chase") || normalized.includes("takedown")) return "Chase and takedown";
+
+  return null;
+}
+
 function StepPill({
   step,
   active,
@@ -300,6 +354,8 @@ export default function Page() {
   const [sceneMode, setSceneMode] = useState<"romanized" | "english">("romanized");
 
   const [mediaAnalysis, setMediaAnalysis] = useState<MediaAnalysisResult | null>(null);
+  const [showWSTVWorkflowDiagram, setShowWSTVWorkflowDiagram] = useState(false);
+  const [showRunwayOfficialWorkflowDiagram, setShowRunwayOfficialWorkflowDiagram] = useState(false);
 
   // STEP 3 (generate)
   const [activeProvider, setActiveProvider] = useState<AIProvider>("none");
@@ -422,6 +478,11 @@ export default function Page() {
     habitat === "Auto"
       ? suggestHabitat(predator, prey, preset.environment)
       : habitatPromptMap[habitat];
+
+  const mediaSuggestedArc = useMemo(
+    () => normalizeArcSuggestion(mediaAnalysis?.suggestedArc),
+    [mediaAnalysis?.suggestedArc]
+  );
 
   // ✅ Quality recommendations (AFTER preset)
   const qualityReco = useMemo(() => {
@@ -574,6 +635,21 @@ export default function Page() {
   }, []);
 
   useEffect(() => {
+    if (!mediaAnalysis) return;
+
+    const nextWeather = normalizeWeatherSuggestion(mediaAnalysis.weather);
+    const nextDepthMode = normalizeDepthSuggestion(mediaAnalysis.suggestedDepth);
+
+    if (nextWeather && weather !== nextWeather) {
+      setWeather(nextWeather);
+    }
+
+    if (nextDepthMode && depthMode !== nextDepthMode) {
+      setDepthMode(nextDepthMode);
+    }
+  }, [mediaAnalysis, weather, depthMode]);
+
+  useEffect(() => {
     if (!preset.prey.length) return;
 
     const nextPrey = preset.prey.includes(prey) ? prey : preset.prey[0];
@@ -583,12 +659,12 @@ export default function Page() {
       return;
     }
 
-    const suggestedArc = suggestArc(predator, nextPrey, preset.defaultArc) as Arc;
+    const suggestedArc = mediaSuggestedArc ?? (suggestArc(predator, nextPrey, preset.defaultArc) as Arc);
 
     if (arc !== suggestedArc) {
       setArc(suggestedArc);
     }
-  }, [predator, prey, arc, preset.prey, preset.defaultArc]);
+  }, [predator, prey, arc, preset.prey, preset.defaultArc, mediaSuggestedArc]);
 
   async function handleGenerate() {
     setIsGenerating(true);
@@ -651,6 +727,18 @@ export default function Page() {
         finalArc,
         weather,
         runwayModel,
+        emotionalTone,
+        animalVibe,
+        sceneInject,
+        quality
+      );
+
+      const seedance = buildSeedanceShots(
+        predator,
+        prey,
+        finalEnvironment,
+        finalArc,
+        weather,
         emotionalTone,
         animalVibe,
         sceneInject,
@@ -781,8 +869,11 @@ export default function Page() {
         voiceoverLine,
         shotImagePlan,
 
-        runwayShots: [runway?.shot1 ?? "", runway?.shot2 ?? "", runway?.shot3 ?? ""],
-        klingShots: [kling?.shot1 ?? "", kling?.shot2 ?? "", kling?.shot3 ?? ""],
+        runwayShots: [runway?.shot1 ?? "", runway?.shot2 ?? "", runway?.shot3 ?? "", runway?.shot4 ?? ""],
+        klingShots: [kling?.shot1 ?? "", kling?.shot2 ?? "", kling?.shot3 ?? "", kling?.shot4 ?? ""],
+        seedanceShots: [seedance.shot1, seedance.shot2, seedance.shot3, seedance.shot4],
+        seedanceMultiShotPrompt: seedance.multiShotPrompt,
+        seedanceWorkflowGuide: seedance.workflowGuide,
 
         klingNative15s,
         klingSixShot,
@@ -809,34 +900,34 @@ export default function Page() {
             why: "Use Image 1 from the master image for the clean first-frame opening.",
           },
           {
-            engine: "RUNWAY",
+            engine: "KLING",
             title: "Shot 2 — Pressure Build",
-            prompt: runway?.shot2 ?? "",
+            prompt: kling?.shot2 ?? "",
             motionStrength,
-            why: "Use Image 2 edited from Shot 1 image to build pressure without identity drift.",
+            why: "Use Image 2 edited from Shot 1 image for a stronger physics-safe pressure build without losing identity.",
           },
           {
             engine: "KLING",
             title: "Shot 3 — Peak Action",
-            prompt: kling?.shot2 ?? "",
+            prompt: kling?.shot3 ?? "",
             motionStrength,
             why: "Use Image 3 edited from Shot 2 image for the strongest full-body action beat.",
           },
           {
             engine: "RUNWAY",
             title: "Shot 4 — Resolved Tension",
-            prompt: runway?.shot3 ?? "",
+            prompt: runway?.shot4 ?? "",
             motionStrength,
             why: "Use Image 4 edited from Shot 3 image for the readable aftermath or final tension hold.",
           },
         ],
-        runwayBundle: [runway?.shot1 ?? "", runway?.shot2 ?? "", runway?.shot3 ?? ""].join(
+        runwayBundle: [runway?.shot1 ?? "", runway?.shot2 ?? "", runway?.shot3 ?? "", runway?.shot4 ?? ""].join(
           "\n\n---\n\n"
         ),
-        klingBundle: [kling?.shot1 ?? "", kling?.shot2 ?? "", kling?.shot3 ?? ""].join(
+        klingBundle: [kling?.shot1 ?? "", kling?.shot2 ?? "", kling?.shot3 ?? "", kling?.shot4 ?? ""].join(
           "\n\n---\n\n"
         ),
-        routingNote: `4-shot routing: Image 1 → Shot 1 Opening Tension (Runway ${runwayModel}) | Image 2 → Shot 2 Pressure Build (Runway ${runwayModel}) | Image 3 → Shot 3 Peak Action (Kling ${klingModel}) | Image 4 → Shot 4 Resolved Tension (Runway ${runwayModel})`,
+        routingNote: `4-shot hybrid routing: Image 1 → Shot 1 Opening Tension (Runway ${runwayModel}) | Image 2 → Shot 2 Pressure Build (Kling ${klingModel}) | Image 3 → Shot 3 Peak Action (Kling ${klingModel}) | Image 4 → Shot 4 Resolved Tension (Runway ${runwayModel})`,
         pipelineStyle: "4-shot",
         fiveShotCinematic,
         fiveShotViral,
@@ -1839,26 +1930,56 @@ export default function Page() {
         </div>
       )}
       <div className="mt-8 space-y-8">
-  <div className="rounded-2xl border border-gray-200 bg-white p-5 shadow-sm">
-    <div className="mb-3 text-xs font-extrabold uppercase tracking-widest text-gray-600">
-      WORKFLOW DIAGRAM
-    </div>
-    <h2 className="mb-4 text-lg font-extrabold text-gray-900">
-      WSTV Custom Workflow
-    </h2>
-    <WSTVWorkflowDiagram />
-  </div>
+        <div className="rounded-2xl border border-gray-200 bg-white p-5 shadow-sm">
+          <div className="mb-4 flex flex-wrap items-start justify-between gap-3">
+            <div>
+              <div className="mb-3 text-xs font-extrabold uppercase tracking-widest text-gray-600">
+                WORKFLOW DIAGRAM
+              </div>
+              <h2 className="text-lg font-extrabold text-gray-900">WSTV Custom Workflow</h2>
+            </div>
+            <button
+              type="button"
+              onClick={() => setShowWSTVWorkflowDiagram((prev) => !prev)}
+              className="rounded-xl border border-gray-300 bg-white px-4 py-2 text-xs font-extrabold text-gray-800 hover:bg-gray-50 active:scale-[0.98]"
+            >
+              {showWSTVWorkflowDiagram ? "Hide Diagram" : "Show Diagram"}
+            </button>
+          </div>
+          {showWSTVWorkflowDiagram ? (
+            <WSTVWorkflowDiagram />
+          ) : (
+            <div className="rounded-xl border border-dashed border-gray-300 bg-gray-50 px-4 py-5 text-sm text-gray-600">
+              Diagram hidden by default. Click &quot;Show Diagram&quot; to open it.
+            </div>
+          )}
+        </div>
 
-  <div className="rounded-2xl border border-gray-200 bg-white p-5 shadow-sm">
-    <div className="mb-3 text-xs font-extrabold uppercase tracking-widest text-gray-600">
-      WORKFLOW DIAGRAM
-    </div>
-    <h2 className="mb-4 text-lg font-extrabold text-gray-900">
-      Runway Official Workflow
-    </h2>
-    <RunwayOfficialWorkflowDiagram />
-  </div>
-</div>
+        <div className="rounded-2xl border border-gray-200 bg-white p-5 shadow-sm">
+          <div className="mb-4 flex flex-wrap items-start justify-between gap-3">
+            <div>
+              <div className="mb-3 text-xs font-extrabold uppercase tracking-widest text-gray-600">
+                WORKFLOW DIAGRAM
+              </div>
+              <h2 className="text-lg font-extrabold text-gray-900">Runway Official Workflow</h2>
+            </div>
+            <button
+              type="button"
+              onClick={() => setShowRunwayOfficialWorkflowDiagram((prev) => !prev)}
+              className="rounded-xl border border-gray-300 bg-white px-4 py-2 text-xs font-extrabold text-gray-800 hover:bg-gray-50 active:scale-[0.98]"
+            >
+              {showRunwayOfficialWorkflowDiagram ? "Hide Diagram" : "Show Diagram"}
+            </button>
+          </div>
+          {showRunwayOfficialWorkflowDiagram ? (
+            <RunwayOfficialWorkflowDiagram />
+          ) : (
+            <div className="rounded-xl border border-dashed border-gray-300 bg-gray-50 px-4 py-5 text-sm text-gray-600">
+              Diagram hidden by default. Click &quot;Show Diagram&quot; to open it.
+            </div>
+          )}
+        </div>
+      </div>
       <SettingsDrawer />
     </main>
   );
