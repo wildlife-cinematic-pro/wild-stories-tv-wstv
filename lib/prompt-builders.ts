@@ -1507,9 +1507,9 @@ export function buildSeedanceShots(
 7. Keep wording simple and direct.
 8. Use clear degree adverbs when motion intensity matters: slowly, sharply, quickly, gently.
 9. If camera movement is described, set the camera to non-fixed.
-10. Default WSTV workflow: generate 4 separate video shots.
+10. Primary WSTV workflow: generate 4 separate Seedance video shots.
 11. Set each individual shot to 5 seconds in the Seedance 2.0 node settings or prompt parameters.
-12. For a combined continuity prompt, connect shots with "Cut to" and describe the new shot after each transition.
+12. Optional combined continuity prompt: connect shots with "Cut to" only when you intentionally want the separate all-in-one reference format. The main production path still runs the 4 separate shots above.
 13. Negative prompts do not work in Seedance 2.0.
 14. Keep motion readable and continuity-safe in ${cleanEnv}, ${cleanWeather}.`);
 
@@ -1578,7 +1578,7 @@ Subject movement: ${formatActionSubject(predator, s3Predator)}. ${prey} ${s3Prey
 Background movement: ${stripBackgroundMovementLead(buildSeedanceBackgroundMotion(habitatMode, micro, "aftermath"))}
 Camera movement: Locked wide aftermath hold with a subtle pull-back.
 Seedance 2.0 settings: Duration 5s | Prompt + First Frame. Fixed or non-fixed camera can work here, but keep the motion instruction explicit and simple.`),
-    multiShotPrompt: finalizePrompt(`SEEDANCE 4-SHOT CONTINUITY PROMPT
+    multiShotPrompt: finalizePrompt(`SEEDANCE PRIMARY 4-SHOT CONTINUITY PROMPT
 ${officialRule}
 ${cameraRule}
 ${qLead}
@@ -1593,7 +1593,7 @@ Shot 1: opening tension
 Shot 2: pressure build
 Shot 3: peak action
 Shot 4: resolved tension
-Use "Cut to" exactly as written so Seedance preserves the shot-to-shot relationship more clearly. For the 5s x 4 workflow, generate each shot separately.`),
+Use "Cut to" exactly as written so Seedance preserves the shot-to-shot relationship more clearly. This combined prompt is optional reference only; for the main 5s x 4 production workflow, generate each shot separately.`),
     workflowGuide,
   };
 }
@@ -2836,7 +2836,10 @@ export function buildClipChaining(predator: string, driftRisk: PredatorInfo["dri
   return finalizePrompt(`CLIP CHAINING — ${predator.toUpperCase()}
 ${riskLine}
 
-═══ RUNWAY GEN-4.5 CHAINING (WSTV Handoff Rule) ═══
+PRIMARY WSTV PATH — Seedance 2.0 4-shot continuity remains the main production workflow.
+SECONDARY PATHS BELOW — use Runway or Kling only when you intentionally switch to an alternate or fallback workflow.
+
+═══ RUNWAY GEN-4.5 CHAINING (OPTIONAL SECONDARY PATH) ═══
 STEP 1 — Generate Shot 1 (Runway I2V) with strong first-frame readability and both subjects clearly readable.
   • If the outgoing final frame is a clean full-body handoff frame, use it as the next I2V input.
   • If readability drops, reuse the master still or manually select a clean continuity frame instead.
@@ -2845,7 +2848,7 @@ STEP 3 — Chain Shot 3 the same way. Keep peak action readable and spacing clea
 STEP 4 — Chain Shot 4 with the cleanest handoff source available. End on a readable final hold.
 STEP 5 — Combine clips in a video editor. Remove repeated handoff frames if needed.
 
-═══ KLING 3.0 CHAINING (OPTIONAL ALT / FALLBACK) ═══
+═══ KLING 3.0 CHAINING (OPTIONAL SECONDARY PATH) ═══
 STEP 1 — Generate Shot 1 with clear opening tension and readable full-subject visibility.
 STEP 2 — Use the previous last frame only when it remains a clean full-body handoff frame. Otherwise use the master still or a manually selected clean continuity frame, then enable Bind Subject.
 STEP 3 — Continue through Shot 4 with one readable action beat per shot and clean handoff frames.

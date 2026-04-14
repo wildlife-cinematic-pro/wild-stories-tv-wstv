@@ -261,7 +261,7 @@ export type GeneratedPackage = {
   capCutScript?: CapCutScript;
   soundDesignPack?: SoundDesignPack;
   animalBehavior?: AnimalBehavior;
-  pipelineStyle?: "3-shot" | "4-shot" | "5-shot";
+  pipelineStyle?: "4-shot" | "5-shot";
 
   // ── Runway workflow ──
   runwayCameraPlan?: string;

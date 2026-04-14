@@ -202,7 +202,7 @@ describe("Seedance prompt builder", () => {
     expect(shots.shot2).toContain("═══ PASTE-READY SEEDANCE PROMPT");
     expect(shots.shot4).toContain("Suggested duration: 5 seconds.");
     expect(shots.workflowGuide).toContain("subject movement + background movement + camera movement");
-    expect(shots.workflowGuide).toContain("4 separate video shots");
+    expect(shots.workflowGuide).toContain("4 separate Seedance video shots");
     expect(shots.workflowGuide).toContain("Cut to");
   });
 
@@ -219,7 +219,7 @@ describe("Seedance prompt builder", () => {
       quality
     );
 
-    expect(shots.multiShotPrompt).toContain("SEEDANCE 4-SHOT CONTINUITY PROMPT");
+    expect(shots.multiShotPrompt).toContain("SEEDANCE PRIMARY 4-SHOT CONTINUITY PROMPT");
     expect(shots.multiShotPrompt).toContain("Shot 4: resolved tension");
     expect(shots.multiShotPrompt).toMatch(/\bCut to\b/g);
   });
@@ -237,7 +237,7 @@ describe("Seedance prompt builder", () => {
       quality
     );
 
-    expect(shots.workflowGuide).toContain("Default WSTV workflow: generate 4 separate video shots.");
+    expect(shots.workflowGuide).toContain("Primary WSTV workflow: generate 4 separate Seedance video shots.");
     expect(shots.workflowGuide).not.toContain("3-shot");
   });
 });
@@ -248,7 +248,7 @@ describe("Clip chaining guidance", () => {
 
     expect(guide).toContain("STEP 4 — Chain Shot 4");
     expect(guide).toContain("STEP 5 — Combine clips");
-    expect(guide).toContain("OPTIONAL ALT / FALLBACK");
+    expect(guide).toContain("OPTIONAL SECONDARY PATH");
     expect(guide).toContain("Optional extended format: use Multi-Shot mode (up to 6 shots");
   });
 });

@@ -227,9 +227,9 @@ function normalizeArcSuggestion(value: string | undefined): Arc | null {
 // ─── SUB-COMPONENTS ───────────────────────────────────────────────────────────
 
 function ModelCard({
-  active, tag, title, subtitle, onClick, tone,
+  active, tag, title, subtitle, onClick, tone, activeLabel = "✓ Selected",
 }: {
-  active: boolean; tag: string; title: string; subtitle: string; onClick: () => void; tone: "green" | "blue";
+  active: boolean; tag: string; title: string; subtitle: string; onClick: () => void; tone: "green" | "blue"; activeLabel?: string;
 }) {
   const isGreen = tone === "green";
   return (
@@ -248,7 +248,7 @@ function ModelCard({
         </span>
         {active && (
           <span className={`rounded px-1.5 py-0.5 text-[10px] font-extrabold ${isGreen ? "bg-green-600 text-white" : "bg-blue-600 text-white"}`}>
-            ✓ Selected
+            {activeLabel}
           </span>
         )}
       </div>
@@ -265,6 +265,8 @@ function FeaturedModelCard({
   subtitle,
   note,
   onClick,
+  activeLabel = "✓ Selected",
+  inactiveLabel = "Select",
 }: {
   active: boolean;
   tag: string;
@@ -272,6 +274,8 @@ function FeaturedModelCard({
   subtitle: string;
   note: string;
   onClick: () => void;
+  activeLabel?: string;
+  inactiveLabel?: string;
 }) {
   return (
     <button
@@ -293,7 +297,7 @@ function FeaturedModelCard({
         <span className={`rounded-lg px-2 py-1 text-[10px] font-extrabold ${
           active ? "bg-violet-600 text-white" : "bg-gray-200 text-gray-600"
         }`}>
-          {active ? "✓ Selected" : "Select"}
+          {active ? activeLabel : inactiveLabel}
         </span>
       </div>
       <div className="text-sm font-extrabold text-gray-900">{title}</div>
@@ -576,7 +580,7 @@ export default function Page() {
         ],
         runwayBundle: [runway?.shot1 ?? "", runway?.shot2 ?? "", runway?.shot3 ?? "", runway?.shot4 ?? ""].join("\n\n---\n\n"),
         klingBundle: [kling?.shot1 ?? "", kling?.shot2 ?? "", kling?.shot3 ?? "", kling?.shot4 ?? ""].join("\n\n---\n\n"),
-        routingNote: `Primary workflow: Seedance 2.0 4-shot continuity (Shot 1 → Shot 4). Optional alternate bundle: hybrid routing uses Runway ${runwayModel} for Shots 1 and 4, and Kling ${klingModel} for Shots 2 and 3.`,
+        routingNote: `Primary workflow: Seedance 2.0 4-shot continuity (Shot 1 → Shot 4). Secondary optional bundle: hybrid fallback routing uses Runway ${runwayModel} for Shots 1 and 4, and Kling ${klingModel} for Shots 2 and 3 when you intentionally leave the main Seedance lane.`,
         pipelineStyle: "4-shot", fiveShotCinematic, fiveShotViral, watchTimeReport, platformPack,
         seoTitle, altTextPrompt, qualitySummary, referenceWorkflow, naturalismChecklist,
         modelsUsed: { runway: runwayModel, kling: klingModel },
@@ -1018,26 +1022,32 @@ export default function Page() {
                       active
                       tag="SEEDANCE"
                       title="Seedance 2.0"
-                      subtitle="Primary WSTV 4-shot continuity lane for the current production workflow."
-                      note="Main continuity path = Seedance 2.0 Shot 1 → Shot 4. Single current Seedance profile is selected by default, while Runway and Kling stay available below for alternate prompt bundles and fallback workflows."
+                      subtitle="Primary WSTV production path — Seedance-first 4-shot continuity."
+                      note="Default continuity path = Seedance 2.0 Shot 1 → Shot 4. Runway and Kling stay available below as secondary optional alternate / fallback workflows, not as co-equal main lanes."
+                      activeLabel="✓ Primary default"
                       onClick={() => {}}
                     />
                   </div>
+                  <div className="mb-4 rounded-xl border border-gray-100 bg-gray-50 px-3 py-2 text-[11px] font-medium text-gray-500">
+                    Secondary optional paths: choose a Runway or Kling profile only when you intentionally want an alternate prompt bundle or fallback workflow.
+                  </div>
                   <div className="grid gap-4 md:grid-cols-2">
                     <div className="space-y-2">
-                      <div className="mb-2 inline-flex rounded-lg bg-green-100 px-2 py-1 text-[10px] font-extrabold text-green-700">RUNWAY</div>
+                      <div className="mb-2 inline-flex rounded-lg bg-green-100 px-2 py-1 text-[10px] font-extrabold text-green-700">RUNWAY · OPTIONAL</div>
                       {RUNWAY_MODELS.map((m) => (
                         <ModelCard key={m} tone="green" tag="RUNWAY" active={runwayModel === m} title={m}
                           subtitle={m === "Gen-4.5" ? "Best realism, strongest first-frame readability" : m === "Gen-4 Turbo" ? "Fast draft for quick readable opening tests" : "Stable cinematic shots with clear openings"}
+                          activeLabel="✓ Alt selected"
                           onClick={() => setRunwayModel(m)}
                         />
                       ))}
                     </div>
                     <div className="space-y-2">
-                      <div className="mb-2 inline-flex rounded-lg bg-blue-100 px-2 py-1 text-[10px] font-extrabold text-blue-700">KLING</div>
+                      <div className="mb-2 inline-flex rounded-lg bg-blue-100 px-2 py-1 text-[10px] font-extrabold text-blue-700">KLING · OPTIONAL</div>
                       {KLING_MODELS.map((m) => (
                         <ModelCard key={m} tone="blue" tag="KLING" active={klingModel === m} title={m}
                           subtitle={m === "Kling 3.0 Pro" ? "Strong action workflow, best readable openings" : m === "Kling 3.0 Standard" ? "Balanced action with clear subject spacing" : m === "Kling 2.6 Pro" ? "Earlier option for simpler readable action" : m === "Kling 2.5 Turbo Pro" ? "Fast draft for one clean action beat" : "Fast I2V draft option for rough motion tests"}
+                          activeLabel="✓ Alt selected"
                           onClick={() => setKlingModel(m)}
                         />
                       ))}
@@ -1278,13 +1288,13 @@ export default function Page() {
             <div className="flex flex-col gap-3 xl:flex-row xl:items-end xl:justify-between">
               <div className="max-w-3xl">
                 <div className="text-xs font-extrabold uppercase tracking-[0.18em] text-white/35">Workflow Viewer</div>
-                <div className="mt-1 text-sm text-white/55">Switch between the WSTV production continuity map and the Runway-native reference handoff view.</div>
+                <div className="mt-1 text-sm text-white/55">Switch between the primary WSTV production continuity map and the optional Runway-native reference handoff view.</div>
               </div>
               <div className="rounded-[1.25rem] border border-white/10 bg-white/[0.05] p-1 shadow-[inset_0_1px_0_rgba(255,255,255,0.03)]">
                 <div className="flex flex-wrap gap-1">
                   {([
                     { id: "wstv" as WorkflowTab, label: "WSTV Custom Workflow", badge: "Primary" },
-                    { id: "runway" as WorkflowTab, label: "Runway Official Workflow", badge: "Reference" },
+                    { id: "runway" as WorkflowTab, label: "Runway Official Workflow", badge: "Optional reference" },
                   ]).map((tab) => (
                     <button
                       key={tab.id}
@@ -1308,7 +1318,7 @@ export default function Page() {
               </div>
             </div>
             <div className="text-xs text-white/35">
-              Interactive viewer with drag, zoom, and inspectable continuity wires.
+              Interactive viewer with drag, zoom, and inspectable continuity wires. WSTV stays the main production lane.
             </div>
           </div>
 
@@ -1328,7 +1338,7 @@ export default function Page() {
                   <div className="mt-1 text-[11px] text-gray-500">
                     {workflowTab === "wstv"
                       ? "Production-oriented continuity viewer with Canonical Anchor, preferred Extract Frame handoff, and Last Frame fallback."
-                      : "Reference viewer for the Runway-native safe-handoff pattern, manual overrides, and stitched final assembly."}
+                      : "Optional reference viewer for the Runway-native safe-handoff pattern, manual overrides, and stitched final assembly."}
                   </div>
                 </div>
               </div>

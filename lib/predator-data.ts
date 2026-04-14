@@ -1051,7 +1051,7 @@ export function calculateViralScore(
   prey: string,
   arc: Arc,
   weather: Weather,
-  pipelineStyle: "3-shot" | "5-shot"
+  pipelineStyle: "4-shot" | "5-shot"
 ): ViralScore {
   const scores: { label: string; score: number; tip: string }[] = [];
   const hook = pkg.hook2026?.[0] ?? pkg.hook;
@@ -1089,7 +1089,7 @@ export function calculateViralScore(
     tip:
       pipelineStyle === "5-shot"
         ? "5-shot pipeline = strong story retention ✓"
-        : "3-shot pipeline = strong short-form retention ✓",
+        : "4-shot pipeline = strong short-form retention ✓",
   });
 
   const usaArcs: Arc[] = [
@@ -1276,10 +1276,10 @@ export function buildFiveShotViral(
 // WATCH TIME REPORT
 // ─────────────────────────────────────────────────────────────
 export function buildWatchTimeReport(
-  pipelineStyle: "3-shot" | "5-shot",
+  pipelineStyle: "4-shot" | "5-shot",
   dailyReels = 2
 ): WatchTimeReport {
-  const secs = pipelineStyle === "3-shot" ? 25 : 45;
+  const secs = pipelineStyle === "4-shot" ? 20 : 45;
   const watchMinsPerView = secs / 60;
   const goalMinutes = 600_000;
   const avgViewsPerReel = 5_000;
@@ -1288,7 +1288,7 @@ export function buildWatchTimeReport(
 
   return {
     currentDuration: `~${secs} seconds`,
-    targetDuration: "Aim for 22–28s on fast viral runs and 38–48s on stronger story builds",
+    targetDuration: "Aim for 18–24s on 4-shot primary runs and 38–48s on stronger 5-shot story builds",
     watchTimePerView: `${watchMinsPerView.toFixed(2)} min/view`,
     viewsNeededFor600k: Math.ceil(goalMinutes / watchMinsPerView),
     daysToGoal,

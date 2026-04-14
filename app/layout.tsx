@@ -4,7 +4,7 @@ import "./globals.css";
 export const metadata: Metadata = {
   title: "AI Wildlife Cinematic Director",
   description:
-    "Generate cinematic AI wildlife prompts for Runway, Kling, and social media platforms.",
+    "Generate Seedance-first 4-shot wildlife prompt packs with optional Runway and Kling alternate workflows.",
 };
 
 export default function RootLayout({

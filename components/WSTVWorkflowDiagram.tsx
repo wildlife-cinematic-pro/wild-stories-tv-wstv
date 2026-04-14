@@ -8,6 +8,9 @@
  *     and keeps the WSTV lane centered on the real intended production flow.
  *   • Seedance 2.0 is the primary 4-shot lane here because that is the intended
  *     WSTV continuity workflow, while Gen-4 remains the Canonical Anchor stage.
+ *   • Runway and Kling remain available elsewhere in the repo as secondary
+ *     optional alternate / fallback workflows, but they are intentionally not
+ *     presented here as co-equal main production lanes.
  *   • The separate Parse JSON social lane is export-only: hook / caption /
  *     hashtags / tags are shown for publishing, not as part of the render path.
  *   • Optional manual Text nodes stay available as operator overrides for the
@@ -370,7 +373,7 @@ const NODE_SPECS: NodeSpec[] = [
     width: 214, bg: "#1a0544", accent: "#c084fc",
     inputs: [{ id: "image", label: "Image", kind: "image", required: true }],
     outputs: [{ id: "image", label: "Image", kind: "image" }],
-    infoLines: ["Runway-native continuity reset and fallback anchor"],
+    infoLines: ["Canonical anchor build + fallback still source"],
   }),
 
   makeNode("combine1", {
@@ -1033,8 +1036,10 @@ function InfoPanel() {
           Seedance 2.0 is the main WSTV video lane here because this file is meant
           to mirror the intended production workflow as closely as possible. The main
           audio lane is intentionally removed so the diagram stays about continuity,
-          prompt assembly, QA, and final post only. The automatic route stays primary;
-          manual Text nodes are optional override paths only.
+          prompt assembly, QA, and final post only. Runway and Kling stay available
+          elsewhere in the repo as secondary optional alternate / fallback workflows,
+          but this primary WSTV diagram does not present them as co-equal lanes. The
+          automatic route stays primary; manual Text nodes are optional override paths only.
         </p>
       </div>
     </div>
@@ -1493,7 +1498,7 @@ export default function WSTVWorkflowDiagram({
             color: "#1e2f42", fontSize: 11, fontWeight: 700,
             letterSpacing: "0.12em", textTransform: "uppercase",
           }}>
-            Wild Stories TV · 4-shot production workflow · core continuity + social side outputs
+            Wild Stories TV · Seedance-first 4-shot production workflow · core continuity + social side outputs
           </div>
 
           <div style={{
