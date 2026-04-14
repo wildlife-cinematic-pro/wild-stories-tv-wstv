@@ -2445,7 +2445,7 @@ const audio3Short = buildKlingAudioShort(predator, prey, env, weather, "aftermat
 const pasteReadyCore = [
   quality?.motionOnlyI2V
     ? `Same ${predator} and ${prey} identities from the input image in the same environment continuity, ${cleanWeather}. Photorealistic wildlife documentary in 9:16 vertical.`
-    : `${predator} and ${prey} remain consistent across all three beats in ${cleanEnv}, ${cleanWeather}. Photorealistic wildlife documentary in 9:16 vertical.`,
+    : `${predator} and ${prey} remain consistent across all three timed beats of this optional 15-second format in ${cleanEnv}, ${cleanWeather}. Photorealistic wildlife documentary in 9:16 vertical.`,
 
   ``,
 
@@ -2821,6 +2821,9 @@ export function buildCapCutPlan(predator: string, arc: string, weather: Weather)
 
 // ─────────────────────────────────────────────────────────────
 // CLIP CHAINING
+// Primary path = 4-shot Seedance-first workflow.
+// Runway and Kling chaining guidance below remains available as optional
+// alternate / fallback workflow help.
 // ─────────────────────────────────────────────────────────────
 export function buildClipChaining(predator: string, driftRisk: PredatorInfo["driftRisk"]): string {
   const riskLine =
@@ -2838,14 +2841,16 @@ STEP 1 — Generate Shot 1 (Runway I2V) with strong first-frame readability and 
   • If the outgoing final frame is a clean full-body handoff frame, use it as the next I2V input.
   • If readability drops, reuse the master still or manually select a clean continuity frame instead.
 STEP 2 — Chain Shot 2 with the cleanest handoff source available. Prompt = motion only.
-STEP 3 — Chain Shot 3 the same way. Keep end-state tension readable and spacing clear.
-STEP 4 — Combine clips in a video editor. Remove repeated handoff frames if needed.
+STEP 3 — Chain Shot 3 the same way. Keep peak action readable and spacing clear.
+STEP 4 — Chain Shot 4 with the cleanest handoff source available. End on a readable final hold.
+STEP 5 — Combine clips in a video editor. Remove repeated handoff frames if needed.
 
-═══ KLING 3.0 CHAINING ═══
+═══ KLING 3.0 CHAINING (OPTIONAL ALT / FALLBACK) ═══
 STEP 1 — Generate Shot 1 with clear opening tension and readable full-subject visibility.
 STEP 2 — Use the previous last frame only when it remains a clean full-body handoff frame. Otherwise use the master still or a manually selected clean continuity frame, then enable Bind Subject.
-STEP 3 — Optionally set End Frame for precise final-pose control.
-STEP 4 — Alternative: use Multi-Shot mode (up to 6 shots, single prompt).
+STEP 3 — Continue through Shot 4 with one readable action beat per shot and clean handoff frames.
+STEP 4 — Optionally set End Frame for precise final-pose control.
+STEP 5 — Optional extended format: use Multi-Shot mode (up to 6 shots, single prompt) when you intentionally want the separate 6-shot workflow.
 
 RULE: Subject description stays consistent across all clips.
 RULE: Preserve predator-to-survival-animal spacing and readable silhouette separation.

@@ -3,7 +3,11 @@ import {
   normalizeClaudeVisionMimeType,
   parseProviderJsonObject,
 } from "@/lib/enhance-provider";
-import { mediaAnalysisSchema, type MediaAnalysisPayload } from "@/lib/schemas";
+import {
+  copyPolishResponseSchema,
+  mediaAnalysisSchema,
+  type MediaAnalysisPayload,
+} from "@/lib/schemas";
 import type { MediaAnalysisResult } from "@/types";
 
 describe("media analysis schema alignment", () => {
@@ -38,6 +42,15 @@ describe("media analysis schema alignment", () => {
 });
 
 describe("enhance route provider helpers", () => {
+  it("requires at least one usable copy-polish field", () => {
+    expect(copyPolishResponseSchema.safeParse({}).success).toBe(false);
+    expect(
+      copyPolishResponseSchema.safeParse({
+        imagePrompt: "Keep the same mountain lion identity, same scene continuity, cleaner prompt wording.",
+      }).success
+    ).toBe(true);
+  });
+
   it("normalizes Claude image/jpg uploads to image/jpeg", () => {
     expect(normalizeClaudeVisionMimeType("image/jpg")).toBe("image/jpeg");
     expect(normalizeClaudeVisionMimeType("IMAGE/JPEG")).toBe("image/jpeg");

@@ -3,7 +3,21 @@ import { z } from "zod";
 
 export const aiProviderSchema = z.enum(["none", "claude", "gemini"]);
 
-export const enhanceRequestSchema = z.object({
+const copyPolishFieldSchema = z.string().trim().min(1);
+
+const copyPolishBaseSchema = z
+  .object({
+    imagePrompt: z.string().trim().min(20).max(4000),
+    hook: z.string().trim().max(500).optional().default(""),
+    caption: z.string().trim().max(1200).optional().default(""),
+    voiceoverLine: z.string().trim().max(800).optional().default(""),
+  })
+  .strict();
+
+// Lightweight AI polish only.
+// This is not the main cinematic prompt-pack architecture.
+export const copyPolishRequestSchema = z
+  .object({
   provider: z.enum(["claude", "gemini"]),
   predator: z.string().min(1).max(64),
   prey: z.string().min(1).max(64),
@@ -12,27 +26,45 @@ export const enhanceRequestSchema = z.object({
   weather: z.string().min(1).max(80),
   emotionalTone: z.string().min(1).max(80),
   animalVibe: z.string().min(1).max(80),
-  base: z.object({
-    imagePrompt: z.string().min(20),
-    hook: z.string().optional().default(""),
-    caption: z.string().optional().default(""),
-    voiceoverLine: z.string().optional().default(""),
-  }),
-});
+    base: copyPolishBaseSchema,
+  })
+  .strict();
 
-export type EnhanceRequest = z.infer<typeof enhanceRequestSchema>;
+export type CopyPolishRequest = z.infer<typeof copyPolishRequestSchema>;
 
-export const enhanceResponseSchema = z.object({
-  aiEnhanced: z.boolean().optional(),
-  imagePrompt: z.string().optional(),
-  hook: z.string().optional(),
-  caption: z.string().optional(),
-  voiceoverLine: z.string().optional(),
-  improvements: z.union([z.string(), z.array(z.string())]).optional(),
-  error: z.string().optional(),
-});
+export const copyPolishResponseSchema = z
+  .object({
+    aiEnhanced: z.boolean().optional(),
+    imagePrompt: copyPolishFieldSchema.max(4000).optional(),
+    hook: copyPolishFieldSchema.max(500).optional(),
+    caption: copyPolishFieldSchema.max(1200).optional(),
+    voiceoverLine: copyPolishFieldSchema.max(800).optional(),
+    improvements: z
+      .union([
+        copyPolishFieldSchema.max(400),
+        z.array(copyPolishFieldSchema.max(400)).min(1).max(8),
+      ])
+      .optional(),
+  })
+  .strict()
+  .superRefine((value, ctx) => {
+    const hasPolishField =
+      typeof value.imagePrompt === "string" ||
+      typeof value.hook === "string" ||
+      typeof value.caption === "string" ||
+      typeof value.voiceoverLine === "string" ||
+      typeof value.improvements === "string" ||
+      (Array.isArray(value.improvements) && value.improvements.length > 0);
 
-export type EnhanceResponse = z.infer<typeof enhanceResponseSchema>;
+    if (!hasPolishField) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: "Expected at least one usable copy or prompt polish field.",
+      });
+    }
+  });
+
+export type CopyPolishResponse = z.infer<typeof copyPolishResponseSchema>;
 
 export const mediaAnalysisSchema = z
   .object({
@@ -53,12 +85,3 @@ export const mediaAnalysisSchema = z
   .strict();
 
 export type MediaAnalysisPayload = z.infer<typeof mediaAnalysisSchema>;
-
-export const uiSelectionSchema = z.object({
-  predator: z.string().min(1),
-  prey: z.string().min(1),
-  runwayModel: z.string().min(1),
-  klingModel: z.string().min(1),
-  arc: z.string().min(1),
-  weather: z.string().min(1),
-});

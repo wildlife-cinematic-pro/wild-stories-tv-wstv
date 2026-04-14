@@ -2,8 +2,8 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
 import {
-  enhanceRequestSchema,
-  enhanceResponseSchema,
+  copyPolishRequestSchema,
+  copyPolishResponseSchema,
   mediaAnalysisSchema,
 } from "@/lib/schemas";
 import {
@@ -69,9 +69,9 @@ function jsonError(message: string, status = 400, details?: unknown) {
 type Provider = "gemini" | "claude";
 
 /**
- * Text enhance response schema (existing)
+ * Lightweight copy / prompt polish response schema
  */
-const providerResponseSchema = enhanceResponseSchema.strict();
+const providerResponseSchema = copyPolishResponseSchema;
 
 /**
  * ─────────────────────────────────────────────────────────────
@@ -393,9 +393,10 @@ export async function POST(req: Request) {
   }
 
   /**
-   * ✅ BRANCH 2: normal enhance (existing feature)
+   * ✅ BRANCH 2: lightweight copy + image-prompt polish
+   * This route is NOT the main cinematic prompt-pack generator.
    */
-  const parsedReq = enhanceRequestSchema.safeParse(body);
+  const parsedReq = copyPolishRequestSchema.safeParse(body);
   if (!parsedReq.success) {
     return jsonError("Invalid request", 400, parsedReq.error.flatten());
   }
@@ -415,9 +416,13 @@ export async function POST(req: Request) {
   const baseCaption = sanitizeString(parsedReq.data.base.caption, 1200);
   const baseVoiceover = sanitizeString(parsedReq.data.base.voiceoverLine, 800);
 
-  const prompt = [
-    "You are an expert short-form video creative director.",
-    "Return JSON only with keys: hook, caption, voiceoverLine, improvements.",
+  const polishPrompt = [
+    "You are a lightweight WSTV copy and prompt polisher for short-form wildlife videos.",
+    "This endpoint is not the main cinematic prompt engine.",
+    "Do not generate shot packs, workflow JSON, or multi-shot architecture.",
+    "Return JSON only with optional keys: imagePrompt, hook, caption, voiceoverLine, improvements.",
+    "Only rewrite fields that become genuinely better. Leave everything else out.",
+    "If you touch imagePrompt, keep it as a surgical polish of the existing image prompt rather than a new workflow.",
     "",
     `Predator: ${predator}`,
     `Prey: ${prey}`,
@@ -442,14 +447,14 @@ export async function POST(req: Request) {
       if (!apiKey) return jsonError("Missing GEMINI_API_KEY", 500);
 
       const stable = getGeminiModelStable();
-      let { res, data } = await callGeminiText(stable, apiKey, prompt);
+        let { res, data } = await callGeminiText(stable, apiKey, polishPrompt);
 
       if (!res.ok) {
         const msg = JSON.stringify(data ?? {}).toLowerCase();
         const looksLikeModelIssue = msg.includes("model") && msg.includes("support");
         if (looksLikeModelIssue) {
           const fb = getGeminiModelFallback();
-          ({ res, data } = await callGeminiText(fb, apiKey, prompt));
+          ({ res, data } = await callGeminiText(fb, apiKey, polishPrompt));
         }
       }
 
@@ -458,18 +463,18 @@ export async function POST(req: Request) {
       const text = extractGeminiText(data);
       let obj: Record<string, unknown>;
       try {
-        obj = parseProviderJsonObject(text, "Gemini enhancement");
+        obj = parseProviderJsonObject(text, "Gemini copy polish");
       } catch (error) {
         return jsonError(
-          error instanceof Error ? error.message : "Gemini returned invalid JSON",
+          error instanceof Error ? error.message : "Gemini returned invalid JSON for copy polish",
           502
         );
       }
 
       const out = providerResponseSchema.safeParse(obj);
-      if (!out.success) return jsonError("Invalid Gemini response format", 502, out.error.flatten());
+      if (!out.success) return jsonError("Invalid Gemini copy polish format", 502, out.error.flatten());
       if (!hasUsableGeneratedPackageEnhancements(out.data)) {
-        return jsonError("Gemini returned no usable enhancement fields", 502);
+        return jsonError("Gemini returned no usable copy polish fields", 502);
       }
 
       return NextResponse.json({ ...out.data, aiEnhanced: true }, { status: 200 });
@@ -479,28 +484,28 @@ export async function POST(req: Request) {
     const apiKey = process.env.ANTHROPIC_API_KEY;
     if (!apiKey) return jsonError("Missing ANTHROPIC_API_KEY", 500);
 
-    const { res, data } = await callClaudeText(apiKey, prompt);
+    const { res, data } = await callClaudeText(apiKey, polishPrompt);
     if (!res.ok) return jsonError("Claude request failed", 500, data);
 
     const text = extractClaudeText(data);
     let obj: Record<string, unknown>;
     try {
-      obj = parseProviderJsonObject(text, "Claude enhancement");
+      obj = parseProviderJsonObject(text, "Claude copy polish");
     } catch (error) {
       return jsonError(
-        error instanceof Error ? error.message : "Claude returned invalid JSON",
+        error instanceof Error ? error.message : "Claude returned invalid JSON for copy polish",
         502
       );
     }
 
     const out = providerResponseSchema.safeParse(obj);
-    if (!out.success) return jsonError("Invalid Claude response format", 502, out.error.flatten());
+    if (!out.success) return jsonError("Invalid Claude copy polish format", 502, out.error.flatten());
     if (!hasUsableGeneratedPackageEnhancements(out.data)) {
-      return jsonError("Claude returned no usable enhancement fields", 502);
+      return jsonError("Claude returned no usable copy polish fields", 502);
     }
 
     return NextResponse.json({ ...out.data, aiEnhanced: true }, { status: 200 });
   } catch (err) {
-    return jsonError("Enhancement error", 500, String(err));
+    return jsonError("Copy polish error", 500, String(err));
   }
 }

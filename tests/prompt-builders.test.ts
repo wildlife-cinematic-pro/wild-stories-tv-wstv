@@ -223,6 +223,34 @@ describe("Seedance prompt builder", () => {
     expect(shots.multiShotPrompt).toContain("Shot 4: resolved tension");
     expect(shots.multiShotPrompt).toMatch(/\bCut to\b/g);
   });
+
+  it("keeps Seedance 4-shot wording as the clearest primary path", () => {
+    const shots = buildSeedanceShots(
+      "Mountain Lion",
+      "White-tailed Deer",
+      "Rocky Mountain meadow",
+      "Ambush attack",
+      "Golden Hour",
+      "Raw Tension",
+      "BBC Earth Documentary",
+      "Continuity-first wildlife sequence.",
+      quality
+    );
+
+    expect(shots.workflowGuide).toContain("Default WSTV workflow: generate 4 separate video shots.");
+    expect(shots.workflowGuide).not.toContain("3-shot");
+  });
+});
+
+describe("Clip chaining guidance", () => {
+  it("describes a 4-shot chain and labels Kling 6-shot as optional", () => {
+    const guide = buildClipChaining("Wolf", "MEDIUM");
+
+    expect(guide).toContain("STEP 4 — Chain Shot 4");
+    expect(guide).toContain("STEP 5 — Combine clips");
+    expect(guide).toContain("OPTIONAL ALT / FALLBACK");
+    expect(guide).toContain("Optional extended format: use Multi-Shot mode (up to 6 shots");
+  });
 });
 describe("Step 7 — Opening readability and tension clarity", () => {
   const base = {

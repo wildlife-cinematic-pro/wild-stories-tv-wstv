@@ -33,7 +33,7 @@ import {
   getNextVersionNumber,
   makePromptVersionKey,
 } from "@/lib/versioning";
-import { enhanceResponseSchema } from "@/lib/schemas";
+import { copyPolishResponseSchema } from "@/lib/schemas";
 import {
   hasUsableGeneratedPackageEnhancements,
   mergeGeneratedPackage,
@@ -576,7 +576,7 @@ export default function Page() {
         ],
         runwayBundle: [runway?.shot1 ?? "", runway?.shot2 ?? "", runway?.shot3 ?? "", runway?.shot4 ?? ""].join("\n\n---\n\n"),
         klingBundle: [kling?.shot1 ?? "", kling?.shot2 ?? "", kling?.shot3 ?? "", kling?.shot4 ?? ""].join("\n\n---\n\n"),
-        routingNote: `4-shot hybrid routing: Image 1 → Shot 1 Opening Tension (Runway ${runwayModel}) | Image 2 → Shot 2 Pressure Build (Kling ${klingModel}) | Image 3 → Shot 3 Peak Action (Kling ${klingModel}) | Image 4 → Shot 4 Resolved Tension (Runway ${runwayModel})`,
+        routingNote: `Primary workflow: Seedance 2.0 4-shot continuity (Shot 1 → Shot 4). Optional alternate bundle: hybrid routing uses Runway ${runwayModel} for Shots 1 and 4, and Kling ${klingModel} for Shots 2 and 3.`,
         pipelineStyle: "4-shot", fiveShotCinematic, fiveShotViral, watchTimeReport, platformPack,
         seoTitle, altTextPrompt, qualitySummary, referenceWorkflow, naturalismChecklist,
         modelsUsed: { runway: runwayModel, kling: klingModel },
@@ -597,9 +597,9 @@ export default function Page() {
           body: JSON.stringify({ provider: activeProvider, predator, prey, env: finalEnvironment, arc: finalArc, weather, emotionalTone, animalVibe, base: { imagePrompt, hook: hook2026?.[0] ?? "", caption: caption2026 ?? "", voiceoverLine } }),
         });
         const data = await res.json().catch(() => ({} as unknown));
-        if (!res.ok) throw new Error(((data as Record<string, unknown>)?.error as string) || `AI enhancement failed (${res.status})`);
-        const parsedEnhanced = enhanceResponseSchema.safeParse(data);
-        if (!parsedEnhanced.success) throw new Error("Invalid AI enhancement response");
+        if (!res.ok) throw new Error(((data as Record<string, unknown>)?.error as string) || `AI polish failed (${res.status})`);
+        const parsedEnhanced = copyPolishResponseSchema.safeParse(data);
+        if (!parsedEnhanced.success) throw new Error("Invalid AI polish response");
         enhanced = {
           ...(parsedEnhanced.data.imagePrompt ? { imagePrompt: parsedEnhanced.data.imagePrompt } : {}),
           ...(parsedEnhanced.data.hook ? { hook: parsedEnhanced.data.hook } : {}),
@@ -607,7 +607,7 @@ export default function Page() {
           ...(parsedEnhanced.data.voiceoverLine ? { voiceoverLine: parsedEnhanced.data.voiceoverLine } : {}),
           aiEnhanced: true,
         };
-        if (!hasUsableGeneratedPackageEnhancements(enhanced)) throw new Error("AI enhancement returned no usable prompt updates");
+        if (!hasUsableGeneratedPackageEnhancements(enhanced)) throw new Error("AI polish returned no usable prompt or copy updates");
       }
 
       const finalPkg: GeneratedPackage = mergeGeneratedPackage(basePkg, enhanced, {
@@ -1185,7 +1185,8 @@ export default function Page() {
 
                 {/* AI provider */}
                 <div className="mb-5 rounded-[1.25rem] border border-gray-100 bg-gray-50/80 p-3.5">
-                  <div className="mb-3 text-[11px] font-semibold uppercase tracking-wide text-gray-500">AI Enhancement</div>
+                  <div className="mb-1 text-[11px] font-semibold uppercase tracking-wide text-gray-500">AI Copy &amp; Prompt Polish</div>
+                  <div className="mb-3 text-[11px] text-gray-400">Optional polish only. Main cinematic 4-shot packs still come from the local Seedance-first builders.</div>
                   <div className="flex flex-wrap gap-2">
                     {(["none", "gemini", "claude"] as AIProvider[]).map((p) => (
                       <button key={p} type="button" onClick={() => setActiveProvider(p)}
