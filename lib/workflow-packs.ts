@@ -524,7 +524,7 @@ export function buildCapCutScript(
   arc: Arc,
   weather: Weather,
   pkg: GeneratedPackage,
-  pipelineStyle: "3-shot" | "5-shot"
+  pipelineStyle: "4-shot" | "5-shot"
 ): CapCutScript {
   const isWinter = weather === "Winter Blizzard" || weather === "Frozen Dusk";
   const hook = pkg.hook2026?.[0] ?? pkg.hook;
@@ -541,11 +541,11 @@ export function buildCapCutScript(
           ? "Silent tension → single low impact → ambient nature settle"
           : "Cinematic wildlife underscore — slow build, natural peaks";
 
-  const beats3: CapCutBeat[] = [
+  const beats4: CapCutBeat[] = [
     {
       timeIn: "0:00",
       timeOut: "0:04",
-      shotRef: "Shot 1 — Image / Establishing",
+      shotRef: "Shot 1 — Opening Tension / Seedance",
       onScreenText: hook.slice(0, 40),
       transition: "Cut (no transition — hard cut stops scroll)",
       sfx: isWinter
@@ -555,19 +555,30 @@ export function buildCapCutScript(
     },
     {
       timeIn: "0:04",
-      timeOut: "0:12",
-      shotRef: "Shot 2 — Action / Kling Strike",
+      timeOut: "0:09",
+      shotRef: "Shot 2 — Pressure Build / Seedance",
       onScreenText: "WATCH CLOSELY 👀",
-      transition: "Zoom cut — punch in 1.15x at impact moment",
-      sfx: sanitizeWorkflowPhrase(`${sfxImpact} + animal vocalization`),
-      musicNote: "Music peak at 0:08 — hard hit on impact frame",
+      transition: "Cut on forward pressure increase",
+      sfx: isWinter
+        ? "Snow surface movement + low tension bed"
+        : "Terrain movement + low tension bed",
+      musicNote: "Music lifts slightly — hold tension without full impact yet",
     },
     {
-      timeIn: "0:12",
-      timeOut: "0:18",
-      shotRef: "Shot 3 — Aftermath / Runway",
+      timeIn: "0:09",
+      timeOut: "0:14",
+      shotRef: "Shot 3 — Peak Action / Seedance",
+      onScreenText: "WAIT FOR IT... 🔥",
+      transition: "Punch cut on impact acceleration",
+      sfx: sanitizeWorkflowPhrase(`${sfxImpact} + animal vocalization`),
+      musicNote: "Music peak lands on the strongest readable action frame",
+    },
+    {
+      timeIn: "0:14",
+      timeOut: "0:20",
+      shotRef: "Shot 4 — Resolved Tension / Seedance",
       onScreenText: "Who won? Comment below 👇",
-      transition: "Fade or slow dissolve — let atmosphere breathe",
+      transition: "Hold or short dissolve once the action settles",
       sfx: "Breathing settle, wind, distant environment",
       musicNote: "Music resolves — soft outro, fade to nature sound",
     },
@@ -624,10 +635,10 @@ export function buildCapCutScript(
   ];
 
   return {
-    totalDuration: pipelineStyle === "5-shot" ? "0:55" : "0:18",
+    totalDuration: pipelineStyle === "5-shot" ? "0:55" : "0:20",
     aspectRatio: "9:16 (1080×1920)",
     fps: 24,
-    beats: pipelineStyle === "5-shot" ? beats5 : beats3,
+    beats: pipelineStyle === "5-shot" ? beats5 : beats4,
     exportSettings:
       "H.264 | 1080×1920 | 24fps project | 30fps export for upload | 20–25 Mbps | AAC 320kbps",
     musicMood,
@@ -640,7 +651,7 @@ export function buildCapCutScript(
 export function buildRunwayCameraPlan(
   arc: Arc,
   weather: Weather,
-  pipelineStyle: "3-shot" | "5-shot"
+  pipelineStyle: "4-shot" | "5-shot"
 ): string {
   const winter = weather === "Winter Blizzard" || weather === "Frozen Dusk";
 
@@ -706,7 +717,7 @@ export function buildRunwayCameraPlan(
       `Avoid: ${s.avoid}`,
       pipelineStyle === "5-shot"
         ? "Use the gentlest move on shots 1 and 5; save the strongest move for the action beat only."
-        : "For 3-shot reels, keep the move simple so the hook remains readable immediately.",
+        : "For 4-shot reels, keep the move simple so Shot 1 stays readable immediately and the strongest movement lands in Shot 3 only.",
     ]
       .filter(Boolean)
       .join(" ")

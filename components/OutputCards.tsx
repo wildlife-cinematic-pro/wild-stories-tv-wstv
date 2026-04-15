@@ -1933,7 +1933,7 @@ function WorkflowPromptMap({
     6: false,
   };
 
-  const [mode, setMode] = useState<WorkflowMode>("seedance");
+  const [mode, setMode] = useState<WorkflowMode>("hybrid");
   const [doneByMode, setDoneByMode] = useState<Record<WorkflowMode, Record<number, boolean>>>({
     seedance: { ...emptyDone },
     runway: { ...emptyDone },
@@ -2009,7 +2009,8 @@ function WorkflowPromptMap({
     };
 
     const runwayGuide = [
-      "RUNWAY 4-SHOT WORKFLOW",
+      "OPTIONAL RUNWAY 4-SHOT WORKFLOW",
+      "Use this when you intentionally want the optional full Runway 4-shot bundle.",
       "1. Upload the master still or a clean continuity-safe handoff frame into Runway I2V.",
       "2. Keep the prompt motion-first: motion, camera, physics, and spacing.",
       "3. Default WSTV Runway flow is 4 separate shots at 5 seconds each.",
@@ -2020,7 +2021,8 @@ function WorkflowPromptMap({
     ].join("\n");
 
     const klingGuide = [
-      "KLING 4-SHOT WORKFLOW",
+      "OPTIONAL KLING 4-SHOT WORKFLOW",
+      "Use this when you intentionally want the optional full Kling 4-shot bundle.",
       "1. Use the continuity image as the visual 3D anchor and keep visual restatement light.",
       "2. Enable Bind Subject when identity lock matters.",
       "3. Default WSTV Kling flow is 4 separate shots at 5 seconds each.",
@@ -2031,7 +2033,8 @@ function WorkflowPromptMap({
     ].join("\n");
 
     const hybridGuide = [
-      "HYBRID 4-SHOT ROUTING",
+      "PRIMARY HYBRID 4-SHOT ROUTING",
+      "This is the main WSTV production path.",
       "1. Generate the master still first.",
       "2. Shot 1 uses Runway for the clean readable opening tension.",
       "3. Shot 2 uses Kling for pressure build.",
@@ -2045,9 +2048,9 @@ function WorkflowPromptMap({
       seedance: {
         pipeline:
           "Image Prompt → Master Still → Seedance Shot 1 Opening Tension → Seedance Shot 2 Pressure Build → Seedance Shot 3 Peak Action → Seedance Shot 4 Resolved Tension → CapCut",
-        bannerTitle: "Seedance 2.0 rule",
+        bannerTitle: "Optional Seedance 2.0 bundle",
         bannerBody:
-          "Keep prompts motion-first, simple, and direct. Use Prompt + First Frame as the base, add Ref Image / Ref Video only when needed, and default to 4 separate 5-second shots.",
+          "Optional full Seedance 4-shot bundle. Keep prompts motion-first, simple, and direct. Use Prompt + First Frame as the base, add Ref Image / Ref Video only when needed, and default to 4 separate 5-second shots.",
         steps: [
           imageStep,
           {
@@ -2100,9 +2103,9 @@ function WorkflowPromptMap({
       runway: {
         pipeline:
           "Image Prompt → Master Still → Runway Shot 1 Opening Tension → Runway Shot 2 Pressure Build → Runway Shot 3 Peak Action → Runway Shot 4 Resolved Tension → CapCut",
-        bannerTitle: "Runway rule",
+        bannerTitle: "Optional Runway bundle",
         bannerBody:
-          "Runway I2V is motion-first and identity comes from the uploaded image. Keep prompts continuity-safe, use 4 separate 5-second shots, and do not use negative prompts.",
+          "Optional full Runway 4-shot bundle. Runway I2V is motion-first and identity comes from the uploaded image. Keep prompts continuity-safe, use 4 separate 5-second shots, and do not use negative prompts.",
         steps: [
           imageStep,
           {
@@ -2155,9 +2158,9 @@ function WorkflowPromptMap({
       kling: {
         pipeline:
           "Image Prompt → Master Still → Kling Shot 1 Opening Tension → Kling Shot 2 Pressure Build → Kling Shot 3 Peak Action → Kling Shot 4 Resolved Tension → CapCut",
-        bannerTitle: "Kling rule",
+        bannerTitle: "Optional Kling bundle",
         bannerBody:
-          "Kling uses the image as a 3D anchor. Keep wide full-body readability, enable Bind Subject when needed, and use 4 separate 5-second shots.",
+          "Optional full Kling 4-shot bundle. Kling uses the image as a 3D anchor. Keep wide full-body readability, enable Bind Subject when needed, and use 4 separate 5-second shots.",
         steps: [
           imageStep,
           {
@@ -2210,9 +2213,9 @@ function WorkflowPromptMap({
       hybrid: {
         pipeline:
           "Image Prompt → Master Still → Runway Shot 1 Opening Tension → Kling Shot 2 Pressure Build → Kling Shot 3 Peak Action → Runway Shot 4 Resolved Tension → CapCut",
-        bannerTitle: "Hybrid route",
+        bannerTitle: "Primary hybrid 4-shot route",
         bannerBody:
-          "Hybrid WSTV route uses Runway for the clean opening and final settle, and Kling for Shot 2-3 pressure/action physics. This is the current recommended hybrid routing.",
+          "This is the main WSTV production path. Use Runway for the clean opening and final settle, and Kling for Shot 2-3 pressure/action physics.",
         steps: [
           imageStep,
           {
@@ -2371,10 +2374,10 @@ function WorkflowPromptMap({
 
       <div className="mt-4 flex flex-wrap gap-2">
         {[
-          { key: "seedance", label: "Seedance" },
-          { key: "runway", label: "Runway" },
-          { key: "kling", label: "Kling" },
-          { key: "hybrid", label: "Hybrid" },
+          { key: "hybrid", label: "Hybrid Primary" },
+          { key: "seedance", label: "Seedance Optional" },
+          { key: "runway", label: "Runway Optional" },
+          { key: "kling", label: "Kling Optional" },
         ].map((item) => (
           <button
             key={item.key}
@@ -2560,6 +2563,25 @@ export default function OutputCards({
     if (Array.isArray(v)) return v.map(String).join("\n").trim();
     return String(v ?? "").trim();
   }
+
+  const primaryShotPlan = useMemo(() => {
+    return (data.shotPlan ?? []).map((item, index) => {
+      const title = safeStr(item.title) || `Shot ${index + 1}`;
+      const note = title.split("—")[1]?.trim() ?? "";
+      const isRunway = item.engine === "RUNWAY";
+
+      return {
+        ...item,
+        title,
+        note,
+        cardEngine: isRunway ? ("runway" as const) : ("kling" as const),
+        engineLabel: isRunway ? "Runway" : "Kling",
+        color: isRunway
+          ? "border-green-200 bg-green-50 text-green-900"
+          : "border-blue-200 bg-blue-50 text-blue-900",
+      };
+    });
+  }, [data.shotPlan]);
 
   function buildCopyAllPacksText() {
     const seedance = seedanceShots
@@ -2812,7 +2834,7 @@ export default function OutputCards({
     {
       key: "video",
       label: "Video",
-      detail: "Seedance, Runway, Kling, hybrid route",
+      detail: "Primary hybrid route, plus optional Seedance, Runway, and Kling bundles",
       badge: "4 shots",
     },
     {
@@ -2862,7 +2884,7 @@ export default function OutputCards({
       eyebrow: "Video",
       title: `${seedanceShots.length}/${runwayShots.length}/${klingShots.length} engine packs`,
       detail:
-        "Switch between Hybrid, Seedance, Runway, and Kling instead of scrolling through every shot at once.",
+        "Switch between the primary Hybrid route and the optional Seedance, Runway, and Kling bundles instead of scrolling through every shot at once.",
       footer: "Open video workspace",
     },
     {
@@ -3076,9 +3098,9 @@ export default function OutputCards({
                   Video workspace
                 </div>
                 <p className="mt-1 max-w-3xl text-xs leading-relaxed text-gray-600">
-                  Default WSTV video setup is 4 shots at 5 seconds each. Instead
-                  of showing every engine stack at once, choose one engine view
-                  or the hybrid route below.
+                  Default WSTV video setup is the primary hybrid 4-shot
+                  path. Seedance 2.0, full Runway 4-shot, and full Kling
+                  4-shot bundles stay available below as optional views.
                 </p>
               </div>
 
@@ -3086,19 +3108,19 @@ export default function OutputCards({
                 {[
                   {
                     key: "hybrid" as const,
-                    label: "Hybrid Route",
+                    label: "Hybrid Primary",
                   },
                   {
                     key: "seedance" as const,
-                    label: "Seedance",
+                    label: "Seedance Optional",
                   },
                   {
                     key: "runway" as const,
-                    label: "Runway",
+                    label: "Runway Optional",
                   },
                   {
                     key: "kling" as const,
-                    label: "Kling",
+                    label: "Kling Optional",
                   },
                 ].map((item) => (
                   <button
@@ -3125,7 +3147,7 @@ export default function OutputCards({
               <div className="rounded-2xl border border-violet-200 bg-violet-50 p-4 shadow-sm">
                 <div className="flex flex-wrap items-center justify-between gap-2">
                   <div className="text-sm font-extrabold text-violet-900">
-                    Hybrid route summary
+                    Primary hybrid 4-shot route summary
                   </div>
                   <span className="rounded-full bg-white px-2 py-0.5 text-[11px] font-bold text-violet-700 ring-1 ring-violet-200">
                     Runway 1 → Kling 2-3 → Runway 4
@@ -3133,50 +3155,22 @@ export default function OutputCards({
                 </div>
 
                 <p className="mt-2 text-xs leading-relaxed text-violet-800">
-                  This route keeps the opening and resolve cleaner in Runway,
-                  while using Kling for the middle pressure/action beats. It is
-                  the fastest way to review the mixed-engine story flow without
-                  scrolling through all engine packs together.
+                  This primary route keeps the opening and resolve cleaner in
+                  Runway, while using Kling for the middle pressure/action beats.
+                  It matches the main mixed-engine WSTV workflow.
                 </p>
 
                 <div className="mt-4 grid gap-3 md:grid-cols-2 xl:grid-cols-4">
-                  {[
-                    {
-                      title: "Shot 1",
-                      engine: "Runway",
-                      note: "Opening tension",
-                      color:
-                        "border-green-200 bg-green-50 text-green-900",
-                    },
-                    {
-                      title: "Shot 2",
-                      engine: "Kling",
-                      note: "Pressure build",
-                      color: "border-blue-200 bg-blue-50 text-blue-900",
-                    },
-                    {
-                      title: "Shot 3",
-                      engine: "Kling",
-                      note: "Peak action",
-                      color: "border-blue-200 bg-blue-50 text-blue-900",
-                    },
-                    {
-                      title: "Shot 4",
-                      engine: "Runway",
-                      note: "Resolved tension",
-                      color:
-                        "border-green-200 bg-green-50 text-green-900",
-                    },
-                  ].map((item) => (
+                  {primaryShotPlan.map((item, index) => (
                     <div
-                      key={item.title}
+                      key={`${item.engine}-${item.title}-${index}`}
                       className={`rounded-2xl border p-3 ${item.color}`}
                     >
                       <div className="text-[11px] font-black uppercase tracking-wide">
-                        {item.title}
+                        {`Shot ${index + 1}`}
                       </div>
                       <div className="mt-2 text-base font-black">
-                        {item.engine}
+                        {item.engineLabel}
                       </div>
                       <div className="mt-1 text-xs font-medium opacity-80">
                         {item.note}
@@ -3187,38 +3181,15 @@ export default function OutputCards({
               </div>
 
               <div className="grid gap-4 xl:grid-cols-2">
-                {runwayShots[0] && (
+                {primaryShotPlan.map((item, index) => (
                   <ProShotCard
-                    engine="runway"
-                    index={0}
-                    shot={runwayShots[0]}
+                    key={`${item.engine}-${item.title}-${index}`}
+                    engine={item.cardEngine}
+                    index={index}
+                    shot={safeStr(item.prompt)}
                     onCopy={onCopy}
                   />
-                )}
-                {klingShots[1] && (
-                  <ProShotCard
-                    engine="kling"
-                    index={1}
-                    shot={klingShots[1]}
-                    onCopy={onCopy}
-                  />
-                )}
-                {klingShots[2] && (
-                  <ProShotCard
-                    engine="kling"
-                    index={2}
-                    shot={klingShots[2]}
-                    onCopy={onCopy}
-                  />
-                )}
-                {runwayShots[3] && (
-                  <ProShotCard
-                    engine="runway"
-                    index={3}
-                    shot={runwayShots[3]}
-                    onCopy={onCopy}
-                  />
-                )}
+                ))}
               </div>
             </div>
           )}
@@ -3230,17 +3201,16 @@ export default function OutputCards({
                   Seedance Shots
                 </div>
                 <span className="rounded-full bg-white px-2 py-0.5 text-[11px] font-bold text-orange-700 ring-1 ring-orange-200">
-                  Seedance 2.0 | multimodal refs | Cut to for multi-shot
+                  Seedance 2.0 | optional full 4-shot bundle | multimodal refs
                 </span>
               </div>
 
               <p className="mb-3 text-xs text-orange-800">
-                Best for simple direct video prompting. Base workflow: `Prompt`
-                + `First Frame`, then add `Ref Image` or `Ref Video` only when
-                useful. Default WSTV setup is 4 separate shots at 5 seconds
-                each. Keep static description light, describe subject movement +
-                background movement + camera movement, and avoid negative
-                prompts.
+                Optional full Seedance 2.0 bundle. Base workflow: `Prompt` + `First Frame`,
+                then add `Ref Image` or `Ref Video` only when useful. Standard
+                Seedance setup here is 4 separate shots at 5 seconds each. Keep static description
+                light, describe subject movement + background movement + camera
+                movement, and avoid negative prompts.
               </p>
 
               <div className="mb-3 flex flex-wrap gap-2">
@@ -3299,7 +3269,7 @@ export default function OutputCards({
               </div>
 
               <p className="mb-3 text-xs text-green-800">
-                Full Runway pack now supports 4 separate shots: opening tension,
+                Optional full Runway 4-shot bundle. It supports opening tension,
                 pressure build, peak action, and resolved tension. In the hybrid
                 route, Runway is used for Shot 1 and Shot 4.
               </p>
@@ -3353,9 +3323,9 @@ export default function OutputCards({
               </div>
 
               <p className="mb-3 text-xs text-blue-800">
-                Full Kling pack now supports 4 separate shots too. It works
-                especially well for pressure build and peak action, and the
-                hybrid route uses Kling for Shot 2 and Shot 3.
+                Optional full Kling 4-shot bundle. It works especially well for
+                pressure build and peak action, and the hybrid route uses Kling
+                for Shot 2 and Shot 3.
               </p>
 
               <p className="mb-3 text-xs text-blue-800">
@@ -3418,8 +3388,9 @@ export default function OutputCards({
                   Direct prompt workspace
                 </div>
                 <p className="mt-1 max-w-3xl text-xs leading-relaxed text-gray-600">
-                  One-click multi-shot prompts live here. Use this tab when you
-                  want to paste one full block directly into Seedance or Kling.
+                  One-click multi-shot prompts live here. Seedance 2.0 stays
+                  available as an optional direct 4-shot bundle, while Kling formats
+                  remain optional alternate / extended prompt formats.
                 </p>
               </div>
 
@@ -3447,7 +3418,7 @@ export default function OutputCards({
                         : "border-blue-200 bg-white text-blue-800 hover:bg-blue-50"
                     }`}
                   >
-                    Kling 15s
+                    Kling 15s Optional
                   </button>
                 )}
                 {data.klingSixShot && (
@@ -3460,7 +3431,7 @@ export default function OutputCards({
                         : "border-indigo-200 bg-white text-indigo-800 hover:bg-indigo-50"
                     }`}
                   >
-                    Kling 6-Shot
+                    Kling 6-Shot Optional
                   </button>
                 )}
               </div>

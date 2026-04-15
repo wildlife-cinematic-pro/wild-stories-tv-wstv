@@ -33,7 +33,7 @@ import {
   getNextVersionNumber,
   makePromptVersionKey,
 } from "@/lib/versioning";
-import { enhanceResponseSchema } from "@/lib/schemas";
+import { copyPolishResponseSchema } from "@/lib/schemas";
 import {
   hasUsableGeneratedPackageEnhancements,
   mergeGeneratedPackage,
@@ -65,6 +65,7 @@ import {
 
 import {
   buildImagePrompt,
+  buildFourShotWorkflow,
   buildSeedanceShots,
   buildShotImagePlan,
   buildRunwayShots,
@@ -226,38 +227,46 @@ function normalizeArcSuggestion(value: string | undefined): Arc | null {
 
 // ─── SUB-COMPONENTS ───────────────────────────────────────────────────────────
 
+// Current latest: activeLabel prop preserved from doc3
 function ModelCard({
-  active, tag, title, subtitle, onClick, tone,
+  active, tag, title, subtitle, onClick, tone, activeLabel = "✓ Selected",
 }: {
-  active: boolean; tag: string; title: string; subtitle: string; onClick: () => void; tone: "green" | "blue";
+  active: boolean; tag: string; title: string; subtitle: string; onClick: () => void; tone: "green" | "blue"; activeLabel?: string;
 }) {
   const isGreen = tone === "green";
   return (
     <button
       type="button"
       onClick={onClick}
-      className={`w-full rounded-xl border p-3 text-left transition-all active:scale-[0.99] ${
+      className={`w-full rounded-2xl border px-3.5 py-3.5 text-left transition-all active:scale-[0.99] ${
         active
-          ? isGreen ? "border-green-400 bg-green-50" : "border-blue-400 bg-blue-50"
-          : "border-gray-200 bg-white hover:bg-gray-50"
+          ? isGreen
+            ? "border-green-200 bg-green-50/80 shadow-sm shadow-green-100/70"
+            : "border-blue-200 bg-blue-50/80 shadow-sm shadow-blue-100/70"
+          : "border-gray-200 bg-white hover:border-gray-300 hover:bg-gray-50/80"
       }`}
     >
-      <div className="mb-1.5 flex items-center justify-between gap-2">
-        <span className={`rounded px-1.5 py-0.5 text-[10px] font-extrabold ${isGreen ? "bg-green-100 text-green-700" : "bg-blue-100 text-blue-700"}`}>
+      <div className="mb-2 flex items-center justify-between gap-2">
+        <span className={`rounded-full px-2 py-1 text-[10px] font-semibold ${
+          isGreen ? "bg-green-100 text-green-700" : "bg-blue-100 text-blue-700"
+        }`}>
           {tag}
         </span>
         {active && (
-          <span className={`rounded px-1.5 py-0.5 text-[10px] font-extrabold ${isGreen ? "bg-green-600 text-white" : "bg-blue-600 text-white"}`}>
-            ✓ Selected
+          <span className={`rounded-full px-2 py-1 text-[10px] font-semibold ${
+            isGreen ? "bg-green-600 text-white" : "bg-blue-600 text-white"
+          }`}>
+            {activeLabel}
           </span>
         )}
       </div>
-      <div className="text-sm font-bold text-gray-900">{title}</div>
-      <div className="mt-0.5 text-xs leading-relaxed text-gray-500">{subtitle}</div>
+      <div className="text-sm font-semibold tracking-tight text-gray-900">{title}</div>
+      <div className="mt-1 text-xs leading-relaxed text-gray-500">{subtitle}</div>
     </button>
   );
 }
 
+// Current latest: activeLabel + inactiveLabel props preserved from doc3
 function FeaturedModelCard({
   active,
   tag,
@@ -265,6 +274,8 @@ function FeaturedModelCard({
   subtitle,
   note,
   onClick,
+  activeLabel = "✓ Selected",
+  inactiveLabel = "Select",
 }: {
   active: boolean;
   tag: string;
@@ -272,38 +283,43 @@ function FeaturedModelCard({
   subtitle: string;
   note: string;
   onClick: () => void;
+  activeLabel?: string;
+  inactiveLabel?: string;
 }) {
   return (
     <button
       type="button"
       onClick={onClick}
       aria-pressed={active}
-      className={`w-full rounded-[1.15rem] border p-4 text-left transition-all active:scale-[0.99] ${
+      className={`w-full overflow-hidden rounded-[24px] border text-left transition-all active:scale-[0.99] ${
         active
-          ? "border-violet-300 bg-gradient-to-br from-violet-50 via-white to-indigo-50 shadow-[0_16px_38px_-24px_rgba(109,40,217,0.42)]"
-          : "border-violet-200 bg-white hover:bg-violet-50/50"
+          ? "border-violet-200 bg-violet-50/80 shadow-sm shadow-violet-100/80"
+          : "border-gray-200 bg-white hover:border-violet-200 hover:bg-violet-50/40"
       }`}
     >
-      <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
-        <span className={`rounded-lg px-2 py-1 text-[10px] font-extrabold ${
-          active ? "bg-violet-100 text-violet-700" : "bg-gray-100 text-gray-500"
+      {active && <div className="h-[3px] w-full bg-violet-400/90" />}
+      <div className="p-4">
+        <div className="mb-2.5 flex flex-wrap items-center justify-between gap-2">
+          <span className={`rounded-full px-2.5 py-1 text-[10px] font-semibold ${
+            active ? "bg-violet-100 text-violet-700" : "bg-gray-100 text-gray-500"
+          }`}>
+            {tag}
+          </span>
+          <span className={`rounded-full px-2.5 py-1 text-[10px] font-semibold ${
+            active ? "bg-violet-600 text-white" : "bg-gray-200 text-gray-600"
+          }`}>
+            {active ? activeLabel : inactiveLabel}
+          </span>
+        </div>
+        <div className="text-sm font-semibold tracking-tight text-gray-900">{title}</div>
+        <div className="mt-1 text-xs leading-relaxed text-gray-600">{subtitle}</div>
+        <div className={`mt-3 rounded-2xl border px-3 py-2.5 text-[11px] font-medium leading-relaxed ${
+          active
+            ? "border-violet-100 bg-white/80 text-violet-700"
+            : "border-gray-200 bg-gray-50 text-gray-500"
         }`}>
-          {tag}
-        </span>
-        <span className={`rounded-lg px-2 py-1 text-[10px] font-extrabold ${
-          active ? "bg-violet-600 text-white" : "bg-gray-200 text-gray-600"
-        }`}>
-          {active ? "✓ Selected" : "Select"}
-        </span>
-      </div>
-      <div className="text-sm font-extrabold text-gray-900">{title}</div>
-      <div className="mt-1 text-xs leading-relaxed text-gray-600">{subtitle}</div>
-      <div className={`mt-3 rounded-xl border px-3 py-2 text-[11px] font-medium ${
-        active
-          ? "border-violet-100 bg-white/80 text-violet-700"
-          : "border-gray-200 bg-gray-50 text-gray-500"
-      }`}>
-        {note}
+          {note}
+        </div>
       </div>
     </button>
   );
@@ -530,6 +546,19 @@ export default function Page() {
       const runway = buildRunwayShots(predator, prey, finalEnvironment, finalArc, weather, runwayModel, emotionalTone, animalVibe, sceneInject, quality);
       const seedance = buildSeedanceShots(predator, prey, finalEnvironment, finalArc, weather, emotionalTone, animalVibe, sceneInject, quality);
       const kling = buildKlingShots(predator, prey, finalEnvironment, finalArc, weather, klingModel, emotionalTone, animalVibe, sceneInject, quality);
+      const fourShotWorkflow = buildFourShotWorkflow({
+        predator,
+        prey,
+        env: finalEnvironment,
+        arc: finalArc,
+        weather,
+        runwayModel,
+        klingModel,
+        emotionalTone,
+        animalVibe,
+        sceneDesc: sceneInject,
+        quality,
+      });
       const klingNative15s = buildKlingNative15s(predator, prey, finalEnvironment, finalArc, weather, klingModel, emotionalTone, animalVibe, sceneInject, quality);
       const klingSixShot = buildKlingSixShot(predator, prey, finalEnvironment, finalArc, weather, klingModel, emotionalTone, animalVibe, sceneInject, quality);
       const negativePromptForKling = buildNegativePrompt(predator, "KLING");
@@ -569,14 +598,14 @@ export default function Page() {
         hook: hook2026?.[0] ?? "", hook2026: hook2026 ?? [], recommendedHookIndex,
         caption: caption2026 ?? "", caption2026: caption2026 ?? "", cta, hashtags, tenIdeas,
         shotPlan: [
-          { engine: "RUNWAY", title: "Shot 1 — Opening Tension", prompt: runway?.shot1 ?? "", motionStrength, why: "Use Image 1 from the master image for the clean first-frame opening." },
-          { engine: "KLING", title: "Shot 2 — Pressure Build", prompt: kling?.shot2 ?? "", motionStrength, why: "Use Image 2 edited from Shot 1 image for a stronger physics-safe pressure build without losing identity." },
-          { engine: "KLING", title: "Shot 3 — Peak Action", prompt: kling?.shot3 ?? "", motionStrength, why: "Use Image 3 edited from Shot 2 image for the strongest full-body action beat." },
-          { engine: "RUNWAY", title: "Shot 4 — Resolved Tension", prompt: runway?.shot4 ?? "", motionStrength, why: "Use Image 4 edited from Shot 3 image for the readable aftermath or final tension hold." },
+          { engine: "RUNWAY", title: "Shot 1 — Opening Tension", prompt: fourShotWorkflow.shot1, motionStrength, why: "Use Image 1 from the master image for the clean first-frame opening." },
+          { engine: "KLING", title: "Shot 2 — Pressure Build", prompt: fourShotWorkflow.shot2, motionStrength, why: "Use Image 2 edited from Shot 1 image for a stronger physics-safe pressure build without losing identity." },
+          { engine: "KLING", title: "Shot 3 — Peak Action", prompt: fourShotWorkflow.shot3, motionStrength, why: "Use Image 3 edited from Shot 2 image for the strongest full-body action beat." },
+          { engine: "RUNWAY", title: "Shot 4 — Resolved Tension", prompt: fourShotWorkflow.shot4, motionStrength, why: "Use Image 4 edited from Shot 3 image for the readable aftermath or final tension hold." },
         ],
         runwayBundle: [runway?.shot1 ?? "", runway?.shot2 ?? "", runway?.shot3 ?? "", runway?.shot4 ?? ""].join("\n\n---\n\n"),
         klingBundle: [kling?.shot1 ?? "", kling?.shot2 ?? "", kling?.shot3 ?? "", kling?.shot4 ?? ""].join("\n\n---\n\n"),
-        routingNote: `4-shot hybrid routing: Image 1 → Shot 1 Opening Tension (Runway ${runwayModel}) | Image 2 → Shot 2 Pressure Build (Kling ${klingModel}) | Image 3 → Shot 3 Peak Action (Kling ${klingModel}) | Image 4 → Shot 4 Resolved Tension (Runway ${runwayModel})`,
+        routingNote: `Primary workflow: hybrid 4-shot routing uses Runway ${runwayModel} for Shots 1 and 4, and Kling ${klingModel} for Shots 2 and 3. Optional bundles: Seedance 2.0, full Runway 4-shot, and full Kling 4-shot outputs remain available.`,
         pipelineStyle: "4-shot", fiveShotCinematic, fiveShotViral, watchTimeReport, platformPack,
         seoTitle, altTextPrompt, qualitySummary, referenceWorkflow, naturalismChecklist,
         modelsUsed: { runway: runwayModel, kling: klingModel },
@@ -597,9 +626,9 @@ export default function Page() {
           body: JSON.stringify({ provider: activeProvider, predator, prey, env: finalEnvironment, arc: finalArc, weather, emotionalTone, animalVibe, base: { imagePrompt, hook: hook2026?.[0] ?? "", caption: caption2026 ?? "", voiceoverLine } }),
         });
         const data = await res.json().catch(() => ({} as unknown));
-        if (!res.ok) throw new Error(((data as Record<string, unknown>)?.error as string) || `AI enhancement failed (${res.status})`);
-        const parsedEnhanced = enhanceResponseSchema.safeParse(data);
-        if (!parsedEnhanced.success) throw new Error("Invalid AI enhancement response");
+        if (!res.ok) throw new Error(((data as Record<string, unknown>)?.error as string) || `AI polish failed (${res.status})`);
+        const parsedEnhanced = copyPolishResponseSchema.safeParse(data);
+        if (!parsedEnhanced.success) throw new Error("Invalid AI polish response");
         enhanced = {
           ...(parsedEnhanced.data.imagePrompt ? { imagePrompt: parsedEnhanced.data.imagePrompt } : {}),
           ...(parsedEnhanced.data.hook ? { hook: parsedEnhanced.data.hook } : {}),
@@ -607,7 +636,7 @@ export default function Page() {
           ...(parsedEnhanced.data.voiceoverLine ? { voiceoverLine: parsedEnhanced.data.voiceoverLine } : {}),
           aiEnhanced: true,
         };
-        if (!hasUsableGeneratedPackageEnhancements(enhanced)) throw new Error("AI enhancement returned no usable prompt updates");
+        if (!hasUsableGeneratedPackageEnhancements(enhanced)) throw new Error("AI polish returned no usable prompt or copy updates");
       }
 
       const finalPkg: GeneratedPackage = mergeGeneratedPackage(basePkg, enhanced, {
@@ -655,30 +684,30 @@ export default function Page() {
   // ─── RENDER ───────────────────────────────────────────────────────────────
 
   return (
-    <main className="min-h-screen w-full bg-gray-950">
+    <main className="min-h-screen w-full bg-gray-50">
 
-      {/* ── APP HEADER ─────────────────────────────────────────────────────── */}
-      <header className="sticky top-0 z-40 border-b border-white/10 bg-gray-950/95 backdrop-blur-sm shadow-[0_1px_0_rgba(255,255,255,0.03)]">
+      {/* ── APP HEADER — dark cinematic anchor ─────────────────────────── */}
+      <header className="sticky top-0 z-40 border-b border-white/[0.07] bg-gray-950">
         <div className="mx-auto w-full max-w-[var(--main-max-width)] px-4 sm:px-6 lg:px-8">
-          <div className="flex flex-wrap items-center justify-between gap-3 py-3 sm:min-h-[4rem] sm:flex-nowrap">
+          <div className="flex flex-wrap items-center justify-between gap-3 py-3 sm:min-h-[56px] sm:flex-nowrap">
 
             {/* Brand */}
             <div className="flex min-w-0 items-center gap-3">
-              <div className="grid h-8 w-8 shrink-0 place-items-center rounded-xl bg-white/10 ring-1 ring-white/10">
-                <span className="text-[11px] font-black text-white">W</span>
+              <div className="grid h-8 w-8 shrink-0 place-items-center rounded-xl bg-white/10 ring-1 ring-white/[0.12]">
+                <span className="text-[11px] font-bold text-white">W</span>
               </div>
               <div className="min-w-0">
                 <div className="flex flex-wrap items-center gap-x-2 gap-y-0.5">
-                  <span className="truncate text-sm font-black tracking-tight text-white sm:text-[15px]">WILD STORIES TV</span>
-                  <span className="hidden text-[10px] font-semibold text-white/40 sm:inline">WSTV Production Studio</span>
+                  <span className="truncate text-sm font-bold tracking-tight text-white sm:text-[15px]">WILD STORIES TV</span>
+                  <span className="hidden text-[10px] font-medium text-white/35 sm:inline">WSTV Production Studio</span>
                 </div>
-                <div className="mt-0.5 text-[10px] font-medium text-white/35 sm:hidden">Production Studio</div>
+                <div className="mt-0.5 text-[10px] font-medium text-white/30 sm:hidden">Production Studio</div>
               </div>
             </div>
 
-            {/* Top-level tab switcher */}
-            <div className="order-3 w-full sm:order-2 sm:flex sm:flex-1 sm:justify-center">
-              <nav className="grid w-full grid-cols-2 items-center gap-1 rounded-2xl border border-white/10 bg-white/[0.06] p-1 shadow-[inset_0_1px_0_rgba(255,255,255,0.03)] sm:w-auto sm:min-w-[260px] sm:flex-none">
+            {/* Top-level tab switcher — compact segmented control */}
+            <div className="order-3 flex w-full justify-start sm:order-2 sm:flex-1 sm:justify-center">
+              <nav className="inline-flex items-center rounded-2xl border border-white/[0.08] bg-white/[0.04] p-1 shadow-[inset_0_1px_0_rgba(255,255,255,0.04)]">
                 {([
                   { id: "build" as TopTab, label: "Build", icon: "⚡" },
                   { id: "workflows" as TopTab, label: "Workflows", icon: "⬡" },
@@ -687,13 +716,21 @@ export default function Page() {
                     key={tab.id}
                     type="button"
                     onClick={() => setActiveTab(tab.id)}
-                    className={`flex items-center justify-center gap-1.5 rounded-xl px-3 py-2 text-xs font-bold transition-all sm:px-4 ${
+                    className={`group flex items-center gap-2 rounded-xl border px-3.5 py-2 text-xs font-semibold tracking-[0.01em] transition-all ${
                       activeTab === tab.id
-                        ? "bg-white text-gray-900 shadow-[0_10px_30px_-18px_rgba(15,23,42,0.65)]"
-                        : "text-white/55 hover:bg-white/[0.05] hover:text-white/85"
+                        ? "border-white/15 bg-white text-gray-950 shadow-sm"
+                        : "border-transparent text-white/50 hover:bg-white/[0.06] hover:text-white/80"
                     }`}
                   >
-                    <span>{tab.icon}</span>
+                    <span
+                      className={`grid h-5 w-5 place-items-center rounded-full text-[11px] transition-all ${
+                        activeTab === tab.id
+                          ? "bg-gray-900/10 text-gray-900"
+                          : "bg-white/[0.06] text-white/70 group-hover:bg-white/[0.1] group-hover:text-white"
+                      }`}
+                    >
+                      {tab.icon}
+                    </span>
                     {tab.label}
                   </button>
                 ))}
@@ -711,629 +748,737 @@ export default function Page() {
           BUILD TAB
       ══════════════════════════════════════════════════════════════════════ */}
       {activeTab === "build" && (
-        <div className="mx-auto w-full max-w-[var(--main-max-width)] px-4 py-6 sm:px-6 sm:py-7 lg:px-8">
-
-          {/* Step navigator */}
-          <div className="mb-7 rounded-[1.5rem] border border-white/10 bg-white/[0.04] p-1.5 shadow-[inset_0_1px_0_rgba(255,255,255,0.03)]">
-            <div className="grid gap-1 md:grid-cols-3">
-              {([
-                { step: 1 as Step, label: "Wildlife Setup", desc: "Animals, arc, atmosphere" },
-                { step: 2 as Step, label: "Engine & Quality", desc: "Model, drift, upload" },
-                { step: 3 as Step, label: "Generate", desc: "Run & review output" },
-              ]).map((s) => (
-                <button
-                  key={s.step}
-                  type="button"
-                  onClick={() => setStep(s.step)}
-                  className={`flex items-center gap-3 rounded-[1rem] px-3.5 py-3 text-left transition-all sm:px-4 sm:py-3.5 ${
-                    step === s.step
-                      ? "bg-white text-gray-900 shadow-[0_10px_30px_-18px_rgba(15,23,42,0.55)]"
-                      : "text-white/70 hover:bg-white/[0.06]"
-                  }`}
-                >
-                  <div className={`grid h-8 w-8 shrink-0 place-items-center rounded-xl text-xs font-black ${
-                    step === s.step ? "bg-gray-900 text-white" : "bg-white/10 text-white/50"
-                  }`}>
-                    {step > s.step ? "✓" : s.step}
+        <>
+          {/* Breadcrumb step strip — transitional band between dark header and light body */}
+          <div className="border-b border-gray-200 bg-gradient-to-b from-gray-100 via-white to-gray-50/90">
+            <div className="mx-auto w-full max-w-[var(--main-max-width)] px-4 sm:px-6 lg:px-8">
+              <div className="flex items-center gap-2 overflow-x-auto rounded-2xl border border-gray-200/80 bg-white/80 px-2 py-2.5 shadow-sm shadow-gray-200/50 backdrop-blur">
+                {([
+                  { step: 1 as Step, label: "Wildlife Setup" },
+                  { step: 2 as Step, label: "Engine & Quality" },
+                  { step: 3 as Step, label: "Generate" },
+                ]).map((s, i) => (
+                  <div key={s.step} className="flex shrink-0 items-center gap-2">
+                    <button
+                      type="button"
+                      onClick={() => setStep(s.step)}
+                      className={`flex items-center gap-2 rounded-2xl border px-3.5 py-2 text-left text-xs font-semibold transition-all active:scale-[0.98] ${
+                        step === s.step
+                          ? "border-gray-900 bg-gray-900 text-white shadow-sm"
+                          : step > s.step
+                          ? "border-emerald-200 bg-emerald-50 text-emerald-700 hover:bg-emerald-100"
+                          : "border-transparent bg-transparent text-gray-400 hover:border-gray-200 hover:bg-gray-50 hover:text-gray-700"
+                      }`}
+                    >
+                      <span
+                        className={`grid h-5 w-5 place-items-center rounded-full text-[10px] ${
+                          step === s.step
+                            ? "bg-white/15 text-white"
+                            : step > s.step
+                            ? "bg-emerald-100 text-emerald-700"
+                            : "bg-gray-100 text-gray-500"
+                        }`}
+                      >
+                        {step > s.step ? "✓" : s.step}
+                      </span>
+                      <span className="flex flex-col items-start leading-none">
+                        <span className={`text-[9px] uppercase tracking-[0.14em] ${
+                          step === s.step ? "text-white/55" : step > s.step ? "text-emerald-500" : "text-gray-400"
+                        }`}>
+                          Step {s.step}
+                        </span>
+                        <span>{s.label}</span>
+                      </span>
+                    </button>
+                    {i < 2 && (
+                      <span className="shrink-0 rounded-full bg-gray-100 px-2 py-1 text-[10px] font-semibold text-gray-300">
+                        ›
+                      </span>
+                    )}
                   </div>
-                  <div className="min-w-0">
-                    <div className={`truncate text-xs font-extrabold sm:text-[13px] ${step === s.step ? "text-gray-900" : "text-white/80"}`}>
-                      {s.label}
-                    </div>
-                    <div className={`mt-0.5 hidden truncate text-[10px] md:block ${step === s.step ? "text-gray-500" : "text-white/35"}`}>
-                      {s.desc}
-                    </div>
-                  </div>
-                </button>
-              ))}
+                ))}
+              </div>
             </div>
           </div>
 
-          {/* ── STEP 1 ───────────────────────────────────────────────────── */}
-          {step === 1 && (
-            <div className="grid gap-6 xl:grid-cols-[minmax(0,1fr)_340px]">
+          {/* Page content */}
+          <div className="mx-auto w-full max-w-[var(--main-max-width)] px-4 py-6 sm:px-6 sm:py-8 lg:px-8">
 
-              {/* Left: Inputs */}
-              <div className="space-y-6">
+            {/* ── STEP 1 ─────────────────────────────────────────────────── */}
+            {step === 1 && (
+              <div className="grid gap-6 xl:grid-cols-[minmax(0,1fr)_340px]">
 
-                {/* Animals */}
-                <section className="rounded-[1.5rem] border border-gray-200/90 bg-white p-5 shadow-[0_14px_38px_-28px_rgba(15,23,42,0.35)] sm:p-6">
-                  <h3 className="mb-5 text-xs font-extrabold uppercase tracking-[0.18em] text-gray-400">Animals</h3>
-                  <div className="grid gap-4 sm:grid-cols-2">
-                    <div>
-                      <label className="mb-1.5 block text-xs font-semibold text-gray-500">Lead Animal</label>
-                      <select
-                        value={predator}
-                        onChange={(e) => setPredator(e.target.value)}
-                        className="w-full rounded-xl border border-gray-200 bg-gray-50 px-3 py-2.5 text-sm font-medium text-gray-900 focus:border-gray-400 focus:outline-none"
-                      >
-                        {predatorOptions.map((p) => <option key={p} value={p}>{p}</option>)}
-                      </select>
-                      <p className="mt-1 text-[11px] text-gray-400">Controls the encounter and drives opening pressure.</p>
-                      {customPredators.length > 0 && (
-                        <p className="mt-0.5 text-[11px] text-gray-400">
-                          {customPredators.length} custom animal{customPredators.length > 1 ? "s" : ""} added
-                        </p>
-                      )}
+                {/* Left: Inputs */}
+                <div className="space-y-6">
+
+                  {/* Animals */}
+                  <section className="rounded-2xl border border-gray-200 bg-white p-5 sm:p-6">
+                    <h3 className="mb-4 text-[11px] font-semibold uppercase tracking-[0.1em] text-gray-400">Animals</h3>
+                    <div className="grid gap-4 sm:grid-cols-2">
+                      <div>
+                        <label className="mb-1.5 block text-[11px] font-medium text-gray-500">Lead Animal</label>
+                        <select
+                          value={predator}
+                          onChange={(e) => setPredator(e.target.value)}
+                          className="w-full rounded-xl border border-gray-200 bg-gray-50 px-3 py-2.5 text-sm font-medium text-gray-900 focus:border-gray-400 focus:outline-none"
+                        >
+                          {predatorOptions.map((p) => <option key={p} value={p}>{p}</option>)}
+                        </select>
+                        <p className="mt-1 text-[11px] text-gray-400">Controls the encounter and drives opening pressure.</p>
+                        {customPredators.length > 0 && (
+                          <p className="mt-0.5 text-[11px] text-gray-400">
+                            {customPredators.length} custom animal{customPredators.length > 1 ? "s" : ""} added
+                          </p>
+                        )}
+                      </div>
+                      <div>
+                        <label className="mb-1.5 block text-[11px] font-medium text-gray-500">Opposing Animal</label>
+                        <select
+                          value={prey}
+                          onChange={(e) => setPrey(e.target.value)}
+                          className="w-full rounded-xl border border-gray-200 bg-gray-50 px-3 py-2.5 text-sm font-medium text-gray-900 focus:border-gray-400 focus:outline-none"
+                        >
+                          {preset.prey.map((p) => <option key={p} value={p}>{p}</option>)}
+                        </select>
+                        <p className="mt-1 text-[11px] text-gray-400">Filtered for realism from the selected lead animal.</p>
+                      </div>
                     </div>
-                    <div>
-                      <label className="mb-1.5 block text-xs font-semibold text-gray-500">Opposing Animal</label>
-                      <select
-                        value={prey}
-                        onChange={(e) => setPrey(e.target.value)}
-                        className="w-full rounded-xl border border-gray-200 bg-gray-50 px-3 py-2.5 text-sm font-medium text-gray-900 focus:border-gray-400 focus:outline-none"
-                      >
-                        {preset.prey.map((p) => <option key={p} value={p}>{p}</option>)}
-                      </select>
-                      <p className="mt-1 text-[11px] text-gray-400">Filtered for realism from the selected lead animal.</p>
+                  </section>
+
+                  {/* Scene */}
+                  <section className="rounded-2xl border border-gray-200 bg-white p-5 sm:p-6">
+                    <h3 className="mb-4 text-[11px] font-semibold uppercase tracking-[0.1em] text-gray-400">Scene</h3>
+                    <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+                      <div>
+                        <label className="mb-1.5 block text-[11px] font-medium text-gray-500">Conflict Arc</label>
+                        <select
+                          value={arc}
+                          disabled
+                          className="w-full cursor-not-allowed rounded-xl border border-gray-200 bg-gray-100 px-3 py-2.5 text-sm text-gray-400"
+                        >
+                          <option value={arc}>{arc}</option>
+                        </select>
+                        <p className="mt-1 text-[11px] text-gray-400">Auto-matched from animal pairing.</p>
+                      </div>
+                      <div>
+                        <label className="mb-1.5 block text-[11px] font-medium text-gray-500">Scene Atmosphere</label>
+                        <select
+                          value={weather}
+                          onChange={(e) => setWeather(e.target.value as Weather)}
+                          className="w-full rounded-xl border border-gray-200 bg-gray-50 px-3 py-2.5 text-sm font-medium text-gray-900 focus:border-gray-400 focus:outline-none"
+                        >
+                          {weatherOptions.map((w) => <option key={w} value={w}>{w}</option>)}
+                        </select>
+                      </div>
+                      <div>
+                        <label className="mb-1.5 block text-[11px] font-medium text-gray-500">Cinematic Depth</label>
+                        <select
+                          value={depthMode}
+                          onChange={(e) => setDepthMode(e.target.value as DepthMode)}
+                          className="w-full rounded-xl border border-gray-200 bg-gray-50 px-3 py-2.5 text-sm font-medium text-gray-900 focus:border-gray-400 focus:outline-none"
+                        >
+                          {depthModes.map((d) => <option key={d} value={d}>{d}</option>)}
+                        </select>
+                      </div>
+                      <div>
+                        <label className="mb-1.5 block text-[11px] font-medium text-gray-500">Habitat Override</label>
+                        <select
+                          value={habitat}
+                          onChange={(e) => setHabitat(e.target.value as HabitatPreset)}
+                          className="w-full rounded-xl border border-gray-200 bg-gray-50 px-3 py-2.5 text-sm font-medium text-gray-900 focus:border-gray-400 focus:outline-none"
+                        >
+                          {habitatOptions.map((h) => <option key={h} value={h}>{h}</option>)}
+                        </select>
+                        {habitat !== "Auto" && (
+                          <p className="mt-1 text-[11px] font-medium text-amber-600">⚠ Manual override active</p>
+                        )}
+                      </div>
+                      <div>
+                        <label className="mb-1.5 block text-[11px] font-medium text-gray-500">Tension Level</label>
+                        <select
+                          value={emotionalTone}
+                          onChange={(e) => setEmotionalTone(e.target.value as EmotionalTone)}
+                          className="w-full rounded-xl border border-gray-200 bg-gray-50 px-3 py-2.5 text-sm font-medium text-gray-900 focus:border-gray-400 focus:outline-none"
+                        >
+                          {emotionalTones.map((t) => <option key={t} value={t}>{t}</option>)}
+                        </select>
+                      </div>
+                      <div>
+                        <label className="mb-1.5 block text-[11px] font-medium text-gray-500">Instinct Style</label>
+                        <select
+                          value={animalVibe}
+                          onChange={(e) => setAnimalVibe(e.target.value as AnimalVibe)}
+                          className="w-full rounded-xl border border-gray-200 bg-gray-50 px-3 py-2.5 text-sm font-medium text-gray-900 focus:border-gray-400 focus:outline-none"
+                        >
+                          {animalVibes.map((v) => <option key={v} value={v}>{v}</option>)}
+                        </select>
+                      </div>
+                    </div>
+                  </section>
+
+                  {/* Step 1 actions */}
+                  <div className="flex flex-wrap gap-2.5 border-t border-gray-200/80 pt-5">
+                    <button
+                      type="button"
+                      onClick={() => { setPredator(DEFAULT_PREDATOR); setPrey(DEFAULT_PREY); setArc(DEFAULT_ARC); setWeather(DEFAULT_WEATHER); setHabitat(DEFAULT_HABITAT); setDepthMode(DEFAULT_DEPTH_MODE); setEmotionalTone(DEFAULT_EMOTIONAL_TONE); setAnimalVibe(DEFAULT_ANIMAL_VIBE); }}
+                      className="rounded-2xl border border-gray-200 bg-white px-4 py-2.5 text-sm font-semibold text-gray-600 shadow-sm shadow-gray-100/80 hover:bg-gray-50 active:scale-[0.98]"
+                    >
+                      Reset Defaults
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setStep(2)}
+                      className="rounded-2xl bg-gray-900 px-5 py-2.5 text-sm font-semibold text-white shadow-sm shadow-gray-300/70 hover:bg-black active:scale-[0.98]"
+                    >
+                      Continue → Engine & Quality
+                    </button>
+                  </div>
+                </div>
+
+                {/* Right: Current Setup (sticky) — violet left-border accent */}
+                <div className="space-y-6">
+                  <div className="rounded-[24px] border border-gray-200 border-l-4 border-l-violet-400 bg-white p-5 shadow-sm shadow-gray-200/70 sm:p-6 lg:sticky lg:top-[calc(56px+41px)]">
+                    <div className="flex items-start justify-between gap-3">
+                      <div>
+                        <h3 className="text-[11px] font-semibold uppercase tracking-[0.1em] text-gray-400">Current Setup</h3>
+                        <p className="mt-1 text-[11px] leading-relaxed text-gray-500">Live preview of your wildlife build</p>
+                      </div>
+                      <span className="rounded-full bg-violet-100 px-2.5 py-1 text-[10px] font-semibold text-violet-700">Live</span>
+                    </div>
+                    <div className="mt-4 rounded-2xl border border-gray-200/80 bg-gradient-to-br from-gray-50 to-white p-4">
+                      <div className="text-base font-bold tracking-tight text-gray-900">{predator} vs {prey}</div>
+                      <div className="mt-1.5 flex flex-wrap gap-2">
+                        <span className="rounded-full bg-white px-2.5 py-1 text-[10px] font-semibold text-gray-600 shadow-sm shadow-gray-100">
+                          {arc}
+                        </span>
+                        <span className="rounded-full bg-white px-2.5 py-1 text-[10px] font-semibold text-gray-500 shadow-sm shadow-gray-100">
+                          {weather}
+                        </span>
+                        <span className="rounded-full bg-white px-2.5 py-1 text-[10px] font-semibold text-gray-500 shadow-sm shadow-gray-100">
+                          {depthMode}
+                        </span>
+                      </div>
+                    </div>
+                    <div className="mt-3 space-y-3">
+                      <div className="rounded-2xl border border-gray-100 bg-gray-50 p-3.5">
+                        <div className="mb-1 text-[10px] font-semibold uppercase tracking-wide text-gray-400">Environment</div>
+                        <div className="text-[11px] leading-relaxed text-gray-600">{finalEnvironment}</div>
+                      </div>
+                      <div className="flex items-center justify-between rounded-2xl border border-gray-100 bg-gray-50 px-3.5 py-3">
+                        <span className="text-[11px] font-medium text-gray-500">Drift Risk</span>
+                        <span className={`rounded-full px-2.5 py-1 text-[10px] font-semibold ${
+                          preset.driftRisk === "HIGH" ? "bg-red-100 text-red-700" :
+                          preset.driftRisk === "MEDIUM" ? "bg-amber-100 text-amber-700" :
+                          "bg-emerald-100 text-emerald-700"
+                        }`}>
+                          {preset.driftRisk}
+                        </span>
+                      </div>
                     </div>
                   </div>
-                </section>
 
-                {/* Scene */}
-                <section className="rounded-[1.5rem] border border-gray-200/90 bg-white p-5 shadow-[0_14px_38px_-28px_rgba(15,23,42,0.35)] sm:p-6">
-                  <h3 className="mb-5 text-xs font-extrabold uppercase tracking-[0.18em] text-gray-400">Scene</h3>
-                  <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-                    <div>
-                      <label className="mb-1.5 block text-xs font-semibold text-gray-500">Conflict Arc</label>
-                      <select
-                        value={arc}
-                        disabled
-                        className="w-full rounded-xl border border-gray-200 bg-gray-100 px-3 py-2.5 text-sm text-gray-500 cursor-not-allowed"
+                  {/* Add custom animal */}
+                  <div className="rounded-[24px] border border-dashed border-gray-300 bg-white/80 p-4 shadow-sm shadow-gray-100/80 sm:p-5">
+                    <div className="flex items-center justify-between gap-3">
+                      <div>
+                        <div className="text-xs font-semibold uppercase tracking-[0.08em] text-gray-500">Custom Animal</div>
+                        <div className="mt-1 text-sm font-semibold text-gray-800">Add any animal to the list</div>
+                        <div className="mt-0.5 text-[11px] text-gray-500">Save a reusable local preset without changing the current flow.</div>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => { setCustomForm({ name: "", prey: "", environment: habitatPromptMap["Rocky Mountain Meadow"], defaultArc: arc || "Pack hunting strategy", driftRisk: preset.driftRisk }); setCustomModalOpen(true); }}
+                        className="rounded-2xl border border-gray-200 bg-white px-3.5 py-2 text-xs font-semibold text-gray-700 shadow-sm shadow-gray-100/80 hover:bg-gray-50 active:scale-[0.98]"
                       >
-                        <option value={arc}>{arc}</option>
-                      </select>
-                      <p className="mt-1 text-[11px] text-gray-400">Auto-matched from animal pairing.</p>
-                    </div>
-                    <div>
-                      <label className="mb-1.5 block text-xs font-semibold text-gray-500">Scene Atmosphere</label>
-                      <select
-                        value={weather}
-                        onChange={(e) => setWeather(e.target.value as Weather)}
-                        className="w-full rounded-xl border border-gray-200 bg-gray-50 px-3 py-2.5 text-sm font-medium text-gray-900 focus:border-gray-400 focus:outline-none"
-                      >
-                        {weatherOptions.map((w) => <option key={w} value={w}>{w}</option>)}
-                      </select>
-                    </div>
-                    <div>
-                      <label className="mb-1.5 block text-xs font-semibold text-gray-500">Cinematic Depth</label>
-                      <select
-                        value={depthMode}
-                        onChange={(e) => setDepthMode(e.target.value as DepthMode)}
-                        className="w-full rounded-xl border border-gray-200 bg-gray-50 px-3 py-2.5 text-sm font-medium text-gray-900 focus:border-gray-400 focus:outline-none"
-                      >
-                        {depthModes.map((d) => <option key={d} value={d}>{d}</option>)}
-                      </select>
-                    </div>
-                    <div>
-                      <label className="mb-1.5 block text-xs font-semibold text-gray-500">Habitat Override</label>
-                      <select
-                        value={habitat}
-                        onChange={(e) => setHabitat(e.target.value as HabitatPreset)}
-                        className="w-full rounded-xl border border-gray-200 bg-gray-50 px-3 py-2.5 text-sm font-medium text-gray-900 focus:border-gray-400 focus:outline-none"
-                      >
-                        {habitatOptions.map((h) => <option key={h} value={h}>{h}</option>)}
-                      </select>
-                      {habitat !== "Auto" && (
-                        <p className="mt-1 text-[11px] text-amber-600 font-medium">⚠ Manual override active</p>
-                      )}
-                    </div>
-                    <div>
-                      <label className="mb-1.5 block text-xs font-semibold text-gray-500">Tension Level</label>
-                      <select
-                        value={emotionalTone}
-                        onChange={(e) => setEmotionalTone(e.target.value as EmotionalTone)}
-                        className="w-full rounded-xl border border-gray-200 bg-gray-50 px-3 py-2.5 text-sm font-medium text-gray-900 focus:border-gray-400 focus:outline-none"
-                      >
-                        {emotionalTones.map((t) => <option key={t} value={t}>{t}</option>)}
-                      </select>
-                    </div>
-                    <div>
-                      <label className="mb-1.5 block text-xs font-semibold text-gray-500">Instinct Style</label>
-                      <select
-                        value={animalVibe}
-                        onChange={(e) => setAnimalVibe(e.target.value as AnimalVibe)}
-                        className="w-full rounded-xl border border-gray-200 bg-gray-50 px-3 py-2.5 text-sm font-medium text-gray-900 focus:border-gray-400 focus:outline-none"
-                      >
-                        {animalVibes.map((v) => <option key={v} value={v}>{v}</option>)}
-                      </select>
+                        + Add
+                      </button>
                     </div>
                   </div>
-                </section>
-
-                {/* Actions */}
-                <div className="flex flex-wrap gap-2.5">
-                  <button
-                    type="button"
-                    onClick={() => { setPredator(DEFAULT_PREDATOR); setPrey(DEFAULT_PREY); setArc(DEFAULT_ARC); setWeather(DEFAULT_WEATHER); setHabitat(DEFAULT_HABITAT); setDepthMode(DEFAULT_DEPTH_MODE); setEmotionalTone(DEFAULT_EMOTIONAL_TONE); setAnimalVibe(DEFAULT_ANIMAL_VIBE); }}
-                    className="rounded-xl border border-gray-300 bg-white px-4 py-2.5 text-sm font-bold text-gray-700 hover:bg-gray-50 active:scale-[0.98]"
-                  >
-                    Reset Defaults
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setStep(2)}
-                    className="rounded-xl bg-gray-900 px-5 py-2.5 text-sm font-bold text-white hover:bg-black active:scale-[0.98]"
-                  >
-                    Continue → Engine & Quality
-                  </button>
                 </div>
               </div>
+            )}
 
-              {/* Right: Current Setup card (sticky) */}
-              <div className="space-y-3 sm:space-y-4">
-                {/* Setup preview */}
-                <div className="rounded-[1.75rem] border border-gray-200/90 bg-gradient-to-br from-white via-white to-gray-50 p-5 shadow-[0_24px_60px_-32px_rgba(15,23,42,0.45)] lg:sticky lg:top-24 sm:p-6">
-                  <div className="flex items-start justify-between gap-3">
-                    <div>
-                      <h3 className="text-xs font-extrabold uppercase tracking-[0.18em] text-gray-400">Current Setup</h3>
-                      <p className="mt-1 text-[11px] text-gray-500">Live preview of your wildlife build context</p>
+            {/* ── STEP 2 ─────────────────────────────────────────────────── */}
+            {step === 2 && (
+              <div className="grid gap-6 xl:grid-cols-[minmax(0,1fr)_380px]">
+
+                {/* Left: Models + Quality */}
+                <div className="space-y-6">
+
+                  {/* Quality Automation */}
+                  <section className="rounded-2xl border border-gray-200 bg-white p-5 sm:p-6">
+                    <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
+                      <div className="flex items-center gap-2">
+                        <h3 className="text-[11px] font-semibold uppercase tracking-[0.1em] text-gray-400">🛡 Quality Automation</h3>
+                        <span className={`rounded-full px-2 py-0.5 text-[10px] font-semibold ${
+                          qualityReco.level === "HIGH" ? "bg-red-100 text-red-700" :
+                          qualityReco.level === "MEDIUM" ? "bg-amber-100 text-amber-700" :
+                          "bg-emerald-100 text-emerald-700"
+                        }`}>
+                          {qualityReco.level} drift
+                        </span>
+                      </div>
+                      <div className="flex flex-wrap gap-2">
+                        <button
+                          type="button"
+                          onClick={() => setAutoApplyHighDrift((v) => !v)}
+                          className={`rounded-2xl border px-3.5 py-2 text-xs font-semibold transition-all active:scale-95 ${
+                            autoApplyHighDrift ? "border-gray-900 bg-gray-900 text-white shadow-sm shadow-gray-300/60" : "border-gray-200 bg-white text-gray-600 shadow-sm shadow-gray-100/80 hover:bg-gray-50"
+                          }`}
+                        >
+                          {autoApplyHighDrift ? "⚡ Auto: ON" : "⚡ Auto: OFF"}
+                        </button>
+                        <button
+                          type="button"
+                          disabled={!lastQualityBeforeApply}
+                          onClick={undoRecommendedQuality}
+                          className="rounded-2xl border border-gray-200 bg-white px-3.5 py-2 text-xs font-semibold text-gray-600 shadow-sm shadow-gray-100/80 hover:bg-gray-50 disabled:opacity-40 active:scale-95"
+                        >
+                          ↩ Undo
+                        </button>
+                        <button
+                          type="button"
+                          onClick={applyRecommendedQuality}
+                          className="rounded-2xl bg-gray-900 px-3.5 py-2 text-xs font-semibold text-white shadow-sm shadow-gray-300/60 hover:bg-black active:scale-95"
+                        >
+                          ✅ Apply
+                        </button>
+                      </div>
                     </div>
-                    <span className="rounded-full bg-gray-900 px-2.5 py-1 text-[10px] font-bold text-white/85">Live</span>
-                  </div>
-                  <div className="mt-4 rounded-[1.25rem] border border-gray-100 bg-gray-50/80 p-4">
-                    <div className="text-base font-extrabold text-gray-900">{predator} vs {prey}</div>
-                    <div className="mt-1 text-sm text-gray-600">{arc}</div>
-                    <div className="mt-1 text-xs text-gray-500">{weather} · {depthMode}</div>
-                  </div>
-                  <div className="mt-4 grid gap-3">
-                    <div className="rounded-2xl border border-gray-100 bg-white/80 p-3.5">
-                      <div className="mb-1 text-[11px] font-semibold uppercase tracking-wide text-gray-500">Environment</div>
-                      <div className="text-[11px] leading-relaxed text-gray-600">{finalEnvironment}</div>
+
+                    {qualityReco.warnings.length > 0 ? (
+                      <div className="space-y-2">
+                        {qualityReco.warnings.map((w) => (
+                          <div key={w.id} className={`rounded-xl border p-3 ${
+                            w.severity === "danger" ? "border-red-200 bg-red-50" :
+                            w.severity === "warning" ? "border-amber-200 bg-amber-50" : "border-gray-200 bg-gray-50"
+                          }`}>
+                            <div className="text-xs font-semibold text-gray-900">{w.title}</div>
+                            <div className="mt-0.5 text-xs text-gray-600">{w.detail}</div>
+                          </div>
+                        ))}
+                      </div>
+                    ) : (
+                      <div className="rounded-xl border border-emerald-200 bg-emerald-50 p-3 text-xs font-semibold text-emerald-700">
+                        ✅ No critical warnings — quality settings look good.
+                      </div>
+                    )}
+
+                    {qualityReco.why.length > 0 && (
+                      <div className="mt-2 text-xs text-gray-400">
+                        <span className="font-semibold text-gray-500">Why:</span> {qualityReco.why.join(" • ")}
+                      </div>
+                    )}
+                  </section>
+
+                  {/* Model Profile */}
+                  <section className="rounded-2xl border border-gray-200 bg-white p-5 sm:p-6">
+                    <div className="mb-4 flex flex-wrap items-center justify-between gap-2">
+                      <h3 className="text-[11px] font-semibold uppercase tracking-[0.1em] text-gray-400">Model Profile</h3>
+                      <span className="rounded-full bg-gray-100 px-2.5 py-1 text-[10px] font-medium text-gray-500">prompts auto-adapt per model</span>
                     </div>
-                    <div className="flex items-center justify-between rounded-2xl border border-gray-100 bg-white/80 px-3.5 py-3">
-                      <span className="text-[11px] font-semibold uppercase tracking-wide text-gray-500">Drift Risk</span>
-                      <span className={`rounded-full px-2.5 py-1 text-[10px] font-extrabold ${
+
+                    {/* Hybrid 4-shot — primary featured card with indigo accent bar */}
+                    <div className="mb-4">
+                      <FeaturedModelCard
+                        active
+                        tag="HYBRID"
+                        title="Hybrid 4-shot"
+                        subtitle="Primary WSTV production path — hybrid 4-shot continuity."
+                        note="Default continuity path = Runway Shot 1 → Kling Shot 2 → Kling Shot 3 → Runway Shot 4. Seedance remains available in the generated package as an optional full 4-shot bundle."
+                        activeLabel="✓ Primary default"
+                        onClick={() => {}}
+                      />
+                    </div>
+
+                    {/* Secondary context note */}
+                    <div className="mb-4 rounded-2xl border border-gray-100 bg-gray-50 px-3.5 py-2.5 text-[11px] font-medium leading-relaxed text-gray-500">
+                      Hybrid uses both engines below: choose the Runway model for Shot 1 and Shot 4, and the Kling model for Shot 2 and Shot 3. Seedance remains available in the generated package as an optional full-bundle route.
+                    </div>
+
+                    {/* Runway + Kling — hybrid engine selectors */}
+                    <div className="grid gap-4 md:grid-cols-2">
+                      <div className="space-y-2">
+                        <div className="mb-1 flex items-center gap-2">
+                          <div className="h-[2px] w-8 rounded-full bg-green-400" />
+                          <span className="rounded-full bg-green-100 px-2.5 py-1 text-[10px] font-semibold text-green-700">RUNWAY · HYBRID</span>
+                        </div>
+                        {RUNWAY_MODELS.map((m) => (
+                          <ModelCard key={m} tone="green" tag="RUNWAY" active={runwayModel === m} title={m}
+                            subtitle={m === "Gen-4.5" ? "Best realism, strongest first-frame readability" : m === "Gen-4 Turbo" ? "Fast draft for quick readable opening tests" : "Stable cinematic shots with clear openings"}
+                            activeLabel="✓ Used in hybrid"
+                            onClick={() => setRunwayModel(m)}
+                          />
+                        ))}
+                      </div>
+                      <div className="space-y-2">
+                        <div className="mb-1 flex items-center gap-2">
+                          <div className="h-[2px] w-8 rounded-full bg-blue-400" />
+                          <span className="rounded-full bg-blue-100 px-2.5 py-1 text-[10px] font-semibold text-blue-700">KLING · HYBRID</span>
+                        </div>
+                        {KLING_MODELS.map((m) => (
+                          <ModelCard key={m} tone="blue" tag="KLING" active={klingModel === m} title={m}
+                            subtitle={m === "Kling 3.0 Pro" ? "Strong action workflow, best readable openings" : m === "Kling 3.0 Standard" ? "Balanced action with clear subject spacing" : m === "Kling 2.6 Pro" ? "Earlier option for simpler readable action" : m === "Kling 2.5 Turbo Pro" ? "Fast draft for one clean action beat" : "Fast I2V draft option for rough motion tests"}
+                            activeLabel="✓ Used in hybrid"
+                            onClick={() => setKlingModel(m)}
+                          />
+                        ))}
+                      </div>
+                    </div>
+                  </section>
+
+                  {/* Quality Toggles */}
+                  <section className="rounded-2xl border border-gray-200 bg-white p-5 sm:p-6">
+                    <h3 className="mb-4 text-[11px] font-semibold uppercase tracking-[0.1em] text-gray-400">Quality Toggles</h3>
+                    <QualityPanel
+                      realismMode={realismMode} setRealismMode={setRealismMode}
+                      motionOnlyI2V={motionOnlyI2V} setMotionOnlyI2V={setMotionOnlyI2V}
+                      referenceLock={referenceLock} setReferenceLock={setReferenceLock}
+                      singleActionRule={singleActionRule} setSingleActionRule={setSingleActionRule}
+                      microMotion={microMotion} setMicroMotion={setMicroMotion}
+                      heroVeo={heroVeo} setHeroVeo={setHeroVeo}
+                    />
+                    <div className="mt-4 border-t border-gray-100 pt-4">
+                      <label className="mb-1.5 block text-[11px] font-medium text-gray-500">Image Prompt Target</label>
+                      <select
+                        value={imagePromptTarget}
+                        onChange={(e) => setImagePromptTarget(e.target.value as ImagePromptTarget)}
+                        className="w-full rounded-xl border border-gray-200 bg-gray-50 px-3 py-2.5 text-sm font-medium text-gray-900"
+                      >
+                        <option value="NANO_BANANA_2">Nano Banana 2 — Gemini 3.1 Flash Image (default)</option>
+                        <option value="NB2">NB2 (legacy Gemini 2.5 Flash Image)</option>
+                        <option value="RUNWAY">Runway Reference</option>
+                        <option value="MJ">Midjourney</option>
+                      </select>
+                    </div>
+
+                    {/* Reference tags */}
+                    <div className="mt-3 rounded-xl border border-violet-200 bg-violet-50 p-3 text-xs text-violet-700">
+                      <div className="mb-1 font-semibold">Reference tags</div>
+                      <div className="space-y-0.5 text-[11px]">
+                        <div>Lead animal → <code className="rounded bg-white px-1 py-0.5 text-violet-800">@hero_predator</code></div>
+                        <div>Opposing animal → <code className="rounded bg-white px-1 py-0.5 text-violet-800">@hero_prey</code></div>
+                        <div>Environment plate → <code className="rounded bg-white px-1 py-0.5 text-violet-800">@env_plate</code></div>
+                      </div>
+                      <div className="mt-1.5 text-violet-500">Video prompts मा appearance नलेख — reference image नै identity हो।</div>
+                    </div>
+                  </section>
+                </div>
+
+                {/* Right: Upload + Scene */}
+                <div className="space-y-6">
+
+                  {/* Media upload */}
+                  <section className="rounded-2xl border border-gray-200 bg-white p-5 sm:p-6">
+                    <div className="mb-4 flex items-center justify-between">
+                      <h3 className="text-[11px] font-semibold uppercase tracking-[0.1em] text-gray-400">📎 Media Upload</h3>
+                      <span className="rounded-full bg-purple-50 px-2.5 py-1 text-[10px] font-semibold text-purple-600">Auto Analyze</span>
+                    </div>
+                    <MediaAnalyzer
+                      activeProvider={activeProvider}
+                      analysis={mediaAnalysis}
+                      onAnalysisComplete={setMediaAnalysis}
+                      onClear={() => setMediaAnalysis(null)}
+                    />
+                  </section>
+
+                  {/* Scene description — coral tint marks creative inject zone */}
+                  <section className="rounded-2xl border border-orange-200 bg-orange-50 p-5 sm:p-6">
+                    <h3 className="mb-4 text-[11px] font-semibold uppercase tracking-[0.1em] text-orange-500">Scene Description</h3>
+                    <div className="mb-4 flex overflow-hidden rounded-xl border border-orange-200 bg-white">
+                      {(["romanized", "english"] as const).map((mode) => (
+                        <button
+                          key={mode}
+                          type="button"
+                          onClick={() => setSceneMode(mode)}
+                          className={`flex-1 px-3 py-2 text-xs font-semibold transition-all ${
+                            sceneMode === mode ? "bg-orange-600 text-white" : "text-orange-600 hover:bg-orange-50"
+                          }`}
+                        >
+                          {mode === "romanized" ? "Nepali Romanized" : "Direct English"}
+                        </button>
+                      ))}
+                    </div>
+                    <textarea
+                      value={sceneNepaliRomanized}
+                      onChange={(e) => setSceneNepaliRomanized(e.target.value)}
+                      placeholder={sceneMode === "romanized" ? "jastei: bag le bakhra lai khedaera..." : "Write the scene in English..."}
+                      className="min-h-[120px] w-full resize-none rounded-xl border border-orange-200 bg-white p-3.5 text-sm text-gray-900 outline-none placeholder:text-gray-400"
+                    />
+                    <div className="mt-3 flex flex-wrap gap-2">
+                      {["Example 1", "Example 2", "Example 3"].map((x) => (
+                        <button key={x} type="button"
+                          onClick={() => setSceneNepaliRomanized(`${x}: bag le bakhra lai khedaera...`)}
+                          className="rounded-lg border border-orange-200 bg-orange-100 px-2.5 py-1 text-xs font-semibold text-orange-800 hover:bg-orange-200"
+                        >
+                          {x}
+                        </button>
+                      ))}
+                      <button
+                        type="button"
+                        onClick={() => alert("Auto-translate wiring: optional. For now, this text injects directly into prompts.")}
+                        className="ml-auto rounded-xl bg-orange-600 px-3 py-1.5 text-xs font-semibold text-white hover:bg-orange-700"
+                      >
+                        Translate →
+                      </button>
+                    </div>
+                  </section>
+
+                  {/* Compact status strip — replaces redundant duplicate setup card */}
+                  <div className="rounded-[24px] border border-gray-200 bg-white p-4 shadow-sm shadow-gray-100/80 sm:p-5">
+                    <div className="flex flex-wrap items-start justify-between gap-3">
+                      <div>
+                        <div className="text-[11px] font-semibold uppercase tracking-[0.1em] text-gray-400">Current Setup</div>
+                        <div className="mt-1 text-sm font-semibold text-gray-900">{predator} vs {prey}</div>
+                        <div className="mt-2 flex flex-wrap gap-2">
+                          <span className="rounded-full bg-gray-100 px-2.5 py-1 text-[10px] font-semibold text-gray-600">{arc}</span>
+                          <span className="rounded-full bg-gray-100 px-2.5 py-1 text-[10px] font-semibold text-gray-500">{weather}</span>
+                        </div>
+                      </div>
+                      <span className={`rounded-full px-2.5 py-1 text-[10px] font-semibold ${
                         preset.driftRisk === "HIGH" ? "bg-red-100 text-red-700" :
                         preset.driftRisk === "MEDIUM" ? "bg-amber-100 text-amber-700" :
                         "bg-emerald-100 text-emerald-700"
-                      }`}>
-                        {preset.driftRisk}
-                      </span>
+                      }`}>{preset.driftRisk} drift</span>
                     </div>
                   </div>
                 </div>
 
-                {/* Add custom animal */}
-                <div className="rounded-[1.5rem] border border-dashed border-gray-300/80 bg-gray-50/75 p-4 sm:p-5">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <div className="text-xs font-extrabold uppercase tracking-wide text-gray-700">Custom Animal</div>
-                      <div className="mt-0.5 text-[11px] text-gray-500">Add any animal to the list</div>
-                    </div>
-                    <button
-                      type="button"
-                      onClick={() => { setCustomForm({ name: "", prey: "", environment: habitatPromptMap["Rocky Mountain Meadow"], defaultArc: arc || "Pack hunting strategy", driftRisk: preset.driftRisk }); setCustomModalOpen(true); }}
-                      className="rounded-xl border border-gray-300 bg-white px-3 py-1.5 text-xs font-bold text-gray-700 hover:bg-gray-100 active:scale-[0.98]"
-                    >
-                      + Add
-                    </button>
-                  </div>
+                {/* Step 2 nav */}
+                <div className="flex flex-wrap gap-2 border-t border-gray-200/80 pt-5 lg:col-span-2">
+                  <button type="button" onClick={() => setStep(1)}
+                    className="rounded-2xl border border-gray-200 bg-white px-5 py-2.5 text-sm font-semibold text-gray-600 shadow-sm shadow-gray-100/80 hover:bg-gray-50 active:scale-[0.98]">
+                    ← Back
+                  </button>
+                  <button type="button" onClick={() => setStep(3)}
+                    className="rounded-2xl bg-gray-900 px-5 py-2.5 text-sm font-semibold text-white shadow-sm shadow-gray-300/70 hover:bg-black active:scale-[0.98]">
+                    Continue → Generate
+                  </button>
                 </div>
               </div>
-            </div>
-          )}
+            )}
 
-          {/* ── STEP 2 ───────────────────────────────────────────────────── */}
-          {step === 2 && (
-            <div className="grid gap-6 xl:grid-cols-[minmax(0,1fr)_380px]">
-
-              {/* Left: Models + Quality */}
+            {/* ── STEP 3 ─────────────────────────────────────────────────── */}
+            {step === 3 && (
               <div className="space-y-6">
 
-                {/* Quality Automation */}
-                <section className="rounded-[1.5rem] border border-gray-200/90 bg-white p-5 shadow-[0_14px_38px_-28px_rgba(15,23,42,0.35)] sm:p-6">
-                  <div className="mb-5 flex flex-wrap items-center justify-between gap-3">
-                    <div className="flex items-center gap-2">
-                      <h3 className="text-xs font-extrabold uppercase tracking-[0.18em] text-gray-400">🛡 Quality Automation</h3>
-                      <span className={`rounded-full px-2 py-0.5 text-[10px] font-extrabold ${
-                        qualityReco.level === "HIGH" ? "bg-red-100 text-red-700" :
-                        qualityReco.level === "MEDIUM" ? "bg-amber-100 text-amber-700" :
-                        "bg-emerald-100 text-emerald-700"
-                      }`}>
-                        {qualityReco.level} drift
-                      </span>
-                    </div>
-                    <div className="flex flex-wrap gap-2">
-                      <button
-                        type="button"
-                        onClick={() => setAutoApplyHighDrift((v) => !v)}
-                        className={`rounded-xl border px-3 py-1.5 text-xs font-bold transition-all active:scale-95 ${
-                          autoApplyHighDrift ? "border-gray-900 bg-gray-900 text-white" : "border-gray-300 bg-white text-gray-700 hover:bg-gray-50"
-                        }`}
-                      >
-                        {autoApplyHighDrift ? "⚡ Auto: ON" : "⚡ Auto: OFF"}
-                      </button>
-                      <button
-                        type="button"
-                        disabled={!lastQualityBeforeApply}
-                        onClick={undoRecommendedQuality}
-                        className="rounded-xl border border-gray-300 bg-white px-3 py-1.5 text-xs font-bold text-gray-700 hover:bg-gray-50 disabled:opacity-40 active:scale-95"
-                      >
-                        ↩ Undo
-                      </button>
-                      <button
-                        type="button"
-                        onClick={applyRecommendedQuality}
-                        className="rounded-xl bg-gray-900 px-3 py-1.5 text-xs font-bold text-white hover:bg-black active:scale-95"
-                      >
-                        ✅ Apply
-                      </button>
-                    </div>
-                  </div>
-
-                  {qualityReco.warnings.length > 0 ? (
-                    <div className="space-y-2">
-                      {qualityReco.warnings.map((w) => (
-                        <div key={w.id} className={`rounded-xl border p-3 ${
-                          w.severity === "danger" ? "border-red-200 bg-red-50" :
-                          w.severity === "warning" ? "border-amber-200 bg-amber-50" : "border-gray-200 bg-gray-50"
-                        }`}>
-                          <div className="text-xs font-extrabold text-gray-900">{w.title}</div>
-                          <div className="mt-0.5 text-xs text-gray-600">{w.detail}</div>
-                        </div>
-                      ))}
-                    </div>
-                  ) : (
-                    <div className="rounded-xl border border-emerald-200 bg-emerald-50 p-3 text-xs font-semibold text-emerald-700">
-                      ✅ No critical warnings — quality settings look good.
-                    </div>
-                  )}
-
-                  {qualityReco.why.length > 0 && (
-                    <div className="mt-2 text-xs text-gray-400">
-                      <span className="font-bold text-gray-600">Why:</span> {qualityReco.why.join(" • ")}
-                    </div>
-                  )}
-                </section>
-
-                {/* Models */}
-                <section className="rounded-[1.5rem] border border-gray-200/90 bg-white p-5 shadow-[0_14px_38px_-28px_rgba(15,23,42,0.35)] sm:p-6">
+                {/* Generate card — dark island */}
+                <section className="rounded-[24px] bg-gray-900 p-5 shadow-[0_18px_40px_rgba(15,23,42,0.18)] sm:p-6">
                   <div className="mb-5 flex flex-wrap items-center justify-between gap-2">
-                    <h3 className="text-xs font-extrabold uppercase tracking-[0.18em] text-gray-400">Model Profile</h3>
-                    <span className="rounded bg-gray-100 px-2 py-1 text-[10px] font-semibold text-gray-500">prompts auto-adapt per model</span>
+                    <h3 className="text-[11px] font-semibold uppercase tracking-[0.1em] text-white/40">Generate for Reels</h3>
+                    <div className="rounded-full border border-white/[0.08] bg-white/[0.05] px-2.5 py-1 text-[10px] font-semibold text-white/50">{predator} vs {prey}</div>
                   </div>
-                  <div className="mb-4">
-                    <FeaturedModelCard
-                      active
-                      tag="SEEDANCE"
-                      title="Seedance 2.0"
-                      subtitle="Primary WSTV 4-shot continuity lane for the current production workflow."
-                      note="Main continuity path = Seedance 2.0 Shot 1 → Shot 4. Single current Seedance profile is selected by default, while Runway and Kling stay available below for alternate prompt bundles and fallback workflows."
-                      onClick={() => {}}
-                    />
-                  </div>
-                  <div className="grid gap-4 md:grid-cols-2">
-                    <div className="space-y-2">
-                      <div className="mb-2 inline-flex rounded-lg bg-green-100 px-2 py-1 text-[10px] font-extrabold text-green-700">RUNWAY</div>
-                      {RUNWAY_MODELS.map((m) => (
-                        <ModelCard key={m} tone="green" tag="RUNWAY" active={runwayModel === m} title={m}
-                          subtitle={m === "Gen-4.5" ? "Best realism, strongest first-frame readability" : m === "Gen-4 Turbo" ? "Fast draft for quick readable opening tests" : "Stable cinematic shots with clear openings"}
-                          onClick={() => setRunwayModel(m)}
-                        />
-                      ))}
-                    </div>
-                    <div className="space-y-2">
-                      <div className="mb-2 inline-flex rounded-lg bg-blue-100 px-2 py-1 text-[10px] font-extrabold text-blue-700">KLING</div>
-                      {KLING_MODELS.map((m) => (
-                        <ModelCard key={m} tone="blue" tag="KLING" active={klingModel === m} title={m}
-                          subtitle={m === "Kling 3.0 Pro" ? "Strong action workflow, best readable openings" : m === "Kling 3.0 Standard" ? "Balanced action with clear subject spacing" : m === "Kling 2.6 Pro" ? "Earlier option for simpler readable action" : m === "Kling 2.5 Turbo Pro" ? "Fast draft for one clean action beat" : "Fast I2V draft option for rough motion tests"}
-                          onClick={() => setKlingModel(m)}
-                        />
+
+                  {/* AI provider */}
+                  <div className="mb-5 rounded-2xl border border-white/10 bg-white/[0.06] p-3.5">
+                    <div className="mb-1 text-[11px] font-semibold uppercase tracking-wide text-white/40">AI Copy &amp; Prompt Polish</div>
+                    <div className="mb-3 text-[11px] text-white/30">Optional polish only. Main cinematic 4-shot packs now come from the hybrid dispatcher, with Seedance, full Runway, and full Kling bundles still included as optional outputs.</div>
+                    <div className="flex flex-wrap gap-2">
+                      {(["none", "gemini", "claude"] as AIProvider[]).map((p) => (
+                        <button key={p} type="button" onClick={() => setActiveProvider(p)}
+                          className={`rounded-2xl border px-4 py-2 text-xs font-semibold transition-all active:scale-95 ${
+                            activeProvider === p
+                              ? "border-white/25 bg-white/10 text-white shadow-sm shadow-black/20"
+                              : "border-white/[0.12] text-white/35 hover:bg-white/[0.06] hover:text-white/60"
+                          }`}
+                        >
+                          {p === "none" ? "Off (Local)" : p === "gemini" ? "✦ Gemini" : "✦ Claude"}
+                        </button>
                       ))}
                     </div>
                   </div>
+
+                  {/* Inverted CTA — white button inside dark island */}
+                  <button
+                    onClick={handleGenerate}
+                    disabled={isGenerating}
+                    className="w-full rounded-2xl bg-white py-4 text-sm font-bold text-gray-900 shadow-sm shadow-black/20 transition-all hover:bg-gray-100 disabled:opacity-50 active:scale-[0.98]"
+                  >
+                    {isGenerating ? (
+                      <span className="flex items-center justify-center gap-2">
+                        <span className="h-4 w-4 rounded-full border-2 border-gray-900/20 border-t-gray-900 animate-spin" />
+                        Generating...
+                      </span>
+                    ) : `⚡ Generate — ${predator} vs ${prey}`}
+                  </button>
                 </section>
 
-                {/* Quality toggles */}
-                <section className="rounded-[1.5rem] border border-gray-200/90 bg-white p-5 shadow-[0_14px_38px_-28px_rgba(15,23,42,0.35)] sm:p-6">
-                  <h3 className="mb-5 text-xs font-extrabold uppercase tracking-[0.18em] text-gray-400">Quality Toggles</h3>
-                  <QualityPanel
-                    realismMode={realismMode} setRealismMode={setRealismMode}
-                    motionOnlyI2V={motionOnlyI2V} setMotionOnlyI2V={setMotionOnlyI2V}
-                    referenceLock={referenceLock} setReferenceLock={setReferenceLock}
-                    singleActionRule={singleActionRule} setSingleActionRule={setSingleActionRule}
-                    microMotion={microMotion} setMicroMotion={setMicroMotion}
-                    heroVeo={heroVeo} setHeroVeo={setHeroVeo}
-                  />
-                  <div className="mt-3 pt-3 border-t border-gray-100">
-                    <label className="mb-1.5 block text-xs font-semibold text-gray-500">Image Prompt Target</label>
-                    <select
-                      value={imagePromptTarget}
-                      onChange={(e) => setImagePromptTarget(e.target.value as ImagePromptTarget)}
-                      className="w-full rounded-xl border border-gray-200 bg-gray-50 px-3 py-2.5 text-sm font-medium text-gray-900"
-                    >
-                      <option value="NANO_BANANA_2">Nano Banana 2 — Gemini 3.1 Flash Image (default)</option>
-                      <option value="NB2">NB2 (legacy Gemini 2.5 Flash Image)</option>
-                      <option value="RUNWAY">Runway Reference</option>
-                      <option value="MJ">Midjourney</option>
-                    </select>
-                  </div>
-
-                  {/* Reference tags */}
-                  <div className="mt-3 rounded-xl border border-violet-200 bg-violet-50 p-3 text-xs text-violet-700">
-                    <div className="font-semibold mb-1">Reference tags</div>
-                    <div className="space-y-0.5 text-[11px]">
-                      <div>Lead animal → <code className="rounded bg-white px-1 py-0.5 text-violet-800">@hero_predator</code></div>
-                      <div>Opposing animal → <code className="rounded bg-white px-1 py-0.5 text-violet-800">@hero_prey</code></div>
-                      <div>Environment plate → <code className="rounded bg-white px-1 py-0.5 text-violet-800">@env_plate</code></div>
-                    </div>
-                    <div className="mt-1.5 text-violet-500">Video prompts मा appearance नलेख — reference image नै identity हो।</div>
-                  </div>
-                </section>
-              </div>
-
-              {/* Right: Upload + Scene */}
-              <div className="space-y-5">
-
-                {/* Media upload */}
-                <section className="rounded-[1.5rem] border border-gray-200/90 bg-white p-5 shadow-[0_14px_38px_-28px_rgba(15,23,42,0.35)] sm:p-6">
-                  <div className="mb-4 flex items-center justify-between">
-                    <h3 className="text-xs font-extrabold uppercase tracking-[0.18em] text-gray-400">📎 Media Upload</h3>
-                    <span className="rounded-lg bg-purple-100 px-2 py-1 text-[10px] font-bold text-purple-700">Auto Analyze</span>
-                  </div>
-                  <MediaAnalyzer
-                    activeProvider={activeProvider}
-                    analysis={mediaAnalysis}
-                    onAnalysisComplete={setMediaAnalysis}
-                    onClear={() => setMediaAnalysis(null)}
-                  />
-                </section>
-
-                {/* Scene description */}
-                <section className="rounded-[1.5rem] border border-orange-200/80 bg-orange-50/85 p-5 shadow-[0_14px_38px_-28px_rgba(194,65,12,0.28)] sm:p-6">
-                  <h3 className="mb-4 text-xs font-extrabold uppercase tracking-[0.18em] text-orange-500">Scene Description</h3>
-                  <div className="mb-4 flex overflow-hidden rounded-xl border border-orange-200 bg-white">
-                    {(["romanized", "english"] as const).map((mode) => (
-                      <button
-                        key={mode}
-                        type="button"
-                        onClick={() => setSceneMode(mode)}
-                        className={`flex-1 px-3 py-2 text-xs font-bold ${
-                          sceneMode === mode ? "bg-orange-600 text-white" : "text-orange-600 hover:bg-orange-50"
-                        }`}
-                      >
-                        {mode === "romanized" ? "Nepali Romanized" : "Direct English"}
-                      </button>
-                    ))}
-                  </div>
-                  <textarea
-                    value={sceneNepaliRomanized}
-                    onChange={(e) => setSceneNepaliRomanized(e.target.value)}
-                    placeholder={sceneMode === "romanized" ? "jastei: bag le bakhra lai khedaera..." : "Write the scene in English..."}
-                    className="min-h-[120px] w-full resize-none rounded-xl border border-orange-200 bg-white p-3.5 text-sm text-gray-900 outline-none placeholder:text-gray-400"
-                  />
-                  <div className="mt-3 flex flex-wrap gap-2">
-                    {["Example 1", "Example 2", "Example 3"].map((x) => (
-                      <button key={x} type="button"
-                        onClick={() => setSceneNepaliRomanized(`${x}: bag le bakhra lai khedaera...`)}
-                        className="rounded-lg border border-orange-200 bg-orange-100 px-2.5 py-1 text-xs font-bold text-orange-800 hover:bg-orange-200"
-                      >
-                        {x}
-                      </button>
-                    ))}
-                    <button
-                      type="button"
-                      onClick={() => alert("Auto-translate wiring: optional. For now, this text injects directly into prompts.")}
-                      className="ml-auto rounded-xl bg-orange-600 px-3 py-1.5 text-xs font-bold text-white hover:bg-orange-700"
-                    >
-                      Translate →
-                    </button>
-                  </div>
-                </section>
-
-                {/* Sticky setup summary on desktop */}
-                <div className="rounded-[1.5rem] border border-gray-200/90 bg-gradient-to-br from-white to-gray-50 p-5 shadow-[0_14px_38px_-28px_rgba(15,23,42,0.35)]">
-                  <div className="mb-2 text-[10px] font-extrabold uppercase tracking-[0.18em] text-gray-400">Current Setup</div>
-                  <div className="text-sm font-extrabold text-gray-900">{predator} vs {prey}</div>
-                  <div className="text-xs text-gray-500 mt-0.5">{arc} · {weather}</div>
-                  <div className="mt-3 flex items-center justify-between rounded-xl border border-gray-100 bg-white/80 px-3 py-2.5">
-                    <span className="text-[11px] text-gray-400">Drift Risk</span>
-                    <span className={`text-xs font-extrabold px-2 py-0.5 rounded-full ${
-                      preset.driftRisk === "HIGH" ? "bg-red-100 text-red-700" :
-                      preset.driftRisk === "MEDIUM" ? "bg-amber-100 text-amber-700" :
-                      "bg-emerald-100 text-emerald-700"
-                    }`}>{preset.driftRisk}</span>
-                  </div>
-                </div>
-              </div>
-
-              {/* Nav */}
-              <div className="lg:col-span-2 flex flex-wrap gap-2 pt-2">
-                <button type="button" onClick={() => setStep(1)}
-                  className="rounded-xl border border-gray-300 bg-white px-5 py-2.5 text-sm font-bold text-gray-700 hover:bg-gray-50 active:scale-[0.98]">
-                  ← Back
-                </button>
-                <button type="button" onClick={() => setStep(3)}
-                  className="rounded-xl bg-gray-900 px-5 py-2.5 text-sm font-bold text-white hover:bg-black active:scale-[0.98]">
-                  Continue → Generate
-                </button>
-              </div>
-            </div>
-          )}
-
-          {/* ── STEP 3 ───────────────────────────────────────────────────── */}
-          {step === 3 && (
-            <div className="space-y-6">
-
-              {/* Generate card */}
-              <section className="rounded-[1.5rem] border border-gray-200/90 bg-white p-5 shadow-[0_14px_38px_-28px_rgba(15,23,42,0.35)] sm:p-6">
-                <div className="mb-5 flex flex-wrap items-center justify-between gap-2">
-                  <h3 className="text-xs font-extrabold uppercase tracking-[0.18em] text-gray-400">Generate for Reels</h3>
-                  <div className="text-xs text-gray-500 font-medium">{predator} vs {prey}</div>
-                </div>
-
-                {/* AI provider */}
-                <div className="mb-5 rounded-[1.25rem] border border-gray-100 bg-gray-50/80 p-3.5">
-                  <div className="mb-3 text-[11px] font-semibold uppercase tracking-wide text-gray-500">AI Enhancement</div>
-                  <div className="flex flex-wrap gap-2">
-                    {(["none", "gemini", "claude"] as AIProvider[]).map((p) => (
-                      <button key={p} type="button" onClick={() => setActiveProvider(p)}
-                        className={`rounded-xl border px-4 py-2 text-xs font-bold transition-all active:scale-95 ${
-                          activeProvider === p ? "border-gray-900 bg-gray-900 text-white" : "border-gray-300 bg-white text-gray-600 hover:bg-gray-50"
-                        }`}
-                      >
-                        {p === "none" ? "Off (Local)" : p === "gemini" ? "✦ Gemini" : "✦ Claude"}
-                      </button>
-                    ))}
-                  </div>
-                </div>
-
-                <button
-                  onClick={handleGenerate}
-                  disabled={isGenerating}
-                  className="w-full rounded-xl bg-gray-900 py-4 text-sm font-extrabold text-white hover:bg-black disabled:opacity-60 active:scale-[0.98] transition-all"
-                >
-                  {isGenerating ? (
-                    <span className="flex items-center justify-center gap-2">
-                      <span className="h-4 w-4 rounded-full border-2 border-white/30 border-t-white animate-spin" />
-                      Generating...
-                    </span>
-                  ) : `⚡ Generate — ${predator} vs ${prey}`}
-                </button>
-
+                {/* Error state — outside dark island, on light bg */}
                 {error && (
-                  <div className="mt-3 rounded-xl border border-red-200 bg-red-50 p-4">
+                  <div className="rounded-xl border border-red-200 bg-red-50 p-4">
                     <p className="text-sm font-semibold text-red-700">⚠️ {error}</p>
                   </div>
                 )}
-              </section>
 
-              {/* Output */}
-              {pkg && (
-                <section className="rounded-[1.5rem] border border-white/10 bg-white/[0.04] p-1.5 shadow-[inset_0_1px_0_rgba(255,255,255,0.03)] sm:p-2">
-                  <div className="flex flex-wrap items-center justify-between gap-2 px-4 pb-2 pt-4 sm:px-5">
-                    <div>
-                      <div className="text-xs font-extrabold uppercase tracking-[0.18em] text-white/45">Generated Output</div>
-                      <div className="mt-1 text-sm font-semibold text-white/80">Prompt pack, workflow guidance, and export-ready copy</div>
+                {/* Output — premium light-surface wrapper */}
+                {pkg && (
+                  <section>
+                    <div className="mb-4 rounded-2xl border border-gray-200 bg-white/80 p-4 shadow-sm shadow-gray-200/60">
+                      <div className="flex flex-wrap items-start justify-between gap-3">
+                        <div>
+                          <div className="flex flex-wrap items-center gap-2">
+                            <div className="text-[11px] font-semibold uppercase tracking-[0.14em] text-gray-400">Generated Output</div>
+                            <span className="rounded-full bg-gray-900 px-2.5 py-1 text-[10px] font-semibold text-white/80">
+                              Ready to scan
+                            </span>
+                          </div>
+                          <div className="mt-1 text-sm font-semibold text-gray-800">Prompt pack, workflow guidance, and export-ready copy</div>
+                          <div className="mt-1 text-xs leading-relaxed text-gray-500">
+                            Core prompts, workflow notes, and posting assets are grouped below for quick review.
+                          </div>
+                        </div>
+                        <div className="flex flex-wrap items-center gap-1.5">
+                          <span className="rounded-full bg-violet-100 px-2.5 py-1 text-[10px] font-semibold text-violet-700">Seedance</span>
+                          <span className="rounded-full bg-green-100 px-2.5 py-1 text-[10px] font-semibold text-green-700">Runway</span>
+                          <span className="rounded-full bg-blue-100 px-2.5 py-1 text-[10px] font-semibold text-blue-700">Kling</span>
+                        </div>
+                      </div>
                     </div>
-                  </div>
-                  <OutputCards
-                    data={pkg}
-                    onRestoreVersion={(v) => {
-                      setPkg((prev) => {
-                        if (!prev) return prev;
-                        const restored: GeneratedPackage = { ...prev, imagePrompt: v.imagePrompt, hook: v.hook, caption: v.caption, voiceoverLine: v.voiceoverLine ?? prev.voiceoverLine };
-                        try {
-                          const key = makePromptVersionKey(restored.predatorName ?? predator, restored.preyName ?? prey, String(restored.arcName ?? arc));
-                          appendPromptVersion(key, {
-                            version: getNextVersionNumber(key),
-                            timestamp: new Date().toISOString(),
-                            imagePrompt: restored.imagePrompt,
-                            hook: restored.hook ?? "",
-                            caption: restored.caption ?? "",
-                            voiceoverLine: restored.voiceoverLine ?? "",
-                            label: `RESTORE v${v.version} • ${predator} vs ${prey}`,
-                            performanceNote: "",
+                    <div className="overflow-hidden rounded-2xl border border-gray-200 bg-white">
+                      <OutputCards
+                        data={pkg}
+                        onRestoreVersion={(v) => {
+                          setPkg((prev) => {
+                            if (!prev) return prev;
+                            const restored: GeneratedPackage = { ...prev, imagePrompt: v.imagePrompt, hook: v.hook, caption: v.caption, voiceoverLine: v.voiceoverLine ?? prev.voiceoverLine };
+                            try {
+                              const key = makePromptVersionKey(restored.predatorName ?? predator, restored.preyName ?? prey, String(restored.arcName ?? arc));
+                              appendPromptVersion(key, {
+                                version: getNextVersionNumber(key),
+                                timestamp: new Date().toISOString(),
+                                imagePrompt: restored.imagePrompt,
+                                hook: restored.hook ?? "",
+                                caption: restored.caption ?? "",
+                                voiceoverLine: restored.voiceoverLine ?? "",
+                                label: `RESTORE v${v.version} • ${predator} vs ${prey}`,
+                                performanceNote: "",
+                              });
+                            } catch { /* ignore */ }
+                            return restored;
                           });
-                        } catch { /* ignore */ }
-                        return restored;
-                      });
-                    }}
-                  />
-                </section>
-              )}
+                        }}
+                      />
+                    </div>
+                  </section>
+                )}
 
-              {/* Nav */}
-              <div className="flex gap-2">
-                <button type="button" onClick={() => setStep(2)}
-                  className="rounded-xl border border-gray-300 bg-white px-5 py-2.5 text-sm font-bold text-gray-700 hover:bg-gray-50 active:scale-[0.98]">
-                  ← Back
-                </button>
+                {/* Step 3 nav */}
+                <div className="flex gap-2 border-t border-gray-200/80 pt-5">
+                  <button type="button" onClick={() => setStep(2)}
+                    className="rounded-2xl border border-gray-200 bg-white px-5 py-2.5 text-sm font-semibold text-gray-600 shadow-sm shadow-gray-100/80 hover:bg-gray-50 active:scale-[0.98]">
+                    ← Back
+                  </button>
+                </div>
               </div>
-            </div>
-          )}
-        </div>
+            )}
+          </div>
+        </>
       )}
 
       {/* ══════════════════════════════════════════════════════════════════════
-          WORKFLOWS TAB
+          WORKFLOWS TAB — scoped dark zone
       ══════════════════════════════════════════════════════════════════════ */}
       {activeTab === "workflows" && (
-        <div className="mx-auto w-full max-w-[var(--main-max-width)] px-4 py-7 sm:px-6 sm:py-8 lg:px-8">
+        <div className="min-h-[calc(100vh-56px)] bg-gray-950">
+          <div className="mx-auto w-full max-w-[var(--main-max-width)] px-4 py-8 sm:px-6 sm:py-10 lg:px-8">
 
-          {/* Workflow tab selector */}
-          <div className="mb-6 space-y-3">
-            <div className="flex flex-col gap-3 xl:flex-row xl:items-end xl:justify-between">
-              <div className="max-w-3xl">
-                <div className="text-xs font-extrabold uppercase tracking-[0.18em] text-white/35">Workflow Viewer</div>
-                <div className="mt-1 text-sm text-white/55">Switch between the WSTV production continuity map and the Runway-native reference handoff view.</div>
-              </div>
-              <div className="rounded-[1.25rem] border border-white/10 bg-white/[0.05] p-1 shadow-[inset_0_1px_0_rgba(255,255,255,0.03)]">
-                <div className="flex flex-wrap gap-1">
-                  {([
-                    { id: "wstv" as WorkflowTab, label: "WSTV Custom Workflow", badge: "Primary" },
-                    { id: "runway" as WorkflowTab, label: "Runway Official Workflow", badge: "Reference" },
-                  ]).map((tab) => (
-                    <button
-                      key={tab.id}
-                      type="button"
-                      onClick={() => setWorkflowTab(tab.id)}
-                      className={`flex items-center gap-2 rounded-xl px-4 py-2.5 text-sm font-bold transition-all ${
-                        workflowTab === tab.id ? "bg-white text-gray-900 shadow-[0_10px_30px_-18px_rgba(15,23,42,0.65)]" : "text-white/55 hover:bg-white/[0.05] hover:text-white/85"
-                      }`}
-                    >
-                      {tab.label}
-                      <span className={`rounded px-1.5 py-0.5 text-[10px] font-extrabold ${
-                        workflowTab === tab.id
-                          ? tab.id === "wstv" ? "bg-green-100 text-green-700" : "bg-blue-100 text-blue-700"
-                          : "bg-white/10 text-white/40"
-                      }`}>
-                        {tab.badge}
-                      </span>
-                    </button>
-                  ))}
+            {/* Workflow tab selector */}
+            <div className="mb-7 space-y-3">
+              <div className="flex flex-col gap-4 xl:flex-row xl:items-end xl:justify-between">
+                <div className="max-w-2xl">
+                  <div className="text-[11px] font-semibold uppercase tracking-[0.1em] text-white/30">Workflow Viewer</div>
+                  <div className="mt-1 text-sm text-white/50">Switch between the primary WSTV production continuity map and the optional Runway-native reference handoff view.</div>
+                </div>
+                <div className="rounded-[24px] border border-white/[0.08] bg-white/[0.03] p-1.5 shadow-[inset_0_1px_0_rgba(255,255,255,0.03)]">
+                  <div className="flex flex-wrap gap-1.5">
+                    {([
+                      {
+                        id: "wstv" as WorkflowTab,
+                        label: "WSTV Custom Workflow",
+                        badge: "Primary",
+                        icon: "◈",
+                        description: "Production continuity map",
+                      },
+                      {
+                        id: "runway" as WorkflowTab,
+                        label: "Runway Official Workflow",
+                        badge: "Optional reference",
+                        icon: "↗",
+                        description: "Native safe-handoff reference",
+                      },
+                    ]).map((tab) => (
+                      <button
+                        key={tab.id}
+                        type="button"
+                        onClick={() => setWorkflowTab(tab.id)}
+                        className={`group flex min-w-[240px] items-center justify-between gap-3 rounded-2xl border px-4 py-3 text-left transition-all ${
+                          workflowTab === tab.id
+                            ? "border-white/15 bg-white/[0.96] text-gray-900 shadow-[0_1px_3px_rgba(15,23,42,0.2)]"
+                            : "border-transparent text-white/45 hover:border-white/[0.08] hover:bg-white/[0.04] hover:text-white/75"
+                        }`}
+                      >
+                        <div className="flex items-center gap-3">
+                          <span
+                            className={`grid h-8 w-8 place-items-center rounded-2xl text-sm ${
+                              workflowTab === tab.id
+                                ? "bg-gray-900/10 text-gray-900"
+                                : "bg-white/[0.06] text-white/70 group-hover:bg-white/[0.1] group-hover:text-white"
+                            }`}
+                          >
+                            {tab.icon}
+                          </span>
+                          <span className="min-w-0">
+                            <span className="block text-sm font-semibold">{tab.label}</span>
+                            <span className={`mt-0.5 block text-[11px] ${
+                              workflowTab === tab.id ? "text-gray-500" : "text-white/35 group-hover:text-white/45"
+                            }`}>
+                              {tab.description}
+                            </span>
+                          </span>
+                        </div>
+                        <span className={`rounded-full px-2 py-1 text-[10px] font-semibold ${
+                          workflowTab === tab.id
+                            ? tab.id === "wstv" ? "bg-violet-100 text-violet-700" : "bg-green-100 text-green-700"
+                            : "bg-white/[0.06] text-white/35"
+                        }`}>
+                          {tab.badge}
+                        </span>
+                      </button>
+                    ))}
+                  </div>
                 </div>
               </div>
+              <div className="text-xs text-white/25">
+                Interactive viewer with drag, zoom, and inspectable continuity wires. WSTV stays the main production lane.
+              </div>
             </div>
-            <div className="text-xs text-white/35">
-              Interactive viewer with drag, zoom, and inspectable continuity wires.
-            </div>
-          </div>
 
-          {/* Diagram area */}
-          <div className="overflow-hidden rounded-[1.75rem] border border-white/10 bg-gradient-to-b from-gray-900 to-gray-950 shadow-[0_28px_80px_-40px_rgba(0,0,0,0.75)]">
-            <div className="border-b border-white/10 px-5 py-4 sm:px-6">
-              <div className="flex flex-wrap items-center gap-3">
-                <div className="flex items-center gap-2">
-                  <div className="h-2 w-2 rounded-full bg-red-500/70" />
-                  <div className="h-2 w-2 rounded-full bg-yellow-500/70" />
-                  <div className="h-2 w-2 rounded-full bg-green-500/70" />
-                </div>
-                <div>
-                  <div className="text-xs font-semibold text-gray-300">
-                    {workflowTab === "wstv" ? "WSTV · 4-shot production workflow · Seedance 2.0 primary lane" : "Runway Official · 4-shot safe handoff · Gen-4.5 native"}
+            {/* Diagram frame */}
+            <div className="overflow-hidden rounded-2xl border border-white/[0.08] bg-gray-900">
+              <div className="border-b border-white/[0.08] px-5 py-4 sm:px-6">
+                <div className="flex flex-wrap items-center gap-3">
+                  <div className="flex items-center gap-1.5">
+                    <div className="h-2 w-2 rounded-full bg-red-500/60" />
+                    <div className="h-2 w-2 rounded-full bg-yellow-500/60" />
+                    <div className="h-2 w-2 rounded-full bg-green-500/60" />
                   </div>
-                  <div className="mt-1 text-[11px] text-gray-500">
-                    {workflowTab === "wstv"
-                      ? "Production-oriented continuity viewer with Canonical Anchor, preferred Extract Frame handoff, and Last Frame fallback."
-                      : "Reference viewer for the Runway-native safe-handoff pattern, manual overrides, and stitched final assembly."}
+                  <div>
+                    <div className="text-xs font-semibold text-gray-300">
+                      {workflowTab === "wstv"
+                        ? "WSTV · 4-shot production workflow · Seedance 2.0 primary lane"
+                        : "Runway Official · 4-shot safe handoff · Gen-4.5 native"}
+                    </div>
+                    <div className="mt-0.5 text-[11px] text-gray-500">
+                      {workflowTab === "wstv"
+                        ? "Production-oriented continuity viewer with Canonical Anchor, preferred Extract Frame handoff, and Last Frame fallback."
+                        : "Optional reference viewer for the Runway-native safe-handoff pattern, manual overrides, and stitched final assembly."}
+                    </div>
                   </div>
                 </div>
               </div>
-            </div>
-            <div className="p-4 sm:p-5">
-              {workflowTab === "wstv" ? <WSTVWorkflowDiagram /> : <RunwayOfficialWorkflowDiagram />}
+              <div className="p-4 sm:p-5">
+                {workflowTab === "wstv" ? <WSTVWorkflowDiagram /> : <RunwayOfficialWorkflowDiagram />}
+              </div>
             </div>
           </div>
         </div>
@@ -1341,105 +1486,132 @@ export default function Page() {
 
       {/* ── CUSTOM ANIMAL MODAL ─────────────────────────────────────────────── */}
       {customModalOpen && (
-        <div className="fixed inset-0 z-50 grid place-items-center bg-black/50 backdrop-blur-sm p-4">
-          <div className="w-full max-w-xl rounded-2xl border border-gray-200 bg-white p-6 shadow-2xl">
-            <div className="mb-4 flex items-center justify-between">
-              <div className="text-base font-extrabold text-gray-900">➕ Add Custom Animal</div>
-              <button type="button" onClick={() => setCustomModalOpen(false)}
-                className="rounded-xl border border-gray-200 bg-gray-50 px-3 py-1.5 text-xs font-bold text-gray-600 hover:bg-gray-100">
-                Close
-              </button>
-            </div>
-
-            <div className="grid gap-3 sm:grid-cols-2">
-              <div>
-                <label className="mb-1 block text-xs font-semibold text-gray-600">Animal name</label>
-                <input value={customForm.name} onChange={(e) => setCustomForm((p) => ({ ...p, name: e.target.value }))}
-                  placeholder="e.g., Mountain Lion"
-                  className="w-full rounded-xl border border-gray-200 bg-gray-50 px-3 py-2.5 text-sm focus:outline-none focus:border-gray-400" />
-              </div>
-              <div>
-                <label className="mb-1 block text-xs font-semibold text-gray-600">Opposing animals (comma-separated)</label>
-                <input value={customForm.prey} onChange={(e) => setCustomForm((p) => ({ ...p, prey: e.target.value }))}
-                  placeholder="e.g., White-tailed Deer, Elk"
-                  className="w-full rounded-xl border border-gray-200 bg-gray-50 px-3 py-2.5 text-sm focus:outline-none focus:border-gray-400" />
-              </div>
-              <div className="sm:col-span-2">
-                <label className="mb-1 block text-xs font-semibold text-gray-600">Environment</label>
-                <select value={customForm.environment} onChange={(e) => setCustomForm((p) => ({ ...p, environment: e.target.value }))}
-                  className="w-full rounded-xl border border-gray-200 bg-gray-50 px-3 py-2.5 text-sm">
-                  {Object.entries(habitatPromptMap).map(([label, prompt]) => (
-                    <option key={label} value={prompt}>{label}</option>
-                  ))}
-                </select>
-              </div>
-              <div>
-                <label className="mb-1 block text-xs font-semibold text-gray-600">Default Arc</label>
-                <select value={customForm.defaultArc} onChange={(e) => setCustomForm((p) => ({ ...p, defaultArc: e.target.value }))}
-                  className="w-full rounded-xl border border-gray-200 bg-gray-50 px-3 py-2.5 text-sm">
-                  {arcs.map((a) => <option key={a} value={a}>{a}</option>)}
-                </select>
-              </div>
-              <div>
-                <label className="mb-1 block text-xs font-semibold text-gray-600">Drift Risk</label>
-                <select value={customForm.driftRisk} onChange={(e) => setCustomForm((p) => ({ ...p, driftRisk: e.target.value as "LOW" | "MEDIUM" | "HIGH" }))}
-                  className="w-full rounded-xl border border-gray-200 bg-gray-50 px-3 py-2.5 text-sm">
-                  <option value="LOW">LOW</option>
-                  <option value="MEDIUM">MEDIUM</option>
-                  <option value="HIGH">HIGH</option>
-                </select>
+        <div className="fixed inset-0 z-50 grid place-items-center bg-gray-950/60 p-4 backdrop-blur-md">
+          <div className="w-full max-w-xl overflow-hidden rounded-[28px] border border-white/70 bg-white shadow-[0_24px_80px_rgba(15,23,42,0.28)]">
+            <div className="border-b border-gray-200 bg-gradient-to-b from-gray-50 to-white px-6 py-5">
+              <div className="flex items-start justify-between gap-4">
+                <div>
+                  <div className="text-[11px] font-semibold uppercase tracking-[0.14em] text-gray-400">Custom Animal</div>
+                  <div className="mt-1 text-lg font-bold text-gray-900">Add or update a saved entry</div>
+                  <p className="mt-2 max-w-lg text-sm leading-relaxed text-gray-500">
+                    Store a reusable animal preset locally without changing the current generation flow.
+                  </p>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setCustomModalOpen(false)}
+                  className="rounded-2xl border border-gray-200 bg-white px-3 py-1.5 text-xs font-semibold text-gray-600 shadow-sm shadow-gray-200/70 hover:bg-gray-50"
+                >
+                  Close
+                </button>
               </div>
             </div>
 
-            <div className="mt-5 flex flex-wrap gap-2">
-              <button
-                type="button"
-                onClick={() => {
-                  const name = customForm.name.trim();
-                  if (!name) return;
-                  const builtInAnimalExists = Object.prototype.hasOwnProperty.call(predatorData, name);
-                  if (builtInAnimalExists) { alert("This animal already exists in the built-in list."); return; }
-                  const normalizedName = name.toLowerCase();
-                  const normalizedPrey = Array.from(new Set(customForm.prey.split(",").map((item) => item.trim()).filter(Boolean)));
-                  const entry: CustomPredatorForm = {
-                    name,
-                    prey: normalizedPrey.length ? normalizedPrey.join(", ") : "White-tailed Deer",
-                    environment: customForm.environment.trim() || habitatPromptMap["Rocky Mountain Meadow"],
-                    defaultArc: customForm.defaultArc || "Pack hunting strategy",
-                    driftRisk: customForm.driftRisk,
-                  };
-                  setCustomPredators((prev) => {
-                    const next = prev.filter((x) => x.name.trim().toLowerCase() !== normalizedName).concat(entry);
-                    writeCustomPredators(next);
-                    return next;
-                  });
-                  setPredator(name);
-                  setPrey(normalizedPrey[0] || DEFAULT_PREY);
-                  setArc(suggestArc(name, normalizedPrey[0] || DEFAULT_PREY, entry.defaultArc) as Arc);
-                  setHabitat(DEFAULT_HABITAT);
-                  setCustomModalOpen(false);
-                }}
-                className="rounded-xl bg-gray-900 px-5 py-2.5 text-sm font-bold text-white hover:bg-black active:scale-[0.98]"
-              >
-                Save & Select
-              </button>
-              <button
-                type="button"
-                onClick={() => {
-                  const name = customForm.name.trim();
-                  if (!name) return;
-                  setCustomPredators((prev) => { const next = prev.filter((x) => x.name.trim().toLowerCase() !== name.toLowerCase()); writeCustomPredators(next); return next; });
-                  if (predator === name) { setPredator(DEFAULT_PREDATOR); setPrey(DEFAULT_PREY); setArc(DEFAULT_ARC); setWeather(DEFAULT_WEATHER); setHabitat(DEFAULT_HABITAT); setDepthMode(DEFAULT_DEPTH_MODE); setEmotionalTone(DEFAULT_EMOTIONAL_TONE); setAnimalVibe(DEFAULT_ANIMAL_VIBE); }
-                  setCustomModalOpen(false);
-                }}
-                className="rounded-xl border border-red-200 bg-red-50 px-5 py-2.5 text-sm font-bold text-red-700 hover:bg-red-100 active:scale-[0.98]"
-              >
-                Delete
-              </button>
+            <div className="p-6">
+              <div className="mb-5 rounded-2xl border border-violet-100 bg-violet-50/70 px-4 py-3">
+                <div className="text-xs font-semibold text-violet-700">Saved locally</div>
+                <div className="mt-1 text-[11px] leading-relaxed text-violet-600">
+                  This preset appears in the animal dropdown and remains available in future sessions on this device.
+                </div>
+              </div>
+
+              <div className="mb-5">
+                <div className="text-[11px] font-semibold uppercase tracking-[0.12em] text-gray-400">Preset Details</div>
+                <div className="mt-1 text-sm font-medium text-gray-500">
+                  Use the fields below to save a new animal or update an existing custom entry.
+                </div>
+              </div>
+
+              <div className="grid gap-3 sm:grid-cols-2">
+                <div>
+                  <label className="mb-1 block text-[11px] font-medium uppercase tracking-[0.08em] text-gray-500">Animal name</label>
+                  <input value={customForm.name} onChange={(e) => setCustomForm((p) => ({ ...p, name: e.target.value }))}
+                    placeholder="e.g., Mountain Lion"
+                    className="w-full rounded-2xl border border-gray-200 bg-gray-50/80 px-3.5 py-3 text-sm text-gray-800 shadow-sm shadow-gray-100/80 transition focus:border-gray-400 focus:bg-white focus:outline-none focus:ring-4 focus:ring-gray-200/60" />
+                </div>
+                <div>
+                  <label className="mb-1 block text-[11px] font-medium uppercase tracking-[0.08em] text-gray-500">Opposing animals (comma-separated)</label>
+                  <input value={customForm.prey} onChange={(e) => setCustomForm((p) => ({ ...p, prey: e.target.value }))}
+                    placeholder="e.g., White-tailed Deer, Elk"
+                    className="w-full rounded-2xl border border-gray-200 bg-gray-50/80 px-3.5 py-3 text-sm text-gray-800 shadow-sm shadow-gray-100/80 transition focus:border-gray-400 focus:bg-white focus:outline-none focus:ring-4 focus:ring-gray-200/60" />
+                </div>
+                <div className="sm:col-span-2">
+                  <label className="mb-1 block text-[11px] font-medium uppercase tracking-[0.08em] text-gray-500">Environment</label>
+                  <select value={customForm.environment} onChange={(e) => setCustomForm((p) => ({ ...p, environment: e.target.value }))}
+                    className="w-full rounded-2xl border border-gray-200 bg-gray-50/80 px-3.5 py-3 text-sm text-gray-800 shadow-sm shadow-gray-100/80 transition focus:border-gray-400 focus:bg-white focus:outline-none focus:ring-4 focus:ring-gray-200/60">
+                    {Object.entries(habitatPromptMap).map(([label, prompt]) => (
+                      <option key={label} value={prompt}>{label}</option>
+                    ))}
+                  </select>
+                </div>
+                <div>
+                  <label className="mb-1 block text-[11px] font-medium uppercase tracking-[0.08em] text-gray-500">Default Arc</label>
+                  <select value={customForm.defaultArc} onChange={(e) => setCustomForm((p) => ({ ...p, defaultArc: e.target.value }))}
+                    className="w-full rounded-2xl border border-gray-200 bg-gray-50/80 px-3.5 py-3 text-sm text-gray-800 shadow-sm shadow-gray-100/80 transition focus:border-gray-400 focus:bg-white focus:outline-none focus:ring-4 focus:ring-gray-200/60">
+                    {arcs.map((a) => <option key={a} value={a}>{a}</option>)}
+                  </select>
+                </div>
+                <div>
+                  <label className="mb-1 block text-[11px] font-medium uppercase tracking-[0.08em] text-gray-500">Drift Risk</label>
+                  <select value={customForm.driftRisk} onChange={(e) => setCustomForm((p) => ({ ...p, driftRisk: e.target.value as "LOW" | "MEDIUM" | "HIGH" }))}
+                    className="w-full rounded-2xl border border-gray-200 bg-gray-50/80 px-3.5 py-3 text-sm text-gray-800 shadow-sm shadow-gray-100/80 transition focus:border-gray-400 focus:bg-white focus:outline-none focus:ring-4 focus:ring-gray-200/60">
+                    <option value="LOW">LOW</option>
+                    <option value="MEDIUM">MEDIUM</option>
+                    <option value="HIGH">HIGH</option>
+                  </select>
+                </div>
+              </div>
+
+              <div className="mt-6 flex flex-wrap items-center gap-2 border-t border-gray-100 pt-5">
+                <button
+                  type="button"
+                  onClick={() => {
+                    const name = customForm.name.trim();
+                    if (!name) return;
+                    const builtInAnimalExists = Object.prototype.hasOwnProperty.call(predatorData, name);
+                    if (builtInAnimalExists) { alert("This animal already exists in the built-in list."); return; }
+                    const normalizedName = name.toLowerCase();
+                    const normalizedPrey = Array.from(new Set(customForm.prey.split(",").map((item) => item.trim()).filter(Boolean)));
+                    const entry: CustomPredatorForm = {
+                      name,
+                      prey: normalizedPrey.length ? normalizedPrey.join(", ") : "White-tailed Deer",
+                      environment: customForm.environment.trim() || habitatPromptMap["Rocky Mountain Meadow"],
+                      defaultArc: customForm.defaultArc || "Pack hunting strategy",
+                      driftRisk: customForm.driftRisk,
+                    };
+                    setCustomPredators((prev) => {
+                      const next = prev.filter((x) => x.name.trim().toLowerCase() !== normalizedName).concat(entry);
+                      writeCustomPredators(next);
+                      return next;
+                    });
+                    setPredator(name);
+                    setPrey(normalizedPrey[0] || DEFAULT_PREY);
+                    setArc(suggestArc(name, normalizedPrey[0] || DEFAULT_PREY, entry.defaultArc) as Arc);
+                    setHabitat(DEFAULT_HABITAT);
+                    setCustomModalOpen(false);
+                  }}
+                  className="rounded-2xl bg-gray-900 px-5 py-2.5 text-sm font-semibold text-white shadow-sm shadow-gray-300/70 hover:bg-black active:scale-[0.98]"
+                >
+                  Save & Select
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    const name = customForm.name.trim();
+                    if (!name) return;
+                    setCustomPredators((prev) => { const next = prev.filter((x) => x.name.trim().toLowerCase() !== name.toLowerCase()); writeCustomPredators(next); return next; });
+                    if (predator === name) { setPredator(DEFAULT_PREDATOR); setPrey(DEFAULT_PREY); setArc(DEFAULT_ARC); setWeather(DEFAULT_WEATHER); setHabitat(DEFAULT_HABITAT); setDepthMode(DEFAULT_DEPTH_MODE); setEmotionalTone(DEFAULT_EMOTIONAL_TONE); setAnimalVibe(DEFAULT_ANIMAL_VIBE); }
+                    setCustomModalOpen(false);
+                  }}
+                  className="rounded-2xl border border-red-200 bg-red-50 px-5 py-2.5 text-sm font-semibold text-red-700 hover:bg-red-100 active:scale-[0.98]"
+                >
+                  Delete
+                </button>
+              </div>
+              <p className="mt-4 text-[11px] leading-relaxed text-gray-400">
+                Save गरेपछि यो animal dropdown मा add हुन्छ र future sessions मा पनि रहन्छ (localStorage).
+              </p>
             </div>
-            <p className="mt-3 text-[11px] text-gray-400">
-              Save गरेपछि यो animal dropdown मा add हुन्छ र future sessions मा पनि रहन्छ (localStorage).
-            </p>
           </div>
         </div>
       )}

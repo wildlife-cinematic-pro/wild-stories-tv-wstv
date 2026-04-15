@@ -30,20 +30,22 @@
 //   • Avoid negative phrasing ("the camera doesn't move").
 //   • Runway Characters feature available for consistency.
 //
-// KLING 3.0 [House + estimate — primary-doc refresh recommended]:
+// KLING 3.0 [House guidance — verified against community sources, April 2026]:
 //   • Resolution: Native 4K (3840×2160) at up to 60fps.
 //   • Duration: 3–15 seconds per generation.
 //   • Multi-shot: Up to 6 shots in a single prompt.
 //   • Native audio: Dialogue, ambient sound, SFX, voice tone.
 //   • Elements 3.0 / "Bind Subject": Lock character consistency.
 //   • Start AND End frame control (new in 3.0).
-//   • Negative prompts: SUPPORTED and recommended.
+//   • Negative prompts: SUPPORTED and recommended (use to prevent morphing, sliding feet, extra limbs).
 //   • Guidance Scale (CFG): 0.0–1.0. Higher = strict, lower = creative.
 //   • Motion intensity: 0.1–1.0 values (specify for predictable results).
-//   • Paste-ready prompt style: director-style narrative for direct paste, with structured breakdown kept below for reference
+//   • Paste-ready prompt style: director-style narrative for direct paste, with structured breakdown kept below for reference.
 //   • Cinematic intent: model understands film language natively.
 //   • Omni mode: processes text, image, audio simultaneously.
-//   • I2V: Image = 3D anchor (not just first frame like older models).
+//   • I2V: Image = 3D anchor (not just first frame like older models). Prompt motion only — never redescribe appearance.
+//   • I2V end-state rule: always include a clear end-state description (e.g. "then settles back into place") to prevent generation hanging at 99%.
+//   • I2V word count: 20–40 words optimal for standard I2V; WSTV wildlife shots intentionally exceed this for explicit readability/spacing rules.
 //   • Multi-prompt system: separate Shot Prompt per shot with duration.
 //
 // SEEDANCE 2.0 [Official launch + official Seedance prompt guides, accessed 2026-04-13]:
@@ -107,7 +109,7 @@ export const RUNWAY_SPECS = {
     chainingMethod: "Use last-frame chaining only when the outgoing frame is a clean full-body handoff frame. Otherwise reuse the master still or a manually selected clean frame.",
 } as const;
 
-/** Kling 3.0 current WSTV house guidance (primary-doc refresh recommended) */
+/** Kling 3.0 current WSTV house guidance (verified against public Kling VIDEO 3.0 docs where applicable, plus community sources, April 2026) */
 export const KLING_SPECS = {
   resolution: "Native 4K (3840×2160)" as const,
   fpsMax: 60 as const,
@@ -2349,6 +2351,118 @@ ${audio4}
 
 Kling settings: Motion intensity ${mi4.toFixed(2)} | Optionally set End Frame for final pose | Use Shot 3 last frame only if it remains a clean full-body handoff frame; otherwise use the master still or a manually selected clean continuity frame`),
   };
+}
+
+// ─────────────────────────────────────────────────────────────
+// FOUR-SHOT WORKFLOW MODE TYPES + HYBRID ORCHESTRATOR
+//
+// PRIMARY workflow matches WSTVWorkflowDiagram.tsx:
+//   Shot 1 — Gen-4.5 I2V (Runway)  · Opening Tension  (identity lock + cinematic quality)
+//   Shot 2 — Kling 3.0             · Pressure Build   (physics realism + action impact)
+//   Shot 3 — Kling 3.0             · Peak Action      (physics realism + action impact)
+//   Shot 4 — Gen-4.5 I2V (Runway)  · Resolved Tension (identity lock + cinematic quality)
+//
+// OPTIONAL selectable modes:
+//   "seedance"    — all 4 shots via Seedance 2.0
+//   "kling-only"  — all 4 shots via Kling 3.0
+//   "runway-only" — all 4 shots via Runway Gen-4.5
+// ─────────────────────────────────────────────────────────────
+
+export type FourShotWorkflowMode = "hybrid" | "runway-only" | "kling-only" | "seedance";
+
+/**
+ * Primary WSTV 4-shot hybrid workflow.
+ * Composes from existing builders — no shot-level logic is duplicated.
+ *
+ * Shot 1 = Runway Gen-4.5 I2V  (buildRunwayShots → shot1)
+ * Shot 2 = Kling 3.0           (buildKlingShots  → shot2)
+ * Shot 3 = Kling 3.0           (buildKlingShots  → shot3)
+ * Shot 4 = Runway Gen-4.5 I2V  (buildRunwayShots → shot4)
+ */
+export function buildHybridFourShotWorkflow(
+  predator: string,
+  prey: string,
+  env: string,
+  arc: Arc,
+  weather: Weather,
+  runwayModel: RunwayModel,
+  klingModel: KlingModel,
+  emotionalTone: EmotionalTone,
+  animalVibe: AnimalVibe,
+  sceneDesc?: string,
+  quality?: QualityOptions
+): { shot1: string; shot2: string; shot3: string; shot4: string } {
+  const runway = buildRunwayShots(
+    predator, prey, env, arc, weather, runwayModel,
+    emotionalTone, animalVibe, sceneDesc, quality
+  );
+  const kling = buildKlingShots(
+    predator, prey, env, arc, weather, klingModel,
+    emotionalTone, animalVibe, sceneDesc, quality
+  );
+  return {
+    shot1: runway.shot1,  // Runway: Opening Tension
+    shot2: kling.shot2,   // Kling:  Pressure Build
+    shot3: kling.shot3,   // Kling:  Peak Action
+    shot4: runway.shot4,  // Runway: Resolved Tension
+  };
+}
+
+/**
+ * Dispatcher for all 4-shot workflow modes.
+ * "hybrid" is the primary WSTV mode and matches WSTVWorkflowDiagram.tsx.
+ * All other modes are optional alternatives.
+ *
+ * Returns { shot1, shot2, shot3, shot4 } in every mode.
+ * For "seedance", multiShotPrompt and workflowGuide are available via
+ * buildSeedanceShots() directly when the full return shape is needed.
+ */
+export function buildFourShotWorkflow(opts: {
+  mode?: FourShotWorkflowMode;
+  predator: string;
+  prey: string;
+  env: string;
+  arc: Arc;
+  weather: Weather;
+  runwayModel: RunwayModel;
+  klingModel: KlingModel;
+  emotionalTone: EmotionalTone;
+  animalVibe: AnimalVibe;
+  sceneDesc?: string;
+  quality?: QualityOptions;
+}): { shot1: string; shot2: string; shot3: string; shot4: string } {
+  const {
+    mode = "hybrid", predator, prey, env, arc, weather,
+    runwayModel, klingModel, emotionalTone, animalVibe, sceneDesc, quality,
+  } = opts;
+
+  switch (mode) {
+    case "hybrid":
+      return buildHybridFourShotWorkflow(
+        predator, prey, env, arc, weather, runwayModel, klingModel,
+        emotionalTone, animalVibe, sceneDesc, quality
+      );
+    case "runway-only":
+      return buildRunwayShots(
+        predator, prey, env, arc, weather, runwayModel,
+        emotionalTone, animalVibe, sceneDesc, quality
+      );
+    case "kling-only":
+      return buildKlingShots(
+        predator, prey, env, arc, weather, klingModel,
+        emotionalTone, animalVibe, sceneDesc, quality
+      );
+    case "seedance": {
+      const sd = buildSeedanceShots(
+        predator, prey, env, arc, weather, emotionalTone, animalVibe, sceneDesc, quality
+      );
+      return { shot1: sd.shot1, shot2: sd.shot2, shot3: sd.shot3, shot4: sd.shot4 };
+    }
+    default: {
+      const _exhaustive: never = mode;
+      return _exhaustive;
+    }
+  }
 }
 
 // ─────────────────────────────────────────────────────────────

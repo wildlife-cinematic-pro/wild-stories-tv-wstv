@@ -6,19 +6,21 @@
  * Production notes:
  *   • This diagram follows the current picker-label wording from your screenshots
  *     and keeps the WSTV lane centered on the real intended production flow.
- *   • Gen-4.5 I2V is the primary model for Shots 1 and 4 (identity lock + cinematic
- *     quality). Kling 3.0 handles Shots 2 and 3 (physics realism + action impact).
- *   • All models are available inside Runway as of Feb 2026. Seedance remains
- *     available as an alternate workflow elsewhere in the repo but is intentionally
- *     not the primary lane in this diagram.
+ *   • This diagram now reflects the primary hybrid 4-shot runtime path:
+ *     Gen-4.5 / Runway for Shot 1, Kling 3.0 for Shots 2 and 3,
+ *     and Gen-4.5 / Runway for Shot 4.
+ *   • Seedance 2.0 remains the optional continuity reference lane elsewhere in
+ *     the repo, and full Runway / full Kling 4-shot bundles remain available as
+ *     optional engine-specific outputs.
  *   • The separate Parse JSON social lane is export-only: hook / caption /
  *     hashtags / tags are shown for publishing, not as part of the render path.
  *   • Optional manual Text nodes stay available as operator overrides for the
  *     master image prompt, each shot prompt pack, and social export text.
  *
  * Main WSTV lane:
- *   • Gen-4.5 I2V — Shots 1 and 4 (identity lock + cinematic quality).
- *   • Kling 3.0 — Shots 2 and 3 (physics realism + action impact).
+ *   • Gen-4.5 I2V — Shot 1 and Shot 4 (identity lock + cinematic quality).
+ *   • Kling 3.0 — Shot 2 and Shot 3 (physics realism + action impact).
+ *   • Seedance 2.0 remains an optional continuity reference lane outside this primary diagram.
  *   • Character lock is represented with real nodes only:
  *     Parse JSON → Combine Text → Nano Banana 2 → Gen-4 canonical anchor →
  *     Extract Frame preferred handoff → Last Frame fallback → First Frame QA.
@@ -353,7 +355,7 @@ const NODE_SPECS: NodeSpec[] = [
       { id: "prompt", label: "Prompt", kind: "text",  required: true },
     ],
     outputs: [{ id: "video", label: "Video", kind: "video" }],
-    infoLines: ["Gen-4.5 I2V — identity locked from anchor, cinematic opener"],
+    infoLines: ["Gen-4.5 I2V — Shot 1 opener for the primary hybrid lane"],
   }),
   makeNode("extract1", {
     title: "Extract Frame", subtitle: "Preferred Handoff 1", badge: "UTILITY",
@@ -533,7 +535,7 @@ const NODE_SPECS: NodeSpec[] = [
       { id: "prompt", label: "Prompt", kind: "text",  required: true },
     ],
     outputs: [{ id: "video", label: "Video", kind: "video" }],
-    infoLines: ["Gen-4.5 I2V — cinematic pullback, clean closing from Shot 3 frame"],
+    infoLines: ["Gen-4.5 I2V — Shot 4 closer for the primary hybrid lane"],
   }),
   makeNode("qa4", {
     title: "First Frame", subtitle: "QA 4", badge: "UTILITY",
@@ -912,15 +914,15 @@ function InfoPanel() {
       </div>
       <div style={divider} />
       <div style={{ flex: "1 1 0", padding: "16px 18px", minWidth: 220 }}>
-        <div style={headStyle}>Model lane + scope</div>
+        <div style={headStyle}>Hybrid lane + scope</div>
         <p style={bodyStyle}>
-          Shot 1 and Shot 4 use Gen-4.5 I2V — identity is locked from the Canonical
-          Anchor and cinematic quality is highest at the open and close. Shot 2 uses
-          Kling 3.0 for the stalk and build phase where fur detail and muscle tension
-          realism matter most. Shot 3 uses Kling 3.0 for the action impact beat where
-          physics simulation is the priority. All four models are available inside
-          Runway as of February 2026 on paid plans. The automatic route stays primary;
-          manual Text nodes are optional override paths only.
+          This diagram shows the app&apos;s primary runtime workflow: hybrid 4-shot
+          routing with Gen-4.5 / Runway on Shot 1 and Shot 4, and Kling 3.0 on
+          Shot 2 and Shot 3. The audio lane is intentionally removed so this
+          diagram stays about continuity, prompt assembly, QA, and final post
+          only. Seedance 2.0 remains an optional continuity reference lane
+          elsewhere; manual Text nodes are optional override paths only.
+
         </p>
       </div>
     </div>
@@ -1324,7 +1326,7 @@ export default function WSTVWorkflowDiagram({
             color: "#1e2f42", fontSize: 11, fontWeight: 700,
             letterSpacing: "0.12em", textTransform: "uppercase",
           }}>
-            Wild Stories TV · Gen-4.5 I2V / Kling 3.0 4-shot production workflow · core continuity + social side outputs
+            Wild Stories TV · hybrid 4-shot production workflow · core continuity + social side outputs
           </div>
 
           <div style={{
