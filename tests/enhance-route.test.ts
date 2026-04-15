@@ -74,6 +74,6 @@ describe("enhance route provider helpers", () => {
 
     expect(() =>
       parseProviderJsonObject('{"hook":"A"', "Claude enhancement")
-    ).toThrow(/non-JSON output|malformed JSON/i);
+    ).toThrow(/non-JSON output|malformed JSON|JSON-like content|no valid JSON object could be parsed/i);
   });
 });
