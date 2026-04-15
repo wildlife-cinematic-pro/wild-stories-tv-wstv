@@ -1387,7 +1387,7 @@ export default function Page() {
               <div className="flex flex-col gap-4 xl:flex-row xl:items-end xl:justify-between">
                 <div className="max-w-2xl">
                   <div className="text-[11px] font-semibold uppercase tracking-[0.1em] text-white/30">Workflow Viewer</div>
-                  <div className="mt-1 text-sm text-white/50">Switch between the primary WSTV production continuity map and the optional Runway-native reference handoff view.</div>
+                  <div className="mt-1 text-sm text-white/50">Switch between the primary hybrid 4-shot production workflow view and the optional Runway-native reference handoff view.</div>
                 </div>
                 <div className="rounded-[24px] border border-white/[0.08] bg-white/[0.03] p-1.5 shadow-[inset_0_1px_0_rgba(255,255,255,0.03)]">
                   <div className="flex flex-wrap gap-1.5">
@@ -1449,7 +1449,7 @@ export default function Page() {
                 </div>
               </div>
               <div className="text-xs text-white/25">
-                Interactive viewer with drag, zoom, and inspectable continuity wires. WSTV stays the main production lane.
+                Interactive viewer with drag, zoom, and inspectable continuity wires. The primary runtime lane is the hybrid 4-shot workflow.
               </div>
             </div>
 
@@ -1465,12 +1465,12 @@ export default function Page() {
                   <div>
                     <div className="text-xs font-semibold text-gray-300">
                       {workflowTab === "wstv"
-                        ? "WSTV · 4-shot production workflow · Seedance 2.0 primary lane"
+                        ? "WSTV · 4-shot production workflow · hybrid primary lane"
                         : "Runway Official · 4-shot safe handoff · Gen-4.5 native"}
                     </div>
                     <div className="mt-0.5 text-[11px] text-gray-500">
                       {workflowTab === "wstv"
-                        ? "Production-oriented continuity viewer with Canonical Anchor, preferred Extract Frame handoff, and Last Frame fallback."
+                        ? "Production-oriented continuity viewer for the hybrid 4-shot path, with Canonical Anchor, preferred Extract Frame handoff, and Last Frame fallback."
                         : "Optional reference viewer for the Runway-native safe-handoff pattern, manual overrides, and stitched final assembly."}
                     </div>
                   </div>
