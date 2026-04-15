@@ -4,6 +4,21 @@ import { z } from "zod";
 export const aiProviderSchema = z.enum(["none", "claude", "gemini"]);
 
 const copyPolishFieldSchema = z.string().trim().min(1);
+const copyPolishImprovementItemSchema = copyPolishFieldSchema.max(400);
+const copyPolishImprovementsSchema = z.preprocess(
+  (value) => {
+    if (!Array.isArray(value)) return value;
+    const cleaned = value
+      .filter((item): item is string => typeof item === "string")
+      .map((item) => item.trim())
+      .filter(Boolean);
+    return cleaned;
+  },
+  z.union([
+    copyPolishImprovementItemSchema,
+    z.array(copyPolishImprovementItemSchema).min(1).max(8),
+  ])
+);
 
 const copyPolishBaseSchema = z
   .object({
@@ -18,14 +33,14 @@ const copyPolishBaseSchema = z
 // This is not the main cinematic prompt-pack architecture.
 export const copyPolishRequestSchema = z
   .object({
-  provider: z.enum(["claude", "gemini"]),
-  predator: z.string().min(1).max(64),
-  prey: z.string().min(1).max(64),
-  env: z.string().min(1).max(300),
-  arc: z.string().min(1).max(120),
-  weather: z.string().min(1).max(80),
-  emotionalTone: z.string().min(1).max(80),
-  animalVibe: z.string().min(1).max(80),
+    provider: z.enum(["claude", "gemini"]),
+    predator: z.string().min(1).max(64),
+    prey: z.string().min(1).max(64),
+    env: z.string().min(1).max(300),
+    arc: z.string().min(1).max(120),
+    weather: z.string().min(1).max(80),
+    emotionalTone: z.string().min(1).max(80),
+    animalVibe: z.string().min(1).max(80),
     base: copyPolishBaseSchema,
   })
   .strict();
@@ -39,12 +54,7 @@ export const copyPolishResponseSchema = z
     hook: copyPolishFieldSchema.max(500).optional(),
     caption: copyPolishFieldSchema.max(1200).optional(),
     voiceoverLine: copyPolishFieldSchema.max(800).optional(),
-    improvements: z
-      .union([
-        copyPolishFieldSchema.max(400),
-        z.array(copyPolishFieldSchema.max(400)).min(1).max(8),
-      ])
-      .optional(),
+    improvements: copyPolishImprovementsSchema.optional(),
   })
   .strict()
   .superRefine((value, ctx) => {
