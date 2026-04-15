@@ -1,6 +1,7 @@
 import { describe, it, expect } from "vitest";
 import {
   buildImagePrompt,
+  buildFourShotWorkflow,
   buildRunwayShots,
   buildKlingShots,
   buildSeedanceShots,
@@ -202,7 +203,7 @@ describe("Seedance prompt builder", () => {
     expect(shots.shot2).toContain("═══ PASTE-READY SEEDANCE PROMPT");
     expect(shots.shot4).toContain("Suggested duration: 5 seconds.");
     expect(shots.workflowGuide).toContain("subject movement + background movement + camera movement");
-    expect(shots.workflowGuide).toContain("4 separate Seedance video shots");
+    expect(shots.workflowGuide).toContain("Default WSTV workflow: generate 4 separate video shots.");
     expect(shots.workflowGuide).toContain("Cut to");
   });
 
@@ -219,12 +220,12 @@ describe("Seedance prompt builder", () => {
       quality
     );
 
-    expect(shots.multiShotPrompt).toContain("SEEDANCE PRIMARY 4-SHOT CONTINUITY PROMPT");
+    expect(shots.multiShotPrompt).toContain("SEEDANCE 4-SHOT CONTINUITY PROMPT");
     expect(shots.multiShotPrompt).toContain("Shot 4: resolved tension");
     expect(shots.multiShotPrompt).toMatch(/\bCut to\b/g);
   });
 
-  it("keeps Seedance 4-shot wording as the clearest primary path", () => {
+  it("retains the existing Seedance workflow-guide wording", () => {
     const shots = buildSeedanceShots(
       "Mountain Lion",
       "White-tailed Deer",
@@ -237,19 +238,19 @@ describe("Seedance prompt builder", () => {
       quality
     );
 
-    expect(shots.workflowGuide).toContain("Primary WSTV workflow: generate 4 separate Seedance video shots.");
+    expect(shots.workflowGuide).toContain("Default WSTV workflow: generate 4 separate video shots.");
     expect(shots.workflowGuide).not.toContain("3-shot");
   });
 });
 
 describe("Clip chaining guidance", () => {
-  it("describes a 4-shot chain and labels Kling 6-shot as optional", () => {
+  it("describes the current Runway handoff flow and Kling multi-shot alternative", () => {
     const guide = buildClipChaining("Wolf", "MEDIUM");
 
-    expect(guide).toContain("STEP 4 — Chain Shot 4");
-    expect(guide).toContain("STEP 5 — Combine clips");
-    expect(guide).toContain("OPTIONAL SECONDARY PATH");
-    expect(guide).toContain("Optional extended format: use Multi-Shot mode (up to 6 shots");
+    expect(guide).toContain("STEP 4 — Combine clips in a video editor.");
+    expect(guide).toContain("STEP 4 — Alternative: use Multi-Shot mode (up to 6 shots, single prompt).");
+    expect(guide).toContain("═══ KLING 3.0 CHAINING ═══");
+    expect(guide).toContain("WSTV Handoff Rule");
   });
 });
 describe("Step 7 — Opening readability and tension clarity", () => {
@@ -907,6 +908,235 @@ describe("Step 9 — Kling single-shot paste-ready narrative format", () => {
     expect(shots.shot2).toMatch(/Motion intensity:\s*[\d.]+/i);
     expect(shots.shot3).toMatch(/Motion intensity:\s*[\d.]+/i);
     expect(shots.shot4).toMatch(/Motion intensity:\s*[\d.]+/i);
+  });
+});
+
+describe("four-shot workflow dispatcher", () => {
+  const base = {
+    predator: "Mountain Lion",
+    prey: "White-tailed Deer",
+    env: "Rocky Mountain meadow",
+    arc: "Ambush attack" as const,
+    weather: "Golden Hour" as const,
+    runwayModel: "Gen-4.5" as const,
+    klingModel: "Kling 3.0 Pro" as const,
+    emotionalTone: "Raw Tension" as const,
+    animalVibe: "National Geographic Wild" as const,
+    sceneDesc: "A tense opening in tall grass.",
+  };
+
+  const quality = {
+    realismMode: "Reference Locked",
+    motionOnlyI2V: true,
+    referenceLock: true,
+    singleActionRule: true,
+    microMotion: true,
+    heroVeo: false,
+  } as const;
+
+  it("defaults omitted mode to hybrid", () => {
+    const workflow = buildFourShotWorkflow({
+      predator: base.predator,
+      prey: base.prey,
+      env: base.env,
+      arc: base.arc,
+      weather: base.weather,
+      runwayModel: base.runwayModel,
+      klingModel: base.klingModel,
+      emotionalTone: base.emotionalTone,
+      animalVibe: base.animalVibe,
+      sceneDesc: base.sceneDesc,
+      quality,
+    });
+
+    const runway = buildRunwayShots(
+      base.predator,
+      base.prey,
+      base.env,
+      base.arc,
+      base.weather,
+      base.runwayModel,
+      base.emotionalTone,
+      base.animalVibe,
+      base.sceneDesc,
+      quality
+    );
+    const kling = buildKlingShots(
+      base.predator,
+      base.prey,
+      base.env,
+      base.arc,
+      base.weather,
+      base.klingModel,
+      base.emotionalTone,
+      base.animalVibe,
+      base.sceneDesc,
+      quality
+    );
+
+    expect(workflow).toEqual({
+      shot1: runway.shot1,
+      shot2: kling.shot2,
+      shot3: kling.shot3,
+      shot4: runway.shot4,
+    });
+  });
+
+  it("hybrid mode maps Shot 1 Runway, Shot 2 Kling, Shot 3 Kling, Shot 4 Runway", () => {
+    const workflow = buildFourShotWorkflow({
+      mode: "hybrid",
+      predator: base.predator,
+      prey: base.prey,
+      env: base.env,
+      arc: base.arc,
+      weather: base.weather,
+      runwayModel: base.runwayModel,
+      klingModel: base.klingModel,
+      emotionalTone: base.emotionalTone,
+      animalVibe: base.animalVibe,
+      sceneDesc: base.sceneDesc,
+      quality,
+    });
+
+    const runway = buildRunwayShots(
+      base.predator,
+      base.prey,
+      base.env,
+      base.arc,
+      base.weather,
+      base.runwayModel,
+      base.emotionalTone,
+      base.animalVibe,
+      base.sceneDesc,
+      quality
+    );
+    const kling = buildKlingShots(
+      base.predator,
+      base.prey,
+      base.env,
+      base.arc,
+      base.weather,
+      base.klingModel,
+      base.emotionalTone,
+      base.animalVibe,
+      base.sceneDesc,
+      quality
+    );
+
+    expect(workflow.shot1).toBe(runway.shot1);
+    expect(workflow.shot2).toBe(kling.shot2);
+    expect(workflow.shot3).toBe(kling.shot3);
+    expect(workflow.shot4).toBe(runway.shot4);
+  });
+
+  it("seedance mode still returns all four Seedance shots", () => {
+    const workflow = buildFourShotWorkflow({
+      mode: "seedance",
+      predator: base.predator,
+      prey: base.prey,
+      env: base.env,
+      arc: base.arc,
+      weather: base.weather,
+      runwayModel: base.runwayModel,
+      klingModel: base.klingModel,
+      emotionalTone: base.emotionalTone,
+      animalVibe: base.animalVibe,
+      sceneDesc: base.sceneDesc,
+      quality,
+    });
+
+    const seedance = buildSeedanceShots(
+      base.predator,
+      base.prey,
+      base.env,
+      base.arc,
+      base.weather,
+      base.emotionalTone,
+      base.animalVibe,
+      base.sceneDesc,
+      quality
+    );
+
+    expect(workflow).toEqual({
+      shot1: seedance.shot1,
+      shot2: seedance.shot2,
+      shot3: seedance.shot3,
+      shot4: seedance.shot4,
+    });
+  });
+
+  it("runway-only mode still returns all four Runway shots", () => {
+    const workflow = buildFourShotWorkflow({
+      mode: "runway-only",
+      predator: base.predator,
+      prey: base.prey,
+      env: base.env,
+      arc: base.arc,
+      weather: base.weather,
+      runwayModel: base.runwayModel,
+      klingModel: base.klingModel,
+      emotionalTone: base.emotionalTone,
+      animalVibe: base.animalVibe,
+      sceneDesc: base.sceneDesc,
+      quality,
+    });
+
+    const runway = buildRunwayShots(
+      base.predator,
+      base.prey,
+      base.env,
+      base.arc,
+      base.weather,
+      base.runwayModel,
+      base.emotionalTone,
+      base.animalVibe,
+      base.sceneDesc,
+      quality
+    );
+
+    expect(workflow).toEqual({
+      shot1: runway.shot1,
+      shot2: runway.shot2,
+      shot3: runway.shot3,
+      shot4: runway.shot4,
+    });
+  });
+
+  it("kling-only mode still returns all four Kling shots", () => {
+    const workflow = buildFourShotWorkflow({
+      mode: "kling-only",
+      predator: base.predator,
+      prey: base.prey,
+      env: base.env,
+      arc: base.arc,
+      weather: base.weather,
+      runwayModel: base.runwayModel,
+      klingModel: base.klingModel,
+      emotionalTone: base.emotionalTone,
+      animalVibe: base.animalVibe,
+      sceneDesc: base.sceneDesc,
+      quality,
+    });
+
+    const kling = buildKlingShots(
+      base.predator,
+      base.prey,
+      base.env,
+      base.arc,
+      base.weather,
+      base.klingModel,
+      base.emotionalTone,
+      base.animalVibe,
+      base.sceneDesc,
+      quality
+    );
+
+    expect(workflow).toEqual({
+      shot1: kling.shot1,
+      shot2: kling.shot2,
+      shot3: kling.shot3,
+      shot4: kling.shot4,
+    });
   });
 });
 

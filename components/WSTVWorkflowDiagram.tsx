@@ -6,18 +6,19 @@
  * Production notes:
  *   • This diagram follows the current picker-label wording from your screenshots
  *     and keeps the WSTV lane centered on the real intended production flow.
- *   • Seedance 2.0 is the primary 4-shot lane here because that is the intended
- *     WSTV continuity workflow, while Gen-4 remains the Canonical Anchor stage.
- *   • Runway and Kling remain available elsewhere in the repo as secondary
- *     optional alternate / fallback workflows, but they are intentionally not
- *     presented here as co-equal main production lanes.
+ *   • This component now serves as the optional Seedance 2.0 continuity
+ *     reference lane, while the app's primary 4-shot runtime path is the
+ *     hybrid route (Runway Shot 1, Kling Shots 2-3, Runway Shot 4).
+ *   • Runway and Kling remain available elsewhere in the repo as the primary
+ *     hybrid route and as optional full-engine bundles; this diagram stays
+ *     focused on the standalone Seedance continuity path only.
  *   • The separate Parse JSON social lane is export-only: hook / caption /
  *     hashtags / tags are shown for publishing, not as part of the render path.
  *   • Optional manual Text nodes stay available as operator overrides for the
  *     master image prompt, each shot prompt pack, and social export text.
  *
- * Main WSTV lane:
- *   • Seedance 2.0 is the primary 4-shot continuity lane.
+ * Seedance reference lane:
+ *   • Seedance 2.0 is the optional full-bundle 4-shot continuity lane.
  *   • Character lock is represented with real nodes only:
  *     Parse JSON → Combine Text → Nano Banana 2 → Gen-4 canonical anchor →
  *     Extract Frame preferred handoff → Last Frame fallback → First Frame QA.
@@ -410,7 +411,7 @@ const NODE_SPECS: NodeSpec[] = [
       { id: "prompt", label: "Prompt", kind: "text", required: true },
     ],
     outputs: [{ id: "video", label: "Video", kind: "video" }],
-    infoLines: ["Primary WSTV continuity lane — anchor starts here"],
+    infoLines: ["Seedance continuity reference lane — anchor starts here"],
   }),
   makeNode("extract1", {
     title: "Extract Frame",
@@ -635,7 +636,7 @@ const NODE_SPECS: NodeSpec[] = [
       { id: "prompt", label: "Prompt", kind: "text", required: true },
     ],
     outputs: [{ id: "video", label: "Video", kind: "video" }],
-    infoLines: ["Final shot in the primary Seedance continuity lane"],
+    infoLines: ["Final shot in the Seedance continuity reference lane"],
   }),
   makeNode("qa4", {
     title: "First Frame",
@@ -1031,15 +1032,15 @@ function InfoPanel() {
       </div>
       <div style={divider} />
       <div style={{ flex: "1 1 0", padding: "16px 18px", minWidth: 220 }}>
-        <div style={headStyle}>Seedance lane + scope</div>
+        <div style={headStyle}>Seedance reference lane + scope</div>
         <p style={bodyStyle}>
-          Seedance 2.0 is the main WSTV video lane here because this file is meant
-          to mirror the intended production workflow as closely as possible. The main
-          audio lane is intentionally removed so the diagram stays about continuity,
-          prompt assembly, QA, and final post only. Runway and Kling stay available
-          elsewhere in the repo as secondary optional alternate / fallback workflows,
-          but this primary WSTV diagram does not present them as co-equal lanes. The
-          automatic route stays primary; manual Text nodes are optional override paths only.
+          Seedance 2.0 is shown here as the optional full-bundle continuity
+          reference lane. The app&apos;s primary runtime workflow is the hybrid
+          4-shot route (Runway Shot 1, Kling Shots 2-3, Runway Shot 4). The
+          audio lane is intentionally removed so this diagram stays about
+          continuity, prompt assembly, QA, and final post only. This component
+          remains focused on the standalone Seedance path; manual Text nodes are
+          optional override paths only.
         </p>
       </div>
     </div>
@@ -1498,7 +1499,7 @@ export default function WSTVWorkflowDiagram({
             color: "#1e2f42", fontSize: 11, fontWeight: 700,
             letterSpacing: "0.12em", textTransform: "uppercase",
           }}>
-            Wild Stories TV · Seedance-first 4-shot production workflow · core continuity + social side outputs
+            Wild Stories TV · Seedance 4-shot continuity reference workflow · core continuity + social side outputs
           </div>
 
           <div style={{

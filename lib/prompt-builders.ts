@@ -30,20 +30,22 @@
 //   • Avoid negative phrasing ("the camera doesn't move").
 //   • Runway Characters feature available for consistency.
 //
-// KLING 3.0 [House + estimate — primary-doc refresh recommended]:
+// KLING 3.0 [House guidance — verified against community sources, April 2026]:
 //   • Resolution: Native 4K (3840×2160) at up to 60fps.
 //   • Duration: 3–15 seconds per generation.
 //   • Multi-shot: Up to 6 shots in a single prompt.
 //   • Native audio: Dialogue, ambient sound, SFX, voice tone.
 //   • Elements 3.0 / "Bind Subject": Lock character consistency.
 //   • Start AND End frame control (new in 3.0).
-//   • Negative prompts: SUPPORTED and recommended.
+//   • Negative prompts: SUPPORTED and recommended (use to prevent morphing, sliding feet, extra limbs).
 //   • Guidance Scale (CFG): 0.0–1.0. Higher = strict, lower = creative.
 //   • Motion intensity: 0.1–1.0 values (specify for predictable results).
-//   • Paste-ready prompt style: director-style narrative for direct paste, with structured breakdown kept below for reference
+//   • Paste-ready prompt style: director-style narrative for direct paste, with structured breakdown kept below for reference.
 //   • Cinematic intent: model understands film language natively.
 //   • Omni mode: processes text, image, audio simultaneously.
-//   • I2V: Image = 3D anchor (not just first frame like older models).
+//   • I2V: Image = 3D anchor (not just first frame like older models). Prompt motion only — never redescribe appearance.
+//   • I2V end-state rule: always include a clear end-state description (e.g. "then settles back into place") to prevent generation hanging at 99%.
+//   • I2V word count: 20–40 words optimal for standard I2V; WSTV wildlife shots intentionally exceed this for explicit readability/spacing rules.
 //   • Multi-prompt system: separate Shot Prompt per shot with duration.
 //
 // SEEDANCE 2.0 [Official launch + official Seedance prompt guides, accessed 2026-04-13]:
@@ -107,7 +109,7 @@ export const RUNWAY_SPECS = {
     chainingMethod: "Use last-frame chaining only when the outgoing frame is a clean full-body handoff frame. Otherwise reuse the master still or a manually selected clean frame.",
 } as const;
 
-/** Kling 3.0 current WSTV house guidance (primary-doc refresh recommended) */
+/** Kling 3.0 current WSTV house guidance (verified against public Kling VIDEO 3.0 docs where applicable, plus community sources, April 2026) */
 export const KLING_SPECS = {
   resolution: "Native 4K (3840×2160)" as const,
   fpsMax: 60 as const,
@@ -1507,9 +1509,9 @@ export function buildSeedanceShots(
 7. Keep wording simple and direct.
 8. Use clear degree adverbs when motion intensity matters: slowly, sharply, quickly, gently.
 9. If camera movement is described, set the camera to non-fixed.
-10. Primary WSTV workflow: generate 4 separate Seedance video shots.
+10. Default WSTV workflow: generate 4 separate video shots.
 11. Set each individual shot to 5 seconds in the Seedance 2.0 node settings or prompt parameters.
-12. Optional combined continuity prompt: connect shots with "Cut to" only when you intentionally want the separate all-in-one reference format. The main production path still runs the 4 separate shots above.
+12. For a combined continuity prompt, connect shots with "Cut to" and describe the new shot after each transition.
 13. Negative prompts do not work in Seedance 2.0.
 14. Keep motion readable and continuity-safe in ${cleanEnv}, ${cleanWeather}.`);
 
@@ -1578,7 +1580,7 @@ Subject movement: ${formatActionSubject(predator, s3Predator)}. ${prey} ${s3Prey
 Background movement: ${stripBackgroundMovementLead(buildSeedanceBackgroundMotion(habitatMode, micro, "aftermath"))}
 Camera movement: Locked wide aftermath hold with a subtle pull-back.
 Seedance 2.0 settings: Duration 5s | Prompt + First Frame. Fixed or non-fixed camera can work here, but keep the motion instruction explicit and simple.`),
-    multiShotPrompt: finalizePrompt(`SEEDANCE PRIMARY 4-SHOT CONTINUITY PROMPT
+    multiShotPrompt: finalizePrompt(`SEEDANCE 4-SHOT CONTINUITY PROMPT
 ${officialRule}
 ${cameraRule}
 ${qLead}
@@ -1593,7 +1595,7 @@ Shot 1: opening tension
 Shot 2: pressure build
 Shot 3: peak action
 Shot 4: resolved tension
-Use "Cut to" exactly as written so Seedance preserves the shot-to-shot relationship more clearly. This combined prompt is optional reference only; for the main 5s x 4 production workflow, generate each shot separately.`),
+Use "Cut to" exactly as written so Seedance preserves the shot-to-shot relationship more clearly. For the 5s x 4 workflow, generate each shot separately.`),
     workflowGuide,
   };
 }
@@ -2352,6 +2354,118 @@ Kling settings: Motion intensity ${mi4.toFixed(2)} | Optionally set End Frame fo
 }
 
 // ─────────────────────────────────────────────────────────────
+// FOUR-SHOT WORKFLOW MODE TYPES + HYBRID ORCHESTRATOR
+//
+// PRIMARY workflow matches WSTVWorkflowDiagram.tsx:
+//   Shot 1 — Gen-4.5 I2V (Runway)  · Opening Tension  (identity lock + cinematic quality)
+//   Shot 2 — Kling 3.0             · Pressure Build   (physics realism + action impact)
+//   Shot 3 — Kling 3.0             · Peak Action      (physics realism + action impact)
+//   Shot 4 — Gen-4.5 I2V (Runway)  · Resolved Tension (identity lock + cinematic quality)
+//
+// OPTIONAL selectable modes:
+//   "seedance"    — all 4 shots via Seedance 2.0
+//   "kling-only"  — all 4 shots via Kling 3.0
+//   "runway-only" — all 4 shots via Runway Gen-4.5
+// ─────────────────────────────────────────────────────────────
+
+export type FourShotWorkflowMode = "hybrid" | "runway-only" | "kling-only" | "seedance";
+
+/**
+ * Primary WSTV 4-shot hybrid workflow.
+ * Composes from existing builders — no shot-level logic is duplicated.
+ *
+ * Shot 1 = Runway Gen-4.5 I2V  (buildRunwayShots → shot1)
+ * Shot 2 = Kling 3.0           (buildKlingShots  → shot2)
+ * Shot 3 = Kling 3.0           (buildKlingShots  → shot3)
+ * Shot 4 = Runway Gen-4.5 I2V  (buildRunwayShots → shot4)
+ */
+export function buildHybridFourShotWorkflow(
+  predator: string,
+  prey: string,
+  env: string,
+  arc: Arc,
+  weather: Weather,
+  runwayModel: RunwayModel,
+  klingModel: KlingModel,
+  emotionalTone: EmotionalTone,
+  animalVibe: AnimalVibe,
+  sceneDesc?: string,
+  quality?: QualityOptions
+): { shot1: string; shot2: string; shot3: string; shot4: string } {
+  const runway = buildRunwayShots(
+    predator, prey, env, arc, weather, runwayModel,
+    emotionalTone, animalVibe, sceneDesc, quality
+  );
+  const kling = buildKlingShots(
+    predator, prey, env, arc, weather, klingModel,
+    emotionalTone, animalVibe, sceneDesc, quality
+  );
+  return {
+    shot1: runway.shot1,  // Runway: Opening Tension
+    shot2: kling.shot2,   // Kling:  Pressure Build
+    shot3: kling.shot3,   // Kling:  Peak Action
+    shot4: runway.shot4,  // Runway: Resolved Tension
+  };
+}
+
+/**
+ * Dispatcher for all 4-shot workflow modes.
+ * "hybrid" is the primary WSTV mode and matches WSTVWorkflowDiagram.tsx.
+ * All other modes are optional alternatives.
+ *
+ * Returns { shot1, shot2, shot3, shot4 } in every mode.
+ * For "seedance", multiShotPrompt and workflowGuide are available via
+ * buildSeedanceShots() directly when the full return shape is needed.
+ */
+export function buildFourShotWorkflow(opts: {
+  mode?: FourShotWorkflowMode;
+  predator: string;
+  prey: string;
+  env: string;
+  arc: Arc;
+  weather: Weather;
+  runwayModel: RunwayModel;
+  klingModel: KlingModel;
+  emotionalTone: EmotionalTone;
+  animalVibe: AnimalVibe;
+  sceneDesc?: string;
+  quality?: QualityOptions;
+}): { shot1: string; shot2: string; shot3: string; shot4: string } {
+  const {
+    mode = "hybrid", predator, prey, env, arc, weather,
+    runwayModel, klingModel, emotionalTone, animalVibe, sceneDesc, quality,
+  } = opts;
+
+  switch (mode) {
+    case "hybrid":
+      return buildHybridFourShotWorkflow(
+        predator, prey, env, arc, weather, runwayModel, klingModel,
+        emotionalTone, animalVibe, sceneDesc, quality
+      );
+    case "runway-only":
+      return buildRunwayShots(
+        predator, prey, env, arc, weather, runwayModel,
+        emotionalTone, animalVibe, sceneDesc, quality
+      );
+    case "kling-only":
+      return buildKlingShots(
+        predator, prey, env, arc, weather, klingModel,
+        emotionalTone, animalVibe, sceneDesc, quality
+      );
+    case "seedance": {
+      const sd = buildSeedanceShots(
+        predator, prey, env, arc, weather, emotionalTone, animalVibe, sceneDesc, quality
+      );
+      return { shot1: sd.shot1, shot2: sd.shot2, shot3: sd.shot3, shot4: sd.shot4 };
+    }
+    default: {
+      const _exhaustive: never = mode;
+      return _exhaustive;
+    }
+  }
+}
+
+// ─────────────────────────────────────────────────────────────
 // KLING NATIVE 15-SECOND MULTI-SHOT
 // ─────────────────────────────────────────────────────────────
 export function buildKlingNative15s(
@@ -2445,7 +2559,7 @@ const audio3Short = buildKlingAudioShort(predator, prey, env, weather, "aftermat
 const pasteReadyCore = [
   quality?.motionOnlyI2V
     ? `Same ${predator} and ${prey} identities from the input image in the same environment continuity, ${cleanWeather}. Photorealistic wildlife documentary in 9:16 vertical.`
-    : `${predator} and ${prey} remain consistent across all three timed beats of this optional 15-second format in ${cleanEnv}, ${cleanWeather}. Photorealistic wildlife documentary in 9:16 vertical.`,
+    : `${predator} and ${prey} remain consistent across all three beats in ${cleanEnv}, ${cleanWeather}. Photorealistic wildlife documentary in 9:16 vertical.`,
 
   ``,
 
@@ -2821,9 +2935,6 @@ export function buildCapCutPlan(predator: string, arc: string, weather: Weather)
 
 // ─────────────────────────────────────────────────────────────
 // CLIP CHAINING
-// Primary path = 4-shot Seedance-first workflow.
-// Runway and Kling chaining guidance below remains available as optional
-// alternate / fallback workflow help.
 // ─────────────────────────────────────────────────────────────
 export function buildClipChaining(predator: string, driftRisk: PredatorInfo["driftRisk"]): string {
   const riskLine =
@@ -2836,24 +2947,19 @@ export function buildClipChaining(predator: string, driftRisk: PredatorInfo["dri
   return finalizePrompt(`CLIP CHAINING — ${predator.toUpperCase()}
 ${riskLine}
 
-PRIMARY WSTV PATH — Seedance 2.0 4-shot continuity remains the main production workflow.
-SECONDARY PATHS BELOW — use Runway or Kling only when you intentionally switch to an alternate or fallback workflow.
-
-═══ RUNWAY GEN-4.5 CHAINING (OPTIONAL SECONDARY PATH) ═══
+═══ RUNWAY GEN-4.5 CHAINING (WSTV Handoff Rule) ═══
 STEP 1 — Generate Shot 1 (Runway I2V) with strong first-frame readability and both subjects clearly readable.
   • If the outgoing final frame is a clean full-body handoff frame, use it as the next I2V input.
   • If readability drops, reuse the master still or manually select a clean continuity frame instead.
 STEP 2 — Chain Shot 2 with the cleanest handoff source available. Prompt = motion only.
-STEP 3 — Chain Shot 3 the same way. Keep peak action readable and spacing clear.
-STEP 4 — Chain Shot 4 with the cleanest handoff source available. End on a readable final hold.
-STEP 5 — Combine clips in a video editor. Remove repeated handoff frames if needed.
+STEP 3 — Chain Shot 3 the same way. Keep end-state tension readable and spacing clear.
+STEP 4 — Combine clips in a video editor. Remove repeated handoff frames if needed.
 
-═══ KLING 3.0 CHAINING (OPTIONAL SECONDARY PATH) ═══
+═══ KLING 3.0 CHAINING ═══
 STEP 1 — Generate Shot 1 with clear opening tension and readable full-subject visibility.
 STEP 2 — Use the previous last frame only when it remains a clean full-body handoff frame. Otherwise use the master still or a manually selected clean continuity frame, then enable Bind Subject.
-STEP 3 — Continue through Shot 4 with one readable action beat per shot and clean handoff frames.
-STEP 4 — Optionally set End Frame for precise final-pose control.
-STEP 5 — Optional extended format: use Multi-Shot mode (up to 6 shots, single prompt) when you intentionally want the separate 6-shot workflow.
+STEP 3 — Optionally set End Frame for precise final-pose control.
+STEP 4 — Alternative: use Multi-Shot mode (up to 6 shots, single prompt).
 
 RULE: Subject description stays consistent across all clips.
 RULE: Preserve predator-to-survival-animal spacing and readable silhouette separation.

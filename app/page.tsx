@@ -65,6 +65,7 @@ import {
 
 import {
   buildImagePrompt,
+  buildFourShotWorkflow,
   buildSeedanceShots,
   buildShotImagePlan,
   buildRunwayShots,
@@ -545,6 +546,19 @@ export default function Page() {
       const runway = buildRunwayShots(predator, prey, finalEnvironment, finalArc, weather, runwayModel, emotionalTone, animalVibe, sceneInject, quality);
       const seedance = buildSeedanceShots(predator, prey, finalEnvironment, finalArc, weather, emotionalTone, animalVibe, sceneInject, quality);
       const kling = buildKlingShots(predator, prey, finalEnvironment, finalArc, weather, klingModel, emotionalTone, animalVibe, sceneInject, quality);
+      const fourShotWorkflow = buildFourShotWorkflow({
+        predator,
+        prey,
+        env: finalEnvironment,
+        arc: finalArc,
+        weather,
+        runwayModel,
+        klingModel,
+        emotionalTone,
+        animalVibe,
+        sceneDesc: sceneInject,
+        quality,
+      });
       const klingNative15s = buildKlingNative15s(predator, prey, finalEnvironment, finalArc, weather, klingModel, emotionalTone, animalVibe, sceneInject, quality);
       const klingSixShot = buildKlingSixShot(predator, prey, finalEnvironment, finalArc, weather, klingModel, emotionalTone, animalVibe, sceneInject, quality);
       const negativePromptForKling = buildNegativePrompt(predator, "KLING");
@@ -584,14 +598,14 @@ export default function Page() {
         hook: hook2026?.[0] ?? "", hook2026: hook2026 ?? [], recommendedHookIndex,
         caption: caption2026 ?? "", caption2026: caption2026 ?? "", cta, hashtags, tenIdeas,
         shotPlan: [
-          { engine: "RUNWAY", title: "Shot 1 — Opening Tension", prompt: runway?.shot1 ?? "", motionStrength, why: "Use Image 1 from the master image for the clean first-frame opening." },
-          { engine: "KLING", title: "Shot 2 — Pressure Build", prompt: kling?.shot2 ?? "", motionStrength, why: "Use Image 2 edited from Shot 1 image for a stronger physics-safe pressure build without losing identity." },
-          { engine: "KLING", title: "Shot 3 — Peak Action", prompt: kling?.shot3 ?? "", motionStrength, why: "Use Image 3 edited from Shot 2 image for the strongest full-body action beat." },
-          { engine: "RUNWAY", title: "Shot 4 — Resolved Tension", prompt: runway?.shot4 ?? "", motionStrength, why: "Use Image 4 edited from Shot 3 image for the readable aftermath or final tension hold." },
+          { engine: "RUNWAY", title: "Shot 1 — Opening Tension", prompt: fourShotWorkflow.shot1, motionStrength, why: "Use Image 1 from the master image for the clean first-frame opening." },
+          { engine: "KLING", title: "Shot 2 — Pressure Build", prompt: fourShotWorkflow.shot2, motionStrength, why: "Use Image 2 edited from Shot 1 image for a stronger physics-safe pressure build without losing identity." },
+          { engine: "KLING", title: "Shot 3 — Peak Action", prompt: fourShotWorkflow.shot3, motionStrength, why: "Use Image 3 edited from Shot 2 image for the strongest full-body action beat." },
+          { engine: "RUNWAY", title: "Shot 4 — Resolved Tension", prompt: fourShotWorkflow.shot4, motionStrength, why: "Use Image 4 edited from Shot 3 image for the readable aftermath or final tension hold." },
         ],
         runwayBundle: [runway?.shot1 ?? "", runway?.shot2 ?? "", runway?.shot3 ?? "", runway?.shot4 ?? ""].join("\n\n---\n\n"),
         klingBundle: [kling?.shot1 ?? "", kling?.shot2 ?? "", kling?.shot3 ?? "", kling?.shot4 ?? ""].join("\n\n---\n\n"),
-        routingNote: `Primary workflow: Seedance 2.0 4-shot continuity (Shot 1 → Shot 4). Secondary optional bundle: hybrid fallback routing uses Runway ${runwayModel} for Shots 1 and 4, and Kling ${klingModel} for Shots 2 and 3 when you intentionally leave the main Seedance lane.`,
+        routingNote: `Primary workflow: hybrid 4-shot routing uses Runway ${runwayModel} for Shots 1 and 4, and Kling ${klingModel} for Shots 2 and 3. Optional bundles: Seedance 2.0, full Runway 4-shot, and full Kling 4-shot outputs remain available.`,
         pipelineStyle: "4-shot", fiveShotCinematic, fiveShotViral, watchTimeReport, platformPack,
         seoTitle, altTextPrompt, qualitySummary, referenceWorkflow, naturalismChecklist,
         modelsUsed: { runway: runwayModel, kling: klingModel },
@@ -1064,14 +1078,14 @@ export default function Page() {
                       <span className="rounded-full bg-gray-100 px-2.5 py-1 text-[10px] font-medium text-gray-500">prompts auto-adapt per model</span>
                     </div>
 
-                    {/* Seedance — primary featured card with violet accent bar */}
+                    {/* Hybrid 4-shot — primary featured card with indigo accent bar */}
                     <div className="mb-4">
                       <FeaturedModelCard
                         active
-                        tag="SEEDANCE"
-                        title="Seedance 2.0"
-                        subtitle="Primary WSTV production path — Seedance-first 4-shot continuity."
-                        note="Default continuity path = Seedance 2.0 Shot 1 → Shot 4. Runway and Kling stay available below as secondary optional alternate / fallback workflows, not as co-equal main lanes."
+                        tag="HYBRID"
+                        title="Hybrid 4-shot"
+                        subtitle="Primary WSTV production path — hybrid 4-shot continuity."
+                        note="Default continuity path = Runway Shot 1 → Kling Shot 2 → Kling Shot 3 → Runway Shot 4. Seedance remains available in the generated package as an optional full 4-shot bundle."
                         activeLabel="✓ Primary default"
                         onClick={() => {}}
                       />
@@ -1079,20 +1093,20 @@ export default function Page() {
 
                     {/* Secondary context note */}
                     <div className="mb-4 rounded-2xl border border-gray-100 bg-gray-50 px-3.5 py-2.5 text-[11px] font-medium leading-relaxed text-gray-500">
-                      Secondary optional paths: choose a Runway or Kling profile only when you intentionally want an alternate prompt bundle or fallback workflow.
+                      Hybrid uses both engines below: choose the Runway model for Shot 1 and Shot 4, and the Kling model for Shot 2 and Shot 3. Seedance remains available in the generated package as an optional full-bundle route.
                     </div>
 
-                    {/* Runway + Kling — secondary, with engine accent bars */}
+                    {/* Runway + Kling — hybrid engine selectors */}
                     <div className="grid gap-4 md:grid-cols-2">
                       <div className="space-y-2">
                         <div className="mb-1 flex items-center gap-2">
                           <div className="h-[2px] w-8 rounded-full bg-green-400" />
-                          <span className="rounded-full bg-green-100 px-2.5 py-1 text-[10px] font-semibold text-green-700">RUNWAY · OPTIONAL</span>
+                          <span className="rounded-full bg-green-100 px-2.5 py-1 text-[10px] font-semibold text-green-700">RUNWAY · HYBRID</span>
                         </div>
                         {RUNWAY_MODELS.map((m) => (
                           <ModelCard key={m} tone="green" tag="RUNWAY" active={runwayModel === m} title={m}
                             subtitle={m === "Gen-4.5" ? "Best realism, strongest first-frame readability" : m === "Gen-4 Turbo" ? "Fast draft for quick readable opening tests" : "Stable cinematic shots with clear openings"}
-                            activeLabel="✓ Alt selected"
+                            activeLabel="✓ Used in hybrid"
                             onClick={() => setRunwayModel(m)}
                           />
                         ))}
@@ -1100,12 +1114,12 @@ export default function Page() {
                       <div className="space-y-2">
                         <div className="mb-1 flex items-center gap-2">
                           <div className="h-[2px] w-8 rounded-full bg-blue-400" />
-                          <span className="rounded-full bg-blue-100 px-2.5 py-1 text-[10px] font-semibold text-blue-700">KLING · OPTIONAL</span>
+                          <span className="rounded-full bg-blue-100 px-2.5 py-1 text-[10px] font-semibold text-blue-700">KLING · HYBRID</span>
                         </div>
                         {KLING_MODELS.map((m) => (
                           <ModelCard key={m} tone="blue" tag="KLING" active={klingModel === m} title={m}
                             subtitle={m === "Kling 3.0 Pro" ? "Strong action workflow, best readable openings" : m === "Kling 3.0 Standard" ? "Balanced action with clear subject spacing" : m === "Kling 2.6 Pro" ? "Earlier option for simpler readable action" : m === "Kling 2.5 Turbo Pro" ? "Fast draft for one clean action beat" : "Fast I2V draft option for rough motion tests"}
-                            activeLabel="✓ Alt selected"
+                            activeLabel="✓ Used in hybrid"
                             onClick={() => setKlingModel(m)}
                           />
                         ))}
@@ -1258,7 +1272,7 @@ export default function Page() {
                   {/* AI provider */}
                   <div className="mb-5 rounded-2xl border border-white/10 bg-white/[0.06] p-3.5">
                     <div className="mb-1 text-[11px] font-semibold uppercase tracking-wide text-white/40">AI Copy &amp; Prompt Polish</div>
-                    <div className="mb-3 text-[11px] text-white/30">Optional polish only. Main cinematic 4-shot packs still come from the local Seedance-first builders.</div>
+                    <div className="mb-3 text-[11px] text-white/30">Optional polish only. Main cinematic 4-shot packs now come from the hybrid dispatcher, with Seedance, full Runway, and full Kling bundles still included as optional outputs.</div>
                     <div className="flex flex-wrap gap-2">
                       {(["none", "gemini", "claude"] as AIProvider[]).map((p) => (
                         <button key={p} type="button" onClick={() => setActiveProvider(p)}
