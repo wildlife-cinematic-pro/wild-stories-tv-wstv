@@ -22,7 +22,7 @@
  *   • Kling 3.0 — Shot 2 and Shot 3 (physics realism + action impact).
  *   • Seedance 2.0 remains an optional continuity reference lane outside this primary diagram.
  *   • Character lock is represented with real nodes only:
- *     Parse JSON → Combine Text → Nano Banana 2 → Gen-4 canonical anchor →
+ *     JSON Parse → Prompt Assembler (WSTV) → Nano Banana 2 → Gen-4 Image node (WSTV anchor) →
  *     Extract Frame preferred handoff → Last Frame fallback → First Frame QA.
  *   • The audio lane is intentionally removed here so the diagram stays focused
  *     on continuity, prompt assembly, QA, and final post.
@@ -98,10 +98,10 @@ const WIRE_COLORS: Record<WireStyle, string> = {
 
 const WIRE_STYLE_LABELS: Record<WireStyle, string> = {
   main: "Main pipeline",
-  rules: "Rule bus",
+  rules: "WSTV prompt-rule link",
   preferred: "Preferred continuity",
   fallback: "Fallback continuity",
-  anchor: "Canonical Anchor fallback",
+  anchor: "WSTV anchor fallback",
   qa: "First Frame QA",
   post: "Assembly + post",
   meta: "Social export only",
@@ -109,10 +109,10 @@ const WIRE_STYLE_LABELS: Record<WireStyle, string> = {
 };
 
 const RULE_ROUTE_ANNOTATIONS = [
-  { key: "r1", x: 1260, y: 674, label: "R1", note: "Combine Text Shot 1" },
-  { key: "r2", x: 2090, y: 754, label: "R2", note: "Combine Text Shot 2" },
-  { key: "r3", x: 2920, y: 834, label: "R3", note: "Combine Text Shot 3" },
-  { key: "r4", x: 3750, y: 898, label: "R4", note: "Combine Text Shot 4" },
+  { key: "r1", x: 1260, y: 674, label: "R1", note: "Prompt Assembly Shot 1 (WSTV)" },
+  { key: "r2", x: 2090, y: 754, label: "R2", note: "Prompt Assembly Shot 2 (WSTV)" },
+  { key: "r3", x: 2920, y: 834, label: "R3", note: "Prompt Assembly Shot 3 (WSTV)" },
+  { key: "r4", x: 3750, y: 898, label: "R4", note: "Prompt Assembly Shot 4 (WSTV)" },
 ] as const;
 
 const STITCH_ROUTE_ANNOTATIONS = [
@@ -210,21 +210,21 @@ function makeNode(id: string, cfg: Omit<NodeSpec, "id">): NodeSpec {
 // ─── NODE SPECS ──────────────────────────────────────────────────────────────
 const NODE_SPECS: NodeSpec[] = [
   makeNode("text_system", {
-    title: "Text", subtitle: "System Prompt", badge: "INPUT",
+    title: "Text", subtitle: "System Prompt", badge: "RUNWAY NATIVE",
     width: 190, bg: "#0c1520",
     inputs: [],
     outputs: [{ id: "text", label: "Text", kind: "text" }],
     infoLines: ["Structured output contract + continuity rules"],
   }),
   makeNode("text_story", {
-    title: "Text", subtitle: "Story Brief", badge: "INPUT",
+    title: "Text", subtitle: "Story Brief", badge: "RUNWAY NATIVE",
     width: 190, bg: "#0c1520",
     inputs: [],
     outputs: [{ id: "text", label: "Text", kind: "text" }],
     infoLines: ["Predator, prey, habitat, arc, pacing"],
   }),
   makeNode("image_ref", {
-    title: "Image", subtitle: "Character / Scene Reference", badge: "INPUT",
+    title: "Image input", subtitle: "Character / Scene Reference", badge: "RUNWAY NATIVE",
     width: 214, bg: "#0c1520",
     inputs: [],
     outputs: [{ id: "image", label: "Image", kind: "image" }],
@@ -232,7 +232,7 @@ const NODE_SPECS: NodeSpec[] = [
   }),
 
   makeNode("claude", {
-    title: "Claude", subtitle: "LLM Node", badge: "LLM",
+    title: "LLM", subtitle: "Claude Opus 4.5", badge: "RUNWAY NATIVE",
     width: 228, bg: "#14092e", accent: "#f97316",
     inputs: [
       { id: "system", label: "System Prompt", kind: "text", required: true },
@@ -240,11 +240,11 @@ const NODE_SPECS: NodeSpec[] = [
       { id: "image",  label: "Image",         kind: "image" },
     ],
     outputs: [{ id: "json", label: "Text (JSON)", kind: "text" }],
-    infoLines: ["Picker label follows current screenshots"],
+    infoLines: ["Official Runway LLM node — Claude Opus 4.5 is the active model selection"],
   }),
 
   makeNode("parse_json", {
-    title: "Parse JSON", subtitle: "Core Outputs", badge: "UTILITY",
+    title: "JSON Parse", subtitle: "Core Render Outputs", badge: "RUNWAY NATIVE",
     width: 312, bg: "#07121d", accent: "#16a34a",
     inputs: [{ id: "json", label: "Text (JSON)", kind: "text", required: true }],
     outputs: [
@@ -261,7 +261,7 @@ const NODE_SPECS: NodeSpec[] = [
     infoLines: ["Render-pipeline prompt parts only"],
   }),
   makeNode("parse_json_meta", {
-    title: "Parse JSON", subtitle: "Meta / Social Outputs", badge: "UTILITY",
+    title: "JSON Parse", subtitle: "Social / Export Outputs", badge: "RUNWAY NATIVE",
     width: 296, bg: "#071520", accent: "#22d3ee",
     inputs: [{ id: "json", label: "Text (JSON)", kind: "text", required: true }],
     outputs: [
@@ -273,35 +273,35 @@ const NODE_SPECS: NodeSpec[] = [
     infoLines: ["Reference / export only — not part of the render pipeline"],
   }),
   makeNode("manual_master", {
-    title: "Text", subtitle: "Optional Manual Master Image Prompt", badge: "MANUAL",
+    title: "Text", subtitle: "Optional Manual Master Image Prompt", badge: "WSTV CUSTOM",
     width: 236, bg: "#1a1207", accent: "#f97316",
     inputs: [],
     outputs: [{ id: "text", label: "Text", kind: "text" }],
     infoLines: ["Optional override — type master_image_prompt directly here"],
   }),
   makeNode("manual_hook", {
-    title: "Text", subtitle: "Optional Manual Hook", badge: "MANUAL",
+    title: "Text", subtitle: "Optional Manual Hook", badge: "WSTV CUSTOM",
     width: 214, bg: "#1a1207", accent: "#f97316",
     inputs: [],
     outputs: [{ id: "text", label: "Text", kind: "text" }],
     infoLines: ["Optional export-text override — direct hook entry"],
   }),
   makeNode("manual_caption", {
-    title: "Text", subtitle: "Optional Manual Caption", badge: "MANUAL",
+    title: "Text", subtitle: "Optional Manual Caption", badge: "WSTV CUSTOM",
     width: 214, bg: "#1a1207", accent: "#f97316",
     inputs: [],
     outputs: [{ id: "text", label: "Text", kind: "text" }],
     infoLines: ["Optional export-text override — direct caption entry"],
   }),
   makeNode("manual_hashtags", {
-    title: "Text", subtitle: "Optional Manual Hashtags", badge: "MANUAL",
+    title: "Text", subtitle: "Optional Manual Hashtags", badge: "WSTV CUSTOM",
     width: 214, bg: "#1a1207", accent: "#f97316",
     inputs: [],
     outputs: [{ id: "text", label: "Text", kind: "text" }],
     infoLines: ["Optional export-text override — direct hashtag entry"],
   }),
   makeNode("manual_tags", {
-    title: "Text", subtitle: "Optional Manual Tags", badge: "MANUAL",
+    title: "Text", subtitle: "Optional Manual Tags", badge: "WSTV CUSTOM",
     width: 214, bg: "#1a1207", accent: "#f97316",
     inputs: [],
     outputs: [{ id: "text", label: "Text", kind: "text" }],
@@ -309,7 +309,7 @@ const NODE_SPECS: NodeSpec[] = [
   }),
 
   makeNode("nano_banana_2", {
-    title: "Nano Banana 2", subtitle: "Canonical still build", badge: "MODEL",
+    title: "Nano Banana 2", subtitle: "Canonical still build", badge: "THIRD-PARTY",
     width: 228, bg: "#051a0e", accent: "#16a34a",
     inputs: [
       { id: "prompt", label: "Prompt", kind: "text",  required: true },
@@ -319,15 +319,15 @@ const NODE_SPECS: NodeSpec[] = [
     infoLines: ["Reference image + master prompt build the clean anchor still"],
   }),
   makeNode("gen4_anchor", {
-    title: "Gen-4", subtitle: "Canonical Anchor", badge: "MODEL",
+    title: "Gen-4 Image", subtitle: "Canonical Anchor (WSTV)", badge: "RUNWAY NATIVE",
     width: 214, bg: "#1a0544", accent: "#c084fc",
     inputs: [{ id: "image", label: "Image", kind: "image", required: true }],
     outputs: [{ id: "image", label: "Image", kind: "image" }],
-    infoLines: ["Canonical anchor build + fallback still source"],
+    infoLines: ["Official Gen-4 Image node — WSTV treats its output as a fixed identity source across all four shots"],
   }),
 
   makeNode("combine1", {
-    title: "Combine Text", subtitle: "Shot 1 Prompt Pack", badge: "UTILITY",
+    title: "Combine Text", subtitle: "Shot 1 Prompt Pack", badge: "WSTV CUSTOM",
     width: 236, bg: "#09111e", accent: "#2563eb",
     inputs: [
       { id: "base",       label: "shot1_base_prompt",    kind: "text", required: true },
@@ -337,10 +337,10 @@ const NODE_SPECS: NodeSpec[] = [
       { id: "notes",      label: "operator_notes",       kind: "text" },
     ],
     outputs: [{ id: "text", label: "Text", kind: "text" }],
-    infoLines: ["Build final motion-only prompt pack for Shot 1"],
+    infoLines: ["Build final motion-only prompt pack for Shot 1", "No official Runway equivalent — WSTV prompt assembly step"],
   }),
   makeNode("manual_shot1", {
-    title: "Text", subtitle: "Optional Manual Shot 1 Prompt Pack", badge: "MANUAL",
+    title: "Text", subtitle: "Optional Manual Shot 1 Prompt Pack", badge: "WSTV CUSTOM",
     width: 236, bg: "#1a1207", accent: "#f97316",
     inputs: [],
     outputs: [{ id: "text", label: "Text", kind: "text" }],
@@ -348,38 +348,38 @@ const NODE_SPECS: NodeSpec[] = [
   }),
   // ── SHOT 1: Gen-4.5 I2V ─────────────────────────────────────────────────
   makeNode("shot1", {
-    title: "Gen-4.5", subtitle: "Shot 1 — I2V", badge: "MODEL",
+    title: "Gen-4.5", subtitle: "Shot 1 — I2V", badge: "RUNWAY NATIVE",
     width: 244, bg: "#1a0544", accent: "#c084fc",
     inputs: [
       { id: "image",  label: "Image",  kind: "image", required: true },
       { id: "prompt", label: "Prompt", kind: "text",  required: true },
     ],
     outputs: [{ id: "video", label: "Video", kind: "video" }],
-    infoLines: ["Gen-4.5 I2V — Shot 1 opener for the primary hybrid lane"],
+    infoLines: ["Gen-4.5 I2V — Shot 1 opener for the primary hybrid lane (model name confirmed; Workflows node variant inferred)"],
   }),
   makeNode("extract1", {
-    title: "Extract Frame", subtitle: "Preferred Handoff 1", badge: "UTILITY",
+    title: "Extract Frame", subtitle: "Preferred Handoff 1", badge: "RUNWAY NATIVE",
     width: 214, bg: "#041420", accent: "#34d399",
     inputs: [{ id: "video", label: "Video", kind: "video", required: true }],
     outputs: [{ id: "image", label: "Image", kind: "image" }],
     infoLines: ["Preferred continuity — choose the cleanest handoff frame"],
   }),
   makeNode("trim1", {
-    title: "Trim", subtitle: "Fallback Prep 1", badge: "UTILITY",
+    title: "Trim Video", subtitle: "Fallback Prep 1", badge: "RUNWAY NATIVE",
     width: 190, bg: "#071318", accent: "#38bdf8",
     inputs: [{ id: "video", label: "Video", kind: "video", required: true }],
     outputs: [{ id: "video", label: "Video", kind: "video" }],
     infoLines: ["Fallback prep before Last Frame"],
   }),
   makeNode("last1", {
-    title: "Last Frame", subtitle: "Fallback Handoff 1", badge: "UTILITY",
+    title: "Last Frame", subtitle: "Fallback Handoff 1", badge: "RUNWAY NATIVE",
     width: 204, bg: "#160202", accent: "#fb923c", dim: true,
     inputs: [{ id: "video", label: "Video", kind: "video", required: true }],
     outputs: [{ id: "image", label: "Image", kind: "image" }],
     infoLines: ["Fallback only — never the preferred handoff"],
   }),
   makeNode("qa1", {
-    title: "First Frame", subtitle: "QA 1", badge: "UTILITY",
+    title: "First Frame", subtitle: "QA 1", badge: "RUNWAY NATIVE",
     width: 186, bg: "#100c00", accent: "#fbbf24", dim: true,
     inputs: [{ id: "video", label: "Video", kind: "video", required: true }],
     outputs: [{ id: "image", label: "Image", kind: "image" }],
@@ -387,7 +387,7 @@ const NODE_SPECS: NodeSpec[] = [
   }),
 
   makeNode("combine2", {
-    title: "Combine Text", subtitle: "Shot 2 Prompt Pack", badge: "UTILITY",
+    title: "Combine Text", subtitle: "Shot 2 Prompt Pack", badge: "WSTV CUSTOM",
     width: 236, bg: "#09111e", accent: "#2563eb",
     inputs: [
       { id: "base",       label: "shot2_base_prompt",    kind: "text", required: true },
@@ -397,10 +397,10 @@ const NODE_SPECS: NodeSpec[] = [
       { id: "notes",      label: "operator_notes",       kind: "text" },
     ],
     outputs: [{ id: "text", label: "Text", kind: "text" }],
-    infoLines: ["Build final motion-only prompt pack for Shot 2"],
+    infoLines: ["Build final motion-only prompt pack for Shot 2", "No official Runway equivalent — WSTV prompt assembly step"],
   }),
   makeNode("manual_shot2", {
-    title: "Text", subtitle: "Optional Manual Shot 2 Prompt Pack", badge: "MANUAL",
+    title: "Text", subtitle: "Optional Manual Shot 2 Prompt Pack", badge: "WSTV CUSTOM",
     width: 236, bg: "#1a1207", accent: "#f97316",
     inputs: [],
     outputs: [{ id: "text", label: "Text", kind: "text" }],
@@ -408,7 +408,7 @@ const NODE_SPECS: NodeSpec[] = [
   }),
   // ── SHOT 2: Kling 3.0 ───────────────────────────────────────────────────
   makeNode("shot2", {
-    title: "Kling 3.0", subtitle: "Shot 2 — Action Build", badge: "MODEL",
+    title: "Kling 3.0", subtitle: "Shot 2 — Action Build", badge: "THIRD-PARTY",
     width: 244, bg: "#030d1e", accent: "#3b82f6",
     inputs: [
       { id: "image",  label: "Image",  kind: "image", required: true },
@@ -418,28 +418,28 @@ const NODE_SPECS: NodeSpec[] = [
     infoLines: ["Kling 3.0 — stalk + build, fur detail, muscle tension realistic"],
   }),
   makeNode("extract2", {
-    title: "Extract Frame", subtitle: "Preferred Handoff 2", badge: "UTILITY",
+    title: "Extract Frame", subtitle: "Preferred Handoff 2", badge: "RUNWAY NATIVE",
     width: 214, bg: "#041420", accent: "#34d399",
     inputs: [{ id: "video", label: "Video", kind: "video", required: true }],
     outputs: [{ id: "image", label: "Image", kind: "image" }],
     infoLines: ["Preferred continuity handoff into Shot 3"],
   }),
   makeNode("trim2", {
-    title: "Trim", subtitle: "Fallback Prep 2", badge: "UTILITY",
+    title: "Trim Video", subtitle: "Fallback Prep 2", badge: "RUNWAY NATIVE",
     width: 190, bg: "#071318", accent: "#38bdf8",
     inputs: [{ id: "video", label: "Video", kind: "video", required: true }],
     outputs: [{ id: "video", label: "Video", kind: "video" }],
     infoLines: ["Fallback prep before Last Frame"],
   }),
   makeNode("last2", {
-    title: "Last Frame", subtitle: "Fallback Handoff 2", badge: "UTILITY",
+    title: "Last Frame", subtitle: "Fallback Handoff 2", badge: "RUNWAY NATIVE",
     width: 204, bg: "#160202", accent: "#fb923c", dim: true,
     inputs: [{ id: "video", label: "Video", kind: "video", required: true }],
     outputs: [{ id: "image", label: "Image", kind: "image" }],
     infoLines: ["Fallback only — use after Trim when needed"],
   }),
   makeNode("qa2", {
-    title: "First Frame", subtitle: "QA 2", badge: "UTILITY",
+    title: "First Frame", subtitle: "QA 2", badge: "RUNWAY NATIVE",
     width: 186, bg: "#100c00", accent: "#fbbf24", dim: true,
     inputs: [{ id: "video", label: "Video", kind: "video", required: true }],
     outputs: [{ id: "image", label: "Image", kind: "image" }],
@@ -447,7 +447,7 @@ const NODE_SPECS: NodeSpec[] = [
   }),
 
   makeNode("combine3", {
-    title: "Combine Text", subtitle: "Shot 3 Prompt Pack", badge: "UTILITY",
+    title: "Combine Text", subtitle: "Shot 3 Prompt Pack", badge: "WSTV CUSTOM",
     width: 236, bg: "#09111e", accent: "#2563eb",
     inputs: [
       { id: "base",       label: "shot3_base_prompt",    kind: "text", required: true },
@@ -457,10 +457,10 @@ const NODE_SPECS: NodeSpec[] = [
       { id: "notes",      label: "operator_notes",       kind: "text" },
     ],
     outputs: [{ id: "text", label: "Text", kind: "text" }],
-    infoLines: ["Build final motion-only prompt pack for Shot 3"],
+    infoLines: ["Build final motion-only prompt pack for Shot 3", "No official Runway equivalent — WSTV prompt assembly step"],
   }),
   makeNode("manual_shot3", {
-    title: "Text", subtitle: "Optional Manual Shot 3 Prompt Pack", badge: "MANUAL",
+    title: "Text", subtitle: "Optional Manual Shot 3 Prompt Pack", badge: "WSTV CUSTOM",
     width: 236, bg: "#1a1207", accent: "#f97316",
     inputs: [],
     outputs: [{ id: "text", label: "Text", kind: "text" }],
@@ -468,38 +468,38 @@ const NODE_SPECS: NodeSpec[] = [
   }),
   // ── SHOT 3: Kling 3.0 ───────────────────────────────────────────────────
   makeNode("shot3", {
-    title: "Kling 3.0", subtitle: "Shot 3 — Impact", badge: "MODEL",
+    title: "Kling 3.0", subtitle: "Shot 3 — Impact", badge: "THIRD-PARTY",
     width: 244, bg: "#030d1e", accent: "#3b82f6",
     inputs: [
       { id: "image",  label: "Image",  kind: "image", required: true },
       { id: "prompt", label: "Prompt", kind: "text",  required: true },
     ],
     outputs: [{ id: "video", label: "Video", kind: "video" }],
-    infoLines: ["Kling 3.0 — action impact, physics strongest, #1 ELO Apr 2026"],
+    infoLines: ["Kling 3.0 — peak action beat, strong physics fidelity for predator-prey contact"],
   }),
   makeNode("extract3", {
-    title: "Extract Frame", subtitle: "Preferred Handoff 3", badge: "UTILITY",
+    title: "Extract Frame", subtitle: "Preferred Handoff 3", badge: "RUNWAY NATIVE",
     width: 214, bg: "#041420", accent: "#34d399",
     inputs: [{ id: "video", label: "Video", kind: "video", required: true }],
     outputs: [{ id: "image", label: "Image", kind: "image" }],
     infoLines: ["Preferred continuity handoff into Shot 4"],
   }),
   makeNode("trim3", {
-    title: "Trim", subtitle: "Fallback Prep 3", badge: "UTILITY",
+    title: "Trim Video", subtitle: "Fallback Prep 3", badge: "RUNWAY NATIVE",
     width: 190, bg: "#071318", accent: "#38bdf8",
     inputs: [{ id: "video", label: "Video", kind: "video", required: true }],
     outputs: [{ id: "video", label: "Video", kind: "video" }],
     infoLines: ["Fallback prep before Last Frame"],
   }),
   makeNode("last3", {
-    title: "Last Frame", subtitle: "Fallback Handoff 3", badge: "UTILITY",
+    title: "Last Frame", subtitle: "Fallback Handoff 3", badge: "RUNWAY NATIVE",
     width: 204, bg: "#160202", accent: "#fb923c", dim: true,
     inputs: [{ id: "video", label: "Video", kind: "video", required: true }],
     outputs: [{ id: "image", label: "Image", kind: "image" }],
     infoLines: ["Fallback only — use after Trim when needed"],
   }),
   makeNode("qa3", {
-    title: "First Frame", subtitle: "QA 3", badge: "UTILITY",
+    title: "First Frame", subtitle: "QA 3", badge: "RUNWAY NATIVE",
     width: 186, bg: "#100c00", accent: "#fbbf24", dim: true,
     inputs: [{ id: "video", label: "Video", kind: "video", required: true }],
     outputs: [{ id: "image", label: "Image", kind: "image" }],
@@ -507,7 +507,7 @@ const NODE_SPECS: NodeSpec[] = [
   }),
 
   makeNode("combine4", {
-    title: "Combine Text", subtitle: "Shot 4 Prompt Pack", badge: "UTILITY",
+    title: "Combine Text", subtitle: "Shot 4 Prompt Pack", badge: "WSTV CUSTOM",
     width: 236, bg: "#09111e", accent: "#2563eb",
     inputs: [
       { id: "base",       label: "shot4_base_prompt",    kind: "text", required: true },
@@ -517,10 +517,10 @@ const NODE_SPECS: NodeSpec[] = [
       { id: "notes",      label: "operator_notes",       kind: "text" },
     ],
     outputs: [{ id: "text", label: "Text", kind: "text" }],
-    infoLines: ["Build final motion-only prompt pack for Shot 4"],
+    infoLines: ["Build final motion-only prompt pack for Shot 4", "No official Runway equivalent — WSTV prompt assembly step"],
   }),
   makeNode("manual_shot4", {
-    title: "Text", subtitle: "Optional Manual Shot 4 Prompt Pack", badge: "MANUAL",
+    title: "Text", subtitle: "Optional Manual Shot 4 Prompt Pack", badge: "WSTV CUSTOM",
     width: 236, bg: "#1a1207", accent: "#f97316",
     inputs: [],
     outputs: [{ id: "text", label: "Text", kind: "text" }],
@@ -528,17 +528,17 @@ const NODE_SPECS: NodeSpec[] = [
   }),
   // ── SHOT 4: Gen-4.5 I2V ─────────────────────────────────────────────────
   makeNode("shot4", {
-    title: "Gen-4.5", subtitle: "Shot 4 — I2V", badge: "MODEL",
+    title: "Gen-4.5", subtitle: "Shot 4 — I2V", badge: "RUNWAY NATIVE",
     width: 244, bg: "#1a0544", accent: "#c084fc",
     inputs: [
       { id: "image",  label: "Image",  kind: "image", required: true },
       { id: "prompt", label: "Prompt", kind: "text",  required: true },
     ],
     outputs: [{ id: "video", label: "Video", kind: "video" }],
-    infoLines: ["Gen-4.5 I2V — Shot 4 closer for the primary hybrid lane"],
+    infoLines: ["Gen-4.5 I2V — Shot 4 closer for the primary hybrid lane (model name confirmed; Workflows node variant inferred)"],
   }),
   makeNode("qa4", {
-    title: "First Frame", subtitle: "QA 4", badge: "UTILITY",
+    title: "First Frame", subtitle: "QA 4", badge: "RUNWAY NATIVE",
     width: 186, bg: "#100c00", accent: "#fbbf24", dim: true,
     inputs: [{ id: "video", label: "Video", kind: "video", required: true }],
     outputs: [{ id: "image", label: "Image", kind: "image" }],
@@ -546,7 +546,7 @@ const NODE_SPECS: NodeSpec[] = [
   }),
 
   makeNode("stitch", {
-    title: "Stitch Videos", subtitle: "Final 4-shot assembly", badge: "UTILITY",
+    title: "Stitch", subtitle: "4-shot assembly", badge: "RUNWAY NATIVE",
     width: 220, bg: "#0d0220", accent: "#16a34a",
     inputs: [
       { id: "s1", label: "Input 1", kind: "video", required: true },
@@ -558,18 +558,18 @@ const NODE_SPECS: NodeSpec[] = [
     infoLines: ["Assemble Shot 1 → Shot 4 in playback order"],
   }),
   makeNode("trim_final", {
-    title: "Trim", subtitle: "Final Cleanup", badge: "UTILITY",
+    title: "Trim Video", subtitle: "Final Cleanup", badge: "RUNWAY NATIVE",
     width: 190, bg: "#071318", accent: "#38bdf8",
     inputs: [{ id: "video", label: "Video", kind: "video", required: true }],
     outputs: [{ id: "video", label: "Video", kind: "video" }],
     infoLines: ["Tighten runtime after stitch"],
   }),
   makeNode("upscale", {
-    title: "Upscale Video - Topaz AI", subtitle: "Final Master", badge: "POST",
+    title: "Upscale Video", subtitle: "Topaz AI (external)", badge: "WSTV CUSTOM",
     width: 264, bg: "#030d1a", accent: "#38bdf8",
     inputs: [{ id: "video", label: "Video", kind: "video", required: true }],
     outputs: [{ id: "video", label: "Video", kind: "video" }],
-    infoLines: ["Optional final post after continuity and cleanup are locked"],
+    infoLines: ["External post step — Topaz AI is not a Runway node. Run after export from Stitch → Trim Video."],
   }),
 ];
 
@@ -868,61 +868,70 @@ function InfoPanel() {
   return (
     <div style={{ display: "flex", gap: 0, borderRadius: 14, overflow: "hidden", border: `1px solid ${BORDER}`, background: panelBg, fontFamily: "ui-monospace, SFMono-Regular, Menlo, monospace", flexWrap: "wrap" }}>
       <div style={{ flex: "1 1 0", padding: "16px 18px", minWidth: 220 }}>
-        <div style={headStyle}>Picker labels</div>
+        <div style={headStyle}>Node classification</div>
         <p style={bodyStyle}>
-          This diagram follows the current picker wording from your screenshots for
-          Parse JSON, Combine Text, Trim, Stitch Videos, Claude, Gen-4, Gen-4.5,
-          and Kling 3.0. Older Runway help content may still use JSON Parse,
-          Trim Video, Stitch, and Claude Opus 4.5 wording.
+          This diagram uses three tiers. Runway Native nodes use official Runway
+          Workflows names as they appear in the picker: LLM, JSON Parse, Image input,
+          Gen-4 Image, Gen-4.5, Extract Frame, Last Frame, First Frame, Trim Video,
+          and Stitch. Third-Party Model nodes — Nano Banana 2 and Kling 3.0 — are
+          available inside Runway Workflows and labeled with their official model names.
+          WSTV Custom nodes — the Combine Text prompt assemblers, manual override
+          Text nodes, and the Topaz AI upscale step — implement production logic with
+          no direct Runway equivalent and are clearly marked as such.
         </p>
       </div>
       <div style={divider} />
       <div style={{ flex: "1 1 0", padding: "16px 18px", minWidth: 220 }}>
-        <div style={headStyle}>Character lock path</div>
+        <div style={headStyle}>Identity &amp; continuity</div>
         <p style={bodyStyle}>
-          Character consistency comes from the Canonical Anchor plus the preferred
-          Extract Frame handoff chain, with Last Frame after Trim kept as fallback.
-          First Frame stays QA-only so operators can inspect the opening frame
-          without turning it into a continuity handoff.
+          Character identity is carried by the Image input node across all four shots.
+          The Gen-4 Image node produces a clean canonical still that feeds Shot 1
+          directly and acts as a WSTV anchor fallback for Shots 2–4. The preferred
+          inter-shot handoff is Extract Frame: select the cleanest full-body frame
+          from the outgoing clip and use it as the Image input for the next shot.
+          Last Frame after Trim Video is the fallback when no clean mid-clip frame
+          can be selected. First Frame nodes are QA-only — they expose the opening
+          frame of a shot for inspection and should not be used as continuity sources.
         </p>
       </div>
       <div style={divider} />
       <div style={{ flex: "1 1 0", padding: "16px 18px", minWidth: 220 }}>
-        <div style={headStyle}>Prompt build</div>
+        <div style={headStyle}>Prompt assembly</div>
         <p style={bodyStyle}>
-          Parse JSON breaks one structured Claude response into reusable prompt
-          parts for the render lane. Each Combine Text node merges shotN_base_prompt with
-          character_lock_rules, continuity_rules, camera_rules, and optional
-          operator_notes before feeding the matching shot node Prompt input as a
-          motion-focused shot pack. Optional Manual Master Image Prompt and Optional
-          Manual Shot Prompt Pack Text nodes stay available when you want to type
-          those entries directly instead of using the automatic route. For each prompt
-          target, use either the automatic route or the matching manual override, not both.
+          JSON Parse breaks the LLM node&apos;s structured response into reusable
+          parts for the render lane: one base prompt per shot plus shared character
+          lock, continuity, camera, and operator note fields. Each WSTV Combine Text
+          node merges these fields into a single motion-focused prompt pack for the
+          corresponding shot. This assembly step is WSTV custom logic with no official
+          Runway equivalent. Manual override Text nodes let you type any field
+          directly. For each shot, use either the automatic path or the manual
+          override — not both at the same time.
         </p>
       </div>
       <div style={divider} />
       <div style={{ flex: "1 1 0", padding: "16px 18px", minWidth: 220 }}>
-        <div style={headStyle}>Social outputs</div>
+        <div style={headStyle}>Social lane</div>
         <p style={bodyStyle}>
-          A separate Parse JSON side lane exports hook, caption, hashtags, and
-          optional tags from the same structured Claude response. Matching optional
-          manual Text nodes below that lane let you type those export fields directly.
-          Those fields are for publishing / posting only and do not feed the video
-          continuity lane. Use either the auto export text or the matching manual
-          Text node for each field.
+          A second JSON Parse node extracts social fields — hook, caption, hashtags,
+          and tags — from the same LLM response. This lane is export-only and does
+          not feed the video render path. Optional manual Text nodes below that lane
+          allow direct entry when writing social copy without running the full LLM
+          generation. Use either the JSON Parse output or the matching manual Text
+          node for each field, not both.
         </p>
       </div>
       <div style={divider} />
       <div style={{ flex: "1 1 0", padding: "16px 18px", minWidth: 220 }}>
-        <div style={headStyle}>Hybrid lane + scope</div>
+        <div style={headStyle}>Pipeline scope</div>
         <p style={bodyStyle}>
-          This diagram shows the app&apos;s primary runtime workflow: hybrid 4-shot
-          routing with Gen-4.5 / Runway on Shot 1 and Shot 4, and Kling 3.0 on
-          Shot 2 and Shot 3. The audio lane is intentionally removed so this
-          diagram stays about continuity, prompt assembly, QA, and final post
-          only. Seedance 2.0 remains an optional continuity reference lane
-          elsewhere; manual Text nodes are optional override paths only.
-
+          The primary path is a hybrid 4-shot sequence: Shot 1 and Shot 4 use
+          Gen-4.5 for clean first-frame readability and stable closing composition.
+          Shots 2 and 3 use Kling 3.0 for physics-realistic predator-prey action.
+          Both Gen-4.5 and Kling 3.0 are available inside Runway Workflows — Gen-4.5
+          as a Runway Native model, Kling 3.0 as a Third-Party Model. All four shots
+          feed Stitch, then Trim Video, then an optional Topaz AI upscale step that
+          runs outside Runway. The audio lane is not shown — this diagram covers
+          prompt assembly, identity continuity, QA, and final assembly only.
         </p>
       </div>
     </div>
@@ -1132,7 +1141,7 @@ export default function WSTVWorkflowDiagram({
       <div
         ref={containerRef}
         style={{
-          width: "100%", height: 860,
+          width: "100%", height: "clamp(860px, 82vh, 1040px)",
           borderRadius: 18, overflow: "hidden",
           border: "1px solid rgba(255,255,255,0.07)",
           background: BG, position: "relative",
@@ -1340,7 +1349,7 @@ export default function WSTVWorkflowDiagram({
           }}>
             Master image prompt source rule:
             <br />
-            use either <span style={{ color: "#e0f2fe" }}>Parse JSON → master_image_prompt</span> or
+            use either <span style={{ color: "#e0f2fe" }}>JSON Parse → master_image_prompt</span> or
             the matching <span style={{ color: "#fed7aa" }}>Optional Manual Master Image Prompt</span>.
             Do not feed both into Nano Banana 2 at the same time.
           </div>
@@ -1355,8 +1364,8 @@ export default function WSTVWorkflowDiagram({
             boxShadow: "0 8px 24px rgba(0,0,0,0.18)", pointerEvents: "none", whiteSpace: "nowrap",
           }}>
             Shot prompt source rule: each shot Prompt input uses either the blue
-            <span style={{ color: "#bfdbfe" }}> Combine Text</span> output or the orange
-            <span style={{ color: "#fed7aa" }}> Optional Manual Shot Prompt Pack</span> node for that shot, not both at once.
+            <span style={{ color: "#bfdbfe" }}> Prompt Assembler (WSTV)</span> output or the orange
+            <span style={{ color: "#fed7aa" }}> Manual Override Text</span> node for that shot, not both at once.
           </div>
 
           <div style={{
@@ -1370,7 +1379,7 @@ export default function WSTVWorkflowDiagram({
           }}>
             Social lane is export-only.
             <br />
-            Copy hook, caption, hashtags, and tags from either the Parse JSON meta
+            Copy hook, caption, hashtags, and tags from either the JSON Parse social
             outputs or the matching optional manual Text node.
           </div>
 
@@ -1460,15 +1469,15 @@ export default function WSTVWorkflowDiagram({
             background: "rgba(9,17,27,0.78)", border: `1px solid ${BORDER}`,
           }}>
             {([
-              { label: "Main pipeline",             color: WIRE_COLORS.main,      dashed: false },
-              { label: "Rule buses",                color: WIRE_COLORS.rules,     dashed: false },
-              { label: "Preferred continuity",      color: WIRE_COLORS.preferred, dashed: false },
-              { label: "Last Frame fallback",       color: WIRE_COLORS.fallback,  dashed: true  },
-              { label: "Canonical Anchor fallback", color: WIRE_COLORS.anchor,    dashed: true  },
-              { label: "First Frame QA",            color: WIRE_COLORS.qa,        dashed: true  },
-              { label: "Assembly + post",           color: WIRE_COLORS.post,      dashed: false },
-              { label: "Optional manual override",  color: WIRE_COLORS.manual,    dashed: true  },
-              { label: "Social export only",        color: WIRE_COLORS.meta,      dashed: true  },
+              { label: "Main pipeline",               color: WIRE_COLORS.main,      dashed: false },
+              { label: "Prompt-rule links (WSTV)",    color: WIRE_COLORS.rules,     dashed: false },
+              { label: "Extract Frame handoff",       color: WIRE_COLORS.preferred, dashed: false },
+              { label: "Last Frame handoff (fallback)",color: WIRE_COLORS.fallback, dashed: true  },
+              { label: "WSTV anchor fallback",        color: WIRE_COLORS.anchor,    dashed: true  },
+              { label: "First Frame QA only",         color: WIRE_COLORS.qa,        dashed: true  },
+              { label: "Assembly + post",             color: WIRE_COLORS.post,      dashed: false },
+              { label: "WSTV manual override",        color: WIRE_COLORS.manual,    dashed: true  },
+              { label: "Social export only",          color: WIRE_COLORS.meta,      dashed: true  },
             ] as const).map((item) => (
               <div key={item.label} style={{ display: "flex", alignItems: "center", gap: 7 }}>
                 <svg width={34} height={10}>

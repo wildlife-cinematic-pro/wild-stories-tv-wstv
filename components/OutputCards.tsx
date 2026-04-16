@@ -57,30 +57,8 @@ function extractRunwayPasteReady(shotText: string): string {
 
 function extractKlingPromptBody(shotText: string): string {
   const s = String(shotText ?? "");
-  const extractAfterMarker = (start: number, markerLength: number): string => {
-    const afterMarker = s.slice(start + markerLength).trim();
 
-    const endCandidates = [
-      afterMarker.indexOf("\n─── FULL BREAKDOWN"),
-      afterMarker.indexOf("\n\n─── FULL BREAKDOWN"),
-      afterMarker.indexOf("\nAudio:"),
-      afterMarker.indexOf("\n\nAudio:"),
-      afterMarker.indexOf("\nKling settings:"),
-      afterMarker.indexOf("\n\nKling settings:"),
-      afterMarker.indexOf("\n────────────────────────────────"),
-      afterMarker.indexOf("\n─── FULL BREAKDOWN (reference only)"),
-    ].filter((n) => n >= 0);
-
-    const end = endCandidates.length ? Math.min(...endCandidates) : -1;
-    return (end >= 0 ? afterMarker.slice(0, end) : afterMarker).trim();
-  };
-
-  const genericMarker = s.match(/═══ PASTE INTO KLING[^\n]*═══/);
-  if (genericMarker?.index !== undefined) {
-    return extractAfterMarker(genericMarker.index, genericMarker[0].length);
-  }
-
-  const markers = [
+    const markers = [
     "═══ PASTE INTO KLING — stays under 2500 chars (copy this block only) ═══",
     "═══ PASTE-READY KLING PROMPT (copy this block into Kling) ═══",
     "═══ KLING 3.0 PROMPT (SCALE format) ═══",
@@ -90,7 +68,21 @@ function extractKlingPromptBody(shotText: string): string {
   for (const marker of markers) {
     const start = s.indexOf(marker);
     if (start >= 0) {
-      return extractAfterMarker(start, marker.length);
+      const afterMarker = s.slice(start + marker.length).trim();
+
+            const endCandidates = [
+        afterMarker.indexOf("\n─── FULL BREAKDOWN"),
+        afterMarker.indexOf("\n\n─── FULL BREAKDOWN"),
+        afterMarker.indexOf("\nAudio:"),
+        afterMarker.indexOf("\n\nAudio:"),
+        afterMarker.indexOf("\nKling settings:"),
+        afterMarker.indexOf("\n\nKling settings:"),
+        afterMarker.indexOf("\n────────────────────────────────"),
+        afterMarker.indexOf("\n─── FULL BREAKDOWN (reference only)"),
+      ].filter((n) => n >= 0);
+
+      const end = endCandidates.length ? Math.min(...endCandidates) : -1;
+      return (end >= 0 ? afterMarker.slice(0, end) : afterMarker).trim();
     }
   }
 
@@ -3336,9 +3328,9 @@ export default function OutputCards({
                 for Shot 2 and Shot 3.
               </p>
               <p className="mb-3 text-xs text-blue-800">
-                Paste-ready body is director-style narrative. Bind Subject /
-                element references plus Start/End Frame can help continuity.
-                Structured breakdown remains for reference.
+                Paste-ready body is director-style narrative. Negative prompts
+                OK. Bind Subject + Start/End Frame. Structured breakdown remains
+                for reference.
               </p>
 
               <div className="mb-3 flex flex-wrap gap-2">
@@ -3522,7 +3514,7 @@ export default function OutputCards({
                     </span>
 
                     <span className="rounded-full bg-green-100 px-2 py-0.5 text-[11px] font-extrabold text-green-700 ring-1 ring-green-200">
-                      ✓ Continuity with Bind Subject
+                      ✓ Zero inter-clip drift
                     </span>
 
                     <span className="rounded-full bg-amber-100 px-2 py-0.5 text-[11px] font-extrabold text-amber-800 ring-1 ring-amber-200">
@@ -3590,10 +3582,9 @@ export default function OutputCards({
                   <span className="font-extrabold">WSTV multi-shot flow:</span>{" "}
                   Opening tension → Pressure hold → Profile pressure → Tension
                   reaction cut → Action pressure wide → Resolved tension wide.
-                  एकै prompt ले 6 cinematic shots generate गर्छ — Bind Subject
-                  / element references use गर्दा subject continuity reinforce
-                  गर्न सकिन्छ, and the opening starts with clearer full-subject
-                  readability.
+                  एकै prompt ले 6 cinematic shots generate गर्छ — subject
+                  identity सबै shots मा locked हुन्छ, and the opening starts
+                  with clearer full-subject readability.
                 </p>
 
                 <pre className="max-h-[520px] overflow-auto whitespace-pre-wrap rounded-xl border border-indigo-200 bg-white p-3 text-xs leading-relaxed text-gray-900">
