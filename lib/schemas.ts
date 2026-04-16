@@ -32,6 +32,50 @@ export const enhanceResponseSchema = z.object({
   error: z.string().optional(),
 });
 
+export const wstvPromptPackSchema = z.object({
+  master_image_prompt: z.string().min(1),
+  shot1_video_prompt: z.string().min(1),
+  shot2_video_prompt: z.string().min(1),
+  shot2_audio_prompt: z.string().min(1),
+  shot3_video_prompt: z.string().min(1),
+  kling_negative_prompt: z.string().min(1),
+  character_lock: z.string().min(1),
+  hook: z.string().min(1),
+  caption: z.string().min(1),
+  motion_intensity: z.object({
+    shot1: z.number().min(0.1).max(1.0),
+    shot2: z.number().min(0.1).max(1.0),
+    shot3: z.number().min(0.1).max(1.0),
+  }),
+  operator_notes: z.string().min(1),
+});
+
+export type WSTVPromptPack = z.infer<typeof wstvPromptPackSchema>;
+
+export const enhanceResponseSchema = z.object({
+  aiEnhanced: z.boolean().optional(),
+  imagePrompt: z.string().optional(),
+  hook: z.string().optional(),
+  caption: z.string().optional(),
+  voiceoverLine: z.string().optional(),
+  improvements: z.union([z.string(), z.array(z.string())]).optional(),
+  error: z.string().optional(),
+  // Add WSTVPromptPack fields to enhanceResponseSchema for API validation
+  master_image_prompt: z.string().optional(),
+  shot1_video_prompt: z.string().optional(),
+  shot2_video_prompt: z.string().optional(),
+  shot2_audio_prompt: z.string().optional(),
+  shot3_video_prompt: z.string().optional(),
+  kling_negative_prompt: z.string().optional(),
+  character_lock: z.string().optional(),
+  motion_intensity: z.object({
+    shot1: z.number().min(0.1).max(1.0),
+    shot2: z.number().min(0.1).max(1.0),
+    shot3: z.number().min(0.1).max(1.0),
+  }).optional(),
+  operator_notes: z.string().optional(),
+});
+
 export type EnhanceResponse = z.infer<typeof enhanceResponseSchema>;
 
 export const mediaAnalysisSchema = z

@@ -5,6 +5,7 @@ import {
   enhanceRequestSchema,
   enhanceResponseSchema,
   mediaAnalysisSchema,
+  wstvPromptPackSchema,
 } from "@/lib/schemas";
 import {
   normalizeClaudeVisionMimeType,
@@ -71,7 +72,7 @@ type Provider = "gemini" | "claude";
 /**
  * Text enhance response schema (existing)
  */
-const providerResponseSchema = enhanceResponseSchema.strict();
+const providerResponseSchema = wstvPromptPackSchema.strict();
 
 /**
  * ─────────────────────────────────────────────────────────────
@@ -468,11 +469,21 @@ export async function POST(req: Request) {
 
       const out = providerResponseSchema.safeParse(obj);
       if (!out.success) return jsonError("Invalid Gemini response format", 502, out.error.flatten());
-      if (!hasUsableGeneratedPackageEnhancements(out.data)) {
-        return jsonError("Gemini returned no usable enhancement fields", 502);
-      }
-
-      return NextResponse.json({ ...out.data, aiEnhanced: true }, { status: 200 });
+      const promptPack = out.data;
+      return NextResponse.json({
+        aiEnhanced: true,
+        master_image_prompt: promptPack.master_image_prompt,
+        shot1_video_prompt: promptPack.shot1_video_prompt,
+        shot2_video_prompt: promptPack.shot2_video_prompt,
+        shot2_audio_prompt: promptPack.shot2_audio_prompt,
+        shot3_video_prompt: promptPack.shot3_video_prompt,
+        kling_negative_prompt: promptPack.kling_negative_prompt,
+        character_lock: promptPack.character_lock,
+        hook: promptPack.hook,
+        caption: promptPack.caption,
+        motion_intensity: promptPack.motion_intensity,
+        operator_notes: promptPack.operator_notes,
+      }, { status: 200 });
     }
 
     // Claude
@@ -495,11 +506,21 @@ export async function POST(req: Request) {
 
     const out = providerResponseSchema.safeParse(obj);
     if (!out.success) return jsonError("Invalid Claude response format", 502, out.error.flatten());
-    if (!hasUsableGeneratedPackageEnhancements(out.data)) {
-      return jsonError("Claude returned no usable enhancement fields", 502);
-    }
-
-    return NextResponse.json({ ...out.data, aiEnhanced: true }, { status: 200 });
+    const promptPack = out.data;
+    return NextResponse.json({
+      aiEnhanced: true,
+      master_image_prompt: promptPack.master_image_prompt,
+      shot1_video_prompt: promptPack.shot1_video_prompt,
+      shot2_video_prompt: promptPack.shot2_video_prompt,
+      shot2_audio_prompt: promptPack.shot2_audio_prompt,
+      shot3_video_prompt: promptPack.shot3_video_prompt,
+      kling_negative_prompt: promptPack.kling_negative_prompt,
+      character_lock: promptPack.character_lock,
+      hook: promptPack.hook,
+      caption: promptPack.caption,
+      motion_intensity: promptPack.motion_intensity,
+      operator_notes: promptPack.operator_notes,
+    }, { status: 200 });
   } catch (err) {
     return jsonError("Enhancement error", 500, String(err));
   }
