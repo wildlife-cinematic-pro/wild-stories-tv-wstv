@@ -31,7 +31,8 @@
 //   • Runway Characters feature available for consistency.
 //
 // KLING 3.0 [House guidance — verified against community sources, April 2026]:
-//   • Resolution: Native 4K (3840×2160) at up to 60fps.
+//   • Resolution: Official Kling 3.0 guide documents 720p and 1080p modes.
+//   • Frame rate: Use the current Kling UI for the available output option.
 //   • Duration: 3–15 seconds per generation.
 //   • Multi-shot: Up to 6 shots in a single prompt.
 //   • Native audio: Dialogue, ambient sound, SFX, voice tone.
@@ -111,8 +112,8 @@ export const RUNWAY_SPECS = {
 
 /** Kling 3.0 current WSTV house guidance (verified against public Kling VIDEO 3.0 docs where applicable, plus community sources, April 2026) */
 export const KLING_SPECS = {
-  resolution: "Native 4K (3840×2160)" as const,
-  fpsMax: 60 as const,
+  resolution: "720p / 1080p" as const,
+  fpsMax: undefined as number | undefined,
   durationRange: { min: 3, max: 15 } as const,
   maxShots: 6 as const,
   nativeAudio: true,
@@ -2189,7 +2190,7 @@ export function buildKlingShots(
   const mi2 = Number(((mi1 + mi3) / 2).toFixed(2));
 
   const audio1 = buildKlingAudioPrompt(predator, prey, env, weather, arc, "establish");
-  const audio2 = buildKlingAudioPrompt(predator, prey, env, weather, arc, "establish");
+  const audio2 = buildKlingAudioPrompt(predator, prey, env, weather, arc, "action");
   const audio3 = buildKlingAudioPrompt(predator, prey, env, weather, arc, "action");
   const audio4 = buildKlingAudioPrompt(predator, prey, env, weather, arc, "aftermath");
 
@@ -2647,7 +2648,7 @@ HOW TO USE (Kling 3.0 WSTV Workflow):
 4. Paste ONLY the block above the FULL BREAKDOWN line into Kling.
 5. If Custom Multi-Shot exposes per-shot guidance, use Shot 1 → ${cfgScales.shot1}, Shot 2 → ${cfgScales.shot2}, Shot 3 → ${cfgScales.shot3}. If only one guidance field is available, start with ${cfgScales.shot2}.
 6. Enable native audio for documentary-quality sound.
-7. Output: Native 4K at 60fps available.
+7. Output: Use the currently available Kling resolution / frame-rate options shown in the product UI.
 8. Optional: Set End Frame image for final-pose control.
 ✅ Native single-prompt workflow — identity preserved across all 3 beats.`);
 }
@@ -2869,7 +2870,7 @@ HOW TO USE (Kling 3.0 WSTV 6-Shot Workflow):
 3. Enable "Bind Subject" (Elements 3.0) for identity lock.
 4. Paste ONLY the block above the FULL BREAKDOWN line into Kling.
 5. Enable native audio for documentary-quality sound.
-6. Output: Native 4K at 60fps.
+6. Output: Use the currently available Kling resolution / frame-rate options shown in the product UI.
 ✅ One prompt → 6 cinematic shots with consistent identity and audio.`);
 }
 
