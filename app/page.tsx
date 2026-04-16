@@ -1380,7 +1380,7 @@ export default function Page() {
       ══════════════════════════════════════════════════════════════════════ */}
       {activeTab === "workflows" && (
         <div className="min-h-[calc(100vh-56px)] bg-gray-950">
-          <div className="mx-auto w-full max-w-[var(--main-max-width)] px-4 py-8 sm:px-6 sm:py-10 lg:px-8">
+          <div className="w-full px-4 py-8 sm:px-6 sm:py-10 lg:px-8 xl:px-10 2xl:px-12">
 
             {/* Workflow tab selector */}
             <div className="mb-7 space-y-3">
@@ -1476,7 +1476,7 @@ export default function Page() {
                   </div>
                 </div>
               </div>
-              <div className="p-4 sm:p-5">
+              <div className="p-3 sm:p-4 lg:p-5">
                 {workflowTab === "wstv" ? <WSTVWorkflowDiagram /> : <RunwayOfficialWorkflowDiagram />}
               </div>
             </div>
