@@ -690,7 +690,7 @@ export function Hook2026Panel({
         `V${i + 1}${i === recommendedIndex ? " (Recommended)" : ""}: ${h}`
     )
     .join("\n");
-  const styleLabels = ["Fast curiosity", "Emotion / tension", "Shock ending"];
+  const styleLabels = HOOK_FAMILY_LABELS;
 
   return (
     <div className="rounded-xl border border-orange-200 bg-orange-50 p-4 shadow-sm">
@@ -789,57 +789,89 @@ export function Caption2026Panel({
   captionOld: string;
   onCopy: (t: string) => void;
 }) {
-  const [show, setShow] = useState<"2026" | "old">("2026");
+  const bothCaptions = [
+    captionOld ? `SHORT CAPTION\n${captionOld}` : "",
+    caption2026 ? `LONG CAPTION\n${caption2026}` : "",
+  ]
+    .filter(Boolean)
+    .join("\n\n---\n\n");
 
   return (
     <div className="rounded-xl border border-emerald-200 bg-emerald-50 p-4 shadow-sm">
-      <div className="mb-3 flex flex-wrap items-center gap-2">
-        <span className="text-sm font-bold text-gray-900">
-          📝 Story-Based Caption
-        </span>
-        <span className="rounded bg-emerald-100 px-2 py-0.5 text-xs font-bold text-emerald-700">
-          5-Part 2026 Structure
-        </span>
-      </div>
-
-      <div className="mb-3 flex overflow-hidden rounded-lg border border-emerald-200 bg-white">
+      <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
+        <div className="flex flex-wrap items-center gap-2">
+          <span className="text-sm font-bold text-gray-900">
+            📝 Publishing Captions
+          </span>
+          <span className="rounded bg-emerald-100 px-2 py-0.5 text-xs font-bold text-emerald-700">
+            Short + long variants
+          </span>
+        </div>
         <button
-          onClick={() => setShow("2026")}
-          className={`flex-1 py-2 text-xs font-bold transition-all ${
-            show === "2026"
-              ? "bg-emerald-600 text-white"
-              : "text-emerald-600 hover:bg-emerald-50"
-          }`}
+          onClick={() => onCopy(bothCaptions)}
+          className="rounded bg-emerald-600 px-3 py-1 text-xs font-bold text-white hover:bg-emerald-700 active:scale-95"
           type="button"
         >
-          🔥 2026 Story Format
-        </button>
-        <button
-          onClick={() => setShow("old")}
-          className={`flex-1 py-2 text-xs font-bold transition-all ${
-            show === "old"
-              ? "bg-gray-600 text-white"
-              : "text-gray-500 hover:bg-gray-50"
-          }`}
-          type="button"
-        >
-          Classic Format
+          Copy Both
         </button>
       </div>
 
-      <div className="rounded-lg border border-emerald-100 bg-white p-3">
-        <p className="whitespace-pre-wrap text-sm leading-7 text-gray-800">
-          {show === "2026" ? caption2026 : captionOld}
-        </p>
-      </div>
+      <p className="mb-3 text-xs leading-5 text-emerald-800">
+        Short caption छिटो post/test को लागि, long caption story-led publish वा
+        description slot को लागि ready राखिएको छ.
+      </p>
 
-      <button
-        onClick={() => onCopy(show === "2026" ? caption2026 : captionOld)}
-        className="mt-2 w-full rounded-lg bg-emerald-600 py-2 text-sm font-bold text-white hover:bg-emerald-700 active:scale-95"
-        type="button"
-      >
-        Copy Caption
-      </button>
+      <div className="space-y-3">
+        {captionOld && (
+          <div className="rounded-lg border border-emerald-100 bg-white p-3">
+            <div className="mb-2 flex items-center justify-between gap-2">
+              <div>
+                <p className="text-xs font-bold uppercase tracking-wide text-emerald-700">
+                  Short Caption
+                </p>
+                <p className="text-[11px] text-gray-500">
+                  Fast publishing / default caption
+                </p>
+              </div>
+              <button
+                onClick={() => onCopy(captionOld)}
+                className="rounded border border-emerald-200 bg-emerald-50 px-2 py-1 text-xs font-bold text-emerald-800 hover:bg-emerald-100 active:scale-95"
+                type="button"
+              >
+                Copy Short
+              </button>
+            </div>
+            <p className="whitespace-pre-wrap text-sm leading-7 text-gray-800">
+              {captionOld}
+            </p>
+          </div>
+        )}
+
+        {caption2026 && (
+          <div className="rounded-lg border border-emerald-100 bg-white p-3">
+            <div className="mb-2 flex items-center justify-between gap-2">
+              <div>
+                <p className="text-xs font-bold uppercase tracking-wide text-emerald-700">
+                  Long Caption
+                </p>
+                <p className="text-[11px] text-gray-500">
+                  Story-led publish / description variant
+                </p>
+              </div>
+              <button
+                onClick={() => onCopy(caption2026)}
+                className="rounded border border-emerald-200 bg-emerald-50 px-2 py-1 text-xs font-bold text-emerald-800 hover:bg-emerald-100 active:scale-95"
+                type="button"
+              >
+                Copy Long
+              </button>
+            </div>
+            <p className="whitespace-pre-wrap text-sm leading-7 text-gray-800">
+              {caption2026}
+            </p>
+          </div>
+        )}
+      </div>
     </div>
   );
 }
@@ -943,15 +975,15 @@ export function WatchTimePanel({ report }: { report: WatchTimeReport }) {
 
       <div className="mb-3 grid gap-2 md:grid-cols-3">
         <div className="rounded-lg border border-red-200 bg-white p-3 text-center">
-          <p className="text-xs text-gray-400">3-Shot (Old)</p>
-          <p className="text-xl font-bold text-red-500">~13s</p>
-          <p className="text-xs text-gray-400">Below optimal</p>
+          <p className="text-xs text-gray-400">Hybrid 4-Shot Primary</p>
+          <p className="text-xl font-bold text-red-500">{report.currentDuration}</p>
+          <p className="text-xs text-gray-400">Fast readable short-lane default</p>
         </div>
         <div className="rounded-lg border border-green-300 bg-white p-3 text-center">
-          <p className="text-xs text-gray-400">5-Shot (New)</p>
-          <p className="text-xl font-bold text-green-600">60–70s</p>
+          <p className="text-xs text-gray-400">Long Lane Story Build</p>
+          <p className="text-xl font-bold text-green-600">45–75s</p>
           <p className="text-xs font-semibold text-green-600">
-            ✓ Research peak
+            ✓ More hold, build, and payoff
           </p>
         </div>
         <div className="rounded-lg border border-indigo-200 bg-white p-3 text-center">
@@ -2423,6 +2455,15 @@ type OutputWorkspaceTab =
 
 type VideoWorkspaceTab = "hybrid" | "seedance" | "runway" | "kling";
 type DirectWorkspaceTab = "seedance" | "kling15" | "kling6";
+const HOOK_FAMILY_LABELS = ["Danger", "Curiosity", "Reversal"] as const;
+
+function formatHookFamilyLabel(value: string): string {
+  return value
+    .split(/[_\-\s]+/)
+    .filter(Boolean)
+    .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
+    .join(" ");
+}
 
 function WorkspaceTabButton({
   label,
@@ -2582,6 +2623,88 @@ export default function OutputCards({
       };
     });
   }, [data.shotPlan]);
+
+  const publishReadiness = useMemo(() => {
+    const usViewsModeReport = (data.usViewsModeReport ??
+      null) as Record<string, unknown> | null;
+    const audienceSource = (data.usAudienceScore ??
+      usViewsModeReport?.audienceScore ??
+      null) as Record<string, unknown> | null;
+    const openingSource = (data.openingFrameScore ??
+      usViewsModeReport?.openingFrameScore ??
+      null) as Record<string, unknown> | null;
+    const guardSource = (data.publishGuardReport ??
+      usViewsModeReport?.publishGuard ??
+      null) as Record<string, unknown> | null;
+
+    const audienceTotal =
+      typeof audienceSource?.total === "number" ? audienceSource.total : null;
+    const audienceSummary =
+      typeof audienceSource?.summary === "string"
+        ? audienceSource.summary.trim()
+        : typeof audienceSource?.verdict === "string"
+          ? formatHookFamilyLabel(audienceSource.verdict)
+          : "";
+
+    const openingTotal =
+      typeof openingSource?.total === "number" ? openingSource.total : null;
+    const openingSummary =
+      typeof openingSource?.summary === "string"
+        ? openingSource.summary.trim()
+        : typeof openingSource?.note === "string"
+          ? openingSource.note.trim()
+          : "";
+
+    const publishGuardWarnings = Array.isArray(guardSource?.warnings)
+      ? guardSource.warnings.map((warning) => safeStr(warning)).filter(Boolean)
+      : [];
+    const publishGuardPass =
+      typeof guardSource?.isPass === "boolean"
+        ? guardSource.isPass
+        : typeof guardSource?.pass === "boolean"
+          ? guardSource.pass
+          : null;
+
+    const rawHookFamily =
+      typeof data.hookFamily === "string"
+        ? data.hookFamily
+        : typeof usViewsModeReport?.hookFamily === "string"
+          ? String(usViewsModeReport.hookFamily)
+          : "";
+    const bestHookFamily = rawHookFamily
+      ? formatHookFamilyLabel(rawHookFamily)
+      : typeof data.recommendedHookIndex === "number" &&
+          HOOK_FAMILY_LABELS[data.recommendedHookIndex]
+        ? HOOK_FAMILY_LABELS[data.recommendedHookIndex]
+        : "";
+
+    const shouldPublish =
+      typeof usViewsModeReport?.shouldPublish === "boolean"
+        ? usViewsModeReport.shouldPublish
+        : audienceTotal !== null &&
+            openingTotal !== null &&
+            publishGuardPass !== null
+          ? audienceTotal >= 70 && openingTotal >= 60 && publishGuardPass
+          : null;
+
+    return {
+      audienceTotal,
+      audienceSummary,
+      openingTotal,
+      openingSummary,
+      publishGuardPass,
+      publishGuardWarnings,
+      bestHookFamily,
+      shouldPublish,
+    };
+  }, [
+    data.hookFamily,
+    data.openingFrameScore,
+    data.publishGuardReport,
+    data.recommendedHookIndex,
+    data.usAudienceScore,
+    data.usViewsModeReport,
+  ]);
 
   function buildCopyAllPacksText() {
     const seedance = seedanceShots
@@ -3620,6 +3743,142 @@ export default function OutputCards({
             Posting ready assets यहाँ राखिएको छ: hook, caption, voiceover, CTA,
             hashtags, platform pack, अनि posting time guidance.
           </div>
+
+          {(publishReadiness.audienceTotal !== null ||
+            publishReadiness.openingTotal !== null ||
+            publishReadiness.publishGuardPass !== null ||
+            publishReadiness.publishGuardWarnings.length > 0 ||
+            publishReadiness.bestHookFamily ||
+            publishReadiness.shouldPublish !== null) && (
+            <div className="rounded-2xl border border-gray-200 bg-white p-4 shadow-sm">
+              <div className="flex flex-wrap items-start justify-between gap-3">
+                <div>
+                  <div className="text-sm font-extrabold text-gray-900">
+                    Fast Publish Check
+                  </div>
+                  <p className="mt-1 text-xs leading-relaxed text-gray-600">
+                    Main publish path simple राख्न go/no-go, U.S. fit, opening
+                    read, and publish guard warnings यही माथि summarize गरिएको
+                    छ.
+                  </p>
+                </div>
+              </div>
+
+              <div className="mt-4 grid gap-3 md:grid-cols-2 xl:grid-cols-4">
+                {publishReadiness.shouldPublish !== null && (
+                  <div className="rounded-xl border border-gray-200 bg-gray-50 p-3">
+                    <div className="text-[11px] font-bold uppercase tracking-wide text-gray-500">
+                      Should Publish
+                    </div>
+                    <div
+                      className={`mt-2 text-lg font-black ${
+                        publishReadiness.shouldPublish
+                          ? "text-emerald-700"
+                          : "text-rose-700"
+                      }`}
+                    >
+                      {publishReadiness.shouldPublish ? "Yes" : "No"}
+                    </div>
+                  </div>
+                )}
+
+                {publishReadiness.audienceTotal !== null && (
+                  <div className="rounded-xl border border-blue-200 bg-blue-50 p-3">
+                    <div className="text-[11px] font-bold uppercase tracking-wide text-blue-600">
+                      U.S. Audience Score
+                    </div>
+                    <div className="mt-2 text-lg font-black text-blue-900">
+                      {publishReadiness.audienceTotal}/100
+                    </div>
+                    {publishReadiness.audienceSummary && (
+                      <p className="mt-1 text-xs leading-relaxed text-blue-800">
+                        {publishReadiness.audienceSummary}
+                      </p>
+                    )}
+                  </div>
+                )}
+
+                {publishReadiness.openingTotal !== null && (
+                  <div className="rounded-xl border border-violet-200 bg-violet-50 p-3">
+                    <div className="text-[11px] font-bold uppercase tracking-wide text-violet-600">
+                      Opening-Frame Score
+                    </div>
+                    <div className="mt-2 text-lg font-black text-violet-900">
+                      {publishReadiness.openingTotal}/100
+                    </div>
+                    {publishReadiness.openingSummary && (
+                      <p className="mt-1 text-xs leading-relaxed text-violet-800">
+                        {publishReadiness.openingSummary}
+                      </p>
+                    )}
+                  </div>
+                )}
+
+                {publishReadiness.bestHookFamily && (
+                  <div className="rounded-xl border border-amber-200 bg-amber-50 p-3">
+                    <div className="text-[11px] font-bold uppercase tracking-wide text-amber-600">
+                      Best Hook Family
+                    </div>
+                    <div className="mt-2 text-lg font-black text-amber-900">
+                      {publishReadiness.bestHookFamily}
+                    </div>
+                    <p className="mt-1 text-xs leading-relaxed text-amber-800">
+                      Recommended hook direction for faster testing.
+                    </p>
+                  </div>
+                )}
+              </div>
+
+              {(publishReadiness.publishGuardPass !== null ||
+                publishReadiness.publishGuardWarnings.length > 0) && (
+                <div
+                  className={`mt-4 rounded-xl border p-3 ${
+                    publishReadiness.publishGuardPass
+                      ? "border-emerald-200 bg-emerald-50"
+                      : "border-amber-200 bg-amber-50"
+                  }`}
+                >
+                  <div className="flex flex-wrap items-center justify-between gap-2">
+                    <div className="text-sm font-bold text-gray-900">
+                      Publish Guard Warnings
+                    </div>
+                    {publishReadiness.publishGuardPass !== null && (
+                      <span
+                        className={`rounded-full px-2.5 py-1 text-[11px] font-bold ${
+                          publishReadiness.publishGuardPass
+                            ? "bg-emerald-100 text-emerald-700"
+                            : "bg-amber-100 text-amber-700"
+                        }`}
+                      >
+                        {publishReadiness.publishGuardPass
+                          ? "Pass"
+                          : "Needs cleanup"}
+                      </span>
+                    )}
+                  </div>
+
+                  {publishReadiness.publishGuardWarnings.length > 0 ? (
+                    <div className="mt-3 space-y-2">
+                      {publishReadiness.publishGuardWarnings.map(
+                        (warning, index) => (
+                          <div
+                            key={`${warning}-${index}`}
+                            className="rounded-lg border border-white/70 bg-white/80 px-3 py-2 text-xs leading-relaxed text-gray-700"
+                          >
+                            {warning}
+                          </div>
+                        )
+                      )}
+                    </div>
+                  ) : (
+                    <p className="mt-2 text-xs text-gray-600">
+                      No publish guard warnings in the current package.
+                    </p>
+                  )}
+                </div>
+              )}
+            </div>
+          )}
 
           <SectionLabel label="Hooks & Copy" />
 

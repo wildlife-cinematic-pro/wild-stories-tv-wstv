@@ -77,14 +77,71 @@ export type KlingModel =
   | "Kling 2.6 Pro"
   | "Kling 2.5 Turbo Pro"
   | "Kling 2.5 Turbo";
-  // types/index.ts (ADD near other shared types)
+// types/index.ts (ADD near other shared types)
 export type ImagePromptTarget = "MJ" | "NB2" | "RUNWAY" | "NANO_BANANA_2";
-export type ImagePromptEngine = "MJ" | "NB2" | "NANO_BANANA_2" | "FLUX" | "RUNWAY";
+export type ImagePromptEngine =
+  | "MJ"
+  | "NB2"
+  | "NANO_BANANA_2"
+  | "FLUX"
+  | "RUNWAY";
 
 export type VeoModel = "Veo 3.1";
-export type PlatformTarget = "facebook" | "instagram" | "tiktok" | "youtube_shorts";
+export type PlatformTarget =
+  | "facebook"
+  | "instagram"
+  | "tiktok"
+  | "youtube_shorts";
 export type RealismMode = "Balanced" | "High Naturalism" | "Reference Locked";
 export type FiveShotStyle = "cinematic" | "viral";
+
+export type DurationLane = "short" | "long";
+
+export type HookFamily = "danger" | "curiosity" | "reversal";
+
+export type OpeningFrameScore = {
+  total: number;
+  summary: string;
+};
+
+export type USAudienceScoreResult = {
+  total: number;
+  speciesScore: number;
+  environmentScore: number;
+  arcScore: number;
+  summary: string;
+};
+
+export type PublishGuardReport = {
+  isPass: boolean;
+  pass?: boolean;
+  warnings: string[];
+  blockers?: string[];
+  fixes?: string[];
+  summary?: string;
+};
+
+export type PerformanceSnapshot = {
+  durationLane: DurationLane;
+  hookFamily: HookFamily;
+  sampleSize: number;
+  averageWatchTimeSeconds: number;
+  completionRate: number;
+  shareRate: number;
+  summary: string;
+};
+
+export type USViewsModeReport = {
+  durationLane: DurationLane;
+  hookFamily: HookFamily;
+  audienceScore: USAudienceScoreResult;
+  openingFrameScore: OpeningFrameScore;
+  publishGuard: PublishGuardReport;
+  performanceSnapshot?: PerformanceSnapshot;
+  shouldPublish: boolean;
+  summary: string;
+  nextActions: string[];
+};
 
 // ─────────────────────────────────────────────────────────────
 // PREDATOR
@@ -109,7 +166,7 @@ export type QualityOptions = {
   singleActionRule: boolean;
   microMotion: boolean;
   heroVeo: boolean;
-  seamlessShot?: boolean;  // Appends "Continuous, seamless shot" to Runway prompts
+  seamlessShot?: boolean; // Appends "Continuous, seamless shot" to Runway prompts
 };
 
 // ─────────────────────────────────────────────────────────────
@@ -262,6 +319,15 @@ export type GeneratedPackage = {
   soundDesignPack?: SoundDesignPack;
   animalBehavior?: AnimalBehavior;
   pipelineStyle?: "4-shot" | "5-shot";
+
+  // ── US views mode ──
+  durationLane?: DurationLane;
+  hookFamily?: HookFamily;
+  usAudienceScore?: USAudienceScoreResult;
+  openingFrameScore?: OpeningFrameScore;
+  publishGuardReport?: PublishGuardReport;
+  performanceSnapshot?: PerformanceSnapshot;
+  usViewsModeReport?: USViewsModeReport;
 
   // ── Runway workflow ──
   runwayCameraPlan?: string;
@@ -436,7 +502,12 @@ export type EarningsEstimate = {
 
 export type PostingDay = {
   day: string;
-  slots: { zone: string; time: string; why: string; priority: "🔥" | "⭐" | "✅" }[];
+  slots: {
+    zone: string;
+    time: string;
+    why: string;
+    priority: "🔥" | "⭐" | "✅";
+  }[];
 };
 
 export type CalendarDay = {

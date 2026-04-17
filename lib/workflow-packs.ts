@@ -119,11 +119,20 @@ export type WorkflowPipelinePack = {
   name: string;
   badge: string;
   totalDuration: string;
+  durationLane?: WorkflowDurationLane;
   summary: string;
   shots: PipelineShot[];
 };
 
 export type ShotMode = "3shot" | "4shot" | "5shot";
+export type WorkflowDurationLane = "short" | "long";
+
+export type WorkflowDurationLanePack = {
+  lane: WorkflowDurationLane;
+  totalDuration: string;
+  defaultMode: "4shot" | "5shot";
+  summary: string;
+};
 
 // ─────────────────────────────────────────────────────────────
 // 1. ANIMAL BEHAVIOR LIBRARY
@@ -542,7 +551,7 @@ export function buildCapCutScript(
           : "Cinematic wildlife underscore — slow build, natural peaks";
 
   const beats4: CapCutBeat[] = [
-    {
+  {
       timeIn: "0:00",
       timeOut: "0:04",
       shotRef: "Shot 1 — Opening Tension / Seedance",
@@ -553,7 +562,7 @@ export function buildCapCutScript(
         : "Natural habitat ambience, distant call",
       musicNote: "Music starts 0:01 — very low volume, slow build",
     },
-    {
+  {
       timeIn: "0:04",
       timeOut: "0:09",
       shotRef: "Shot 2 — Pressure Build / Seedance",
@@ -582,7 +591,7 @@ export function buildCapCutScript(
       sfx: "Breathing settle, wind, distant environment",
       musicNote: "Music resolves — soft outro, fade to nature sound",
     },
-  ];
+];
 
   const beats5: CapCutBeat[] = [
     {
@@ -632,7 +641,7 @@ export function buildCapCutScript(
       sfx: "Breathing, ambient nature, single deep call",
       musicNote: "Music resolves — soft piano or strings fade out",
     },
-  ];
+];
 
   return {
     totalDuration: pipelineStyle === "5-shot" ? "0:55" : "0:20",
@@ -716,7 +725,7 @@ export function buildRunwayCameraPlan(
         : "",
       `Avoid: ${s.avoid}`,
       pipelineStyle === "5-shot"
-        ? "Use the gentlest move on shots 1 and 5; save the strongest move for the action beat only."
+        ? "For the long lane, hold longer on shots 1 and 2, keep the build readable through shot 4, and save the strongest move for the action payoff only."
         : "For 4-shot reels, keep the move simple so Shot 1 stays readable immediately and the strongest movement lands in Shot 3 only.",
     ]
       .filter(Boolean)
@@ -1131,6 +1140,21 @@ Best fit: ${arc} in ${cleanEnv} during ${weather}. Recommended final model: ${fi
 // ─────────────────────────────────────────────────────────────
 // 11. UI WORKFLOW PIPELINE PACKS
 // ─────────────────────────────────────────────────────────────
+export const workflowDurationLanePacks: WorkflowDurationLanePack[] = [
+  {
+    lane: "short",
+    totalDuration: "0:18–0:30",
+    defaultMode: "4shot",
+    summary: "Current hybrid 4-shot default. Best for fast readable reels with a clean opening, fast build, and tight payoff.",
+  },
+  {
+    lane: "long",
+    totalDuration: "0:45–1:15",
+    defaultMode: "5shot",
+    summary: "Long lane for more hold, more build, and more payoff while keeping the action readable.",
+  },
+];
+
 export const workflowPipelinePacks: WorkflowPipelinePack[] = [
   {
     id: "3shot",
@@ -1168,12 +1192,13 @@ export const workflowPipelinePacks: WorkflowPipelinePack[] = [
       },
     ],
   },
-    {
+  {
     id: "4shot",
     name: "4-Shot Pipeline — Cinematic Story",
-    badge: "20 seconds",
-    totalDuration: "0:20",
-    summary: "Opening tension → pressure build → action pressure → resolved tension. Best balanced format.",
+    badge: "18–30 seconds",
+    totalDuration: "0:18–0:30",
+    durationLane: "short",
+    summary: "Opening tension → pressure build → action pressure → resolved tension. Current hybrid 4-shot default for the short lane.",
     shots: [
       {
         id: 1,
@@ -1187,11 +1212,11 @@ export const workflowPipelinePacks: WorkflowPipelinePack[] = [
       {
         id: 2,
         title: "Pressure Build",
-        engine: "RUNWAY",
+        engine: "KLING",
         durationLabel: "4–9s",
-        description: "Two animals visible, spacing pressure rises, body language stays readable.",
+        description: "Two animals visible, spacing pressure rises, body language stays readable, and Kling carries the heavier interaction build.",
         copyText:
-          "SHOT 2 — PRESSURE BUILD: both animals framed clearly, no sudden movement, tension building through spacing and posture, subtle atmosphere, slow camera drift, readable body language.",
+          "SHOT 2 — PRESSURE BUILD: both animals framed clearly, tension building through spacing and posture, heavier interaction mechanics, readable body language, subtle atmosphere, and stable subject continuity.",
       },
       {
         id: 3,
@@ -1216,9 +1241,10 @@ export const workflowPipelinePacks: WorkflowPipelinePack[] = [
   {
     id: "5shot",
     name: "5-Shot Pipeline — Watch Time Optimizer",
-    badge: "45–55 seconds",
-    totalDuration: "0:45–0:55",
-    summary: "Opening tension → pressure build → action pressure → reaction pressure → resolved tension. Best for Facebook watch time.",
+    badge: "45–75 seconds",
+    totalDuration: "0:45–1:15",
+    durationLane: "long",
+    summary: "Opening tension → pressure build → action pressure → reaction pressure → resolved tension. Long lane for more hold, more build, and more payoff.",
     shots: [
       {
         id: 1,
@@ -1234,9 +1260,9 @@ export const workflowPipelinePacks: WorkflowPipelinePack[] = [
         title: "Pressure Build",
         engine: "RUNWAY",
         durationLabel: "4–12s",
-        description: "Slow pressure setup, spacing tightens, suspense grows without losing clarity.",
+        description: "Longer pressure setup, spacing tightens, suspense grows without losing clarity.",
         copyText:
-          "SHOT 2 — PRESSURE BUILD: both animals visible, distance pressure building, subtle camera movement, slow suspense, no attack yet, environment remains alive, subject clarity stays strong.",
+          "SHOT 2 — PRESSURE BUILD: both animals visible, distance pressure building, subtle camera movement, longer suspense hold, no attack yet, environment remains alive, subject clarity stays strong.",
       },
       {
         id: 3,
@@ -1252,23 +1278,39 @@ export const workflowPipelinePacks: WorkflowPipelinePack[] = [
         title: "Reaction Pressure",
         engine: "KLING",
         durationLabel: "22–32s",
-        description: "Stumble, shift, panic, retaliation, unstable momentum, but action remains readable.",
+        description: "Stumble, shift, panic, retaliation, unstable momentum, with extra build before the final payoff.",
         copyText:
-          "SHOT 4 — REACTION PRESSURE: post-impact reaction, stumble or reversal, visible body tension, tension still active, momentum unclear, layered terrain response, clean readable spacing.",
+          "SHOT 4 — REACTION PRESSURE: post-impact reaction, stumble or reversal, visible body tension, tension still active, momentum unclear, layered terrain response, clean readable spacing, extended payoff build.",
       },
       {
         id: 5,
         title: "Resolved Tension",
         engine: "RUNWAY",
         durationLabel: "32–55s",
-        description: "Winner walk, retreat, calm, unresolved stare, or final dominance with a clean ending frame.",
+        description: "Winner walk, retreat, calm, unresolved stare, or final dominance with extra hold so the payoff fully lands.",
         copyText:
-          "SHOT 5 — RESOLVED TENSION: dominance or retreat outcome, movement settles, subtle atmosphere, powerful cinematic resolve, restrained documentary ending, clean final-frame readability.",
+          "SHOT 5 — RESOLVED TENSION: dominance or retreat outcome, movement settles, subtle atmosphere, powerful cinematic resolve, restrained documentary ending, clean final-frame readability, and a longer payoff hold.",
       },
     ],
   },
-  ];
+];
 
 export function getWorkflowPipelinePack(mode: ShotMode): WorkflowPipelinePack {
-  return workflowPipelinePacks.find((pack) => pack.id === mode) ?? workflowPipelinePacks[2];
+  return (
+    workflowPipelinePacks.find((pack) => pack.id === mode) ??
+    workflowPipelinePacks.find((pack) => pack.id === "4shot") ??
+    workflowPipelinePacks[0]
+  );
+}
+
+export function getDefaultWorkflowShotModeForDurationLane(
+  lane: WorkflowDurationLane
+): "4shot" | "5shot" {
+  return lane === "long" ? "5shot" : "4shot";
+}
+
+export function getWorkflowPipelinePackForDurationLane(
+  lane: WorkflowDurationLane
+): WorkflowPipelinePack {
+  return getWorkflowPipelinePack(getDefaultWorkflowShotModeForDurationLane(lane));
 }
