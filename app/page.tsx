@@ -144,6 +144,7 @@ type WorkflowTab = "wstv" | "runway";
 type MarketMode = "US_ONLY";
 type DurationLaneMode = DurationLane;
 type HookMode = HookFamily | "all";
+type SceneDescriptionMode = "auto" | "manual";
 
 type QualityState = {
   realismMode: RealismMode;
@@ -172,6 +173,137 @@ type PublishFlowSummary = {
 };
 
 const HOOK_FAMILY_ORDER: HookFamily[] = ["danger", "curiosity", "reversal"];
+
+const ARC_SCENE_CONTEXT: Record<Arc, string> = {
+  "Ambush attack": "ambush pressure",
+  "Predator vs predator fight": "predator clash",
+  "Chase and takedown": "chase pressure",
+  "Escape from danger": "escape pressure",
+  "Territory dominance battle": "territory pressure",
+  "Pack hunting strategy": "pack pressure",
+  "Defender stands ground": "stand-ground pressure",
+  "Giant vs giant clash": "giant-animal clash",
+};
+
+function buildSceneLeadSentence(
+  predator: string,
+  prey: string,
+  arc: Arc,
+  variant = 0
+): string {
+  const predatorLower = predator.toLowerCase();
+  const preyLower = prey.toLowerCase();
+  const variantIndex = Math.abs(variant) % 3;
+
+  switch (arc) {
+    case "Ambush attack":
+      return [
+        `The ${preyLower} looks up too late as the ${predatorLower} closes in.`,
+        `The ${predatorLower} is already in range before the ${preyLower} reads the danger.`,
+        `The ${preyLower} reacts late. The ${predatorLower} is already inside the moment.`,
+      ][variantIndex] ?? "";
+    case "Chase and takedown":
+      return [
+        `The ${predatorLower} commits first. The ${preyLower} has no time to reset.`,
+        `The ${preyLower} loses space fast once the ${predatorLower} commits.`,
+        `The ${predatorLower} drives the pace. The ${preyLower} never gets clear.`,
+      ][variantIndex] ?? "";
+    case "Defender stands ground":
+      return [
+        `The ${preyLower} keeps pressing. This ${predatorLower} never gives ground.`,
+        `The ${predatorLower} holds position and the ${preyLower} walks into real pressure.`,
+        `The ${preyLower} pushes closer. The ${predatorLower} refuses to move.`,
+      ][variantIndex] ?? "";
+    case "Giant vs giant clash":
+      return [
+        `${predator} and ${prey} get too close. One heavy step changes the standoff.`,
+        `${predator} and ${prey} hold the same space too long. The clash turns fast.`,
+        `${predator} and ${prey} stay chest-to-chest. The pressure shifts on one step.`,
+      ][variantIndex] ?? "";
+    case "Territory dominance battle":
+      return [
+        `The ${preyLower} crosses the wrong line. The ${predatorLower} answers immediately.`,
+        `The ${predatorLower} reads the boundary first. The ${preyLower} pays for it.`,
+        `The ${preyLower} steps too far in. The ${predatorLower} takes control fast.`,
+      ][variantIndex] ?? "";
+    case "Pack hunting strategy":
+      return [
+        `The ${preyLower} looks free for a second. Then the ${predatorLower} closes the lane.`,
+        `The ${predatorLower} takes away the escape lane before the ${preyLower} can reset.`,
+        `The ${preyLower} still has room, then the ${predatorLower} turns the spacing tight.`,
+      ][variantIndex] ?? "";
+    case "Predator vs predator fight":
+      return [
+        `${predator} and ${prey} meet too close. One bad read shifts control fast.`,
+        `${predator} and ${prey} hold the same ground. One move changes the balance.`,
+        `${predator} and ${prey} square up early. The control flips on one mistake.`,
+      ][variantIndex] ?? "";
+    case "Escape from danger":
+      return [
+        `The ${predatorLower} moves first. The ${preyLower} has almost no time to turn.`,
+        `The ${preyLower} reads the danger late as the ${predatorLower} closes fast.`,
+        `The ${predatorLower} commits instantly. The ${preyLower} is already under pressure.`,
+      ][variantIndex] ?? "";
+    default:
+      return `${predator} and ${prey} get too close. The pressure turns readable fast.`;
+  }
+}
+
+function compactSceneHabitatLabel(habitat: HabitatPreset, environment: string): string {
+  const base = habitat === "Auto" ? environment : habitat;
+  const cleaned = String(base ?? "")
+    .split(/[.,]/)[0]
+    .replace(/\bwith\b.*$/i, "")
+    .replace(/\s{2,}/g, " ")
+    .trim();
+  return cleaned
+    .split(/\s+/)
+    .slice(0, 4)
+    .join(" ")
+    .toLowerCase();
+}
+
+function finalizeAutoSceneDescription(raw: string): string {
+  const compact = String(raw ?? "").replace(/\s+/g, " ").trim();
+  const sentences =
+    compact.match(/[^.!?]+[.!?]?/g)?.map((sentence) => sentence.trim()).filter(Boolean) ?? [];
+  const limited = (sentences.length ? sentences : [compact]).slice(0, 2).join(" ");
+
+  if (limited.length <= 150) return limited;
+
+  const firstSentence = sentences[0] ?? compact;
+  if (firstSentence.length <= 150) return firstSentence;
+
+  return `${firstSentence.slice(0, 147).trimEnd()}...`;
+}
+
+function buildAutoSceneDescription({
+  predator,
+  prey,
+  arc,
+  habitat,
+  environment,
+  variant = 0,
+}: {
+  predator: string;
+  prey: string;
+  arc: Arc;
+  habitat: HabitatPreset;
+  environment: string;
+  variant?: number;
+}): string {
+  const variantIndex = Math.abs(variant) % 3;
+  const lead = buildSceneLeadSentence(predator, prey, arc, variantIndex);
+  const habitatLabel = compactSceneHabitatLabel(habitat, environment);
+  const contextLabel = ARC_SCENE_CONTEXT[arc] ?? "wildlife pressure";
+  const context = [
+    `Clean readable U.S. ${contextLabel} setup.`,
+    `Clear ${habitatLabel} setup for U.S. Facebook Reels.`,
+    `Fast U.S. wildlife opener with clean ${contextLabel}.`,
+  ][variantIndex] ?? `Clean readable U.S. ${contextLabel} setup.`;
+
+  return finalizeAutoSceneDescription(`${lead} ${context}`);
+}
 
 // ─── DEFAULTS ────────────────────────────────────────────────────────────────
 
@@ -404,8 +536,11 @@ export default function Page() {
   const [heroVeo, setHeroVeo] = useState(false);
   const [autoApplyHighDrift, setAutoApplyHighDrift] = useState(false);
   const [lastQualityBeforeApply, setLastQualityBeforeApply] = useState<QualityState | null>(null);
-  const [sceneNepaliRomanized, setSceneNepaliRomanized] = useState("");
-  const [sceneMode, setSceneMode] = useState<"romanized" | "english">("romanized");
+  const [sceneDescription, setSceneDescription] = useState("");
+  const [sceneDescriptionMode, setSceneDescriptionMode] = useState<SceneDescriptionMode>("auto");
+  const [sceneDescriptionTouched, setSceneDescriptionTouched] = useState(false);
+  const [sceneDescriptionVariant, setSceneDescriptionVariant] = useState(0);
+  const [sceneMode, setSceneMode] = useState<"romanized" | "english">("english");
   const [mediaAnalysis, setMediaAnalysis] = useState<MediaAnalysisResult | null>(null);
 
   // STEP 3
@@ -499,6 +634,18 @@ export default function Page() {
   const previewArc = useMemo(
     () => suggestArc(predator, prey, arc) as Arc,
     [predator, prey, arc]
+  );
+  const autoSceneDescription = useMemo(
+    () =>
+      buildAutoSceneDescription({
+        predator,
+        prey,
+        arc: previewArc,
+        habitat,
+        environment: finalEnvironment,
+        variant: sceneDescriptionVariant,
+      }),
+    [predator, prey, previewArc, habitat, finalEnvironment, sceneDescriptionVariant]
   );
   const selectedPipelineStyle = durationLane === "long" ? "5-shot" : "4-shot";
   const captionMode = marketMode === "US_ONLY" ? "us-only" : "default";
@@ -641,6 +788,38 @@ export default function Page() {
     strictOriginalityGuard,
   ]);
 
+  useEffect(() => {
+    if (!(sceneDescriptionMode === "auto" || !sceneDescriptionTouched)) return;
+    setSceneDescription((current) =>
+      current === autoSceneDescription ? current : autoSceneDescription
+    );
+  }, [autoSceneDescription, sceneDescriptionMode, sceneDescriptionTouched]);
+
+  function applyAutoSceneDescription(variant: number) {
+    const nextDescription = buildAutoSceneDescription({
+      predator,
+      prey,
+      arc: previewArc,
+      habitat,
+      environment: finalEnvironment,
+      variant,
+    });
+    setSceneDescriptionVariant(variant);
+    setSceneDescription(nextDescription);
+    setSceneDescriptionMode("auto");
+    setSceneDescriptionTouched(false);
+  }
+
+  function handleSceneDescriptionChange(value: string) {
+    setSceneDescription(value);
+    setSceneDescriptionMode("manual");
+    setSceneDescriptionTouched(true);
+  }
+
+  function handleSceneDescriptionRegenerate() {
+    applyAutoSceneDescription(sceneDescriptionVariant + 1);
+  }
+
   function captureCurrentQuality(): QualityState {
     return { realismMode, motionOnlyI2V, referenceLock, singleActionRule, microMotion, heroVeo };
   }
@@ -739,7 +918,7 @@ export default function Page() {
       const finalArc = previewArc;
       const safeMedia = (mediaAnalysis ?? null) as SafeMediaAnalysis | null;
       const sceneInjectFromMedia = safeMedia?.imagePromptInject ?? "";
-      const sceneInjectFromUser = sceneNepaliRomanized.trim();
+      const sceneInjectFromUser = sceneDescription.trim();
       const sceneInject = sceneInjectFromUser.length > 0 ? sceneInjectFromUser : sceneInjectFromMedia;
       const quality = { realismMode, motionOnlyI2V, referenceLock, singleActionRule, microMotion, heroVeo };
 
@@ -1560,43 +1739,82 @@ export default function Page() {
 
                   {/* Scene description — coral tint marks creative inject zone */}
                   <section className="rounded-2xl border border-orange-200 bg-orange-50 p-5 sm:p-6">
-                    <h3 className="mb-4 text-[11px] font-semibold uppercase tracking-[0.1em] text-orange-500">Scene Description</h3>
-                    <div className="mb-4 flex overflow-hidden rounded-xl border border-orange-200 bg-white">
-                      {(["romanized", "english"] as const).map((mode) => (
-                        <button
-                          key={mode}
-                          type="button"
-                          onClick={() => setSceneMode(mode)}
-                          className={`flex-1 px-3 py-2 text-xs font-semibold transition-all ${
-                            sceneMode === mode ? "bg-orange-600 text-white" : "text-orange-600 hover:bg-orange-50"
-                          }`}
-                        >
-                          {mode === "romanized" ? "Nepali Romanized" : "Direct English"}
-                        </button>
-                      ))}
+                    <div className="mb-4 flex flex-wrap items-start justify-between gap-3">
+                      <div>
+                        <h3 className="text-[11px] font-semibold uppercase tracking-[0.1em] text-orange-500">Scene Description</h3>
+                        <p className="mt-1 text-xs leading-relaxed text-orange-700">
+                          Short auto-fill by default for a fast U.S. wildlife / Facebook Reels setup. Edit anytime.
+                        </p>
+                      </div>
+                      <div className="flex flex-wrap items-center gap-2">
+                        <span className={`rounded-full px-2.5 py-1 text-[10px] font-semibold ${
+                          sceneDescriptionMode === "auto"
+                            ? "bg-orange-600 text-white"
+                            : "bg-white text-orange-700"
+                        }`}>
+                          {sceneDescriptionMode === "auto" ? "Auto Mode" : "Manual Mode"}
+                        </span>
+                        {sceneDescriptionMode === "manual" && sceneDescriptionTouched && (
+                          <span className="rounded-full bg-white px-2.5 py-1 text-[10px] font-semibold text-gray-600">
+                            Protected from overwrite
+                          </span>
+                        )}
+                      </div>
                     </div>
-                    <textarea
-                      value={sceneNepaliRomanized}
-                      onChange={(e) => setSceneNepaliRomanized(e.target.value)}
-                      placeholder={sceneMode === "romanized" ? "jastei: bag le bakhra lai khedaera..." : "Write the scene in English..."}
-                      className="min-h-[120px] w-full resize-none rounded-xl border border-orange-200 bg-white p-3.5 text-sm text-gray-900 outline-none placeholder:text-gray-400"
-                    />
-                    <div className="mt-3 flex flex-wrap gap-2">
-                      {["Example 1", "Example 2", "Example 3"].map((x) => (
-                        <button key={x} type="button"
-                          onClick={() => setSceneNepaliRomanized(`${x}: bag le bakhra lai khedaera...`)}
-                          className="rounded-lg border border-orange-200 bg-orange-100 px-2.5 py-1 text-xs font-semibold text-orange-800 hover:bg-orange-200"
-                        >
-                          {x}
-                        </button>
-                      ))}
+
+                    <div className="mb-3 flex flex-wrap items-center gap-2">
+                      <div className="flex overflow-hidden rounded-xl border border-orange-200 bg-white">
+                        {(["romanized", "english"] as const).map((mode) => (
+                          <button
+                            key={mode}
+                            type="button"
+                            onClick={() => setSceneMode(mode)}
+                            className={`px-3 py-2 text-xs font-semibold transition-all ${
+                              sceneMode === mode ? "bg-orange-600 text-white" : "text-orange-600 hover:bg-orange-50"
+                            }`}
+                          >
+                            {mode === "romanized" ? "Nepali Romanized" : "Direct English"}
+                          </button>
+                        ))}
+                      </div>
                       <button
                         type="button"
-                        onClick={() => alert("Auto-translate wiring: optional. For now, this text injects directly into prompts.")}
-                        className="ml-auto rounded-xl bg-orange-600 px-3 py-1.5 text-xs font-semibold text-white hover:bg-orange-700"
+                        onClick={() => applyAutoSceneDescription(0)}
+                        className="rounded-xl border border-orange-200 bg-white px-3 py-2 text-xs font-semibold text-orange-700 hover:bg-orange-100"
                       >
-                        Translate →
+                        Auto Fill
                       </button>
+                      <button
+                        type="button"
+                        onClick={handleSceneDescriptionRegenerate}
+                        className="rounded-xl border border-orange-200 bg-orange-100 px-3 py-2 text-xs font-semibold text-orange-800 hover:bg-orange-200"
+                      >
+                        Regenerate
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => applyAutoSceneDescription(0)}
+                        className="rounded-xl border border-orange-200 bg-white px-3 py-2 text-xs font-semibold text-gray-700 hover:bg-gray-50"
+                      >
+                        Reset to Auto
+                      </button>
+                    </div>
+
+                    <textarea
+                      value={sceneDescription}
+                      onChange={(e) => handleSceneDescriptionChange(e.target.value)}
+                      placeholder={sceneMode === "romanized" ? "jastei: bag le bakhra lai khedaera..." : "Write a short scene description in English..."}
+                      className="min-h-[120px] w-full resize-none rounded-xl border border-orange-200 bg-white p-3.5 text-sm text-gray-900 outline-none placeholder:text-gray-400"
+                    />
+                    <div className="mt-3 flex flex-wrap items-center justify-between gap-2 text-[11px] leading-relaxed text-orange-700">
+                      <span>
+                        {sceneDescriptionMode === "auto"
+                          ? "Auto mode updates with setup changes until you edit manually."
+                          : "Manual mode will not be overwritten. Blank is still allowed if you want no extra scene guidance."}
+                      </span>
+                      <span className="rounded-full bg-white px-2.5 py-1 font-semibold text-gray-600">
+                        {sceneDescription.trim().length === 0 ? "Blank allowed" : `${sceneDescription.trim().length} chars`}
+                      </span>
                     </div>
                   </section>
 

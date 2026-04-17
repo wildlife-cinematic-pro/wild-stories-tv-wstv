@@ -135,22 +135,22 @@ const VIRAL_CAPTIONS: Partial<Record<Arc, (predator: string, prey: string, env: 
 // 4. 2026 CAPTIONS
 // ─────────────────────────────────────────────────────────────
 const SHORT_CAPTIONS_2026: Partial<Record<Arc, (predator: string, prey: string, env: string) => string>> = {
-  "Ambush attack": (predator, prey, env) =>
-    `In the ${env}, the ${prey.toLowerCase()} looked up a moment too late and the ${predator.toLowerCase()} was already inside the pressure zone. The whole sequence turns on that lost second.`,
-  "Chase and takedown": (predator, prey, env) =>
-    `Across the ${env}, the ${predator.toLowerCase()} committed cleanly and the ${prey.toLowerCase()} had almost no time to reset. The tension comes from how fast the escape window closes.`,
-  "Defender stands ground": (predator, prey, env) =>
-    `In the ${env}, every instinct said move, but this ${predator.toLowerCase()} held position. That decision changed the whole feel of the encounter with the ${prey.toLowerCase()}.`,
-  "Giant vs giant clash": (predator, prey, env) =>
-    `In the ${env}, a ${predator.toLowerCase()} and a ${prey.toLowerCase()} met at close range and neither gave space. The weight of the moment is what makes the collision land.`,
-  "Territory dominance battle": (predator, prey, env) =>
-    `In the ${env}, the ${prey.toLowerCase()} crossed into the wrong space and the ${predator.toLowerCase()} answered immediately. The tension comes from how clear the boundary becomes.`,
-  "Pack hunting strategy": (predator, prey, env) =>
-    `In the ${env}, the ${prey.toLowerCase()} looked mobile at first, but the ${predator.toLowerCase()} took away the escape lane before full contact. The pressure feels organized from the start.`,
-  "Predator vs predator fight": (predator, prey, env) =>
-    `In the ${env}, a ${predator.toLowerCase()} and a ${prey.toLowerCase()} met with no easy retreat. The tension comes from how quickly one bad read can shift control.`,
-  "Escape from danger": (predator, prey, env) =>
-    `In the ${env}, the ${prey.toLowerCase()} had almost no time to react before the ${predator.toLowerCase()} moved. The whole clip turns on one survival decision.`,
+  "Ambush attack": (predator, prey) =>
+    `The ${prey.toLowerCase()} looked up too late. The ${predator.toLowerCase()} was already inside the danger zone.`,
+  "Chase and takedown": (predator, prey) =>
+    `The ${predator.toLowerCase()} committed first. The ${prey.toLowerCase()} had no time to reset.`,
+  "Defender stands ground": (predator, prey) =>
+    `The ${prey.toLowerCase()} kept pressing. This ${predator.toLowerCase()} never gave ground.`,
+  "Giant vs giant clash": (predator, prey) =>
+    `${predator} and ${prey} got too close. One heavy step changed the standoff.`,
+  "Territory dominance battle": (predator, prey) =>
+    `The ${prey.toLowerCase()} crossed the wrong line. The ${predator.toLowerCase()} answered immediately.`,
+  "Pack hunting strategy": (predator, prey) =>
+    `The ${prey.toLowerCase()} looked free for a second. Then the ${predator.toLowerCase()} closed the escape lane.`,
+  "Predator vs predator fight": (predator, prey) =>
+    `${predator} and ${prey} met too close. One bad read shifted control fast.`,
+  "Escape from danger": (predator, prey) =>
+    `The ${predator.toLowerCase()} moved first. The ${prey.toLowerCase()} had almost no time to turn.`,
 };
 
 const CAPTIONS_2026: Partial<Record<Arc, (predator: string, prey: string, env: string) => string>> = {
@@ -308,7 +308,21 @@ export function buildCTA(arc: Arc): string {
   );
 }
 
-/** Short caption variant — trimmed to 220 chars */
+function finalizeShortCaption(raw: string): string {
+  const compact = String(raw ?? "").replace(/\s+/g, " ").trim();
+  const sentences =
+    compact.match(/[^.!?]+[.!?]?/g)?.map((sentence) => sentence.trim()).filter(Boolean) ?? [];
+  const cappedSentenceCount = (sentences.length ? sentences : [compact]).slice(0, 2).join(" ");
+
+  if (cappedSentenceCount.length <= 150) return cappedSentenceCount;
+
+  const firstSentence = sentences[0] ?? compact;
+  if (firstSentence.length <= 150) return firstSentence;
+
+  return `${firstSentence.slice(0, 147).trimEnd()}...`;
+}
+
+/** Short caption variant — publish-safe by default, trimmed to 150 chars */
 export function buildCaption(
   predator: string,
   prey: string,
@@ -328,7 +342,7 @@ export function buildCaption(
       ? raw.replace(/\s+—\s+/g, ": ")
       : raw;
 
-  return caption.length > 220 ? `${caption.slice(0, 217)}...` : caption;
+  return finalizeShortCaption(caption);
 }
 
 /** Long caption variant — multi-paragraph story structure, no trimming */
