@@ -6,12 +6,10 @@
 //   • Pure functions only — no React, no useState, no UI
 //   • All data and functions exported for use in buildPackage()
 //
-// RESEARCH SOURCES (2025–2026):
-//   • Meta official: original content prioritized for CMP beta
-//   • Social Insider Jan 2026: 60-90s reels peak performance
-//   • Shortimize Nov 2025: first 1-2 hours = 80% viral potential
-//   • OpusClip Feb 2026: first 3 seconds = scroll stopper
-//   • HookAgency Jan 2026: USA posting time windows
+// PACKAGING GOAL:
+//   • Clean, original, U.S.-readable social packaging
+//   • Strong first-line hooks and short publish-safe captions
+//   • Exactly 5 hashtags and a separate tags field
 // ─────────────────────────────────────────────────────────────
 
 import type {
@@ -31,81 +29,81 @@ export type CaptionOptions = {
   mode?: CaptionMode;
 };
 export type HashtagOptions = {
-  count?: 3 | 4 | 5;
+  count?: number;
 };
 
 // ─────────────────────────────────────────────────────────────
 // 1. VIRAL HOOKS  (legacy — one hook per arc)
 // ─────────────────────────────────────────────────────────────
 const VIRAL_HOOKS: Partial<Record<Arc, (predator: string, prey: string) => string>> = {
-    "Ambush attack": (predator, prey) =>
-    `The ${prey.toLowerCase()} looked up too late and the ${predator.toLowerCase()} was already there. ⚠️`,
+  "Ambush attack": (predator, prey) =>
+    `The ${prey.toLowerCase()} looked up too late. The ${predator.toLowerCase()} was already there.`,
 
-    "Chase and takedown": (predator, prey) =>
-    `Once the ${predator.toLowerCase()} committed, the ${prey.toLowerCase()} lost space fast. ⚡`,
+  "Chase and takedown": (predator, prey) =>
+    `Once the ${predator.toLowerCase()} committed, the ${prey.toLowerCase()} lost space fast.`,
 
   "Defender stands ground": (predator) =>
-    `Nobody expected this ${predator.toLowerCase()} to hold its ground. 🦬`,
+    `Nobody expected this ${predator.toLowerCase()} to hold its ground.`,
 
   "Giant vs giant clash": (predator, prey) =>
-    `${predator} vs ${prey} — two giants, one brutal moment. 🔥`,
+    `${predator} and ${prey} got too close. One heavy step changed the standoff.`,
 
   "Territory dominance battle": (_predator, prey) =>
-    `The ${prey.toLowerCase()} crossed the wrong boundary. 👀`,
+    `The ${prey.toLowerCase()} crossed the wrong boundary.`,
 
-    "Pack hunting strategy": (_predator, prey) =>
-    `The ${prey.toLowerCase()} was already losing the field before it reacted. 🧠`,
+  "Pack hunting strategy": (_predator, prey) =>
+    `The ${prey.toLowerCase()} was already losing space before it reacted.`,
 
   "Predator vs predator fight": () =>
-    `Two apex predators. One territory. No room to back down. 💥`,
+    `Two apex predators met too close. There was no safe outcome.`,
 
-    "Escape from danger": (_predator, prey) =>
-    `This ${prey.toLowerCase()} had almost no time to read the danger. ⚡`,
+  "Escape from danger": (_predator, prey) =>
+    `This ${prey.toLowerCase()} had almost no time to read the danger.`,
 };
 
 // ─────────────────────────────────────────────────────────────
 // 2. 2026 HOOKS  (3 variants per arc — danger / curiosity / reversal)
 // ─────────────────────────────────────────────────────────────
 const HOOKS_2026: Partial<Record<Arc, (predator: string, prey: string) => string[]>> = {
-    "Ambush attack": (predator, prey) => [
-    `The ${prey.toLowerCase()} looked up too late. ⚠️`,
-    `The ${predator.toLowerCase()} was already inside the danger zone. 👀`,
-    `One quiet second flipped into open panic. 🔥`,
+  "Ambush attack": (predator, prey) => [
+    `The ${prey.toLowerCase()} looked up too late.`,
+    `The ${predator.toLowerCase()} was already inside the danger zone.`,
+    `One quiet second turned into open pressure.`,
   ],
-    "Chase and takedown": (predator, prey) => [
-    `The ${predator.toLowerCase()} committed and the escape window vanished. ⚡`,
-    `The ${prey.toLowerCase()} reacted fast. The gap still closed. 😳`,
-    `For a beat it looked open. Then the chase flipped. 🎬`,
+  "Chase and takedown": (predator, prey) => [
+    `The ${predator.toLowerCase()} committed and the escape window vanished.`,
+    `The ${prey.toLowerCase()} reacted fast. The gap still closed.`,
+    `For a beat it looked open. Then the chase flipped.`,
   ],
   "Defender stands ground": (predator, prey) => [
-    `Nobody expected this ${predator.toLowerCase()} to hold position. 🦬`,
-    `The ${prey.toLowerCase()} thought this was an easy push. It wasn't. 🔥`,
-    `The easy push turned into a hard stop instantly. 👀`,
+    `Nobody expected this ${predator.toLowerCase()} to hold position.`,
+    `The ${prey.toLowerCase()} thought this was an easy push. It wasn't.`,
+    `The easy push turned into a hard stop instantly.`,
   ],
   "Giant vs giant clash": (predator, prey) => [
-    `${predator} and ${prey} were too close for either one to back off. 🔥`,
-    `One heavy step turned this into a real collision. 👀`,
-    `It looked like a standoff until the impact flipped the moment. ⚠️`,
+    `${predator} and ${prey} were too close for either one to back off.`,
+    `One heavy step turned this into a real collision.`,
+    `It looked like a standoff until the impact flipped the moment.`,
   ],
   "Territory dominance battle": (predator, prey) => [
-    `The ${prey.toLowerCase()} crossed the wrong boundary. ⚠️`,
-    `This is ${predator}'s ground and the ${prey.toLowerCase()} felt it instantly. 🔥`,
-    `One step too far turned a warning into a full answer. 👀`,
+    `The ${prey.toLowerCase()} crossed the wrong boundary.`,
+    `This is ${predator}'s ground and the ${prey.toLowerCase()} felt it instantly.`,
+    `One step too far turned a warning into a full answer.`,
   ],
-    "Pack hunting strategy": (predator, prey) => [
-    `The ${prey.toLowerCase()} was already losing space before it reacted. ⚠️`,
-    `This is why ${predator.toLowerCase()}s feel dangerous before full contact. 🧠`,
-    `It looked wide open until the escape lane vanished. 👀`,
+  "Pack hunting strategy": (predator, prey) => [
+    `The ${prey.toLowerCase()} was already losing space before it reacted.`,
+    `This is why ${predator.toLowerCase()}s feel dangerous before full contact.`,
+    `It looked wide open until the escape lane vanished.`,
   ],
   "Predator vs predator fight": (predator, prey) => [
-    `Two apex predators. One space. No safe outcome. 💥`,
-    `${predator} vs ${prey} — this turned violent instantly. 🔥`,
-    `One bad read flipped control immediately. 👀`,
+    `Two apex predators. One space. No safe outcome.`,
+    `${predator} and ${prey} turned this into open pressure instantly.`,
+    `One bad read flipped control immediately.`,
   ],
   "Escape from danger": (predator, prey) => [
-    `This ${prey.toLowerCase()} had less than a second to react. ⚡`,
-    `The ${predator.toLowerCase()} moved before the ${prey.toLowerCase()} read the danger. 👁️`,
-    `It looked finished until one move changed the outcome. 😳`,
+    `This ${prey.toLowerCase()} had less than a second to react.`,
+    `The ${predator.toLowerCase()} moved before the ${prey.toLowerCase()} read the danger.`,
+    `It looked finished until one move changed the outcome.`,
   ],
 };
 
@@ -114,21 +112,21 @@ const HOOKS_2026: Partial<Record<Arc, (predator: string, prey: string) => string
 // ─────────────────────────────────────────────────────────────
 const VIRAL_CAPTIONS: Partial<Record<Arc, (predator: string, prey: string, env: string) => string>> = {
   "Ambush attack": (predator, prey, env) =>
-    `Deep in the ${env}, the ${prey.toLowerCase()} looked safe for one second too long. The ${predator.toLowerCase()} had already closed the distance — and from that instant, survival turned into pure reaction. Nature rarely gives a warning. ⚠️`,
+    `In the ${env}, the ${prey.toLowerCase()} lost one second and the ${predator.toLowerCase()} used it. The whole moment works because the pressure becomes readable immediately.`,
   "Chase and takedown": (predator, prey, env) =>
-    `Across the ${env}, the ${predator.toLowerCase()} committed fully and the ${prey.toLowerCase()} had only seconds to respond. What makes this moment powerful is not just the speed — it is the instant when the outcome starts to shift. ⚡`,
+    `Across the ${env}, the ${predator.toLowerCase()} committed early and the ${prey.toLowerCase()} had almost no time to recover. The shift in control is the real story beat.`,
   "Defender stands ground": (predator, prey, env) =>
-    `In the ${env}, every instinct said move. This ${predator.toLowerCase()} did the opposite. When the ${prey.toLowerCase()} kept pressing forward, the encounter stopped feeling like a chase and started feeling like a statement. 🦬`,
+    `In the ${env}, every instinct said move. This ${predator.toLowerCase()} stayed put, and that choice changed the whole read once the ${prey.toLowerCase()} kept pressing.`,
   "Giant vs giant clash": (predator, prey, env) =>
-    `Two massive animals met in the ${env}, and neither wanted to yield space. A ${predator.toLowerCase()} and a ${prey.toLowerCase()} bring a different kind of tension — slower, heavier, and much more violent once contact happens. 🔥`,
+    `Two heavy animals met in the ${env}, and neither wanted to give space. The tension lands because the weight transfer is visible before the real impact.`,
   "Territory dominance battle": (predator, prey, env) =>
-    `In the ${env}, the line between passing through and crossing the wrong boundary is tiny. The ${prey.toLowerCase()} stepped in anyway, and the ${predator.toLowerCase()} answered immediately. Territory in the wild is never symbolic — it is enforced. 👀`,
+    `In the ${env}, the boundary was already clear before the response landed. The ${prey.toLowerCase()} stepped into it, and the ${predator.toLowerCase()} answered right away.`,
   "Pack hunting strategy": (predator, prey, env) =>
-    `At first, the ${prey.toLowerCase()} looked free. Then the shape of the trap became clear. In the ${env}, the ${predator.toLowerCase()} is dangerous not because of chaos, but because every movement feels coordinated before the prey even realizes it. 🧠`,
+    `At first, the ${prey.toLowerCase()} looked free. Then the shape of the trap became readable. In the ${env}, the ${predator.toLowerCase()} wins space before full contact.`,
   "Predator vs predator fight": (predator, prey, env) =>
-    `A ${predator.toLowerCase()} and a ${prey.toLowerCase()} in the ${env} creates a different kind of pressure — no easy retreat, no harmless bluff, and almost no margin for error. These confrontations feel rare because both animals understand the cost. 💥`,
+    `A ${predator.toLowerCase()} and a ${prey.toLowerCase()} in the ${env} creates a different kind of pressure. Both animals understand the cost of a bad read, so every movement matters more.`,
   "Escape from danger": (predator, prey, env) =>
-    `Everything in the ${env} changed in an instant. The ${prey.toLowerCase()} had almost no time to process the danger before the ${predator.toLowerCase()} was already moving. In moments like this, survival comes down to one decision made fast enough. ⚡`,
+    `Everything in the ${env} changed in a second. The ${prey.toLowerCase()} had almost no time to process the danger before the ${predator.toLowerCase()} was already moving.`,
 };
 
 // ─────────────────────────────────────────────────────────────
@@ -195,36 +193,47 @@ const CAPTIONS_2026_US_ONLY: Partial<Record<Arc, (predator: string, prey: string
 // 5. CTAs
 // ─────────────────────────────────────────────────────────────
 const VIRAL_CTAS: Partial<Record<Arc, string>> = {
-    "Ambush attack":
-    "At what second did you realize the danger was already there? Comment below 👇 Follow for original wildlife reels.",
-    "Chase and takedown":
-    "Did the prey ever have enough space to recover? Comment below 👇 Follow for daily wildlife tension.",
+  "Ambush attack":
+    "What second made the danger feel obvious to you?",
+  "Chase and takedown":
+    "Did the prey ever have enough space to recover?",
   "Defender stands ground":
-    "Did you expect that stand? Drop your reaction below 👇 Follow for daily wildlife that breaks expectations.",
+    "Did you expect that stand to hold?",
   "Giant vs giant clash":
-    "Who won this clash? Comment your pick below 👇 Follow for giant-animal encounters.",
+    "Which step changed the standoff for you?",
   "Territory dominance battle":
-    "Would you have backed off earlier? Comment below 👇 Follow for raw dominance moments.",
-    "Pack hunting strategy":
-    "When did you notice the escape lane disappearing? Comment below 👇 Follow for smart wildlife tension.",
+    "Would you have backed off earlier?",
+  "Pack hunting strategy":
+    "When did the escape lane start closing?",
   "Predator vs predator fight":
-    "Which animal would you trust more here? Comment below 👇 Follow for rare predator encounters.",
-    "Escape from danger":
-    "Did the prey read the danger in time? Comment below 👇 Follow for instant-impact wildlife reels.",
+    "Which animal looked more in control first?",
+  "Escape from danger":
+    "Did the prey read the danger in time?",
 };
 
 // ─────────────────────────────────────────────────────────────
 // 6. HASHTAGS
 // ─────────────────────────────────────────────────────────────
 const BASE_HASHTAGS: Partial<Record<Arc, string[]>> = {
-  "Ambush attack": ["#wildlife", "#ambush", "#predatorprey"],
-  "Chase and takedown": ["#wildlife", "#chase", "#predatorprey"],
-  "Defender stands ground": ["#wildlife", "#animalbehavior", "#defender"],
-  "Giant vs giant clash": ["#wildlife", "#giantanimals", "#animalclash"],
-  "Territory dominance battle": ["#wildlife", "#territory", "#dominance"],
-  "Pack hunting strategy": ["#wildlife", "#packhunting", "#predatorprey"],
-  "Predator vs predator fight": ["#wildlife", "#predatorfight", "#animalconflict"],
-  "Escape from danger": ["#wildlife", "#escape", "#survival"],
+  "Ambush attack": ["#wildlife", "#ambush", "#usa"],
+  "Chase and takedown": ["#wildlife", "#wildlifechase", "#usa"],
+  "Defender stands ground": ["#wildlife", "#animalbehavior", "#usa"],
+  "Giant vs giant clash": ["#wildlife", "#animalclash", "#usa"],
+  "Territory dominance battle": ["#wildlife", "#territory", "#usa"],
+  "Pack hunting strategy": ["#wildlife", "#packhunting", "#usa"],
+  "Predator vs predator fight": ["#wildlife", "#predatorclash", "#usa"],
+  "Escape from danger": ["#wildlife", "#survival", "#usa"],
+};
+
+const ARC_TAG_LABEL: Record<Arc, string> = {
+  "Ambush attack": "ambush predator",
+  "Chase and takedown": "wildlife chase",
+  "Defender stands ground": "defensive stand",
+  "Giant vs giant clash": "giant animal clash",
+  "Territory dominance battle": "territory clash",
+  "Pack hunting strategy": "pack hunting",
+  "Predator vs predator fight": "predator clash",
+  "Escape from danger": "escape moment",
 };
 
 // ─────────────────────────────────────────────────────────────
@@ -263,6 +272,60 @@ function sanitizeSocialEnv(env: string): string {
     .trim();
 }
 
+function normalizeCopy(text: string): string {
+  return String(text ?? "")
+    .replace(/\s+/g, " ")
+    .replace(/\s+([,.;!?])/g, "$1")
+    .trim();
+}
+
+function splitSentences(text: string): string[] {
+  return (
+    normalizeCopy(text)
+      .match(/[^.!?]+[.!?]?/g)
+      ?.map((sentence) => normalizeCopy(sentence))
+      .filter(Boolean) ?? []
+  );
+}
+
+function trimAtWordBoundary(text: string, maxChars: number): string {
+  const compact = normalizeCopy(text);
+  if (compact.length <= maxChars) return compact;
+
+  const clipped = compact.slice(0, maxChars + 1);
+  const wordSafe = normalizeCopy(
+    clipped.replace(/\s+\S*$/, "").replace(/[,:;/-]+$/g, "")
+  );
+  const fallback = normalizeCopy(compact.slice(0, maxChars).replace(/[,:;/-]+$/g, ""));
+  const resolved = wordSafe.length >= Math.floor(maxChars * 0.6) ? wordSafe : fallback;
+
+  if (!resolved) return compact.slice(0, maxChars).trim();
+  return /[.!?]$/.test(resolved) ? resolved : `${resolved}.`;
+}
+
+function finalizeHookCopy(raw: string): string {
+  const compact = normalizeCopy(raw);
+  const limitedSentences = (splitSentences(compact).slice(0, 2).join(" ") || compact).trim();
+  return trimAtWordBoundary(limitedSentences, 96);
+}
+
+function toHashtag(value: string): string {
+  const compact = String(value ?? "")
+    .toLowerCase()
+    .replace(/[^a-z0-9\s]/g, "")
+    .replace(/\s+/g, "")
+    .trim();
+  return compact ? `#${compact}` : "";
+}
+
+function toTag(value: string): string {
+  return String(value ?? "")
+    .toLowerCase()
+    .replace(/[^a-z0-9\s-]/g, " ")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
 // ─────────────────────────────────────────────────────────────
 // PUBLIC BUILDER FUNCTIONS
 // ─────────────────────────────────────────────────────────────
@@ -273,19 +336,19 @@ export function buildHook(predator: string, prey: string, arc: Arc): string {
     VIRAL_HOOKS[arc]?.(predator, prey) ??
     `${predator} vs ${prey} — one wrong move changes everything.`;
 
-  return raw.length > 72 ? `${raw.slice(0, 69)}...` : raw;
+  return finalizeHookCopy(raw);
 }
 
 /** 3-variant 2026 hooks for A/B testing. Order: danger, curiosity, reversal. */
 export function build2026Hook(predator: string, prey: string, arc: Arc): string[] {
   const hooks =
     HOOKS_2026[arc]?.(predator, prey) ?? [
-      `${predator} vs ${prey} — one wrong move changes everything. 🔥`,
-      `Nature gives almost no warning. 👀`,
-      `This moment turned in less than a second. ⚡`,
+      `${predator} and ${prey} met too close. One move changed the whole read.`,
+      `The space looked open until it closed all at once.`,
+      `It looked settled for a second. Then the pressure flipped.`,
     ];
 
-  return hooks.map((hook) => (hook.length > 78 ? `${hook.slice(0, 75)}...` : hook));
+  return hooks.map((hook) => finalizeHookCopy(hook));
 }
 
 /** Named 2026 hook family selector for danger / curiosity / reversal. */
@@ -304,22 +367,21 @@ export function build2026HookByFamily(
 export function buildCTA(arc: Arc): string {
   return (
     VIRAL_CTAS[arc] ??
-    "Who wins this battle? Comment your guess 👇 Follow for daily wildlife cinema."
+    "What moment changed the outcome for you?"
   );
 }
 
 function finalizeShortCaption(raw: string): string {
-  const compact = String(raw ?? "").replace(/\s+/g, " ").trim();
-  const sentences =
-    compact.match(/[^.!?]+[.!?]?/g)?.map((sentence) => sentence.trim()).filter(Boolean) ?? [];
-  const cappedSentenceCount = (sentences.length ? sentences : [compact]).slice(0, 2).join(" ");
+  const compact = normalizeCopy(raw);
+  const sentences = splitSentences(compact);
+  const limited = (sentences.length ? sentences : [compact]).slice(0, 2).join(" ");
 
-  if (cappedSentenceCount.length <= 150) return cappedSentenceCount;
+  if (limited.length <= 150) return limited;
 
-  const firstSentence = sentences[0] ?? compact;
+  const firstSentence = sentences[0] ?? limited;
   if (firstSentence.length <= 150) return firstSentence;
 
-  return `${firstSentence.slice(0, 147).trimEnd()}...`;
+  return trimAtWordBoundary(firstSentence, 150);
 }
 
 /** Short caption variant — publish-safe by default, trimmed to 150 chars */
@@ -385,30 +447,57 @@ export function buildLongCaption(
   return build2026Caption(predator, prey, env, arc, options);
 }
 
-function clampHashtagCount(count?: 3 | 4 | 5): 3 | 4 | 5 {
-  return count === 3 || count === 4 || count === 5 ? count : 5;
+function getArcHashtag(arc: Arc): string {
+  return (
+    {
+      "Ambush attack": "#ambush",
+      "Chase and takedown": "#wildlifechase",
+      "Defender stands ground": "#animalbehavior",
+      "Giant vs giant clash": "#animalclash",
+      "Territory dominance battle": "#territory",
+      "Pack hunting strategy": "#packhunting",
+      "Predator vs predator fight": "#predatorclash",
+      "Escape from danger": "#survival",
+    }[arc] ?? "#wildlife"
+  );
 }
 
-/** Hashtag string — default output stays between 3 and 5 total tags. */
+/** Hashtag string — always returns exactly 5 clean hashtags. */
 export function buildHashtags(
   predator: string,
   prey: string,
   arc: Arc,
   options: HashtagOptions = {}
 ): string {
-  const predatorTag = `#${predator.toLowerCase().replace(/\s+/g, "")}`;
-  const preyTag = `#${prey.toLowerCase().replace(/\s+/g, "")}`;
-  const limit = clampHashtagCount(options.count);
-  const baseTags = BASE_HASHTAGS[arc] ?? ["#wildlife", "#nature", "#animalbehavior"];
+  void options;
 
+  const baseTags = BASE_HASHTAGS[arc] ?? ["#wildlife", getArcHashtag(arc), "#usa"];
   const tags = [
     baseTags[0] ?? "#wildlife",
-    predatorTag,
-    preyTag,
-    ...baseTags.slice(1),
-  ];
+    toHashtag(predator),
+    toHashtag(prey),
+    getArcHashtag(arc),
+    baseTags[2] ?? "#usa",
+  ].filter(Boolean);
 
-  return [...new Set(tags)].slice(0, limit).join(" ");
+  return [...new Set(tags)].slice(0, 5).join(" ");
+}
+
+/** Separate Facebook-style tags field — clean keywords, not hashtags. */
+export function buildTags(
+  predator: string,
+  prey: string,
+  arc: Arc
+): string {
+  const tags = [
+    toTag(predator),
+    toTag(prey),
+    ARC_TAG_LABEL[arc],
+    "wildlife",
+    "usa nature",
+  ].filter(Boolean);
+
+  return [...new Set(tags)].slice(0, 5).join(", ");
 }
 
 // ─────────────────────────────────────────────────────────────
@@ -424,11 +513,14 @@ export function buildPlatformPack(
   const hooks = build2026Hook(predator, prey, arc);
   const shortCaption = buildShortCaption(predator, prey, cleanEnv, arc, { mode: "us-only" });
   const longCaption = buildLongCaption(predator, prey, cleanEnv, arc, { mode: "us-only" });
+  const hashtags = buildHashtags(predator, prey, arc, { count: 5 });
+  const tags = buildTags(predator, prey, arc);
 
   const facebook: FacebookPack = {
     hook: hooks[0],
     caption: longCaption,
-    hashtags: buildHashtags(predator, prey, arc, { count: 5 }),
+    hashtags,
+    tags,
         bestTime: "Test weekday 8–10 AM ET and 12–3 PM ET first, then refine with Facebook Insights while prioritizing reels with fast readable openings.",
         cmpNote:
       "Facebook Content Monetization beta is invite-only. Eligible formats include reels, photos, stories, and text posts. Meta prioritizes original content and stronger viewer retention signals.",
@@ -439,7 +531,7 @@ export function buildPlatformPack(
   const instagram: InstagramPack = {
     hook: hooks[1],
     caption: shortCaption,
-    hashtags: buildHashtags(predator, prey, arc, { count: 4 }),
+    hashtags,
     bestTime: "Test afternoon and evening windows, then optimize from account Insights while keeping the opening frame instantly readable.",
     strategyNote: "Keep the first line punchy and make sure the opening frame shows readable pressure immediately.",
   };
@@ -447,7 +539,7 @@ export function buildPlatformPack(
   const tiktok: TikTokPack = {
     hook: hooks[2],
     caption: shortCaption,
-    hashtags: buildHashtags(predator, prey, arc, { count: 4 }),
+    hashtags,
     bestTime: "Test late afternoon to evening and refine using retention, not only views, especially on clips with immediate visible tension.",
     strategyNote: "Use larger caption beats, faster opening language, and no slow setup before the tension is visible.",
   };
@@ -455,7 +547,7 @@ export function buildPlatformPack(
   const youtube_shorts: YouTubeShortsPack = {
     title: `${predator} vs ${prey} — ${arc} | Wild Stories TV`,
     description: longCaption,
-    tags: `wildlife, ${predator.toLowerCase()}, ${prey.toLowerCase()}, ${arc.toLowerCase()}, nature documentary, animal behavior, ai wildlife`,
+    tags,
     bestTime: "Keep a consistent cadence and judge by retention plus returning viewers.",
     strategyNote: "Write a searchable title and make the opening seconds instantly readable before the sequence escalates.",
   };

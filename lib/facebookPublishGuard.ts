@@ -6,7 +6,7 @@ export interface PublishGuardInput {
   originalityConfirmed: boolean;
 }
 
-const MAX_HASHTAGS = 5;
+const REQUIRED_HASHTAGS = 5;
 const MAX_CAPTION_LENGTH = 180;
 
 export function runFacebookPublishGuard(input: PublishGuardInput): PublishGuardReport {
@@ -23,8 +23,8 @@ export function runFacebookPublishGuard(input: PublishGuardInput): PublishGuardR
     warnings.push('Caption is too long for the default Facebook-safe mode.');
   }
 
-  if (input.hashtags.length > MAX_HASHTAGS) {
-    warnings.push('Too many hashtags for the Facebook-safe mode.');
+  if (input.hashtags.length !== REQUIRED_HASHTAGS) {
+    warnings.push("Hashtag count should stay at exactly 5 for the default Facebook-safe mode.");
   }
 
   const unique = new Set(input.hashtags.map((tag) => tag.toLowerCase()));
@@ -36,7 +36,7 @@ export function runFacebookPublishGuard(input: PublishGuardInput): PublishGuardR
   const fixes = [
     !input.originalityConfirmed ? "Confirm originality before publishing." : "",
     input.caption.length > MAX_CAPTION_LENGTH ? "Trim the publish caption for faster Facebook-safe readability." : "",
-    input.hashtags.length > MAX_HASHTAGS ? "Reduce hashtags to 3 to 5 tags total." : "",
+    input.hashtags.length !== REQUIRED_HASHTAGS ? "Use exactly 5 clean hashtags." : "",
     new Set(input.hashtags.map((tag) => tag.toLowerCase())).size !== input.hashtags.length
       ? "Remove duplicate hashtags."
       : "",

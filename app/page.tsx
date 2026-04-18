@@ -18,6 +18,7 @@ import type {
   AnimalVibe,
   Weather,
   HookFamily,
+  PipelineStyle,
   RealismMode,
   GeneratedPackage,
   MediaAnalysisResult,
@@ -26,7 +27,6 @@ import type {
   KlingModel,
   CustomPredatorForm,
   PromptVersion,
-  ImagePromptTarget,
   HabitatPreset,
 } from "@/types";
 
@@ -92,6 +92,7 @@ import {
   buildLongCaption,
   buildCTA,
   buildHashtags,
+  buildTags,
   buildPlatformPack,
   buildSEOTitle,
   buildAltTextPrompt,
@@ -164,7 +165,7 @@ type PublishFlowSummary = {
   hookFamily: HookFamily;
   fastPublishMode: boolean;
   strictOriginalityGuard: boolean;
-  pipelineStyle: "4-shot" | "5-shot";
+  pipelineStyle: PipelineStyle;
   primaryHook: string;
   usAudienceScore: ReturnType<typeof scoreUSAudience>;
   openingFrameScore: ReturnType<typeof scoreOpeningFrame>;
@@ -174,16 +175,11 @@ type PublishFlowSummary = {
 
 const HOOK_FAMILY_ORDER: HookFamily[] = ["danger", "curiosity", "reversal"];
 
-const ARC_SCENE_CONTEXT: Record<Arc, string> = {
-  "Ambush attack": "ambush pressure",
-  "Predator vs predator fight": "predator clash",
-  "Chase and takedown": "chase pressure",
-  "Escape from danger": "escape pressure",
-  "Territory dominance battle": "territory pressure",
-  "Pack hunting strategy": "pack pressure",
-  "Defender stands ground": "stand-ground pressure",
-  "Giant vs giant clash": "giant-animal clash",
-};
+function formatPipelineStyleLabel(style: PipelineStyle): string {
+  return style === "long-hybrid-4-shot"
+    ? "Hybrid 4-shot (50s)"
+    : "Hybrid 4-shot";
+}
 
 function buildSceneLeadSentence(
   predator: string,
@@ -274,7 +270,17 @@ function finalizeAutoSceneDescription(raw: string): string {
   const firstSentence = sentences[0] ?? compact;
   if (firstSentence.length <= 150) return firstSentence;
 
-  return `${firstSentence.slice(0, 147).trimEnd()}...`;
+  const words = firstSentence.split(/\s+/).filter(Boolean);
+  let wordSafe = "";
+  for (const word of words) {
+    const next = wordSafe ? `${wordSafe} ${word}` : word;
+    if (next.length > 150) break;
+    wordSafe = next;
+  }
+  const resolved = wordSafe.replace(/[,:;/-]+$/g, "").trim();
+
+  if (!resolved) return firstSentence.trim();
+  return /[.!?]$/.test(resolved) ? resolved : `${resolved}.`;
 }
 
 function buildAutoSceneDescription({
@@ -295,12 +301,12 @@ function buildAutoSceneDescription({
   const variantIndex = Math.abs(variant) % 3;
   const lead = buildSceneLeadSentence(predator, prey, arc, variantIndex);
   const habitatLabel = compactSceneHabitatLabel(habitat, environment);
-  const contextLabel = ARC_SCENE_CONTEXT[arc] ?? "wildlife pressure";
+  const safeHabitatLabel = habitatLabel || "wildlife habitat";
   const context = [
-    `Clean readable U.S. ${contextLabel} setup.`,
-    `Clear ${habitatLabel} setup for U.S. Facebook Reels.`,
-    `Fast U.S. wildlife opener with clean ${contextLabel}.`,
-  ][variantIndex] ?? `Clean readable U.S. ${contextLabel} setup.`;
+    "Clear U.S. wildlife setup for fast Facebook viewing.",
+    `Readable ${safeHabitatLabel} setup for a U.S. wildlife reel.`,
+    "Fast U.S. wildlife opener with clear readable tension.",
+  ][variantIndex] ?? "Clear U.S. wildlife setup for fast Facebook viewing.";
 
   return finalizeAutoSceneDescription(`${lead} ${context}`);
 }
@@ -527,7 +533,6 @@ export default function Page() {
   // STEP 2
   const [runwayModel, setRunwayModel] = useState<RunwayModel>(RUNWAY_MODELS[0]);
   const [klingModel, setKlingModel] = useState<KlingModel>(KLING_MODELS[0]);
-  const [imagePromptTarget, setImagePromptTarget] = useState<ImagePromptTarget>("NANO_BANANA_2");
   const [realismMode, setRealismMode] = useState<RealismMode>("Reference Locked");
   const [motionOnlyI2V, setMotionOnlyI2V] = useState(true);
   const [referenceLock, setReferenceLock] = useState(true);
@@ -647,7 +652,8 @@ export default function Page() {
       }),
     [predator, prey, previewArc, habitat, finalEnvironment, sceneDescriptionVariant]
   );
-  const selectedPipelineStyle = durationLane === "long" ? "5-shot" : "4-shot";
+  const selectedPipelineStyle: PipelineStyle =
+    durationLane === "long" ? "long-hybrid-4-shot" : "4-shot";
   const captionMode = marketMode === "US_ONLY" ? "us-only" : "default";
   const previewHooks = useMemo(
     () => build2026Hook(predator, prey, previewArc),
@@ -671,9 +677,13 @@ export default function Page() {
   const previewHashtags = useMemo(
     () =>
       buildHashtags(predator, prey, previewArc, {
-        count: fastPublishMode ? 4 : durationLane === "long" ? 5 : 4,
+        count: 5,
       }),
-    [fastPublishMode, durationLane, predator, prey, previewArc]
+    [predator, prey, previewArc]
+  );
+  const previewTags = useMemo(
+    () => buildTags(predator, prey, previewArc),
+    [predator, prey, previewArc]
   );
   const previewHashtagList = useMemo(
     () => previewHashtags.split(/\s+/).filter(Boolean),
@@ -930,6 +940,7 @@ export default function Page() {
       const publishCaption =
         fastPublishMode || durationLane === "short" ? shortCaption : longCaption;
       const hashtags = previewHashtags;
+      const tags = previewTags;
       const recommendedHookIndex = previewRecommendedHookIndex;
       const hookFamily = previewHookFamily;
 
@@ -978,7 +989,7 @@ export default function Page() {
       });
       const performanceSnapshot = usViewsModeReport.performanceSnapshot;
 
-      const imagePrompt = buildImagePrompt(predator, prey, finalEnvironment, finalArc, preset.lighting, preset.cameraGear, preset.texture, depthMode, weather, emotionalTone, animalVibe, sceneInject, quality, imagePromptTarget);
+      const imagePrompt = buildImagePrompt(predator, prey, finalEnvironment, finalArc, preset.lighting, preset.cameraGear, preset.texture, depthMode, weather, emotionalTone, animalVibe, sceneInject, quality, "NANO_BANANA_2");
       const shotImagePlan = buildShotImagePlan(predator, prey, finalEnvironment, finalArc, weather, quality);
       const runway = buildRunwayShots(predator, prey, finalEnvironment, finalArc, weather, runwayModel, emotionalTone, animalVibe, sceneInject, quality);
       const seedance = buildSeedanceShots(predator, prey, finalEnvironment, finalArc, weather, emotionalTone, animalVibe, sceneInject, quality);
@@ -986,6 +997,7 @@ export default function Page() {
       const fourShotWorkflow = buildFourShotWorkflow({
         predator,
         prey,
+        durationLane,
         env: finalEnvironment,
         arc: finalArc,
         weather,
@@ -1016,6 +1028,38 @@ export default function Page() {
       const fiveShotViral = buildFiveShotViral(predator, prey, finalEnvironment, finalArc, weather, runwayModel, klingModel, emotionalTone, animalVibe, quality);
       const watchTimeReport = buildWatchTimeReport(selectedPipelineStyle, 2);
       const motionStrength = arcMotionStrength[finalArc] ?? 70;
+      const primaryShotDurations =
+        durationLane === "long"
+          ? ["0–10s", "10–25s", "25–40s", "40–50s"]
+          : ["0–4s", "4–9s", "9–15s", "15–20s"];
+      const primaryShotTitles =
+        durationLane === "long"
+          ? [
+              "Shot 1 — Opening Tension",
+              "Shot 2 — Pressure Build",
+              "Shot 3 — Main Action Payoff",
+              "Shot 4 — Aftermath Resolve",
+            ]
+          : [
+              "Shot 1 — Opening Tension",
+              "Shot 2 — Pressure Build",
+              "Shot 3 — Peak Action",
+              "Shot 4 — Resolved Tension",
+            ];
+      const primaryShotWhy =
+        durationLane === "long"
+          ? [
+              "Use Image 1 from the master image for the readable 10-second opening tension and first-frame clarity beat.",
+              "Use Image 2 edited from Shot 1 image for the slower 15-second pressure build with wider spacing collapse and stronger continuity-safe body language.",
+              "Use Image 3 edited from Shot 2 image for the 15-second main action payoff with the clearest readable force transfer.",
+              "Use Image 4 edited from Shot 3 image for the 10-second aftermath hold, winner/retreat resolve, and clean final-frame handoff.",
+            ]
+          : [
+              "Use Image 1 from the master image for the clean first-frame opening.",
+              "Use Image 2 edited from Shot 1 image for a stronger physics-safe pressure build without losing identity.",
+              "Use Image 3 edited from Shot 2 image for the strongest full-body action beat.",
+              "Use Image 4 edited from Shot 3 image for the readable aftermath or final tension hold.",
+            ];
       const soundDesignPack = buildSoundDesignPack(predator, prey, finalEnvironment, finalArc, weather, klingModel);
       const animalBehaviorResult = getAnimalBehavior(predator);
       // 5. Final output
@@ -1029,17 +1073,17 @@ export default function Page() {
         seedanceWorkflowGuide: seedance.workflowGuide,
         klingNative15s, klingSixShot, motionStrength, capCutPlan, clipChaining,
         hook: finalHook, hook2026: finalHook2026 ?? [], recommendedHookIndex,
-        caption: shortCaption ?? "", caption2026: longCaption ?? "", cta, hashtags, tenIdeas,
+        caption: shortCaption ?? "", caption2026: longCaption ?? "", cta, hashtags, tags, tenIdeas,
         shotPlan: [
-          { engine: "RUNWAY", title: "Shot 1 — Opening Tension", prompt: fourShotWorkflow.shot1, motionStrength, why: "Use Image 1 from the master image for the clean first-frame opening." },
-          { engine: "KLING", title: "Shot 2 — Pressure Build", prompt: fourShotWorkflow.shot2, motionStrength, why: "Use Image 2 edited from Shot 1 image for a stronger physics-safe pressure build without losing identity." },
-          { engine: "KLING", title: "Shot 3 — Peak Action", prompt: fourShotWorkflow.shot3, motionStrength, why: "Use Image 3 edited from Shot 2 image for the strongest full-body action beat." },
-          { engine: "RUNWAY", title: "Shot 4 — Resolved Tension", prompt: fourShotWorkflow.shot4, motionStrength, why: "Use Image 4 edited from Shot 3 image for the readable aftermath or final tension hold." },
+          { engine: "RUNWAY", title: primaryShotTitles[0], prompt: fourShotWorkflow.shot1, motionStrength, durationLabel: primaryShotDurations[0], why: primaryShotWhy[0] },
+          { engine: "KLING", title: primaryShotTitles[1], prompt: fourShotWorkflow.shot2, motionStrength, durationLabel: primaryShotDurations[1], why: primaryShotWhy[1] },
+          { engine: "KLING", title: primaryShotTitles[2], prompt: fourShotWorkflow.shot3, motionStrength, durationLabel: primaryShotDurations[2], why: primaryShotWhy[2] },
+          { engine: "RUNWAY", title: primaryShotTitles[3], prompt: fourShotWorkflow.shot4, motionStrength, durationLabel: primaryShotDurations[3], why: primaryShotWhy[3] },
         ],
         runwayBundle: [runway?.shot1 ?? "", runway?.shot2 ?? "", runway?.shot3 ?? "", runway?.shot4 ?? ""].join("\n\n---\n\n"),
         klingBundle: [kling?.shot1 ?? "", kling?.shot2 ?? "", kling?.shot3 ?? "", kling?.shot4 ?? ""].join("\n\n---\n\n"),
-        routingNote: selectedPipelineStyle === "5-shot"
-          ? `Primary workflow: hybrid 4-shot routing uses Runway ${runwayModel} for Shots 1 and 4, and Kling ${klingModel} for Shots 2 and 3. Long lane keeps the stronger 5-shot hold, build, and payoff guidance active through watch-time, CapCut, and five-shot story outputs.`
+        routingNote: selectedPipelineStyle === "long-hybrid-4-shot"
+          ? `Primary workflow: true 50-second hybrid 4-shot routing uses Runway ${runwayModel} for Shot 1 (10s) and Shot 4 (10s), and Kling ${klingModel} for Shot 2 (15s) and Shot 3 (15s). Long lane holds the setup longer, builds pressure more gradually, lands one clearer payoff beat, and preserves a cleaner aftermath resolve.`
           : `Primary workflow: hybrid 4-shot routing uses Runway ${runwayModel} for Shots 1 and 4, and Kling ${klingModel} for Shots 2 and 3. Optional bundles: Seedance 2.0, full Runway 4-shot, and full Kling 4-shot outputs remain available.`,
         pipelineStyle: selectedPipelineStyle, fiveShotCinematic, fiveShotViral, watchTimeReport, platformPack,
         seoTitle, altTextPrompt, qualitySummary, referenceWorkflow, naturalismChecklist,
@@ -1576,7 +1620,7 @@ export default function Page() {
                           className="w-full rounded-xl border border-gray-200 bg-gray-50 px-3 py-2.5 text-sm font-medium text-gray-900"
                         >
                           <option value="short">Short — 18–30 sec</option>
-                          <option value="long">Long — 45–75 sec</option>
+                          <option value="long">Long — 50 sec hybrid</option>
                         </select>
                       </div>
                       <div>
@@ -1694,17 +1738,13 @@ export default function Page() {
                       heroVeo={heroVeo} setHeroVeo={setHeroVeo}
                     />
                     <div className="mt-4 border-t border-gray-100 pt-4">
-                      <label className="mb-1.5 block text-[11px] font-medium text-gray-500">Image Prompt Target</label>
-                      <select
-                        value={imagePromptTarget}
-                        onChange={(e) => setImagePromptTarget(e.target.value as ImagePromptTarget)}
-                        className="w-full rounded-xl border border-gray-200 bg-gray-50 px-3 py-2.5 text-sm font-medium text-gray-900"
-                      >
-                        <option value="NANO_BANANA_2">Nano Banana 2 — Gemini 3.1 Flash Image (default)</option>
-                        <option value="NB2">NB2 (legacy Gemini 2.5 Flash Image)</option>
-                        <option value="RUNWAY">Runway Reference</option>
-                        <option value="MJ">Midjourney</option>
-                      </select>
+                      <label className="mb-1.5 block text-[11px] font-medium text-gray-500">Image Prompt Engine</label>
+                      <div className="rounded-xl border border-gray-200 bg-gray-50 px-3 py-2.5 text-sm font-medium text-gray-900">
+                        Nano Banana 2 — Gemini image master prompt
+                      </div>
+                      <div className="mt-2 text-xs leading-relaxed text-gray-500">
+                        Image prompt generation is fixed to the Nano Banana path. Runway and Kling stay motion/video only.
+                      </div>
                     </div>
 
                     {/* Reference tags */}
@@ -1950,7 +1990,7 @@ export default function Page() {
                         <div className="rounded-2xl border border-gray-200 bg-white p-4 shadow-sm shadow-gray-200/60">
                           <div className="text-[10px] font-semibold uppercase tracking-[0.1em] text-gray-400">5. Final Output</div>
                           <div className="mt-2 text-sm font-semibold text-gray-900">
-                            {publishFlowSummary.durationLane.toUpperCase()} • {publishFlowSummary.pipelineStyle}
+                            {publishFlowSummary.durationLane.toUpperCase()} • {formatPipelineStyleLabel(publishFlowSummary.pipelineStyle)}
                           </div>
                           <div className="mt-1 text-xs text-gray-500">
                             Hook: {publishFlowSummary.hookFamily} {publishFlowSummary.fastPublishMode ? "• Fast publish" : ""}

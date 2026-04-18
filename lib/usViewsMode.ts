@@ -63,7 +63,7 @@ export function buildUSViewsModeReport(input: USViewsModeInput): USViewsModeRepo
       ? "Rebuild the opening frame so both subjects and the threat read immediately."
       : "",
     !publish.isPass
-      ? "Tighten the caption, keep hashtags lean, and confirm originality before publishing."
+      ? "Tighten the caption, use exactly 5 clean hashtags, and confirm originality before publishing."
       : "",
     !performanceReady
       ? "Current performance memory does not support this publish setup yet. Use the safer lane or stronger hook family."

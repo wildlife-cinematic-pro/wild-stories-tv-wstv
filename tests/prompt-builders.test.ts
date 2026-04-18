@@ -15,7 +15,7 @@ import {
   validateEngineConstraints,
 } from "@/lib/prompt-builders";
 
-describe("buildImagePrompt – engine-aware MJ params", () => {
+describe("buildImagePrompt – Nano Banana image path", () => {
   const args = {
     predator: "Lion",
     prey: "Zebra",
@@ -92,7 +92,7 @@ describe("buildImagePrompt – engine-aware MJ params", () => {
     expect(hasMJParams(p)).toBe(false);
   });
 
-  it("appends MJ params ONLY when target is MJ", () => {
+  it("keeps the Nano Banana path even when a legacy MJ target is passed", () => {
     const p = buildImagePrompt(
       args.predator,
       args.prey,
@@ -109,12 +109,10 @@ describe("buildImagePrompt – engine-aware MJ params", () => {
       undefined,
       "MJ"
     );
-    expect(/--ar\s+9:16/i.test(p)).toBe(true);
-    expect(/--style\s+raw/i.test(p)).toBe(true);
-    expect(/--v\s+6\.1/i.test(p)).toBe(true);
+    expect(hasMJParams(p)).toBe(false);
   });
 
-  it("does NOT duplicate MJ params if prompt already includes them", () => {
+  it("strips legacy MJ flags from scene descriptions", () => {
     const p = buildImagePrompt(
       args.predator,
       args.prey,
@@ -131,8 +129,8 @@ describe("buildImagePrompt – engine-aware MJ params", () => {
       undefined,
       "MJ"
     );
-    expect((p.match(/--ar\s+9:16/gi) ?? []).length).toBe(1);
-    expect((p.match(/--style\s+raw/gi) ?? []).length).toBe(1);
+    expect(/--ar\s+9:16/i.test(p)).toBe(false);
+    expect(/--style\s+raw/i.test(p)).toBe(false);
   });
 });
 
@@ -198,11 +196,10 @@ describe("Seedance prompt builder", () => {
       quality
     );
 
-    expect(shots.shot1).toContain("Seedance 2.0 guidance");
-    expect(shots.shot1).toContain("negative prompts");
+    expect(shots.shot1).toContain("Conservative WSTV Seedance rule");
     expect(shots.shot2).toContain("═══ PASTE-READY SEEDANCE PROMPT");
     expect(shots.shot4).toContain("Suggested duration: 5 seconds.");
-    expect(shots.workflowGuide).toContain("subject movement + background movement + camera movement");
+    expect(shots.workflowGuide).toContain("WSTV fallback prompt structure: subject movement + background movement + camera movement");
     expect(shots.workflowGuide).toContain("Default WSTV workflow: generate 4 separate video shots.");
     expect(shots.workflowGuide).toContain("Cut to");
   });

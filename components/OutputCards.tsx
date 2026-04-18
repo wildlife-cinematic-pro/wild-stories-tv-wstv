@@ -576,7 +576,7 @@ export function FiveShotPanel({
     <div className="rounded-xl border-2 border-indigo-200 bg-indigo-50 p-4 shadow-sm">
       <div className="mb-3 flex flex-wrap items-center gap-2">
         <span className="text-sm font-bold text-indigo-900">
-          🎬 5-Shot Pipeline — Watch Time Optimizer
+          🎬 Optional 5-Shot Story Pack
         </span>
         <span className="rounded bg-indigo-100 px-2 py-0.5 text-xs font-bold text-indigo-700">
           {plan.totalDuration}
@@ -975,15 +975,15 @@ export function WatchTimePanel({ report }: { report: WatchTimeReport }) {
 
       <div className="mb-3 grid gap-2 md:grid-cols-3">
         <div className="rounded-lg border border-red-200 bg-white p-3 text-center">
-          <p className="text-xs text-gray-400">Hybrid 4-Shot Primary</p>
-          <p className="text-xl font-bold text-red-500">{report.currentDuration}</p>
+          <p className="text-xs text-gray-400">Short Hybrid Lane</p>
+          <p className="text-xl font-bold text-red-500">18–24s</p>
           <p className="text-xs text-gray-400">Fast readable short-lane default</p>
         </div>
         <div className="rounded-lg border border-green-300 bg-white p-3 text-center">
-          <p className="text-xs text-gray-400">Long Lane Story Build</p>
-          <p className="text-xl font-bold text-green-600">45–75s</p>
+          <p className="text-xs text-gray-400">Long Hybrid Lane</p>
+          <p className="text-xl font-bold text-green-600">50s</p>
           <p className="text-xs font-semibold text-green-600">
-            ✓ More hold, build, and payoff
+            ✓ Runway 10 / Kling 15 / Kling 15 / Runway 10
           </p>
         </div>
         <div className="rounded-lg border border-indigo-200 bg-white p-3 text-center">
@@ -1493,21 +1493,33 @@ export function PlatformPackPanel({
           </button>
         </div>
 
-        <div className="rounded-lg bg-gray-50 p-3">
-          <p className="text-xs font-bold text-gray-500">
-            {"tags" in data ? "Tags" : "Hashtags"}
-          </p>
-          <p className="mt-1 text-xs text-gray-700">
-            {"tags" in data ? data.tags : data.hashtags}
-          </p>
-          <button
-            onClick={() => onCopy("tags" in data ? data.tags : data.hashtags)}
-            className="mt-2 rounded bg-gray-900 px-2 py-1 text-xs text-white"
-            type="button"
-          >
-            Copy
-          </button>
-        </div>
+        {"hashtags" in data && data.hashtags ? (
+          <div className="rounded-lg bg-gray-50 p-3">
+            <p className="text-xs font-bold text-gray-500">Hashtags</p>
+            <p className="mt-1 text-xs text-gray-700">{data.hashtags}</p>
+            <button
+              onClick={() => onCopy(data.hashtags)}
+              className="mt-2 rounded bg-gray-900 px-2 py-1 text-xs text-white"
+              type="button"
+            >
+              Copy
+            </button>
+          </div>
+        ) : null}
+
+        {"tags" in data && typeof data.tags === "string" && data.tags.trim() ? (
+          <div className="rounded-lg bg-gray-50 p-3">
+            <p className="text-xs font-bold text-gray-500">Tags</p>
+            <p className="mt-1 text-xs text-gray-700">{data.tags}</p>
+            <button
+              onClick={() => onCopy(String(data.tags))}
+              className="mt-2 rounded bg-gray-900 px-2 py-1 text-xs text-white"
+              type="button"
+            >
+              Copy
+            </button>
+          </div>
+        ) : null}
 
         <div className="rounded-lg border border-green-200 bg-green-50 p-3 text-xs text-green-700">
           🕐 <strong>Best time to test:</strong> {data.bestTime}
@@ -2030,9 +2042,9 @@ function WorkflowPromptMap({
     const imageStep: WorkflowItem = {
       step: 1,
       title: "Image Prompt",
-      badge: "NB2 / Flux / Midjourney",
+      badge: "Nano Banana 2 / Gemini",
       color: imageCardColor,
-      help: "Generate the master hero still first, then use that image or a continuity-safe edited frame as the visual base for the next engine.",
+      help: "Generate the master hero still first with the Nano Banana image prompt, then use that image or a continuity-safe edited frame as the visual base for the next engine.",
       value: imagePrompt,
       actions: [
         { label: "Copy Image Prompt", value: imagePrompt },
@@ -2055,7 +2067,7 @@ function WorkflowPromptMap({
     const klingGuide = [
       "OPTIONAL KLING 4-SHOT WORKFLOW",
       "Use this when you intentionally want the optional full Kling 4-shot bundle.",
-      "1. Use the continuity image as the visual 3D anchor and keep visual restatement light.",
+      "1. Use the continuity image as the motion reference and keep visual restatement light.",
       "2. Enable Bind Subject when identity lock matters.",
       "3. Default WSTV Kling flow is 4 separate shots at 5 seconds each.",
       "4. Keep framing wide and full-body readable across all four shots.",
@@ -2124,9 +2136,9 @@ function WorkflowPromptMap({
           {
             step: 6,
             title: "Seedance Prompt Rules",
-            badge: "Official guide",
+            badge: "WSTV guide",
             color: guideColor,
-            help: "Use these rules while editing Seedance 2.0 prompts. Negative prompts do not work.",
+            help: "Use these rules while editing Seedance 2.0 prompts. Public prompt guidance is limited, so keep the wording simple, movement-led, and continuity-safe.",
             value: seedanceWorkflowGuide,
             actions: [{ label: "Copy Seedance Rules", value: seedanceWorkflowGuide }],
           },
@@ -2192,7 +2204,7 @@ function WorkflowPromptMap({
           "Image Prompt → Master Still → Kling Shot 1 Opening Tension → Kling Shot 2 Pressure Build → Kling Shot 3 Peak Action → Kling Shot 4 Resolved Tension → CapCut",
         bannerTitle: "Optional Kling bundle",
         bannerBody:
-          "Optional full Kling 4-shot bundle. Kling uses the image as a 3D anchor. Keep wide full-body readability, enable Bind Subject when needed, and use 4 separate 5-second shots.",
+          "Optional full Kling 4-shot bundle. Keep prompts movement-led, keep wide full-body readability, enable Bind Subject when needed, and use 4 separate 5-second shots.",
         steps: [
           imageStep,
           {
@@ -2609,12 +2621,14 @@ export default function OutputCards({
     return (data.shotPlan ?? []).map((item, index) => {
       const title = safeStr(item.title) || `Shot ${index + 1}`;
       const note = title.split("—")[1]?.trim() ?? "";
+      const durationLabel = safeStr(item.durationLabel);
       const isRunway = item.engine === "RUNWAY";
 
       return {
         ...item,
         title,
         note,
+        durationLabel,
         cardEngine: isRunway ? ("runway" as const) : ("kling" as const),
         engineLabel: isRunway ? "Runway" : "Kling",
         color: isRunway
@@ -2623,6 +2637,18 @@ export default function OutputCards({
       };
     });
   }, [data.shotPlan]);
+
+  const isLongHybridLane =
+    data.durationLane === "long" || data.pipelineStyle === "long-hybrid-4-shot";
+  const hybridRouteBadge = isLongHybridLane
+    ? "LONG • 50s total"
+    : "SHORT • Hybrid 4-shot";
+  const hybridRouteTiming = isLongHybridLane
+    ? "Runway 10 / Kling 15 / Kling 15 / Runway 10"
+    : "Runway 1 → Kling 2-3 → Runway 4";
+  const hybridRouteSummary = isLongHybridLane
+    ? "This long lane keeps the same continuity-safe hybrid route, but gives Shot 1 a slower readable setup, Shot 2-3 a stronger 15-second build/payoff, and Shot 4 a cleaner aftermath resolve."
+    : "This primary route keeps the opening and resolve cleaner in Runway, while using Kling for the middle pressure/action beats. It matches the main mixed-engine WSTV workflow.";
 
   const publishReadiness = useMemo(() => {
     const usViewsModeReport = (data.usViewsModeReport ??
@@ -2895,6 +2921,8 @@ export default function OutputCards({
       `CTA\n${safeStr((data as Record<string, unknown>).cta)}`,
       "",
       `HASHTAGS\n${safeStr((data as Record<string, unknown>).hashtags)}`,
+      "",
+      `TAGS\n${safeStr((data as Record<string, unknown>).tags)}`,
     ].join("\n");
   }
 
@@ -3221,9 +3249,9 @@ export default function OutputCards({
                   Video workspace
                 </div>
                 <p className="mt-1 max-w-3xl text-xs leading-relaxed text-gray-600">
-                  Default WSTV video setup is the primary hybrid 4-shot
-                  path. Seedance 2.0, full Runway 4-shot, and full Kling
-                  4-shot bundles stay available below as optional views.
+                  {isLongHybridLane
+                    ? "Current package is using the true long hybrid 4-shot lane: 50 seconds total with Runway 10 / Kling 15 / Kling 15 / Runway 10. Optional Seedance, full Runway, and full Kling bundles still stay below as secondary views."
+                    : "Default WSTV video setup is the primary hybrid 4-shot path. Seedance 2.0, full Runway 4-shot, and full Kling 4-shot bundles stay available below as optional views."}
                 </p>
               </div>
 
@@ -3270,17 +3298,34 @@ export default function OutputCards({
               <div className="rounded-2xl border border-violet-200 bg-violet-50 p-4 shadow-sm">
                 <div className="flex flex-wrap items-center justify-between gap-2">
                   <div className="text-sm font-extrabold text-violet-900">
-                    Primary hybrid 4-shot route summary
+                    {isLongHybridLane
+                      ? "Primary long hybrid 4-shot route summary"
+                      : "Primary hybrid 4-shot route summary"}
                   </div>
-                  <span className="rounded-full bg-white px-2 py-0.5 text-[11px] font-bold text-violet-700 ring-1 ring-violet-200">
-                    Runway 1 → Kling 2-3 → Runway 4
-                  </span>
+                  <div className="flex flex-wrap items-center gap-2">
+                    <span className="rounded-full bg-white px-2 py-0.5 text-[11px] font-bold text-violet-700 ring-1 ring-violet-200">
+                      {hybridRouteBadge}
+                    </span>
+                    <span className="rounded-full bg-white px-2 py-0.5 text-[11px] font-bold text-violet-700 ring-1 ring-violet-200">
+                      {hybridRouteTiming}
+                    </span>
+                  </div>
                 </div>
 
                 <p className="mt-2 text-xs leading-relaxed text-violet-800">
-                  This primary route keeps the opening and resolve cleaner in
-                  Runway, while using Kling for the middle pressure/action beats.
-                  It matches the main mixed-engine WSTV workflow.
+                  {hybridRouteSummary}
+                </p>
+
+                {isLongHybridLane && (
+                  <div className="mt-3 rounded-xl border border-violet-200 bg-white/80 px-3 py-2 text-[11px] font-semibold text-violet-700">
+                    Long-form hybrid pacing: Shot 1 readable setup, Shot 2 pressure build, Shot 3 main payoff, Shot 4 aftermath resolve.
+                  </div>
+                )}
+
+                <p className="mt-3 text-[11px] font-semibold uppercase tracking-wide text-violet-500">
+                  {isLongHybridLane
+                    ? "Continuity-safe hybrid route preserved"
+                    : "Continuity-safe hybrid route"}
                 </p>
 
                 <div className="mt-4 grid gap-3 md:grid-cols-2 xl:grid-cols-4">
@@ -3298,6 +3343,11 @@ export default function OutputCards({
                       <div className="mt-1 text-xs font-medium opacity-80">
                         {item.note}
                       </div>
+                      {item.durationLabel && (
+                        <div className="mt-2 inline-flex rounded-full bg-white px-2 py-0.5 text-[10px] font-bold text-violet-700 ring-1 ring-violet-200">
+                          {item.durationLabel}
+                        </div>
+                      )}
                     </div>
                   ))}
                 </div>
@@ -3929,6 +3979,10 @@ export default function OutputCards({
             <Card title="# Hashtags" value={data.hashtags} onCopy={onCopy} />
           )}
 
+          {data.tags && (
+            <Card title="Tags" value={data.tags} onCopy={onCopy} />
+          )}
+
           {data.platformPack && (
             <>
               <SectionLabel label="Platform Packs" />
@@ -3951,7 +4005,7 @@ export default function OutputCards({
 
           {data.fiveShotCinematic && data.fiveShotViral && (
             <>
-              <SectionLabel label="5-Shot Pipeline" />
+              <SectionLabel label="Optional 5-Shot Packs" />
               <FiveShotPanel
                 cinematic={data.fiveShotCinematic}
                 viral={data.fiveShotViral}

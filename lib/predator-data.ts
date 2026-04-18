@@ -32,6 +32,7 @@ import type {
   BulkItem,
   ViralScore,
   WatchTimeReport,
+  PipelineStyle,
   OriginalityItem,
   EarningsEstimate,
   PostingDay,
@@ -1051,11 +1052,12 @@ export function calculateViralScore(
   prey: string,
   arc: Arc,
   weather: Weather,
-  pipelineStyle: "4-shot" | "5-shot"
+  pipelineStyle: PipelineStyle
 ): ViralScore {
   const scores: { label: string; score: number; tip: string }[] = [];
   const hook = pkg.hook2026?.[0] ?? pkg.hook;
   const hookLower = hook.toLowerCase();
+  const isLongHybrid = pipelineStyle === "long-hybrid-4-shot";
 
   const hookScore = Math.max(
     0,
@@ -1082,13 +1084,13 @@ export function calculateViralScore(
     tip: hookScore >= 16 ? "Strong hook ✓" : "Use animal name + immediate danger + one clear consequence",
   });
 
-  const wtScore = pipelineStyle === "5-shot" ? 20 : 18;
+  const wtScore = isLongHybrid ? 20 : 18;
   scores.push({
     label: "Watch Time Setup",
     score: wtScore,
     tip:
-      pipelineStyle === "5-shot"
-        ? "5-shot pipeline = strong story retention ✓"
+      isLongHybrid
+        ? "Long hybrid 4-shot = strong story retention ✓"
         : "4-shot pipeline = strong short-form retention ✓",
   });
 
@@ -1276,10 +1278,11 @@ export function buildFiveShotViral(
 // WATCH TIME REPORT
 // ─────────────────────────────────────────────────────────────
 export function buildWatchTimeReport(
-  pipelineStyle: "4-shot" | "5-shot",
+  pipelineStyle: PipelineStyle,
   dailyReels = 2
 ): WatchTimeReport {
-  const secs = pipelineStyle === "4-shot" ? 20 : 45;
+  const isLongHybrid = pipelineStyle === "long-hybrid-4-shot";
+  const secs = isLongHybrid ? 50 : 20;
   const watchMinsPerView = secs / 60;
   const goalMinutes = 600_000;
   const avgViewsPerReel = 5_000;
@@ -1287,8 +1290,9 @@ export function buildWatchTimeReport(
   const daysToGoal = Math.ceil(goalMinutes / Math.max(dailyMins, 1));
 
   return {
-    currentDuration: `~${secs} seconds`,
-    targetDuration: "Aim for 18–24s on 4-shot primary runs and 38–48s on stronger 5-shot story builds",
+    currentDuration: isLongHybrid ? "50 seconds" : `~${secs} seconds`,
+    targetDuration:
+      "Aim for 18–24s on 4-shot primary runs and 50 seconds on the long hybrid 4-shot route when the build stays readable.",
     watchTimePerView: `${watchMinsPerView.toFixed(2)} min/view`,
     viewsNeededFor600k: Math.ceil(goalMinutes / watchMinsPerView),
     daysToGoal,

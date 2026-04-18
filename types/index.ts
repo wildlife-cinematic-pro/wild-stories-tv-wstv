@@ -78,6 +78,8 @@ export type KlingModel =
   | "Kling 2.5 Turbo Pro"
   | "Kling 2.5 Turbo";
 // types/index.ts (ADD near other shared types)
+// Legacy values are preserved for compatibility, but runtime image prompting
+// is now centered on the Nano Banana / Gemini path.
 export type ImagePromptTarget = "MJ" | "NB2" | "RUNWAY" | "NANO_BANANA_2";
 export type ImagePromptEngine =
   | "MJ"
@@ -96,6 +98,7 @@ export type RealismMode = "Balanced" | "High Naturalism" | "Reference Locked";
 export type FiveShotStyle = "cinematic" | "viral";
 
 export type DurationLane = "short" | "long";
+export type PipelineStyle = "4-shot" | "long-hybrid-4-shot";
 
 export type HookFamily = "danger" | "curiosity" | "reversal";
 
@@ -178,6 +181,7 @@ export type ShotPlan = {
   prompt: string;
   motionStrength: number;
   why: string;
+  durationLabel?: string;
 };
 
 export type ShotImagePlan = {
@@ -217,6 +221,7 @@ export type FacebookPack = PlatformPostCommon & {
   hook: string;
   caption: string;
   hashtags: string;
+  tags?: string;
   cmpNote: string;
 };
 
@@ -224,12 +229,14 @@ export type InstagramPack = PlatformPostCommon & {
   hook: string;
   caption: string;
   hashtags: string;
+  tags?: string;
 };
 
 export type TikTokPack = PlatformPostCommon & {
   hook: string;
   caption: string;
   hashtags: string;
+  tags?: string;
 };
 
 export type YouTubeShortsPack = PlatformPostCommon & {
@@ -282,6 +289,7 @@ export type GeneratedPackage = {
   caption2026: string;
   cta: string;
   hashtags: string;
+  tags?: string;
   tenIdeas: string[];
 
   // ── Shot routing ──
@@ -318,7 +326,7 @@ export type GeneratedPackage = {
   capCutScript?: CapCutScript;
   soundDesignPack?: SoundDesignPack;
   animalBehavior?: AnimalBehavior;
-  pipelineStyle?: "4-shot" | "5-shot";
+  pipelineStyle?: PipelineStyle;
 
   // ── US views mode ──
   durationLane?: DurationLane;

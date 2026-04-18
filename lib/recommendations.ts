@@ -115,7 +115,7 @@ export function getQualityRecommendations(input: QualityRecommendationInput): Qu
   const longLanePerformance = getLanePerformance("long");
   const spamPackagingWarnings =
     publishGuard?.warnings.filter((warning) =>
-      /caption is too long|too many hashtags|duplicate hashtags/i.test(warning)
+      /caption is too long|hashtag count should stay at exactly 5|too many hashtags|duplicate hashtags/i.test(warning)
     ) ?? [];
 
   const recommended: QualityRecommended = {
@@ -339,7 +339,7 @@ export function getQualityRecommendations(input: QualityRecommendationInput): Qu
     (!opening || opening.total >= 60);
 
   const publishSafeRecommendation = !publishSafe
-    ? "Not publish-safe yet. Tighten caption / hashtags, confirm originality, and keep the packaging cleaner before publishing."
+    ? "Not publish-safe yet. Tighten the caption, use exactly 5 clean hashtags, confirm originality, and keep the packaging cleaner before publishing."
     : opening && opening.total < 60
       ? "Packaging is publish-safe, but the opening frame is weak. Fix the first second and test the short lane first."
     : audience && audience.total < 70
