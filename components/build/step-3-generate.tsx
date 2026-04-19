@@ -1,0 +1,258 @@
+"use client";
+
+import OutputCards from "@/components/OutputCards";
+
+import type { PublishFlowSummary } from "@/lib/build-package";
+import { formatPipelineStyleLabel } from "@/lib/page-build-helpers";
+import type { AIProvider, GeneratedPackage, PromptVersion } from "@/types";
+
+type Step3GenerateProps = {
+  predator: string;
+  prey: string;
+  activeProvider: AIProvider;
+  onActiveProviderChange: (provider: AIProvider) => void;
+  onGenerate: () => void;
+  isGenerating: boolean;
+  error: string;
+  pkg: GeneratedPackage | null;
+  publishFlowSummary: PublishFlowSummary | null;
+  onRestoreVersion: (version: PromptVersion) => void;
+  onBack: () => void;
+};
+
+export default function Step3Generate({
+  predator,
+  prey,
+  activeProvider,
+  onActiveProviderChange,
+  onGenerate,
+  isGenerating,
+  error,
+  pkg,
+  publishFlowSummary,
+  onRestoreVersion,
+  onBack,
+}: Step3GenerateProps) {
+  return (
+    <div className="space-y-6">
+      <section className="rounded-[24px] bg-gray-900 p-5 shadow-[0_18px_40px_rgba(15,23,42,0.18)] sm:p-6">
+        <div className="mb-5 flex flex-wrap items-center justify-between gap-2">
+          <h3 className="text-[11px] font-semibold uppercase tracking-[0.1em] text-white/40">
+            Generate for Reels
+          </h3>
+          <div className="rounded-full border border-white/[0.08] bg-white/[0.05] px-2.5 py-1 text-[10px] font-semibold text-white/50">
+            {predator} vs {prey}
+          </div>
+        </div>
+
+        <div className="mb-5 rounded-2xl border border-white/10 bg-white/[0.06] p-3.5">
+          <div className="mb-1 text-[11px] font-semibold uppercase tracking-wide text-white/40">
+            AI Copy &amp; Prompt Polish
+          </div>
+          <div className="mb-3 text-[11px] text-white/30">
+            Optional polish only. Main cinematic 4-shot packs now come from the
+            hybrid dispatcher, with Seedance, full Runway, and full Kling bundles
+            still included as optional outputs.
+          </div>
+          <div className="flex flex-wrap gap-2">
+            {(["none", "gemini", "claude"] as AIProvider[]).map((provider) => (
+              <button
+                key={provider}
+                type="button"
+                onClick={() => onActiveProviderChange(provider)}
+                className={`rounded-2xl border px-4 py-2 text-xs font-semibold transition-all active:scale-95 ${
+                  activeProvider === provider
+                    ? "border-white/25 bg-white/10 text-white shadow-sm shadow-black/20"
+                    : "border-white/[0.12] text-white/35 hover:bg-white/[0.06] hover:text-white/60"
+                }`}
+              >
+                {provider === "none"
+                  ? "Off (Local)"
+                  : provider === "gemini"
+                    ? "✦ Gemini"
+                    : "✦ Claude"}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        <div className="mb-5 rounded-2xl border border-white/10 bg-white/[0.04] px-3.5 py-3 text-[11px] text-white/55">
+          Flow: 1. Inputs → 2. U.S. score → 3. Opening score → 4. Publish guard →
+          5. Final output
+        </div>
+
+        <button
+          type="button"
+          onClick={onGenerate}
+          disabled={isGenerating}
+          className="w-full rounded-2xl bg-white py-4 text-sm font-bold text-gray-900 shadow-sm shadow-black/20 transition-all hover:bg-gray-100 disabled:opacity-50 active:scale-[0.98]"
+        >
+          {isGenerating ? (
+            <span className="flex items-center justify-center gap-2">
+              <span className="h-4 w-4 animate-spin rounded-full border-2 border-gray-900/20 border-t-gray-900" />
+              Generating...
+            </span>
+          ) : (
+            `⚡ Generate — ${predator} vs ${prey}`
+          )}
+        </button>
+      </section>
+
+      {error && (
+        <div className="rounded-xl border border-red-200 bg-red-50 p-4">
+          <p className="text-sm font-semibold text-red-700">⚠️ {error}</p>
+        </div>
+      )}
+
+      {pkg && (
+        <section>
+          {publishFlowSummary && (
+            <div className="mb-4 grid gap-3 md:grid-cols-2 xl:grid-cols-5">
+              <div className="rounded-2xl border border-gray-200 bg-white p-4 shadow-sm shadow-gray-200/60">
+                <div className="text-[10px] font-semibold uppercase tracking-[0.1em] text-gray-400">
+                  1. User Inputs
+                </div>
+                <div className="mt-2 text-sm font-semibold text-gray-900">
+                  {publishFlowSummary.predatorName} vs {publishFlowSummary.preyName}
+                </div>
+                <div className="mt-1 text-xs text-gray-500">
+                  {publishFlowSummary.arcName} • {publishFlowSummary.marketMode}
+                </div>
+              </div>
+              <div className="rounded-2xl border border-blue-200 bg-blue-50 p-4 shadow-sm shadow-blue-100/60">
+                <div className="text-[10px] font-semibold uppercase tracking-[0.1em] text-blue-500">
+                  2. U.S. Score
+                </div>
+                <div className="mt-2 text-sm font-semibold text-blue-900">
+                  {publishFlowSummary.usAudienceScore.total}/100
+                </div>
+                <div className="mt-1 text-xs text-blue-700">
+                  {publishFlowSummary.usAudienceScore.summary}
+                </div>
+              </div>
+              <div className="rounded-2xl border border-violet-200 bg-violet-50 p-4 shadow-sm shadow-violet-100/60">
+                <div className="text-[10px] font-semibold uppercase tracking-[0.1em] text-violet-500">
+                  3. Opening Score
+                </div>
+                <div className="mt-2 text-sm font-semibold text-violet-900">
+                  {publishFlowSummary.openingFrameScore.total}/100
+                </div>
+                <div className="mt-1 text-xs text-violet-700">
+                  {publishFlowSummary.openingFrameScore.summary}
+                </div>
+              </div>
+              <div
+                className={`rounded-2xl border p-4 shadow-sm ${
+                  publishFlowSummary.publishGuardReport.isPass
+                    ? "border-emerald-200 bg-emerald-50 shadow-emerald-100/60"
+                    : "border-amber-200 bg-amber-50 shadow-amber-100/60"
+                }`}
+              >
+                <div
+                  className={`text-[10px] font-semibold uppercase tracking-[0.1em] ${
+                    publishFlowSummary.publishGuardReport.isPass
+                      ? "text-emerald-500"
+                      : "text-amber-500"
+                  }`}
+                >
+                  4. Publish Guard
+                </div>
+                <div
+                  className={`mt-2 text-sm font-semibold ${
+                    publishFlowSummary.publishGuardReport.isPass
+                      ? "text-emerald-900"
+                      : "text-amber-900"
+                  }`}
+                >
+                  {publishFlowSummary.publishGuardReport.isPass
+                    ? "Pass"
+                    : "Needs cleanup"}
+                </div>
+                <div
+                  className={`mt-1 text-xs ${
+                    publishFlowSummary.publishGuardReport.isPass
+                      ? "text-emerald-700"
+                      : "text-amber-700"
+                  }`}
+                >
+                  {publishFlowSummary.publishGuardReport.warnings[0] ??
+                    "Packaging is within the default fast-publish guard."}
+                </div>
+              </div>
+              <div className="rounded-2xl border border-gray-200 bg-white p-4 shadow-sm shadow-gray-200/60">
+                <div className="text-[10px] font-semibold uppercase tracking-[0.1em] text-gray-400">
+                  5. Final Output
+                </div>
+                <div className="mt-2 text-sm font-semibold text-gray-900">
+                  {publishFlowSummary.durationLane.toUpperCase()} •{" "}
+                  {formatPipelineStyleLabel(publishFlowSummary.pipelineStyle)}
+                </div>
+                <div className="mt-1 text-xs text-gray-500">
+                  Hook: {publishFlowSummary.hookFamily}{" "}
+                  {publishFlowSummary.fastPublishMode ? "• Fast publish" : ""}
+                </div>
+                <div
+                  className={`mt-2 inline-flex rounded-full px-2.5 py-1 text-[10px] font-semibold ${
+                    publishFlowSummary.publishWorthy
+                      ? "bg-emerald-100 text-emerald-700"
+                      : "bg-amber-100 text-amber-700"
+                  }`}
+                >
+                  {publishFlowSummary.publishWorthy
+                    ? "Publish-worthy"
+                    : "Review before publish"}
+                </div>
+              </div>
+            </div>
+          )}
+
+          <div className="mb-4 rounded-2xl border border-gray-200 bg-white/80 p-4 shadow-sm shadow-gray-200/60">
+            <div className="flex flex-wrap items-start justify-between gap-3">
+              <div>
+                <div className="flex flex-wrap items-center gap-2">
+                  <div className="text-[11px] font-semibold uppercase tracking-[0.14em] text-gray-400">
+                    Generated Output
+                  </div>
+                  <span className="rounded-full bg-gray-900 px-2.5 py-1 text-[10px] font-semibold text-white/80">
+                    Ready to scan
+                  </span>
+                </div>
+                <div className="mt-1 text-sm font-semibold text-gray-800">
+                  Prompt pack, workflow guidance, and export-ready copy
+                </div>
+                <div className="mt-1 text-xs leading-relaxed text-gray-500">
+                  Core prompts, workflow notes, and posting assets are grouped
+                  below for quick review.
+                </div>
+              </div>
+              <div className="flex flex-wrap items-center gap-1.5">
+                <span className="rounded-full bg-violet-100 px-2.5 py-1 text-[10px] font-semibold text-violet-700">
+                  Seedance
+                </span>
+                <span className="rounded-full bg-green-100 px-2.5 py-1 text-[10px] font-semibold text-green-700">
+                  Runway
+                </span>
+                <span className="rounded-full bg-blue-100 px-2.5 py-1 text-[10px] font-semibold text-blue-700">
+                  Kling
+                </span>
+              </div>
+            </div>
+          </div>
+          <div className="overflow-hidden rounded-2xl border border-gray-200 bg-white">
+            <OutputCards data={pkg} onRestoreVersion={onRestoreVersion} />
+          </div>
+        </section>
+      )}
+
+      <div className="flex gap-2 border-t border-gray-200/80 pt-5">
+        <button
+          type="button"
+          onClick={onBack}
+          className="rounded-2xl border border-gray-200 bg-white px-5 py-2.5 text-sm font-semibold text-gray-600 shadow-sm shadow-gray-100/80 hover:bg-gray-50 active:scale-[0.98]"
+        >
+          ← Back
+        </button>
+      </div>
+    </div>
+  );
+}
