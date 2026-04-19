@@ -1350,6 +1350,8 @@ function sanitizeLightingPhrase(lighting: string, weather: Weather): string {
   const cleanLighting = String(lighting ?? "")
     .replace(/\b8k raw\b/gi, "")
     .replace(/\braw\b/gi, "")
+    .replace(/\b\d{3,4}[Kk]\s*colou?r\s*temperature\b/gi, "")
+    .replace(/\b\d{3,4}[Kk]\b/gi, "")
     .replace(/\bbacklit dust clouds?\b/gi, "clean warm rim light")
     .replace(/\bdust clouds?\b/gi, "clear air")
     .replace(/\bdust haze\b/gi, "clear air")
