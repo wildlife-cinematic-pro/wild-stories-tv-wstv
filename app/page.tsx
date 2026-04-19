@@ -13,9 +13,12 @@ import type {
   AIProvider,
   Arc,
   DepthMode,
+  DurationLane,
   EmotionalTone,
   AnimalVibe,
   Weather,
+  HookFamily,
+  PipelineStyle,
   RealismMode,
   GeneratedPackage,
   MediaAnalysisResult,
@@ -24,7 +27,6 @@ import type {
   KlingModel,
   CustomPredatorForm,
   PromptVersion,
-  ImagePromptTarget,
   HabitatPreset,
 } from "@/types";
 
@@ -85,14 +87,20 @@ import {
 
 import {
   build2026Hook,
-  build2026Caption,
+  build2026HookByFamily,
+  buildShortCaption,
+  buildLongCaption,
   buildCTA,
   buildHashtags,
+  buildTags,
   buildPlatformPack,
   buildSEOTitle,
   buildAltTextPrompt,
-  getRecommendedHookIndex,
 } from "@/lib/platform-packs";
+import { scoreUSAudience } from "@/lib/usAudienceProfile";
+import { scoreOpeningFrame } from "@/lib/openingFrameScore";
+import { runFacebookPublishGuard } from "@/lib/facebookPublishGuard";
+import { buildUSViewsModeReport } from "@/lib/usViewsMode";
 
 import {
   readSettings,
@@ -134,6 +142,10 @@ type NormalizedPreset = {
 type Step = 1 | 2 | 3;
 type TopTab = "build" | "workflows";
 type WorkflowTab = "wstv" | "runway";
+type MarketMode = "US_ONLY";
+type DurationLaneMode = DurationLane;
+type HookMode = HookFamily | "all";
+type SceneDescriptionMode = "auto" | "manual";
 
 type QualityState = {
   realismMode: RealismMode;
@@ -143,6 +155,161 @@ type QualityState = {
   microMotion: boolean;
   heroVeo: boolean;
 };
+
+type PublishFlowSummary = {
+  predatorName: string;
+  preyName: string;
+  arcName: Arc;
+  marketMode: MarketMode;
+  durationLane: DurationLaneMode;
+  hookFamily: HookFamily;
+  fastPublishMode: boolean;
+  strictOriginalityGuard: boolean;
+  pipelineStyle: PipelineStyle;
+  primaryHook: string;
+  usAudienceScore: ReturnType<typeof scoreUSAudience>;
+  openingFrameScore: ReturnType<typeof scoreOpeningFrame>;
+  publishGuardReport: ReturnType<typeof runFacebookPublishGuard>;
+  publishWorthy: boolean;
+};
+
+const HOOK_FAMILY_ORDER: HookFamily[] = ["danger", "curiosity", "reversal"];
+
+function formatPipelineStyleLabel(style: PipelineStyle): string {
+  return style === "long-hybrid-4-shot"
+    ? "Hybrid 4-shot (50s)"
+    : "Hybrid 4-shot";
+}
+
+function buildSceneLeadSentence(
+  predator: string,
+  prey: string,
+  arc: Arc,
+  variant = 0
+): string {
+  const predatorLower = predator.toLowerCase();
+  const preyLower = prey.toLowerCase();
+  const variantIndex = Math.abs(variant) % 3;
+
+  switch (arc) {
+    case "Ambush attack":
+      return [
+        `The ${preyLower} looks up too late as the ${predatorLower} closes in.`,
+        `The ${predatorLower} is already in range before the ${preyLower} reads the danger.`,
+        `The ${preyLower} reacts late. The ${predatorLower} is already inside the moment.`,
+      ][variantIndex] ?? "";
+    case "Chase and takedown":
+      return [
+        `The ${predatorLower} commits first. The ${preyLower} has no time to reset.`,
+        `The ${preyLower} loses space fast once the ${predatorLower} commits.`,
+        `The ${predatorLower} drives the pace. The ${preyLower} never gets clear.`,
+      ][variantIndex] ?? "";
+    case "Defender stands ground":
+      return [
+        `The ${preyLower} keeps pressing. This ${predatorLower} never gives ground.`,
+        `The ${predatorLower} holds position and the ${preyLower} walks into real pressure.`,
+        `The ${preyLower} pushes closer. The ${predatorLower} refuses to move.`,
+      ][variantIndex] ?? "";
+    case "Giant vs giant clash":
+      return [
+        `${predator} and ${prey} get too close. One heavy step changes the standoff.`,
+        `${predator} and ${prey} hold the same space too long. The clash turns fast.`,
+        `${predator} and ${prey} stay chest-to-chest. The pressure shifts on one step.`,
+      ][variantIndex] ?? "";
+    case "Territory dominance battle":
+      return [
+        `The ${preyLower} crosses the wrong line. The ${predatorLower} answers immediately.`,
+        `The ${predatorLower} reads the boundary first. The ${preyLower} pays for it.`,
+        `The ${preyLower} steps too far in. The ${predatorLower} takes control fast.`,
+      ][variantIndex] ?? "";
+    case "Pack hunting strategy":
+      return [
+        `The ${preyLower} looks free for a second. Then the ${predatorLower} closes the lane.`,
+        `The ${predatorLower} takes away the escape lane before the ${preyLower} can reset.`,
+        `The ${preyLower} still has room, then the ${predatorLower} turns the spacing tight.`,
+      ][variantIndex] ?? "";
+    case "Predator vs predator fight":
+      return [
+        `${predator} and ${prey} meet too close. One bad read shifts control fast.`,
+        `${predator} and ${prey} hold the same ground. One move changes the balance.`,
+        `${predator} and ${prey} square up early. The control flips on one mistake.`,
+      ][variantIndex] ?? "";
+    case "Escape from danger":
+      return [
+        `The ${predatorLower} moves first. The ${preyLower} has almost no time to turn.`,
+        `The ${preyLower} reads the danger late as the ${predatorLower} closes fast.`,
+        `The ${predatorLower} commits instantly. The ${preyLower} is already under pressure.`,
+      ][variantIndex] ?? "";
+    default:
+      return `${predator} and ${prey} get too close. The pressure turns readable fast.`;
+  }
+}
+
+function compactSceneHabitatLabel(habitat: HabitatPreset, environment: string): string {
+  const base = habitat === "Auto" ? environment : habitat;
+  const cleaned = String(base ?? "")
+    .split(/[.,]/)[0]
+    .replace(/\bwith\b.*$/i, "")
+    .replace(/\s{2,}/g, " ")
+    .trim();
+  return cleaned
+    .split(/\s+/)
+    .slice(0, 4)
+    .join(" ")
+    .toLowerCase();
+}
+
+function finalizeAutoSceneDescription(raw: string): string {
+  const compact = String(raw ?? "").replace(/\s+/g, " ").trim();
+  const sentences =
+    compact.match(/[^.!?]+[.!?]?/g)?.map((sentence) => sentence.trim()).filter(Boolean) ?? [];
+  const limited = (sentences.length ? sentences : [compact]).slice(0, 2).join(" ");
+
+  if (limited.length <= 150) return limited;
+
+  const firstSentence = sentences[0] ?? compact;
+  if (firstSentence.length <= 150) return firstSentence;
+
+  const words = firstSentence.split(/\s+/).filter(Boolean);
+  let wordSafe = "";
+  for (const word of words) {
+    const next = wordSafe ? `${wordSafe} ${word}` : word;
+    if (next.length > 150) break;
+    wordSafe = next;
+  }
+  const resolved = wordSafe.replace(/[,:;/-]+$/g, "").trim();
+
+  if (!resolved) return firstSentence.trim();
+  return /[.!?]$/.test(resolved) ? resolved : `${resolved}.`;
+}
+
+function buildAutoSceneDescription({
+  predator,
+  prey,
+  arc,
+  habitat,
+  environment,
+  variant = 0,
+}: {
+  predator: string;
+  prey: string;
+  arc: Arc;
+  habitat: HabitatPreset;
+  environment: string;
+  variant?: number;
+}): string {
+  const variantIndex = Math.abs(variant) % 3;
+  const lead = buildSceneLeadSentence(predator, prey, arc, variantIndex);
+  const habitatLabel = compactSceneHabitatLabel(habitat, environment);
+  const safeHabitatLabel = habitatLabel || "wildlife habitat";
+  const context = [
+    "Clear U.S. wildlife setup for fast Facebook viewing.",
+    `Readable ${safeHabitatLabel} setup for a U.S. wildlife reel.`,
+    "Fast U.S. wildlife opener with clear readable tension.",
+  ][variantIndex] ?? "Clear U.S. wildlife setup for fast Facebook viewing.";
+
+  return finalizeAutoSceneDescription(`${lead} ${context}`);
+}
 
 // ─── DEFAULTS ────────────────────────────────────────────────────────────────
 
@@ -223,6 +390,31 @@ function normalizeArcSuggestion(value: string | undefined): Arc | null {
   if (normalized.includes("giant") || normalized.includes("clash")) return "Giant vs giant clash";
   if (normalized.includes("chase") || normalized.includes("takedown")) return "Chase and takedown";
   return null;
+}
+
+function buildOpeningFrameInput(
+  arc: Arc,
+  depthMode: DepthMode,
+  motionOnlyI2V: boolean,
+  referenceLock: boolean,
+  singleActionRule: boolean,
+  fastPublishMode: boolean,
+  hookMode: HookMode
+) {
+  const instantPressureArc =
+    arc === "Ambush attack" ||
+    arc === "Chase and takedown" ||
+    arc === "Escape from danger" ||
+    arc === "Predator vs predator fight" ||
+    arc === "Defender stands ground";
+
+  return {
+    fullBodyReadable: referenceLock || depthMode !== "Cinematic Blur",
+    threatReadable: singleActionRule && (instantPressureArc || hookMode === "danger"),
+    subjectSeparation: referenceLock && motionOnlyI2V,
+    environmentClear: depthMode !== "Cinematic Blur",
+    emotionalReadImmediate: fastPublishMode || hookMode !== "all" || instantPressureArc,
+  };
 }
 
 // ─── SUB-COMPONENTS ───────────────────────────────────────────────────────────
@@ -341,7 +533,6 @@ export default function Page() {
   // STEP 2
   const [runwayModel, setRunwayModel] = useState<RunwayModel>(RUNWAY_MODELS[0]);
   const [klingModel, setKlingModel] = useState<KlingModel>(KLING_MODELS[0]);
-  const [imagePromptTarget, setImagePromptTarget] = useState<ImagePromptTarget>("NANO_BANANA_2");
   const [realismMode, setRealismMode] = useState<RealismMode>("Reference Locked");
   const [motionOnlyI2V, setMotionOnlyI2V] = useState(true);
   const [referenceLock, setReferenceLock] = useState(true);
@@ -350,8 +541,11 @@ export default function Page() {
   const [heroVeo, setHeroVeo] = useState(false);
   const [autoApplyHighDrift, setAutoApplyHighDrift] = useState(false);
   const [lastQualityBeforeApply, setLastQualityBeforeApply] = useState<QualityState | null>(null);
-  const [sceneNepaliRomanized, setSceneNepaliRomanized] = useState("");
-  const [sceneMode, setSceneMode] = useState<"romanized" | "english">("romanized");
+  const [sceneDescription, setSceneDescription] = useState("");
+  const [sceneDescriptionMode, setSceneDescriptionMode] = useState<SceneDescriptionMode>("auto");
+  const [sceneDescriptionTouched, setSceneDescriptionTouched] = useState(false);
+  const [sceneDescriptionVariant, setSceneDescriptionVariant] = useState(0);
+  const [sceneMode, setSceneMode] = useState<"romanized" | "english">("english");
   const [mediaAnalysis, setMediaAnalysis] = useState<MediaAnalysisResult | null>(null);
 
   // STEP 3
@@ -376,6 +570,12 @@ export default function Page() {
     defaultArc: "Pack hunting strategy",
     driftRisk: "MEDIUM",
   });
+  const [marketMode] = useState<MarketMode>("US_ONLY");
+  const [durationLane, setDurationLane] = useState<DurationLaneMode>("short");
+  const [hookMode, setHookMode] = useState<HookMode>("all");
+  const [fastPublishMode, setFastPublishMode] = useState(true);
+  const [strictOriginalityGuard, setStrictOriginalityGuard] = useState(true);
+  const [publishFlowSummary, setPublishFlowSummary] = useState<PublishFlowSummary | null>(null);
 
   const predatorOptions = useMemo(() => {
     const base = Object.keys(predatorData);
@@ -436,10 +636,199 @@ export default function Page() {
     [mediaAnalysis?.suggestedArc]
   );
 
+  const previewArc = useMemo(
+    () => suggestArc(predator, prey, arc) as Arc,
+    [predator, prey, arc]
+  );
+  const autoSceneDescription = useMemo(
+    () =>
+      buildAutoSceneDescription({
+        predator,
+        prey,
+        arc: previewArc,
+        habitat,
+        environment: finalEnvironment,
+        variant: sceneDescriptionVariant,
+      }),
+    [predator, prey, previewArc, habitat, finalEnvironment, sceneDescriptionVariant]
+  );
+  const selectedPipelineStyle: PipelineStyle =
+    durationLane === "long" ? "long-hybrid-4-shot" : "4-shot";
+  const captionMode = marketMode === "US_ONLY" ? "us-only" : "default";
+  const previewHooks = useMemo(
+    () => build2026Hook(predator, prey, previewArc),
+    [predator, prey, previewArc]
+  );
+  const previewShortCaption = useMemo(
+    () => buildShortCaption(predator, prey, finalEnvironment, previewArc, { mode: captionMode }),
+    [predator, prey, finalEnvironment, previewArc, captionMode]
+  );
+  const previewLongCaption = useMemo(
+    () => buildLongCaption(predator, prey, finalEnvironment, previewArc, { mode: captionMode }),
+    [predator, prey, finalEnvironment, previewArc, captionMode]
+  );
+  const previewCaption = useMemo(
+    () =>
+      fastPublishMode || durationLane === "short"
+        ? previewShortCaption
+        : previewLongCaption,
+    [fastPublishMode, durationLane, previewShortCaption, previewLongCaption]
+  );
+  const previewHashtags = useMemo(
+    () =>
+      buildHashtags(predator, prey, previewArc, {
+        count: 5,
+      }),
+    [predator, prey, previewArc]
+  );
+  const previewTags = useMemo(
+    () => buildTags(predator, prey, previewArc),
+    [predator, prey, previewArc]
+  );
+  const previewHashtagList = useMemo(
+    () => previewHashtags.split(/\s+/).filter(Boolean),
+    [previewHashtags]
+  );
+  const previewOpeningFrameInput = useMemo(
+    () =>
+      buildOpeningFrameInput(
+        previewArc,
+        depthMode,
+        motionOnlyI2V,
+        referenceLock,
+        singleActionRule,
+        fastPublishMode,
+        hookMode
+      ),
+    [
+      previewArc,
+      depthMode,
+      motionOnlyI2V,
+      referenceLock,
+      singleActionRule,
+      fastPublishMode,
+      hookMode,
+    ]
+  );
+  const previewUSViewsModeReport = useMemo(
+    () =>
+      buildUSViewsModeReport({
+        durationLane,
+        hookFamily: hookMode === "all" ? undefined : hookMode,
+        concept: {
+          predator,
+          prey,
+          environment: finalEnvironment,
+          arc: previewArc,
+        },
+        openingFrame: previewOpeningFrameInput,
+        caption: previewCaption,
+        hashtags: previewHashtagList,
+        originalityConfirmed: strictOriginalityGuard,
+      }),
+    [
+      durationLane,
+      hookMode,
+      predator,
+      prey,
+      finalEnvironment,
+      previewArc,
+      previewOpeningFrameInput,
+      previewCaption,
+      previewHashtagList,
+      strictOriginalityGuard,
+    ]
+  );
+  const previewHookFamily = previewUSViewsModeReport.hookFamily;
+  const previewPrimaryHook = useMemo(
+    () => build2026HookByFamily(predator, prey, previewArc, previewHookFamily),
+    [predator, prey, previewArc, previewHookFamily]
+  );
+  const previewHook2026 = useMemo(
+    () => [previewPrimaryHook, ...previewHooks.filter((hook) => hook !== previewPrimaryHook)],
+    [previewHooks, previewPrimaryHook]
+  );
+  const previewRecommendedHookIndex = useMemo(
+    () => Math.max(0, HOOK_FAMILY_ORDER.indexOf(previewHookFamily)),
+    [previewHookFamily]
+  );
+  const previewOpeningFrameScore = previewUSViewsModeReport.openingFrameScore;
+  const previewPublishGuardReport = previewUSViewsModeReport.publishGuard;
+  const previewPerformanceSnapshot = previewUSViewsModeReport.performanceSnapshot;
+  const previewAudienceScore = previewUSViewsModeReport.audienceScore;
+
   const qualityReco = useMemo(() => getQualityRecommendations({
     driftRisk: preset.driftRisk, realismMode, runwayModel, klingModel,
+    durationLane,
+    hookFamily: previewHookFamily,
+    performance: previewPerformanceSnapshot,
     motionOnlyI2V, referenceLock, singleActionRule, microMotion, heroVeo,
-  }), [preset.driftRisk, realismMode, runwayModel, klingModel, motionOnlyI2V, referenceLock, singleActionRule, microMotion, heroVeo]);
+    concept: {
+      predator,
+      prey,
+      environment: finalEnvironment,
+      arc: previewArc,
+    },
+    openingFrame: previewOpeningFrameInput,
+    packaging: {
+      caption: previewCaption,
+      hashtags: previewHashtagList,
+      originalityConfirmed: strictOriginalityGuard,
+    },
+  }), [
+    preset.driftRisk,
+    realismMode,
+    runwayModel,
+    klingModel,
+    durationLane,
+    previewHookFamily,
+    previewPerformanceSnapshot,
+    motionOnlyI2V,
+    referenceLock,
+    singleActionRule,
+    microMotion,
+    heroVeo,
+    predator,
+    prey,
+    finalEnvironment,
+    previewArc,
+    previewOpeningFrameInput,
+    previewCaption,
+    previewHashtagList,
+    strictOriginalityGuard,
+  ]);
+
+  useEffect(() => {
+    if (!(sceneDescriptionMode === "auto" || !sceneDescriptionTouched)) return;
+    setSceneDescription((current) =>
+      current === autoSceneDescription ? current : autoSceneDescription
+    );
+  }, [autoSceneDescription, sceneDescriptionMode, sceneDescriptionTouched]);
+
+  function applyAutoSceneDescription(variant: number) {
+    const nextDescription = buildAutoSceneDescription({
+      predator,
+      prey,
+      arc: previewArc,
+      habitat,
+      environment: finalEnvironment,
+      variant,
+    });
+    setSceneDescriptionVariant(variant);
+    setSceneDescription(nextDescription);
+    setSceneDescriptionMode("auto");
+    setSceneDescriptionTouched(false);
+  }
+
+  function handleSceneDescriptionChange(value: string) {
+    setSceneDescription(value);
+    setSceneDescriptionMode("manual");
+    setSceneDescriptionTouched(true);
+  }
+
+  function handleSceneDescriptionRegenerate() {
+    applyAutoSceneDescription(sceneDescriptionVariant + 1);
+  }
 
   function captureCurrentQuality(): QualityState {
     return { realismMode, motionOnlyI2V, referenceLock, singleActionRule, microMotion, heroVeo };
@@ -453,6 +842,7 @@ export default function Page() {
     setLastQualityBeforeApply(captureCurrentQuality());
     const r = qualityReco.recommended;
     if (r.realismMode) setRealismMode(r.realismMode);
+    if (r.durationLane) setDurationLane(r.durationLane);
     if (typeof r.motionOnlyI2V === "boolean") setMotionOnlyI2V(r.motionOnlyI2V);
     if (typeof r.referenceLock === "boolean") setReferenceLock(r.referenceLock);
     if (typeof r.singleActionRule === "boolean") setSingleActionRule(r.singleActionRule);
@@ -532,16 +922,74 @@ export default function Page() {
     setIsGenerating(true);
     setError("");
     setPkg(null);
+    setPublishFlowSummary(null);
     try {
       if (!predator || !prey) throw new Error("Missing predator or prey");
-      const finalArc = suggestArc(predator, prey, arc) as Arc;
+      const finalArc = previewArc;
       const safeMedia = (mediaAnalysis ?? null) as SafeMediaAnalysis | null;
       const sceneInjectFromMedia = safeMedia?.imagePromptInject ?? "";
-      const sceneInjectFromUser = sceneNepaliRomanized.trim();
+      const sceneInjectFromUser = sceneDescription.trim();
       const sceneInject = sceneInjectFromUser.length > 0 ? sceneInjectFromUser : sceneInjectFromMedia;
       const quality = { realismMode, motionOnlyI2V, referenceLock, singleActionRule, microMotion, heroVeo };
 
-      const imagePrompt = buildImagePrompt(predator, prey, finalEnvironment, finalArc, preset.lighting, preset.cameraGear, preset.texture, depthMode, weather, emotionalTone, animalVibe, sceneInject, quality, imagePromptTarget);
+      // 1. User inputs
+      const finalHook2026 = previewHook2026;
+      const finalHook = previewPrimaryHook || finalHook2026[0] || "";
+      const shortCaption = previewShortCaption;
+      const longCaption = previewLongCaption;
+      const publishCaption =
+        fastPublishMode || durationLane === "short" ? shortCaption : longCaption;
+      const hashtags = previewHashtags;
+      const tags = previewTags;
+      const recommendedHookIndex = previewRecommendedHookIndex;
+      const hookFamily = previewHookFamily;
+
+      // 2. U.S. score
+      const usAudienceScore = scoreUSAudience({
+        predator,
+        prey,
+        environment: finalEnvironment,
+        arc: finalArc,
+      });
+
+      // 3. Opening score
+      const openingFrameInput = buildOpeningFrameInput(
+        finalArc,
+        depthMode,
+        motionOnlyI2V,
+        referenceLock,
+        singleActionRule,
+        fastPublishMode,
+        hookMode
+      );
+      const openingFrameScore = scoreOpeningFrame(openingFrameInput);
+
+      // 4. Publish guard
+      const publishGuardReport = runFacebookPublishGuard({
+        caption: publishCaption,
+        hashtags: hashtags.split(/\s+/).filter(Boolean),
+        originalityConfirmed: strictOriginalityGuard,
+      });
+      const usViewsModeReport = buildUSViewsModeReport({
+        durationLane,
+        hookFamily,
+        concept: {
+          predator,
+          prey,
+          environment: finalEnvironment,
+          arc: finalArc,
+        },
+        openingFrame: openingFrameInput,
+        caption: publishCaption,
+        hashtags: hashtags.split(/\s+/).filter(Boolean),
+        originalityConfirmed: strictOriginalityGuard,
+        audienceScore: usAudienceScore,
+        openingFrameScore,
+        publishGuardReport,
+      });
+      const performanceSnapshot = usViewsModeReport.performanceSnapshot;
+
+      const imagePrompt = buildImagePrompt(predator, prey, finalEnvironment, finalArc, preset.lighting, preset.cameraGear, preset.texture, depthMode, weather, emotionalTone, animalVibe, sceneInject, quality, "NANO_BANANA_2");
       const shotImagePlan = buildShotImagePlan(predator, prey, finalEnvironment, finalArc, weather, quality);
       const runway = buildRunwayShots(predator, prey, finalEnvironment, finalArc, weather, runwayModel, emotionalTone, animalVibe, sceneInject, quality);
       const seedance = buildSeedanceShots(predator, prey, finalEnvironment, finalArc, weather, emotionalTone, animalVibe, sceneInject, quality);
@@ -549,6 +997,7 @@ export default function Page() {
       const fourShotWorkflow = buildFourShotWorkflow({
         predator,
         prey,
+        durationLane,
         env: finalEnvironment,
         arc: finalArc,
         weather,
@@ -566,11 +1015,7 @@ export default function Page() {
       const voiceoverLine = buildVoiceoverLine(predator, prey, finalEnvironment, emotionalTone);
       const capCutPlan = buildCapCutPlan(predator, finalArc, weather);
       const clipChaining = buildClipChaining(predator, preset.driftRisk);
-      const hook2026 = build2026Hook(predator, prey, finalArc);
-      const caption2026 = build2026Caption(predator, prey, finalEnvironment, finalArc);
       const cta = buildCTA(finalArc);
-      const hashtags = buildHashtags(predator, prey, finalArc);
-      const recommendedHookIndex = getRecommendedHookIndex(finalArc);
       const presetForIdeas = { ...preset, environment: finalEnvironment };
       const tenIdeas = build10Ideas(predator, preset.prey, presetForIdeas as never);
       const platformPack = buildPlatformPack(predator, prey, finalArc, finalEnvironment);
@@ -581,11 +1026,43 @@ export default function Page() {
       const naturalismChecklist = buildNaturalismChecklist(quality, weather, finalEnvironment);
       const fiveShotCinematic = buildFiveShotCinematic(predator, prey, finalEnvironment, finalArc, weather, runwayModel, klingModel, emotionalTone, animalVibe, quality);
       const fiveShotViral = buildFiveShotViral(predator, prey, finalEnvironment, finalArc, weather, runwayModel, klingModel, emotionalTone, animalVibe, quality);
-      const watchTimeReport = buildWatchTimeReport("5-shot", 2);
+      const watchTimeReport = buildWatchTimeReport(selectedPipelineStyle, 2);
       const motionStrength = arcMotionStrength[finalArc] ?? 70;
+      const primaryShotDurations =
+        durationLane === "long"
+          ? ["0–10s", "10–25s", "25–40s", "40–50s"]
+          : ["0–4s", "4–9s", "9–15s", "15–20s"];
+      const primaryShotTitles =
+        durationLane === "long"
+          ? [
+              "Shot 1 — Opening Tension",
+              "Shot 2 — Pressure Build",
+              "Shot 3 — Main Action Payoff",
+              "Shot 4 — Aftermath Resolve",
+            ]
+          : [
+              "Shot 1 — Opening Tension",
+              "Shot 2 — Pressure Build",
+              "Shot 3 — Peak Action",
+              "Shot 4 — Resolved Tension",
+            ];
+      const primaryShotWhy =
+        durationLane === "long"
+          ? [
+              "Use Image 1 from the master image for the readable 10-second opening tension and first-frame clarity beat.",
+              "Use Image 2 edited from Shot 1 image for the slower 15-second pressure build with wider spacing collapse and stronger continuity-safe body language.",
+              "Use Image 3 edited from Shot 2 image for the 15-second main action payoff with the clearest readable force transfer.",
+              "Use Image 4 edited from Shot 3 image for the 10-second aftermath hold, winner/retreat resolve, and clean final-frame handoff.",
+            ]
+          : [
+              "Use Image 1 from the master image for the clean first-frame opening.",
+              "Use Image 2 edited from Shot 1 image for a stronger physics-safe pressure build without losing identity.",
+              "Use Image 3 edited from Shot 2 image for the strongest full-body action beat.",
+              "Use Image 4 edited from Shot 3 image for the readable aftermath or final tension hold.",
+            ];
       const soundDesignPack = buildSoundDesignPack(predator, prey, finalEnvironment, finalArc, weather, klingModel);
       const animalBehaviorResult = getAnimalBehavior(predator);
-
+      // 5. Final output
       const basePkg: GeneratedPackage = {
         predatorName: predator, preyName: prey, arcName: finalArc,
         imagePrompt, negativePrompt: negativePromptForKling, thumbnailPrompt, voiceoverLine, shotImagePlan,
@@ -595,25 +1072,27 @@ export default function Page() {
         seedanceMultiShotPrompt: seedance.multiShotPrompt,
         seedanceWorkflowGuide: seedance.workflowGuide,
         klingNative15s, klingSixShot, motionStrength, capCutPlan, clipChaining,
-        hook: hook2026?.[0] ?? "", hook2026: hook2026 ?? [], recommendedHookIndex,
-        caption: caption2026 ?? "", caption2026: caption2026 ?? "", cta, hashtags, tenIdeas,
+        hook: finalHook, hook2026: finalHook2026 ?? [], recommendedHookIndex,
+        caption: shortCaption ?? "", caption2026: longCaption ?? "", cta, hashtags, tags, tenIdeas,
         shotPlan: [
-          { engine: "RUNWAY", title: "Shot 1 — Opening Tension", prompt: fourShotWorkflow.shot1, motionStrength, why: "Use Image 1 from the master image for the clean first-frame opening." },
-          { engine: "KLING", title: "Shot 2 — Pressure Build", prompt: fourShotWorkflow.shot2, motionStrength, why: "Use Image 2 edited from Shot 1 image for a stronger physics-safe pressure build without losing identity." },
-          { engine: "KLING", title: "Shot 3 — Peak Action", prompt: fourShotWorkflow.shot3, motionStrength, why: "Use Image 3 edited from Shot 2 image for the strongest full-body action beat." },
-          { engine: "RUNWAY", title: "Shot 4 — Resolved Tension", prompt: fourShotWorkflow.shot4, motionStrength, why: "Use Image 4 edited from Shot 3 image for the readable aftermath or final tension hold." },
+          { engine: "RUNWAY", title: primaryShotTitles[0], prompt: fourShotWorkflow.shot1, motionStrength, durationLabel: primaryShotDurations[0], why: primaryShotWhy[0] },
+          { engine: "KLING", title: primaryShotTitles[1], prompt: fourShotWorkflow.shot2, motionStrength, durationLabel: primaryShotDurations[1], why: primaryShotWhy[1] },
+          { engine: "KLING", title: primaryShotTitles[2], prompt: fourShotWorkflow.shot3, motionStrength, durationLabel: primaryShotDurations[2], why: primaryShotWhy[2] },
+          { engine: "RUNWAY", title: primaryShotTitles[3], prompt: fourShotWorkflow.shot4, motionStrength, durationLabel: primaryShotDurations[3], why: primaryShotWhy[3] },
         ],
         runwayBundle: [runway?.shot1 ?? "", runway?.shot2 ?? "", runway?.shot3 ?? "", runway?.shot4 ?? ""].join("\n\n---\n\n"),
         klingBundle: [kling?.shot1 ?? "", kling?.shot2 ?? "", kling?.shot3 ?? "", kling?.shot4 ?? ""].join("\n\n---\n\n"),
-        routingNote: `Primary workflow: hybrid 4-shot routing uses Runway ${runwayModel} for Shots 1 and 4, and Kling ${klingModel} for Shots 2 and 3. Optional bundles: Seedance 2.0, full Runway 4-shot, and full Kling 4-shot outputs remain available.`,
-        pipelineStyle: "4-shot", fiveShotCinematic, fiveShotViral, watchTimeReport, platformPack,
+        routingNote: selectedPipelineStyle === "long-hybrid-4-shot"
+          ? `Primary workflow: true 50-second hybrid 4-shot routing uses Runway ${runwayModel} for Shot 1 (10s) and Shot 4 (10s), and Kling ${klingModel} for Shot 2 (15s) and Shot 3 (15s). Long lane holds the setup longer, builds pressure more gradually, lands one clearer payoff beat, and preserves a cleaner aftermath resolve.`
+          : `Primary workflow: hybrid 4-shot routing uses Runway ${runwayModel} for Shots 1 and 4, and Kling ${klingModel} for Shots 2 and 3. Optional bundles: Seedance 2.0, full Runway 4-shot, and full Kling 4-shot outputs remain available.`,
+        pipelineStyle: selectedPipelineStyle, fiveShotCinematic, fiveShotViral, watchTimeReport, platformPack,
         seoTitle, altTextPrompt, qualitySummary, referenceWorkflow, naturalismChecklist,
         modelsUsed: { runway: runwayModel, kling: klingModel },
         sceneDesc: sceneInject, soundDesignPack,
         animalBehavior: animalBehaviorResult ?? undefined,
       };
 
-      const capCutScript = buildCapCutScript(predator, prey, finalArc, weather, basePkg, "5-shot");
+      const capCutScript = buildCapCutScript(predator, prey, finalArc, weather, basePkg, selectedPipelineStyle);
       const twoPartViralPreset = shouldBuildTwoPartViralPreset(predator, prey, finalArc)
         ? buildTwoPartViralPreset(predator, prey, finalEnvironment, weather, finalArc, runwayModel)
         : null;
@@ -623,7 +1102,7 @@ export default function Page() {
         const res = await fetch("/api/enhance", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ provider: activeProvider, predator, prey, env: finalEnvironment, arc: finalArc, weather, emotionalTone, animalVibe, base: { imagePrompt, hook: hook2026?.[0] ?? "", caption: caption2026 ?? "", voiceoverLine } }),
+          body: JSON.stringify({ provider: activeProvider, predator, prey, env: finalEnvironment, arc: finalArc, weather, emotionalTone, animalVibe, base: { imagePrompt, hook: finalHook, caption: shortCaption ?? "", voiceoverLine } }),
         });
         const data = await res.json().catch(() => ({} as unknown));
         if (!res.ok) throw new Error(((data as Record<string, unknown>)?.error as string) || `AI polish failed (${res.status})`);
@@ -639,8 +1118,38 @@ export default function Page() {
         if (!hasUsableGeneratedPackageEnhancements(enhanced)) throw new Error("AI polish returned no usable prompt or copy updates");
       }
 
+      const finalShortCaption =
+        typeof enhanced.caption === "string" && enhanced.caption.trim().length > 0
+          ? enhanced.caption
+          : shortCaption;
+      const finalPublishCaption =
+        fastPublishMode || durationLane === "short" ? finalShortCaption : longCaption;
+      const finalUsViewsModeReport = buildUSViewsModeReport({
+        durationLane,
+        hookFamily,
+        concept: {
+          predator,
+          prey,
+          environment: finalEnvironment,
+          arc: finalArc,
+        },
+        openingFrame: openingFrameInput,
+        caption: finalPublishCaption,
+        hashtags: hashtags.split(/\s+/).filter(Boolean),
+        originalityConfirmed: strictOriginalityGuard,
+        audienceScore: usAudienceScore,
+        openingFrameScore,
+        performanceSnapshot,
+      });
       const finalPkg: GeneratedPackage = mergeGeneratedPackage(basePkg, enhanced, {
         capCutScript,
+        durationLane,
+        hookFamily: finalUsViewsModeReport.hookFamily,
+        usAudienceScore,
+        openingFrameScore,
+        publishGuardReport: finalUsViewsModeReport.publishGuard,
+        performanceSnapshot: finalUsViewsModeReport.performanceSnapshot,
+        usViewsModeReport: finalUsViewsModeReport,
         ...(twoPartViralPreset ? {
           twoPartViralOverview: twoPartViralPreset.overview,
           twoPartWorkflowGuide: twoPartViralPreset.workflowGuide,
@@ -656,6 +1165,22 @@ export default function Page() {
       });
 
       setPkg(finalPkg);
+      setPublishFlowSummary({
+        predatorName: predator,
+        preyName: prey,
+        arcName: finalArc,
+        marketMode,
+        durationLane,
+        hookFamily: finalUsViewsModeReport.hookFamily,
+        fastPublishMode,
+        strictOriginalityGuard,
+        pipelineStyle: selectedPipelineStyle,
+        primaryHook: finalHook,
+        usAudienceScore,
+        openingFrameScore,
+        publishGuardReport: finalUsViewsModeReport.publishGuard,
+        publishWorthy: finalUsViewsModeReport.shouldPublish,
+      });
 
       try {
         const key = makePromptVersionKey(finalPkg.predatorName ?? predator, finalPkg.preyName ?? prey, String(finalPkg.arcName ?? arc));
@@ -1069,6 +1594,80 @@ export default function Page() {
                         <span className="font-semibold text-gray-500">Why:</span> {qualityReco.why.join(" • ")}
                       </div>
                     )}
+
+                    <div className="mt-3 rounded-xl border border-blue-100 bg-blue-50 p-3 text-xs text-blue-800">
+                      <div className="font-semibold">Publish path</div>
+                      <div className="mt-0.5">Inputs → U.S. score → Opening score → Publish guard → Final output</div>
+                      <div className="mt-1 text-blue-700">
+                        Suggested lane: <span className="font-semibold uppercase">{qualityReco.suggestedLane}</span> • {qualityReco.publishSafeRecommendation}
+                      </div>
+                    </div>
+                  </section>
+
+                  {/* Market & Publish Controls */}
+                  <section className="rounded-2xl border border-gray-200 bg-white p-5 sm:p-6">
+                    <div className="mb-4 flex flex-wrap items-center justify-between gap-2">
+                      <h3 className="text-[11px] font-semibold uppercase tracking-[0.1em] text-gray-400">Market & Publish Flow</h3>
+                      <span className="rounded-full bg-blue-100 px-2.5 py-1 text-[10px] font-semibold text-blue-700">{marketMode}</span>
+                    </div>
+
+                    <div className="grid gap-4 md:grid-cols-2">
+                      <div>
+                        <label className="mb-1.5 block text-[11px] font-medium text-gray-500">Duration Lane</label>
+                        <select
+                          value={durationLane}
+                          onChange={(e) => setDurationLane(e.target.value as DurationLaneMode)}
+                          className="w-full rounded-xl border border-gray-200 bg-gray-50 px-3 py-2.5 text-sm font-medium text-gray-900"
+                        >
+                          <option value="short">Short — 18–30 sec</option>
+                          <option value="long">Long — 50 sec hybrid</option>
+                        </select>
+                      </div>
+                      <div>
+                        <label className="mb-1.5 block text-[11px] font-medium text-gray-500">Hook Mode</label>
+                        <select
+                          value={hookMode}
+                          onChange={(e) => setHookMode(e.target.value as HookMode)}
+                          className="w-full rounded-xl border border-gray-200 bg-gray-50 px-3 py-2.5 text-sm font-medium text-gray-900"
+                        >
+                          <option value="all">All hook variants</option>
+                          <option value="danger">Danger</option>
+                          <option value="curiosity">Curiosity</option>
+                          <option value="reversal">Reversal</option>
+                        </select>
+                      </div>
+                    </div>
+
+                    <div className="mt-4 grid gap-2 md:grid-cols-2">
+                      <button
+                        type="button"
+                        onClick={() => setFastPublishMode((v) => !v)}
+                        className={`rounded-2xl border px-3.5 py-2 text-xs font-semibold transition-all active:scale-95 ${
+                          fastPublishMode
+                            ? "border-gray-900 bg-gray-900 text-white shadow-sm shadow-gray-300/60"
+                            : "border-gray-200 bg-white text-gray-600 shadow-sm shadow-gray-100/80 hover:bg-gray-50"
+                        }`}
+                      >
+                        {fastPublishMode ? "⚡ Fast Publish: ON" : "⚡ Fast Publish: OFF"}
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setStrictOriginalityGuard((v) => !v)}
+                        className={`rounded-2xl border px-3.5 py-2 text-xs font-semibold transition-all active:scale-95 ${
+                          strictOriginalityGuard
+                            ? "border-emerald-200 bg-emerald-50 text-emerald-700 shadow-sm shadow-emerald-100/70"
+                            : "border-gray-200 bg-white text-gray-600 shadow-sm shadow-gray-100/80 hover:bg-gray-50"
+                        }`}
+                      >
+                        {strictOriginalityGuard ? "🛡 Originality Guard: ON" : "🛡 Originality Guard: OFF"}
+                      </button>
+                    </div>
+
+                    <div className="mt-4 rounded-xl border border-gray-100 bg-gray-50 p-3 text-xs text-gray-600">
+                      <div><span className="font-semibold text-gray-700">U.S. score:</span> {previewAudienceScore.total}/100</div>
+                      <div className="mt-1"><span className="font-semibold text-gray-700">Opening score:</span> {previewOpeningFrameScore.total}/100</div>
+                      <div className="mt-1"><span className="font-semibold text-gray-700">Publish guard:</span> {previewPublishGuardReport.isPass ? "Pass" : "Needs cleanup"}</div>
+                    </div>
                   </section>
 
                   {/* Model Profile */}
@@ -1139,17 +1738,13 @@ export default function Page() {
                       heroVeo={heroVeo} setHeroVeo={setHeroVeo}
                     />
                     <div className="mt-4 border-t border-gray-100 pt-4">
-                      <label className="mb-1.5 block text-[11px] font-medium text-gray-500">Image Prompt Target</label>
-                      <select
-                        value={imagePromptTarget}
-                        onChange={(e) => setImagePromptTarget(e.target.value as ImagePromptTarget)}
-                        className="w-full rounded-xl border border-gray-200 bg-gray-50 px-3 py-2.5 text-sm font-medium text-gray-900"
-                      >
-                        <option value="NANO_BANANA_2">Nano Banana 2 — Gemini 3.1 Flash Image (default)</option>
-                        <option value="NB2">NB2 (legacy Gemini 2.5 Flash Image)</option>
-                        <option value="RUNWAY">Runway Reference</option>
-                        <option value="MJ">Midjourney</option>
-                      </select>
+                      <label className="mb-1.5 block text-[11px] font-medium text-gray-500">Image Prompt Engine</label>
+                      <div className="rounded-xl border border-gray-200 bg-gray-50 px-3 py-2.5 text-sm font-medium text-gray-900">
+                        Nano Banana 2 — Gemini image master prompt
+                      </div>
+                      <div className="mt-2 text-xs leading-relaxed text-gray-500">
+                        Image prompt generation is fixed to the Nano Banana path. Runway and Kling stay motion/video only.
+                      </div>
                     </div>
 
                     {/* Reference tags */}
@@ -1184,43 +1779,82 @@ export default function Page() {
 
                   {/* Scene description — coral tint marks creative inject zone */}
                   <section className="rounded-2xl border border-orange-200 bg-orange-50 p-5 sm:p-6">
-                    <h3 className="mb-4 text-[11px] font-semibold uppercase tracking-[0.1em] text-orange-500">Scene Description</h3>
-                    <div className="mb-4 flex overflow-hidden rounded-xl border border-orange-200 bg-white">
-                      {(["romanized", "english"] as const).map((mode) => (
-                        <button
-                          key={mode}
-                          type="button"
-                          onClick={() => setSceneMode(mode)}
-                          className={`flex-1 px-3 py-2 text-xs font-semibold transition-all ${
-                            sceneMode === mode ? "bg-orange-600 text-white" : "text-orange-600 hover:bg-orange-50"
-                          }`}
-                        >
-                          {mode === "romanized" ? "Nepali Romanized" : "Direct English"}
-                        </button>
-                      ))}
+                    <div className="mb-4 flex flex-wrap items-start justify-between gap-3">
+                      <div>
+                        <h3 className="text-[11px] font-semibold uppercase tracking-[0.1em] text-orange-500">Scene Description</h3>
+                        <p className="mt-1 text-xs leading-relaxed text-orange-700">
+                          Short auto-fill by default for a fast U.S. wildlife / Facebook Reels setup. Edit anytime.
+                        </p>
+                      </div>
+                      <div className="flex flex-wrap items-center gap-2">
+                        <span className={`rounded-full px-2.5 py-1 text-[10px] font-semibold ${
+                          sceneDescriptionMode === "auto"
+                            ? "bg-orange-600 text-white"
+                            : "bg-white text-orange-700"
+                        }`}>
+                          {sceneDescriptionMode === "auto" ? "Auto Mode" : "Manual Mode"}
+                        </span>
+                        {sceneDescriptionMode === "manual" && sceneDescriptionTouched && (
+                          <span className="rounded-full bg-white px-2.5 py-1 text-[10px] font-semibold text-gray-600">
+                            Protected from overwrite
+                          </span>
+                        )}
+                      </div>
                     </div>
-                    <textarea
-                      value={sceneNepaliRomanized}
-                      onChange={(e) => setSceneNepaliRomanized(e.target.value)}
-                      placeholder={sceneMode === "romanized" ? "jastei: bag le bakhra lai khedaera..." : "Write the scene in English..."}
-                      className="min-h-[120px] w-full resize-none rounded-xl border border-orange-200 bg-white p-3.5 text-sm text-gray-900 outline-none placeholder:text-gray-400"
-                    />
-                    <div className="mt-3 flex flex-wrap gap-2">
-                      {["Example 1", "Example 2", "Example 3"].map((x) => (
-                        <button key={x} type="button"
-                          onClick={() => setSceneNepaliRomanized(`${x}: bag le bakhra lai khedaera...`)}
-                          className="rounded-lg border border-orange-200 bg-orange-100 px-2.5 py-1 text-xs font-semibold text-orange-800 hover:bg-orange-200"
-                        >
-                          {x}
-                        </button>
-                      ))}
+
+                    <div className="mb-3 flex flex-wrap items-center gap-2">
+                      <div className="flex overflow-hidden rounded-xl border border-orange-200 bg-white">
+                        {(["romanized", "english"] as const).map((mode) => (
+                          <button
+                            key={mode}
+                            type="button"
+                            onClick={() => setSceneMode(mode)}
+                            className={`px-3 py-2 text-xs font-semibold transition-all ${
+                              sceneMode === mode ? "bg-orange-600 text-white" : "text-orange-600 hover:bg-orange-50"
+                            }`}
+                          >
+                            {mode === "romanized" ? "Nepali Romanized" : "Direct English"}
+                          </button>
+                        ))}
+                      </div>
                       <button
                         type="button"
-                        onClick={() => alert("Auto-translate wiring: optional. For now, this text injects directly into prompts.")}
-                        className="ml-auto rounded-xl bg-orange-600 px-3 py-1.5 text-xs font-semibold text-white hover:bg-orange-700"
+                        onClick={() => applyAutoSceneDescription(0)}
+                        className="rounded-xl border border-orange-200 bg-white px-3 py-2 text-xs font-semibold text-orange-700 hover:bg-orange-100"
                       >
-                        Translate →
+                        Auto Fill
                       </button>
+                      <button
+                        type="button"
+                        onClick={handleSceneDescriptionRegenerate}
+                        className="rounded-xl border border-orange-200 bg-orange-100 px-3 py-2 text-xs font-semibold text-orange-800 hover:bg-orange-200"
+                      >
+                        Regenerate
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => applyAutoSceneDescription(0)}
+                        className="rounded-xl border border-orange-200 bg-white px-3 py-2 text-xs font-semibold text-gray-700 hover:bg-gray-50"
+                      >
+                        Reset to Auto
+                      </button>
+                    </div>
+
+                    <textarea
+                      value={sceneDescription}
+                      onChange={(e) => handleSceneDescriptionChange(e.target.value)}
+                      placeholder={sceneMode === "romanized" ? "jastei: bag le bakhra lai khedaera..." : "Write a short scene description in English..."}
+                      className="min-h-[120px] w-full resize-none rounded-xl border border-orange-200 bg-white p-3.5 text-sm text-gray-900 outline-none placeholder:text-gray-400"
+                    />
+                    <div className="mt-3 flex flex-wrap items-center justify-between gap-2 text-[11px] leading-relaxed text-orange-700">
+                      <span>
+                        {sceneDescriptionMode === "auto"
+                          ? "Auto mode updates with setup changes until you edit manually."
+                          : "Manual mode will not be overwritten. Blank is still allowed if you want no extra scene guidance."}
+                      </span>
+                      <span className="rounded-full bg-white px-2.5 py-1 font-semibold text-gray-600">
+                        {sceneDescription.trim().length === 0 ? "Blank allowed" : `${sceneDescription.trim().length} chars`}
+                      </span>
                     </div>
                   </section>
 
@@ -1288,6 +1922,10 @@ export default function Page() {
                     </div>
                   </div>
 
+                  <div className="mb-5 rounded-2xl border border-white/10 bg-white/[0.04] px-3.5 py-3 text-[11px] text-white/55">
+                    Flow: 1. Inputs → 2. U.S. score → 3. Opening score → 4. Publish guard → 5. Final output
+                  </div>
+
                   {/* Inverted CTA — white button inside dark island */}
                   <button
                     onClick={handleGenerate}
@@ -1313,6 +1951,61 @@ export default function Page() {
                 {/* Output — premium light-surface wrapper */}
                 {pkg && (
                   <section>
+                    {publishFlowSummary && (
+                      <div className="mb-4 grid gap-3 md:grid-cols-2 xl:grid-cols-5">
+                        <div className="rounded-2xl border border-gray-200 bg-white p-4 shadow-sm shadow-gray-200/60">
+                          <div className="text-[10px] font-semibold uppercase tracking-[0.1em] text-gray-400">1. User Inputs</div>
+                          <div className="mt-2 text-sm font-semibold text-gray-900">{publishFlowSummary.predatorName} vs {publishFlowSummary.preyName}</div>
+                          <div className="mt-1 text-xs text-gray-500">{publishFlowSummary.arcName} • {publishFlowSummary.marketMode}</div>
+                        </div>
+                        <div className="rounded-2xl border border-blue-200 bg-blue-50 p-4 shadow-sm shadow-blue-100/60">
+                          <div className="text-[10px] font-semibold uppercase tracking-[0.1em] text-blue-500">2. U.S. Score</div>
+                          <div className="mt-2 text-sm font-semibold text-blue-900">{publishFlowSummary.usAudienceScore.total}/100</div>
+                          <div className="mt-1 text-xs text-blue-700">{publishFlowSummary.usAudienceScore.summary}</div>
+                        </div>
+                        <div className="rounded-2xl border border-violet-200 bg-violet-50 p-4 shadow-sm shadow-violet-100/60">
+                          <div className="text-[10px] font-semibold uppercase tracking-[0.1em] text-violet-500">3. Opening Score</div>
+                          <div className="mt-2 text-sm font-semibold text-violet-900">{publishFlowSummary.openingFrameScore.total}/100</div>
+                          <div className="mt-1 text-xs text-violet-700">{publishFlowSummary.openingFrameScore.summary}</div>
+                        </div>
+                        <div className={`rounded-2xl border p-4 shadow-sm ${
+                          publishFlowSummary.publishGuardReport.isPass
+                            ? "border-emerald-200 bg-emerald-50 shadow-emerald-100/60"
+                            : "border-amber-200 bg-amber-50 shadow-amber-100/60"
+                        }`}>
+                          <div className={`text-[10px] font-semibold uppercase tracking-[0.1em] ${
+                            publishFlowSummary.publishGuardReport.isPass ? "text-emerald-500" : "text-amber-500"
+                          }`}>4. Publish Guard</div>
+                          <div className={`mt-2 text-sm font-semibold ${
+                            publishFlowSummary.publishGuardReport.isPass ? "text-emerald-900" : "text-amber-900"
+                          }`}>
+                            {publishFlowSummary.publishGuardReport.isPass ? "Pass" : "Needs cleanup"}
+                          </div>
+                          <div className={`mt-1 text-xs ${
+                            publishFlowSummary.publishGuardReport.isPass ? "text-emerald-700" : "text-amber-700"
+                          }`}>
+                            {publishFlowSummary.publishGuardReport.warnings[0] ?? "Packaging is within the default fast-publish guard."}
+                          </div>
+                        </div>
+                        <div className="rounded-2xl border border-gray-200 bg-white p-4 shadow-sm shadow-gray-200/60">
+                          <div className="text-[10px] font-semibold uppercase tracking-[0.1em] text-gray-400">5. Final Output</div>
+                          <div className="mt-2 text-sm font-semibold text-gray-900">
+                            {publishFlowSummary.durationLane.toUpperCase()} • {formatPipelineStyleLabel(publishFlowSummary.pipelineStyle)}
+                          </div>
+                          <div className="mt-1 text-xs text-gray-500">
+                            Hook: {publishFlowSummary.hookFamily} {publishFlowSummary.fastPublishMode ? "• Fast publish" : ""}
+                          </div>
+                          <div className={`mt-2 inline-flex rounded-full px-2.5 py-1 text-[10px] font-semibold ${
+                            publishFlowSummary.publishWorthy
+                              ? "bg-emerald-100 text-emerald-700"
+                              : "bg-amber-100 text-amber-700"
+                          }`}>
+                            {publishFlowSummary.publishWorthy ? "Publish-worthy" : "Review before publish"}
+                          </div>
+                        </div>
+                      </div>
+                    )}
+
                     <div className="mb-4 rounded-2xl border border-gray-200 bg-white/80 p-4 shadow-sm shadow-gray-200/60">
                       <div className="flex flex-wrap items-start justify-between gap-3">
                         <div>

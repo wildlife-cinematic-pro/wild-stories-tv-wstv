@@ -16,6 +16,7 @@ import type {
   Weather,
   RunwayModel,
   GeneratedPackage,
+  PipelineStyle,
   CapCutScript,
   CapCutBeat,
   SoundDesignPack,
@@ -119,11 +120,20 @@ export type WorkflowPipelinePack = {
   name: string;
   badge: string;
   totalDuration: string;
+  durationLane?: WorkflowDurationLane;
   summary: string;
   shots: PipelineShot[];
 };
 
 export type ShotMode = "3shot" | "4shot" | "5shot";
+export type WorkflowDurationLane = "short" | "long";
+
+export type WorkflowDurationLanePack = {
+  lane: WorkflowDurationLane;
+  totalDuration: string;
+  defaultMode: "4shot" | "5shot";
+  summary: string;
+};
 
 // ─────────────────────────────────────────────────────────────
 // 1. ANIMAL BEHAVIOR LIBRARY
@@ -524,10 +534,11 @@ export function buildCapCutScript(
   arc: Arc,
   weather: Weather,
   pkg: GeneratedPackage,
-  pipelineStyle: "4-shot" | "5-shot"
+  pipelineStyle: PipelineStyle
 ): CapCutScript {
   const isWinter = weather === "Winter Blizzard" || weather === "Frozen Dusk";
   const hook = pkg.hook2026?.[0] ?? pkg.hook;
+  const isLongHybrid = pipelineStyle === "long-hybrid-4-shot";
   const sfxImpact = sanitizeWorkflowPhrase(
     isWinter ? "Ground thud + cold-air rush" : "Dust scatter + ground thud"
   );
@@ -542,7 +553,7 @@ export function buildCapCutScript(
           : "Cinematic wildlife underscore — slow build, natural peaks";
 
   const beats4: CapCutBeat[] = [
-    {
+  {
       timeIn: "0:00",
       timeOut: "0:04",
       shotRef: "Shot 1 — Opening Tension / Seedance",
@@ -553,7 +564,7 @@ export function buildCapCutScript(
         : "Natural habitat ambience, distant call",
       musicNote: "Music starts 0:01 — very low volume, slow build",
     },
-    {
+  {
       timeIn: "0:04",
       timeOut: "0:09",
       shotRef: "Shot 2 — Pressure Build / Seedance",
@@ -582,63 +593,56 @@ export function buildCapCutScript(
       sfx: "Breathing settle, wind, distant environment",
       musicNote: "Music resolves — soft outro, fade to nature sound",
     },
-  ];
+];
 
-  const beats5: CapCutBeat[] = [
+  const beatsLongHybrid: CapCutBeat[] = [
     {
       timeIn: "0:00",
-      timeOut: "0:04",
-      shotRef: "Shot 1 — Hook Close-up",
-      onScreenText: hook.slice(0, 35),
-      transition: "Hard cut — instant start, no intro",
-      sfx: "Dead silence OR single low breath",
-      musicNote: "No music yet — silence builds tension",
-    },
-    {
-      timeIn: "0:04",
-      timeOut: "0:14",
-      shotRef: "Shot 2 — Standoff / Setup",
-      onScreenText: `${predator} vs ${prey}...`,
-      transition: "Match cut on eye movement",
+      timeOut: "0:10",
+      shotRef: "Shot 1 — Runway Opening Tension",
+      onScreenText: hook.slice(0, 40),
+      transition: "Hard cut — first frame must read instantly",
       sfx: isWinter
-        ? "Wind, snow surface movement, distant environment"
-        : "Grass movement, distant environment",
-      musicNote: "Music enters 0:05 — single low cello note sustained",
+        ? "Cold wind bed, low air-pressure rumble, subtle body tension"
+        : "Natural habitat bed, low tension pulse, subtle body movement",
+      musicNote: "Music starts low after the first beat and stays restrained while the setup breathes",
     },
     {
-      timeIn: "0:14",
-      timeOut: "0:26",
-      shotRef: "Shot 3 — Tension / Pre-action",
-      onScreenText: "WAIT FOR IT... 🔥",
-      transition: "Slow zoom cut — 1.05x push in",
-      sfx: "Heartbeat sub bass, silence growing",
-      musicNote: "Music builds — strings enter, tempo increases slightly",
+      timeIn: "0:10",
+      timeOut: "0:25",
+      shotRef: "Shot 2 — Kling Pressure Build",
+      onScreenText: `${predator} vs ${prey}...`,
+      transition: "Match cut on spacing compression",
+      sfx: isWinter
+        ? "Snow surface movement, controlled foot pressure, distant winter environment"
+        : "Terrain movement, controlled foot pressure, distant environment",
+      musicNote: "Music builds slowly with pressure but still avoids the full impact peak",
     },
     {
-      timeIn: "0:26",
+      timeIn: "0:25",
       timeOut: "0:40",
-      shotRef: "Shot 4 — Clash / Impact",
-      onScreenText: "😱",
-      transition: "Flash cut — 2 frame white flash on impact",
-      sfx: sanitizeWorkflowPhrase(`${sfxImpact} + full animal audio`),
-      musicNote: "MUSIC PEAK — full orchestra hit, hard sync to impact",
+      shotRef: "Shot 3 — Kling Main Action",
+      onScreenText: "WAIT FOR IT... 🔥",
+      transition: "Punch cut on the first readable payoff beat",
+      sfx: sanitizeWorkflowPhrase(`${sfxImpact} + full animal audio + terrain response`),
+      musicNote: "Music peak lands once on the clearest payoff frame, then starts easing off",
     },
     {
       timeIn: "0:40",
-      timeOut: "0:55",
-      shotRef: "Shot 5 — Winner Walk / Resolve",
-      onScreenText: "Follow for more 🦁",
-      transition: "Slow fade in from black",
-      sfx: "Breathing, ambient nature, single deep call",
-      musicNote: "Music resolves — soft piano or strings fade out",
+      timeOut: "0:50",
+      shotRef: "Shot 4 — Runway Aftermath / Resolve",
+      onScreenText: "Who won? Comment below 👇",
+      transition: "Hold the chained end-state and resolve naturally",
+      sfx: "Breathing settle, wind, residual terrain movement",
+      musicNote: "Music resolves with a longer hold so the aftermath fully lands",
     },
-  ];
+];
 
   return {
-    totalDuration: pipelineStyle === "5-shot" ? "0:55" : "0:20",
+    totalDuration: isLongHybrid ? "0:50" : "0:20",
     aspectRatio: "9:16 (1080×1920)",
     fps: 24,
-    beats: pipelineStyle === "5-shot" ? beats5 : beats4,
+    beats: isLongHybrid ? beatsLongHybrid : beats4,
     exportSettings:
       "H.264 | 1080×1920 | 24fps project | 30fps export for upload | 20–25 Mbps | AAC 320kbps",
     musicMood,
@@ -651,9 +655,10 @@ export function buildCapCutScript(
 export function buildRunwayCameraPlan(
   arc: Arc,
   weather: Weather,
-  pipelineStyle: "4-shot" | "5-shot"
+  pipelineStyle: PipelineStyle
 ): string {
   const winter = weather === "Winter Blizzard" || weather === "Frozen Dusk";
+  const isLongHybrid = pipelineStyle === "long-hybrid-4-shot";
 
   const map: Record<Arc, { move: string; speed: string; why: string; avoid: string }> = {
     "Ambush attack": {
@@ -715,8 +720,8 @@ export function buildRunwayCameraPlan(
         ? "In winter scenes, keep the move restrained so micro-motion and layered depth remain readable."
         : "",
       `Avoid: ${s.avoid}`,
-      pipelineStyle === "5-shot"
-        ? "Use the gentlest move on shots 1 and 5; save the strongest move for the action beat only."
+      isLongHybrid
+        ? "For the long lane, let Shot 1 breathe for 10 seconds, keep Shot 2 and Shot 3 wide and readable across the 15-second build and payoff beats, and save the strongest move for the Shot 3 payoff only."
         : "For 4-shot reels, keep the move simple so Shot 1 stays readable immediately and the strongest movement lands in Shot 3 only.",
     ]
       .filter(Boolean)
@@ -1131,6 +1136,21 @@ Best fit: ${arc} in ${cleanEnv} during ${weather}. Recommended final model: ${fi
 // ─────────────────────────────────────────────────────────────
 // 11. UI WORKFLOW PIPELINE PACKS
 // ─────────────────────────────────────────────────────────────
+export const workflowDurationLanePacks: WorkflowDurationLanePack[] = [
+  {
+    lane: "short",
+    totalDuration: "0:18–0:30",
+    defaultMode: "4shot",
+    summary: "Current hybrid 4-shot default. Best for fast readable reels with a clean opening, fast build, and tight payoff.",
+  },
+  {
+    lane: "long",
+    totalDuration: "0:50",
+    defaultMode: "5shot",
+    summary: "True 50-second hybrid 4-shot workflow. Runway 10s → Kling 15s → Kling 15s → Runway 10s with longer hold, build, payoff, and aftermath.",
+  },
+];
+
 export const workflowPipelinePacks: WorkflowPipelinePack[] = [
   {
     id: "3shot",
@@ -1168,12 +1188,13 @@ export const workflowPipelinePacks: WorkflowPipelinePack[] = [
       },
     ],
   },
-    {
+  {
     id: "4shot",
     name: "4-Shot Pipeline — Cinematic Story",
-    badge: "20 seconds",
-    totalDuration: "0:20",
-    summary: "Opening tension → pressure build → action pressure → resolved tension. Best balanced format.",
+    badge: "18–30 seconds",
+    totalDuration: "0:18–0:30",
+    durationLane: "short",
+    summary: "Opening tension → pressure build → action pressure → resolved tension. Current hybrid 4-shot default for the short lane.",
     shots: [
       {
         id: 1,
@@ -1187,11 +1208,11 @@ export const workflowPipelinePacks: WorkflowPipelinePack[] = [
       {
         id: 2,
         title: "Pressure Build",
-        engine: "RUNWAY",
+        engine: "KLING",
         durationLabel: "4–9s",
-        description: "Two animals visible, spacing pressure rises, body language stays readable.",
+        description: "Two animals visible, spacing pressure rises, body language stays readable, and Kling carries the heavier interaction build.",
         copyText:
-          "SHOT 2 — PRESSURE BUILD: both animals framed clearly, no sudden movement, tension building through spacing and posture, subtle atmosphere, slow camera drift, readable body language.",
+          "SHOT 2 — PRESSURE BUILD: both animals framed clearly, tension building through spacing and posture, heavier interaction mechanics, readable body language, subtle atmosphere, and stable subject continuity.",
       },
       {
         id: 3,
@@ -1215,60 +1236,68 @@ export const workflowPipelinePacks: WorkflowPipelinePack[] = [
   },
   {
     id: "5shot",
-    name: "5-Shot Pipeline — Watch Time Optimizer",
-    badge: "45–55 seconds",
-    totalDuration: "0:45–0:55",
-    summary: "Opening tension → pressure build → action pressure → reaction pressure → resolved tension. Best for Facebook watch time.",
+    name: "Long Hybrid 4-Shot Pipeline — 50 Seconds",
+    badge: "50 seconds",
+    totalDuration: "0:50",
+    durationLane: "long",
+    summary: "Opening tension → pressure build → main action payoff → aftermath resolve. True long-lane hybrid pacing with Runway 10 / Kling 15 / Kling 15 / Runway 10.",
     shots: [
       {
         id: 1,
         title: "Opening Tension",
         engine: "RUNWAY",
-        durationLabel: "0–4s",
-        description: "Scroll-stopping tension with immediate readable subject visibility.",
+        durationLabel: "0–10s",
+        description: "Readable setup and opening tension with a slower hold so the first frame stays clear before pressure tightens.",
         copyText:
-          "SHOT 1 — OPENING TENSION: both subjects immediately readable, direct eye-line tension, subtle fur-edge micro-motion, no sudden movement, subtle push-in, scroll-stopping documentary realism.",
+          "SHOT 1 — OPENING TENSION: keep both subjects instantly readable from frame one, hold the setup long enough to breathe, use one restrained push-in only, and let the pressure line tighten without an early payoff.",
       },
       {
         id: 2,
         title: "Pressure Build",
-        engine: "RUNWAY",
-        durationLabel: "4–12s",
-        description: "Slow pressure setup, spacing tightens, suspense grows without losing clarity.",
+        engine: "KLING",
+        durationLabel: "10–25s",
+        description: "Spacing collapse and body-language escalation with Kling carrying the slower suspense build in wide readable framing.",
         copyText:
-          "SHOT 2 — PRESSURE BUILD: both animals visible, distance pressure building, subtle camera movement, slow suspense, no attack yet, environment remains alive, subject clarity stays strong.",
+          "SHOT 2 — PRESSURE BUILD: keep both animals wide and readable, let distance compress gradually, build pressure through posture and spacing, and avoid the full collision until Shot 3.",
       },
       {
         id: 3,
-        title: "Action Pressure",
+        title: "Main Action Payoff",
         engine: "KLING",
-        durationLabel: "12–22s",
-        description: "Main collision or action beat. Physics, weight, debris, strongest readable payoff.",
+        durationLabel: "25–40s",
+        description: "Main action beat with the strongest readable payoff, grounded physics, and a clean chained end-state.",
         copyText:
-          "SHOT 3 — ACTION PRESSURE: full-body collision or pressure beat, realistic weight transfer, dust or snow explosion, strongest impact beat, readable mechanics, cinematic payoff moment.",
+          "SHOT 3 — MAIN ACTION PAYOFF: land one dominant action beat only, keep full-body mechanics readable, let the payoff peak once, and finish on a clean frame that can chain safely into Shot 4.",
       },
       {
         id: 4,
-        title: "Reaction Pressure",
-        engine: "KLING",
-        durationLabel: "22–32s",
-        description: "Stumble, shift, panic, retaliation, unstable momentum, but action remains readable.",
-        copyText:
-          "SHOT 4 — REACTION PRESSURE: post-impact reaction, stumble or reversal, visible body tension, tension still active, momentum unclear, layered terrain response, clean readable spacing.",
-      },
-      {
-        id: 5,
-        title: "Resolved Tension",
         engine: "RUNWAY",
-        durationLabel: "32–55s",
-        description: "Winner walk, retreat, calm, unresolved stare, or final dominance with a clean ending frame.",
+        title: "Aftermath Resolve",
+        durationLabel: "40–50s",
+        description: "Winner hold, retreat, stare-down, or resolve with extra room for the aftermath to land cleanly.",
         copyText:
-          "SHOT 5 — RESOLVED TENSION: dominance or retreat outcome, movement settles, subtle atmosphere, powerful cinematic resolve, restrained documentary ending, clean final-frame readability.",
+          "SHOT 4 — AFTERMATH RESOLVE: return to Runway for the clean settle, hold the final spacing long enough to read the outcome, and end on a stable cinematic frame.",
       },
     ],
   },
-  ];
+];
 
 export function getWorkflowPipelinePack(mode: ShotMode): WorkflowPipelinePack {
-  return workflowPipelinePacks.find((pack) => pack.id === mode) ?? workflowPipelinePacks[2];
+  return (
+    workflowPipelinePacks.find((pack) => pack.id === mode) ??
+    workflowPipelinePacks.find((pack) => pack.id === "4shot") ??
+    workflowPipelinePacks[0]
+  );
+}
+
+export function getDefaultWorkflowShotModeForDurationLane(
+  lane: WorkflowDurationLane
+): "4shot" | "5shot" {
+  return lane === "long" ? "5shot" : "4shot";
+}
+
+export function getWorkflowPipelinePackForDurationLane(
+  lane: WorkflowDurationLane
+): WorkflowPipelinePack {
+  return getWorkflowPipelinePack(getDefaultWorkflowShotModeForDurationLane(lane));
 }

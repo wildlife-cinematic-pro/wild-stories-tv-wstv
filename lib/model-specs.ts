@@ -73,8 +73,7 @@ export const KLING_MODEL_MULT: Record<KlingModel, number> = {
 
 export const RUNWAY_STYLE_NOTE: Record<RunwayModel, string> = {
   "Gen-4.5":
-    // Emphasize the opening seconds and U.S. audience familiarity.  
-    "Runway Gen-4.5: flagship — best cinematic quality, temporal coherence and camera control. The first 1–3 seconds are critical: prioritize strong first‑frame readability, immediate visible tension and clear predator‑to‑survival‑animal spacing. Choose U.S.‑familiar wildlife and habitats when possible for higher Facebook Reels engagement. Use rich camera language: push, drift, hold and track.",
+    "Runway Gen-4.5: flagship — best cinematic quality, temporal coherence and camera control. The first 1–3 seconds are critical: prioritize strong first‑frame readability, immediate visible tension, and clear predator‑to‑survival‑animal spacing. Choose U.S.-readable wildlife and habitats when that fits the audience focus. Use rich camera language: push, drift, hold, and track.",
 
   "Gen-4 Turbo":
     // Fast model guidance with new opening‑readability focus.  
@@ -87,7 +86,7 @@ export const RUNWAY_STYLE_NOTE: Record<RunwayModel, string> = {
 
 export const KLING_STYLE_NOTE: Record<KlingModel, string> = {
   "Kling 3.0 Pro":
-    "Kling 3.0 Pro: WSTV action workflow — write like a director giving scene instructions, not a keyword list. Describe camera, subject motion, and scene intent as one flowing direction. First 1–3 seconds must deliver immediate full-body readability, visible tension, and clear predator-to-survival-animal spacing. Use U.S.-familiar wildlife and habitats for stronger Facebook Reels performance.",
+    "Kling 3.0 Pro: WSTV action workflow — write like a director giving scene instructions, not a keyword list. Describe camera, subject motion, and scene intent as one flowing direction. The first 1–3 seconds should deliver immediate full-body readability, visible tension, and clear predator-to-survival-animal spacing.",
   "Kling 3.0 Standard":
     "Kling 3.0 Standard: balanced WSTV motion workflow — director-style prompt, not form fields. Both animals must be clearly readable from frame one with unambiguous subject spacing. One primary action per shot. Environments should reflect recognizable U.S. habitats.",
   "Kling 2.6 Pro":
