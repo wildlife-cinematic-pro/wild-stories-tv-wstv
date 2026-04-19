@@ -1,6 +1,7 @@
 import { describe, it, expect } from "vitest";
 import {
   buildImagePrompt,
+  buildShotImagePlan,
   buildFourShotWorkflow,
   buildRunwayShots,
   buildKlingShots,
@@ -10,6 +11,7 @@ import {
   buildCapCutPlan,
   buildClipChaining,
   build10Ideas,
+  buildThumbnailPrompt,
   finalizeGenerationText,
   sanitizeSocialCopyText,
   validateEngineConstraints,
@@ -131,6 +133,28 @@ describe("buildImagePrompt – Nano Banana image path", () => {
     );
     expect(/--ar\s+9:16/i.test(p)).toBe(false);
     expect(/--style\s+raw/i.test(p)).toBe(false);
+  });
+
+  it("keeps long scene context word-safe instead of clipping into broken endings", () => {
+    const longScene =
+      `${"meadow ".repeat(19)}Clear U.S. wildlife setup for fast Facebook viewing.`;
+
+    const p = buildImagePrompt(
+      args.predator,
+      args.prey,
+      args.env,
+      args.arc,
+      args.lighting,
+      args.cameraGear,
+      args.texture,
+      args.depthMode,
+      args.weather,
+      args.emotionalTone,
+      args.animalVibe,
+      longScene
+    );
+
+    expect(p).not.toMatch(/\bClear U\.(?=\s|$)/);
   });
 });
 
@@ -612,6 +636,64 @@ describe("Step 7C — supporting prompt helpers keep readability language", () =
     expect(wordCount(shot3Paste)).toBeLessThanOrEqual(120);
     expect(wordCount(shot4Paste)).toBeLessThanOrEqual(120);
     expect(shot1Paste).not.toContain("Keep both subjects");
+  });
+});
+
+describe("Step 12 — export cleanup guards", () => {
+  it("keeps Yellowstone meadow image-plan exports land-correct", () => {
+    const shots = buildShotImagePlan(
+      "Grizzly Bear",
+      "Bison",
+      "Yellowstone meadow open wilderness",
+      "Giant vs giant clash",
+      "Golden Hour",
+      {
+        realismMode: "Reference Locked",
+        motionOnlyI2V: true,
+        referenceLock: true,
+        singleActionRule: true,
+        microMotion: true,
+        heroVeo: false,
+      }
+    );
+
+    const exportText = shots.map((shot) => shot.prompt).join("\n");
+    expect(exportText).not.toMatch(/surface ripples|suspended particles|water ripples/i);
+    expect(exportText).toContain("Nano Banana 2 / Gemini master still");
+    expect(exportText).not.toContain("Keep everything else in the image exactly the same");
+  });
+
+  it("keeps long scene context export-safe when United States continuity text is present", () => {
+    const p = buildImagePrompt(
+      "Mountain Lion",
+      "White-tailed Deer",
+      "Rocky Mountain meadow",
+      "Ambush attack",
+      "golden hour sunlight",
+      "Canon EOS R5, wildlife lens",
+      "detailed fur texture",
+      "Balanced Depth",
+      "Golden Hour",
+      "Raw Tension",
+      "National Geographic Wild",
+      `${"meadow ".repeat(19)}Clear U.S. wildlife setup for fast Facebook viewing.`
+    );
+
+    expect(p).not.toMatch(/\bClear U\.(?=\s|$)/);
+  });
+
+  it("removes leftover melodramatic raw-tension filler from thumbnail exports", () => {
+    const thumb = buildThumbnailPrompt(
+      "Mountain Lion",
+      "White-tailed Deer",
+      "Rocky Mountain meadow",
+      "Golden Hour",
+      "Raw Tension",
+      "National Geographic Wild"
+    );
+
+    expect(thumb).not.toContain("the air itself feels dangerous");
+    expect(thumb).toContain("visible pressure in posture and spacing");
   });
 });
 

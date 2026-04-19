@@ -207,7 +207,7 @@ export const predatorData: Record<string, PredatorInfo> = {
   "Grizzly Bear": {
     prey: ["Bison", "Moose", "Bull Elk", "Salmon", "Elk Calf"],
     environment:
-      "Yellowstone meadow, river corridor, and open wilderness with strong clash readability and clean subject spacing",
+      "Yellowstone meadow and open wilderness with strong clash readability and clean subject spacing",
     lighting:
       "dramatic overcast mountain light, open-air clarity, dry grass movement, heavy cloud diffusion, and clean clash readability",
     cameraGear:
@@ -726,26 +726,26 @@ export const emotionalTonePrompt: Record<
 > = {
   "Raw Tension": {
     image:
-      "palpable raw tension — both animals at the edge of movement, muscles coiled, the air itself feels dangerous",
+      "raw tension — both animals at the edge of movement, muscles coiled, visible pressure in posture and spacing",
     video:
-      "stillness broken only by micro-movements — breathing, ear flicks, weight shifts. Every frame loaded with impending motion.",
+      "stillness broken by micro-movements — breathing, ear flicks, and weight shifts. Pressure is visible before the move.",
     voiceover:
-      "The tension is unbearable. Every second could be the last moment of silence.",
+      "Both animals are set. The pressure is visible before either one commits.",
   },
   "Silent Dread": {
     image:
-      "deep atmospheric dread — silence heavier than sound, shadows pressing in, a stillness that feels like a held breath",
+      "quiet pressure — low movement, held posture, and a frame that looks settled right before the break",
     video:
-      "slow creeping dread — camera barely moves, subject pauses, environment reacts with subtle wind and distant sounds.",
+      "slow restrained tension — camera barely moves, subject pauses, and the environment reacts in subtle wind and distant movement.",
     voiceover:
-      "In this silence, something ancient stirs. The forest holds its breath.",
+      "The scene stays quiet, but the setup is already in place.",
   },
   "Explosive Energy": {
     image:
       "explosive kinetic energy — motion blur on extremities, muscles fully extended, environment reacting at full force",
     video:
       "maximum kinetic force — full body acceleration, environmental scatter, ground reaction, limbs at full extension.",
-    voiceover: "In a split second, everything erupts. Pure force. Pure instinct.",
+    voiceover: "One committed move turns the whole frame.",
   },
   "Calm Dominance": {
     image:
@@ -753,7 +753,7 @@ export const emotionalTonePrompt: Record<
     video:
       "unhurried deliberate movement — predator controls every step, eyes forward, environment parting around it.",
     voiceover:
-      "No rush. No hesitation. This animal owns every inch of this land.",
+      "The pace stays controlled because one animal already owns the space.",
   },
   "Desperate Survival": {
     image:
@@ -761,21 +761,21 @@ export const emotionalTonePrompt: Record<
     video:
       "desperate full-body flight — every muscle engaged for survival, ground churning, maximum speed.",
     voiceover:
-      "This is not a choice. This is survive or perish — nothing in between.",
+      "The response is immediate because there is no extra reaction time.",
   },
   "Haunting Stillness": {
     image:
-      "haunting motionless presence — predator standing like a statue in mist, eyes glowing with quiet ancient intelligence",
+      "held stillness — predator nearly motionless, eyes fixed, posture settled before the move",
     video:
-      "ghostly stillness — predator barely moves, mist drifts around it, environment falls eerily quiet.",
-    voiceover: "It just stands there. Watching. Patient as time itself.",
+      "near-static hold — predator barely moves while the environment stays quiet and restrained.",
+    voiceover: "Everything holds for a beat, but the threat line is already clear.",
   },
   "Primal Instinct": {
     image:
-      "pure primal instinct — raw animal energy, no thought, only reflex and evolutionary programming at work",
+      "instinctive pressure — raw animal energy, fast reflexes, and body-led reaction under pressure",
     video:
-      "pure instinctive movement — no hesitation, body acts before mind, ancient muscle memory in full execution.",
-    voiceover: "Millions of years of evolution — all of it, firing at once.",
+      "instinctive movement — no hesitation, body acts first, and the reaction lands cleanly.",
+    voiceover: "The body reacts before there is time to think.",
   },
 };
 
@@ -1021,7 +1021,7 @@ export function suggestHabitat(predator: string, prey: string, fallback: string)
   const preyIs = (...names: string[]) => names.includes(prey) || names.includes(r);
 
   if (predatorIs("Grizzly Bear") && preyIs("Bison", "Moose", "Bull Elk", "Elk")) {
-    return "Yellowstone meadow, river corridor, and open wilderness with strong clash readability and clean subject spacing";
+    return "Yellowstone meadow and open wilderness with strong clash readability and clean subject spacing";
   }
 
   if (predatorIs("Grizzly Bear") && preyIs("Salmon", "Fish")) {

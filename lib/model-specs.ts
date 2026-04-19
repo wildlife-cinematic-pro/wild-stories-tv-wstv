@@ -73,7 +73,7 @@ export const KLING_MODEL_MULT: Record<KlingModel, number> = {
 
 export const RUNWAY_STYLE_NOTE: Record<RunwayModel, string> = {
   "Gen-4.5":
-    "Runway Gen-4.5: flagship — best cinematic quality, temporal coherence and camera control. The first 1–3 seconds are critical: prioritize strong first‑frame readability, immediate visible tension, and clear predator‑to‑survival‑animal spacing. Choose U.S.-readable wildlife and habitats when that fits the audience focus. Use rich camera language: push, drift, hold, and track.",
+    "Runway Gen-4.5: flagship — best cinematic quality, temporal coherence and camera control. The first 1–3 seconds are critical: prioritize strong first‑frame readability, immediate visible tension, and clear predator‑to‑survival‑animal spacing. Choose strong U.S. wildlife framing when that fits the audience focus. Use rich camera language: push, drift, hold, and track.",
 
   "Gen-4 Turbo":
     // Fast model guidance with new opening‑readability focus.  
