@@ -36,7 +36,7 @@ describe("suggestHabitat pair matching", () => {
         "Bull Elk",
         "fallback habitat"
       )
-    ).toBe("Yellowstone meadow, river corridor, and open wilderness with strong clash readability and clean subject spacing");
+    ).toBe("Yellowstone meadow and open wilderness with strong clash readability and clean subject spacing");
   });
   describe("calendar rotations use stronger elk naming", () => {
   it("includes Wolf Pack vs Bull Elk in monthly calendar rotations", () => {

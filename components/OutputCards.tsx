@@ -20,6 +20,7 @@ import { useMemo, useRef, useState } from "react";
 
 import PromptVersionsPanel from "@/components/PromptVersionsPanel";
 import { downloadText } from "@/lib/storage";
+import { buildCopyAllPacksText as buildCopyAllPacksTextFromPackage, buildExportTxtFull as buildExportTxtFullFromPackage } from "@/lib/export-text";
 import WSTVWorkflowDiagram from "@/components/WSTVWorkflowDiagram";
 
 import type {
@@ -2733,69 +2734,7 @@ export default function OutputCards({
   ]);
 
   function buildCopyAllPacksText() {
-    const seedance = seedanceShots
-      .map((s, i) => `Seedance Shot ${i + 1}\n${safeStr(s)}`)
-      .join("\n\n---\n\n");
-
-    const runway = runwayShots
-      .map((s, i) => `Runway Shot ${i + 1}\n${safeStr(s)}`)
-      .join("\n\n---\n\n");
-
-    const kling = klingShots
-      .map((s, i) => `Kling Shot ${i + 1}\n${safeStr(s)}`)
-      .join("\n\n---\n\n");
-
-  const twoPart = buildTwoPartText();
-  const capCutScript = buildCapCutScriptText();
-  const animalBehavior = buildAnimalBehaviorText();
-  const soundDesign = buildSoundDesignText();
-  const shotImagePlanText = (data.shotImagePlan ?? [])
-    .map(
-      (plan, i) =>
-        `Image ${i + 1} — ${safeStr(plan.title)}\nSource: ${
-          plan.source === "master" ? "Master image" : "Previous shot image"
-        }\n${safeStr(plan.prompt)}`
-    )
-    .join("\n\n---\n\n");
-
-  return [
-    `WSTV EXPORT PACK (Pro 2026)`,
-    `Predator: ${safeStr(data.predatorName)}`,
-    `Prey: ${safeStr(data.preyName)}`,
-    `Arc: ${safeStr(data.arcName)}`,
-    data.routingNote ? `Routing: ${safeStr(data.routingNote)}` : "",
-    "",
-    `=== 4-SHOT IMAGE PLAN ===`,
-    shotImagePlanText || "(none)",
-    "",
-    `=== SEEDANCE PACK (I2V | simple motion-first prompting | NO negatives) ===`,
-    seedance || "(none)",
-    "",
-    `=== SEEDANCE MULTI-SHOT ===`,
-    safeStr((data as Record<string, unknown>).seedanceMultiShotPrompt) || "(none)",
-    "",
-    `=== RUNWAY PACK (Gen-4.5 | 24/25fps | 720p | NO negatives) ===`,
-    runway || "(none)",
-    "",
-    `=== KLING PACK (3.0 | WSTV action workflow | Negatives OK) ===`,
-    kling || "(none)",
-    "",
-    `=== KLING DIRECT (15s) ===`,
-    safeStr((data as Record<string, unknown>).klingNative15s) || "(none)",
-    "",
-    `=== KLING 6-SHOT (DIRECT) ===`,
-    safeStr((data as Record<string, unknown>).klingSixShot) || "(none)",
-    "",
-    twoPart,
-    "",
-    capCutScript,
-    "",
-    animalBehavior,
-    "",
-    soundDesign,
-  ]
-    .filter(Boolean)
-    .join("\n");
+    return buildCopyAllPacksTextFromPackage(data);
   }
   function buildTwoPartText() {
     if (!data.twoPartViralOverview) return "";
@@ -2890,40 +2829,7 @@ export default function OutputCards({
     ].join("\n\n");
   }
   function buildExportTxtFull() {
-    const packs = buildCopyAllPacksText();
-
-    return [
-      packs,
-      "",
-      `=== CORE PROMPTS ===`,
-      `IMAGE PROMPT\n${safeStr(data.imagePrompt)}`,
-      "",
-      `NEGATIVE PROMPT\n${safeStr(
-        (data as Record<string, unknown>).negativePrompt
-      )}`,
-      "",
-      `THUMBNAIL PROMPT\n${safeStr(
-        (data as Record<string, unknown>).thumbnailPrompt
-      )}`,
-      "",
-      `VOICEOVER\n${safeStr((data as Record<string, unknown>).voiceoverLine)}`,
-      "",
-      `CAPCUT PLAN\n${safeStr((data as Record<string, unknown>).capCutPlan)}`,
-      "",
-      `CLIP CHAINING\n${safeStr(
-        (data as Record<string, unknown>).clipChaining
-      )}`,
-      "",
-      `HOOK\n${safeStr((data as Record<string, unknown>).hook)}`,
-      "",
-      `CAPTION\n${safeStr((data as Record<string, unknown>).caption)}`,
-      "",
-      `CTA\n${safeStr((data as Record<string, unknown>).cta)}`,
-      "",
-      `HASHTAGS\n${safeStr((data as Record<string, unknown>).hashtags)}`,
-      "",
-      `TAGS\n${safeStr((data as Record<string, unknown>).tags)}`,
-    ].join("\n");
+    return buildExportTxtFullFromPackage(data);
   }
 
   async function copyAllPacks() {

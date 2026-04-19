@@ -259,22 +259,22 @@ function compactSceneHabitatLabel(habitat: HabitatPreset, environment: string): 
     .toLowerCase();
 }
 
-function finalizeAutoSceneDescription(raw: string): string {
+function finalizeAutoSceneDescription(raw: string, maxChars = 120): string {
   const compact = String(raw ?? "").replace(/\s+/g, " ").trim();
   const sentences =
     compact.match(/[^.!?]+[.!?]?/g)?.map((sentence) => sentence.trim()).filter(Boolean) ?? [];
   const limited = (sentences.length ? sentences : [compact]).slice(0, 2).join(" ");
 
-  if (limited.length <= 150) return limited;
+  if (limited.length <= maxChars) return limited;
 
   const firstSentence = sentences[0] ?? compact;
-  if (firstSentence.length <= 150) return firstSentence;
+  if (firstSentence.length <= maxChars) return firstSentence;
 
   const words = firstSentence.split(/\s+/).filter(Boolean);
   let wordSafe = "";
   for (const word of words) {
     const next = wordSafe ? `${wordSafe} ${word}` : word;
-    if (next.length > 150) break;
+    if (next.length > maxChars) break;
     wordSafe = next;
   }
   const resolved = wordSafe.replace(/[,:;/-]+$/g, "").trim();
@@ -303,10 +303,10 @@ function buildAutoSceneDescription({
   const habitatLabel = compactSceneHabitatLabel(habitat, environment);
   const safeHabitatLabel = habitatLabel || "wildlife habitat";
   const context = [
-    "Clear U.S. wildlife setup for fast Facebook viewing.",
-    `Readable ${safeHabitatLabel} setup for a U.S. wildlife reel.`,
-    "Fast U.S. wildlife opener with clear readable tension.",
-  ][variantIndex] ?? "Clear U.S. wildlife setup for fast Facebook viewing.";
+    "Clear U.S. wildlife setup.",
+    `Readable ${safeHabitatLabel} for a U.S. wildlife reel.`,
+    "Fast U.S. wildlife opener with clear tension.",
+  ][variantIndex] ?? "Clear U.S. wildlife setup.";
 
   return finalizeAutoSceneDescription(`${lead} ${context}`);
 }
@@ -1212,7 +1212,7 @@ export default function Page() {
     <main className="min-h-screen w-full bg-gray-50">
 
       {/* ── APP HEADER — dark cinematic anchor ─────────────────────────── */}
-      <header className="sticky top-0 z-40 border-b border-white/[0.07] bg-gray-950">
+      <header className="sticky top-0 z-40 border-b border-white/[0.07] bg-gray-950/95 backdrop-blur-xl">
         <div className="mx-auto w-full max-w-[var(--main-max-width)] px-4 sm:px-6 lg:px-8">
           <div className="flex flex-wrap items-center justify-between gap-3 py-3 sm:min-h-[56px] sm:flex-nowrap">
 
@@ -1266,6 +1266,59 @@ export default function Page() {
               <SettingsDrawer />
             </div>
           </div>
+
+          {activeTab === "build" && (
+            <div className="border-t border-white/[0.06] pb-3 pt-2">
+              <div className="overflow-hidden rounded-[24px] border border-gray-200/80 bg-gradient-to-b from-gray-100 via-white to-gray-50/95 shadow-[0_12px_30px_rgba(15,23,42,0.08)] backdrop-blur-xl">
+                <div className="flex items-center gap-2 overflow-x-auto px-2 py-2.5 sm:px-3">
+                  {([
+                    { step: 1 as Step, label: "Wildlife Setup" },
+                    { step: 2 as Step, label: "Engine & Quality" },
+                    { step: 3 as Step, label: "Generate" },
+                  ]).map((s, i) => (
+                    <div key={s.step} className="flex shrink-0 items-center gap-2">
+                      <button
+                        type="button"
+                        onClick={() => setStep(s.step)}
+                        className={`flex items-center gap-2 rounded-2xl border px-3.5 py-2 text-left text-xs font-semibold transition-all active:scale-[0.98] ${
+                          step === s.step
+                            ? "border-gray-900 bg-gray-900 text-white shadow-sm"
+                            : step > s.step
+                            ? "border-emerald-200 bg-emerald-50 text-emerald-700 hover:bg-emerald-100"
+                            : "border-transparent bg-transparent text-gray-400 hover:border-gray-200 hover:bg-gray-50 hover:text-gray-700"
+                        }`}
+                      >
+                        <span
+                          className={`grid h-5 w-5 place-items-center rounded-full text-[10px] ${
+                            step === s.step
+                              ? "bg-white/15 text-white"
+                              : step > s.step
+                              ? "bg-emerald-100 text-emerald-700"
+                              : "bg-gray-100 text-gray-500"
+                          }`}
+                        >
+                          {step > s.step ? "✓" : s.step}
+                        </span>
+                        <span className="flex flex-col items-start leading-none">
+                          <span className={`text-[9px] uppercase tracking-[0.14em] ${
+                            step === s.step ? "text-white/55" : step > s.step ? "text-emerald-500" : "text-gray-400"
+                          }`}>
+                            Step {s.step}
+                          </span>
+                          <span>{s.label}</span>
+                        </span>
+                      </button>
+                      {i < 2 && (
+                        <span className="shrink-0 rounded-full bg-gray-100 px-2 py-1 text-[10px] font-semibold text-gray-300">
+                          ›
+                        </span>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+          )}
         </div>
       </header>
 
@@ -1274,58 +1327,6 @@ export default function Page() {
       ══════════════════════════════════════════════════════════════════════ */}
       {activeTab === "build" && (
         <>
-          {/* Breadcrumb step strip — transitional band between dark header and light body */}
-          <div className="border-b border-gray-200 bg-gradient-to-b from-gray-100 via-white to-gray-50/90">
-            <div className="mx-auto w-full max-w-[var(--main-max-width)] px-4 sm:px-6 lg:px-8">
-              <div className="flex items-center gap-2 overflow-x-auto rounded-2xl border border-gray-200/80 bg-white/80 px-2 py-2.5 shadow-sm shadow-gray-200/50 backdrop-blur">
-                {([
-                  { step: 1 as Step, label: "Wildlife Setup" },
-                  { step: 2 as Step, label: "Engine & Quality" },
-                  { step: 3 as Step, label: "Generate" },
-                ]).map((s, i) => (
-                  <div key={s.step} className="flex shrink-0 items-center gap-2">
-                    <button
-                      type="button"
-                      onClick={() => setStep(s.step)}
-                      className={`flex items-center gap-2 rounded-2xl border px-3.5 py-2 text-left text-xs font-semibold transition-all active:scale-[0.98] ${
-                        step === s.step
-                          ? "border-gray-900 bg-gray-900 text-white shadow-sm"
-                          : step > s.step
-                          ? "border-emerald-200 bg-emerald-50 text-emerald-700 hover:bg-emerald-100"
-                          : "border-transparent bg-transparent text-gray-400 hover:border-gray-200 hover:bg-gray-50 hover:text-gray-700"
-                      }`}
-                    >
-                      <span
-                        className={`grid h-5 w-5 place-items-center rounded-full text-[10px] ${
-                          step === s.step
-                            ? "bg-white/15 text-white"
-                            : step > s.step
-                            ? "bg-emerald-100 text-emerald-700"
-                            : "bg-gray-100 text-gray-500"
-                        }`}
-                      >
-                        {step > s.step ? "✓" : s.step}
-                      </span>
-                      <span className="flex flex-col items-start leading-none">
-                        <span className={`text-[9px] uppercase tracking-[0.14em] ${
-                          step === s.step ? "text-white/55" : step > s.step ? "text-emerald-500" : "text-gray-400"
-                        }`}>
-                          Step {s.step}
-                        </span>
-                        <span>{s.label}</span>
-                      </span>
-                    </button>
-                    {i < 2 && (
-                      <span className="shrink-0 rounded-full bg-gray-100 px-2 py-1 text-[10px] font-semibold text-gray-300">
-                        ›
-                      </span>
-                    )}
-                  </div>
-                ))}
-              </div>
-            </div>
-          </div>
-
           {/* Page content */}
           <div className="mx-auto w-full max-w-[var(--main-max-width)] px-4 py-6 sm:px-6 sm:py-8 lg:px-8">
 

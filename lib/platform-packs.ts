@@ -292,14 +292,16 @@ function trimAtWordBoundary(text: string, maxChars: number): string {
   const compact = normalizeCopy(text);
   if (compact.length <= maxChars) return compact;
 
-  const clipped = compact.slice(0, maxChars + 1);
-  const wordSafe = normalizeCopy(
-    clipped.replace(/\s+\S*$/, "").replace(/[,:;/-]+$/g, "")
-  );
-  const fallback = normalizeCopy(compact.slice(0, maxChars).replace(/[,:;/-]+$/g, ""));
-  const resolved = wordSafe.length >= Math.floor(maxChars * 0.6) ? wordSafe : fallback;
+  const words = compact.split(/\s+/).filter(Boolean);
+  let wordSafe = "";
+  for (const word of words) {
+    const next = wordSafe ? `${wordSafe} ${word}` : word;
+    if (next.length > maxChars) break;
+    wordSafe = next;
+  }
+  const resolved = normalizeCopy(wordSafe.replace(/[,:;/-]+$/g, ""));
 
-  if (!resolved) return compact.slice(0, maxChars).trim();
+  if (!resolved) return compact.trim();
   return /[.!?]$/.test(resolved) ? resolved : `${resolved}.`;
 }
 

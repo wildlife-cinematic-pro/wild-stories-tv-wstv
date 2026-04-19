@@ -167,20 +167,27 @@ function finalizePrompt(input: string): string {
   return finalizeGenerationText(input);
 }
 
+function normalizeBrokenSceneTail(input: string): string {
+  return finalizeGenerationText(input)
+    .replace(/\bClear U\.\s*$/g, "Clear U.S. wildlife setup.")
+    .replace(/\bClear U\.S\s*$/g, "Clear U.S. wildlife setup.")
+    .replace(/\bClear U\.S\.\s*$/g, "Clear U.S. wildlife setup.");
+}
+
 function clipPromptContext(input: string, maxChars = 150): string {
-  const compact = finalizeGenerationText(input);
+  const compact = normalizeBrokenSceneTail(input);
   if (compact.length <= maxChars) return compact;
 
-  const clipped = compact.slice(0, maxChars + 1);
-  const wordSafe = finalizeGenerationText(
-    clipped.replace(/\s+\S*$/, "").replace(/[,:;/-]+$/g, "")
-  );
-  const fallback = finalizeGenerationText(
-    compact.slice(0, maxChars).replace(/[,:;/-]+$/g, "")
-  );
-  const resolved = wordSafe.length >= Math.floor(maxChars * 0.6) ? wordSafe : fallback;
+  const words = compact.split(/\s+/).filter(Boolean);
+  let wordSafe = "";
+  for (const word of words) {
+    const next = wordSafe ? `${wordSafe} ${word}` : word;
+    if (next.length > maxChars) break;
+    wordSafe = next;
+  }
+  const resolved = normalizeBrokenSceneTail(wordSafe.replace(/[,:;/-]+$/g, ""));
 
-  if (!resolved) return compact.slice(0, maxChars).trim();
+  if (!resolved) return compact.trim();
   return /[.!?]$/.test(resolved) ? resolved : `${resolved}.`;
 }
 
@@ -345,21 +352,57 @@ function klingWidePhysicsRule(): string {
 // ─────────────────────────────────────────────────────────────
 type HabitatMode = "land" | "aquatic" | "shoreline";
 
-function isAquaticEnv(env: string): boolean {
+function isBroadYellowstoneLandClashEnv(env: string): boolean {
   const envLower = env.toLowerCase();
   return (
-    envLower.includes("water") ||
-    envLower.includes("river") ||
+    envLower.includes("yellowstone") &&
+    (
+      envLower.includes("meadow") ||
+      envLower.includes("open wilderness") ||
+      envLower.includes("grassland") ||
+      envLower.includes("prairie")
+    )
+  );
+}
+
+function isExplicitWaterForwardEnv(env: string): boolean {
+  const envLower = env.toLowerCase();
+  const hasStrongWaterMarker =
+    envLower.includes("waterline") ||
+    envLower.includes("underwater") ||
+    envLower.includes("riverbank") ||
+    envLower.includes("bank") ||
+    envLower.includes("shoreline") ||
+    envLower.includes("shore") ||
+    envLower.includes("shallow current") ||
+    envLower.includes("current") ||
+    envLower.includes("rapids") ||
+    envLower.includes("water ") ||
+    envLower.startsWith("water") ||
     envLower.includes("lake") ||
     envLower.includes("swamp") ||
     envLower.includes("ocean") ||
     envLower.includes("sea") ||
     envLower.includes("reef") ||
     envLower.includes("coast") ||
-    envLower.includes("shore") ||
-    envLower.includes("underwater") ||
-    envLower.includes("marine")
+    envLower.includes("marine");
+
+  if (isBroadYellowstoneLandClashEnv(env)) {
+    return hasStrongWaterMarker;
+  }
+
+  return (
+    hasStrongWaterMarker ||
+    envLower.includes("river")
   );
+}
+
+function isAquaticEnv(env: string): boolean {
+  if (isBroadYellowstoneLandClashEnv(env) && !isExplicitWaterForwardEnv(env)) {
+    return false;
+  }
+
+  return isExplicitWaterForwardEnv(env);
 }
 
 function isAquaticAnimal(name: string): boolean {
@@ -937,18 +980,7 @@ export function getDepthPrompt(mode: DepthMode): { depth: string; lensNote: stri
 // ─────────────────────────────────────────────────────────────
 export function buildMicroMotionLine(weather: Weather, env: string): string {
   const envLower = env.toLowerCase();
-  const isAquatic =
-    envLower.includes("water") ||
-    envLower.includes("river") ||
-    envLower.includes("lake") ||
-    envLower.includes("swamp") ||
-    envLower.includes("ocean") ||
-    envLower.includes("sea") ||
-    envLower.includes("reef") ||
-    envLower.includes("coast") ||
-    envLower.includes("shore") ||
-    envLower.includes("underwater") ||
-    envLower.includes("marine");
+  const isWaterForward = isAquaticEnv(env);
 
   const isArctic =
     envLower.includes("arctic") ||
@@ -959,7 +991,7 @@ export function buildMicroMotionLine(weather: Weather, env: string): string {
     envLower.includes("frozen") ||
     envLower.includes("winter");
 
-  if (isAquatic) {
+  if (isWaterForward) {
     if (weather === "Storm") {
       return "choppy surface movement, wave slap, underwater particulate drift, foam disturbance, current-driven motion";
     }
@@ -1215,9 +1247,63 @@ export function buildNaturalismChecklist(opts: QualityOptions, weather: Weather,
   ].map(finalizePrompt);
 }
 
-function finalizeImagePrompt(prompt: string, target: ImagePromptTarget): string {
-  void target;
-  return finalizePrompt(prompt);
+function buildNanoBananaImagePrompt(
+  predator: string,
+  prey: string,
+  cleanEnv: string,
+  arc: string,
+  cleanLighting: string,
+  cleanTexture: string,
+  depth: ReturnType<typeof getDepthPrompt>,
+  animalVibe: AnimalVibe,
+  habitatMode: HabitatMode,
+  sanitizedSceneDesc: string,
+  quality?: QualityOptions
+): string {
+  const vibe = animalVibePrompt[animalVibe];
+
+  const subjectLine =
+    habitatMode === "aquatic"
+      ? `${predator} and ${prey} share one frame in ${cleanEnv} during a high-tension ${getSafeArcLabel(arc)} beat.`
+      : habitatMode === "shoreline"
+        ? `${predator} and ${prey} share one frame at the waterline in ${cleanEnv} during a high-tension ${getSafeArcLabel(arc)} beat.`
+        : `${predator} and ${prey} share one frame in ${cleanEnv} during a high-tension ${getSafeArcLabel(arc)} beat.`;
+
+  const tensionLine =
+    habitatMode === "aquatic"
+      ? `${predator} holds visible pressure through the water while ${prey} stays alert and reactive, with biologically plausible spacing.`
+      : habitatMode === "shoreline"
+        ? `${predator} holds visible pressure at the bank while ${prey} stays alert near the waterline, with natural shoreline spacing.`
+        : `${predator} holds visible pre-action pressure while ${prey} stays alert and reactive, with biologically plausible spacing.`;
+
+  const compositionLine =
+    depth.lensNote === "cinematic telephoto depth separation"
+      ? `Wide 9:16 vertical frame, telephoto compression, strong shallow depth separation, both animals fully visible.`
+      : depth.lensNote === "balanced documentary depth"
+        ? `Wide 9:16 vertical frame, telephoto framing, clear midground separation, both animals fully visible.`
+        : `Wide 9:16 vertical frame, telephoto framing, deep background visible, both animals fully visible.`;
+
+  const atmosphereLine = `Lighting: ${cleanLighting}. Clear air, terrain visible from foreground to background.`;
+
+  const detailLine =
+    vibe.texture
+      ? `Photoreal wildlife detail with ${cleanTexture}. ${vibe.texture}.`
+      : `Photoreal wildlife detail with ${cleanTexture}.`;
+
+  const anatomyLine =
+    quality?.realismMode === "High Naturalism"
+      ? "Accurate predator and prey anatomy, natural coat markings, visible paw or hoof contact with the ground, realistic fur imperfections and biological wear."
+      : quality?.realismMode === "Reference Locked"
+        ? "Accurate predator and prey anatomy, natural coat markings, stable silhouettes, and visible paw or hoof contact with the ground."
+        : "Accurate predator and prey anatomy, natural coat markings, and visible paw or hoof contact with the ground.";
+
+  const styleTag = "Photorealistic wildlife documentary style.";
+
+  const sceneNote = sanitizedSceneDesc
+    ? ` Scene note: ${clipPromptContext(sanitizedSceneDesc, 120)}`
+    : "";
+
+  return `${subjectLine} ${tensionLine} ${compositionLine} Depth of field: ${depth.depth}. ${atmosphereLine} ${detailLine} ${anatomyLine} ${styleTag}${sceneNote}`;
 }
 function sanitizeImageEnv(env: string): string {
   return String(env ?? "")
@@ -1636,60 +1722,27 @@ export function buildImagePrompt(
   void target;
 
   const depth = getDepthPrompt(depthMode);
-  const vibe = animalVibePrompt[animalVibe];
   const cleanEnv = sanitizeImageEnv(env);
   const cleanTexture = sanitizeImageTexture(texture, env);
   const cleanLighting = sanitizeLightingPhrase(lighting, weather);
-  const qLead = "";
   const sanitizedSceneDesc = stripLegacyImageFlags(sceneDesc?.trim() ?? "");
-  const sceneNote = sanitizedSceneDesc
-    ? ` Scene note: ${clipPromptContext(sanitizedSceneDesc, 120)}`
-    : "";
-
-  const realismAdd =
-    quality?.realismMode === "High Naturalism"
-      ? "Natural imperfections stay visible in fur, feathers, skin, and ground contact."
-      : quality?.realismMode === "Reference Locked"
-        ? "Keep markings, scale, anatomy, and silhouette stable for continuity-safe downstream video prompting."
-        : "Keep anatomy stable, textures natural, and subject silhouettes easy to read.";
-
   const habitatMode = getHabitatMode(predator, prey, env);
 
-  const optics =
-    depthMode === "Cinematic Blur"
-      ? "Telephoto compression with strong shallow depth separation"
-      : depthMode === "Balanced Depth"
-        ? "Telephoto documentary perspective with readable midground separation"
-        : "Documentary telephoto perspective with deeper habitat clarity";
-
-  const subjectLine =
-    habitatMode === "aquatic"
-      ? `${predator} and ${prey} share the same frame in ${cleanEnv} during a high-tension ${getSafeArcLabel(arc)} beat.`
-      : habitatMode === "shoreline"
-        ? `${predator} and ${prey} share the same frame at the waterline in ${cleanEnv} during a high-tension ${getSafeArcLabel(arc)} beat.`
-        : `${predator} and ${prey} share the same frame in ${cleanEnv} during a high-tension ${getSafeArcLabel(arc)} beat.`;
-
-  const actionLine =
-    habitatMode === "aquatic"
-      ? `${predator} holds visible pressure through the water while ${prey} stays fully alert and reactive. Both animals remain fully readable with biologically plausible spacing.`
-      : habitatMode === "shoreline"
-        ? `${predator} holds visible pressure at the bank while ${prey} stays fully alert near the waterline. Both animals remain fully readable with natural shoreline spacing.`
-        : `${predator} holds visible pre-action pressure while ${prey} stays fully alert and reactive. Both animals remain fully readable with biologically plausible spacing.`;
-
-  const compositionLine = `Wide 9:16 wildlife documentary composition built for strong mobile-first first-frame clarity. Both animals are fully readable, silhouettes stay stable, terrain layers stay readable, and the frame carries one clear tension line. ${optics}. Depth of field: ${depth.depth}.`;
-
-  const lightingLine = `Lighting and atmosphere: ${cleanLighting}. Clear air, crisp subject separation, realistic shadow direction, and readable terrain from frame one.`;
-
-  const textureLine = `Photoreal wildlife detail with ${cleanTexture}. ${vibe.texture}. Keep anatomy believable, markings stable, grounded contact clear, and color natural. ${realismAdd}`;
-
-  const continuityLine = quality?.referenceLock
-    ? "Build this as a clean master still for continuity-safe downstream video generation."
-    : "Keep the image stable and readable for downstream video generation.";
-
-  return finalizeImagePrompt(
-    `${qLead} ${subjectLine} ${actionLine} ${compositionLine} ${lightingLine} ${textureLine} ${continuityLine}${sceneNote}`,
-    "NANO_BANANA_2"
+  const prompt = buildNanoBananaImagePrompt(
+    predator,
+    prey,
+    cleanEnv,
+    arc,
+    cleanLighting,
+    cleanTexture,
+    depth,
+    animalVibe,
+    habitatMode,
+    sanitizedSceneDesc,
+    quality
   );
+
+  return finalizePrompt(prompt);
 }
 
 // ─────────────────────────────────────────────────────────────
@@ -1745,36 +1798,40 @@ export function buildShotImagePlan(
   const resolvePredator = sanitizeVideoBeatText(aftermath.predatorBeat);
   const resolvePrey = sanitizeVideoBeatText(aftermath.preyBeat);
 
-  const continuityLock = `Keep the same ${predator}, the same ${prey}, the same anatomy, markings, scale, lighting, habitat, and overall 9:16 documentary composition family in ${cleanEnv}, ${cleanWeather}. Preserve realistic subject spacing, grounded contact, clean silhouette separation, and stable environmental continuity.`;
-  const atmosphereLock = `Keep the same environmental continuity with ${micro}.`;
+  const continuityLock = `Keep ${predator} and ${prey} identical in anatomy, markings, scale, lighting family, and habitat continuity in ${cleanEnv}, ${cleanWeather}. Preserve the same 9:16 documentary image family, grounded contact, realistic spacing, and clean silhouette separation.`;
+  const atmosphereLock = `Environmental response stays subtle and scene-correct: ${micro}.`;
+  const masterBase =
+    "Base image: use the Nano Banana 2 / Gemini master still as the continuity anchor.";
+  const continuityBase =
+    "Base image: use the previous continuity image derived from the Nano Banana master still.";
 
   return [
     {
       title: "Shot 1 Image — Opening Tension",
       source: "master",
       prompt: finalizePrompt(
-        `Using the provided image, ${continuityLock} Change only the framing into a wide opening shot with both subjects fully visible from frame one. The ${predator} ${openingPredator}. The ${prey} ${openingPrey}. Keep everything else in the image exactly the same, preserving the original style, lighting, composition, and aspect ratio. ${atmosphereLock}`
+        `${masterBase} ${continuityLock} Reframe into a wide opening shot with both subjects fully readable from frame one. The ${predator} ${openingPredator}. The ${prey} ${openingPrey}. Keep the existing style and composition family intact. ${atmosphereLock}`
       ),
     },
     {
       title: "Shot 2 Image — Pressure Build",
       source: "previous_image",
       prompt: finalizePrompt(
-        `Using the provided image, ${continuityLock} Change only the framing and pose into a slightly tighter pressure-build shot. The ${predator} ${pressurePredator}. The ${prey} ${pressurePrey}. Keep everything else in the image exactly the same, preserving the original style, lighting, composition, and aspect ratio. ${atmosphereLock}`
+        `${continuityBase} ${continuityLock} Tighten the frame slightly for the pressure-build beat. The ${predator} ${pressurePredator}. The ${prey} ${pressurePrey}. Keep the lighting family and visual continuity stable. ${atmosphereLock}`
       ),
     },
     {
       title: "Shot 3 Image — Peak Action",
       source: "previous_image",
       prompt: finalizePrompt(
-        `Using the provided image, ${continuityLock} Change only the pose into the peak action beat. The ${predator} ${peakPredator}. The ${prey} ${peakPrey}. Preserve full-body readability, clear predator-to-prey spacing, believable traction, and strong biomechanical clarity. Keep everything else in the image exactly the same, preserving the original style, lighting, composition, and aspect ratio. ${atmosphereLock}`
+        `${continuityBase} ${continuityLock} Advance into the peak action beat with one dominant readable action. The ${predator} ${peakPredator}. The ${prey} ${peakPrey}. Preserve full-body readability, clear predator-to-prey spacing, believable traction, and strong biomechanical clarity. ${atmosphereLock}`
       ),
     },
     {
       title: "Shot 4 Image — Resolved Tension",
       source: "previous_image",
       prompt: finalizePrompt(
-        `Using the provided image, ${continuityLock} Change only the scene into the immediate aftermath or resolved tension beat. The ${predator} ${resolvePredator}. The ${prey} ${resolvePrey}. Preserve readable spacing to the final frame, stable anatomy, and clean continuity. Keep everything else in the image exactly the same, preserving the original style, lighting, composition, and aspect ratio. ${atmosphereLock}`
+        `${continuityBase} ${continuityLock} Move into the immediate aftermath or resolved tension beat. The ${predator} ${resolvePredator}. The ${prey} ${resolvePrey}. Preserve readable spacing to the final frame, stable anatomy, and clean continuity. ${atmosphereLock}`
       ),
     },
   ];
