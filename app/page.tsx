@@ -1,13 +1,6 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState } from "react";
-import {
-  buildSoundDesignPack,
-  getAnimalBehavior,
-  buildCapCutScript,
-  shouldBuildTwoPartViralPreset,
-  buildTwoPartViralPreset,
-} from "@/lib/workflow-packs";
 
 import type {
   AIProvider,
@@ -38,9 +31,14 @@ import {
 import { copyPolishResponseSchema } from "@/lib/schemas";
 import {
   hasUsableGeneratedPackageEnhancements,
-  mergeGeneratedPackage,
   type GeneratedPackageEnhancements,
 } from "@/lib/generated-package";
+import {
+  buildGeneratedPackageDraft,
+  buildOpeningFrameInput,
+  finalizeGeneratedPackageDraft,
+  type PublishFlowSummary,
+} from "@/lib/build-package";
 
 import { getQualityRecommendations } from "@/lib/recommendations";
 
@@ -49,9 +47,6 @@ import {
   suggestArc,
   emotionalTones,
   animalVibes,
-  buildFiveShotCinematic,
-  buildFiveShotViral,
-  buildWatchTimeReport,
   suggestHabitat,
 } from "@/lib/predator-data";
 
@@ -60,46 +55,18 @@ import {
   weatherOptions,
   habitatOptions,
   depthModes,
-  arcMotionStrength,
   RUNWAY_MODELS,
   KLING_MODELS,
 } from "@/lib/model-specs";
-
-import {
-  buildImagePromptCard,
-  buildFourShotWorkflowPromptPack,
-  buildSeedancePromptPack,
-  buildShotImagePlan,
-  buildRunwayPromptPack,
-  buildKlingPromptPack,
-  buildKlingNative15sCard,
-  buildKlingSixShotCard,
-  buildNegativePrompt,
-  buildThumbnailPrompt,
-  buildVoiceoverLine,
-  buildCapCutPlan,
-  buildClipChaining,
-  build10Ideas,
-  buildQualitySummary,
-  buildReferenceWorkflow,
-  buildNaturalismChecklist,
-} from "@/lib/prompt-builders";
 
 import {
   build2026Hook,
   build2026HookByFamily,
   buildShortCaption,
   buildLongCaption,
-  buildCTA,
   buildHashtags,
   buildTags,
-  buildPlatformPack,
-  buildSEOTitle,
-  buildAltTextPrompt,
 } from "@/lib/platform-packs";
-import { scoreUSAudience } from "@/lib/usAudienceProfile";
-import { scoreOpeningFrame } from "@/lib/openingFrameScore";
-import { runFacebookPublishGuard } from "@/lib/facebookPublishGuard";
 import { buildUSViewsModeReport } from "@/lib/usViewsMode";
 
 import {
@@ -154,23 +121,6 @@ type QualityState = {
   singleActionRule: boolean;
   microMotion: boolean;
   heroVeo: boolean;
-};
-
-type PublishFlowSummary = {
-  predatorName: string;
-  preyName: string;
-  arcName: Arc;
-  marketMode: MarketMode;
-  durationLane: DurationLaneMode;
-  hookFamily: HookFamily;
-  fastPublishMode: boolean;
-  strictOriginalityGuard: boolean;
-  pipelineStyle: PipelineStyle;
-  primaryHook: string;
-  usAudienceScore: ReturnType<typeof scoreUSAudience>;
-  openingFrameScore: ReturnType<typeof scoreOpeningFrame>;
-  publishGuardReport: ReturnType<typeof runFacebookPublishGuard>;
-  publishWorthy: boolean;
 };
 
 const HOOK_FAMILY_ORDER: HookFamily[] = ["danger", "curiosity", "reversal"];
@@ -390,31 +340,6 @@ function normalizeArcSuggestion(value: string | undefined): Arc | null {
   if (normalized.includes("giant") || normalized.includes("clash")) return "Giant vs giant clash";
   if (normalized.includes("chase") || normalized.includes("takedown")) return "Chase and takedown";
   return null;
-}
-
-function buildOpeningFrameInput(
-  arc: Arc,
-  depthMode: DepthMode,
-  motionOnlyI2V: boolean,
-  referenceLock: boolean,
-  singleActionRule: boolean,
-  fastPublishMode: boolean,
-  hookMode: HookMode
-) {
-  const instantPressureArc =
-    arc === "Ambush attack" ||
-    arc === "Chase and takedown" ||
-    arc === "Escape from danger" ||
-    arc === "Predator vs predator fight" ||
-    arc === "Defender stands ground";
-
-  return {
-    fullBodyReadable: referenceLock || depthMode !== "Cinematic Blur",
-    threatReadable: singleActionRule && (instantPressureArc || hookMode === "danger"),
-    subjectSeparation: referenceLock && motionOnlyI2V,
-    environmentClear: depthMode !== "Cinematic Blur",
-    emotionalReadImmediate: fastPublishMode || hookMode !== "all" || instantPressureArc,
-  };
 }
 
 // ─── SUB-COMPONENTS ───────────────────────────────────────────────────────────
@@ -925,302 +850,69 @@ export default function Page() {
     setPublishFlowSummary(null);
     try {
       if (!predator || !prey) throw new Error("Missing predator or prey");
-      const finalArc = previewArc;
       const safeMedia = (mediaAnalysis ?? null) as SafeMediaAnalysis | null;
       const sceneInjectFromMedia = safeMedia?.imagePromptInject ?? "";
       const sceneInjectFromUser = sceneDescription.trim();
       const sceneInject = sceneInjectFromUser.length > 0 ? sceneInjectFromUser : sceneInjectFromMedia;
       const quality = { realismMode, motionOnlyI2V, referenceLock, singleActionRule, microMotion, heroVeo };
-
-      // 1. User inputs
-      const finalHook2026 = previewHook2026;
-      const finalHook = previewPrimaryHook || finalHook2026[0] || "";
-      const shortCaption = previewShortCaption;
-      const longCaption = previewLongCaption;
-      const publishCaption =
-        fastPublishMode || durationLane === "short" ? shortCaption : longCaption;
-      const hashtags = previewHashtags;
-      const tags = previewTags;
-      const recommendedHookIndex = previewRecommendedHookIndex;
-      const hookFamily = previewHookFamily;
-
-      // 2. U.S. score
-      const usAudienceScore = scoreUSAudience({
+      const draft = buildGeneratedPackageDraft({
         predator,
         prey,
-        environment: finalEnvironment,
-        arc: finalArc,
-      });
-
-      // 3. Opening score
-      const openingFrameInput = buildOpeningFrameInput(
-        finalArc,
+        presetLighting: preset.lighting,
+        presetCameraGear: preset.cameraGear,
+        presetTexture: preset.texture,
+        presetDriftRisk: preset.driftRisk,
+        presetForIdeas: { ...preset, environment: finalEnvironment } as PredatorInfo,
+        finalEnvironment,
+        finalArc: previewArc,
+        weather,
         depthMode,
-        motionOnlyI2V,
-        referenceLock,
-        singleActionRule,
+        emotionalTone,
+        animalVibe,
+        runwayModel,
+        klingModel,
+        durationLane,
+        marketMode,
         fastPublishMode,
-        hookMode
-      );
-      const openingFrameScore = scoreOpeningFrame(openingFrameInput);
-
-      // 4. Publish guard
-      const publishGuardReport = runFacebookPublishGuard({
-        caption: publishCaption,
-        hashtags: hashtags.split(/\s+/).filter(Boolean),
-        originalityConfirmed: strictOriginalityGuard,
-      });
-      const usViewsModeReport = buildUSViewsModeReport({
-        durationLane,
-        hookFamily,
-        concept: {
-          predator,
-          prey,
-          environment: finalEnvironment,
-          arc: finalArc,
-        },
-        openingFrame: openingFrameInput,
-        caption: publishCaption,
-        hashtags: hashtags.split(/\s+/).filter(Boolean),
-        originalityConfirmed: strictOriginalityGuard,
-        audienceScore: usAudienceScore,
-        openingFrameScore,
-        publishGuardReport,
-      });
-      const performanceSnapshot = usViewsModeReport.performanceSnapshot;
-
-      const imagePromptCard = buildImagePromptCard(
-        predator,
-        prey,
-        finalEnvironment,
-        finalArc,
-        preset.lighting,
-        preset.cameraGear,
-        preset.texture,
-        depthMode,
-        weather,
-        emotionalTone,
-        animalVibe,
+        strictOriginalityGuard,
+        selectedPipelineStyle,
         sceneInject,
         quality,
-        "NANO_BANANA_2"
-      );
-      const imagePrompt = imagePromptCard.fullText;
-      const shotImagePlan = buildShotImagePlan(predator, prey, finalEnvironment, finalArc, weather, quality);
-      const runwayPack = buildRunwayPromptPack(
-        predator,
-        prey,
-        finalEnvironment,
-        finalArc,
-        weather,
-        runwayModel,
-        emotionalTone,
-        animalVibe,
-        sceneInject,
-        quality
-      );
-      const seedancePack = buildSeedancePromptPack(
-        predator,
-        prey,
-        finalEnvironment,
-        finalArc,
-        weather,
-        emotionalTone,
-        animalVibe,
-        sceneInject,
-        quality
-      );
-      const klingPack = buildKlingPromptPack(
-        predator,
-        prey,
-        finalEnvironment,
-        finalArc,
-        weather,
-        klingModel,
-        emotionalTone,
-        animalVibe,
-        sceneInject,
-        quality
-      );
-      const fourShotWorkflowPack = buildFourShotWorkflowPromptPack({
-        predator,
-        prey,
-        durationLane,
-        env: finalEnvironment,
-        arc: finalArc,
-        weather,
-        runwayModel,
-        klingModel,
-        emotionalTone,
-        animalVibe,
-        sceneDesc: sceneInject,
-        quality,
+        finalHook2026: previewHook2026,
+        finalHook: previewPrimaryHook || previewHook2026[0] || "",
+        shortCaption: previewShortCaption,
+        longCaption: previewLongCaption,
+        hashtags: previewHashtags,
+        tags: previewTags,
+        recommendedHookIndex: previewRecommendedHookIndex,
+        hookFamily: previewHookFamily,
+        usAudienceScore: previewAudienceScore,
+        openingFrameInput: previewOpeningFrameInput,
+        openingFrameScore: previewOpeningFrameScore,
+        performanceSnapshot: previewPerformanceSnapshot,
       });
-      const fourShotWorkflow = {
-        shot1: fourShotWorkflowPack.shot1.fullText,
-        shot2: fourShotWorkflowPack.shot2.fullText,
-        shot3: fourShotWorkflowPack.shot3.fullText,
-        shot4: fourShotWorkflowPack.shot4.fullText,
-      };
-      const klingNative15sCard = buildKlingNative15sCard(
-        predator,
-        prey,
-        finalEnvironment,
-        finalArc,
-        weather,
-        klingModel,
-        emotionalTone,
-        animalVibe,
-        sceneInject,
-        quality
-      );
-      const klingNative15s = klingNative15sCard.fullText;
-      const klingSixShotCard = buildKlingSixShotCard(
-        predator,
-        prey,
-        finalEnvironment,
-        finalArc,
-        weather,
-        klingModel,
-        emotionalTone,
-        animalVibe,
-        sceneInject,
-        quality
-      );
-      const klingSixShot = klingSixShotCard.fullText;
-      const negativePromptForKling = buildNegativePrompt(predator, "KLING");
-      const thumbnailPrompt = buildThumbnailPrompt(predator, prey, finalEnvironment, weather, emotionalTone, animalVibe);
-      const voiceoverLine = buildVoiceoverLine(predator, prey, finalEnvironment, emotionalTone);
-      const capCutPlan = buildCapCutPlan(predator, finalArc, weather);
-      const clipChaining = buildClipChaining(predator, preset.driftRisk);
-      const cta = buildCTA(finalArc);
-      const presetForIdeas = { ...preset, environment: finalEnvironment };
-      const tenIdeas = build10Ideas(predator, preset.prey, presetForIdeas as never);
-      const platformPack = buildPlatformPack(predator, prey, finalArc, finalEnvironment);
-      const seoTitle = buildSEOTitle(predator, prey, finalArc);
-      const altTextPrompt = buildAltTextPrompt(predator, prey, finalEnvironment, finalArc);
-      const qualitySummary = buildQualitySummary(quality);
-      const referenceWorkflow = buildReferenceWorkflow(predator, quality);
-      const naturalismChecklist = buildNaturalismChecklist(quality, weather, finalEnvironment);
-      const fiveShotCinematic = buildFiveShotCinematic(predator, prey, finalEnvironment, finalArc, weather, runwayModel, klingModel, emotionalTone, animalVibe, quality);
-      const fiveShotViral = buildFiveShotViral(predator, prey, finalEnvironment, finalArc, weather, runwayModel, klingModel, emotionalTone, animalVibe, quality);
-      const watchTimeReport = buildWatchTimeReport(selectedPipelineStyle, 2);
-      const motionStrength = arcMotionStrength[finalArc] ?? 70;
-      const primaryShotDurations =
-        durationLane === "long"
-          ? ["0–10s", "10–25s", "25–40s", "40–50s"]
-          : ["0–4s", "4–9s", "9–15s", "15–20s"];
-      const primaryShotTitles =
-        durationLane === "long"
-          ? [
-              "Shot 1 — Opening Tension",
-              "Shot 2 — Pressure Build",
-              "Shot 3 — Main Action Payoff",
-              "Shot 4 — Aftermath Resolve",
-            ]
-          : [
-              "Shot 1 — Opening Tension",
-              "Shot 2 — Pressure Build",
-              "Shot 3 — Peak Action",
-              "Shot 4 — Resolved Tension",
-            ];
-      const primaryShotWhy =
-        durationLane === "long"
-          ? [
-              "Use Image 1 from the master image for the readable 10-second opening tension and first-frame clarity beat.",
-              "Use Image 2 edited from Shot 1 image for the slower 15-second pressure build with wider spacing collapse and stronger continuity-safe body language.",
-              "Use Image 3 edited from Shot 2 image for the 15-second main action payoff with the clearest readable force transfer.",
-              "Use Image 4 edited from Shot 3 image for the 10-second aftermath hold, winner/retreat resolve, and clean final-frame handoff.",
-            ]
-          : [
-              "Use Image 1 from the master image for the clean first-frame opening.",
-              "Use Image 2 edited from Shot 1 image for a stronger physics-safe pressure build without losing identity.",
-              "Use Image 3 edited from Shot 2 image for the strongest full-body action beat.",
-              "Use Image 4 edited from Shot 3 image for the readable aftermath or final tension hold.",
-            ];
-      const soundDesignPack = buildSoundDesignPack(predator, prey, finalEnvironment, finalArc, weather, klingModel);
-      const animalBehaviorResult = getAnimalBehavior(predator);
-      // 5. Final output
-      const basePkg: GeneratedPackage = {
-        predatorName: predator, preyName: prey, arcName: finalArc,
-        imagePrompt, negativePrompt: negativePromptForKling, thumbnailPrompt, voiceoverLine, shotImagePlan,
-        structuredPrompts: {
-          imagePrompt: imagePromptCard,
-          runwayShots: [runwayPack.shot1, runwayPack.shot2, runwayPack.shot3, runwayPack.shot4],
-          klingShots: [klingPack.shot1, klingPack.shot2, klingPack.shot3, klingPack.shot4],
-          seedanceShots: [seedancePack.shot1, seedancePack.shot2, seedancePack.shot3, seedancePack.shot4],
-          seedanceMultiShot: seedancePack.multiShotPrompt,
-          workflowShots: [
-            fourShotWorkflowPack.shot1,
-            fourShotWorkflowPack.shot2,
-            fourShotWorkflowPack.shot3,
-            fourShotWorkflowPack.shot4,
-          ],
-          klingNative15s: klingNative15sCard,
-          klingSixShot: klingSixShotCard,
-        },
-        runwayShots: [
-          runwayPack.shot1.fullText,
-          runwayPack.shot2.fullText,
-          runwayPack.shot3.fullText,
-          runwayPack.shot4.fullText,
-        ],
-        klingShots: [
-          klingPack.shot1.fullText,
-          klingPack.shot2.fullText,
-          klingPack.shot3.fullText,
-          klingPack.shot4.fullText,
-        ],
-        seedanceShots: [
-          seedancePack.shot1.fullText,
-          seedancePack.shot2.fullText,
-          seedancePack.shot3.fullText,
-          seedancePack.shot4.fullText,
-        ],
-        seedanceMultiShotPrompt: seedancePack.multiShotPrompt.fullText,
-        seedanceWorkflowGuide: seedancePack.workflowGuide,
-        klingNative15s, klingSixShot, motionStrength, capCutPlan, clipChaining,
-        hook: finalHook, hook2026: finalHook2026 ?? [], recommendedHookIndex,
-        caption: shortCaption ?? "", caption2026: longCaption ?? "", cta, hashtags, tags, tenIdeas,
-        shotPlan: [
-          { engine: "RUNWAY", title: primaryShotTitles[0], prompt: fourShotWorkflow.shot1, motionStrength, durationLabel: primaryShotDurations[0], why: primaryShotWhy[0] },
-          { engine: "KLING", title: primaryShotTitles[1], prompt: fourShotWorkflow.shot2, motionStrength, durationLabel: primaryShotDurations[1], why: primaryShotWhy[1] },
-          { engine: "KLING", title: primaryShotTitles[2], prompt: fourShotWorkflow.shot3, motionStrength, durationLabel: primaryShotDurations[2], why: primaryShotWhy[2] },
-          { engine: "RUNWAY", title: primaryShotTitles[3], prompt: fourShotWorkflow.shot4, motionStrength, durationLabel: primaryShotDurations[3], why: primaryShotWhy[3] },
-        ],
-        runwayBundle: [
-          runwayPack.shot1.fullText,
-          runwayPack.shot2.fullText,
-          runwayPack.shot3.fullText,
-          runwayPack.shot4.fullText,
-        ].join("\n\n---\n\n"),
-        klingBundle: [
-          klingPack.shot1.fullText,
-          klingPack.shot2.fullText,
-          klingPack.shot3.fullText,
-          klingPack.shot4.fullText,
-        ].join("\n\n---\n\n"),
-        routingNote: selectedPipelineStyle === "long-hybrid-4-shot"
-          ? `Primary workflow: true 50-second hybrid 4-shot routing uses Runway ${runwayModel} for Shot 1 (10s) and Shot 4 (10s), and Kling ${klingModel} for Shot 2 (15s) and Shot 3 (15s). Long lane holds the setup longer, builds pressure more gradually, lands one clearer payoff beat, and preserves a cleaner aftermath resolve.`
-          : `Primary workflow: hybrid 4-shot routing uses Runway ${runwayModel} for Shots 1 and 4, and Kling ${klingModel} for Shots 2 and 3. Optional bundles: Seedance 2.0, full Runway 4-shot, and full Kling 4-shot outputs remain available.`,
-        pipelineStyle: selectedPipelineStyle, fiveShotCinematic, fiveShotViral, watchTimeReport, platformPack,
-        seoTitle, altTextPrompt, qualitySummary, referenceWorkflow, naturalismChecklist,
-        modelsUsed: { runway: runwayModel, kling: klingModel },
-        sceneDesc: sceneInject, soundDesignPack,
-        animalBehavior: animalBehaviorResult ?? undefined,
-      };
-
-      const capCutScript = buildCapCutScript(predator, prey, finalArc, weather, basePkg, selectedPipelineStyle);
-      const twoPartViralPreset = shouldBuildTwoPartViralPreset(predator, prey, finalArc)
-        ? buildTwoPartViralPreset(predator, prey, finalEnvironment, weather, finalArc, runwayModel)
-        : null;
 
       let enhanced: GeneratedPackageEnhancements = {};
       if (activeProvider !== "none") {
         const res = await fetch("/api/enhance", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ provider: activeProvider, predator, prey, env: finalEnvironment, arc: finalArc, weather, emotionalTone, animalVibe, base: { imagePrompt, hook: finalHook, caption: shortCaption ?? "", voiceoverLine } }),
+          body: JSON.stringify({
+            provider: activeProvider,
+            predator,
+            prey,
+            env: finalEnvironment,
+            arc: previewArc,
+            weather,
+            emotionalTone,
+            animalVibe,
+            base: {
+              imagePrompt: draft.basePkg.imagePrompt,
+              hook: draft.basePkg.hook,
+              caption: draft.basePkg.caption ?? "",
+              voiceoverLine: draft.basePkg.voiceoverLine,
+            },
+          }),
         });
         const data = await res.json().catch(() => ({} as unknown));
         if (!res.ok) throw new Error(((data as Record<string, unknown>)?.error as string) || `AI polish failed (${res.status})`);
@@ -1236,72 +928,20 @@ export default function Page() {
         if (!hasUsableGeneratedPackageEnhancements(enhanced)) throw new Error("AI polish returned no usable prompt or copy updates");
       }
 
-      const finalShortCaption =
-        typeof enhanced.caption === "string" && enhanced.caption.trim().length > 0
-          ? enhanced.caption
-          : shortCaption;
-      const finalPublishCaption =
-        fastPublishMode || durationLane === "short" ? finalShortCaption : longCaption;
-      const finalUsViewsModeReport = buildUSViewsModeReport({
-        durationLane,
-        hookFamily,
-        concept: {
-          predator,
-          prey,
-          environment: finalEnvironment,
-          arc: finalArc,
-        },
-        openingFrame: openingFrameInput,
-        caption: finalPublishCaption,
-        hashtags: hashtags.split(/\s+/).filter(Boolean),
-        originalityConfirmed: strictOriginalityGuard,
-        audienceScore: usAudienceScore,
-        openingFrameScore,
-        performanceSnapshot,
-      });
-      const finalPkg: GeneratedPackage = mergeGeneratedPackage(basePkg, enhanced, {
-        capCutScript,
-        durationLane,
-        hookFamily: finalUsViewsModeReport.hookFamily,
-        usAudienceScore,
-        openingFrameScore,
-        publishGuardReport: finalUsViewsModeReport.publishGuard,
-        performanceSnapshot: finalUsViewsModeReport.performanceSnapshot,
-        usViewsModeReport: finalUsViewsModeReport,
-        ...(twoPartViralPreset ? {
-          twoPartViralOverview: twoPartViralPreset.overview,
-          twoPartWorkflowGuide: twoPartViralPreset.workflowGuide,
-          twoPartPart1Hook: twoPartViralPreset.part1Hook,
-          twoPartPart1Caption: twoPartViralPreset.part1Caption,
-          twoPartPart1Draft: twoPartViralPreset.part1Draft,
-          twoPartPart1Final: twoPartViralPreset.part1Final,
-          twoPartPart2Hook: twoPartViralPreset.part2Hook,
-          twoPartPart2Caption: twoPartViralPreset.part2Caption,
-          twoPartPart2Draft: twoPartViralPreset.part2Draft,
-          twoPartPart2Final: twoPartViralPreset.part2Final,
-        } : {}),
-      });
+      const { finalPkg, publishFlowSummary } = finalizeGeneratedPackageDraft(
+        draft,
+        enhanced
+      );
 
       setPkg(finalPkg);
-      setPublishFlowSummary({
-        predatorName: predator,
-        preyName: prey,
-        arcName: finalArc,
-        marketMode,
-        durationLane,
-        hookFamily: finalUsViewsModeReport.hookFamily,
-        fastPublishMode,
-        strictOriginalityGuard,
-        pipelineStyle: selectedPipelineStyle,
-        primaryHook: finalHook,
-        usAudienceScore,
-        openingFrameScore,
-        publishGuardReport: finalUsViewsModeReport.publishGuard,
-        publishWorthy: finalUsViewsModeReport.shouldPublish,
-      });
+      setPublishFlowSummary(publishFlowSummary);
 
       try {
-        const key = makePromptVersionKey(finalPkg.predatorName ?? predator, finalPkg.preyName ?? prey, String(finalPkg.arcName ?? arc));
+        const key = makePromptVersionKey(
+          finalPkg.predatorName ?? predator,
+          finalPkg.preyName ?? prey,
+          String(finalPkg.arcName ?? arc)
+        );
         const v: PromptVersion = {
           version: getNextVersionNumber(key),
           timestamp: new Date().toISOString(),
@@ -1309,7 +949,7 @@ export default function Page() {
           hook: finalPkg.hook ?? "",
           caption: finalPkg.caption ?? "",
           voiceoverLine: finalPkg.voiceoverLine ?? "",
-          label: `GENERATE • ${activeProvider === "none" ? "Local" : activeProvider} • ${predator} vs ${prey} • ${String(finalArc ?? arc)}`,
+          label: `GENERATE • ${activeProvider === "none" ? "Local" : activeProvider} • ${predator} vs ${prey} • ${String(previewArc ?? arc)}`,
           performanceNote: "",
         };
         appendPromptVersion(key, v);
