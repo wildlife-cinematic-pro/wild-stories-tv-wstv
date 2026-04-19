@@ -1379,12 +1379,6 @@ function sanitizeLightingPhrase(lighting: string, weather: Weather): string {
     .replace(/,?\s*dust\s+motes[^,]*/gi, "")
     .replace(/,?\s*\bdust\b/gi, "")
     .replace(/\bdusty\b/gi, "")
-    .replace(/,?\s*dusty\s+atmosphere/gi, "")
-    .replace(/,?\s*amber\s+dust\s+in\s+air/gi, "")
-    .replace(/,?\s*dry\s+field\s+dust/gi, "")
-    .replace(/,?\s*dust\s+motes[^,]*/gi, "")
-    .replace(/,?\s*\bdust\b/gi, "")
-    .replace(/\bdusty\b/gi, "")
     .trim();
 
   const weatherLighting = sanitizeWeatherPhrase(weatherVariants[weather]);
