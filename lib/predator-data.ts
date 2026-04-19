@@ -422,7 +422,7 @@ export const predatorData: Record<string, PredatorInfo> = {
     cameraGear:
       "Canon EOS R5, 400mm super-telephoto, ridge-level long-lens wildlife framing",
     texture:
-      "tawny smooth coat, muscular rear haunches, long balancing tail, dust and pine needles on paws, sharp whisker detail",
+      "tawny smooth coat, muscular rear haunches, long balancing tail, clean pine needles on paws, sharp whisker detail",
     defaultArc: "Ambush attack",
     driftRisk: "HIGH",
   },
