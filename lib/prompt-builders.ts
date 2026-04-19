@@ -1373,6 +1373,18 @@ function sanitizeLightingPhrase(lighting: string, weather: Weather): string {
     .replace(/\s+,/g, ",")
     .replace(/,\s*,/g, ",")
     .replace(/,\s*\./g, ".")
+    .replace(/,?\s*dusty\s+atmosphere/gi, "")
+    .replace(/,?\s*amber\s+dust\s+in\s+air/gi, "")
+    .replace(/,?\s*dry\s+field\s+dust/gi, "")
+    .replace(/,?\s*dust\s+motes[^,]*/gi, "")
+    .replace(/,?\s*\bdust\b/gi, "")
+    .replace(/\bdusty\b/gi, "")
+    .replace(/,?\s*dusty\s+atmosphere/gi, "")
+    .replace(/,?\s*amber\s+dust\s+in\s+air/gi, "")
+    .replace(/,?\s*dry\s+field\s+dust/gi, "")
+    .replace(/,?\s*dust\s+motes[^,]*/gi, "")
+    .replace(/,?\s*\bdust\b/gi, "")
+    .replace(/\bdusty\b/gi, "")
     .trim();
 
   const weatherLighting = sanitizeWeatherPhrase(weatherVariants[weather]);
@@ -1403,6 +1415,11 @@ function sanitizeImageTexture(texture: string, env: string): string {
   const isArctic = isArcticEnv(env);
 
   let out = String(texture ?? "")
+    .replace(/\bdusty\b/gi, "")
+    .replace(/,?\s*realistic\s+canyon\s+dust/gi, "")
+    .replace(/,?\s*dust\s+on\s+(?:coat|muzzle|nose\s+and\s+whiskers|paws\s+and\s+whiskers)/gi, "")
+    .replace(/,?\s*red\s+dust\s+on\s+paws/gi, "")
+    .replace(/,?\s*mountain\s+dust\s+on\s+paws/gi, "")
     .replace(/\bdust on hooves\b/gi, "clean hooves")
     .replace(/\bmagazine.quality\s+detail\b[^]*?(?:biological authenticity\.?)/gi, "")
     .replace(/\brazor[–—-]sharp on subject\b[^,.]*/gi, "")
