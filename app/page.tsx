@@ -66,14 +66,14 @@ import {
 } from "@/lib/model-specs";
 
 import {
-  buildImagePrompt,
-  buildFourShotWorkflow,
-  buildSeedanceShots,
+  buildImagePromptCard,
+  buildFourShotWorkflowPromptPack,
+  buildSeedancePromptPack,
   buildShotImagePlan,
-  buildRunwayShots,
-  buildKlingShots,
-  buildKlingNative15s,
-  buildKlingSixShot,
+  buildRunwayPromptPack,
+  buildKlingPromptPack,
+  buildKlingNative15sCard,
+  buildKlingSixShotCard,
   buildNegativePrompt,
   buildThumbnailPrompt,
   buildVoiceoverLine,
@@ -989,12 +989,60 @@ export default function Page() {
       });
       const performanceSnapshot = usViewsModeReport.performanceSnapshot;
 
-      const imagePrompt = buildImagePrompt(predator, prey, finalEnvironment, finalArc, preset.lighting, preset.cameraGear, preset.texture, depthMode, weather, emotionalTone, animalVibe, sceneInject, quality, "NANO_BANANA_2");
+      const imagePromptCard = buildImagePromptCard(
+        predator,
+        prey,
+        finalEnvironment,
+        finalArc,
+        preset.lighting,
+        preset.cameraGear,
+        preset.texture,
+        depthMode,
+        weather,
+        emotionalTone,
+        animalVibe,
+        sceneInject,
+        quality,
+        "NANO_BANANA_2"
+      );
+      const imagePrompt = imagePromptCard.fullText;
       const shotImagePlan = buildShotImagePlan(predator, prey, finalEnvironment, finalArc, weather, quality);
-      const runway = buildRunwayShots(predator, prey, finalEnvironment, finalArc, weather, runwayModel, emotionalTone, animalVibe, sceneInject, quality);
-      const seedance = buildSeedanceShots(predator, prey, finalEnvironment, finalArc, weather, emotionalTone, animalVibe, sceneInject, quality);
-      const kling = buildKlingShots(predator, prey, finalEnvironment, finalArc, weather, klingModel, emotionalTone, animalVibe, sceneInject, quality);
-      const fourShotWorkflow = buildFourShotWorkflow({
+      const runwayPack = buildRunwayPromptPack(
+        predator,
+        prey,
+        finalEnvironment,
+        finalArc,
+        weather,
+        runwayModel,
+        emotionalTone,
+        animalVibe,
+        sceneInject,
+        quality
+      );
+      const seedancePack = buildSeedancePromptPack(
+        predator,
+        prey,
+        finalEnvironment,
+        finalArc,
+        weather,
+        emotionalTone,
+        animalVibe,
+        sceneInject,
+        quality
+      );
+      const klingPack = buildKlingPromptPack(
+        predator,
+        prey,
+        finalEnvironment,
+        finalArc,
+        weather,
+        klingModel,
+        emotionalTone,
+        animalVibe,
+        sceneInject,
+        quality
+      );
+      const fourShotWorkflowPack = buildFourShotWorkflowPromptPack({
         predator,
         prey,
         durationLane,
@@ -1008,8 +1056,38 @@ export default function Page() {
         sceneDesc: sceneInject,
         quality,
       });
-      const klingNative15s = buildKlingNative15s(predator, prey, finalEnvironment, finalArc, weather, klingModel, emotionalTone, animalVibe, sceneInject, quality);
-      const klingSixShot = buildKlingSixShot(predator, prey, finalEnvironment, finalArc, weather, klingModel, emotionalTone, animalVibe, sceneInject, quality);
+      const fourShotWorkflow = {
+        shot1: fourShotWorkflowPack.shot1.fullText,
+        shot2: fourShotWorkflowPack.shot2.fullText,
+        shot3: fourShotWorkflowPack.shot3.fullText,
+        shot4: fourShotWorkflowPack.shot4.fullText,
+      };
+      const klingNative15sCard = buildKlingNative15sCard(
+        predator,
+        prey,
+        finalEnvironment,
+        finalArc,
+        weather,
+        klingModel,
+        emotionalTone,
+        animalVibe,
+        sceneInject,
+        quality
+      );
+      const klingNative15s = klingNative15sCard.fullText;
+      const klingSixShotCard = buildKlingSixShotCard(
+        predator,
+        prey,
+        finalEnvironment,
+        finalArc,
+        weather,
+        klingModel,
+        emotionalTone,
+        animalVibe,
+        sceneInject,
+        quality
+      );
+      const klingSixShot = klingSixShotCard.fullText;
       const negativePromptForKling = buildNegativePrompt(predator, "KLING");
       const thumbnailPrompt = buildThumbnailPrompt(predator, prey, finalEnvironment, weather, emotionalTone, animalVibe);
       const voiceoverLine = buildVoiceoverLine(predator, prey, finalEnvironment, emotionalTone);
@@ -1066,11 +1144,41 @@ export default function Page() {
       const basePkg: GeneratedPackage = {
         predatorName: predator, preyName: prey, arcName: finalArc,
         imagePrompt, negativePrompt: negativePromptForKling, thumbnailPrompt, voiceoverLine, shotImagePlan,
-        runwayShots: [runway?.shot1 ?? "", runway?.shot2 ?? "", runway?.shot3 ?? "", runway?.shot4 ?? ""],
-        klingShots: [kling?.shot1 ?? "", kling?.shot2 ?? "", kling?.shot3 ?? "", kling?.shot4 ?? ""],
-        seedanceShots: [seedance.shot1, seedance.shot2, seedance.shot3, seedance.shot4],
-        seedanceMultiShotPrompt: seedance.multiShotPrompt,
-        seedanceWorkflowGuide: seedance.workflowGuide,
+        structuredPrompts: {
+          imagePrompt: imagePromptCard,
+          runwayShots: [runwayPack.shot1, runwayPack.shot2, runwayPack.shot3, runwayPack.shot4],
+          klingShots: [klingPack.shot1, klingPack.shot2, klingPack.shot3, klingPack.shot4],
+          seedanceShots: [seedancePack.shot1, seedancePack.shot2, seedancePack.shot3, seedancePack.shot4],
+          seedanceMultiShot: seedancePack.multiShotPrompt,
+          workflowShots: [
+            fourShotWorkflowPack.shot1,
+            fourShotWorkflowPack.shot2,
+            fourShotWorkflowPack.shot3,
+            fourShotWorkflowPack.shot4,
+          ],
+          klingNative15s: klingNative15sCard,
+          klingSixShot: klingSixShotCard,
+        },
+        runwayShots: [
+          runwayPack.shot1.fullText,
+          runwayPack.shot2.fullText,
+          runwayPack.shot3.fullText,
+          runwayPack.shot4.fullText,
+        ],
+        klingShots: [
+          klingPack.shot1.fullText,
+          klingPack.shot2.fullText,
+          klingPack.shot3.fullText,
+          klingPack.shot4.fullText,
+        ],
+        seedanceShots: [
+          seedancePack.shot1.fullText,
+          seedancePack.shot2.fullText,
+          seedancePack.shot3.fullText,
+          seedancePack.shot4.fullText,
+        ],
+        seedanceMultiShotPrompt: seedancePack.multiShotPrompt.fullText,
+        seedanceWorkflowGuide: seedancePack.workflowGuide,
         klingNative15s, klingSixShot, motionStrength, capCutPlan, clipChaining,
         hook: finalHook, hook2026: finalHook2026 ?? [], recommendedHookIndex,
         caption: shortCaption ?? "", caption2026: longCaption ?? "", cta, hashtags, tags, tenIdeas,
@@ -1080,8 +1188,18 @@ export default function Page() {
           { engine: "KLING", title: primaryShotTitles[2], prompt: fourShotWorkflow.shot3, motionStrength, durationLabel: primaryShotDurations[2], why: primaryShotWhy[2] },
           { engine: "RUNWAY", title: primaryShotTitles[3], prompt: fourShotWorkflow.shot4, motionStrength, durationLabel: primaryShotDurations[3], why: primaryShotWhy[3] },
         ],
-        runwayBundle: [runway?.shot1 ?? "", runway?.shot2 ?? "", runway?.shot3 ?? "", runway?.shot4 ?? ""].join("\n\n---\n\n"),
-        klingBundle: [kling?.shot1 ?? "", kling?.shot2 ?? "", kling?.shot3 ?? "", kling?.shot4 ?? ""].join("\n\n---\n\n"),
+        runwayBundle: [
+          runwayPack.shot1.fullText,
+          runwayPack.shot2.fullText,
+          runwayPack.shot3.fullText,
+          runwayPack.shot4.fullText,
+        ].join("\n\n---\n\n"),
+        klingBundle: [
+          klingPack.shot1.fullText,
+          klingPack.shot2.fullText,
+          klingPack.shot3.fullText,
+          klingPack.shot4.fullText,
+        ].join("\n\n---\n\n"),
         routingNote: selectedPipelineStyle === "long-hybrid-4-shot"
           ? `Primary workflow: true 50-second hybrid 4-shot routing uses Runway ${runwayModel} for Shot 1 (10s) and Shot 4 (10s), and Kling ${klingModel} for Shot 2 (15s) and Shot 3 (15s). Long lane holds the setup longer, builds pressure more gradually, lands one clearer payoff beat, and preserves a cleaner aftermath resolve.`
           : `Primary workflow: hybrid 4-shot routing uses Runway ${runwayModel} for Shots 1 and 4, and Kling ${klingModel} for Shots 2 and 3. Optional bundles: Seedance 2.0, full Runway 4-shot, and full Kling 4-shot outputs remain available.`,
