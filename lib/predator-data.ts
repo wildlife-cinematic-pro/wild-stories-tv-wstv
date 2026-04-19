@@ -691,8 +691,8 @@ export const predatorData: Record<string, PredatorInfo> = {
 // WEATHER VARIANTS
 // ─────────────────────────────────────────────────────────────
 export const weatherVariants: Record<Weather, string> = {
-  "Golden Hour":
-    "golden hour, warm backlight, long shadows, warm 3200K colour temperature",
+ "Golden Hour":
+    "golden hour, warm backlight, long shadows",
   Storm:
     "approaching storm, dramatic sky, god-rays breaking through clouds, desaturated palette, high contrast",
   Overcast:
@@ -808,7 +808,7 @@ export const animalVibePrompt: Record<
     camera:
       "National Geographic field camera — 400mm+ telephoto, maximum compression, subject isolation in natural environment",
     texture:
-      "magazine-quality detail — razor-sharp on subject, natural environmental context visible, biological authenticity",
+      "sharp subject detail, natural environmental context visible",
   },
   "Raw Nature Unfiltered": {
     style:
