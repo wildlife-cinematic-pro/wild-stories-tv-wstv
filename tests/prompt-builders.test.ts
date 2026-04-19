@@ -1,10 +1,15 @@
 import { describe, it, expect } from "vitest";
 import {
+  buildImagePromptCard,
   buildImagePrompt,
   buildShotImagePlan,
+  buildFourShotWorkflowPromptPack,
   buildFourShotWorkflow,
+  buildRunwayPromptPack,
   buildRunwayShots,
+  buildKlingPromptPack,
   buildKlingShots,
+  buildSeedancePromptPack,
   buildSeedanceShots,
   buildKlingNative15s,
   buildKlingSixShot,
@@ -14,6 +19,7 @@ import {
   buildThumbnailPrompt,
   finalizeGenerationText,
   sanitizeSocialCopyText,
+  validateKlingPromptLength,
   validateEngineConstraints,
 } from "@/lib/prompt-builders";
 
@@ -1233,5 +1239,127 @@ describe("engine constraint regression guards", () => {
     expect(warnings.filter((w) => w.level === "error")).toHaveLength(3);
     expect(warnings.some((w) => /24fps or 25fps only/i.test(w.message))).toBe(true);
     expect(warnings.some((w) => /does not support negative prompts/i.test(w.message))).toBe(true);
+  });
+});
+
+describe("structured prompt refactor guards", () => {
+  const base = {
+    predator: "Wolf",
+    prey: "Elk",
+    env: "Rocky Mountain Meadow",
+    arc: "Ambush attack" as const,
+    weather: "Golden Hour" as const,
+    runwayModel: "Gen-4.5" as const,
+    klingModel: "Kling 3.0 Pro" as const,
+    emotionalTone: "Raw Tension" as const,
+    animalVibe: "National Geographic Wild" as const,
+    sceneDesc: "Clear mountain opening with readable spacing and strong first-frame tension.",
+    quality: {
+      realismMode: "Reference Locked" as const,
+      motionOnlyI2V: true,
+      referenceLock: true,
+      singleActionRule: true,
+      microMotion: true,
+      heroVeo: false,
+    },
+  };
+
+  it("Runway structured prompts do not output 30fps or negative-style prompt bodies", () => {
+    const pack = buildRunwayPromptPack(
+      base.predator,
+      base.prey,
+      base.env,
+      base.arc,
+      base.weather,
+      base.runwayModel,
+      base.emotionalTone,
+      base.animalVibe,
+      base.sceneDesc,
+      base.quality
+    );
+
+    for (const shot of [pack.shot1, pack.shot2, pack.shot3, pack.shot4]) {
+      expect(shot.pasteReady).not.toMatch(/\b30\s*fps\b/i);
+      expect(shot.pasteReady).not.toMatch(/^(?:no|never|avoid|do not|don't)\b/im);
+    }
+  });
+
+  it("Kling prompt length validator reports over-budget prompts", () => {
+    const validation = validateKlingPromptLength("x".repeat(2501));
+
+    expect(validation.length).toBe(2501);
+    expect(validation.isOver).toBe(true);
+    expect(validation.remaining).toBe(-1);
+    expect(validation.warning).toBeTruthy();
+  });
+
+  it("hybrid workflow prompt pack preserves Runway / Kling / Kling / Runway order", () => {
+    const workflow = buildFourShotWorkflowPromptPack({
+      predator: base.predator,
+      prey: base.prey,
+      env: base.env,
+      arc: base.arc,
+      weather: base.weather,
+      runwayModel: base.runwayModel,
+      klingModel: base.klingModel,
+      emotionalTone: base.emotionalTone,
+      animalVibe: base.animalVibe,
+      sceneDesc: base.sceneDesc,
+      quality: base.quality,
+    });
+
+    expect(workflow.shot1.metadata?.engine).toBe("runway");
+    expect(workflow.shot2.metadata?.engine).toBe("kling");
+    expect(workflow.shot3.metadata?.engine).toBe("kling");
+    expect(workflow.shot4.metadata?.engine).toBe("runway");
+  });
+
+  it("structured prompt objects expose the fields used by the UI", () => {
+    const image = buildImagePromptCard(
+      "Mountain Lion",
+      "Mule Deer",
+      "Forest Clearing",
+      "Ambush attack",
+      "golden hour rim light",
+      "Canon EOS R5, 200mm wildlife lens",
+      "natural fur breakup and clean paw detail",
+      "Balanced Depth",
+      "Golden Hour",
+      "Raw Tension",
+      "BBC Earth Documentary",
+      "Readable forest edge standoff.",
+      base.quality,
+      "NANO_BANANA_2"
+    );
+    const kling = buildKlingPromptPack(
+      base.predator,
+      base.prey,
+      base.env,
+      base.arc,
+      base.weather,
+      base.klingModel,
+      base.emotionalTone,
+      base.animalVibe,
+      base.sceneDesc,
+      base.quality
+    );
+    const seedance = buildSeedancePromptPack(
+      base.predator,
+      base.prey,
+      base.env,
+      base.arc,
+      base.weather,
+      base.emotionalTone,
+      base.animalVibe,
+      base.sceneDesc,
+      base.quality
+    );
+
+    expect(image.fullText.length).toBeGreaterThan(0);
+    expect(image.pasteReady).toBe(image.fullText);
+    expect(kling.shot2.audio).toContain("Audio:");
+    expect(kling.shot2.settings?.length).toBeGreaterThan(0);
+    expect(kling.shot2.metadata?.motionIntensity).toBeGreaterThan(0);
+    expect(seedance.multiShotPrompt.pasteReady).toContain("Cut to");
   });
 });

@@ -190,6 +190,35 @@ export type ShotImagePlan = {
   prompt: string;
 };
 
+export type StructuredPromptMetadata = {
+  engine?: "image" | "runway" | "kling" | "seedance";
+  shotKey?: string;
+  title?: string;
+  motionIntensity?: number;
+  durationSeconds?: number;
+  variant?: "single-shot" | "multi-shot" | "hybrid" | "native-15s" | "six-shot";
+  workflowRole?: string;
+};
+
+export type StructuredPrompt = {
+  fullText: string;
+  pasteReady: string;
+  audio?: string;
+  settings?: string[];
+  metadata?: StructuredPromptMetadata;
+};
+
+export type StructuredPromptBundle = {
+  imagePrompt?: StructuredPrompt;
+  runwayShots?: StructuredPrompt[];
+  klingShots?: StructuredPrompt[];
+  seedanceShots?: StructuredPrompt[];
+  seedanceMultiShot?: StructuredPrompt;
+  workflowShots?: StructuredPrompt[];
+  klingNative15s?: StructuredPrompt;
+  klingSixShot?: StructuredPrompt;
+};
+
 export type ViralShotPlan = {
   shot1_closeup: string;
   shot2_standoff: string;
@@ -261,6 +290,7 @@ export type GeneratedPackage = {
   negativePrompt: string;
   thumbnailPrompt: string;
   voiceoverLine: string;
+  structuredPrompts?: StructuredPromptBundle;
   runwayShots: string[];
   klingShots: string[];
   seedanceShots?: string[];

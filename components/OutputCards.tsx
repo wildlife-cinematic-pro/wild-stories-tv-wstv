@@ -34,6 +34,7 @@ import type {
   BulkItem,
   PromptVersion,
   GeneratedPackage,
+  StructuredPrompt,
 } from "@/types";
 
 import { extractMotionOnlyPrompt } from "@/lib/workflow-packs";
@@ -128,6 +129,108 @@ function extractKlingAudioPrompt(shotText: string): string {
     /\nAudio:\s*([\s\S]*?)(?:\n\s*Kling settings:|$)/i
   );
   return m?.[1]?.trim() ?? "";
+}
+
+function buildLegacyPromptCard(
+  engine: "image" | "runway" | "kling" | "seedance",
+  fullText: string
+): StructuredPrompt {
+  const safeText = String(fullText ?? "").trim();
+
+  if (engine === "image") {
+    return {
+      fullText: safeText,
+      pasteReady: extractImagePromptBody(safeText),
+      metadata: { engine },
+    };
+  }
+
+  if (engine === "runway") {
+    return {
+      fullText: safeText,
+      pasteReady: extractRunwayPasteReady(safeText),
+      metadata: { engine },
+    };
+  }
+
+  if (engine === "seedance") {
+    return {
+      fullText: safeText,
+      pasteReady: extractSeedancePromptBody(safeText),
+      metadata: { engine },
+    };
+  }
+
+  const motionMatch = safeText.match(/Motion intensity:\s*([\d.]+)/);
+
+  return {
+    fullText: safeText,
+    pasteReady: extractKlingPromptBody(safeText),
+    audio: extractKlingAudioPrompt(safeText),
+    metadata: {
+      engine,
+      motionIntensity: motionMatch ? Number.parseFloat(motionMatch[1]) : undefined,
+    },
+  };
+}
+
+function getPromptCardForEngine(
+  data: GeneratedPackage,
+  engine: "runway" | "kling" | "seedance",
+  index: number
+): StructuredPrompt {
+  const structured =
+    engine === "runway"
+      ? data.structuredPrompts?.runwayShots?.[index]
+      : engine === "kling"
+        ? data.structuredPrompts?.klingShots?.[index]
+        : data.structuredPrompts?.seedanceShots?.[index];
+
+  const fallbackText =
+    engine === "runway"
+      ? data.runwayShots?.[index]
+      : engine === "kling"
+        ? data.klingShots?.[index]
+        : data.seedanceShots?.[index];
+
+  return structured ?? buildLegacyPromptCard(engine, String(fallbackText ?? ""));
+}
+
+function getWorkflowPromptCard(data: GeneratedPackage, index: number): StructuredPrompt {
+  const structured = data.structuredPrompts?.workflowShots?.[index];
+  if (structured) return structured;
+
+  const legacyPrompt = String(data.shotPlan?.[index]?.prompt ?? "");
+  const engine = data.shotPlan?.[index]?.engine === "RUNWAY" ? "runway" : "kling";
+  return buildLegacyPromptCard(engine, legacyPrompt);
+}
+
+function getImagePromptCard(data: GeneratedPackage): StructuredPrompt {
+  return (
+    data.structuredPrompts?.imagePrompt ??
+    buildLegacyPromptCard("image", String(data.imagePrompt ?? ""))
+  );
+}
+
+function getSeedanceMultiShotCard(data: GeneratedPackage): StructuredPrompt {
+  return (
+    data.structuredPrompts?.seedanceMultiShot ??
+    buildLegacyPromptCard("seedance", String(data.seedanceMultiShotPrompt ?? ""))
+  );
+}
+
+function getKlingNative15sCard(data: GeneratedPackage): StructuredPrompt {
+  return (
+    data.structuredPrompts?.klingNative15s ??
+    buildLegacyPromptCard("kling", String(data.klingNative15s ?? ""))
+  );
+}
+
+function getKlingSixShotCard(data: GeneratedPackage): StructuredPrompt {
+  return (
+    data.structuredPrompts?.klingSixShot ??
+    buildLegacyPromptCard("kling", String(data.klingSixShot ?? ""))
+  );
 }
 
 // === NEW: Engine Specs Panel ===
@@ -231,24 +334,24 @@ function ProShotCard({
   engine,
   index,
   shot,
+  prompt,
   onCopy,
 }: {
   engine: "runway" | "kling" | "seedance";
   index: number;
   shot: string;
+  prompt?: StructuredPrompt;
   onCopy: (t: string) => void;
 }) {
   const isRunway = engine === "runway";
   const isSeedance = engine === "seedance";
-  const pasteReady = isRunway
-    ? extractRunwayPasteReady(shot)
-    : isSeedance
-      ? extractSeedancePromptBody(shot)
-      : extractKlingPromptBody(shot);
-
-  const audioPrompt = !isRunway && !isSeedance ? extractKlingAudioPrompt(shot) : "";
-  const miMatch = shot.match(/Motion intensity:\s*([\d.]+)/);
-  const motionIntensity = miMatch ? parseFloat(miMatch[1]) : null;
+  const promptCard = prompt ?? buildLegacyPromptCard(engine, shot);
+  const pasteReady = promptCard.pasteReady;
+  const audioPrompt = !isRunway && !isSeedance ? promptCard.audio ?? "" : "";
+  const motionIntensity =
+    typeof promptCard.metadata?.motionIntensity === "number"
+      ? promptCard.metadata.motionIntensity
+      : null;
   const borderColor = isRunway
     ? "border-green-200"
     : isSeedance
@@ -307,7 +410,7 @@ function ProShotCard({
       </div>
 
       <pre className="max-h-40 overflow-auto whitespace-pre-wrap text-xs leading-relaxed text-gray-900">
-        {shot || "—"}
+        {promptCard.fullText || shot || "—"}
       </pre>
 
       {audioPrompt && (
@@ -1964,6 +2067,19 @@ function WorkflowPromptMap({
   const runwayShots = (data.runwayShots ?? []).map(safeText);
   const klingShots = (data.klingShots ?? []).map(safeText);
   const imagePrompt = safeText(data.imagePrompt);
+  const imagePromptCard = getImagePromptCard(data);
+  const seedancePromptCards = seedanceShots.map((_, index) =>
+    getPromptCardForEngine(data, "seedance", index)
+  );
+  const runwayPromptCards = runwayShots.map((_, index) =>
+    getPromptCardForEngine(data, "runway", index)
+  );
+  const klingPromptCards = klingShots.map((_, index) =>
+    getPromptCardForEngine(data, "kling", index)
+  );
+  const workflowPromptCards = (data.shotPlan ?? []).map((_, index) =>
+    getWorkflowPromptCard(data, index)
+  );
   const seedanceWorkflowGuide = safeText(data.seedanceWorkflowGuide ?? "");
   const routingNote = safeText(data.routingNote ?? "");
 
@@ -2049,7 +2165,7 @@ function WorkflowPromptMap({
       value: imagePrompt,
       actions: [
         { label: "Copy Image Prompt", value: imagePrompt },
-        { label: "Copy BODY", value: extractImagePromptBody(imagePrompt), secondary: true },
+        { label: "Copy BODY", value: imagePromptCard.pasteReady, secondary: true },
       ],
     };
 
@@ -2105,7 +2221,7 @@ function WorkflowPromptMap({
             color: seedanceColor,
             help: "Use the clean opening frame in First Frame. Keep Prompt focused on subject movement, background movement, and camera movement only.",
             value: seedanceShots[0] ?? "",
-            actions: [{ label: "Copy Seedance Shot 1 BODY", value: extractSeedancePromptBody(seedanceShots[0] ?? "") }],
+            actions: [{ label: "Copy Seedance Shot 1 BODY", value: seedancePromptCards[0]?.pasteReady ?? "" }],
           },
           {
             step: 3,
@@ -2114,7 +2230,7 @@ function WorkflowPromptMap({
             color: seedanceColor,
             help: "Let the tension rise without chaotic overlap. Use clear motion adverbs and camera language so the pressure build stays readable and forceful.",
             value: seedanceShots[1] ?? "",
-            actions: [{ label: "Copy Seedance Shot 2 BODY", value: extractSeedancePromptBody(seedanceShots[1] ?? "") }],
+            actions: [{ label: "Copy Seedance Shot 2 BODY", value: seedancePromptCards[1]?.pasteReady ?? "" }],
           },
           {
             step: 4,
@@ -2123,7 +2239,7 @@ function WorkflowPromptMap({
             color: seedanceColor,
             help: "This is the strongest action beat. Keep body mechanics readable, motion grounded, and spacing clear even when the scene speeds up.",
             value: seedanceShots[2] ?? "",
-            actions: [{ label: "Copy Seedance Shot 3 BODY", value: extractSeedancePromptBody(seedanceShots[2] ?? "") }],
+            actions: [{ label: "Copy Seedance Shot 3 BODY", value: seedancePromptCards[2]?.pasteReady ?? "" }],
           },
           {
             step: 5,
@@ -2132,7 +2248,7 @@ function WorkflowPromptMap({
             color: seedanceColor,
             help: "Resolve the motion cleanly and keep the closing frame continuity-safe. Use a simple readable settle instead of adding a new major action.",
             value: seedanceShots[3] ?? "",
-            actions: [{ label: "Copy Seedance Shot 4 BODY", value: extractSeedancePromptBody(seedanceShots[3] ?? "") }],
+            actions: [{ label: "Copy Seedance Shot 4 BODY", value: seedancePromptCards[3]?.pasteReady ?? "" }],
           },
           {
             step: 6,
@@ -2160,7 +2276,7 @@ function WorkflowPromptMap({
             color: runwayColor,
             help: "Use the clean master still or opening continuity frame. Keep both subjects readable from frame one.",
             value: runwayShots[0] ?? "",
-            actions: [{ label: "Copy Runway Shot 1 BODY", value: extractRunwayPasteReady(runwayShots[0] ?? "") }],
+            actions: [{ label: "Copy Runway Shot 1 BODY", value: runwayPromptCards[0]?.pasteReady ?? "" }],
           },
           {
             step: 3,
@@ -2169,7 +2285,7 @@ function WorkflowPromptMap({
             color: runwayColor,
             help: "Build forward pressure gradually with clean spacing and a controlled tracking move.",
             value: runwayShots[1] ?? "",
-            actions: [{ label: "Copy Runway Shot 2 BODY", value: extractRunwayPasteReady(runwayShots[1] ?? "") }],
+            actions: [{ label: "Copy Runway Shot 2 BODY", value: runwayPromptCards[1]?.pasteReady ?? "" }],
           },
           {
             step: 4,
@@ -2178,7 +2294,7 @@ function WorkflowPromptMap({
             color: runwayColor,
             help: "This is the strongest Runway action beat. Keep motion forceful but still readable and continuity-safe.",
             value: runwayShots[2] ?? "",
-            actions: [{ label: "Copy Runway Shot 3 BODY", value: extractRunwayPasteReady(runwayShots[2] ?? "") }],
+            actions: [{ label: "Copy Runway Shot 3 BODY", value: runwayPromptCards[2]?.pasteReady ?? "" }],
           },
           {
             step: 5,
@@ -2187,7 +2303,7 @@ function WorkflowPromptMap({
             color: runwayColor,
             help: "Use a clean readable settle with stable spacing for the final frame family.",
             value: runwayShots[3] ?? "",
-            actions: [{ label: "Copy Runway Shot 4 BODY", value: extractRunwayPasteReady(runwayShots[3] ?? "") }],
+            actions: [{ label: "Copy Runway Shot 4 BODY", value: runwayPromptCards[3]?.pasteReady ?? "" }],
           },
           {
             step: 6,
@@ -2215,7 +2331,7 @@ function WorkflowPromptMap({
             color: klingColor,
             help: "Start with a readable wide opening and immediate visible tension from frame one.",
             value: klingShots[0] ?? "",
-            actions: [{ label: "Copy Kling Shot 1 BODY", value: extractKlingPromptBody(klingShots[0] ?? "") }],
+            actions: [{ label: "Copy Kling Shot 1 BODY", value: klingPromptCards[0]?.pasteReady ?? "" }],
           },
           {
             step: 3,
@@ -2224,7 +2340,7 @@ function WorkflowPromptMap({
             color: klingColor,
             help: "Use Kling for stronger physics-safe pressure build while keeping full-body readability.",
             value: klingShots[1] ?? "",
-            actions: [{ label: "Copy Kling Shot 2 BODY", value: extractKlingPromptBody(klingShots[1] ?? "") }],
+            actions: [{ label: "Copy Kling Shot 2 BODY", value: klingPromptCards[1]?.pasteReady ?? "" }],
           },
           {
             step: 4,
@@ -2233,7 +2349,7 @@ function WorkflowPromptMap({
             color: klingColor,
             help: "This is the strongest Kling action beat. Let the force rise, but keep spacing and body mechanics readable.",
             value: klingShots[2] ?? "",
-            actions: [{ label: "Copy Kling Shot 3 BODY", value: extractKlingPromptBody(klingShots[2] ?? "") }],
+            actions: [{ label: "Copy Kling Shot 3 BODY", value: klingPromptCards[2]?.pasteReady ?? "" }],
           },
           {
             step: 5,
@@ -2242,7 +2358,7 @@ function WorkflowPromptMap({
             color: klingColor,
             help: "Settle the action cleanly and keep the end pose readable and continuity-safe.",
             value: klingShots[3] ?? "",
-            actions: [{ label: "Copy Kling Shot 4 BODY", value: extractKlingPromptBody(klingShots[3] ?? "") }],
+            actions: [{ label: "Copy Kling Shot 4 BODY", value: klingPromptCards[3]?.pasteReady ?? "" }],
           },
           {
             step: 6,
@@ -2270,7 +2386,7 @@ function WorkflowPromptMap({
             color: runwayColor,
             help: "Start with Runway for the cleanest first-frame readability and opening tension.",
             value: runwayShots[0] ?? "",
-            actions: [{ label: "Copy Hybrid Shot 1 BODY", value: extractRunwayPasteReady(runwayShots[0] ?? "") }],
+            actions: [{ label: "Copy Hybrid Shot 1 BODY", value: workflowPromptCards[0]?.pasteReady ?? runwayPromptCards[0]?.pasteReady ?? "" }],
           },
           {
             step: 3,
@@ -2279,7 +2395,7 @@ function WorkflowPromptMap({
             color: klingColor,
             help: "Switch to Kling here for pressure build with stronger physics and readable body mechanics.",
             value: klingShots[1] ?? "",
-            actions: [{ label: "Copy Hybrid Shot 2 BODY", value: extractKlingPromptBody(klingShots[1] ?? "") }],
+            actions: [{ label: "Copy Hybrid Shot 2 BODY", value: workflowPromptCards[1]?.pasteReady ?? klingPromptCards[1]?.pasteReady ?? "" }],
           },
           {
             step: 4,
@@ -2288,7 +2404,7 @@ function WorkflowPromptMap({
             color: klingColor,
             help: "Keep Kling for the strongest action beat before handing the final settle back to Runway.",
             value: klingShots[2] ?? "",
-            actions: [{ label: "Copy Hybrid Shot 3 BODY", value: extractKlingPromptBody(klingShots[2] ?? "") }],
+            actions: [{ label: "Copy Hybrid Shot 3 BODY", value: workflowPromptCards[2]?.pasteReady ?? klingPromptCards[2]?.pasteReady ?? "" }],
           },
           {
             step: 5,
@@ -2297,7 +2413,7 @@ function WorkflowPromptMap({
             color: runwayColor,
             help: "Return to Runway for the clean readable final resolve and stable continuity-safe ending.",
             value: runwayShots[3] ?? "",
-            actions: [{ label: "Copy Hybrid Shot 4 BODY", value: extractRunwayPasteReady(runwayShots[3] ?? "") }],
+            actions: [{ label: "Copy Hybrid Shot 4 BODY", value: workflowPromptCards[3]?.pasteReady ?? runwayPromptCards[3]?.pasteReady ?? "" }],
           },
           {
             step: 6,
@@ -2311,7 +2427,19 @@ function WorkflowPromptMap({
         ],
       },
     };
-  }, [imagePrompt, klingShots, runwayShots, routingNote, seedanceShots, seedanceWorkflowGuide]);
+  }, [
+    imagePrompt,
+    imagePromptCard,
+    klingPromptCards,
+    klingShots,
+    routingNote,
+    runwayPromptCards,
+    runwayShots,
+    seedancePromptCards,
+    seedanceShots,
+    seedanceWorkflowGuide,
+    workflowPromptCards,
+  ]);
 
   const currentWorkflow = workflows[mode];
   const pipeline = currentWorkflow.pipeline;
@@ -2603,6 +2731,22 @@ export default function OutputCards({
     () => (data.seedanceShots ?? []).map((s) => String(s ?? "")),
     [data.seedanceShots]
   );
+  const imagePromptCard = useMemo(() => getImagePromptCard(data), [data]);
+  const runwayPromptCards = useMemo(
+    () => runwayShots.map((_, index) => getPromptCardForEngine(data, "runway", index)),
+    [data, runwayShots]
+  );
+  const klingPromptCards = useMemo(
+    () => klingShots.map((_, index) => getPromptCardForEngine(data, "kling", index)),
+    [data, klingShots]
+  );
+  const seedancePromptCards = useMemo(
+    () => seedanceShots.map((_, index) => getPromptCardForEngine(data, "seedance", index)),
+    [data, seedanceShots]
+  );
+  const seedanceMultiShotCard = useMemo(() => getSeedanceMultiShotCard(data), [data]);
+  const klingNative15sCard = useMemo(() => getKlingNative15sCard(data), [data]);
+  const klingSixShotCard = useMemo(() => getKlingSixShotCard(data), [data]);
 
   const versionKey = useMemo(() => {
     const p = data.predatorName ?? "";
@@ -2630,6 +2774,7 @@ export default function OutputCards({
         title,
         note,
         durationLabel,
+        promptCard: getWorkflowPromptCard(data, index),
         cardEngine: isRunway ? ("runway" as const) : ("kling" as const),
         engineLabel: isRunway ? "Runway" : "Kling",
         color: isRunway
@@ -2637,7 +2782,7 @@ export default function OutputCards({
           : "border-blue-200 bg-blue-50 text-blue-900",
       };
     });
-  }, [data.shotPlan]);
+  }, [data]);
 
   const isLongHybridLane =
     data.durationLane === "long" || data.pipelineStyle === "long-hybrid-4-shot";
@@ -3107,7 +3252,7 @@ export default function OutputCards({
             extraActions={[
               {
                 label: "Copy BODY",
-                onClick: () => onCopy(extractImagePromptBody(data.imagePrompt)),
+                onClick: () => onCopy(imagePromptCard.pasteReady),
                 className:
                   "rounded border border-amber-300 bg-amber-50 px-3 py-1 text-sm font-semibold text-amber-800 hover:bg-amber-100 active:scale-95",
               },
@@ -3266,6 +3411,7 @@ export default function OutputCards({
                     engine={item.cardEngine}
                     index={index}
                     shot={safeStr(item.prompt)}
+                    prompt={item.promptCard}
                     onCopy={onCopy}
                   />
                 ))}
@@ -3297,8 +3443,8 @@ export default function OutputCards({
                   type="button"
                   onClick={() =>
                     onCopy(
-                      seedanceShots
-                        .map((s) => extractSeedancePromptBody(s))
+                      seedancePromptCards
+                        .map((card) => card.pasteReady)
                         .filter(Boolean)
                         .join("\n\n---\n\n")
                     )
@@ -3329,6 +3475,7 @@ export default function OutputCards({
                     engine="seedance"
                     index={i}
                     shot={shot}
+                    prompt={getPromptCardForEngine(data, "seedance", i)}
                     onCopy={onCopy}
                   />
                 ))}
@@ -3364,8 +3511,8 @@ export default function OutputCards({
                   type="button"
                   onClick={() =>
                     onCopy(
-                      runwayShots
-                        .map((s) => extractRunwayPasteReady(s))
+                      runwayPromptCards
+                        .map((card) => card.pasteReady)
                         .filter(Boolean)
                         .join("\n\n---\n\n")
                     )
@@ -3383,6 +3530,7 @@ export default function OutputCards({
                     engine="runway"
                     index={i}
                     shot={shot}
+                    prompt={getPromptCardForEngine(data, "runway", i)}
                     onCopy={onCopy}
                   />
                 ))}
@@ -3417,8 +3565,8 @@ export default function OutputCards({
                   type="button"
                   onClick={() =>
                     onCopy(
-                      klingShots
-                        .map((s) => extractKlingPromptBody(s))
+                      klingPromptCards
+                        .map((card) => card.pasteReady)
                         .filter(Boolean)
                         .join("\n\n---\n\n")
                     )
@@ -3448,6 +3596,7 @@ export default function OutputCards({
                     engine="kling"
                     index={i}
                     shot={shot}
+                    prompt={getPromptCardForEngine(data, "kling", i)}
                     onCopy={onCopy}
                   />
                 ))}
@@ -3550,26 +3699,20 @@ export default function OutputCards({
                 </p>
 
                 <pre className="max-h-[420px] overflow-auto whitespace-pre-wrap rounded-xl border border-orange-200 bg-white p-3 text-xs leading-relaxed text-gray-900">
-                  {String(data.seedanceMultiShotPrompt)}
+                  {seedanceMultiShotCard.fullText}
                 </pre>
 
                 <div className="mt-3 flex flex-wrap gap-2">
                   <button
-                    type="button"
-                    onClick={() => onCopy(String(data.seedanceMultiShotPrompt))}
+                  type="button"
+                    onClick={() => onCopy(seedanceMultiShotCard.fullText)}
                     className="rounded-xl bg-orange-700 px-4 py-2 text-sm font-extrabold text-white hover:bg-orange-800 active:scale-[0.98]"
                   >
                     📋 Copy Full Seedance Prompt
                   </button>
                   <button
                     type="button"
-                    onClick={() =>
-                      onCopy(
-                        extractSeedancePromptBody(
-                          String(data.seedanceMultiShotPrompt)
-                        )
-                      )
-                    }
+                    onClick={() => onCopy(seedanceMultiShotCard.pasteReady)}
                     className="rounded-xl border border-orange-300 bg-white px-4 py-2 text-sm font-extrabold text-orange-700 hover:bg-orange-50 active:scale-[0.98]"
                   >
                     📋 Copy BODY Only
@@ -3610,22 +3753,20 @@ export default function OutputCards({
                 </p>
 
                 <pre className="max-h-[420px] overflow-auto whitespace-pre-wrap rounded-xl border border-blue-200 bg-white p-3 text-xs leading-relaxed text-gray-900">
-                  {String(data.klingNative15s)}
+                  {klingNative15sCard.fullText}
                 </pre>
 
                 <div className="mt-3 flex flex-wrap gap-2">
                   <button
                     type="button"
-                    onClick={() => onCopy(String(data.klingNative15s))}
+                    onClick={() => onCopy(klingNative15sCard.fullText)}
                     className="rounded-xl bg-blue-700 px-4 py-2 text-sm font-extrabold text-white hover:bg-blue-800 active:scale-[0.98]"
                   >
                     📋 Copy Full 15s Prompt
                   </button>
                   <button
                     type="button"
-                    onClick={() =>
-                      onCopy(extractKlingPromptBody(String(data.klingNative15s)))
-                    }
+                    onClick={() => onCopy(klingNative15sCard.pasteReady)}
                     className="rounded-xl border border-blue-300 bg-white px-4 py-2 text-sm font-extrabold text-blue-700 hover:bg-blue-50 active:scale-[0.98]"
                   >
                     📋 Copy BODY Only
@@ -3667,22 +3808,20 @@ export default function OutputCards({
                 </p>
 
                 <pre className="max-h-[520px] overflow-auto whitespace-pre-wrap rounded-xl border border-indigo-200 bg-white p-3 text-xs leading-relaxed text-gray-900">
-                  {String(data.klingSixShot)}
+                  {klingSixShotCard.fullText}
                 </pre>
 
                 <div className="mt-3 flex flex-wrap gap-2">
                   <button
                     type="button"
-                    onClick={() => onCopy(String(data.klingSixShot))}
+                    onClick={() => onCopy(klingSixShotCard.fullText)}
                     className="rounded-xl bg-indigo-700 px-4 py-2 text-sm font-extrabold text-white hover:bg-indigo-800 active:scale-[0.98]"
                   >
                     📋 Copy Full 6-Shot Prompt
                   </button>
                   <button
                     type="button"
-                    onClick={() =>
-                      onCopy(extractKlingPromptBody(String(data.klingSixShot)))
-                    }
+                    onClick={() => onCopy(klingSixShotCard.pasteReady)}
                     className="rounded-xl border border-indigo-300 bg-white px-4 py-2 text-sm font-extrabold text-indigo-700 hover:bg-indigo-50 active:scale-[0.98]"
                   >
                     📋 Copy BODY Only
