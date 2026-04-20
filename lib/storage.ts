@@ -24,6 +24,7 @@ import type {
   HistoryEntry,
   SavedPrompt,
   SavedWorkflowPreset,
+  SavedWorkflowPresetPack,
   PromptVersion,
   AIProvider,
   ContentLane,
@@ -42,6 +43,7 @@ import { weatherOptions, depthModes, habitatOptions } from "@/lib/model-specs";
 import { contentLaneOptions, isContentLane } from "@/lib/content-lanes";
 import {
   getSafeDefaultWorkflowPresetId,
+  normalizeWorkflowPresetPacks,
   normalizeWorkflowPresets,
 } from "@/lib/workflow-presets";
 
@@ -54,6 +56,7 @@ const CUSTOM_PREDATORS_KEY = "wildlife_custom_predators_v1";
 const FAVORITES_KEY = "wildlife_favorites_v1";
 const VERSIONS_KEY = "wildlife_versions_v1";
 const WORKFLOW_PRESETS_KEY = "wildlife_workflow_presets_v1";
+const WORKFLOW_PRESET_PACKS_KEY = "wildlife_workflow_preset_packs_v1";
 const DEFAULT_WORKFLOW_PRESET_KEY = "wildlife_default_workflow_preset_v1";
 
 export const MAX_HISTORY = 20;
@@ -309,6 +312,28 @@ export function writeDefaultWorkflowPresetId(id: string | undefined): void {
     } else {
       localStorage.removeItem(DEFAULT_WORKFLOW_PRESET_KEY);
     }
+  } catch {}
+}
+
+export function readWorkflowPresetPacks(): SavedWorkflowPresetPack[] {
+  if (typeof window === "undefined") return [];
+  try {
+    const raw = localStorage.getItem(WORKFLOW_PRESET_PACKS_KEY);
+    return raw ? normalizeWorkflowPresetPacks(safeJsonParse<unknown>(raw)) : [];
+  } catch {
+    return [];
+  }
+}
+
+export function writeWorkflowPresetPacks(
+  packs: SavedWorkflowPresetPack[]
+): void {
+  if (typeof window === "undefined") return;
+  try {
+    localStorage.setItem(
+      WORKFLOW_PRESET_PACKS_KEY,
+      JSON.stringify(normalizeWorkflowPresetPacks(packs))
+    );
   } catch {}
 }
 

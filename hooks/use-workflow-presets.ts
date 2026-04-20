@@ -4,26 +4,35 @@ import { useEffect, useMemo, useRef, useState } from "react";
 
 import {
   readDefaultWorkflowPresetId,
+  readWorkflowPresetPacks,
   readWorkflowPresets,
   downloadJson,
   hasShareStateInUrl,
   writeDefaultWorkflowPresetId,
+  writeWorkflowPresetPacks,
   writeWorkflowPresets,
 } from "@/lib/storage";
 import {
   areWorkflowPresetSnapshotsEqual,
   buildWorkflowPresetName,
   buildWorkflowPresetExportPayload,
+  buildWorkflowPresetPackExportPayload,
   createWorkflowPreset,
+  createWorkflowPresetPack,
   deleteWorkflowPreset,
+  deleteWorkflowPresetPack,
   getSafeDefaultWorkflowPresetId,
+  mergeWorkflowPresetImport,
   mergeWorkflowPresetImportJson,
+  mergeWorkflowPresetPackImportJson,
   stringifyWorkflowPresetExportPayload,
+  stringifyWorkflowPresetPackExportPayload,
   updateWorkflowPreset,
 } from "@/lib/workflow-presets";
 import type {
   BuildWorkflowPresetSnapshot,
   SavedWorkflowPreset,
+  SavedWorkflowPresetPack,
 } from "@/types";
 
 type UseWorkflowPresetsInput = {
@@ -33,6 +42,7 @@ type UseWorkflowPresetsInput = {
 
 function readInitialWorkflowPresetState() {
   const presets = readWorkflowPresets();
+  const presetPacks = readWorkflowPresetPacks();
   const defaultPresetId = readDefaultWorkflowPresetId(presets);
   const defaultPreset = defaultPresetId
     ? presets.find((preset) => preset.id === defaultPresetId)
@@ -42,6 +52,7 @@ function readInitialWorkflowPresetState() {
   return {
     presets,
     defaultPresetId,
+    presetPacks,
     activePresetId: shouldLoadDefault ? defaultPresetId ?? null : null,
     presetName: shouldLoadDefault ? defaultPreset?.name ?? "" : "",
     defaultPresetToLoad: shouldLoadDefault ? defaultPreset : undefined,
@@ -57,14 +68,24 @@ export function useWorkflowPresets({
   const [presets, setPresets] = useState<SavedWorkflowPreset[]>(
     initialState.presets
   );
+  const [presetPacks, setPresetPacks] = useState<SavedWorkflowPresetPack[]>(
+    initialState.presetPacks
+  );
   const [activePresetId, setActivePresetId] = useState<string | null>(
     initialState.activePresetId
+  );
+  const [activePresetPackId, setActivePresetPackId] = useState<string | null>(
+    null
   );
   const [defaultPresetId, setDefaultPresetId] = useState<string | undefined>(
     initialState.defaultPresetId
   );
   const [presetName, setPresetName] = useState(initialState.presetName);
   const [importStatus, setImportStatus] = useState("");
+  const [packName, setPackName] = useState("");
+  const [packDescription, setPackDescription] = useState("");
+  const [packTagsText, setPackTagsText] = useState("");
+  const [packStatus, setPackStatus] = useState("");
   const loadPresetRef = useRef(onLoadPreset);
   const didApplyDefaultRef = useRef(false);
   const initialDefaultPresetRef = useRef(initialState.defaultPresetToLoad);
@@ -87,6 +108,11 @@ export function useWorkflowPresets({
     writeDefaultWorkflowPresetId(safeDefaultId);
   }
 
+  function persistPresetPacks(nextPacks: SavedWorkflowPresetPack[]) {
+    setPresetPacks(nextPacks);
+    writeWorkflowPresetPacks(nextPacks);
+  }
+
   useEffect(() => {
     if (didApplyDefaultRef.current) return;
     didApplyDefaultRef.current = true;
@@ -100,6 +126,14 @@ export function useWorkflowPresets({
         ? presets.find((preset) => preset.id === activePresetId)
         : undefined,
     [activePresetId, presets]
+  );
+
+  const activePresetPack = useMemo(
+    () =>
+      activePresetPackId
+        ? presetPacks.find((pack) => pack.id === activePresetPackId)
+        : undefined,
+    [activePresetPackId, presetPacks]
   );
 
   const activePresetIsDirty = useMemo(
@@ -183,6 +217,14 @@ export function useWorkflowPresets({
       .slice(0, 80) || "workflow-presets"}.json`;
   }
 
+  function parsePackTags(value: string): string[] {
+    return value
+      .split(",")
+      .map((item) => item.trim())
+      .filter(Boolean)
+      .slice(0, 8);
+  }
+
   function exportPreset(id: string): string | undefined {
     const preset = presets.find((item) => item.id === id);
     if (!preset) return undefined;
@@ -242,16 +284,150 @@ export function useWorkflowPresets({
     return report;
   }
 
+  function createPresetPackFromSelection(
+    presetIds: string[],
+    options: { name?: string; description?: string; tagsText?: string } = {}
+  ): SavedWorkflowPresetPack | undefined {
+    const selectedPresets = presetIds
+      .map((id) => presets.find((preset) => preset.id === id))
+      .filter((preset): preset is SavedWorkflowPreset => Boolean(preset));
+    if (!selectedPresets.length) {
+      setPackStatus("Choose at least one saved preset before creating a pack.");
+      return undefined;
+    }
+
+    const pack = createWorkflowPresetPack(selectedPresets, {
+      name: options.name || packName || "Untitled Preset Pack",
+      description: options.description ?? packDescription,
+      tags: parsePackTags(options.tagsText ?? packTagsText),
+    });
+    const nextPacks = [pack, ...presetPacks].slice(0, 24);
+    persistPresetPacks(nextPacks);
+    setActivePresetPackId(pack.id);
+    setPackName(pack.name);
+    setPackDescription(pack.description);
+    setPackTagsText((pack.tags ?? []).join(", "));
+    setPackStatus(
+      `Created ${pack.name} with ${pack.presets.length} preset${
+        pack.presets.length === 1 ? "" : "s"
+      }.`
+    );
+    return pack;
+  }
+
+  function deletePresetPack(id: string): void {
+    const nextPacks = deleteWorkflowPresetPack(presetPacks, id);
+    persistPresetPacks(nextPacks);
+    if (activePresetPackId === id) {
+      setActivePresetPackId(null);
+      setPackName("");
+      setPackDescription("");
+      setPackTagsText("");
+    }
+    setPackStatus("Preset pack deleted.");
+  }
+
+  function exportPresetPack(id: string): string | undefined {
+    const pack = presetPacks.find((item) => item.id === id);
+    if (!pack) return undefined;
+
+    const payload = buildWorkflowPresetPackExportPayload(pack);
+    if (!payload) return undefined;
+
+    downloadJson(buildExportFilename(`wstv-preset-pack-${pack.name}`), payload);
+    return stringifyWorkflowPresetPackExportPayload(payload);
+  }
+
+  function importPresetPackFromJson(jsonText: string) {
+    const report = mergeWorkflowPresetPackImportJson(presetPacks, jsonText);
+    if (report.importedCount > 0 || report.skippedCount > 0) {
+      persistPresetPacks(report.packs);
+    }
+    if (report.importedPack) {
+      setActivePresetPackId(report.importedPack.id);
+      setPackName(report.importedPack.name);
+      setPackDescription(report.importedPack.description);
+      setPackTagsText((report.importedPack.tags ?? []).join(", "));
+    }
+
+    const parts = [
+      report.importedCount
+        ? `Imported ${report.importedPack?.name ?? "preset pack"}.`
+        : "No preset pack imported.",
+      report.renamedCount ? "Pack name collision adjusted." : "",
+      report.regeneratedIdCount ? "Pack id collision resolved." : "",
+      report.skippedCount ? "Invalid pack data was skipped." : "",
+      ...report.warnings,
+    ].filter(Boolean);
+
+    setPackStatus(parts.join(" "));
+    return report;
+  }
+
+  function applyPresetPack(id: string) {
+    const pack = presetPacks.find((item) => item.id === id);
+    if (!pack) {
+      setPackStatus("Choose a preset pack before applying it.");
+      return undefined;
+    }
+
+    const report = mergeWorkflowPresetImport(presets, pack.presets, {
+      currentDefaultPresetId: defaultPresetId,
+      preserveImportedDefaultWhenEmpty: false,
+    });
+    if (report.importedCount > 0 || report.skippedCount > 0) {
+      persistPresets(report.presets, report.defaultPresetId);
+    }
+
+    const parts = [
+      report.importedCount
+        ? `Applied ${report.importedCount} preset${
+            report.importedCount === 1 ? "" : "s"
+          } from ${pack.name}.`
+        : "No presets applied from this pack.",
+      report.renamedCount
+        ? `${report.renamedCount} preset name collision${
+            report.renamedCount === 1 ? "" : "s"
+          } adjusted.`
+        : "",
+      report.regeneratedIdCount
+        ? `${report.regeneratedIdCount} preset id collision${
+            report.regeneratedIdCount === 1 ? "" : "s"
+          } resolved.`
+        : "",
+      report.skippedCount
+        ? `${report.skippedCount} invalid preset entr${
+            report.skippedCount === 1 ? "y was" : "ies were"
+          } skipped.`
+        : "",
+      ...report.warnings,
+    ].filter(Boolean);
+
+    setPackStatus(parts.join(" "));
+    return report;
+  }
+
   return {
     presets,
+    presetPacks,
     activePreset,
     activePresetId,
+    activePresetPack,
+    activePresetPackId,
     activePresetIsDirty,
     defaultPresetId,
     presetName,
     importStatus,
+    packName,
+    packDescription,
+    packTagsText,
+    packStatus,
     suggestedPresetName: buildWorkflowPresetName(currentSnapshot),
     setPresetName,
+    setPackName,
+    setPackDescription,
+    setPackTagsText,
+    setActivePresetPackId,
     saveCurrentAsPreset,
     updatePresetFromCurrent,
     loadPreset,
@@ -261,5 +437,10 @@ export function useWorkflowPresets({
     exportPreset,
     exportAllPresets,
     importPresetsFromJson,
+    createPresetPackFromSelection,
+    deletePresetPack,
+    exportPresetPack,
+    importPresetPackFromJson,
+    applyPresetPack,
   };
 }
