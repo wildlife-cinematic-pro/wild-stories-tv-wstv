@@ -2,12 +2,16 @@ import { describe, expect, it } from "vitest";
 
 import type { BuildWorkflowPresetSnapshot } from "@/types";
 import {
+  buildWorkflowPresetExportPayload,
   createWorkflowPreset,
   deleteWorkflowPreset,
   getSafeDefaultWorkflowPresetId,
+  mergeWorkflowPresetImport,
+  mergeWorkflowPresetImportJson,
   normalizeWorkflowPresetSnapshot,
   resolveDefaultWorkflowPreset,
   saveWorkflowPreset,
+  stringifyWorkflowPresetExportPayload,
   updateWorkflowPreset,
 } from "@/lib/workflow-presets";
 
@@ -188,5 +192,147 @@ describe("workflow presets", () => {
       sceneDescriptionMode: "manual",
       sceneDescriptionTouched: true,
     });
+  });
+
+  it("exports a single preset with versioned portable JSON metadata", () => {
+    const preset = createWorkflowPreset(makeSnapshot(), {
+      id: "preset-pack-hunt",
+      name: "USA Fast Pack Hunt",
+      now: "2026-04-20T00:00:00.000Z",
+    });
+
+    const payload = buildWorkflowPresetExportPayload([preset], {
+      defaultPresetId: preset.id,
+      exportedAt: "2026-04-20T02:00:00.000Z",
+    });
+    const json = stringifyWorkflowPresetExportPayload(payload);
+
+    expect(payload).toMatchObject({
+      schema: "wstv.workflow-presets",
+      version: 1,
+      source: "wild-stories-tv-wstv",
+      exportedAt: "2026-04-20T02:00:00.000Z",
+      defaultPresetId: "preset-pack-hunt",
+      metadata: { presetCount: 1 },
+    });
+    expect(JSON.parse(json).presets[0].name).toBe("USA Fast Pack Hunt");
+  });
+
+  it("exports all presets and omits unsafe default ids", () => {
+    const first = createWorkflowPreset(makeSnapshot(), {
+      id: "preset-one",
+      name: "USA Fast Pack Hunt",
+      now: "2026-04-20T00:00:00.000Z",
+    });
+    const second = createWorkflowPreset(
+      makeSnapshot({ contentLane: "Escape", arc: "Escape from danger" }),
+      {
+        id: "preset-two",
+        name: "Escape Fast Publish",
+        now: "2026-04-20T01:00:00.000Z",
+      }
+    );
+
+    const payload = buildWorkflowPresetExportPayload([first, second], {
+      defaultPresetId: "missing",
+      exportedAt: "2026-04-20T02:00:00.000Z",
+    });
+
+    expect(payload.presets).toHaveLength(2);
+    expect(payload.defaultPresetId).toBeUndefined();
+    expect(payload.metadata.presetCount).toBe(2);
+  });
+
+  it("imports valid preset JSON and preserves the imported default only when no current default exists", () => {
+    const preset = createWorkflowPreset(makeSnapshot(), {
+      id: "preset-imported-default",
+      name: "Winter Pressure Long Lane",
+      now: "2026-04-20T00:00:00.000Z",
+    });
+    const payload = buildWorkflowPresetExportPayload([preset], {
+      defaultPresetId: preset.id,
+      exportedAt: "2026-04-20T02:00:00.000Z",
+    });
+
+    const report = mergeWorkflowPresetImportJson(
+      [],
+      stringifyWorkflowPresetExportPayload(payload),
+      { preserveImportedDefaultWhenEmpty: true }
+    );
+
+    expect(report.importedCount).toBe(1);
+    expect(report.defaultPresetId).toBe("preset-imported-default");
+    expect(report.presets[0].snapshot.contentLane).toBe("Pack Hunt");
+  });
+
+  it("imports legacy partial preset data through compatibility normalization", () => {
+    const report = mergeWorkflowPresetImport([], {
+      name: "Legacy Fishing Strike",
+      predator: "Bald Eagle",
+      prey: "Salmon",
+      contentLane: "Fishing Strike",
+      arc: "Unknown old arc",
+      habitat: "Old river",
+      sceneDescription: "Eagle over shallow river water.",
+    });
+
+    expect(report.importedCount).toBe(1);
+    expect(report.skippedCount).toBe(0);
+    expect(report.presets[0].name).toBe("Legacy Fishing Strike");
+    expect(report.presets[0].snapshot).toMatchObject({
+      predator: "Bald Eagle",
+      prey: "Salmon",
+      contentLane: "Fishing Strike",
+      arc: "Ambush attack",
+      habitat: "Auto",
+      sceneDescriptionMode: "manual",
+      sceneDescriptionTouched: true,
+    });
+  });
+
+  it("resolves id and name collisions without overwriting existing presets", () => {
+    const existing = createWorkflowPreset(makeSnapshot(), {
+      id: "preset-shared",
+      name: "USA Fast Pack Hunt",
+      now: "2026-04-20T00:00:00.000Z",
+    });
+    const incoming = createWorkflowPreset(
+      makeSnapshot({ prey: "Mule Deer" }),
+      {
+        id: "preset-shared",
+        name: "USA Fast Pack Hunt",
+        now: "2026-04-20T01:00:00.000Z",
+      }
+    );
+
+    const report = mergeWorkflowPresetImport([existing], [incoming], {
+      currentDefaultPresetId: existing.id,
+      preserveImportedDefaultWhenEmpty: true,
+    });
+
+    expect(report.importedCount).toBe(1);
+    expect(report.regeneratedIdCount).toBe(1);
+    expect(report.renamedCount).toBe(1);
+    expect(report.defaultPresetId).toBe(existing.id);
+    expect(report.presets.map((preset) => preset.id)).toContain("preset-shared");
+    expect(report.importedPresets[0].id).toBe("preset-shared-imported");
+    expect(report.importedPresets[0].name).toBe("USA Fast Pack Hunt (Imported)");
+  });
+
+  it("keeps existing presets safe when imported JSON is invalid", () => {
+    const existing = createWorkflowPreset(makeSnapshot(), {
+      id: "preset-existing",
+      name: "USA Fast Pack Hunt",
+      now: "2026-04-20T00:00:00.000Z",
+    });
+
+    const report = mergeWorkflowPresetImportJson([existing], "{not-json", {
+      currentDefaultPresetId: existing.id,
+    });
+
+    expect(report.importedCount).toBe(0);
+    expect(report.presets).toEqual([existing]);
+    expect(report.defaultPresetId).toBe(existing.id);
+    expect(report.warnings[0]).toMatch(/could not be parsed/i);
   });
 });

@@ -60,6 +60,10 @@ type Step1SetupProps = {
   onDeleteWorkflowPreset: (id: string) => void;
   onSetDefaultWorkflowPreset: (id: string) => void;
   onClearDefaultWorkflowPreset: () => void;
+  onExportWorkflowPreset: (id: string) => void;
+  onExportAllWorkflowPresets: () => void;
+  onImportWorkflowPresets: (jsonText: string) => void;
+  workflowPresetImportStatus: string;
 };
 
 export default function Step1Setup({
@@ -101,6 +105,10 @@ export default function Step1Setup({
   onDeleteWorkflowPreset,
   onSetDefaultWorkflowPreset,
   onClearDefaultWorkflowPreset,
+  onExportWorkflowPreset,
+  onExportAllWorkflowPresets,
+  onImportWorkflowPresets,
+  workflowPresetImportStatus,
 }: Step1SetupProps) {
   return (
     <div className="grid gap-6 xl:grid-cols-[minmax(0,1fr)_340px]">
@@ -119,6 +127,10 @@ export default function Step1Setup({
           onDeletePreset={onDeleteWorkflowPreset}
           onSetDefaultPreset={onSetDefaultWorkflowPreset}
           onClearDefaultPreset={onClearDefaultWorkflowPreset}
+          onExportPreset={onExportWorkflowPreset}
+          onExportAllPresets={onExportAllWorkflowPresets}
+          onImportPresets={onImportWorkflowPresets}
+          importStatus={workflowPresetImportStatus}
         />
 
         <section className="rounded-2xl border border-gray-200 bg-white p-5 sm:p-6">

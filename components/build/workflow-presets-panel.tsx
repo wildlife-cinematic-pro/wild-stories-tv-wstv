@@ -1,6 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
+import type { ChangeEvent } from "react";
 
 import type { SavedWorkflowPreset } from "@/types";
 
@@ -18,6 +19,10 @@ type WorkflowPresetsPanelProps = {
   onDeletePreset: (id: string) => void;
   onSetDefaultPreset: (id: string) => void;
   onClearDefaultPreset: () => void;
+  onExportPreset: (id: string) => void;
+  onExportAllPresets: () => void;
+  onImportPresets: (jsonText: string) => void;
+  importStatus: string;
 };
 
 function formatPresetMeta(preset: SavedWorkflowPreset): string {
@@ -46,8 +51,13 @@ export default function WorkflowPresetsPanel({
   onDeletePreset,
   onSetDefaultPreset,
   onClearDefaultPreset,
+  onExportPreset,
+  onExportAllPresets,
+  onImportPresets,
+  importStatus,
 }: WorkflowPresetsPanelProps) {
   const [selectedPresetId, setSelectedPresetId] = useState("");
+  const [importText, setImportText] = useState("");
   const resolvedSelectedPresetId =
     selectedPresetId && presets.some((preset) => preset.id === selectedPresetId)
       ? selectedPresetId
@@ -65,6 +75,16 @@ export default function WorkflowPresetsPanel({
 
   const effectiveName = presetName.trim() || suggestedPresetName;
   const hasPresets = presets.length > 0;
+
+  async function handleImportFile(event: ChangeEvent<HTMLInputElement>) {
+    const file = event.currentTarget.files?.[0];
+    if (!file) return;
+
+    const text = await file.text();
+    setImportText(text);
+    onImportPresets(text);
+    event.currentTarget.value = "";
+  }
 
   return (
     <section className="rounded-2xl border border-gray-200 bg-white p-5 shadow-sm shadow-gray-200/70 sm:p-6">
@@ -183,6 +203,74 @@ export default function WorkflowPresetsPanel({
               Delete
             </button>
           </div>
+        </div>
+      </div>
+
+      <div className="mt-4 rounded-2xl border border-gray-100 bg-gray-50 p-3.5">
+        <div className="mb-2 flex flex-wrap items-start justify-between gap-3">
+          <div>
+            <div className="text-[10px] font-semibold uppercase tracking-[0.1em] text-gray-400">
+              Portable JSON
+            </div>
+            <div className="mt-1 max-w-xl text-[11px] leading-relaxed text-gray-500">
+              Export one preset or the full local preset library, then import
+              pasted JSON or a downloaded file without overwriting existing presets.
+            </div>
+          </div>
+          <div className="flex flex-wrap gap-2">
+            <button
+              type="button"
+              onClick={() =>
+                resolvedSelectedPresetId && onExportPreset(resolvedSelectedPresetId)
+              }
+              disabled={!selectedPreset}
+              className="rounded-xl border border-gray-200 bg-white px-3 py-1.5 text-[11px] font-semibold text-gray-600 shadow-sm shadow-gray-100/80 hover:bg-gray-50 disabled:opacity-45 active:scale-[0.98]"
+            >
+              Export Preset
+            </button>
+            <button
+              type="button"
+              onClick={onExportAllPresets}
+              disabled={!hasPresets}
+              className="rounded-xl border border-gray-200 bg-white px-3 py-1.5 text-[11px] font-semibold text-gray-600 shadow-sm shadow-gray-100/80 hover:bg-gray-50 disabled:opacity-45 active:scale-[0.98]"
+            >
+              Export All
+            </button>
+          </div>
+        </div>
+
+        <textarea
+          value={importText}
+          onChange={(event) => setImportText(event.target.value)}
+          placeholder="Paste exported preset JSON here..."
+          rows={3}
+          className="w-full resize-y rounded-xl border border-gray-200 bg-white px-3 py-2 text-xs text-gray-700 placeholder:text-gray-400 focus:border-gray-400 focus:outline-none"
+        />
+        <div className="mt-2 flex flex-wrap items-center gap-2">
+          <button
+            type="button"
+            onClick={() => onImportPresets(importText)}
+            disabled={!importText.trim()}
+            className="rounded-xl bg-gray-900 px-3.5 py-2 text-xs font-semibold text-white shadow-sm shadow-gray-200/80 hover:bg-black disabled:opacity-45 active:scale-[0.98]"
+          >
+            Import Presets
+          </button>
+          <label className="cursor-pointer rounded-xl border border-gray-200 bg-white px-3.5 py-2 text-xs font-semibold text-gray-600 shadow-sm shadow-gray-100/80 hover:bg-gray-50 active:scale-[0.98]">
+            Upload JSON
+            <input
+              type="file"
+              accept="application/json,.json"
+              className="sr-only"
+              onChange={(event) => {
+                void handleImportFile(event);
+              }}
+            />
+          </label>
+          {importStatus && (
+            <span className="text-[11px] font-medium text-gray-500">
+              {importStatus}
+            </span>
+          )}
         </div>
       </div>
     </section>
