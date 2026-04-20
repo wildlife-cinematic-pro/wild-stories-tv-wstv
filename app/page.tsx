@@ -893,6 +893,21 @@ export default function Page() {
                 workflowPresetPackName={workflowPresetControls.packName}
                 workflowPresetPackDescription={workflowPresetControls.packDescription}
                 workflowPresetPackTagsText={workflowPresetControls.packTagsText}
+                workflowPresetCloudAccountIdInput={
+                  workflowPresetControls.cloudAccountIdInput
+                }
+                workflowPresetConnectedCloudAccountId={
+                  workflowPresetControls.connectedCloudAccountId
+                }
+                workflowPresetCloudSyncState={
+                  workflowPresetControls.cloudSyncStatus.state
+                }
+                workflowPresetCloudSyncMessage={
+                  workflowPresetControls.cloudSyncStatus.message
+                }
+                workflowPresetCloudSyncLastSyncedAt={
+                  workflowPresetControls.cloudSyncStatus.lastSyncedAt
+                }
                 suggestedWorkflowPresetName={workflowPresetControls.suggestedPresetName}
                 activeWorkflowPresetIsDirty={workflowPresetControls.activePresetIsDirty}
                 onPredatorChange={setPredator}
@@ -912,6 +927,9 @@ export default function Page() {
                 }
                 onWorkflowPresetPackTagsTextChange={
                   workflowPresetControls.setPackTagsText
+                }
+                onWorkflowPresetCloudAccountIdInputChange={
+                  workflowPresetControls.setCloudAccountIdInput
                 }
                 onActiveWorkflowPresetPackChange={
                   workflowPresetControls.setActivePresetPackId
@@ -934,6 +952,15 @@ export default function Page() {
                   workflowPresetControls.importPresetPackFromJson
                 }
                 onApplyWorkflowPresetPack={workflowPresetControls.applyPresetPack}
+                onConnectWorkflowPresetCloudLibrary={
+                  workflowPresetControls.connectCloudLibrary
+                }
+                onDisconnectWorkflowPresetCloudLibrary={
+                  workflowPresetControls.disconnectCloudLibrary
+                }
+                onSyncWorkflowPresetCloudLibrary={() => {
+                  void workflowPresetControls.syncCloudLibrary("manual");
+                }}
                 workflowPresetImportStatus={workflowPresetControls.importStatus}
                 workflowPresetPackStatus={workflowPresetControls.packStatus}
                 onOpenCustomAnimal={() =>

@@ -311,6 +311,39 @@ export type WorkflowPresetPackImportReport = {
   warnings: string[];
 };
 
+export type WorkflowPresetCloudSyncState =
+  | "local-only"
+  | "syncing"
+  | "synced"
+  | "conflict-resolved"
+  | "sync-error";
+
+export type WorkflowPresetCloudSession = {
+  accountId: string;
+  connectedAt: string;
+};
+
+export type CloudPresetLibrary = {
+  schema: "wstv.workflow-preset-library";
+  version: 1;
+  source: "wild-stories-tv-wstv";
+  accountId: string;
+  updatedAt: string;
+  defaultPresetId?: string;
+  presets: SavedWorkflowPreset[];
+  presetPacks: SavedWorkflowPresetPack[];
+};
+
+export type CloudPresetLibraryMergeReport = {
+  library: CloudPresetLibrary;
+  presetConflictCount: number;
+  presetRenameCount: number;
+  packConflictCount: number;
+  packRenameCount: number;
+  conflictResolved: boolean;
+  usedCloudDefault: boolean;
+};
+
 // ─────────────────────────────────────────────────────────────
 // PREDATOR
 // ─────────────────────────────────────────────────────────────
