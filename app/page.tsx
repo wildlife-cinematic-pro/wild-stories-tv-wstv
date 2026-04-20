@@ -907,6 +907,10 @@ export default function Page() {
                 onDeleteWorkflowPreset={workflowPresetControls.deletePreset}
                 onSetDefaultWorkflowPreset={workflowPresetControls.setPresetAsDefault}
                 onClearDefaultWorkflowPreset={workflowPresetControls.clearDefaultPreset}
+                onExportWorkflowPreset={workflowPresetControls.exportPreset}
+                onExportAllWorkflowPresets={workflowPresetControls.exportAllPresets}
+                onImportWorkflowPresets={workflowPresetControls.importPresetsFromJson}
+                workflowPresetImportStatus={workflowPresetControls.importStatus}
                 onOpenCustomAnimal={() =>
                   openCustomAnimalModal({
                     defaultArc: arc,

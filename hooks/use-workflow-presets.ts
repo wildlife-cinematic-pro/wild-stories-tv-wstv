@@ -5,6 +5,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import {
   readDefaultWorkflowPresetId,
   readWorkflowPresets,
+  downloadJson,
   hasShareStateInUrl,
   writeDefaultWorkflowPresetId,
   writeWorkflowPresets,
@@ -12,9 +13,12 @@ import {
 import {
   areWorkflowPresetSnapshotsEqual,
   buildWorkflowPresetName,
+  buildWorkflowPresetExportPayload,
   createWorkflowPreset,
   deleteWorkflowPreset,
   getSafeDefaultWorkflowPresetId,
+  mergeWorkflowPresetImportJson,
+  stringifyWorkflowPresetExportPayload,
   updateWorkflowPreset,
 } from "@/lib/workflow-presets";
 import type {
@@ -60,6 +64,7 @@ export function useWorkflowPresets({
     initialState.defaultPresetId
   );
   const [presetName, setPresetName] = useState(initialState.presetName);
+  const [importStatus, setImportStatus] = useState("");
   const loadPresetRef = useRef(onLoadPreset);
   const didApplyDefaultRef = useRef(false);
   const initialDefaultPresetRef = useRef(initialState.defaultPresetToLoad);
@@ -170,6 +175,73 @@ export function useWorkflowPresets({
     writeDefaultWorkflowPresetId(undefined);
   }
 
+  function buildExportFilename(label: string): string {
+    return `${label
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, "-")
+      .replace(/^-+|-+$/g, "")
+      .slice(0, 80) || "workflow-presets"}.json`;
+  }
+
+  function exportPreset(id: string): string | undefined {
+    const preset = presets.find((item) => item.id === id);
+    if (!preset) return undefined;
+
+    const payload = buildWorkflowPresetExportPayload([preset], {
+      defaultPresetId: defaultPresetId === id ? id : undefined,
+    });
+    downloadJson(buildExportFilename(`wstv-preset-${preset.name}`), payload);
+    return stringifyWorkflowPresetExportPayload(payload);
+  }
+
+  function exportAllPresets(): string | undefined {
+    if (!presets.length) return undefined;
+
+    const payload = buildWorkflowPresetExportPayload(presets, {
+      defaultPresetId,
+    });
+    downloadJson("wstv-workflow-presets.json", payload);
+    return stringifyWorkflowPresetExportPayload(payload);
+  }
+
+  function importPresetsFromJson(jsonText: string) {
+    const report = mergeWorkflowPresetImportJson(presets, jsonText, {
+      currentDefaultPresetId: defaultPresetId,
+      preserveImportedDefaultWhenEmpty: true,
+    });
+
+    if (report.importedCount > 0 || report.skippedCount > 0) {
+      persistPresets(report.presets, report.defaultPresetId);
+    }
+
+    const parts = [
+      report.importedCount
+        ? `Imported ${report.importedCount} preset${
+            report.importedCount === 1 ? "" : "s"
+          }.`
+        : "No presets imported.",
+      report.renamedCount
+        ? `${report.renamedCount} name collision${
+            report.renamedCount === 1 ? "" : "s"
+          } adjusted.`
+        : "",
+      report.regeneratedIdCount
+        ? `${report.regeneratedIdCount} id collision${
+            report.regeneratedIdCount === 1 ? "" : "s"
+          } resolved.`
+        : "",
+      report.skippedCount
+        ? `${report.skippedCount} invalid entr${
+            report.skippedCount === 1 ? "y was" : "ies were"
+          } skipped.`
+        : "",
+      ...report.warnings,
+    ].filter(Boolean);
+
+    setImportStatus(parts.join(" "));
+    return report;
+  }
+
   return {
     presets,
     activePreset,
@@ -177,6 +249,7 @@ export function useWorkflowPresets({
     activePresetIsDirty,
     defaultPresetId,
     presetName,
+    importStatus,
     suggestedPresetName: buildWorkflowPresetName(currentSnapshot),
     setPresetName,
     saveCurrentAsPreset,
@@ -185,5 +258,8 @@ export function useWorkflowPresets({
     deletePreset,
     setPresetAsDefault,
     clearDefaultPreset,
+    exportPreset,
+    exportAllPresets,
+    importPresetsFromJson,
   };
 }

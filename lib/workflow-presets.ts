@@ -13,6 +13,8 @@ import type {
   RealismMode,
   RunwayModel,
   SavedWorkflowPreset,
+  WorkflowPresetExportPayload,
+  WorkflowPresetImportReport,
 } from "@/types";
 
 import {
@@ -27,6 +29,8 @@ import { contentLaneOptions } from "@/lib/content-lanes";
 import { animalVibes, emotionalTones } from "@/lib/predator-data";
 
 export const MAX_WORKFLOW_PRESETS = 40;
+export const WORKFLOW_PRESET_EXPORT_SCHEMA = "wstv.workflow-presets";
+export const WORKFLOW_PRESET_EXPORT_VERSION = 1;
 
 const realismModes: RealismMode[] = [
   "Balanced",
@@ -65,6 +69,47 @@ function pickOption<T extends string>(
 
 function makePresetId(now = Date.now()): string {
   return `preset_${now.toString(36)}_${Math.random().toString(36).slice(2, 9)}`;
+}
+
+function makeImportedPresetId(
+  originalId: string,
+  usedIds: Set<string>,
+  index: number
+): string {
+  const safeBase = originalId
+    .trim()
+    .replace(/[^a-zA-Z0-9_-]+/g, "-")
+    .replace(/^-+|-+$/g, "")
+    .slice(0, 72);
+  const base = safeBase || `imported-preset-${index + 1}`;
+
+  let candidate = `${base}-imported`;
+  let suffix = 2;
+  while (usedIds.has(candidate)) {
+    candidate = `${base}-imported-${suffix}`;
+    suffix += 1;
+  }
+
+  usedIds.add(candidate);
+  return candidate;
+}
+
+function getUniquePresetName(name: string, usedNames: Set<string>): string {
+  const base = cleanString(name, "Imported Workflow Preset");
+  if (!usedNames.has(base)) {
+    usedNames.add(base);
+    return base;
+  }
+
+  let candidate = `${base} (Imported)`;
+  let suffix = 2;
+  while (usedNames.has(candidate)) {
+    candidate = `${base} (Imported ${suffix})`;
+    suffix += 1;
+  }
+
+  usedNames.add(candidate);
+  return candidate;
 }
 
 export function buildWorkflowPresetName(
@@ -177,6 +222,35 @@ export function normalizeWorkflowPreset(
   return { id, name, createdAt, updatedAt, snapshot };
 }
 
+function normalizeWorkflowPresetImportCandidate(
+  value: unknown,
+  fallbackIndex: number
+): SavedWorkflowPreset | null {
+  const normalizedPreset = normalizeWorkflowPreset(value);
+  if (normalizedPreset) return normalizedPreset;
+
+  if (!isRecord(value)) return null;
+
+  const snapshotSource = isRecord(value.snapshot) ? value.snapshot : value;
+  const snapshot = normalizeWorkflowPresetSnapshot(snapshotSource);
+  if (!snapshot) return null;
+
+  const now = new Date(0).toISOString();
+  const id = cleanString(value.id, `imported-preset-${fallbackIndex + 1}`);
+  const name =
+    cleanString(value.name) ||
+    cleanString(value.label) ||
+    buildWorkflowPresetName(snapshot);
+
+  return {
+    id,
+    name,
+    createdAt: cleanString(value.createdAt, now),
+    updatedAt: cleanString(value.updatedAt, now),
+    snapshot,
+  };
+}
+
 export function normalizeWorkflowPresets(value: unknown): SavedWorkflowPreset[] {
   if (!Array.isArray(value)) return [];
 
@@ -191,6 +265,171 @@ export function normalizeWorkflowPresets(value: unknown): SavedWorkflowPreset[] 
     })
     .sort((a, b) => b.updatedAt.localeCompare(a.updatedAt))
     .slice(0, MAX_WORKFLOW_PRESETS);
+}
+
+export function buildWorkflowPresetExportPayload(
+  presets: SavedWorkflowPreset[],
+  options: { defaultPresetId?: string; exportedAt?: string } = {}
+): WorkflowPresetExportPayload {
+  const normalizedPresets = normalizeWorkflowPresets(presets);
+  const defaultPresetId = getSafeDefaultWorkflowPresetId(
+    normalizedPresets,
+    options.defaultPresetId
+  );
+
+  return {
+    schema: WORKFLOW_PRESET_EXPORT_SCHEMA,
+    version: WORKFLOW_PRESET_EXPORT_VERSION,
+    source: "wild-stories-tv-wstv",
+    exportedAt: options.exportedAt ?? new Date().toISOString(),
+    ...(defaultPresetId ? { defaultPresetId } : {}),
+    presets: normalizedPresets,
+    metadata: {
+      presetCount: normalizedPresets.length,
+    },
+  };
+}
+
+export function stringifyWorkflowPresetExportPayload(
+  payload: WorkflowPresetExportPayload
+): string {
+  return JSON.stringify(payload, null, 2);
+}
+
+function extractWorkflowPresetImportItems(value: unknown): {
+  items: unknown[];
+  defaultPresetId?: string;
+} {
+  if (Array.isArray(value)) return { items: value };
+  if (!isRecord(value)) return { items: [] };
+
+  if (Array.isArray(value.presets)) {
+    return {
+      items: value.presets,
+      defaultPresetId: cleanString(value.defaultPresetId) || undefined,
+    };
+  }
+
+  if (isRecord(value.preset)) {
+    return {
+      items: [value.preset],
+      defaultPresetId: cleanString(value.defaultPresetId) || undefined,
+    };
+  }
+
+  return { items: [value] };
+}
+
+export function mergeWorkflowPresetImport(
+  existingPresets: SavedWorkflowPreset[],
+  importValue: unknown,
+  options: {
+    currentDefaultPresetId?: string;
+    preserveImportedDefaultWhenEmpty?: boolean;
+  } = {}
+): WorkflowPresetImportReport {
+  const existing = normalizeWorkflowPresets(existingPresets);
+  const { items, defaultPresetId: importedDefaultPresetId } =
+    extractWorkflowPresetImportItems(importValue);
+  const usedIds = new Set(existing.map((preset) => preset.id));
+  const usedNames = new Set(existing.map((preset) => preset.name));
+  const importedPresets: SavedWorkflowPreset[] = [];
+  const importedIdMap = new Map<string, string>();
+  const warnings: string[] = [];
+  let skippedCount = 0;
+  let renamedCount = 0;
+  let regeneratedIdCount = 0;
+
+  items.forEach((item, index) => {
+    const normalized = normalizeWorkflowPresetImportCandidate(item, index);
+    if (!normalized) {
+      skippedCount += 1;
+      warnings.push(`Skipped invalid preset at position ${index + 1}.`);
+      return;
+    }
+
+    const originalId = normalized.id;
+    const originalName = normalized.name;
+    let id = originalId;
+    if (usedIds.has(id)) {
+      id = makeImportedPresetId(originalId, usedIds, index);
+      regeneratedIdCount += 1;
+    } else {
+      usedIds.add(id);
+    }
+
+    const name = getUniquePresetName(originalName, usedNames);
+    if (name !== originalName) renamedCount += 1;
+
+    importedIdMap.set(originalId, id);
+    importedPresets.push({
+      ...normalized,
+      id,
+      name,
+    });
+  });
+
+  const mergedPresets = normalizeWorkflowPresets([
+    ...importedPresets,
+    ...existing,
+  ]);
+  let nextDefaultPresetId = getSafeDefaultWorkflowPresetId(
+    mergedPresets,
+    options.currentDefaultPresetId
+  );
+
+  if (
+    !nextDefaultPresetId &&
+    options.preserveImportedDefaultWhenEmpty &&
+    importedDefaultPresetId
+  ) {
+    nextDefaultPresetId = getSafeDefaultWorkflowPresetId(
+      mergedPresets,
+      importedIdMap.get(importedDefaultPresetId) ?? importedDefaultPresetId
+    );
+  }
+
+  return {
+    presets: mergedPresets,
+    importedPresets,
+    importedCount: importedPresets.length,
+    skippedCount,
+    renamedCount,
+    regeneratedIdCount,
+    defaultPresetId: nextDefaultPresetId,
+    warnings,
+  };
+}
+
+export function mergeWorkflowPresetImportJson(
+  existingPresets: SavedWorkflowPreset[],
+  jsonText: string,
+  options: {
+    currentDefaultPresetId?: string;
+    preserveImportedDefaultWhenEmpty?: boolean;
+  } = {}
+): WorkflowPresetImportReport {
+  try {
+    return mergeWorkflowPresetImport(
+      existingPresets,
+      JSON.parse(jsonText) as unknown,
+      options
+    );
+  } catch {
+    return {
+      presets: normalizeWorkflowPresets(existingPresets),
+      importedPresets: [],
+      importedCount: 0,
+      skippedCount: 0,
+      renamedCount: 0,
+      regeneratedIdCount: 0,
+      defaultPresetId: getSafeDefaultWorkflowPresetId(
+        existingPresets,
+        options.currentDefaultPresetId
+      ),
+      warnings: ["Import failed because the JSON could not be parsed."],
+    };
+  }
 }
 
 export function createWorkflowPreset(
