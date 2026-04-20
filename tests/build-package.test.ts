@@ -104,6 +104,10 @@ describe("build-package refactor seam", () => {
         (shot) => shot.metadata?.engine
       )
     ).toEqual(["runway", "kling", "kling", "runway"]);
+
+    expect(draft.basePkg.routingNote).toContain("Runway Gen-4.5");
+    expect(draft.basePkg.routingNote).toContain("Kling 3.0 Pro");
+    expect(draft.basePkg.routingNote).not.toContain("Kling Kling");
   });
 
   it("keeps structured prompt fields populated for the UI and preserves the Nano Banana image path", () => {

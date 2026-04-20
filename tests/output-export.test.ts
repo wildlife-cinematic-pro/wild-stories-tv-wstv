@@ -176,6 +176,8 @@ describe("live export TXT path", () => {
 
     expect(text).not.toMatch(/\bClear U\.(?=\s|$)/);
     expect(text).toContain("Clear U.S. wildlife setup.");
+    expect(text).not.toContain("same environment continuity");
+    expect(text).not.toContain("stable clean air");
   });
 
   it("writes the live Cougar vs Mule Deer export into the repo without clipped continuity text", () => {

@@ -1362,4 +1362,24 @@ describe("structured prompt refactor guards", () => {
     expect(kling.shot2.metadata?.motionIntensity).toBeGreaterThan(0);
     expect(seedance.multiShotPrompt.pasteReady).toContain("Cut to");
   });
+
+  it("uses cleaner continuity wording in motion-only Kling prompts", () => {
+    const kling = buildKlingPromptPack(
+      "Mountain Lion",
+      "White-tailed Deer",
+      "Rocky Mountain forest edge and open meadow",
+      "Ambush attack",
+      "Golden Hour",
+      "Kling 3.0 Pro",
+      "Raw Tension",
+      "National Geographic Wild",
+      "The deer reads the move late.",
+      base.quality
+    );
+
+    expect(kling.shot1.pasteReady).not.toContain("same environment continuity");
+    expect(kling.shot1.pasteReady).toContain("Preserve the input-frame terrain and light continuity");
+    expect(kling.shot3.pasteReady).not.toContain("raw tension — both animals at the edge of movement");
+    expect(kling.shot4.pasteReady).not.toContain("stable clean air");
+  });
 });

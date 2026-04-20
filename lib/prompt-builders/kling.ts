@@ -125,10 +125,10 @@ export function buildKlingPromptPack(
       : `${baseExtra1} ${tone.video}. ${vibe.style}.`;
 
   const baseExtra3 = isAquatic
-    ? `${micro}. ${tone.image}.`
+    ? `${micro}.`
     : isShoreline
-      ? `residual splash rings, muddy bank settling, ${micro}. ${tone.image}.`
-      : `${micro}. ${tone.image}.`;
+      ? `residual splash rings, muddy bank settling, ${micro}.`
+      : `${micro}.`;
 
   const extra3 = quality?.motionOnlyI2V
     ? baseExtra3
@@ -455,7 +455,7 @@ Selected: ${model}. Switch model to activate.`,
   const audio3Short = buildKlingAudioShort(predator, prey, env, weather, "aftermath");
 
   const nativeSceneLine = quality?.motionOnlyI2V
-    ? `Scene: same environment continuity, ${cleanWeather}.`
+    ? `Scene: preserve the input-frame terrain and light continuity, ${cleanWeather}.`
     : isShoreline
       ? `Scene: shoreline ambush zone, water edge, disturbed shallows, muddy bank, ${cleanWeather}.`
       : `Scene: ${cleanEnv}, ${cleanWeather}.`;
@@ -466,7 +466,7 @@ Selected: ${model}. Switch model to activate.`,
 
   const pasteReadyCore = [
     quality?.motionOnlyI2V
-      ? `Same ${predator} and ${prey} identities from the input image in the same environment continuity, ${cleanWeather}. Photorealistic wildlife documentary in 9:16 vertical.`
+      ? `Keep the same ${predator} and ${prey} identities from the input image with matching terrain and light continuity, ${cleanWeather}. Photorealistic wildlife documentary in 9:16 vertical.`
       : `${predator} and ${prey} remain consistent across all three beats in ${cleanEnv}, ${cleanWeather}. Photorealistic wildlife documentary in 9:16 vertical.`,
     ``,
     `0–5s: Wide opening hold with a subtle push-in. ${formatActionSubject(predator, s1.predatorBeat)}. ${prey} ${s1.preyBeat}. Both subjects fully readable from frame one, locked eye-line, clear spacing, immediate visible tension. ${micro}.`,
@@ -658,7 +658,7 @@ Selected: ${model}. Switch model to activate.`,
   };
 
   const sixShotSceneLine = quality?.motionOnlyI2V
-    ? `Scene: same environment continuity, ${cleanWeather}.`
+    ? `Scene: preserve the input-frame terrain and light continuity, ${cleanWeather}.`
     : shoreline
       ? `Scene: shoreline ambush zone, shallow water edge, muddy bank, ${cleanWeather}.`
       : `Scene: ${cleanEnv}, ${cleanWeather}.`;
@@ -704,7 +704,7 @@ Selected: ${model}. Switch model to activate.`,
 
   const pasteReadySixShotCore = [
     quality?.motionOnlyI2V
-      ? `Same ${predator} and ${prey} identities from the input image in the same environment continuity, ${cleanWeather}. Photorealistic wildlife documentary in 9:16 vertical.`
+      ? `Keep the same ${predator} and ${prey} identities from the input image with matching terrain and light continuity, ${cleanWeather}. Photorealistic wildlife documentary in 9:16 vertical.`
       : `${predator} and ${prey} remain consistent across all six beats in ${cleanEnv}, ${cleanWeather}. Photorealistic wildlife documentary in 9:16 vertical.`,
     ``,
     `0–2s: Wide opening hold. ${predator} stays on the left and ${prey} stays on the right, both fully visible in the same frame with locked eye-line, clear spacing, and immediate tension from frame one.`,

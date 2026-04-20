@@ -103,7 +103,7 @@ export function buildKlingLocationLine(
   const cleanWeather = sanitizeWeatherPhrase(weatherVariants[weather]);
 
   return motionOnlyI2V
-    ? `Lighting & Location: same environment continuity, ${cleanWeather}.`
+    ? `Lighting & Location: Preserve the input-frame terrain and light continuity, ${cleanWeather}.`
     : `Lighting & Location: ${cleanEnv}, ${cleanWeather}.`;
 }
 
