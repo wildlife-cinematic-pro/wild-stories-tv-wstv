@@ -2,6 +2,7 @@ import type {
   Arc,
   AnimalVibe,
   CapCutScript,
+  ContentLane,
   DepthMode,
   DurationLane,
   EmotionalTone,
@@ -120,6 +121,7 @@ export type GeneratedPackageDraftInput = {
   presetForIdeas: PredatorInfo;
   finalEnvironment: string;
   finalArc: Arc;
+  contentLane: ContentLane;
   weather: Weather;
   depthMode: DepthMode;
   emotionalTone: EmotionalTone;
@@ -153,6 +155,7 @@ export type GeneratedPackageDraft = {
   twoPartViralPreset: TwoPartViralPreset | null;
   marketMode: PublishFlowMarketMode;
   durationLane: DurationLane;
+  contentLane: ContentLane;
   fastPublishMode: boolean;
   strictOriginalityGuard: boolean;
   hookFamily: HookFamily;
@@ -330,7 +333,8 @@ export function buildGeneratedPackageDraft(
     input.predator,
     input.prey,
     input.finalArc,
-    input.finalEnvironment
+    input.finalEnvironment,
+    input.contentLane
   );
   const seoTitle = buildSEOTitle(input.predator, input.prey, input.finalArc);
   const altTextPrompt = buildAltTextPrompt(
@@ -540,6 +544,7 @@ export function buildGeneratedPackageDraft(
     twoPartViralPreset,
     marketMode: input.marketMode,
     durationLane: input.durationLane,
+    contentLane: input.contentLane,
     fastPublishMode: input.fastPublishMode,
     strictOriginalityGuard: input.strictOriginalityGuard,
     hookFamily: input.hookFamily,
@@ -568,11 +573,13 @@ export function finalizeGeneratedPackageDraft(
   const finalUsViewsModeReport = buildUSViewsModeReport({
     durationLane: draft.durationLane,
     hookFamily: draft.hookFamily,
+    contentLane: draft.contentLane,
     concept: {
       predator: draft.basePkg.predatorName ?? "",
       prey: draft.basePkg.preyName ?? "",
       environment: draft.finalEnvironment,
       arc: draft.basePkg.arcName as Arc,
+      contentLane: draft.contentLane,
     },
     openingFrame: draft.openingFrameInput,
     caption: finalPublishCaption,

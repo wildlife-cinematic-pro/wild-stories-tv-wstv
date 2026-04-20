@@ -41,6 +41,14 @@ export type HabitatPreset =
   | "Desert Scrubland"
   | "Coastal Cliffline";
 
+export type ContentLane =
+  | "Auto"
+  | "Pack Hunt"
+  | "Defender"
+  | "Fishing Strike"
+  | "Rut Battle"
+  | "Escape";
+
 export type EmotionalTone =
   | "Raw Tension"
   | "Silent Dread"
@@ -144,6 +152,55 @@ export type USViewsModeReport = {
   shouldPublish: boolean;
   summary: string;
   nextActions: string[];
+};
+
+export type ConceptVariantWinnerTag =
+  | "best-overall"
+  | "best-fast-publish"
+  | "strongest-opening"
+  | "best-strongest-opening"
+  | "best-realism";
+
+export type ConceptVariantEmphasis = "balanced" | "fast-publish" | "cinematic";
+
+export type ConceptVariantLabEntry = {
+  id: string;
+  label: string;
+  summary: string;
+  hookFamily: HookFamily;
+  arc: Arc;
+  habitat: HabitatPreset;
+  finalEnvironment: string;
+  durationLane: DurationLane;
+  fastPublishMode: boolean;
+  pipelineStyle: PipelineStyle;
+  emphasis: ConceptVariantEmphasis;
+  sceneDescription: string;
+  sceneDescriptionVariant: number;
+  primaryHook: string;
+  caption: string;
+  hashtags: string;
+  usAudienceScore: USAudienceScoreResult;
+  openingFrameScore: OpeningFrameScore;
+  publishGuardReport: PublishGuardReport;
+  performanceSnapshot?: PerformanceSnapshot;
+  predatorPreyFitScore: number;
+  habitatFitScore: number;
+  arcFitScore: number;
+  realismFitScore: number;
+  fitScore: number;
+  overallScore: number;
+  publishWorthy: boolean;
+  winnerTags: ConceptVariantWinnerTag[];
+};
+
+export type ConceptVariant = ConceptVariantLabEntry;
+
+export type ConceptVariantLabWinners = {
+  bestOverallId?: string;
+  bestFastPublishId?: string;
+  bestStrongestOpeningId?: string;
+  bestRealismId?: string;
 };
 
 // ─────────────────────────────────────────────────────────────
@@ -420,6 +477,7 @@ export type ShareState = {
   weather: Weather;
   depthMode: DepthMode;
   habitat: HabitatPreset;
+  contentLane: ContentLane;
 };
 
 // ─────────────────────────────────────────────────────────────

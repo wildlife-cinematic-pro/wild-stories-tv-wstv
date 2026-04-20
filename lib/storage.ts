@@ -25,6 +25,7 @@ import type {
   SavedPrompt,
   PromptVersion,
   AIProvider,
+  ContentLane,
   RunwayModel,
   KlingModel,
   RealismMode,
@@ -37,6 +38,7 @@ import type {
 } from "@/types";
 
 import { weatherOptions, depthModes, habitatOptions } from "@/lib/model-specs";
+import { contentLaneOptions, isContentLane } from "@/lib/content-lanes";
 
 // ─────────────────────────────────────────────────────────────
 // KEYS & LIMITS
@@ -107,6 +109,7 @@ export type StoredSettings = {
   heroVeo?: boolean;
   autoApplyHighDrift?: boolean;
   habitat?: HabitatPreset;
+  contentLane?: ContentLane;
 };
 
 export function readSettings(): StoredSettings {
@@ -309,6 +312,7 @@ const QS = {
   weather: "w",
   depth: "d",
   habitat: "h",
+  contentLane: "cl",
 } as const;
 
 function isWeather(x: string): x is Weather {
@@ -330,6 +334,7 @@ export function readShareState(): Partial<ShareState> {
   const w = sp.get(QS.weather);
   const d = sp.get(QS.depth);
   const h = sp.get(QS.habitat);
+  const cl = sp.get(QS.contentLane);
 
   return {
     predator: sp.get(QS.predator) ?? undefined,
@@ -338,6 +343,7 @@ export function readShareState(): Partial<ShareState> {
     weather: w && isWeather(w) ? w : undefined,
     depthMode: d && isDepth(d) ? d : undefined,
     habitat: h && isHabitatPreset(h) ? h : undefined,
+    contentLane: cl && isContentLane(cl) ? cl : undefined,
   };
 }
 
@@ -354,6 +360,7 @@ export function writeShareState(state: ShareState): void {
   sod(QS.weather, state.weather);
   sod(QS.depth, state.depthMode);
   sod(QS.habitat, state.habitat);
+  sod(QS.contentLane, state.contentLane);
 
   window.history.replaceState(null, "", url.toString());
 }
@@ -371,6 +378,9 @@ export function buildShareLink(state: ShareState): string {
   if (state.weather) sp.set(QS.weather, state.weather);
   if (state.depthMode) sp.set(QS.depth, state.depthMode);
   if (state.habitat) sp.set(QS.habitat, state.habitat);
+  if (state.contentLane && (contentLaneOptions as readonly string[]).includes(state.contentLane)) {
+    sp.set(QS.contentLane, state.contentLane);
+  }
 
   return url.toString();
 }

@@ -1,5 +1,6 @@
 "use client";
 
+import { contentLaneOptions } from "@/lib/content-lanes";
 import {
   habitatOptions,
   depthModes,
@@ -10,6 +11,7 @@ import { animalVibes, emotionalTones } from "@/lib/predator-data";
 import type {
   AnimalVibe,
   Arc,
+  ContentLane,
   DepthMode,
   EmotionalTone,
   HabitatPreset,
@@ -20,6 +22,7 @@ import type {
 type Step1SetupProps = {
   predator: string;
   prey: string;
+  contentLane: ContentLane;
   arc: Arc;
   weather: Weather;
   depthMode: DepthMode;
@@ -33,6 +36,7 @@ type Step1SetupProps = {
   driftRisk: PredatorInfo["driftRisk"];
   onPredatorChange: (value: string) => void;
   onPreyChange: (value: string) => void;
+  onContentLaneChange: (value: ContentLane) => void;
   onWeatherChange: (value: Weather) => void;
   onDepthModeChange: (value: DepthMode) => void;
   onHabitatChange: (value: HabitatPreset) => void;
@@ -46,6 +50,7 @@ type Step1SetupProps = {
 export default function Step1Setup({
   predator,
   prey,
+  contentLane,
   arc,
   weather,
   depthMode,
@@ -59,6 +64,7 @@ export default function Step1Setup({
   driftRisk,
   onPredatorChange,
   onPreyChange,
+  onContentLaneChange,
   onWeatherChange,
   onDepthModeChange,
   onHabitatChange,
@@ -128,6 +134,25 @@ export default function Step1Setup({
             Scene
           </h3>
           <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+            <div>
+              <label className="mb-1.5 block text-[11px] font-medium text-gray-500">
+                Content Lane
+              </label>
+              <select
+                value={contentLane}
+                onChange={(event) => onContentLaneChange(event.target.value as ContentLane)}
+                className="w-full rounded-xl border border-gray-200 bg-gray-50 px-3 py-2.5 text-sm font-medium text-gray-900 focus:border-gray-400 focus:outline-none"
+              >
+                {contentLaneOptions.map((option) => (
+                  <option key={option} value={option}>
+                    {option}
+                  </option>
+                ))}
+              </select>
+              <p className="mt-1 text-[11px] text-gray-400">
+                Biases prey order, arc choice, habitat language, and packaging direction.
+              </p>
+            </div>
             <div>
               <label className="mb-1.5 block text-[11px] font-medium text-gray-500">
                 Conflict Arc
@@ -271,6 +296,9 @@ export default function Step1Setup({
               {predator} vs {prey}
             </div>
             <div className="mt-1.5 flex flex-wrap gap-2">
+              <span className="rounded-full bg-violet-50 px-2.5 py-1 text-[10px] font-semibold text-violet-700 shadow-sm shadow-violet-100">
+                {contentLane}
+              </span>
               <span className="rounded-full bg-white px-2.5 py-1 text-[10px] font-semibold text-gray-600 shadow-sm shadow-gray-100">
                 {arc}
               </span>
