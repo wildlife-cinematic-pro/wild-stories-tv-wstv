@@ -187,6 +187,7 @@ export type ConceptVariantLabEntry = {
   predatorPreyFitScore: number;
   habitatFitScore: number;
   arcFitScore: number;
+  laneFitScore: number;
   realismFitScore: number;
   fitScore: number;
   overallScore: number;

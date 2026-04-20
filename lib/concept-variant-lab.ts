@@ -1,5 +1,12 @@
 import { buildOpeningFrameInput } from "@/lib/build-package";
-import { getLaneBiasedArc } from "@/lib/content-lanes";
+import {
+  applyContentLaneEnvironmentBias,
+  getLaneBiasedArc,
+  getNearbyArcsForContentLane,
+  getPreferredHabitatsForContentLane,
+  getPreferredHookFamilyForContentLane,
+  scoreContentLaneFit,
+} from "@/lib/content-lanes";
 import { habitatPromptMap } from "@/lib/habitat-presets";
 import { buildAutoSceneDescription } from "@/lib/page-build-helpers";
 import { getBestHookFamilyForDurationLane } from "@/lib/performanceMemory";
@@ -31,6 +38,14 @@ import type {
   RunwayModel,
   Weather,
 } from "@/types";
+
+type BlueprintTone =
+  | "control"
+  | "fast"
+  | "opening"
+  | "cinematic"
+  | "realism"
+  | "alternate";
 
 type ConceptVariantBlueprint = {
   label: string;
@@ -89,18 +104,33 @@ function resolveEnvironment(
   habitat: HabitatPreset,
   predator: string,
   prey: string,
-  presetEnvironment: string
+  presetEnvironment: string,
+  contentLane: ContentLane,
+  arc: Arc
 ): string {
+  const baseEnvironment =
+    habitat === "Auto"
+      ? suggestHabitat(predator, prey, presetEnvironment)
+      : habitatPromptMap[habitat];
+
   return habitat === "Auto"
-    ? suggestHabitat(predator, prey, presetEnvironment)
-    : habitatPromptMap[habitat];
+    ? applyContentLaneEnvironmentBias(
+        contentLane,
+        predator,
+        prey,
+        baseEnvironment,
+        arc
+      )
+    : baseEnvironment;
 }
 
 function toPipelineStyle(durationLane: DurationLane): PipelineStyle {
   return durationLane === "long" ? "long-hybrid-4-shot" : "4-shot";
 }
 
-function guessHabitatPresetFromEnvironment(environment: string): Exclude<HabitatPreset, "Auto"> {
+function guessHabitatPresetFromEnvironment(
+  environment: string
+): Exclude<HabitatPreset, "Auto"> {
   const normalized = normalizeText(environment);
 
   if (/everglades|sawgrass|marsh|wetland/.test(normalized)) return "Everglades Marsh";
@@ -122,7 +152,10 @@ function guessHabitatPresetFromEnvironment(environment: string): Exclude<Habitat
 function getAlternateHabitat(
   habitat: Exclude<HabitatPreset, "Auto">
 ): Exclude<HabitatPreset, "Auto"> {
-  const alternateMap: Record<Exclude<HabitatPreset, "Auto">, Exclude<HabitatPreset, "Auto">> = {
+  const alternateMap: Record<
+    Exclude<HabitatPreset, "Auto">,
+    Exclude<HabitatPreset, "Auto">
+  > = {
     "Rocky Mountain Meadow": "Forest Clearing",
     "Forest Clearing": "Rocky Mountain Meadow",
     "Open Prairie Grassland": "Dry Prairie Plain",
@@ -167,6 +200,244 @@ function buildPlausibleArcs(currentArc: Arc, suggestedArc: Arc): Arc[] {
   return unique([...seed, ...(map[suggestedArc] ?? []), ...(map[currentArc] ?? [])]);
 }
 
+function buildBlueprintLabel(contentLane: ContentLane, tone: BlueprintTone): string {
+  const labels: Record<Exclude<ContentLane, "Auto">, Record<BlueprintTone, string>> = {
+    "Pack Hunt": {
+      control: "Pack Control",
+      fast: "Closing Pressure",
+      opening: "Lane Collapse",
+      cinematic: "Wide Pursuit",
+      realism: "Grounded Pursuit",
+      alternate: "Nearby Break",
+    },
+    Defender: {
+      control: "Hold Ground",
+      fast: "Warning Step",
+      opening: "Defender Read",
+      cinematic: "Stand-Off Hold",
+      realism: "Grounded Stand",
+      alternate: "Counter Pressure",
+    },
+    "Fishing Strike": {
+      control: "Strike Window",
+      fast: "Waterline Burst",
+      opening: "Fishing Opener",
+      cinematic: "Clean Setup",
+      realism: "Grounded Waterline",
+      alternate: "Late Turn",
+    },
+    "Rut Battle": {
+      control: "Clash Control",
+      fast: "Dominance Burst",
+      opening: "Rut Opener",
+      cinematic: "Standoff Hold",
+      realism: "Grounded Clash",
+      alternate: "Power Shift",
+    },
+    Escape: {
+      control: "Survival Read",
+      fast: "Breakaway Burst",
+      opening: "Escape Opener",
+      cinematic: "Wide Exit",
+      realism: "Grounded Escape",
+      alternate: "Late Recovery",
+    },
+  };
+
+  if (contentLane === "Auto") {
+    const autoLabels: Record<BlueprintTone, string> = {
+      control: "Baseline Control",
+      fast: "Fast Publish",
+      opening: "Opening Read",
+      cinematic: "Cinematic Hold",
+      realism: "Grounded Pass",
+      alternate: "Nearby Alternate",
+    };
+
+    return autoLabels[tone];
+  }
+
+  return labels[contentLane][tone];
+}
+
+function buildBlueprintSummary(
+  contentLane: ContentLane,
+  tone: BlueprintTone
+): string {
+  if (contentLane === "Auto") {
+    const autoSummaries: Record<BlueprintTone, string> = {
+      control:
+        "Balanced baseline closest to the current setup, scored as the clean control.",
+      fast:
+        "Fast-publish pressure lane with a tighter opening and a short release rhythm.",
+      opening:
+        "Opening-frame first pass that pushes immediate threat readability.",
+      cinematic:
+        "Cinematic hold with a slower payoff lane when the concept can support more build.",
+      realism:
+        "Realism-weighted pass that keeps the habitat grounded and the pressure more natural.",
+      alternate:
+        "Nearby alternate story beat that changes the read without forcing a hard concept drift.",
+    };
+
+    return autoSummaries[tone];
+  }
+
+  const laneSummaries: Record<Exclude<ContentLane, "Auto">, Record<BlueprintTone, string>> = {
+    "Pack Hunt": {
+      control:
+        "Baseline pack-control pass with readable group pressure and clean chase spacing.",
+      fast:
+        "Fast-publish pack pressure pass that collapses the lane earlier and hits harder upfront.",
+      opening:
+        "Opening-first pass built around the instant the escape lane disappears.",
+      cinematic:
+        "Cinematic pursuit pass with wider spacing and a slower pressure build before the turn.",
+      realism:
+        "Grounded pursuit pass that keeps the pack pressure believable and the lane readable.",
+      alternate:
+        "Nearby pack-adjacent beat that stays inside chase pressure without drifting out of lane.",
+    },
+    Defender: {
+      control:
+        "Baseline defender pass that holds ground early and keeps the posture readable.",
+      fast:
+        "Fast-publish defender pass built around the warning step and immediate pressure turn.",
+      opening:
+        "Opening-first defender tension pass that sells the refusal to yield right away.",
+      cinematic:
+        "Cinematic hold that gives the stand-off room before the defender takes control.",
+      realism:
+        "Grounded defender pass with cleaner footing, spacing, and believable stand-your-ground pressure.",
+      alternate:
+        "Nearby defender-adjacent beat that shifts the tension without losing the hold-ground logic.",
+    },
+    "Fishing Strike": {
+      control:
+        "Baseline strike-window pass that keeps the waterline read clean and the setup sharp.",
+      fast:
+        "Fast-publish strike pass with an earlier waterline burst and tighter surface timing.",
+      opening:
+        "Opening-first fishing pass built around the exact beat where the strike zone closes.",
+      cinematic:
+        "Cinematic strike setup with calmer water spacing before the hit lands.",
+      realism:
+        "Grounded waterline pass that keeps the strike believable and the habitat consistent.",
+      alternate:
+        "Nearby strike-adjacent beat that stays in the shallow-water logic instead of drifting generic.",
+    },
+    "Rut Battle": {
+      control:
+        "Baseline rut pass that keeps dominance posture and clash spacing readable from the start.",
+      fast:
+        "Fast-publish rut pass with a quicker dominance burst and earlier body-language payoff.",
+      opening:
+        "Opening-first clash pass that sells the stance and pending impact immediately.",
+      cinematic:
+        "Cinematic rut hold with a slower dominance build before the heavy contact read.",
+      realism:
+        "Grounded clash pass that keeps the rut-season field feel and heavy-body realism intact.",
+      alternate:
+        "Nearby rut-adjacent beat that shifts the control without losing the dominance lane.",
+    },
+    Escape: {
+      control:
+        "Baseline escape pass that keeps the survival line clean and the pressure readable.",
+      fast:
+        "Fast-publish escape pass with a tighter near-miss turn and a sharper breakaway beat.",
+      opening:
+        "Opening-first survival pass built around the instant the exit window reopens.",
+      cinematic:
+        "Cinematic escape hold with wider spacing before the breakaway payoff lands.",
+      realism:
+        "Grounded survival pass that keeps the movement believable and the escape lane clean.",
+      alternate:
+        "Nearby escape-adjacent beat that stays inside survival pressure without drifting into a different reel type.",
+    },
+  };
+
+  return laneSummaries[contentLane][tone];
+}
+
+function getLaneHookFamilyPool(
+  contentLane: ContentLane,
+  currentHookFamily: HookFamily
+): HookFamily[] {
+  if (contentLane === "Auto") {
+    return unique([
+      currentHookFamily,
+      "danger" as HookFamily,
+      "curiosity" as HookFamily,
+      "reversal" as HookFamily,
+    ]);
+  }
+
+  const preferredHookFamily =
+    getPreferredHookFamilyForContentLane(contentLane) ?? currentHookFamily;
+
+  switch (contentLane) {
+    case "Defender":
+      return unique([preferredHookFamily, "curiosity", "danger", currentHookFamily]);
+    case "Rut Battle":
+      return unique([preferredHookFamily, "reversal", "danger", currentHookFamily]);
+    case "Escape":
+      return unique([preferredHookFamily, "reversal", "curiosity", currentHookFamily]);
+    default:
+      return unique([preferredHookFamily, "curiosity", "reversal", currentHookFamily]);
+  }
+}
+
+function buildHabitatPool(
+  contentLane: ContentLane,
+  currentHabitat: HabitatPreset,
+  explicitHabitat: Exclude<HabitatPreset, "Auto">
+): HabitatPreset[] {
+  if (contentLane === "Auto") {
+    return unique([
+      currentHabitat === "Auto" ? explicitHabitat : currentHabitat,
+      explicitHabitat,
+      getAlternateHabitat(explicitHabitat),
+    ]);
+  }
+
+  return unique([
+    ...getPreferredHabitatsForContentLane(contentLane),
+    currentHabitat === "Auto" ? explicitHabitat : currentHabitat,
+    explicitHabitat,
+    getAlternateHabitat(explicitHabitat),
+  ]);
+}
+
+function buildArcPool(
+  contentLane: ContentLane,
+  currentArc: Arc,
+  suggestedArc: Arc
+): Arc[] {
+  const plausibleArcs = buildPlausibleArcs(currentArc, suggestedArc);
+
+  if (contentLane === "Auto") {
+    return plausibleArcs;
+  }
+
+  return unique([
+    suggestedArc,
+    currentArc,
+    ...getNearbyArcsForContentLane(contentLane),
+    ...plausibleArcs,
+  ]).filter((arc) => {
+    const nearbyArcs = getNearbyArcsForContentLane(contentLane);
+    return nearbyArcs.length === 0 || nearbyArcs.includes(arc) || arc === suggestedArc;
+  });
+}
+
+function pickFirstMatchingArc(
+  arcPool: Arc[],
+  priorities: Arc[],
+  fallback: Arc
+): Arc {
+  return priorities.find((arc) => arcPool.includes(arc)) ?? fallback;
+}
+
 function buildBlueprints(
   input: ConceptVariantLabInput,
   currentHookFamily: HookFamily,
@@ -175,102 +446,184 @@ function buildBlueprints(
 ): ConceptVariantBlueprint[] {
   const shortDefaultHook = getBestHookFamilyForDurationLane("short") ?? "danger";
   const longDefaultHook = getBestHookFamilyForDurationLane("long") ?? "curiosity";
-  const openingArc = buildPlausibleArcs(input.currentArc, suggestedArc).find((arc) =>
-    arc === "Ambush attack" || arc === "Chase and takedown" || arc === "Escape from danger"
-  ) ?? suggestedArc;
+  const arcPool = buildArcPool(input.contentLane, input.currentArc, suggestedArc);
+  const habitatPool = buildHabitatPool(
+    input.contentLane,
+    input.currentHabitat,
+    explicitHabitat
+  );
+  const hookFamilyPool = getLaneHookFamilyPool(input.contentLane, currentHookFamily);
+  const controlArc = pickFirstMatchingArc(
+    arcPool,
+    [input.currentArc, suggestedArc, ...arcPool],
+    suggestedArc
+  );
+
+  if (input.contentLane === "Auto") {
+    const openingArc = pickFirstMatchingArc(
+      arcPool,
+      ["Ambush attack", "Chase and takedown", "Escape from danger"],
+      suggestedArc
+    );
+    const alternateArc = arcPool.find((arc) => arc !== controlArc) ?? suggestedArc;
+
+    return [
+      {
+        label: buildBlueprintLabel("Auto", "control"),
+        summary: buildBlueprintSummary("Auto", "control"),
+        hookFamily: currentHookFamily,
+        arc: controlArc,
+        habitat: habitatPool[0] ?? explicitHabitat,
+        durationLane: input.durationLane,
+        fastPublishMode: input.fastPublishMode,
+        emphasis: "balanced",
+        sceneDescriptionVariant: 0,
+      },
+      {
+        label: buildBlueprintLabel("Auto", "fast"),
+        summary: buildBlueprintSummary("Auto", "fast"),
+        hookFamily: shortDefaultHook,
+        arc: suggestedArc,
+        habitat: habitatPool[0] ?? explicitHabitat,
+        durationLane: "short",
+        fastPublishMode: true,
+        emphasis: "fast-publish",
+        sceneDescriptionVariant: 1,
+      },
+      {
+        label: buildBlueprintLabel("Auto", "opening"),
+        summary: buildBlueprintSummary("Auto", "opening"),
+        hookFamily: "danger",
+        arc: openingArc,
+        habitat: habitatPool[1] ?? habitatPool[0] ?? explicitHabitat,
+        durationLane: "short",
+        fastPublishMode: true,
+        emphasis: "balanced",
+        sceneDescriptionVariant: 2,
+      },
+      {
+        label: buildBlueprintLabel("Auto", "cinematic"),
+        summary: buildBlueprintSummary("Auto", "cinematic"),
+        hookFamily: longDefaultHook,
+        arc: controlArc,
+        habitat: habitatPool[1] ?? habitatPool[0] ?? explicitHabitat,
+        durationLane: "long",
+        fastPublishMode: false,
+        emphasis: "cinematic",
+        sceneDescriptionVariant: 0,
+      },
+      {
+        label: buildBlueprintLabel("Auto", "realism"),
+        summary: buildBlueprintSummary("Auto", "realism"),
+        hookFamily: "curiosity",
+        arc: controlArc,
+        habitat: explicitHabitat,
+        durationLane: "short",
+        fastPublishMode: false,
+        emphasis: "cinematic",
+        sceneDescriptionVariant: 1,
+      },
+      {
+        label: buildBlueprintLabel("Auto", "alternate"),
+        summary: buildBlueprintSummary("Auto", "alternate"),
+        hookFamily: "reversal",
+        arc: alternateArc,
+        habitat: habitatPool[2] ?? habitatPool[1] ?? explicitHabitat,
+        durationLane: input.durationLane,
+        fastPublishMode: input.fastPublishMode,
+        emphasis: "balanced",
+        sceneDescriptionVariant: 2,
+      },
+    ];
+  }
+
+  const spotlightArcPriorities: Record<Exclude<ContentLane, "Auto">, Arc[]> = {
+    "Pack Hunt": ["Pack hunting strategy", "Chase and takedown", "Escape from danger"],
+    Defender: ["Defender stands ground", "Territory dominance battle", "Giant vs giant clash"],
+    "Fishing Strike": ["Ambush attack", "Chase and takedown", "Escape from danger"],
+    "Rut Battle": ["Territory dominance battle", "Giant vs giant clash", "Defender stands ground"],
+    Escape: ["Escape from danger", "Ambush attack", "Chase and takedown"],
+  };
+
+  const controlHabitat = habitatPool[0] ?? explicitHabitat;
+  const pressureHabitat = habitatPool[1] ?? controlHabitat;
+  const cinematicHabitat = habitatPool[2] ?? pressureHabitat;
   const alternateArc =
-    buildPlausibleArcs(input.currentArc, suggestedArc).find((arc) => arc !== input.currentArc) ??
+    arcPool.find((arc) => arc !== controlArc && arc !== suggestedArc) ??
+    arcPool.find((arc) => arc !== controlArc) ??
     suggestedArc;
-  const alternateHabitat = getAlternateHabitat(explicitHabitat);
+  const spotlightArc = pickFirstMatchingArc(
+    arcPool,
+    spotlightArcPriorities[input.contentLane],
+    suggestedArc
+  );
 
   return [
     {
-      label: "Variant A",
-      summary: "Balanced baseline closest to the current setup, scored as the clean control.",
-      hookFamily: currentHookFamily,
-      arc: input.currentArc,
-      habitat: input.currentHabitat,
+      label: buildBlueprintLabel(input.contentLane, "control"),
+      summary: buildBlueprintSummary(input.contentLane, "control"),
+      hookFamily: hookFamilyPool[0] ?? currentHookFamily,
+      arc: controlArc,
+      habitat: controlHabitat,
       durationLane: input.durationLane,
       fastPublishMode: input.fastPublishMode,
       emphasis: "balanced",
       sceneDescriptionVariant: 0,
     },
     {
-      label: "Variant B",
-      summary: "Fast-publish pressure lane with a tighter opening and a short release rhythm.",
-      hookFamily: shortDefaultHook,
+      label: buildBlueprintLabel(input.contentLane, "fast"),
+      summary: buildBlueprintSummary(input.contentLane, "fast"),
+      hookFamily: hookFamilyPool[0] ?? shortDefaultHook,
       arc: suggestedArc,
-      habitat: input.currentHabitat,
+      habitat: pressureHabitat,
       durationLane: "short",
       fastPublishMode: true,
       emphasis: "fast-publish",
       sceneDescriptionVariant: 1,
     },
     {
-      label: "Variant C",
-      summary: "Opening-frame first pass that pushes immediate threat readability.",
-      hookFamily: "danger",
-      arc: openingArc,
-      habitat: input.currentHabitat,
+      label: buildBlueprintLabel(input.contentLane, "opening"),
+      summary: buildBlueprintSummary(input.contentLane, "opening"),
+      hookFamily: hookFamilyPool[0] ?? "danger",
+      arc: spotlightArc,
+      habitat: controlHabitat,
       durationLane: "short",
       fastPublishMode: true,
       emphasis: "balanced",
       sceneDescriptionVariant: 2,
     },
     {
-      label: "Variant D",
-      summary: "Cinematic hold with a slower payoff lane when the concept can support more build.",
-      hookFamily: longDefaultHook,
-      arc: input.currentArc,
-      habitat: alternateHabitat,
+      label: buildBlueprintLabel(input.contentLane, "cinematic"),
+      summary: buildBlueprintSummary(input.contentLane, "cinematic"),
+      hookFamily: hookFamilyPool[1] ?? longDefaultHook,
+      arc: controlArc,
+      habitat: cinematicHabitat,
       durationLane: "long",
       fastPublishMode: false,
       emphasis: "cinematic",
       sceneDescriptionVariant: 0,
     },
     {
-      label: "Variant E",
-      summary: "Realism-weighted pass that keeps the habitat grounded and the pressure more natural.",
-      hookFamily: "curiosity",
-      arc: input.currentArc,
-      habitat: explicitHabitat,
+      label: buildBlueprintLabel(input.contentLane, "realism"),
+      summary: buildBlueprintSummary(input.contentLane, "realism"),
+      hookFamily: hookFamilyPool[1] ?? "curiosity",
+      arc: suggestedArc,
+      habitat: controlHabitat,
       durationLane: "short",
       fastPublishMode: false,
       emphasis: "cinematic",
       sceneDescriptionVariant: 1,
     },
     {
-      label: "Variant F",
-      summary: "Alternate story direction test when the same animal matchup can sell a different beat.",
-      hookFamily: "reversal",
+      label: buildBlueprintLabel(input.contentLane, "alternate"),
+      summary: buildBlueprintSummary(input.contentLane, "alternate"),
+      hookFamily: hookFamilyPool[2] ?? "reversal",
       arc: alternateArc,
-      habitat: alternateHabitat,
+      habitat: pressureHabitat,
       durationLane: input.durationLane,
       fastPublishMode: input.fastPublishMode,
       emphasis: "balanced",
       sceneDescriptionVariant: 2,
-    },
-    {
-      label: "Variant G",
-      summary: "Guard-safe short-lane fallback with clean packaging and a steadier realism posture.",
-      hookFamily: currentHookFamily === "danger" ? "curiosity" : currentHookFamily,
-      arc: suggestedArc,
-      habitat: explicitHabitat,
-      durationLane: "short",
-      fastPublishMode: false,
-      emphasis: "balanced",
-      sceneDescriptionVariant: 0,
-    },
-    {
-      label: "Variant H",
-      summary: "Long-lane curiosity test for stronger narrative hold without losing subject clarity.",
-      hookFamily: "curiosity",
-      arc: alternateArc,
-      habitat: input.currentHabitat,
-      durationLane: "long",
-      fastPublishMode: false,
-      emphasis: "cinematic",
-      sceneDescriptionVariant: 1,
     },
   ];
 }
@@ -296,8 +649,12 @@ function buildHabitatFitScore(
   habitat: HabitatPreset,
   finalEnvironment: string,
   suggestedEnvironment: string,
-  currentHabitat: HabitatPreset
+  currentHabitat: HabitatPreset,
+  contentLane: ContentLane
 ): number {
+  const preferredHabitats = getPreferredHabitatsForContentLane(contentLane);
+
+  if (preferredHabitats.includes(habitat)) return 94;
   if (normalizeText(finalEnvironment) === normalizeText(suggestedEnvironment)) return 96;
   if (habitat === "Auto") return 92;
   if (currentHabitat !== "Auto" && habitat === currentHabitat) return 86;
@@ -305,9 +662,17 @@ function buildHabitatFitScore(
   return 76;
 }
 
-function buildArcFitScore(arc: Arc, suggestedArc: Arc, plausibleArcs: Arc[]): number {
+function buildArcFitScore(
+  arc: Arc,
+  suggestedArc: Arc,
+  plausibleArcs: Arc[],
+  contentLane: ContentLane
+): number {
+  const nearbyArcs = getNearbyArcsForContentLane(contentLane);
+
   if (arc === suggestedArc) return 96;
-  if (plausibleArcs.includes(arc)) return 84;
+  if (nearbyArcs.includes(arc)) return 88;
+  if (plausibleArcs.includes(arc)) return 82;
   return 68;
 }
 
@@ -338,27 +703,97 @@ function buildRealismFitScore(
   return clampScore(score);
 }
 
-function buildPerformanceScore(averageWatchTimeSeconds: number, completionRate: number, shareRate: number): number {
+function buildPerformanceScore(
+  averageWatchTimeSeconds: number,
+  completionRate: number,
+  shareRate: number
+): number {
   return clampScore(
     averageWatchTimeSeconds * 1.2 + completionRate * 35 + shareRate * 120
   );
 }
 
+function buildLaneSpotlightScore(variant: ConceptVariant, contentLane: ContentLane): number {
+  let score = variant.openingFrameScore.total * 0.58 + variant.laneFitScore * 0.32;
+
+  switch (contentLane) {
+    case "Pack Hunt":
+      if (variant.arc === "Pack hunting strategy") score += 8;
+      if (variant.arc === "Chase and takedown") score += 5;
+      if (variant.fastPublishMode) score += 4;
+      if (variant.hookFamily === "danger") score += 3;
+      break;
+    case "Defender":
+      if (variant.arc === "Defender stands ground") score += 8;
+      if (variant.arc === "Territory dominance battle") score += 5;
+      if (variant.hookFamily === "reversal") score += 4;
+      if (!variant.fastPublishMode) score += 2;
+      break;
+    case "Fishing Strike":
+      if (variant.arc === "Ambush attack" || variant.arc === "Chase and takedown") score += 8;
+      if (
+        variant.habitat === "Riverbank Reeds" ||
+        variant.habitat === "Everglades Marsh" ||
+        variant.habitat === "Cypress Swamp Edge" ||
+        variant.habitat === "Coastal Cliffline"
+      ) {
+        score += 6;
+      }
+      if (variant.hookFamily === "danger") score += 3;
+      break;
+    case "Rut Battle":
+      if (
+        variant.arc === "Territory dominance battle" ||
+        variant.arc === "Giant vs giant clash"
+      ) {
+        score += 8;
+      }
+      if (variant.hookFamily === "curiosity") score += 3;
+      if (
+        variant.habitat === "Rocky Mountain Meadow" ||
+        variant.habitat === "Open Prairie Grassland" ||
+        variant.habitat === "Dry Prairie Plain"
+      ) {
+        score += 4;
+      }
+      break;
+    case "Escape":
+      if (variant.arc === "Escape from danger") score += 8;
+      if (variant.fastPublishMode) score += 3;
+      if (variant.hookFamily === "danger" || variant.hookFamily === "reversal") {
+        score += 3;
+      }
+      break;
+    default:
+      break;
+  }
+
+  return clampScore(score);
+}
+
 function attachWinnerTags(
-  variants: ConceptVariant[]
+  variants: ConceptVariant[],
+  contentLane: ContentLane
 ): { variants: ConceptVariant[]; winners: ConceptVariantLabWinners } {
   const findBest = (ranker: (variant: ConceptVariant) => number, pool = variants) =>
     [...pool].sort((left, right) => ranker(right) - ranker(left))[0];
 
-  const bestOverall = findBest((variant) => variant.overallScore);
+  const bestOverall = findBest(
+    (variant) => variant.overallScore * 0.9 + variant.laneFitScore * 0.1
+  );
   const bestFastPublish = findBest(
-    (variant) => variant.overallScore,
+    (variant) =>
+      variant.fastPublishMode
+        ? variant.overallScore * 0.76 + variant.laneFitScore * 0.24
+        : -Infinity,
     variants.filter((variant) => variant.fastPublishMode)
   );
-  const strongestOpening = findBest(
-    (variant) => variant.openingFrameScore.total
+  const strongestOpening = findBest((variant) =>
+    buildLaneSpotlightScore(variant, contentLane)
   );
-  const bestRealism = findBest((variant) => variant.realismFitScore);
+  const bestRealism = findBest(
+    (variant) => variant.realismFitScore * 0.74 + variant.laneFitScore * 0.26
+  );
 
   const winnerTagsById = new Map<string, Set<ConceptVariantWinnerTag>>();
   const addTag = (id: string | undefined, tag: ConceptVariantWinnerTag) => {
@@ -394,7 +829,10 @@ export function buildConceptVariantLab(
   winners: ConceptVariantLabWinners;
 } {
   const currentHookFamily =
-    input.currentHookFamily ?? getBestHookFamilyForDurationLane(input.durationLane) ?? "danger";
+    input.currentHookFamily ??
+    getPreferredHookFamilyForContentLane(input.contentLane) ??
+    getBestHookFamilyForDurationLane(input.durationLane) ??
+    "danger";
   const suggestedArc = getLaneBiasedArc(
     input.contentLane,
     input.predator,
@@ -406,16 +844,20 @@ export function buildConceptVariantLab(
     input.currentHabitat,
     input.predator,
     input.prey,
-    input.presetEnvironment
+    input.presetEnvironment,
+    input.contentLane,
+    suggestedArc
   );
   const explicitHabitat =
     input.currentHabitat === "Auto"
       ? guessHabitatPresetFromEnvironment(primaryEnvironment)
       : input.currentHabitat;
-  const suggestedEnvironment = suggestHabitat(
+  const suggestedEnvironment = applyContentLaneEnvironmentBias(
+    input.contentLane,
     input.predator,
     input.prey,
-    input.presetEnvironment
+    suggestHabitat(input.predator, input.prey, input.presetEnvironment),
+    suggestedArc
   );
 
   const blueprints = buildBlueprints(
@@ -442,6 +884,7 @@ export function buildConceptVariantLab(
           candidate.durationLane,
           String(candidate.fastPublishMode),
         ].join("|");
+
         return candidateKey === key;
       }) === index
     );
@@ -452,7 +895,9 @@ export function buildConceptVariantLab(
       blueprint.habitat,
       input.predator,
       input.prey,
-      input.presetEnvironment
+      input.presetEnvironment,
+      input.contentLane,
+      blueprint.arc
     );
     const sceneDescription = buildAutoSceneDescription({
       predator: input.predator,
@@ -543,9 +988,15 @@ export function buildConceptVariantLab(
       blueprint.habitat,
       finalEnvironment,
       suggestedEnvironment,
-      input.currentHabitat
+      input.currentHabitat,
+      input.contentLane
     );
-    const arcFitScore = buildArcFitScore(blueprint.arc, suggestedArc, plausibleArcs);
+    const arcFitScore = buildArcFitScore(
+      blueprint.arc,
+      suggestedArc,
+      plausibleArcs,
+      input.contentLane
+    );
     const publishWorthy = usViewsMode.shouldPublish || qualityReco.publishWorthy;
     const realismFitScore = buildRealismFitScore(
       blueprint,
@@ -553,11 +1004,21 @@ export function buildConceptVariantLab(
       publishWorthy,
       input
     );
+    const laneFitScore = scoreContentLaneFit({
+      contentLane: input.contentLane,
+      predator: input.predator,
+      prey: input.prey,
+      arc: blueprint.arc,
+      habitat: blueprint.habitat,
+      hookFamily: blueprint.hookFamily,
+      environment: finalEnvironment,
+    });
     const fitScore = clampScore(
-      predatorPreyFitScore * 0.32 +
-        habitatFitScore * 0.24 +
-        arcFitScore * 0.2 +
-        realismFitScore * 0.24
+      predatorPreyFitScore * 0.24 +
+        habitatFitScore * 0.18 +
+        arcFitScore * 0.18 +
+        laneFitScore * 0.2 +
+        realismFitScore * 0.2
     );
     const performanceScore = usViewsMode.performanceSnapshot
       ? buildPerformanceScore(
@@ -568,10 +1029,11 @@ export function buildConceptVariantLab(
       : 72;
     const publishGuardScore = usViewsMode.publishGuard.isPass ? 100 : 72;
     const overallScore = clampScore(
-      usViewsMode.audienceScore.total * 0.32 +
-        usViewsMode.openingFrameScore.total * 0.24 +
-        fitScore * 0.24 +
-        publishGuardScore * 0.12 +
+      usViewsMode.audienceScore.total * 0.28 +
+        usViewsMode.openingFrameScore.total * 0.2 +
+        fitScore * 0.2 +
+        laneFitScore * 0.16 +
+        publishGuardScore * 0.08 +
         performanceScore * 0.08 +
         (publishWorthy ? 3 : 0)
     );
@@ -606,6 +1068,7 @@ export function buildConceptVariantLab(
       predatorPreyFitScore,
       habitatFitScore,
       arcFitScore,
+      laneFitScore,
       realismFitScore,
       fitScore,
       overallScore,
@@ -617,5 +1080,5 @@ export function buildConceptVariantLab(
   const boundedVariants =
     variants.length >= 4 ? variants : variants.slice(0, Math.max(4, variants.length));
 
-  return attachWinnerTags(boundedVariants);
+  return attachWinnerTags(boundedVariants, input.contentLane);
 }

@@ -1,14 +1,23 @@
 "use client";
 
+import ConceptVariantLab from "@/components/build/concept-variant-lab";
 import OutputCards from "@/components/OutputCards";
 
 import type { PublishFlowSummary } from "@/lib/build-package";
 import { formatPipelineStyleLabel } from "@/lib/page-build-helpers";
-import type { AIProvider, GeneratedPackage, PromptVersion } from "@/types";
+import type {
+  AIProvider,
+  ConceptVariant,
+  ConceptVariantLabWinners,
+  ContentLane,
+  GeneratedPackage,
+  PromptVersion,
+} from "@/types";
 
 type Step3GenerateProps = {
   predator: string;
   prey: string;
+  contentLane: ContentLane;
   activeProvider: AIProvider;
   onActiveProviderChange: (provider: AIProvider) => void;
   onGenerate: () => void;
@@ -16,6 +25,10 @@ type Step3GenerateProps = {
   error: string;
   pkg: GeneratedPackage | null;
   publishFlowSummary: PublishFlowSummary | null;
+  conceptVariants: ConceptVariant[];
+  conceptVariantWinners: ConceptVariantLabWinners;
+  activeConceptVariantId: string | null;
+  onPromoteConceptVariant: (variant: ConceptVariant) => void;
   onRestoreVersion: (version: PromptVersion) => void;
   onBack: () => void;
 };
@@ -23,6 +36,7 @@ type Step3GenerateProps = {
 export default function Step3Generate({
   predator,
   prey,
+  contentLane,
   activeProvider,
   onActiveProviderChange,
   onGenerate,
@@ -30,6 +44,10 @@ export default function Step3Generate({
   error,
   pkg,
   publishFlowSummary,
+  conceptVariants,
+  conceptVariantWinners,
+  activeConceptVariantId,
+  onPromoteConceptVariant,
   onRestoreVersion,
   onBack,
 }: Step3GenerateProps) {
@@ -80,6 +98,14 @@ export default function Step3Generate({
           Flow: 1. Inputs → 2. U.S. score → 3. Opening score → 4. Publish guard →
           5. Final output
         </div>
+
+        <ConceptVariantLab
+          contentLane={contentLane}
+          variants={conceptVariants}
+          winners={conceptVariantWinners}
+          activeVariantId={activeConceptVariantId}
+          onPromoteVariant={onPromoteConceptVariant}
+        />
 
         <button
           type="button"

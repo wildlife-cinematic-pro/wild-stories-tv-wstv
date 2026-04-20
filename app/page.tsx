@@ -48,6 +48,7 @@ import {
   type SceneDescriptionMode,
 } from "@/hooks/use-build-preview";
 import { useBuildPersistence } from "@/hooks/use-build-persistence";
+import { useConceptVariantLab } from "@/hooks/use-concept-variant-lab";
 import { useCustomAnimals } from "@/hooks/use-custom-animals";
 
 import SettingsDrawer from "@/components/SettingsDrawer";
@@ -97,6 +98,7 @@ export default function Page() {
   const [prey, setPrey] = useState(DEFAULT_PREY);
   const [contentLane, setContentLane] = useState<ContentLane>(DEFAULT_CONTENT_LANE);
   const [arc, setArc] = useState<Arc>(DEFAULT_ARC);
+  const [conceptArcOverride, setConceptArcOverride] = useState<Arc | null>(null);
   const [weather, setWeather] = useState<Weather>(DEFAULT_WEATHER);
   const [habitat, setHabitat] = useState<HabitatPreset>(DEFAULT_HABITAT);
   const [depthMode, setDepthMode] = useState<DepthMode>(DEFAULT_DEPTH_MODE);
@@ -144,6 +146,7 @@ export default function Page() {
     setPrey(DEFAULT_PREY);
     setContentLane(DEFAULT_CONTENT_LANE);
     setArc(DEFAULT_ARC);
+    setConceptArcOverride(null);
     setWeather(DEFAULT_WEATHER);
     setHabitat(DEFAULT_HABITAT);
     setDepthMode(DEFAULT_DEPTH_MODE);
@@ -238,6 +241,7 @@ export default function Page() {
     predator,
     prey,
     arc,
+    arcOverride: conceptArcOverride,
     contentLane,
     habitat,
     weather,
@@ -264,6 +268,50 @@ export default function Page() {
     setArc,
     setWeather,
     setDepthMode,
+    setSceneDescription,
+    setSceneDescriptionMode,
+    setSceneDescriptionTouched,
+    setSceneDescriptionVariant,
+  });
+
+  useEffect(() => {
+    setConceptArcOverride(null);
+  }, [predator, prey, contentLane]);
+
+  const {
+    variants: conceptVariants,
+    winners: conceptVariantWinners,
+    activeVariantId: activeConceptVariantId,
+    promoteVariant: promoteConceptVariant,
+  } = useConceptVariantLab({
+    predator,
+    prey,
+    contentLane,
+    currentArc: previewArc,
+    currentHabitat: habitat,
+    presetEnvironment: preset.environment,
+    presetPrey: preset.prey,
+    driftRisk: preset.driftRisk,
+    weather,
+    depthMode,
+    durationLane,
+    fastPublishMode,
+    strictOriginalityGuard,
+    realismMode,
+    runwayModel,
+    klingModel,
+    motionOnlyI2V,
+    referenceLock,
+    singleActionRule,
+    microMotion,
+    heroVeo,
+    currentHookFamily: previewHookFamily,
+    setArc,
+    setArcOverride: setConceptArcOverride,
+    setHabitat,
+    setDurationLane,
+    setFastPublishMode,
+    setHookMode,
     setSceneDescription,
     setSceneDescriptionMode,
     setSceneDescriptionTouched,
@@ -693,6 +741,7 @@ export default function Page() {
               <Step3Generate
                 predator={predator}
                 prey={prey}
+                contentLane={contentLane}
                 activeProvider={activeProvider}
                 onActiveProviderChange={setActiveProvider}
                 onGenerate={handleGenerate}
@@ -700,6 +749,10 @@ export default function Page() {
                 error={error}
                 pkg={pkg}
                 publishFlowSummary={publishFlowSummary}
+                conceptVariants={conceptVariants}
+                conceptVariantWinners={conceptVariantWinners}
+                activeConceptVariantId={activeConceptVariantId}
+                onPromoteConceptVariant={promoteConceptVariant}
                 onRestoreVersion={handleRestoreVersion}
                 onBack={() => setStep(2)}
               />
