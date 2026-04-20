@@ -219,6 +219,43 @@ export type PackageLockKey =
 
 export type PackageLockState = Record<PackageLockKey, boolean>;
 
+export type BuildWorkflowPresetSnapshot = {
+  predator: string;
+  prey: string;
+  contentLane: ContentLane;
+  arc: Arc;
+  habitat: HabitatPreset;
+  weather: Weather;
+  durationLane: DurationLane;
+  fastPublishMode: boolean;
+  strictOriginalityGuard: boolean;
+  hookMode: HookFamily | "all";
+  depthMode: DepthMode;
+  emotionalTone: EmotionalTone;
+  animalVibe: AnimalVibe;
+  realismMode: RealismMode;
+  motionOnlyI2V: boolean;
+  referenceLock: boolean;
+  singleActionRule: boolean;
+  microMotion: boolean;
+  heroVeo: boolean;
+  autoApplyHighDrift: boolean;
+  runwayModel: RunwayModel;
+  klingModel: KlingModel;
+  activeProvider: AIProvider;
+  sceneDescriptionMode: "auto" | "manual";
+  sceneDescription: string;
+  sceneDescriptionTouched: boolean;
+};
+
+export type SavedWorkflowPreset = {
+  id: string;
+  name: string;
+  createdAt: string;
+  updatedAt: string;
+  snapshot: BuildWorkflowPresetSnapshot;
+};
+
 // ─────────────────────────────────────────────────────────────
 // PREDATOR
 // ─────────────────────────────────────────────────────────────
