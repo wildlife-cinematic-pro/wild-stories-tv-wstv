@@ -13,6 +13,8 @@ import type {
   RealismMode,
   GeneratedPackage,
   MediaAnalysisResult,
+  PackageLockKey,
+  PackageLockState,
   PredatorInfo,
   RunwayModel,
   KlingModel,
@@ -33,8 +35,14 @@ import {
 import {
   buildGeneratedPackageDraft,
   finalizeGeneratedPackageDraft,
+  type GeneratedPackageDraft,
   type PublishFlowSummary,
 } from "@/lib/build-package";
+import {
+  applyPackageSectionLocks,
+  createDefaultPackageLockState,
+  hasLockedPackageSections,
+} from "@/lib/package-section-locks";
 
 import {
   RUNWAY_MODELS,
@@ -127,6 +135,10 @@ export default function Page() {
   const [activeProvider, setActiveProvider] = useState<AIProvider>("none");
   const [pkg, setPkg] = useState<GeneratedPackage | null>(null);
   const [isGenerating, setIsGenerating] = useState(false);
+  const [isRegeneratingUnlocked, setIsRegeneratingUnlocked] = useState(false);
+  const [packageLocks, setPackageLocks] = useState<PackageLockState>(() =>
+    createDefaultPackageLockState()
+  );
   const [error, setError] = useState("");
 
   // Navigation
@@ -354,92 +366,183 @@ export default function Page() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [autoApplyHighDrift, qualityReco.level, predator, prey, arc, preset.driftRisk, runwayModel, klingModel]);
 
+  function handleTogglePackageLock(key: PackageLockKey) {
+    setPackageLocks((current) => ({
+      ...current,
+      [key]: !current[key],
+    }));
+  }
+
+  function buildCurrentPackageDraft(sceneInjectOverride?: string) {
+    if (!predator || !prey) throw new Error("Missing predator or prey");
+
+    const safeMedia = (mediaAnalysis ?? null) as SafeMediaAnalysis | null;
+    const sceneInjectFromMedia = safeMedia?.imagePromptInject ?? "";
+    const sceneInjectFromUser = sceneDescription.trim();
+    const sceneInject =
+      sceneInjectOverride ??
+      (sceneInjectFromUser.length > 0
+        ? sceneInjectFromUser
+        : sceneInjectFromMedia);
+    const quality = {
+      realismMode,
+      motionOnlyI2V,
+      referenceLock,
+      singleActionRule,
+      microMotion,
+      heroVeo,
+    };
+
+    return buildGeneratedPackageDraft({
+      predator,
+      prey,
+      presetLighting: preset.lighting,
+      presetCameraGear: preset.cameraGear,
+      presetTexture: preset.texture,
+      presetDriftRisk: preset.driftRisk,
+      presetForIdeas: { ...preset, environment: finalEnvironment } as PredatorInfo,
+      finalEnvironment,
+      finalArc: previewArc,
+      contentLane,
+      weather,
+      depthMode,
+      emotionalTone,
+      animalVibe,
+      runwayModel,
+      klingModel,
+      durationLane,
+      marketMode,
+      fastPublishMode,
+      strictOriginalityGuard,
+      selectedPipelineStyle,
+      sceneInject,
+      quality,
+      finalHook2026: previewHook2026,
+      finalHook: previewPrimaryHook || previewHook2026[0] || "",
+      shortCaption: previewShortCaption,
+      longCaption: previewLongCaption,
+      hashtags: previewHashtags,
+      tags: previewTags,
+      recommendedHookIndex: previewRecommendedHookIndex,
+      hookFamily: previewHookFamily,
+      usAudienceScore: previewAudienceScore,
+      openingFrameInput: previewOpeningFrameInput,
+      openingFrameScore: previewOpeningFrameScore,
+      performanceSnapshot: previewPerformanceSnapshot,
+    });
+  }
+
+  async function buildEnhancementsForDraft(
+    draft: GeneratedPackageDraft
+  ): Promise<GeneratedPackageEnhancements> {
+    if (activeProvider === "none") return {};
+
+    const res = await fetch("/api/enhance", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        provider: activeProvider,
+        predator,
+        prey,
+        env: finalEnvironment,
+        arc: previewArc,
+        weather,
+        emotionalTone,
+        animalVibe,
+        base: {
+          imagePrompt: draft.basePkg.imagePrompt,
+          hook: draft.basePkg.hook,
+          caption: draft.basePkg.caption ?? "",
+          voiceoverLine: draft.basePkg.voiceoverLine,
+        },
+      }),
+    });
+    const data = await res.json().catch(() => ({} as unknown));
+    if (!res.ok) {
+      throw new Error(
+        ((data as Record<string, unknown>)?.error as string) ||
+          `AI polish failed (${res.status})`
+      );
+    }
+    const parsedEnhanced = copyPolishResponseSchema.safeParse(data);
+    if (!parsedEnhanced.success) throw new Error("Invalid AI polish response");
+
+    const enhanced: GeneratedPackageEnhancements = {
+      ...(parsedEnhanced.data.imagePrompt
+        ? { imagePrompt: parsedEnhanced.data.imagePrompt }
+        : {}),
+      ...(parsedEnhanced.data.hook ? { hook: parsedEnhanced.data.hook } : {}),
+      ...(parsedEnhanced.data.caption
+        ? { caption: parsedEnhanced.data.caption }
+        : {}),
+      ...(parsedEnhanced.data.voiceoverLine
+        ? { voiceoverLine: parsedEnhanced.data.voiceoverLine }
+        : {}),
+      aiEnhanced: true,
+    };
+
+    if (!hasUsableGeneratedPackageEnhancements(enhanced)) {
+      throw new Error("AI polish returned no usable prompt or copy updates");
+    }
+
+    return enhanced;
+  }
+
+  function appendGenerationVersion(finalPkg: GeneratedPackage, labelPrefix: string) {
+    try {
+      const key = makePromptVersionKey(
+        finalPkg.predatorName ?? predator,
+        finalPkg.preyName ?? prey,
+        String(finalPkg.arcName ?? arc)
+      );
+      const v: PromptVersion = {
+        version: getNextVersionNumber(key),
+        timestamp: new Date().toISOString(),
+        imagePrompt: finalPkg.imagePrompt,
+        hook: finalPkg.hook ?? "",
+        caption: finalPkg.caption ?? "",
+        voiceoverLine: finalPkg.voiceoverLine ?? "",
+        label: `${labelPrefix} • ${
+          activeProvider === "none" ? "Local" : activeProvider
+        } • ${predator} vs ${prey} • ${String(previewArc ?? arc)}`,
+        performanceNote: "",
+      };
+      appendPromptVersion(key, v);
+    } catch {
+      // ignore
+    }
+  }
+
+  function syncPublishSummaryWithPackage(
+    finalPkg: GeneratedPackage,
+    summary: PublishFlowSummary
+  ): PublishFlowSummary {
+    return {
+      ...summary,
+      predatorName: finalPkg.predatorName ?? summary.predatorName,
+      preyName: finalPkg.preyName ?? summary.preyName,
+      arcName: finalPkg.arcName ?? summary.arcName,
+      durationLane: finalPkg.durationLane ?? summary.durationLane,
+      hookFamily: finalPkg.hookFamily ?? summary.hookFamily,
+      pipelineStyle: finalPkg.pipelineStyle ?? summary.pipelineStyle,
+      primaryHook: finalPkg.hook ?? summary.primaryHook,
+      usAudienceScore: finalPkg.usAudienceScore ?? summary.usAudienceScore,
+      openingFrameScore: finalPkg.openingFrameScore ?? summary.openingFrameScore,
+      publishGuardReport:
+        finalPkg.publishGuardReport ?? summary.publishGuardReport,
+      publishWorthy:
+        finalPkg.usViewsModeReport?.shouldPublish ?? summary.publishWorthy,
+    };
+  }
+
   async function handleGenerate() {
     setIsGenerating(true);
     setError("");
     setPkg(null);
     setPublishFlowSummary(null);
     try {
-      if (!predator || !prey) throw new Error("Missing predator or prey");
-      const safeMedia = (mediaAnalysis ?? null) as SafeMediaAnalysis | null;
-      const sceneInjectFromMedia = safeMedia?.imagePromptInject ?? "";
-      const sceneInjectFromUser = sceneDescription.trim();
-      const sceneInject = sceneInjectFromUser.length > 0 ? sceneInjectFromUser : sceneInjectFromMedia;
-      const quality = { realismMode, motionOnlyI2V, referenceLock, singleActionRule, microMotion, heroVeo };
-      const draft = buildGeneratedPackageDraft({
-        predator,
-        prey,
-        presetLighting: preset.lighting,
-        presetCameraGear: preset.cameraGear,
-        presetTexture: preset.texture,
-        presetDriftRisk: preset.driftRisk,
-        presetForIdeas: { ...preset, environment: finalEnvironment } as PredatorInfo,
-        finalEnvironment,
-        finalArc: previewArc,
-        contentLane,
-        weather,
-        depthMode,
-        emotionalTone,
-        animalVibe,
-        runwayModel,
-        klingModel,
-        durationLane,
-        marketMode,
-        fastPublishMode,
-        strictOriginalityGuard,
-        selectedPipelineStyle,
-        sceneInject,
-        quality,
-        finalHook2026: previewHook2026,
-        finalHook: previewPrimaryHook || previewHook2026[0] || "",
-        shortCaption: previewShortCaption,
-        longCaption: previewLongCaption,
-        hashtags: previewHashtags,
-        tags: previewTags,
-        recommendedHookIndex: previewRecommendedHookIndex,
-        hookFamily: previewHookFamily,
-        usAudienceScore: previewAudienceScore,
-        openingFrameInput: previewOpeningFrameInput,
-        openingFrameScore: previewOpeningFrameScore,
-        performanceSnapshot: previewPerformanceSnapshot,
-      });
-
-      let enhanced: GeneratedPackageEnhancements = {};
-      if (activeProvider !== "none") {
-        const res = await fetch("/api/enhance", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            provider: activeProvider,
-            predator,
-            prey,
-            env: finalEnvironment,
-            arc: previewArc,
-            weather,
-            emotionalTone,
-            animalVibe,
-            base: {
-              imagePrompt: draft.basePkg.imagePrompt,
-              hook: draft.basePkg.hook,
-              caption: draft.basePkg.caption ?? "",
-              voiceoverLine: draft.basePkg.voiceoverLine,
-            },
-          }),
-        });
-        const data = await res.json().catch(() => ({} as unknown));
-        if (!res.ok) throw new Error(((data as Record<string, unknown>)?.error as string) || `AI polish failed (${res.status})`);
-        const parsedEnhanced = copyPolishResponseSchema.safeParse(data);
-        if (!parsedEnhanced.success) throw new Error("Invalid AI polish response");
-        enhanced = {
-          ...(parsedEnhanced.data.imagePrompt ? { imagePrompt: parsedEnhanced.data.imagePrompt } : {}),
-          ...(parsedEnhanced.data.hook ? { hook: parsedEnhanced.data.hook } : {}),
-          ...(parsedEnhanced.data.caption ? { caption: parsedEnhanced.data.caption } : {}),
-          ...(parsedEnhanced.data.voiceoverLine ? { voiceoverLine: parsedEnhanced.data.voiceoverLine } : {}),
-          aiEnhanced: true,
-        };
-        if (!hasUsableGeneratedPackageEnhancements(enhanced)) throw new Error("AI polish returned no usable prompt or copy updates");
-      }
-
+      const draft = buildCurrentPackageDraft();
+      const enhanced = await buildEnhancementsForDraft(draft);
       const { finalPkg, publishFlowSummary } = finalizeGeneratedPackageDraft(
         draft,
         enhanced
@@ -447,32 +550,44 @@ export default function Page() {
 
       setPkg(finalPkg);
       setPublishFlowSummary(publishFlowSummary);
-
-      try {
-        const key = makePromptVersionKey(
-          finalPkg.predatorName ?? predator,
-          finalPkg.preyName ?? prey,
-          String(finalPkg.arcName ?? arc)
-        );
-        const v: PromptVersion = {
-          version: getNextVersionNumber(key),
-          timestamp: new Date().toISOString(),
-          imagePrompt: finalPkg.imagePrompt,
-          hook: finalPkg.hook ?? "",
-          caption: finalPkg.caption ?? "",
-          voiceoverLine: finalPkg.voiceoverLine ?? "",
-          label: `GENERATE • ${activeProvider === "none" ? "Local" : activeProvider} • ${predator} vs ${prey} • ${String(previewArc ?? arc)}`,
-          performanceNote: "",
-        };
-        appendPromptVersion(key, v);
-      } catch { /* ignore */ }
-
+      appendGenerationVersion(finalPkg, "GENERATE");
       setStep(3);
     } catch (e) {
       console.error("[generate error]", e);
       setError(e instanceof Error ? e.message : "Generation failed");
     } finally {
       setIsGenerating(false);
+    }
+  }
+
+  async function handleRegenerateUnlockedSections() {
+    if (!pkg) return;
+
+    setIsRegeneratingUnlocked(true);
+    setError("");
+    try {
+      const sceneInjectOverride = packageLocks.sceneDescription
+        ? pkg.sceneDesc ?? ""
+        : undefined;
+      const draft = buildCurrentPackageDraft(sceneInjectOverride);
+      const enhanced = await buildEnhancementsForDraft(draft);
+      const { finalPkg: candidatePkg, publishFlowSummary } =
+        finalizeGeneratedPackageDraft(draft, enhanced);
+      const finalPkg = hasLockedPackageSections(packageLocks)
+        ? applyPackageSectionLocks(pkg, candidatePkg, packageLocks)
+        : candidatePkg;
+
+      setPkg(finalPkg);
+      setPublishFlowSummary(
+        syncPublishSummaryWithPackage(finalPkg, publishFlowSummary)
+      );
+      appendGenerationVersion(finalPkg, "REGENERATE UNLOCKED");
+      setStep(3);
+    } catch (e) {
+      console.error("[regenerate unlocked error]", e);
+      setError(e instanceof Error ? e.message : "Regeneration failed");
+    } finally {
+      setIsRegeneratingUnlocked(false);
     }
   }
 
@@ -745,9 +860,14 @@ export default function Page() {
                 activeProvider={activeProvider}
                 onActiveProviderChange={setActiveProvider}
                 onGenerate={handleGenerate}
+                onRegenerateUnlocked={handleRegenerateUnlockedSections}
                 isGenerating={isGenerating}
+                isRegeneratingUnlocked={isRegeneratingUnlocked}
                 error={error}
                 pkg={pkg}
+                packageLocks={packageLocks}
+                onTogglePackageLock={handleTogglePackageLock}
+                onSetPackageLocks={setPackageLocks}
                 publishFlowSummary={publishFlowSummary}
                 conceptVariants={conceptVariants}
                 conceptVariantWinners={conceptVariantWinners}
