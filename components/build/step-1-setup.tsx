@@ -46,6 +46,16 @@ type Step1SetupProps = {
   workflowPresetPackName: string;
   workflowPresetPackDescription: string;
   workflowPresetPackTagsText: string;
+  workflowPresetCloudAccountIdInput: string;
+  workflowPresetConnectedCloudAccountId?: string;
+  workflowPresetCloudSyncState:
+    | "local-only"
+    | "syncing"
+    | "synced"
+    | "conflict-resolved"
+    | "sync-error";
+  workflowPresetCloudSyncMessage: string;
+  workflowPresetCloudSyncLastSyncedAt?: string;
   suggestedWorkflowPresetName: string;
   activeWorkflowPresetIsDirty: boolean;
   onPredatorChange: (value: string) => void;
@@ -63,6 +73,7 @@ type Step1SetupProps = {
   onWorkflowPresetPackNameChange: (value: string) => void;
   onWorkflowPresetPackDescriptionChange: (value: string) => void;
   onWorkflowPresetPackTagsTextChange: (value: string) => void;
+  onWorkflowPresetCloudAccountIdInputChange: (value: string) => void;
   onActiveWorkflowPresetPackChange: (id: string | null) => void;
   onSaveWorkflowPreset: (name?: string) => void;
   onUpdateWorkflowPreset: (id?: string, name?: string) => void;
@@ -81,6 +92,9 @@ type Step1SetupProps = {
   onExportWorkflowPresetPack: (id: string) => void;
   onImportWorkflowPresetPack: (jsonText: string) => void;
   onApplyWorkflowPresetPack: (id: string) => void;
+  onConnectWorkflowPresetCloudLibrary: (accountId?: string) => void;
+  onDisconnectWorkflowPresetCloudLibrary: () => void;
+  onSyncWorkflowPresetCloudLibrary: () => void;
   workflowPresetImportStatus: string;
   workflowPresetPackStatus: string;
 };
@@ -109,6 +123,11 @@ export default function Step1Setup({
   workflowPresetPackName,
   workflowPresetPackDescription,
   workflowPresetPackTagsText,
+  workflowPresetCloudAccountIdInput,
+  workflowPresetConnectedCloudAccountId,
+  workflowPresetCloudSyncState,
+  workflowPresetCloudSyncMessage,
+  workflowPresetCloudSyncLastSyncedAt,
   suggestedWorkflowPresetName,
   activeWorkflowPresetIsDirty,
   onPredatorChange,
@@ -126,6 +145,7 @@ export default function Step1Setup({
   onWorkflowPresetPackNameChange,
   onWorkflowPresetPackDescriptionChange,
   onWorkflowPresetPackTagsTextChange,
+  onWorkflowPresetCloudAccountIdInputChange,
   onActiveWorkflowPresetPackChange,
   onSaveWorkflowPreset,
   onUpdateWorkflowPreset,
@@ -141,6 +161,9 @@ export default function Step1Setup({
   onExportWorkflowPresetPack,
   onImportWorkflowPresetPack,
   onApplyWorkflowPresetPack,
+  onConnectWorkflowPresetCloudLibrary,
+  onDisconnectWorkflowPresetCloudLibrary,
+  onSyncWorkflowPresetCloudLibrary,
   workflowPresetImportStatus,
   workflowPresetPackStatus,
 }: Step1SetupProps) {
@@ -158,11 +181,17 @@ export default function Step1Setup({
           packName={workflowPresetPackName}
           packDescription={workflowPresetPackDescription}
           packTagsText={workflowPresetPackTagsText}
+          cloudAccountIdInput={workflowPresetCloudAccountIdInput}
+          connectedCloudAccountId={workflowPresetConnectedCloudAccountId}
+          cloudSyncState={workflowPresetCloudSyncState}
+          cloudSyncMessage={workflowPresetCloudSyncMessage}
+          cloudSyncLastSyncedAt={workflowPresetCloudSyncLastSyncedAt}
           suggestedPresetName={suggestedWorkflowPresetName}
           onPresetNameChange={onWorkflowPresetNameChange}
           onPresetPackNameChange={onWorkflowPresetPackNameChange}
           onPresetPackDescriptionChange={onWorkflowPresetPackDescriptionChange}
           onPresetPackTagsTextChange={onWorkflowPresetPackTagsTextChange}
+          onCloudAccountIdInputChange={onWorkflowPresetCloudAccountIdInputChange}
           onActivePresetPackChange={onActiveWorkflowPresetPackChange}
           onSavePreset={onSaveWorkflowPreset}
           onUpdatePreset={onUpdateWorkflowPreset}
@@ -178,6 +207,9 @@ export default function Step1Setup({
           onExportPresetPack={onExportWorkflowPresetPack}
           onImportPresetPack={onImportWorkflowPresetPack}
           onApplyPresetPack={onApplyWorkflowPresetPack}
+          onConnectCloudLibrary={onConnectWorkflowPresetCloudLibrary}
+          onDisconnectCloudLibrary={onDisconnectWorkflowPresetCloudLibrary}
+          onSyncCloudLibrary={onSyncWorkflowPresetCloudLibrary}
           importStatus={workflowPresetImportStatus}
           packStatus={workflowPresetPackStatus}
         />

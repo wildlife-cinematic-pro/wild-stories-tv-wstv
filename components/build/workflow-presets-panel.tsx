@@ -3,7 +3,11 @@
 import { useMemo, useState } from "react";
 import type { ChangeEvent } from "react";
 
-import type { SavedWorkflowPreset, SavedWorkflowPresetPack } from "@/types";
+import type {
+  SavedWorkflowPreset,
+  SavedWorkflowPresetPack,
+  WorkflowPresetCloudSyncState,
+} from "@/types";
 
 type WorkflowPresetsPanelProps = {
   presets: SavedWorkflowPreset[];
@@ -16,11 +20,17 @@ type WorkflowPresetsPanelProps = {
   packName: string;
   packDescription: string;
   packTagsText: string;
+  cloudAccountIdInput: string;
+  connectedCloudAccountId?: string;
+  cloudSyncState: WorkflowPresetCloudSyncState;
+  cloudSyncMessage: string;
+  cloudSyncLastSyncedAt?: string;
   suggestedPresetName: string;
   onPresetNameChange: (value: string) => void;
   onPresetPackNameChange: (value: string) => void;
   onPresetPackDescriptionChange: (value: string) => void;
   onPresetPackTagsTextChange: (value: string) => void;
+  onCloudAccountIdInputChange: (value: string) => void;
   onActivePresetPackChange: (id: string | null) => void;
   onSavePreset: (name?: string) => void;
   onUpdatePreset: (id?: string, name?: string) => void;
@@ -39,6 +49,9 @@ type WorkflowPresetsPanelProps = {
   onExportPresetPack: (id: string) => void;
   onImportPresetPack: (jsonText: string) => void;
   onApplyPresetPack: (id: string) => void;
+  onConnectCloudLibrary: (accountId?: string) => void;
+  onDisconnectCloudLibrary: () => void;
+  onSyncCloudLibrary: () => void;
   importStatus: string;
   packStatus: string;
 };
@@ -60,6 +73,21 @@ function formatPackMeta(pack: SavedWorkflowPresetPack): string {
   return `${pack.presets.length} preset${pack.presets.length === 1 ? "" : "s"}${tags}`;
 }
 
+function getCloudSyncTone(state: WorkflowPresetCloudSyncState): string {
+  switch (state) {
+    case "synced":
+      return "bg-emerald-100 text-emerald-700";
+    case "conflict-resolved":
+      return "bg-amber-100 text-amber-700";
+    case "syncing":
+      return "bg-sky-100 text-sky-700";
+    case "sync-error":
+      return "bg-red-100 text-red-700";
+    default:
+      return "bg-gray-100 text-gray-500";
+  }
+}
+
 export default function WorkflowPresetsPanel({
   presets,
   presetPacks,
@@ -71,11 +99,17 @@ export default function WorkflowPresetsPanel({
   packName,
   packDescription,
   packTagsText,
+  cloudAccountIdInput,
+  connectedCloudAccountId,
+  cloudSyncState,
+  cloudSyncMessage,
+  cloudSyncLastSyncedAt,
   suggestedPresetName,
   onPresetNameChange,
   onPresetPackNameChange,
   onPresetPackDescriptionChange,
   onPresetPackTagsTextChange,
+  onCloudAccountIdInputChange,
   onActivePresetPackChange,
   onSavePreset,
   onUpdatePreset,
@@ -91,6 +125,9 @@ export default function WorkflowPresetsPanel({
   onExportPresetPack,
   onImportPresetPack,
   onApplyPresetPack,
+  onConnectCloudLibrary,
+  onDisconnectCloudLibrary,
+  onSyncCloudLibrary,
   importStatus,
   packStatus,
 }: WorkflowPresetsPanelProps) {
@@ -182,6 +219,89 @@ export default function WorkflowPresetsPanel({
             ? `${activePreset.name}${activePresetIsDirty ? " - modified" : ""}`
             : "No active preset"}
         </span>
+      </div>
+
+      <div className="mb-4 rounded-2xl border border-gray-100 bg-gray-50 p-3.5">
+        <div className="mb-2 flex flex-wrap items-start justify-between gap-3">
+          <div>
+            <div className="text-[10px] font-semibold uppercase tracking-[0.1em] text-gray-400">
+              Cloud Library
+            </div>
+            <div className="mt-1 max-w-xl text-[11px] leading-relaxed text-gray-500">
+              Keep presets and preset packs in an account-level library when
+              cloud sync is available. Local presets stay active if cloud is disconnected.
+            </div>
+          </div>
+          <span
+            className={`rounded-full px-2.5 py-1 text-[10px] font-semibold ${getCloudSyncTone(
+              cloudSyncState
+            )}`}
+          >
+            {cloudSyncState === "local-only"
+              ? "Local only"
+              : cloudSyncState === "syncing"
+                ? "Syncing"
+                : cloudSyncState === "conflict-resolved"
+                  ? "Conflict resolved"
+                  : cloudSyncState === "sync-error"
+                    ? "Sync error"
+                    : "Synced"}
+          </span>
+        </div>
+
+        <div className="grid gap-3 lg:grid-cols-[minmax(0,1fr)_auto]">
+          <div>
+            <label className="mb-1.5 block text-[11px] font-medium text-gray-500">
+              Cloud account ID
+            </label>
+            <input
+              value={cloudAccountIdInput}
+              onChange={(event) => onCloudAccountIdInputChange(event.target.value)}
+              placeholder="team-usa-wildlife"
+              className="w-full rounded-xl border border-gray-200 bg-white px-3 py-2.5 text-sm font-medium text-gray-900 placeholder:text-gray-400 focus:border-gray-400 focus:outline-none"
+            />
+            <p className="mt-1 text-[11px] text-gray-400">
+              Use the same account ID on another device to pull the same preset library.
+            </p>
+          </div>
+
+          <div className="flex flex-wrap items-end gap-2">
+            <button
+              type="button"
+              onClick={() => onConnectCloudLibrary(cloudAccountIdInput)}
+              disabled={!cloudAccountIdInput.trim()}
+              className="rounded-xl bg-gray-900 px-3.5 py-2 text-xs font-semibold text-white shadow-sm shadow-gray-200/80 hover:bg-black disabled:opacity-45 active:scale-[0.98]"
+            >
+              {connectedCloudAccountId ? "Reconnect" : "Connect"}
+            </button>
+            <button
+              type="button"
+              onClick={onSyncCloudLibrary}
+              disabled={!connectedCloudAccountId}
+              className="rounded-xl border border-gray-200 bg-white px-3.5 py-2 text-xs font-semibold text-gray-600 shadow-sm shadow-gray-100/80 hover:bg-gray-50 disabled:opacity-45 active:scale-[0.98]"
+            >
+              Sync Now
+            </button>
+            <button
+              type="button"
+              onClick={onDisconnectCloudLibrary}
+              disabled={!connectedCloudAccountId}
+              className="rounded-xl border border-gray-200 bg-white px-3.5 py-2 text-xs font-semibold text-gray-600 shadow-sm shadow-gray-100/80 hover:bg-gray-50 disabled:opacity-45 active:scale-[0.98]"
+            >
+              Disconnect
+            </button>
+          </div>
+        </div>
+
+        <div className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1 text-[11px] text-gray-500">
+          <span>{cloudSyncMessage}</span>
+          {cloudSyncLastSyncedAt && (
+            <span>Last sync: {cloudSyncLastSyncedAt}</span>
+          )}
+          {connectedCloudAccountId && (
+            <span>Connected: {connectedCloudAccountId}</span>
+          )}
+        </div>
       </div>
 
       <div className="grid gap-3 lg:grid-cols-[minmax(0,1fr)_minmax(260px,0.85fr)]">
