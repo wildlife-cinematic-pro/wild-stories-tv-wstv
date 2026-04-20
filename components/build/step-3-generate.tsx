@@ -1,6 +1,7 @@
 "use client";
 
 import ConceptVariantLab from "@/components/build/concept-variant-lab";
+import SectionLockControls from "@/components/build/section-lock-controls";
 import OutputCards from "@/components/OutputCards";
 
 import type { PublishFlowSummary } from "@/lib/build-package";
@@ -11,6 +12,8 @@ import type {
   ConceptVariantLabWinners,
   ContentLane,
   GeneratedPackage,
+  PackageLockKey,
+  PackageLockState,
   PromptVersion,
 } from "@/types";
 
@@ -21,9 +24,14 @@ type Step3GenerateProps = {
   activeProvider: AIProvider;
   onActiveProviderChange: (provider: AIProvider) => void;
   onGenerate: () => void;
+  onRegenerateUnlocked: () => void;
   isGenerating: boolean;
+  isRegeneratingUnlocked: boolean;
   error: string;
   pkg: GeneratedPackage | null;
+  packageLocks: PackageLockState;
+  onTogglePackageLock: (key: PackageLockKey) => void;
+  onSetPackageLocks: (locks: PackageLockState) => void;
   publishFlowSummary: PublishFlowSummary | null;
   conceptVariants: ConceptVariant[];
   conceptVariantWinners: ConceptVariantLabWinners;
@@ -40,9 +48,14 @@ export default function Step3Generate({
   activeProvider,
   onActiveProviderChange,
   onGenerate,
+  onRegenerateUnlocked,
   isGenerating,
+  isRegeneratingUnlocked,
   error,
   pkg,
+  packageLocks,
+  onTogglePackageLock,
+  onSetPackageLocks,
   publishFlowSummary,
   conceptVariants,
   conceptVariantWinners,
@@ -110,7 +123,7 @@ export default function Step3Generate({
         <button
           type="button"
           onClick={onGenerate}
-          disabled={isGenerating}
+          disabled={isGenerating || isRegeneratingUnlocked}
           className="w-full rounded-2xl bg-white py-4 text-sm font-bold text-gray-900 shadow-sm shadow-black/20 transition-all hover:bg-gray-100 disabled:opacity-50 active:scale-[0.98]"
         >
           {isGenerating ? (
@@ -122,6 +135,16 @@ export default function Step3Generate({
             `⚡ Generate — ${predator} vs ${prey}`
           )}
         </button>
+
+        {pkg && (
+          <SectionLockControls
+            locks={packageLocks}
+            isRegenerating={isRegeneratingUnlocked}
+            onToggleLock={onTogglePackageLock}
+            onSetLocks={onSetPackageLocks}
+            onRegenerateUnlocked={onRegenerateUnlocked}
+          />
+        )}
       </section>
 
       {error && (

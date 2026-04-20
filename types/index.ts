@@ -204,6 +204,21 @@ export type ConceptVariantLabWinners = {
   bestRealismId?: string;
 };
 
+export type PackageLockKey =
+  | "hook"
+  | "caption"
+  | "hashtags"
+  | "sceneDescription"
+  | "masterImagePrompt"
+  | "thumbnailPrompt"
+  | "runwayPrompts"
+  | "klingPrompts"
+  | "seedancePrompts"
+  | "twoPartViralPreset"
+  | "capCutScript";
+
+export type PackageLockState = Record<PackageLockKey, boolean>;
+
 // ─────────────────────────────────────────────────────────────
 // PREDATOR
 // ─────────────────────────────────────────────────────────────
