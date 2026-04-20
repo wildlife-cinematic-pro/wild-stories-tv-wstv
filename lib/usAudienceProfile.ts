@@ -1,4 +1,6 @@
-import type { USAudienceScoreResult } from "@/types";
+import { getUSAudienceLaneBonus } from "@/lib/content-lanes";
+
+import type { ContentLane, USAudienceScoreResult } from "@/types";
 
 export type USWildlifeTier = "tier1" | "tier2" | "tier3";
 
@@ -7,6 +9,7 @@ export interface USAudienceScoreInput {
   prey: string;
   environment: string;
   arc: string;
+  contentLane?: ContentLane;
 }
 
 const TIER_1_SPECIES = new Set([
@@ -55,12 +58,17 @@ export function scoreUSAudience(input: USAudienceScoreInput): USAudienceScoreRes
   const speciesScore = Math.min(35, scoreSpecies(input.predator) + Math.floor(scoreSpecies(input.prey) / 2));
   const environmentScore = scoreEnvironment(input.environment);
   const arcScore = scoreArc(input.arc);
-  const total = Math.min(100, speciesScore + environmentScore + arcScore);
+  const laneBonus = getUSAudienceLaneBonus(input);
+  const total = Math.min(100, speciesScore + environmentScore + arcScore + laneBonus);
 
   let summary = "Moderate U.S. appeal.";
   if (total >= 85) summary = "Strong U.S. appeal with iconic wildlife and setting.";
   else if (total >= 70) summary = "Good U.S. appeal; concept is usable for U.S. testing.";
   else if (total < 55) summary = "Weak U.S. appeal; consider more iconic North American wildlife or setting.";
+
+  if (laneBonus >= 4 && total >= 70) {
+    summary = `${summary} Lane fit reinforces a familiar U.S. wildlife reel pattern.`;
+  }
 
   return { total, speciesScore, environmentScore, arcScore, summary };
 }

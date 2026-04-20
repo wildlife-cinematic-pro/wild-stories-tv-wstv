@@ -1,4 +1,5 @@
 import type {
+  ContentLane,
   DurationLane,
   HookFamily,
   OpeningFrameScore,
@@ -7,6 +8,7 @@ import type {
   USAudienceScoreResult,
   USViewsModeReport,
 } from "@/types";
+import { getPreferredHookFamilyForContentLane } from "@/lib/content-lanes";
 import { runFacebookPublishGuard } from "@/lib/facebookPublishGuard";
 import { scoreOpeningFrame, type OpeningFrameInput } from "@/lib/openingFrameScore";
 import {
@@ -18,6 +20,7 @@ import { scoreUSAudience, type USAudienceScoreInput } from "@/lib/usAudienceProf
 export interface USViewsModeInput {
   durationLane: DurationLane;
   hookFamily?: HookFamily;
+  contentLane?: ContentLane;
   concept: USAudienceScoreInput;
   openingFrame: OpeningFrameInput;
   caption: string;
@@ -30,7 +33,12 @@ export interface USViewsModeInput {
 }
 
 export function buildUSViewsModeReport(input: USViewsModeInput): USViewsModeReport {
-  const audience = input.audienceScore ?? scoreUSAudience(input.concept);
+  const audience =
+    input.audienceScore ??
+    scoreUSAudience({
+      ...input.concept,
+      contentLane: input.contentLane ?? input.concept.contentLane,
+    });
   const opening = input.openingFrameScore ?? scoreOpeningFrame(input.openingFrame);
   const publish =
     input.publishGuardReport ??
@@ -40,7 +48,10 @@ export function buildUSViewsModeReport(input: USViewsModeInput): USViewsModeRepo
       originalityConfirmed: input.originalityConfirmed,
     });
   const hookFamily =
-    input.hookFamily ?? getBestHookFamilyForDurationLane(input.durationLane) ?? "danger";
+    input.hookFamily ??
+    getPreferredHookFamilyForContentLane(input.contentLane ?? "Auto") ??
+    getBestHookFamilyForDurationLane(input.durationLane) ??
+    "danger";
   const performanceSnapshot =
     input.performanceSnapshot ?? getPerformanceSnapshot(input.durationLane, hookFamily);
   const performanceReady = performanceSnapshot

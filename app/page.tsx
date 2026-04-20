@@ -6,6 +6,7 @@ import type {
   AIProvider,
   Arc,
   DepthMode,
+  ContentLane,
   EmotionalTone,
   AnimalVibe,
   Weather,
@@ -80,6 +81,7 @@ type QualityState = {
 
 const DEFAULT_PREDATOR = "Mountain Lion";
 const DEFAULT_PREY = "White-tailed Deer";
+const DEFAULT_CONTENT_LANE: ContentLane = "Auto";
 const DEFAULT_ARC: Arc = "Ambush attack";
 const DEFAULT_WEATHER: Weather = "Golden Hour";
 const DEFAULT_HABITAT: HabitatPreset = "Auto";
@@ -93,6 +95,7 @@ export default function Page() {
   // STEP 1
   const [predator, setPredator] = useState(DEFAULT_PREDATOR);
   const [prey, setPrey] = useState(DEFAULT_PREY);
+  const [contentLane, setContentLane] = useState<ContentLane>(DEFAULT_CONTENT_LANE);
   const [arc, setArc] = useState<Arc>(DEFAULT_ARC);
   const [weather, setWeather] = useState<Weather>(DEFAULT_WEATHER);
   const [habitat, setHabitat] = useState<HabitatPreset>(DEFAULT_HABITAT);
@@ -139,6 +142,7 @@ export default function Page() {
   function handleResetDefaults() {
     setPredator(DEFAULT_PREDATOR);
     setPrey(DEFAULT_PREY);
+    setContentLane(DEFAULT_CONTENT_LANE);
     setArc(DEFAULT_ARC);
     setWeather(DEFAULT_WEATHER);
     setHabitat(DEFAULT_HABITAT);
@@ -151,6 +155,7 @@ export default function Page() {
     predator,
     prey,
     arc,
+    contentLane,
     weather,
     depthMode,
     habitat,
@@ -167,6 +172,7 @@ export default function Page() {
     setPredator,
     setPrey,
     setArc,
+    setContentLane,
     setWeather,
     setDepthMode,
     setHabitat,
@@ -207,6 +213,7 @@ export default function Page() {
 
   const {
     preset,
+    preyOptions: previewPreyOptions,
     finalEnvironment,
     previewArc,
     selectedPipelineStyle,
@@ -231,6 +238,7 @@ export default function Page() {
     predator,
     prey,
     arc,
+    contentLane,
     habitat,
     weather,
     depthMode,
@@ -320,6 +328,7 @@ export default function Page() {
         presetForIdeas: { ...preset, environment: finalEnvironment } as PredatorInfo,
         finalEnvironment,
         finalArc: previewArc,
+        contentLane,
         weather,
         depthMode,
         emotionalTone,
@@ -598,6 +607,7 @@ export default function Page() {
               <Step1Setup
                 predator={predator}
                 prey={prey}
+                contentLane={contentLane}
                 arc={arc}
                 weather={weather}
                 depthMode={depthMode}
@@ -605,12 +615,13 @@ export default function Page() {
                 emotionalTone={emotionalTone}
                 animalVibe={animalVibe}
                 predatorOptions={predatorOptions}
-                preyOptions={preset.prey}
+                preyOptions={previewPreyOptions}
                 customPredatorCount={customPredators.length}
                 finalEnvironment={finalEnvironment}
                 driftRisk={preset.driftRisk}
                 onPredatorChange={setPredator}
                 onPreyChange={setPrey}
+                onContentLaneChange={setContentLane}
                 onWeatherChange={setWeather}
                 onDepthModeChange={setDepthMode}
                 onHabitatChange={setHabitat}

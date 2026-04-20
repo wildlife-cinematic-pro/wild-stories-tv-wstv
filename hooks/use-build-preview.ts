@@ -5,6 +5,11 @@ import type { Dispatch, SetStateAction } from "react";
 
 import { buildOpeningFrameInput } from "@/lib/build-package";
 import {
+  applyContentLaneEnvironmentBias,
+  getLaneBiasedArc,
+  rankPreyOptionsForContentLane,
+} from "@/lib/content-lanes";
+import {
   buildAutoSceneDescription,
   normalizeArcSuggestion,
   normalizeDepthSuggestion,
@@ -31,6 +36,7 @@ import { habitatPromptMap } from "@/lib/habitat-presets";
 
 import type {
   Arc,
+  ContentLane,
   CustomPredatorForm,
   DepthMode,
   DurationLane,
@@ -55,6 +61,8 @@ type UseBuildPreviewInput = {
   predator: string;
   prey: string;
   arc: Arc;
+  arcOverride?: Arc | null;
+  contentLane: ContentLane;
   habitat: HabitatPreset;
   weather: Weather;
   depthMode: DepthMode;
@@ -90,6 +98,8 @@ export function useBuildPreview({
   predator,
   prey,
   arc,
+  arcOverride,
+  contentLane,
   habitat,
   weather,
   depthMode,
@@ -165,9 +175,25 @@ export function useBuildPreview({
     );
   }, [predator, lionFallback, customPredators]);
 
-  const finalEnvironment =
+  const preyOptions = useMemo(
+    () => rankPreyOptionsForContentLane(contentLane, predator, preset.prey),
+    [contentLane, predator, preset.prey]
+  );
+
+  const baseEnvironment =
     habitat === "Auto"
       ? suggestHabitat(predator, prey, preset.environment)
+      : habitatPromptMap[habitat];
+
+  const finalEnvironment =
+    habitat === "Auto"
+      ? applyContentLaneEnvironmentBias(
+          contentLane,
+          predator,
+          prey,
+          baseEnvironment,
+          arcOverride ?? (suggestArc(predator, prey, arc) as Arc)
+        )
       : habitatPromptMap[habitat];
 
   const mediaSuggestedArc = useMemo(
@@ -176,8 +202,15 @@ export function useBuildPreview({
   );
 
   const previewArc = useMemo(
-    () => suggestArc(predator, prey, arc) as Arc,
-    [predator, prey, arc]
+    () =>
+      arcOverride ??
+      getLaneBiasedArc(
+        contentLane,
+        predator,
+        prey,
+        suggestArc(predator, prey, arc) as Arc
+      ),
+    [contentLane, predator, prey, arc, arcOverride]
   );
 
   const autoSceneDescription = useMemo(
@@ -243,22 +276,30 @@ export function useBuildPreview({
   }, [mediaAnalysis, weather, depthMode, setWeather, setDepthMode]);
 
   useEffect(() => {
-    if (!preset.prey.length) return;
+    if (!preyOptions.length) return;
 
-    const nextPrey = preset.prey.includes(prey) ? prey : preset.prey[0];
+    const nextPrey = preyOptions.includes(prey) ? prey : preyOptions[0];
     if (prey !== nextPrey) {
       setPrey(nextPrey);
       return;
     }
 
-    const suggestedArc =
-      mediaSuggestedArc ?? (suggestArc(predator, nextPrey, preset.defaultArc) as Arc);
+    if (arcOverride) return;
+
+    const suggestedArc = getLaneBiasedArc(
+      contentLane,
+      predator,
+      nextPrey,
+      (mediaSuggestedArc ?? suggestArc(predator, nextPrey, preset.defaultArc)) as Arc
+    );
     if (arc !== suggestedArc) setArc(suggestedArc);
   }, [
+    contentLane,
     predator,
     prey,
     arc,
-    preset.prey,
+    arcOverride,
+    preyOptions,
     preset.defaultArc,
     mediaSuggestedArc,
     setPrey,
@@ -269,22 +310,24 @@ export function useBuildPreview({
     durationLane === "long" ? "long-hybrid-4-shot" : "4-shot";
   const captionMode = marketMode === "US_ONLY" ? "us-only" : "default";
   const previewHooks = useMemo(
-    () => build2026Hook(predator, prey, previewArc),
-    [predator, prey, previewArc]
+    () => build2026Hook(predator, prey, previewArc, { contentLane }),
+    [contentLane, predator, prey, previewArc]
   );
   const previewShortCaption = useMemo(
     () =>
       buildShortCaption(predator, prey, finalEnvironment, previewArc, {
         mode: captionMode,
+        contentLane,
       }),
-    [predator, prey, finalEnvironment, previewArc, captionMode]
+    [contentLane, predator, prey, finalEnvironment, previewArc, captionMode]
   );
   const previewLongCaption = useMemo(
     () =>
       buildLongCaption(predator, prey, finalEnvironment, previewArc, {
         mode: captionMode,
+        contentLane,
       }),
-    [predator, prey, finalEnvironment, previewArc, captionMode]
+    [contentLane, predator, prey, finalEnvironment, previewArc, captionMode]
   );
   const previewCaption = useMemo(
     () =>
@@ -297,8 +340,9 @@ export function useBuildPreview({
     () =>
       buildHashtags(predator, prey, previewArc, {
         count: 5,
+        contentLane,
       }),
-    [predator, prey, previewArc]
+    [contentLane, predator, prey, previewArc]
   );
   const previewTags = useMemo(
     () => buildTags(predator, prey, previewArc),
@@ -334,11 +378,13 @@ export function useBuildPreview({
       buildUSViewsModeReport({
         durationLane,
         hookFamily: hookMode === "all" ? undefined : hookMode,
+        contentLane,
         concept: {
           predator,
           prey,
           environment: finalEnvironment,
           arc: previewArc,
+          contentLane,
         },
         openingFrame: previewOpeningFrameInput,
         caption: previewCaption,
@@ -348,6 +394,7 @@ export function useBuildPreview({
     [
       durationLane,
       hookMode,
+      contentLane,
       predator,
       prey,
       finalEnvironment,
@@ -360,8 +407,11 @@ export function useBuildPreview({
   );
   const previewHookFamily = previewUSViewsModeReport.hookFamily;
   const previewPrimaryHook = useMemo(
-    () => build2026HookByFamily(predator, prey, previewArc, previewHookFamily),
-    [predator, prey, previewArc, previewHookFamily]
+    () =>
+      build2026HookByFamily(predator, prey, previewArc, previewHookFamily, {
+        contentLane,
+      }),
+    [contentLane, predator, prey, previewArc, previewHookFamily]
   );
   const previewHook2026 = useMemo(
     () => [
@@ -399,6 +449,7 @@ export function useBuildPreview({
           prey,
           environment: finalEnvironment,
           arc: previewArc,
+          contentLane,
         },
         openingFrame: previewOpeningFrameInput,
         packaging: {
@@ -424,6 +475,7 @@ export function useBuildPreview({
       prey,
       finalEnvironment,
       previewArc,
+      contentLane,
       previewOpeningFrameInput,
       previewCaption,
       previewHashtagList,
@@ -433,6 +485,7 @@ export function useBuildPreview({
 
   return {
     preset,
+    preyOptions,
     finalEnvironment,
     previewArc,
     selectedPipelineStyle,

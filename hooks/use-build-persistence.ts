@@ -10,10 +10,12 @@ import {
   writeShareState,
 } from "@/lib/storage";
 import { KLING_MODELS, RUNWAY_MODELS } from "@/lib/model-specs";
+import { isContentLane } from "@/lib/content-lanes";
 
 import type {
   AIProvider,
   Arc,
+  ContentLane,
   DepthMode,
   HabitatPreset,
   KlingModel,
@@ -26,6 +28,7 @@ type UseBuildPersistenceInput = {
   predator: string;
   prey: string;
   arc: Arc;
+  contentLane: ContentLane;
   weather: Weather;
   depthMode: DepthMode;
   habitat: HabitatPreset;
@@ -42,6 +45,7 @@ type UseBuildPersistenceInput = {
   setPredator: Dispatch<SetStateAction<string>>;
   setPrey: Dispatch<SetStateAction<string>>;
   setArc: Dispatch<SetStateAction<Arc>>;
+  setContentLane: Dispatch<SetStateAction<ContentLane>>;
   setWeather: Dispatch<SetStateAction<Weather>>;
   setDepthMode: Dispatch<SetStateAction<DepthMode>>;
   setHabitat: Dispatch<SetStateAction<HabitatPreset>>;
@@ -61,6 +65,7 @@ export function useBuildPersistence({
   predator,
   prey,
   arc,
+  contentLane,
   weather,
   depthMode,
   habitat,
@@ -77,6 +82,7 @@ export function useBuildPersistence({
   setPredator,
   setPrey,
   setArc,
+  setContentLane,
   setWeather,
   setDepthMode,
   setHabitat,
@@ -97,6 +103,9 @@ export function useBuildPersistence({
     if (shared.predator) setPredator(shared.predator);
     if (shared.prey) setPrey(shared.prey);
     if (shared.arc) setArc(shared.arc as Arc);
+    if (shared.contentLane && isContentLane(shared.contentLane)) {
+      setContentLane(shared.contentLane);
+    }
     if (shared.weather) setWeather(shared.weather);
     if (shared.depthMode) setDepthMode(shared.depthMode);
     if (shared.habitat) setHabitat(shared.habitat);
@@ -124,6 +133,9 @@ export function useBuildPersistence({
     if (saved?.microMotion !== undefined) setMicroMotion(saved.microMotion);
     if (saved?.heroVeo !== undefined) setHeroVeo(saved.heroVeo);
     if (saved?.habitat) setHabitat(saved.habitat);
+    if (saved?.contentLane && isContentLane(saved.contentLane)) {
+      setContentLane(saved.contentLane);
+    }
 
     const autoApply = (saved as Record<string, unknown>)?.autoApplyHighDrift;
     if (typeof autoApply === "boolean") setAutoApplyHighDrift(autoApply);
@@ -131,6 +143,7 @@ export function useBuildPersistence({
     setPredator,
     setPrey,
     setArc,
+    setContentLane,
     setWeather,
     setDepthMode,
     setHabitat,
@@ -159,6 +172,7 @@ export function useBuildPersistence({
       heroVeo,
       autoApplyHighDrift,
       habitat,
+      contentLane,
     });
   }, [
     activeProvider,
@@ -172,9 +186,10 @@ export function useBuildPersistence({
     heroVeo,
     autoApplyHighDrift,
     habitat,
+    contentLane,
   ]);
 
   useEffect(() => {
-    writeShareState({ predator, prey, arc, weather, depthMode, habitat });
-  }, [predator, prey, arc, weather, depthMode, habitat]);
+    writeShareState({ predator, prey, arc, weather, depthMode, habitat, contentLane });
+  }, [predator, prey, arc, weather, depthMode, habitat, contentLane]);
 }

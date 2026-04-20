@@ -14,22 +14,34 @@
 
 import type {
   Arc,
+  ContentLane,
   PlatformPack,
   FacebookPack,
   InstagramPack,
   TikTokPack,
   YouTubeShortsPack,
 } from "@/types";
+import {
+  buildContentLaneHooks,
+  buildContentLaneLongCaptionLead,
+  buildContentLaneShortCaptionLead,
+  getContentLaneHashtag,
+} from "@/lib/content-lanes";
 
 const HOOK_FAMILY_ORDER = ["danger", "curiosity", "reversal"] as const;
 
 export type HookFamilySupport = (typeof HOOK_FAMILY_ORDER)[number];
 export type CaptionMode = "default" | "us-only";
+export type HookBuildOptions = {
+  contentLane?: ContentLane;
+};
 export type CaptionOptions = {
   mode?: CaptionMode;
+  contentLane?: ContentLane;
 };
 export type HashtagOptions = {
   count?: number;
+  contentLane?: ContentLane;
 };
 
 // ─────────────────────────────────────────────────────────────
@@ -342,8 +354,14 @@ export function buildHook(predator: string, prey: string, arc: Arc): string {
 }
 
 /** 3-variant 2026 hooks for A/B testing. Order: danger, curiosity, reversal. */
-export function build2026Hook(predator: string, prey: string, arc: Arc): string[] {
+export function build2026Hook(
+  predator: string,
+  prey: string,
+  arc: Arc,
+  options: HookBuildOptions = {}
+): string[] {
   const hooks =
+    buildContentLaneHooks(options.contentLane ?? "Auto", predator, prey, arc) ??
     HOOKS_2026[arc]?.(predator, prey) ?? [
       `${predator} and ${prey} met too close. One move changed the whole read.`,
       `The space looked open until it closed all at once.`,
@@ -358,9 +376,10 @@ export function build2026HookByFamily(
   predator: string,
   prey: string,
   arc: Arc,
-  family: HookFamilySupport
+  family: HookFamilySupport,
+  options: HookBuildOptions = {}
 ): string {
-  const hooks = build2026Hook(predator, prey, arc);
+  const hooks = build2026Hook(predator, prey, arc, options);
   const index = HOOK_FAMILY_ORDER.indexOf(family);
   return hooks[index] ?? hooks[0] ?? buildHook(predator, prey, arc);
 }
@@ -386,6 +405,17 @@ function finalizeShortCaption(raw: string): string {
   return trimAtWordBoundary(firstSentence, 150);
 }
 
+function prependContentLaneLead(raw: string, lead: string | null): string {
+  if (!lead) return raw;
+  const compactLead = normalizeCopy(lead);
+  const compactRaw = normalizeCopy(raw);
+  if (compactRaw.toLowerCase().startsWith(compactLead.toLowerCase())) {
+    return compactRaw;
+  }
+
+  return `${compactLead} ${compactRaw}`.replace(/\s+/g, " ").trim();
+}
+
 /** Short caption variant — publish-safe by default, trimmed to 150 chars */
 export function buildCaption(
   predator: string,
@@ -406,7 +436,17 @@ export function buildCaption(
       ? raw.replace(/\s+—\s+/g, ": ")
       : raw;
 
-  return finalizeShortCaption(caption);
+  return finalizeShortCaption(
+    prependContentLaneLead(
+      caption,
+      buildContentLaneShortCaptionLead(
+        options.contentLane ?? "Auto",
+        predator,
+        prey,
+        arc
+      )
+    )
+  );
 }
 
 /** Long caption variant — multi-paragraph story structure, no trimming */
@@ -419,14 +459,22 @@ export function build2026Caption(
 ): string {
   const cleanEnv = sanitizeSocialEnv(env);
 
-  return (
+  const baseCaption =
     (options.mode === "us-only" ? CAPTIONS_2026_US_ONLY[arc] : CAPTIONS_2026[arc])?.(
       predator,
       prey,
       cleanEnv
     ) ??
-    `${predator} and ${prey} collide in the ${cleanEnv}. The moment feels immediate, physical, and unforgiving from the first move.\n\nWhich part of the sequence changed the outcome for you?`
+    `${predator} and ${prey} collide in the ${cleanEnv}. The moment feels immediate, physical, and unforgiving from the first move.\n\nWhich part of the sequence changed the outcome for you?`;
+
+  const laneLead = buildContentLaneLongCaptionLead(
+    options.contentLane ?? "Auto",
+    predator,
+    prey,
+    arc
   );
+
+  return laneLead ? `${laneLead}\n\n${baseCaption}` : baseCaption;
 }
 
 export function buildShortCaption(
@@ -474,11 +522,17 @@ export function buildHashtags(
   void options;
 
   const baseTags = BASE_HASHTAGS[arc] ?? ["#wildlife", getArcHashtag(arc), "#usa"];
+  const laneTag = getContentLaneHashtag(
+    options.contentLane ?? "Auto",
+    predator,
+    prey,
+    arc
+  );
   const tags = [
     baseTags[0] ?? "#wildlife",
     toHashtag(predator),
     toHashtag(prey),
-    getArcHashtag(arc),
+    laneTag ?? getArcHashtag(arc),
     baseTags[2] ?? "#usa",
   ].filter(Boolean);
 
@@ -509,13 +563,23 @@ export function buildPlatformPack(
   predator: string,
   prey: string,
   arc: Arc,
-  env: string
+  env: string,
+  contentLane: ContentLane = "Auto"
 ): PlatformPack {
   const cleanEnv = sanitizeSocialEnv(env);
-  const hooks = build2026Hook(predator, prey, arc);
-  const shortCaption = buildShortCaption(predator, prey, cleanEnv, arc, { mode: "us-only" });
-  const longCaption = buildLongCaption(predator, prey, cleanEnv, arc, { mode: "us-only" });
-  const hashtags = buildHashtags(predator, prey, arc, { count: 5 });
+  const hooks = build2026Hook(predator, prey, arc, { contentLane });
+  const shortCaption = buildShortCaption(predator, prey, cleanEnv, arc, {
+    mode: "us-only",
+    contentLane,
+  });
+  const longCaption = buildLongCaption(predator, prey, cleanEnv, arc, {
+    mode: "us-only",
+    contentLane,
+  });
+  const hashtags = buildHashtags(predator, prey, arc, {
+    count: 5,
+    contentLane,
+  });
   const tags = buildTags(predator, prey, arc);
 
   const facebook: FacebookPack = {
