@@ -4,6 +4,7 @@ type LaneCopyBuilder = (predator: string, prey: string) => string;
 
 type ContentLaneConfig = {
   preferredArcs: Arc[];
+  nearbyArcs: Arc[];
   preferredHabitats: HabitatPreset[];
   preferredHookFamily: HookFamily;
   laneTag: string;
@@ -47,6 +48,7 @@ export const contentLaneOptions: ContentLane[] = [
 const CONTENT_LANE_CONFIG: Record<Exclude<ContentLane, "Auto">, ContentLaneConfig> = {
   "Pack Hunt": {
     preferredArcs: ["Pack hunting strategy"],
+    nearbyArcs: ["Pack hunting strategy", "Chase and takedown", "Escape from danger"],
     preferredHabitats: [
       "Open Prairie Grassland",
       "Rocky Mountain Meadow",
@@ -78,6 +80,11 @@ const CONTENT_LANE_CONFIG: Record<Exclude<ContentLane, "Auto">, ContentLaneConfi
   },
   Defender: {
     preferredArcs: ["Defender stands ground"],
+    nearbyArcs: [
+      "Defender stands ground",
+      "Territory dominance battle",
+      "Giant vs giant clash",
+    ],
     preferredHabitats: [
       "Forest Clearing",
       "Open Prairie Grassland",
@@ -117,6 +124,7 @@ const CONTENT_LANE_CONFIG: Record<Exclude<ContentLane, "Auto">, ContentLaneConfi
   },
   "Fishing Strike": {
     preferredArcs: ["Ambush attack", "Chase and takedown"],
+    nearbyArcs: ["Ambush attack", "Chase and takedown", "Escape from danger"],
     preferredHabitats: [
       "Riverbank Reeds",
       "Everglades Marsh",
@@ -162,6 +170,11 @@ const CONTENT_LANE_CONFIG: Record<Exclude<ContentLane, "Auto">, ContentLaneConfi
   },
   "Rut Battle": {
     preferredArcs: ["Territory dominance battle", "Giant vs giant clash"],
+    nearbyArcs: [
+      "Territory dominance battle",
+      "Giant vs giant clash",
+      "Defender stands ground",
+    ],
     preferredHabitats: [
       "Rocky Mountain Meadow",
       "Open Prairie Grassland",
@@ -200,6 +213,7 @@ const CONTENT_LANE_CONFIG: Record<Exclude<ContentLane, "Auto">, ContentLaneConfi
   },
   Escape: {
     preferredArcs: ["Escape from danger"],
+    nearbyArcs: ["Escape from danger", "Ambush attack", "Chase and takedown"],
     preferredHabitats: [
       "Open Prairie Grassland",
       "Forest Clearing",
@@ -254,6 +268,16 @@ export function isContentLane(value: string): value is ContentLane {
 
 export function getPreferredArcsForContentLane(contentLane: ContentLane): Arc[] {
   return getContentLaneConfig(contentLane)?.preferredArcs ?? [];
+}
+
+export function getNearbyArcsForContentLane(contentLane: ContentLane): Arc[] {
+  return getContentLaneConfig(contentLane)?.nearbyArcs ?? [];
+}
+
+export function getPreferredHabitatsForContentLane(
+  contentLane: ContentLane
+): HabitatPreset[] {
+  return getContentLaneConfig(contentLane)?.preferredHabitats ?? [];
 }
 
 export function getPreferredHookFamilyForContentLane(
@@ -423,4 +447,106 @@ export function getUSAudienceLaneBonus(input: {
   if (includesKeyword(input.environment, config.habitatKeywords)) bonus += 2;
 
   return Math.min(8, bonus);
+}
+
+export function scoreContentLaneFit(input: {
+  contentLane: ContentLane;
+  predator: string;
+  prey: string;
+  arc: Arc;
+  habitat: HabitatPreset;
+  hookFamily: HookFamily;
+  environment: string;
+}): number {
+  if (input.contentLane === "Auto") return 84;
+
+  const config = getContentLaneConfig(input.contentLane);
+  if (!config) return 84;
+
+  let score = isContentLaneCompatible(
+    input.contentLane,
+    input.predator,
+    input.prey,
+    input.arc
+  )
+    ? 74
+    : 62;
+
+  if (config.preferredArcs.includes(input.arc)) score += 12;
+  else if (config.nearbyArcs.includes(input.arc)) score += 8;
+
+  if (config.preferredHabitats.includes(input.habitat)) score += 8;
+  else if (input.habitat === "Auto") score += 5;
+
+  if (config.preferredHookFamily === input.hookFamily) score += 6;
+  if (includesKeyword(input.environment, config.habitatKeywords)) score += 6;
+  if (includesKeyword(input.predator, config.predatorKeywords)) score += 4;
+  if (includesKeyword(input.prey, config.preyKeywords)) score += 4;
+
+  return Math.min(100, score);
+}
+
+export function getContentLaneWinnerLabels(contentLane: ContentLane): {
+  overall: string;
+  fastPublish: string;
+  spotlight: string;
+  realism: string;
+  summary: string;
+} {
+  switch (contentLane) {
+    case "Pack Hunt":
+      return {
+        overall: "Best pack overall",
+        fastPublish: "Best chase pressure",
+        spotlight: "Best pack opener",
+        realism: "Best grounded pursuit",
+        summary:
+          "Variants stay inside readable group pressure, chase lanes, and nearby escape beats.",
+      };
+    case "Defender":
+      return {
+        overall: "Best defender overall",
+        fastPublish: "Best warning read",
+        spotlight: "Best defender tension",
+        realism: "Best grounded stand",
+        summary:
+          "Variants stay inside hold-ground tension, warning-step posture, and realistic defender pressure.",
+      };
+    case "Fishing Strike":
+      return {
+        overall: "Best strike overall",
+        fastPublish: "Best fast strike",
+        spotlight: "Best fishing opener",
+        realism: "Best grounded waterline",
+        summary:
+          "Variants stay inside waterline timing, shallow strike setups, and realistic takedown beats.",
+      };
+    case "Rut Battle":
+      return {
+        overall: "Best rut overall",
+        fastPublish: "Best dominance burst",
+        spotlight: "Best rut clash",
+        realism: "Best grounded rut read",
+        summary:
+          "Variants stay inside dominance posture, clash readability, and rut-season field pressure.",
+      };
+    case "Escape":
+      return {
+        overall: "Best escape overall",
+        fastPublish: "Best breakaway burst",
+        spotlight: "Best escape payoff",
+        realism: "Best grounded survival",
+        summary:
+          "Variants stay inside near-miss tension, survival spacing, and believable breakaway payoffs.",
+      };
+    default:
+      return {
+        overall: "Best overall",
+        fastPublish: "Best for fast publish",
+        spotlight: "Strongest opening",
+        realism: "Best realism",
+        summary:
+          "Variants explore nearby hook, arc, habitat, and duration shifts before the final package build.",
+      };
+  }
 }
