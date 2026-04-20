@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 import type {
   AIProvider,
@@ -20,6 +20,7 @@ import type {
   KlingModel,
   PromptVersion,
   HabitatPreset,
+  SavedWorkflowPreset,
 } from "@/types";
 
 import {
@@ -58,6 +59,7 @@ import {
 import { useBuildPersistence } from "@/hooks/use-build-persistence";
 import { useConceptVariantLab } from "@/hooks/use-concept-variant-lab";
 import { useCustomAnimals } from "@/hooks/use-custom-animals";
+import { useWorkflowPresets } from "@/hooks/use-workflow-presets";
 
 import SettingsDrawer from "@/components/SettingsDrawer";
 import WSTVWorkflowDiagram from "@/components/WSTVWorkflowDiagram";
@@ -152,6 +154,42 @@ export default function Page() {
   const [fastPublishMode, setFastPublishMode] = useState(true);
   const [strictOriginalityGuard, setStrictOriginalityGuard] = useState(true);
   const [publishFlowSummary, setPublishFlowSummary] = useState<PublishFlowSummary | null>(null);
+
+  const applyWorkflowPreset = useCallback((preset: SavedWorkflowPreset) => {
+    const snapshot = preset.snapshot;
+
+    setPredator(snapshot.predator);
+    setPrey(snapshot.prey);
+    setContentLane(snapshot.contentLane);
+    setArc(snapshot.arc);
+    setConceptArcOverride(null);
+    setWeather(snapshot.weather);
+    setHabitat(snapshot.habitat);
+    setDepthMode(snapshot.depthMode);
+    setEmotionalTone(snapshot.emotionalTone);
+    setAnimalVibe(snapshot.animalVibe);
+    setRunwayModel(snapshot.runwayModel);
+    setKlingModel(snapshot.klingModel);
+    setRealismMode(snapshot.realismMode);
+    setMotionOnlyI2V(snapshot.motionOnlyI2V);
+    setReferenceLock(snapshot.referenceLock);
+    setSingleActionRule(snapshot.singleActionRule);
+    setMicroMotion(snapshot.microMotion);
+    setHeroVeo(snapshot.heroVeo);
+    setAutoApplyHighDrift(snapshot.autoApplyHighDrift);
+    setSceneDescription(snapshot.sceneDescription);
+    setSceneDescriptionMode(snapshot.sceneDescriptionMode);
+    setSceneDescriptionTouched(snapshot.sceneDescriptionTouched);
+    setSceneDescriptionVariant(0);
+    setActiveProvider(snapshot.activeProvider);
+    setDurationLane(snapshot.durationLane);
+    setHookMode(snapshot.hookMode);
+    setFastPublishMode(snapshot.fastPublishMode);
+    setStrictOriginalityGuard(snapshot.strictOriginalityGuard);
+    setPkg(null);
+    setPublishFlowSummary(null);
+    setError("");
+  }, []);
 
   function handleResetDefaults() {
     setPredator(DEFAULT_PREDATOR);
@@ -284,6 +322,70 @@ export default function Page() {
     setSceneDescriptionMode,
     setSceneDescriptionTouched,
     setSceneDescriptionVariant,
+  });
+
+  const currentWorkflowPresetSnapshot = useMemo(
+    () => ({
+      predator,
+      prey,
+      contentLane,
+      arc: previewArc,
+      habitat,
+      weather,
+      durationLane,
+      fastPublishMode,
+      strictOriginalityGuard,
+      hookMode,
+      depthMode,
+      emotionalTone,
+      animalVibe,
+      realismMode,
+      motionOnlyI2V,
+      referenceLock,
+      singleActionRule,
+      microMotion,
+      heroVeo,
+      autoApplyHighDrift,
+      runwayModel,
+      klingModel,
+      activeProvider,
+      sceneDescriptionMode,
+      sceneDescription,
+      sceneDescriptionTouched,
+    }),
+    [
+      activeProvider,
+      animalVibe,
+      autoApplyHighDrift,
+      contentLane,
+      depthMode,
+      durationLane,
+      emotionalTone,
+      fastPublishMode,
+      habitat,
+      heroVeo,
+      hookMode,
+      klingModel,
+      microMotion,
+      motionOnlyI2V,
+      predator,
+      prey,
+      previewArc,
+      realismMode,
+      referenceLock,
+      runwayModel,
+      sceneDescription,
+      sceneDescriptionMode,
+      sceneDescriptionTouched,
+      singleActionRule,
+      strictOriginalityGuard,
+      weather,
+    ]
+  );
+
+  const workflowPresetControls = useWorkflowPresets({
+    currentSnapshot: currentWorkflowPresetSnapshot,
+    onLoadPreset: applyWorkflowPreset,
   });
 
   useEffect(() => {
@@ -782,6 +884,12 @@ export default function Page() {
                 customPredatorCount={customPredators.length}
                 finalEnvironment={finalEnvironment}
                 driftRisk={preset.driftRisk}
+                workflowPresets={workflowPresetControls.presets}
+                activeWorkflowPresetId={workflowPresetControls.activePresetId}
+                defaultWorkflowPresetId={workflowPresetControls.defaultPresetId}
+                workflowPresetName={workflowPresetControls.presetName}
+                suggestedWorkflowPresetName={workflowPresetControls.suggestedPresetName}
+                activeWorkflowPresetIsDirty={workflowPresetControls.activePresetIsDirty}
                 onPredatorChange={setPredator}
                 onPreyChange={setPrey}
                 onContentLaneChange={setContentLane}
@@ -792,6 +900,13 @@ export default function Page() {
                 onAnimalVibeChange={setAnimalVibe}
                 onResetDefaults={handleResetDefaults}
                 onContinue={() => setStep(2)}
+                onWorkflowPresetNameChange={workflowPresetControls.setPresetName}
+                onSaveWorkflowPreset={workflowPresetControls.saveCurrentAsPreset}
+                onUpdateWorkflowPreset={workflowPresetControls.updatePresetFromCurrent}
+                onLoadWorkflowPreset={workflowPresetControls.loadPreset}
+                onDeleteWorkflowPreset={workflowPresetControls.deletePreset}
+                onSetDefaultWorkflowPreset={workflowPresetControls.setPresetAsDefault}
+                onClearDefaultWorkflowPreset={workflowPresetControls.clearDefaultPreset}
                 onOpenCustomAnimal={() =>
                   openCustomAnimalModal({
                     defaultArc: arc,

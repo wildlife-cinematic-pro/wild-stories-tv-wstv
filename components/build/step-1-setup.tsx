@@ -1,5 +1,6 @@
 "use client";
 
+import WorkflowPresetsPanel from "@/components/build/workflow-presets-panel";
 import { contentLaneOptions } from "@/lib/content-lanes";
 import {
   habitatOptions,
@@ -16,6 +17,7 @@ import type {
   EmotionalTone,
   HabitatPreset,
   PredatorInfo,
+  SavedWorkflowPreset,
   Weather,
 } from "@/types";
 
@@ -34,6 +36,12 @@ type Step1SetupProps = {
   customPredatorCount: number;
   finalEnvironment: string;
   driftRisk: PredatorInfo["driftRisk"];
+  workflowPresets: SavedWorkflowPreset[];
+  activeWorkflowPresetId: string | null;
+  defaultWorkflowPresetId?: string;
+  workflowPresetName: string;
+  suggestedWorkflowPresetName: string;
+  activeWorkflowPresetIsDirty: boolean;
   onPredatorChange: (value: string) => void;
   onPreyChange: (value: string) => void;
   onContentLaneChange: (value: ContentLane) => void;
@@ -45,6 +53,13 @@ type Step1SetupProps = {
   onResetDefaults: () => void;
   onContinue: () => void;
   onOpenCustomAnimal: () => void;
+  onWorkflowPresetNameChange: (value: string) => void;
+  onSaveWorkflowPreset: (name?: string) => void;
+  onUpdateWorkflowPreset: (id?: string, name?: string) => void;
+  onLoadWorkflowPreset: (id: string) => void;
+  onDeleteWorkflowPreset: (id: string) => void;
+  onSetDefaultWorkflowPreset: (id: string) => void;
+  onClearDefaultWorkflowPreset: () => void;
 };
 
 export default function Step1Setup({
@@ -62,6 +77,12 @@ export default function Step1Setup({
   customPredatorCount,
   finalEnvironment,
   driftRisk,
+  workflowPresets,
+  activeWorkflowPresetId,
+  defaultWorkflowPresetId,
+  workflowPresetName,
+  suggestedWorkflowPresetName,
+  activeWorkflowPresetIsDirty,
   onPredatorChange,
   onPreyChange,
   onContentLaneChange,
@@ -73,10 +94,33 @@ export default function Step1Setup({
   onResetDefaults,
   onContinue,
   onOpenCustomAnimal,
+  onWorkflowPresetNameChange,
+  onSaveWorkflowPreset,
+  onUpdateWorkflowPreset,
+  onLoadWorkflowPreset,
+  onDeleteWorkflowPreset,
+  onSetDefaultWorkflowPreset,
+  onClearDefaultWorkflowPreset,
 }: Step1SetupProps) {
   return (
     <div className="grid gap-6 xl:grid-cols-[minmax(0,1fr)_340px]">
       <div className="space-y-6">
+        <WorkflowPresetsPanel
+          presets={workflowPresets}
+          activePresetId={activeWorkflowPresetId}
+          defaultPresetId={defaultWorkflowPresetId}
+          activePresetIsDirty={activeWorkflowPresetIsDirty}
+          presetName={workflowPresetName}
+          suggestedPresetName={suggestedWorkflowPresetName}
+          onPresetNameChange={onWorkflowPresetNameChange}
+          onSavePreset={onSaveWorkflowPreset}
+          onUpdatePreset={onUpdateWorkflowPreset}
+          onLoadPreset={onLoadWorkflowPreset}
+          onDeletePreset={onDeleteWorkflowPreset}
+          onSetDefaultPreset={onSetDefaultWorkflowPreset}
+          onClearDefaultPreset={onClearDefaultWorkflowPreset}
+        />
+
         <section className="rounded-2xl border border-gray-200 bg-white p-5 sm:p-6">
           <h3 className="mb-4 text-[11px] font-semibold uppercase tracking-[0.1em] text-gray-400">
             Animals

@@ -23,6 +23,7 @@
 import type {
   HistoryEntry,
   SavedPrompt,
+  SavedWorkflowPreset,
   PromptVersion,
   AIProvider,
   ContentLane,
@@ -39,6 +40,10 @@ import type {
 
 import { weatherOptions, depthModes, habitatOptions } from "@/lib/model-specs";
 import { contentLaneOptions, isContentLane } from "@/lib/content-lanes";
+import {
+  getSafeDefaultWorkflowPresetId,
+  normalizeWorkflowPresets,
+} from "@/lib/workflow-presets";
 
 // ─────────────────────────────────────────────────────────────
 // KEYS & LIMITS
@@ -48,6 +53,8 @@ const SETTINGS_KEY = "wildlife_settings_v3";
 const CUSTOM_PREDATORS_KEY = "wildlife_custom_predators_v1";
 const FAVORITES_KEY = "wildlife_favorites_v1";
 const VERSIONS_KEY = "wildlife_versions_v1";
+const WORKFLOW_PRESETS_KEY = "wildlife_workflow_presets_v1";
+const DEFAULT_WORKFLOW_PRESET_KEY = "wildlife_default_workflow_preset_v1";
 
 export const MAX_HISTORY = 20;
 export const MAX_FAVORITES = 50;
@@ -259,6 +266,53 @@ export function writeCustomPredatorMap(data: Record<string, unknown>): void {
 }
 
 // ─────────────────────────────────────────────────────────────
+// WORKFLOW PRESETS
+// ─────────────────────────────────────────────────────────────
+
+export function readWorkflowPresets(): SavedWorkflowPreset[] {
+  if (typeof window === "undefined") return [];
+  try {
+    const raw = localStorage.getItem(WORKFLOW_PRESETS_KEY);
+    return raw ? normalizeWorkflowPresets(safeJsonParse<unknown>(raw)) : [];
+  } catch {
+    return [];
+  }
+}
+
+export function writeWorkflowPresets(presets: SavedWorkflowPreset[]): void {
+  if (typeof window === "undefined") return;
+  try {
+    localStorage.setItem(
+      WORKFLOW_PRESETS_KEY,
+      JSON.stringify(normalizeWorkflowPresets(presets))
+    );
+  } catch {}
+}
+
+export function readDefaultWorkflowPresetId(
+  presets: SavedWorkflowPreset[] = readWorkflowPresets()
+): string | undefined {
+  if (typeof window === "undefined") return undefined;
+  try {
+    const raw = localStorage.getItem(DEFAULT_WORKFLOW_PRESET_KEY);
+    return getSafeDefaultWorkflowPresetId(presets, raw);
+  } catch {
+    return undefined;
+  }
+}
+
+export function writeDefaultWorkflowPresetId(id: string | undefined): void {
+  if (typeof window === "undefined") return;
+  try {
+    if (id) {
+      localStorage.setItem(DEFAULT_WORKFLOW_PRESET_KEY, id);
+    } else {
+      localStorage.removeItem(DEFAULT_WORKFLOW_PRESET_KEY);
+    }
+  } catch {}
+}
+
+// ─────────────────────────────────────────────────────────────
 // FAVORITES
 // ─────────────────────────────────────────────────────────────
 
@@ -325,6 +379,12 @@ function isDepth(x: string): x is DepthMode {
 
 function isHabitatPreset(x: string): x is HabitatPreset {
   return (habitatOptions as readonly string[]).includes(x);
+}
+
+export function hasShareStateInUrl(): boolean {
+  if (typeof window === "undefined") return false;
+  const sp = new URLSearchParams(window.location.search);
+  return Object.values(QS).some((key) => sp.has(key));
 }
 
 /** Read predator / prey / arc / weather / depth from URL params */
