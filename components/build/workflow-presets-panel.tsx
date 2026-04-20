@@ -3,16 +3,25 @@
 import { useMemo, useState } from "react";
 import type { ChangeEvent } from "react";
 
-import type { SavedWorkflowPreset } from "@/types";
+import type { SavedWorkflowPreset, SavedWorkflowPresetPack } from "@/types";
 
 type WorkflowPresetsPanelProps = {
   presets: SavedWorkflowPreset[];
+  presetPacks: SavedWorkflowPresetPack[];
   activePresetId: string | null;
+  activePresetPackId: string | null;
   defaultPresetId?: string;
   activePresetIsDirty: boolean;
   presetName: string;
+  packName: string;
+  packDescription: string;
+  packTagsText: string;
   suggestedPresetName: string;
   onPresetNameChange: (value: string) => void;
+  onPresetPackNameChange: (value: string) => void;
+  onPresetPackDescriptionChange: (value: string) => void;
+  onPresetPackTagsTextChange: (value: string) => void;
+  onActivePresetPackChange: (id: string | null) => void;
   onSavePreset: (name?: string) => void;
   onUpdatePreset: (id?: string, name?: string) => void;
   onLoadPreset: (id: string) => void;
@@ -22,7 +31,16 @@ type WorkflowPresetsPanelProps = {
   onExportPreset: (id: string) => void;
   onExportAllPresets: () => void;
   onImportPresets: (jsonText: string) => void;
+  onCreatePresetPack: (
+    presetIds: string[],
+    options: { name?: string; description?: string; tagsText?: string }
+  ) => void;
+  onDeletePresetPack: (id: string) => void;
+  onExportPresetPack: (id: string) => void;
+  onImportPresetPack: (jsonText: string) => void;
+  onApplyPresetPack: (id: string) => void;
   importStatus: string;
+  packStatus: string;
 };
 
 function formatPresetMeta(preset: SavedWorkflowPreset): string {
@@ -37,14 +55,28 @@ function formatPresetMeta(preset: SavedWorkflowPreset): string {
     .join(" - ");
 }
 
+function formatPackMeta(pack: SavedWorkflowPresetPack): string {
+  const tags = pack.tags?.length ? ` - ${pack.tags.join(", ")}` : "";
+  return `${pack.presets.length} preset${pack.presets.length === 1 ? "" : "s"}${tags}`;
+}
+
 export default function WorkflowPresetsPanel({
   presets,
+  presetPacks,
   activePresetId,
+  activePresetPackId,
   defaultPresetId,
   activePresetIsDirty,
   presetName,
+  packName,
+  packDescription,
+  packTagsText,
   suggestedPresetName,
   onPresetNameChange,
+  onPresetPackNameChange,
+  onPresetPackDescriptionChange,
+  onPresetPackTagsTextChange,
+  onActivePresetPackChange,
   onSavePreset,
   onUpdatePreset,
   onLoadPreset,
@@ -54,10 +86,19 @@ export default function WorkflowPresetsPanel({
   onExportPreset,
   onExportAllPresets,
   onImportPresets,
+  onCreatePresetPack,
+  onDeletePresetPack,
+  onExportPresetPack,
+  onImportPresetPack,
+  onApplyPresetPack,
   importStatus,
+  packStatus,
 }: WorkflowPresetsPanelProps) {
   const [selectedPresetId, setSelectedPresetId] = useState("");
+  const [selectedPackId, setSelectedPackId] = useState("");
+  const [selectedPackPresetIds, setSelectedPackPresetIds] = useState<string[]>([]);
   const [importText, setImportText] = useState("");
+  const [packImportText, setPackImportText] = useState("");
   const resolvedSelectedPresetId =
     selectedPresetId && presets.some((preset) => preset.id === selectedPresetId)
       ? selectedPresetId
@@ -72,9 +113,23 @@ export default function WorkflowPresetsPanel({
     () => presets.find((preset) => preset.id === activePresetId),
     [activePresetId, presets]
   );
+  const resolvedSelectedPackId =
+    selectedPackId && presetPacks.some((pack) => pack.id === selectedPackId)
+      ? selectedPackId
+      : activePresetPackId &&
+          presetPacks.some((pack) => pack.id === activePresetPackId)
+        ? activePresetPackId
+        : presetPacks[0]?.id ?? "";
+  const selectedPack = useMemo(
+    () => presetPacks.find((pack) => pack.id === resolvedSelectedPackId),
+    [presetPacks, resolvedSelectedPackId]
+  );
 
   const effectiveName = presetName.trim() || suggestedPresetName;
+  const effectivePackName = packName.trim() || "Untitled Preset Pack";
+  const effectivePackPresetIds = selectedPackPresetIds;
   const hasPresets = presets.length > 0;
+  const hasPresetPacks = presetPacks.length > 0;
 
   async function handleImportFile(event: ChangeEvent<HTMLInputElement>) {
     const file = event.currentTarget.files?.[0];
@@ -84,6 +139,24 @@ export default function WorkflowPresetsPanel({
     setImportText(text);
     onImportPresets(text);
     event.currentTarget.value = "";
+  }
+
+  async function handlePackImportFile(event: ChangeEvent<HTMLInputElement>) {
+    const file = event.currentTarget.files?.[0];
+    if (!file) return;
+
+    const text = await file.text();
+    setPackImportText(text);
+    onImportPresetPack(text);
+    event.currentTarget.value = "";
+  }
+
+  function togglePackPreset(id: string) {
+    setSelectedPackPresetIds((current) =>
+      current.includes(id)
+        ? current.filter((item) => item !== id)
+        : [...current, id]
+    );
   }
 
   return (
@@ -271,6 +344,225 @@ export default function WorkflowPresetsPanel({
               {importStatus}
             </span>
           )}
+        </div>
+      </div>
+
+      <div className="mt-4 rounded-2xl border border-gray-100 bg-white p-3.5">
+        <div className="mb-3 flex flex-wrap items-start justify-between gap-3">
+          <div>
+            <div className="text-[10px] font-semibold uppercase tracking-[0.1em] text-gray-400">
+              Preset Packs
+            </div>
+            <div className="mt-1 max-w-xl text-[11px] leading-relaxed text-gray-500">
+              Bundle multiple workflow presets into a named team pack, export
+              the pack, import a shared pack, then apply its presets safely.
+            </div>
+          </div>
+          <span className="rounded-full bg-gray-100 px-2.5 py-1 text-[10px] font-semibold text-gray-500">
+            {presetPacks.length} pack{presetPacks.length === 1 ? "" : "s"}
+          </span>
+        </div>
+
+        <div className="grid gap-3 lg:grid-cols-[minmax(0,1fr)_minmax(260px,0.85fr)]">
+          <div className="space-y-2">
+            <div className="grid gap-2 sm:grid-cols-2">
+              <input
+                value={packName}
+                onChange={(event) => onPresetPackNameChange(event.target.value)}
+                placeholder="USA Pack Hunt Starter Pack"
+                className="w-full rounded-xl border border-gray-200 bg-gray-50 px-3 py-2 text-xs font-medium text-gray-900 placeholder:text-gray-400 focus:border-gray-400 focus:outline-none"
+              />
+              <input
+                value={packTagsText}
+                onChange={(event) =>
+                  onPresetPackTagsTextChange(event.target.value)
+                }
+                placeholder="USA, fast publish, pack hunt"
+                className="w-full rounded-xl border border-gray-200 bg-gray-50 px-3 py-2 text-xs font-medium text-gray-900 placeholder:text-gray-400 focus:border-gray-400 focus:outline-none"
+              />
+            </div>
+            <textarea
+              value={packDescription}
+              onChange={(event) =>
+                onPresetPackDescriptionChange(event.target.value)
+              }
+              placeholder="Short note for the team about what this pack is best for..."
+              rows={2}
+              className="w-full resize-y rounded-xl border border-gray-200 bg-gray-50 px-3 py-2 text-xs text-gray-700 placeholder:text-gray-400 focus:border-gray-400 focus:outline-none"
+            />
+            <div className="rounded-xl border border-gray-100 bg-gray-50 p-2">
+              <div className="mb-1.5 flex flex-wrap items-center justify-between gap-2">
+                <span className="text-[10px] font-semibold uppercase tracking-[0.1em] text-gray-400">
+                  Pack presets
+                </span>
+                <div className="flex gap-2">
+                  <button
+                    type="button"
+                    onClick={() => setSelectedPackPresetIds(presets.map((preset) => preset.id))}
+                    disabled={!hasPresets}
+                    className="text-[10px] font-semibold text-gray-500 hover:text-gray-900 disabled:opacity-45"
+                  >
+                    Select All
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setSelectedPackPresetIds([])}
+                    disabled={!selectedPackPresetIds.length}
+                    className="text-[10px] font-semibold text-gray-500 hover:text-gray-900 disabled:opacity-45"
+                  >
+                    Clear
+                  </button>
+                </div>
+              </div>
+              <div className="max-h-32 space-y-1 overflow-y-auto pr-1">
+                {!hasPresets && (
+                  <p className="text-[11px] text-gray-400">
+                    Save presets first, then select them for a pack.
+                  </p>
+                )}
+                {presets.map((preset) => {
+                  const checked = effectivePackPresetIds.includes(preset.id);
+                  return (
+                    <label
+                      key={preset.id}
+                      className="flex cursor-pointer items-start gap-2 rounded-lg px-2 py-1.5 hover:bg-white"
+                    >
+                      <input
+                        type="checkbox"
+                        checked={checked}
+                        onChange={() => togglePackPreset(preset.id)}
+                        className="mt-0.5 h-3.5 w-3.5 rounded border-gray-300 text-gray-900 focus:ring-gray-400"
+                      />
+                      <span>
+                        <span className="block text-[11px] font-semibold text-gray-700">
+                          {preset.name}
+                        </span>
+                        <span className="block text-[10px] text-gray-400">
+                          {formatPresetMeta(preset)}
+                        </span>
+                      </span>
+                    </label>
+                  );
+                })}
+              </div>
+            </div>
+            <button
+              type="button"
+              onClick={() =>
+                onCreatePresetPack(effectivePackPresetIds, {
+                  name: effectivePackName,
+                  description: packDescription,
+                  tagsText: packTagsText,
+                })
+              }
+              disabled={!effectivePackPresetIds.length}
+              className="rounded-xl bg-gray-900 px-3.5 py-2 text-xs font-semibold text-white shadow-sm shadow-gray-200/80 hover:bg-black disabled:opacity-45 active:scale-[0.98]"
+            >
+              Create Pack from Selected Presets
+            </button>
+          </div>
+
+          <div className="space-y-2">
+            <select
+              value={resolvedSelectedPackId}
+              onChange={(event) => {
+                const nextId = event.target.value;
+                setSelectedPackId(nextId);
+                onActivePresetPackChange(nextId || null);
+              }}
+              disabled={!hasPresetPacks}
+              className="w-full rounded-xl border border-gray-200 bg-gray-50 px-3 py-2.5 text-sm font-medium text-gray-900 focus:border-gray-400 focus:outline-none disabled:text-gray-400"
+            >
+              {!hasPresetPacks && <option value="">No preset packs yet</option>}
+              {presetPacks.map((pack) => (
+                <option key={pack.id} value={pack.id}>
+                  {pack.name}
+                </option>
+              ))}
+            </select>
+            {selectedPack && (
+              <div className="rounded-xl border border-gray-100 bg-gray-50 p-2.5">
+                <p className="text-[11px] font-semibold text-gray-700">
+                  {selectedPack.name}
+                </p>
+                {selectedPack.description && (
+                  <p className="mt-1 text-[11px] leading-relaxed text-gray-500">
+                    {selectedPack.description}
+                  </p>
+                )}
+                <p className="mt-1 text-[10px] text-gray-400">
+                  {formatPackMeta(selectedPack)}
+                </p>
+              </div>
+            )}
+            <div className="flex flex-wrap gap-2">
+              <button
+                type="button"
+                onClick={() =>
+                  resolvedSelectedPackId && onApplyPresetPack(resolvedSelectedPackId)
+                }
+                disabled={!selectedPack}
+                className="rounded-xl bg-gray-900 px-3 py-1.5 text-[11px] font-semibold text-white shadow-sm shadow-gray-200/80 hover:bg-black disabled:opacity-45 active:scale-[0.98]"
+              >
+                Apply Pack
+              </button>
+              <button
+                type="button"
+                onClick={() =>
+                  resolvedSelectedPackId && onExportPresetPack(resolvedSelectedPackId)
+                }
+                disabled={!selectedPack}
+                className="rounded-xl border border-gray-200 bg-white px-3 py-1.5 text-[11px] font-semibold text-gray-600 shadow-sm shadow-gray-100/80 hover:bg-gray-50 disabled:opacity-45 active:scale-[0.98]"
+              >
+                Export Pack
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  if (!resolvedSelectedPackId) return;
+                  onDeletePresetPack(resolvedSelectedPackId);
+                  setSelectedPackId("");
+                }}
+                disabled={!selectedPack}
+                className="rounded-xl border border-red-100 bg-red-50 px-3 py-1.5 text-[11px] font-semibold text-red-600 hover:bg-red-100 disabled:opacity-45 active:scale-[0.98]"
+              >
+                Delete Pack
+              </button>
+            </div>
+            <textarea
+              value={packImportText}
+              onChange={(event) => setPackImportText(event.target.value)}
+              placeholder="Paste exported preset pack JSON here..."
+              rows={3}
+              className="w-full resize-y rounded-xl border border-gray-200 bg-gray-50 px-3 py-2 text-xs text-gray-700 placeholder:text-gray-400 focus:border-gray-400 focus:outline-none"
+            />
+            <div className="flex flex-wrap items-center gap-2">
+              <button
+                type="button"
+                onClick={() => onImportPresetPack(packImportText)}
+                disabled={!packImportText.trim()}
+                className="rounded-xl border border-gray-200 bg-white px-3 py-1.5 text-[11px] font-semibold text-gray-600 shadow-sm shadow-gray-100/80 hover:bg-gray-50 disabled:opacity-45 active:scale-[0.98]"
+              >
+                Import Pack
+              </button>
+              <label className="cursor-pointer rounded-xl border border-gray-200 bg-white px-3 py-1.5 text-[11px] font-semibold text-gray-600 shadow-sm shadow-gray-100/80 hover:bg-gray-50 active:scale-[0.98]">
+                Upload Pack JSON
+                <input
+                  type="file"
+                  accept="application/json,.json"
+                  className="sr-only"
+                  onChange={(event) => {
+                    void handlePackImportFile(event);
+                  }}
+                />
+              </label>
+            </div>
+            {packStatus && (
+              <p className="text-[11px] font-medium text-gray-500">
+                {packStatus}
+              </p>
+            )}
+          </div>
         </div>
       </div>
     </section>

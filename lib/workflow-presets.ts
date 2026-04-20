@@ -12,9 +12,12 @@ import type {
   KlingModel,
   RealismMode,
   RunwayModel,
+  SavedWorkflowPresetPack,
   SavedWorkflowPreset,
   WorkflowPresetExportPayload,
   WorkflowPresetImportReport,
+  WorkflowPresetPackExportPayload,
+  WorkflowPresetPackImportReport,
 } from "@/types";
 
 import {
@@ -29,8 +32,11 @@ import { contentLaneOptions } from "@/lib/content-lanes";
 import { animalVibes, emotionalTones } from "@/lib/predator-data";
 
 export const MAX_WORKFLOW_PRESETS = 40;
+export const MAX_WORKFLOW_PRESET_PACKS = 24;
 export const WORKFLOW_PRESET_EXPORT_SCHEMA = "wstv.workflow-presets";
 export const WORKFLOW_PRESET_EXPORT_VERSION = 1;
+export const WORKFLOW_PRESET_PACK_EXPORT_SCHEMA = "wstv.workflow-preset-pack";
+export const WORKFLOW_PRESET_PACK_EXPORT_VERSION = 1;
 
 const realismModes: RealismMode[] = [
   "Balanced",
@@ -71,6 +77,12 @@ function makePresetId(now = Date.now()): string {
   return `preset_${now.toString(36)}_${Math.random().toString(36).slice(2, 9)}`;
 }
 
+function makePresetPackId(now = Date.now()): string {
+  return `preset_pack_${now.toString(36)}_${Math.random()
+    .toString(36)
+    .slice(2, 9)}`;
+}
+
 function makeImportedPresetId(
   originalId: string,
   usedIds: Set<string>,
@@ -82,6 +94,29 @@ function makeImportedPresetId(
     .replace(/^-+|-+$/g, "")
     .slice(0, 72);
   const base = safeBase || `imported-preset-${index + 1}`;
+
+  let candidate = `${base}-imported`;
+  let suffix = 2;
+  while (usedIds.has(candidate)) {
+    candidate = `${base}-imported-${suffix}`;
+    suffix += 1;
+  }
+
+  usedIds.add(candidate);
+  return candidate;
+}
+
+function makeImportedPresetPackId(
+  originalId: string,
+  usedIds: Set<string>,
+  index: number
+): string {
+  const safeBase = originalId
+    .trim()
+    .replace(/[^a-zA-Z0-9_-]+/g, "-")
+    .replace(/^-+|-+$/g, "")
+    .slice(0, 72);
+  const base = safeBase || `imported-preset-pack-${index + 1}`;
 
   let candidate = `${base}-imported`;
   let suffix = 2;
@@ -110,6 +145,41 @@ function getUniquePresetName(name: string, usedNames: Set<string>): string {
 
   usedNames.add(candidate);
   return candidate;
+}
+
+function getUniquePresetPackName(name: string, usedNames: Set<string>): string {
+  const base = cleanString(name, "Imported Preset Pack");
+  if (!usedNames.has(base)) {
+    usedNames.add(base);
+    return base;
+  }
+
+  let candidate = `${base} (Imported)`;
+  let suffix = 2;
+  while (usedNames.has(candidate)) {
+    candidate = `${base} (Imported ${suffix})`;
+    suffix += 1;
+  }
+
+  usedNames.add(candidate);
+  return candidate;
+}
+
+function cleanPresetPackTags(value: unknown): string[] {
+  if (!Array.isArray(value)) return [];
+
+  const seen = new Set<string>();
+  return value
+    .map((item) => cleanString(item))
+    .filter(Boolean)
+    .map((item) => item.slice(0, 40))
+    .filter((item) => {
+      const key = item.toLowerCase();
+      if (seen.has(key)) return false;
+      seen.add(key);
+      return true;
+    })
+    .slice(0, 8);
 }
 
 export function buildWorkflowPresetName(
@@ -267,6 +337,94 @@ export function normalizeWorkflowPresets(value: unknown): SavedWorkflowPreset[] 
     .slice(0, MAX_WORKFLOW_PRESETS);
 }
 
+function normalizeWorkflowPresetPackPresets(
+  value: unknown
+): SavedWorkflowPreset[] {
+  if (!Array.isArray(value)) return [];
+
+  return normalizeWorkflowPresets(
+    value.map((item, index) =>
+      normalizeWorkflowPresetImportCandidate(item, index)
+    )
+  );
+}
+
+export function normalizeWorkflowPresetPack(
+  value: unknown
+): SavedWorkflowPresetPack | null {
+  if (!isRecord(value)) return null;
+
+  const id = cleanString(value.id);
+  const name = cleanString(value.name);
+  const presets = normalizeWorkflowPresetPackPresets(value.presets);
+  if (!id || !name || presets.length === 0) return null;
+
+  const createdAt = cleanString(value.createdAt, new Date(0).toISOString());
+  const updatedAt = cleanString(value.updatedAt, createdAt);
+  const description = cleanString(value.description);
+  const tags = cleanPresetPackTags(value.tags);
+
+  return {
+    id,
+    name,
+    description,
+    ...(tags.length ? { tags } : {}),
+    createdAt,
+    updatedAt,
+    presets,
+  };
+}
+
+function normalizeWorkflowPresetPackImportCandidate(
+  value: unknown,
+  fallbackIndex: number
+): SavedWorkflowPresetPack | null {
+  const normalizedPack = normalizeWorkflowPresetPack(value);
+  if (normalizedPack) return normalizedPack;
+
+  if (!isRecord(value)) return null;
+
+  const presets = normalizeWorkflowPresetPackPresets(value.presets);
+  if (presets.length === 0) return null;
+
+  const now = new Date(0).toISOString();
+  const id = cleanString(value.id, `imported-preset-pack-${fallbackIndex + 1}`);
+  const name =
+    cleanString(value.name) ||
+    cleanString(value.label) ||
+    "Imported Preset Pack";
+  const description = cleanString(value.description);
+  const tags = cleanPresetPackTags(value.tags);
+
+  return {
+    id,
+    name,
+    description,
+    ...(tags.length ? { tags } : {}),
+    createdAt: cleanString(value.createdAt, now),
+    updatedAt: cleanString(value.updatedAt, now),
+    presets,
+  };
+}
+
+export function normalizeWorkflowPresetPacks(
+  value: unknown
+): SavedWorkflowPresetPack[] {
+  if (!Array.isArray(value)) return [];
+
+  const seen = new Set<string>();
+  return value
+    .map(normalizeWorkflowPresetPack)
+    .filter((pack): pack is SavedWorkflowPresetPack => Boolean(pack))
+    .filter((pack) => {
+      if (seen.has(pack.id)) return false;
+      seen.add(pack.id);
+      return true;
+    })
+    .sort((a, b) => b.updatedAt.localeCompare(a.updatedAt))
+    .slice(0, MAX_WORKFLOW_PRESET_PACKS);
+}
+
 export function buildWorkflowPresetExportPayload(
   presets: SavedWorkflowPreset[],
   options: { defaultPresetId?: string; exportedAt?: string } = {}
@@ -292,6 +450,32 @@ export function buildWorkflowPresetExportPayload(
 
 export function stringifyWorkflowPresetExportPayload(
   payload: WorkflowPresetExportPayload
+): string {
+  return JSON.stringify(payload, null, 2);
+}
+
+export function buildWorkflowPresetPackExportPayload(
+  pack: SavedWorkflowPresetPack,
+  options: { exportedAt?: string } = {}
+): WorkflowPresetPackExportPayload | null {
+  const normalizedPack = normalizeWorkflowPresetPack(pack);
+  if (!normalizedPack) return null;
+
+  return {
+    schema: WORKFLOW_PRESET_PACK_EXPORT_SCHEMA,
+    version: WORKFLOW_PRESET_PACK_EXPORT_VERSION,
+    source: "wild-stories-tv-wstv",
+    exportedAt: options.exportedAt ?? new Date().toISOString(),
+    pack: normalizedPack,
+    metadata: {
+      presetCount: normalizedPack.presets.length,
+      tags: normalizedPack.tags ?? [],
+    },
+  };
+}
+
+export function stringifyWorkflowPresetPackExportPayload(
+  payload: WorkflowPresetPackExportPayload
 ): string {
   return JSON.stringify(payload, null, 2);
 }
@@ -432,6 +616,86 @@ export function mergeWorkflowPresetImportJson(
   }
 }
 
+function extractWorkflowPresetPackImportItem(value: unknown): unknown {
+  if (!isRecord(value)) return null;
+  if (isRecord(value.pack)) return value.pack;
+  return value;
+}
+
+export function mergeWorkflowPresetPackImport(
+  existingPacks: SavedWorkflowPresetPack[],
+  importValue: unknown
+): WorkflowPresetPackImportReport {
+  const existing = normalizeWorkflowPresetPacks(existingPacks);
+  const packValue = extractWorkflowPresetPackImportItem(importValue);
+  const usedIds = new Set(existing.map((pack) => pack.id));
+  const usedNames = new Set(existing.map((pack) => pack.name));
+  const warnings: string[] = [];
+
+  const normalized = normalizeWorkflowPresetPackImportCandidate(packValue, 0);
+  if (!normalized) {
+    return {
+      packs: existing,
+      importedCount: 0,
+      skippedCount: 1,
+      renamedCount: 0,
+      regeneratedIdCount: 0,
+      warnings: ["Import failed because the preset pack data was invalid."],
+    };
+  }
+
+  const originalId = normalized.id;
+  const originalName = normalized.name;
+  let id = originalId;
+  let regeneratedIdCount = 0;
+  if (usedIds.has(id)) {
+    id = makeImportedPresetPackId(originalId, usedIds, 0);
+    regeneratedIdCount = 1;
+  } else {
+    usedIds.add(id);
+  }
+
+  const name = getUniquePresetPackName(originalName, usedNames);
+  const renamedCount = name !== originalName ? 1 : 0;
+  const importedPack: SavedWorkflowPresetPack = {
+    ...normalized,
+    id,
+    name,
+  };
+  const packs = normalizeWorkflowPresetPacks([importedPack, ...existing]);
+
+  return {
+    packs,
+    importedPack,
+    importedCount: 1,
+    skippedCount: 0,
+    renamedCount,
+    regeneratedIdCount,
+    warnings,
+  };
+}
+
+export function mergeWorkflowPresetPackImportJson(
+  existingPacks: SavedWorkflowPresetPack[],
+  jsonText: string
+): WorkflowPresetPackImportReport {
+  try {
+    return mergeWorkflowPresetPackImport(
+      existingPacks,
+      JSON.parse(jsonText) as unknown
+    );
+  } catch {
+    return {
+      packs: normalizeWorkflowPresetPacks(existingPacks),
+      importedCount: 0,
+      skippedCount: 1,
+      renamedCount: 0,
+      regeneratedIdCount: 0,
+      warnings: ["Pack import failed because the JSON could not be parsed."],
+    };
+  }
+}
+
 export function createWorkflowPreset(
   snapshot: BuildWorkflowPresetSnapshot,
   options: { id?: string; name?: string; now?: string; timestamp?: number } = {}
@@ -451,6 +715,62 @@ export function createWorkflowPreset(
     updatedAt: now,
     snapshot: normalizedSnapshot,
   };
+}
+
+export function createWorkflowPresetPack(
+  presets: SavedWorkflowPreset[],
+  options: {
+    id?: string;
+    name?: string;
+    description?: string;
+    tags?: string[];
+    now?: string;
+    timestamp?: number;
+  } = {}
+): SavedWorkflowPresetPack {
+  const normalizedPresets = normalizeWorkflowPresets(presets);
+  if (normalizedPresets.length === 0) {
+    throw new Error("Preset pack requires at least one valid workflow preset");
+  }
+
+  const now = options.now ?? new Date(options.timestamp ?? Date.now()).toISOString();
+  const tags = cleanPresetPackTags(options.tags);
+
+  return {
+    id: options.id ?? makePresetPackId(options.timestamp),
+    name: cleanString(options.name, "Untitled Preset Pack"),
+    description: cleanString(options.description),
+    ...(tags.length ? { tags } : {}),
+    createdAt: now,
+    updatedAt: now,
+    presets: normalizedPresets,
+  };
+}
+
+export function saveWorkflowPresetPack(
+  packs: SavedWorkflowPresetPack[],
+  presets: SavedWorkflowPreset[],
+  options: {
+    id?: string;
+    name?: string;
+    description?: string;
+    tags?: string[];
+    now?: string;
+    timestamp?: number;
+  } = {}
+): SavedWorkflowPresetPack[] {
+  const pack = createWorkflowPresetPack(presets, options);
+  return normalizeWorkflowPresetPacks([
+    pack,
+    ...packs.filter((item) => item.id !== pack.id),
+  ]);
+}
+
+export function deleteWorkflowPresetPack(
+  packs: SavedWorkflowPresetPack[],
+  id: string
+): SavedWorkflowPresetPack[] {
+  return normalizeWorkflowPresetPacks(packs.filter((pack) => pack.id !== id));
 }
 
 export function saveWorkflowPreset(

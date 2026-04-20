@@ -885,9 +885,14 @@ export default function Page() {
                 finalEnvironment={finalEnvironment}
                 driftRisk={preset.driftRisk}
                 workflowPresets={workflowPresetControls.presets}
+                workflowPresetPacks={workflowPresetControls.presetPacks}
                 activeWorkflowPresetId={workflowPresetControls.activePresetId}
+                activeWorkflowPresetPackId={workflowPresetControls.activePresetPackId}
                 defaultWorkflowPresetId={workflowPresetControls.defaultPresetId}
                 workflowPresetName={workflowPresetControls.presetName}
+                workflowPresetPackName={workflowPresetControls.packName}
+                workflowPresetPackDescription={workflowPresetControls.packDescription}
+                workflowPresetPackTagsText={workflowPresetControls.packTagsText}
                 suggestedWorkflowPresetName={workflowPresetControls.suggestedPresetName}
                 activeWorkflowPresetIsDirty={workflowPresetControls.activePresetIsDirty}
                 onPredatorChange={setPredator}
@@ -901,6 +906,16 @@ export default function Page() {
                 onResetDefaults={handleResetDefaults}
                 onContinue={() => setStep(2)}
                 onWorkflowPresetNameChange={workflowPresetControls.setPresetName}
+                onWorkflowPresetPackNameChange={workflowPresetControls.setPackName}
+                onWorkflowPresetPackDescriptionChange={
+                  workflowPresetControls.setPackDescription
+                }
+                onWorkflowPresetPackTagsTextChange={
+                  workflowPresetControls.setPackTagsText
+                }
+                onActiveWorkflowPresetPackChange={
+                  workflowPresetControls.setActivePresetPackId
+                }
                 onSaveWorkflowPreset={workflowPresetControls.saveCurrentAsPreset}
                 onUpdateWorkflowPreset={workflowPresetControls.updatePresetFromCurrent}
                 onLoadWorkflowPreset={workflowPresetControls.loadPreset}
@@ -910,7 +925,17 @@ export default function Page() {
                 onExportWorkflowPreset={workflowPresetControls.exportPreset}
                 onExportAllWorkflowPresets={workflowPresetControls.exportAllPresets}
                 onImportWorkflowPresets={workflowPresetControls.importPresetsFromJson}
+                onCreateWorkflowPresetPack={
+                  workflowPresetControls.createPresetPackFromSelection
+                }
+                onDeleteWorkflowPresetPack={workflowPresetControls.deletePresetPack}
+                onExportWorkflowPresetPack={workflowPresetControls.exportPresetPack}
+                onImportWorkflowPresetPack={
+                  workflowPresetControls.importPresetPackFromJson
+                }
+                onApplyWorkflowPresetPack={workflowPresetControls.applyPresetPack}
                 workflowPresetImportStatus={workflowPresetControls.importStatus}
+                workflowPresetPackStatus={workflowPresetControls.packStatus}
                 onOpenCustomAnimal={() =>
                   openCustomAnimalModal({
                     defaultArc: arc,

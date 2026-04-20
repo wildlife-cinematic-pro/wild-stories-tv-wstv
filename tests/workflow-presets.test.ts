@@ -3,14 +3,21 @@ import { describe, expect, it } from "vitest";
 import type { BuildWorkflowPresetSnapshot } from "@/types";
 import {
   buildWorkflowPresetExportPayload,
+  buildWorkflowPresetPackExportPayload,
   createWorkflowPreset,
+  createWorkflowPresetPack,
   deleteWorkflowPreset,
   getSafeDefaultWorkflowPresetId,
   mergeWorkflowPresetImport,
   mergeWorkflowPresetImportJson,
+  mergeWorkflowPresetPackImport,
+  mergeWorkflowPresetPackImportJson,
+  normalizeWorkflowPresetPack,
   normalizeWorkflowPresetSnapshot,
   resolveDefaultWorkflowPreset,
+  saveWorkflowPresetPack,
   saveWorkflowPreset,
+  stringifyWorkflowPresetPackExportPayload,
   stringifyWorkflowPresetExportPayload,
   updateWorkflowPreset,
 } from "@/lib/workflow-presets";
@@ -334,5 +341,223 @@ describe("workflow presets", () => {
     expect(report.presets).toEqual([existing]);
     expect(report.defaultPresetId).toBe(existing.id);
     expect(report.warnings[0]).toMatch(/could not be parsed/i);
+  });
+
+  it("exports a preset pack with versioned metadata", () => {
+    const first = createWorkflowPreset(makeSnapshot(), {
+      id: "preset-pack-hunt",
+      name: "USA Pack Hunt Starter",
+      now: "2026-04-20T00:00:00.000Z",
+    });
+    const second = createWorkflowPreset(
+      makeSnapshot({
+        contentLane: "Escape",
+        arc: "Escape from danger",
+        prey: "Mule Deer",
+      }),
+      {
+        id: "preset-escape",
+        name: "Escape Fast Publish",
+        now: "2026-04-20T01:00:00.000Z",
+      }
+    );
+    const pack = createWorkflowPresetPack([first, second], {
+      id: "pack-usa-starter",
+      name: "USA Pack Hunt Starter Pack",
+      description: "Fast publish presets for grouped predator pressure.",
+      tags: ["USA", "Pack Hunt", "Fast Publish", "USA"],
+      now: "2026-04-20T02:00:00.000Z",
+    });
+
+    const payload = buildWorkflowPresetPackExportPayload(pack, {
+      exportedAt: "2026-04-20T03:00:00.000Z",
+    });
+    const json = stringifyWorkflowPresetPackExportPayload(payload!);
+
+    expect(payload).toMatchObject({
+      schema: "wstv.workflow-preset-pack",
+      version: 1,
+      source: "wild-stories-tv-wstv",
+      exportedAt: "2026-04-20T03:00:00.000Z",
+      metadata: {
+        presetCount: 2,
+        tags: ["USA", "Pack Hunt", "Fast Publish"],
+      },
+    });
+    expect(JSON.parse(json).pack.name).toBe("USA Pack Hunt Starter Pack");
+  });
+
+  it("imports preset pack JSON and keeps pack metadata visible", () => {
+    const preset = createWorkflowPreset(makeSnapshot(), {
+      id: "preset-defender-pack",
+      name: "Defender Calf Protection",
+      now: "2026-04-20T00:00:00.000Z",
+    });
+    const pack = createWorkflowPresetPack([preset], {
+      id: "pack-defender",
+      name: "Defender Calf Protection Pack",
+      description: "Hold-ground setups for U.S. wildlife defenders.",
+      tags: ["Defender", "Calf"],
+      now: "2026-04-20T02:00:00.000Z",
+    });
+    const payload = buildWorkflowPresetPackExportPayload(pack, {
+      exportedAt: "2026-04-20T03:00:00.000Z",
+    });
+
+    const report = mergeWorkflowPresetPackImportJson(
+      [],
+      stringifyWorkflowPresetPackExportPayload(payload!)
+    );
+
+    expect(report.importedCount).toBe(1);
+    expect(report.skippedCount).toBe(0);
+    expect(report.importedPack).toMatchObject({
+      id: "pack-defender",
+      name: "Defender Calf Protection Pack",
+      description: "Hold-ground setups for U.S. wildlife defenders.",
+      tags: ["Defender", "Calf"],
+    });
+    expect(report.packs[0].presets[0].snapshot.contentLane).toBe("Pack Hunt");
+  });
+
+  it("normalizes legacy or partial preset pack data safely", () => {
+    const pack = normalizeWorkflowPresetPack({
+      id: "legacy-pack",
+      name: "Fishing Strike Starter Pack",
+      description: "Riverbank strike presets.",
+      tags: ["Fishing", "", "Fishing", "Riverbank"],
+      presets: [
+        {
+          name: "Legacy Eagle Strike",
+          predator: "Bald Eagle",
+          prey: "Salmon",
+          contentLane: "Fishing Strike",
+          habitat: "Riverbank Reeds",
+          sceneDescription: "Eagle over shallow river water.",
+        },
+      ],
+    });
+
+    expect(pack).toMatchObject({
+      id: "legacy-pack",
+      name: "Fishing Strike Starter Pack",
+      tags: ["Fishing", "Riverbank"],
+    });
+    expect(pack?.presets[0].snapshot).toMatchObject({
+      predator: "Bald Eagle",
+      prey: "Salmon",
+      contentLane: "Fishing Strike",
+      habitat: "Riverbank Reeds",
+      sceneDescriptionTouched: true,
+    });
+  });
+
+  it("resolves preset pack id and name collisions without overwriting packs", () => {
+    const existingPreset = createWorkflowPreset(makeSnapshot(), {
+      id: "preset-existing-pack",
+      name: "USA Pack Hunt Starter",
+      now: "2026-04-20T00:00:00.000Z",
+    });
+    const existingPack = createWorkflowPresetPack([existingPreset], {
+      id: "pack-shared",
+      name: "USA Pack Hunt Starter Pack",
+      now: "2026-04-20T01:00:00.000Z",
+    });
+    const incomingPack = createWorkflowPresetPack([existingPreset], {
+      id: "pack-shared",
+      name: "USA Pack Hunt Starter Pack",
+      now: "2026-04-20T02:00:00.000Z",
+    });
+
+    const report = mergeWorkflowPresetPackImport([existingPack], incomingPack);
+
+    expect(report.importedCount).toBe(1);
+    expect(report.regeneratedIdCount).toBe(1);
+    expect(report.renamedCount).toBe(1);
+    expect(report.packs).toHaveLength(2);
+    expect(report.importedPack?.id).toBe("pack-shared-imported");
+    expect(report.importedPack?.name).toBe(
+      "USA Pack Hunt Starter Pack (Imported)"
+    );
+  });
+
+  it("applies pack presets through the existing safe preset merge path", () => {
+    const existingPreset = createWorkflowPreset(makeSnapshot(), {
+      id: "preset-shared",
+      name: "USA Pack Hunt Starter",
+      now: "2026-04-20T00:00:00.000Z",
+    });
+    const incomingPreset = createWorkflowPreset(
+      makeSnapshot({ prey: "Mule Deer" }),
+      {
+        id: "preset-shared",
+        name: "USA Pack Hunt Starter",
+        now: "2026-04-20T01:00:00.000Z",
+      }
+    );
+    const pack = createWorkflowPresetPack([incomingPreset], {
+      id: "pack-apply",
+      name: "USA Pack Hunt Starter Pack",
+      now: "2026-04-20T02:00:00.000Z",
+    });
+
+    const report = mergeWorkflowPresetImport([existingPreset], pack.presets, {
+      currentDefaultPresetId: existingPreset.id,
+      preserveImportedDefaultWhenEmpty: false,
+    });
+
+    expect(report.importedCount).toBe(1);
+    expect(report.regeneratedIdCount).toBe(1);
+    expect(report.renamedCount).toBe(1);
+    expect(report.defaultPresetId).toBe(existingPreset.id);
+    expect(report.importedPresets[0].id).toBe("preset-shared-imported");
+    expect(report.importedPresets[0].name).toBe(
+      "USA Pack Hunt Starter (Imported)"
+    );
+  });
+
+  it("protects existing packs when imported pack JSON is invalid", () => {
+    const preset = createWorkflowPreset(makeSnapshot(), {
+      id: "preset-existing",
+      name: "USA Pack Hunt Starter",
+      now: "2026-04-20T00:00:00.000Z",
+    });
+    const existingPack = createWorkflowPresetPack([preset], {
+      id: "pack-existing",
+      name: "USA Pack Hunt Starter Pack",
+      now: "2026-04-20T01:00:00.000Z",
+    });
+
+    const report = mergeWorkflowPresetPackImportJson([existingPack], "{nope");
+
+    expect(report.importedCount).toBe(0);
+    expect(report.skippedCount).toBe(1);
+    expect(report.packs).toEqual([existingPack]);
+    expect(report.warnings[0]).toMatch(/could not be parsed/i);
+  });
+
+  it("saves preset packs through a normalized local library shape", () => {
+    const preset = createWorkflowPreset(makeSnapshot(), {
+      id: "preset-rut",
+      name: "Rut Battle Cinematic",
+      now: "2026-04-20T00:00:00.000Z",
+    });
+
+    const packs = saveWorkflowPresetPack([], [preset], {
+      id: "pack-rut",
+      name: "Rut Battle Cinematic Pack",
+      description: "Dominance posture and giant-clash setups.",
+      tags: ["Rut Battle"],
+      now: "2026-04-20T01:00:00.000Z",
+    });
+
+    expect(packs).toHaveLength(1);
+    expect(packs[0]).toMatchObject({
+      id: "pack-rut",
+      name: "Rut Battle Cinematic Pack",
+      description: "Dominance posture and giant-clash setups.",
+      tags: ["Rut Battle"],
+    });
+    expect(packs[0].presets[0].snapshot.arc).toBe("Pack hunting strategy");
   });
 });

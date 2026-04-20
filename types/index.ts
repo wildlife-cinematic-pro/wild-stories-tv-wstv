@@ -256,6 +256,16 @@ export type SavedWorkflowPreset = {
   snapshot: BuildWorkflowPresetSnapshot;
 };
 
+export type SavedWorkflowPresetPack = {
+  id: string;
+  name: string;
+  description: string;
+  tags?: string[];
+  createdAt: string;
+  updatedAt: string;
+  presets: SavedWorkflowPreset[];
+};
+
 export type WorkflowPresetExportPayload = {
   schema: "wstv.workflow-presets";
   version: 1;
@@ -276,6 +286,28 @@ export type WorkflowPresetImportReport = {
   renamedCount: number;
   regeneratedIdCount: number;
   defaultPresetId?: string;
+  warnings: string[];
+};
+
+export type WorkflowPresetPackExportPayload = {
+  schema: "wstv.workflow-preset-pack";
+  version: 1;
+  source: "wild-stories-tv-wstv";
+  exportedAt: string;
+  pack: SavedWorkflowPresetPack;
+  metadata: {
+    presetCount: number;
+    tags: string[];
+  };
+};
+
+export type WorkflowPresetPackImportReport = {
+  packs: SavedWorkflowPresetPack[];
+  importedPack?: SavedWorkflowPresetPack;
+  importedCount: number;
+  skippedCount: number;
+  renamedCount: number;
+  regeneratedIdCount: number;
   warnings: string[];
 };
 

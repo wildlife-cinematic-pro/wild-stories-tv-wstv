@@ -18,6 +18,7 @@ import type {
   HabitatPreset,
   PredatorInfo,
   SavedWorkflowPreset,
+  SavedWorkflowPresetPack,
   Weather,
 } from "@/types";
 
@@ -37,9 +38,14 @@ type Step1SetupProps = {
   finalEnvironment: string;
   driftRisk: PredatorInfo["driftRisk"];
   workflowPresets: SavedWorkflowPreset[];
+  workflowPresetPacks: SavedWorkflowPresetPack[];
   activeWorkflowPresetId: string | null;
+  activeWorkflowPresetPackId: string | null;
   defaultWorkflowPresetId?: string;
   workflowPresetName: string;
+  workflowPresetPackName: string;
+  workflowPresetPackDescription: string;
+  workflowPresetPackTagsText: string;
   suggestedWorkflowPresetName: string;
   activeWorkflowPresetIsDirty: boolean;
   onPredatorChange: (value: string) => void;
@@ -54,6 +60,10 @@ type Step1SetupProps = {
   onContinue: () => void;
   onOpenCustomAnimal: () => void;
   onWorkflowPresetNameChange: (value: string) => void;
+  onWorkflowPresetPackNameChange: (value: string) => void;
+  onWorkflowPresetPackDescriptionChange: (value: string) => void;
+  onWorkflowPresetPackTagsTextChange: (value: string) => void;
+  onActiveWorkflowPresetPackChange: (id: string | null) => void;
   onSaveWorkflowPreset: (name?: string) => void;
   onUpdateWorkflowPreset: (id?: string, name?: string) => void;
   onLoadWorkflowPreset: (id: string) => void;
@@ -63,7 +73,16 @@ type Step1SetupProps = {
   onExportWorkflowPreset: (id: string) => void;
   onExportAllWorkflowPresets: () => void;
   onImportWorkflowPresets: (jsonText: string) => void;
+  onCreateWorkflowPresetPack: (
+    presetIds: string[],
+    options: { name?: string; description?: string; tagsText?: string }
+  ) => void;
+  onDeleteWorkflowPresetPack: (id: string) => void;
+  onExportWorkflowPresetPack: (id: string) => void;
+  onImportWorkflowPresetPack: (jsonText: string) => void;
+  onApplyWorkflowPresetPack: (id: string) => void;
   workflowPresetImportStatus: string;
+  workflowPresetPackStatus: string;
 };
 
 export default function Step1Setup({
@@ -82,9 +101,14 @@ export default function Step1Setup({
   finalEnvironment,
   driftRisk,
   workflowPresets,
+  workflowPresetPacks,
   activeWorkflowPresetId,
+  activeWorkflowPresetPackId,
   defaultWorkflowPresetId,
   workflowPresetName,
+  workflowPresetPackName,
+  workflowPresetPackDescription,
+  workflowPresetPackTagsText,
   suggestedWorkflowPresetName,
   activeWorkflowPresetIsDirty,
   onPredatorChange,
@@ -99,6 +123,10 @@ export default function Step1Setup({
   onContinue,
   onOpenCustomAnimal,
   onWorkflowPresetNameChange,
+  onWorkflowPresetPackNameChange,
+  onWorkflowPresetPackDescriptionChange,
+  onWorkflowPresetPackTagsTextChange,
+  onActiveWorkflowPresetPackChange,
   onSaveWorkflowPreset,
   onUpdateWorkflowPreset,
   onLoadWorkflowPreset,
@@ -108,19 +136,34 @@ export default function Step1Setup({
   onExportWorkflowPreset,
   onExportAllWorkflowPresets,
   onImportWorkflowPresets,
+  onCreateWorkflowPresetPack,
+  onDeleteWorkflowPresetPack,
+  onExportWorkflowPresetPack,
+  onImportWorkflowPresetPack,
+  onApplyWorkflowPresetPack,
   workflowPresetImportStatus,
+  workflowPresetPackStatus,
 }: Step1SetupProps) {
   return (
     <div className="grid gap-6 xl:grid-cols-[minmax(0,1fr)_340px]">
       <div className="space-y-6">
         <WorkflowPresetsPanel
           presets={workflowPresets}
+          presetPacks={workflowPresetPacks}
           activePresetId={activeWorkflowPresetId}
+          activePresetPackId={activeWorkflowPresetPackId}
           defaultPresetId={defaultWorkflowPresetId}
           activePresetIsDirty={activeWorkflowPresetIsDirty}
           presetName={workflowPresetName}
+          packName={workflowPresetPackName}
+          packDescription={workflowPresetPackDescription}
+          packTagsText={workflowPresetPackTagsText}
           suggestedPresetName={suggestedWorkflowPresetName}
           onPresetNameChange={onWorkflowPresetNameChange}
+          onPresetPackNameChange={onWorkflowPresetPackNameChange}
+          onPresetPackDescriptionChange={onWorkflowPresetPackDescriptionChange}
+          onPresetPackTagsTextChange={onWorkflowPresetPackTagsTextChange}
+          onActivePresetPackChange={onActiveWorkflowPresetPackChange}
           onSavePreset={onSaveWorkflowPreset}
           onUpdatePreset={onUpdateWorkflowPreset}
           onLoadPreset={onLoadWorkflowPreset}
@@ -130,7 +173,13 @@ export default function Step1Setup({
           onExportPreset={onExportWorkflowPreset}
           onExportAllPresets={onExportAllWorkflowPresets}
           onImportPresets={onImportWorkflowPresets}
+          onCreatePresetPack={onCreateWorkflowPresetPack}
+          onDeletePresetPack={onDeleteWorkflowPresetPack}
+          onExportPresetPack={onExportWorkflowPresetPack}
+          onImportPresetPack={onImportWorkflowPresetPack}
+          onApplyPresetPack={onApplyWorkflowPresetPack}
           importStatus={workflowPresetImportStatus}
+          packStatus={workflowPresetPackStatus}
         />
 
         <section className="rounded-2xl border border-gray-200 bg-white p-5 sm:p-6">
