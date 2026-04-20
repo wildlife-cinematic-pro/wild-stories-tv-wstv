@@ -224,7 +224,7 @@ export function buildShotImagePlan(
   const resolvePrey = sanitizeVideoBeatText(aftermath.preyBeat);
 
   const continuityLock = `Keep ${predator} and ${prey} identical in anatomy, markings, scale, lighting family, and habitat continuity in ${cleanEnv}, ${cleanWeather}. Preserve the same 9:16 documentary image family, grounded contact, realistic spacing, and clean silhouette separation.`;
-  const atmosphereLock = `Environmental response stays subtle and scene-correct: ${micro}.`;
+  const atmosphereLock = `Environment stays continuity-safe with ${micro}.`;
   const masterBase =
     "Base image: use the Nano Banana 2 / Gemini master still as the continuity anchor.";
   const continuityBase =

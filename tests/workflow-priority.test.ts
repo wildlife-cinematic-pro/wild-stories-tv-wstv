@@ -1,6 +1,10 @@
 import { describe, expect, it } from "vitest";
 
-import { buildCapCutScript, buildRunwayCameraPlan } from "@/lib/workflow-packs";
+import {
+  buildCapCutScript,
+  buildRunwayCameraPlan,
+  buildTwoPartViralPreset,
+} from "@/lib/workflow-packs";
 import { buildWatchTimeReport, calculateViralScore } from "@/lib/predator-data";
 import type { GeneratedPackage } from "@/types";
 
@@ -29,6 +33,8 @@ describe("workflow priority cleanup", () => {
     expect(script.totalDuration).toBe("0:20");
     expect(script.beats).toHaveLength(4);
     expect(script.beats[3]?.shotRef).toContain("Shot 4");
+    expect(script.exportSettings).toContain("24fps edit timeline");
+    expect(script.exportSettings).toContain("optional 30fps platform export");
   });
 
   it("reports 4-shot retention language in viral/watch-time helpers", () => {
@@ -45,5 +51,22 @@ describe("workflow priority cleanup", () => {
     expect(score.breakdown.some((item) => item.tip.includes("4-shot pipeline"))).toBe(true);
     expect(watchTime.currentDuration).toContain("20");
     expect(watchTime.targetDuration).toContain("4-shot primary runs");
+  });
+
+  it("switches the two-part preset into ambush-specific storytelling when the arc is ambush attack", () => {
+    const preset = buildTwoPartViralPreset(
+      "Mountain Lion",
+      "White-tailed Deer",
+      "Rocky Mountain forest edge and open meadow",
+      "Golden Hour",
+      "Ambush attack",
+      "Gen-4.5"
+    );
+
+    expect(preset.overview).toContain("late awareness and closing danger");
+    expect(preset.workflowGuide).toContain("Late awareness + closing danger cliffhanger");
+    expect(preset.workflowGuide).not.toContain("winner walk");
+    expect(preset.part2Caption).toContain("unresolved survival payoff");
+    expect(preset.part2Final).toContain("end without forcing a winner reveal");
   });
 });

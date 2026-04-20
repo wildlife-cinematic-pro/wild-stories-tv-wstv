@@ -496,8 +496,8 @@ export function buildGeneratedPackageDraft(
     ].join("\n\n---\n\n"),
     routingNote:
       input.selectedPipelineStyle === "long-hybrid-4-shot"
-        ? `Primary workflow: true 50-second hybrid 4-shot routing uses Runway ${input.runwayModel} for Shot 1 (10s) and Shot 4 (10s), and Kling ${input.klingModel} for Shot 2 (15s) and Shot 3 (15s). Long lane holds the setup longer, builds pressure more gradually, lands one clearer payoff beat, and preserves a cleaner aftermath resolve.`
-        : `Primary workflow: hybrid 4-shot routing uses Runway ${input.runwayModel} for Shots 1 and 4, and Kling ${input.klingModel} for Shots 2 and 3. Optional bundles: Seedance 2.0, full Runway 4-shot, and full Kling 4-shot outputs remain available.`,
+        ? `Primary workflow: true 50-second hybrid 4-shot routing uses Runway ${input.runwayModel} for Shot 1 (10s) and Shot 4 (10s), and ${input.klingModel} for Shot 2 (15s) and Shot 3 (15s). Long lane holds the setup longer, builds pressure more gradually, lands one clearer payoff beat, and preserves a cleaner aftermath resolve.`
+        : `Primary workflow: hybrid 4-shot routing uses Runway ${input.runwayModel} for Shots 1 and 4, and ${input.klingModel} for Shots 2 and 3. Optional bundles: Seedance 2.0, full Runway 4-shot, and full Kling 4-shot outputs remain available.`,
     pipelineStyle: input.selectedPipelineStyle,
     fiveShotCinematic,
     fiveShotViral,

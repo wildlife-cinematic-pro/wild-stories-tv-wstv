@@ -644,7 +644,7 @@ export function buildCapCutScript(
     fps: 24,
     beats: isLongHybrid ? beatsLongHybrid : beats4,
     exportSettings:
-      "H.264 | 1080×1920 | 24fps project | 30fps export for upload | 20–25 Mbps | AAC 320kbps",
+      "H.264 | 1080×1920 | 24fps edit timeline | optional 30fps platform export if required | 20–25 Mbps | AAC 320kbps",
     musicMood,
   };
 }
@@ -1089,6 +1089,51 @@ export function buildTwoPartViralPreset(
   const finalModel = runwayModel === "Gen-4 Turbo" ? "Gen-4.5" : runwayModel;
   const cleanEnv = sanitizeWorkflowEnv(env);
   const atmosphere = sanitizeWorkflowPhrase(getWorkflowAtmosphere(cleanEnv, weather));
+  const isAmbushSequence = arc === "Ambush attack";
+
+  if (isAmbushSequence) {
+    return {
+      overview: sanitizeWorkflowPhrase(
+        `2-Part Viral Ambush Preset — designed for high-tension predator reels such as ${predator} vs ${prey}. Part 1 sells late awareness and closing danger. Part 2 sells the burst, evasive aftermath, and unresolved survival payoff. Keep the same master still across both parts for consistency.`
+      ),
+
+      workflowGuide: `${WORKFLOW_PREFIX} 2-PART VIRAL PRESET
+
+PART 1 — Late awareness + closing danger cliffhanger
+1. Copy ${WORKFLOW_PREFIX} Image Prompt and build the master still first.
+2. Use Part 1 Draft for the fast branch test.
+3. Use Part 1 Final for the polished render.
+4. End on the predator's forward commitment or the prey's late reaction — do not reveal the outcome.
+
+PART 2 — Burst + evasive aftermath payoff
+1. Reuse the same master still or the best last frame from Part 1.
+2. Use Part 2 Draft for the fast branch test.
+3. Use Part 2 Final for the polished render.
+4. Show the burst, the evasive aftermath, and finish on unresolved survival-or-failure tension without forcing a clean winner reveal.
+
+Best fit: ${arc} in ${cleanEnv} during ${weather}. Recommended final model: ${finalModel}.`,
+
+      part1Hook: `${prey} realizes the danger too late. The burst starts in the next second.`,
+      part1Caption:
+        "PART 1 — late awareness, closing danger, and the last readable beat before impact. End on the predator's forward commitment or the prey's late reaction, and do not reveal the outcome yet.",
+      part1Draft: sanitizeWorkflowPhrase(
+        `late awareness, ${predator.toLowerCase()} closes low and controlled, ${prey.toLowerCase()} reads the danger too late, wide readable frame, ${atmosphere}, end on the last safe moment before impact`
+      ),
+      part1Final: sanitizeWorkflowPhrase(
+        `late-awareness cliffhanger, ${predator.toLowerCase()} closes distance with grounded body weight while ${prey.toLowerCase()} reacts a beat too late, wide readable frame, ${atmosphere}, one decisive forward commitment ending before the outcome is shown`
+      ),
+
+      part2Hook: `The burst breaks the frame. Did ${prey.toLowerCase()} clear the line or not?`,
+      part2Caption:
+        "PART 2 — burst, evasive aftermath, and unresolved survival payoff. Reuse the same master still or last frame from Part 1 so the animals stay visually locked.",
+      part2Draft: sanitizeWorkflowPhrase(
+        `burst aftermath, ${predator.toLowerCase()} follows through once, ${prey.toLowerCase()} twists or bounds through one evasive survival reaction, low readable camera, ${atmosphere}`
+      ),
+      part2Final: sanitizeWorkflowPhrase(
+        `burst payoff with unresolved survival tension, ${predator.toLowerCase()} follows through with grounded momentum while ${prey.toLowerCase()} makes one desperate evasive move, restrained documentary camera, ${atmosphere}, end without forcing a winner reveal`
+      ),
+    };
+  }
 
   return {
     overview: sanitizeWorkflowPhrase(

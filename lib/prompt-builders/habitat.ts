@@ -638,13 +638,13 @@ export function buildMicroMotionLine(weather: Weather, env: string): string {
 
   if (isArctic) {
     if (weather === "Golden Hour") {
-      return "subtle frozen-brush sway, light fur movement, clean cold-air stillness, gentle pine movement in warm backlight";
+      return "light frozen-brush movement, slight fur lift, restrained pine drift in warm backlight";
     }
-    return "subtle frozen-ground movement, light fur movement, clean cold-air stillness, faint terrain movement across frozen ground";
+    return "light frozen-ground movement, slight fur lift, restrained distant brush drift";
   }
 
   if (weather === "Winter Blizzard" || weather === "Frozen Dusk") {
-    return "subtle frozen-brush sway, light fur movement, clean cold-air stillness, faint distant brush movement";
+    return "light frozen-brush movement, slight fur lift, restrained distant brush drift";
   }
 
   if (weather === "Storm") {
@@ -652,10 +652,10 @@ export function buildMicroMotionLine(weather: Weather, env: string): string {
   }
 
   if (weather === "Golden Hour") {
-    return "subtle grass sway, light fur movement, stable clean air, gentle background vegetation movement";
+    return "light grass movement, slight fur lift, restrained brush drift";
   }
 
-  return "subtle foliage sway, stable clean air, light environmental reaction around the subjects";
+  return "light foliage drift and restrained environmental reaction around the subjects";
 }
 
 export function buildSeedanceBackgroundMotion(
@@ -690,15 +690,15 @@ export function buildSeedanceBackgroundMotion(
   }
 
   if (beat === "pressure") {
-    return `Background movement builds gradually with ${micro}. Grass and loose debris react with controlled growing tension.`;
+    return `The surroundings build with ${micro}. Loose grass and debris answer the growing pressure.`;
   }
   if (beat === "action") {
-    return `Ground cover reacts quickly with ${micro}. Loose debris and grass move with the action.`;
+    return `Ground cover reacts sharply with ${micro}. Loose debris follows the action.`;
   }
   if (beat === "aftermath") {
-    return `Background motion settles naturally with ${micro}.`;
+    return `The surroundings settle back with ${micro}.`;
   }
-  return `Background movement stays subtle with ${micro}.`;
+  return `The surroundings stay restrained with ${micro}.`;
 }
 
 export function stripBackgroundMovementLead(text: string): string {
