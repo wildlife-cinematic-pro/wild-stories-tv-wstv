@@ -28,6 +28,7 @@ function makeSnapshot(
     predator: "Wolf Pack",
     prey: "Bull Elk",
     contentLane: "Pack Hunt",
+    cameraAnglePreset: "Auto",
     arc: "Pack hunting strategy",
     habitat: "Rocky Mountain Meadow",
     weather: "Dawn",

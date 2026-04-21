@@ -3,6 +3,10 @@
 import WorkflowPresetsPanel from "@/components/build/workflow-presets-panel";
 import { contentLaneOptions } from "@/lib/content-lanes";
 import {
+  cameraAnglePresetOptions,
+  getCameraAnglePresetDefinition,
+} from "@/lib/camera-angle-presets";
+import {
   habitatOptions,
   depthModes,
   weatherOptions,
@@ -23,6 +27,7 @@ import {
 import type {
   AnimalVibe,
   Arc,
+  CameraAnglePreset,
   ContentLane,
   DepthMode,
   EmotionalTone,
@@ -41,6 +46,7 @@ type Step1SetupProps = {
   predator: string;
   prey: string;
   contentLane: ContentLane;
+  cameraAnglePreset: CameraAnglePreset;
   arc: Arc;
   weather: Weather;
   depthMode: DepthMode;
@@ -81,6 +87,7 @@ type Step1SetupProps = {
   onPredatorChange: (value: string) => void;
   onPreyChange: (value: string) => void;
   onContentLaneChange: (value: ContentLane) => void;
+  onCameraAnglePresetChange: (value: CameraAnglePreset) => void;
   onWeatherChange: (value: Weather) => void;
   onDepthModeChange: (value: DepthMode) => void;
   onHabitatChange: (value: HabitatPreset) => void;
@@ -135,6 +142,7 @@ export default function Step1Setup({
   predator,
   prey,
   contentLane,
+  cameraAnglePreset,
   arc,
   weather,
   depthMode,
@@ -175,6 +183,7 @@ export default function Step1Setup({
   onPredatorChange,
   onPreyChange,
   onContentLaneChange,
+  onCameraAnglePresetChange,
   onWeatherChange,
   onDepthModeChange,
   onHabitatChange,
@@ -230,6 +239,7 @@ export default function Step1Setup({
     driftRisk,
   });
   const habitatGuidance = getHabitatOverrideGuidance(habitat, contentLane);
+  const cameraPresetDefinition = getCameraAnglePresetDefinition(cameraAnglePreset);
   const animalPairGuidance = getAnimalPairMicroGuidance(
     predator,
     prey,
@@ -456,6 +466,27 @@ export default function Step1Setup({
             </div>
             <div>
               <label className="mb-1.5 block text-[11px] font-medium text-gray-500">
+                Camera Angle Preset
+              </label>
+              <select
+                value={cameraAnglePreset}
+                onChange={(event) =>
+                  onCameraAnglePresetChange(event.target.value as CameraAnglePreset)
+                }
+                className="w-full rounded-xl border border-gray-200 bg-gray-50 px-3 py-2.5 text-sm font-medium text-gray-900 focus:border-gray-400 focus:outline-none"
+              >
+                {cameraAnglePresetOptions.map((option) => (
+                  <option key={option} value={option}>
+                    {option}
+                  </option>
+                ))}
+              </select>
+              <p className="mt-1 text-[11px] text-gray-400">
+                {cameraPresetDefinition.helper}
+              </p>
+            </div>
+            <div>
+              <label className="mb-1.5 block text-[11px] font-medium text-gray-500">
                 Habitat Override
               </label>
               <select
@@ -572,6 +603,9 @@ export default function Step1Setup({
               </span>
               <span className="rounded-full bg-white px-2.5 py-1 text-[10px] font-semibold text-gray-500 shadow-sm shadow-gray-100">
                 {depthMode}
+              </span>
+              <span className="rounded-full bg-white px-2.5 py-1 text-[10px] font-semibold text-gray-500 shadow-sm shadow-gray-100">
+                {cameraPresetDefinition.label}
               </span>
             </div>
           </div>

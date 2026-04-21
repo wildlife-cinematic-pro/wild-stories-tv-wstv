@@ -27,6 +27,7 @@ import type {
   SavedWorkflowPresetPack,
   PromptVersion,
   AIProvider,
+  CameraAnglePreset,
   ContentLane,
   RunwayModel,
   KlingModel,
@@ -41,6 +42,10 @@ import type {
 
 import { weatherOptions, depthModes, habitatOptions } from "@/lib/model-specs";
 import { contentLaneOptions, isContentLane } from "@/lib/content-lanes";
+import {
+  cameraAnglePresetOptions,
+  isCameraAnglePreset,
+} from "@/lib/camera-angle-presets";
 import {
   getSafeDefaultWorkflowPresetId,
   normalizeWorkflowPresetPacks,
@@ -122,6 +127,7 @@ export type StoredSettings = {
   autoApplyHighDrift?: boolean;
   habitat?: HabitatPreset;
   contentLane?: ContentLane;
+  cameraAnglePreset?: CameraAnglePreset;
 };
 
 export function readSettings(): StoredSettings {
@@ -417,6 +423,7 @@ const QS = {
   depth: "d",
   habitat: "h",
   contentLane: "cl",
+  cameraAnglePreset: "ca",
 } as const;
 
 function isWeather(x: string): x is Weather {
@@ -445,6 +452,7 @@ export function readShareState(): Partial<ShareState> {
   const d = sp.get(QS.depth);
   const h = sp.get(QS.habitat);
   const cl = sp.get(QS.contentLane);
+  const ca = sp.get(QS.cameraAnglePreset);
 
   return {
     predator: sp.get(QS.predator) ?? undefined,
@@ -454,6 +462,7 @@ export function readShareState(): Partial<ShareState> {
     depthMode: d && isDepth(d) ? d : undefined,
     habitat: h && isHabitatPreset(h) ? h : undefined,
     contentLane: cl && isContentLane(cl) ? cl : undefined,
+    cameraAnglePreset: ca && isCameraAnglePreset(ca) ? ca : undefined,
   };
 }
 
@@ -471,6 +480,7 @@ export function writeShareState(state: ShareState): void {
   sod(QS.depth, state.depthMode);
   sod(QS.habitat, state.habitat);
   sod(QS.contentLane, state.contentLane);
+  sod(QS.cameraAnglePreset, state.cameraAnglePreset);
 
   window.history.replaceState(null, "", url.toString());
 }
@@ -490,6 +500,12 @@ export function buildShareLink(state: ShareState): string {
   if (state.habitat) sp.set(QS.habitat, state.habitat);
   if (state.contentLane && (contentLaneOptions as readonly string[]).includes(state.contentLane)) {
     sp.set(QS.contentLane, state.contentLane);
+  }
+  if (
+    state.cameraAnglePreset &&
+    (cameraAnglePresetOptions as readonly string[]).includes(state.cameraAnglePreset)
+  ) {
+    sp.set(QS.cameraAnglePreset, state.cameraAnglePreset);
   }
 
   return url.toString();

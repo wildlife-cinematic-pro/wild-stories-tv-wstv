@@ -37,6 +37,8 @@ function makeDraftInput(
     },
     finalEnvironment: "Rocky Mountain meadow",
     finalArc: "Ambush attack",
+    contentLane: "Auto",
+    cameraAnglePreset: "Auto",
     weather: "Golden Hour",
     depthMode: "Balanced Depth",
     emotionalTone: "Raw Tension",
