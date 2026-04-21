@@ -505,6 +505,36 @@ export type HookOverlayVariant = {
   note: string;
 };
 
+export type FacebookFirstFrameOverlayPreset =
+  | "facebook_species_first"
+  | "facebook_documentary_tension"
+  | "facebook_short_pressure"
+  | "facebook_observational_question"
+  | "facebook_two_line_readable";
+
+export type FacebookCoverFramePreset =
+  | "species_pressure"
+  | "species_question"
+  | "conflict_statement"
+  | "short_documentary"
+  | "two_line_cover";
+
+export type FacebookOverlayPreset = {
+  preset: FacebookFirstFrameOverlayPreset;
+  label: string;
+  text: string;
+  lines: string[];
+  note: string;
+};
+
+export type FacebookCoverFrameTextPreset = {
+  preset: FacebookCoverFramePreset;
+  label: string;
+  text: string;
+  lines: string[];
+  note: string;
+};
+
 export type FirstFrameOverlayGuidance = {
   placement: string;
   textLength: string;
@@ -526,6 +556,8 @@ export type FacebookPack = PlatformPostCommon & {
   hashtags: string;
   tags?: string;
   cmpNote: string;
+  facebookOverlayPresets?: FacebookOverlayPreset[];
+  facebookCoverFramePresets?: FacebookCoverFrameTextPreset[];
 };
 
 export type InstagramPack = PlatformPostCommon & {

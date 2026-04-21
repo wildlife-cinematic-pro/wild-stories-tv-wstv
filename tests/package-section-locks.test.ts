@@ -168,6 +168,24 @@ function makePackage(prefix: string): GeneratedPackage {
             note: `${prefix} fb note`,
           },
         ],
+        facebookOverlayPresets: [
+          {
+            preset: "facebook_species_first",
+            label: `${prefix} facebook overlay preset`,
+            text: `${prefix} facebook overlay text`,
+            lines: [`${prefix} facebook overlay line`],
+            note: `${prefix} facebook overlay note`,
+          },
+        ],
+        facebookCoverFramePresets: [
+          {
+            preset: "species_pressure",
+            label: `${prefix} facebook cover preset`,
+            text: `${prefix} facebook cover text`,
+            lines: [`${prefix} facebook cover line`],
+            note: `${prefix} facebook cover note`,
+          },
+        ],
       },
       instagram: {
         hook: `${prefix} ig hook`,
@@ -290,6 +308,12 @@ describe("package section locks", () => {
     );
     expect(merged.platformPack?.facebook.hookFormattingPresets).toEqual(
       lockedPackage.platformPack?.facebook.hookFormattingPresets
+    );
+    expect(merged.platformPack?.facebook.facebookOverlayPresets).toEqual(
+      lockedPackage.platformPack?.facebook.facebookOverlayPresets
+    );
+    expect(merged.platformPack?.facebook.facebookCoverFramePresets).toEqual(
+      lockedPackage.platformPack?.facebook.facebookCoverFramePresets
     );
     expect(merged.platformPack?.instagram.overlayGuidance).toEqual(
       lockedPackage.platformPack?.instagram.overlayGuidance
