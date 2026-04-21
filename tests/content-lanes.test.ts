@@ -2,7 +2,9 @@ import { describe, expect, it } from "vitest";
 
 import {
   getLaneBiasedArc,
+  isContentLaneCompatible,
   rankPreyOptionsForContentLane,
+  scoreContentLaneFit,
 } from "@/lib/content-lanes";
 import {
   build2026HookByFamily,
@@ -153,5 +155,57 @@ describe("Content Lane system", () => {
       /what looked|changed the read|pressure line/
     );
   });
+
+  it("gates rut battle copy and scoring when the species pair is not rut-compatible", () => {
+    const predator = "Grizzly Bear";
+    const prey = "Bison";
+    const environment = "Yellowstone open meadow and dry grassland";
+
+    expect(
+      isContentLaneCompatible("Rut Battle", predator, prey, "Giant vs giant clash")
+    ).toBe(false);
+
+    const hook = build2026HookByFamily(
+      predator,
+      prey,
+      "Giant vs giant clash",
+      "danger",
+      { contentLane: "Rut Battle" }
+    );
+    const caption = buildShortCaption(
+      predator,
+      prey,
+      environment,
+      "Giant vs giant clash",
+      { mode: "us-only", contentLane: "Rut Battle" }
+    );
+    const fitScore = scoreContentLaneFit({
+      contentLane: "Rut Battle",
+      predator,
+      prey,
+      arc: "Giant vs giant clash",
+      habitat: "Auto",
+      hookFamily: "curiosity",
+      environment,
+    });
+    const baseScore = scoreUSAudience({
+      predator,
+      prey,
+      environment,
+      arc: "Giant vs giant clash",
+    });
+    const laneScore = scoreUSAudience({
+      predator,
+      prey,
+      environment,
+      arc: "Giant vs giant clash",
+      contentLane: "Rut Battle",
+    });
+
+    expect(`${hook} ${caption}`.toLowerCase()).not.toMatch(/antler|rut-season/);
+    expect(fitScore).toBeLessThan(70);
+    expect(laneScore.total).toBe(baseScore.total);
+  });
+
 
 });

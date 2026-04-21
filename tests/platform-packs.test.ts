@@ -6,6 +6,7 @@ import {
   buildCTA,
   buildFacebookCoverFramePresets,
   buildFacebookFirstFrameOverlayPresets,
+  buildHashtags,
   buildFirstFrameOverlayGuidance,
   rankFacebookCoverFramePresets,
   recommendFacebookOverlayPreset,
@@ -271,14 +272,15 @@ describe("platform pack hook engine v2", () => {
     );
 
     expect(fishingRecommendation?.recommended.preset).toBe(
-      "facebook_short_pressure"
+      "facebook_two_line_readable"
     );
     expect(defenderRecommendation?.recommended.preset).toBe(
-      "facebook_documentary_tension"
+      "facebook_two_line_readable"
     );
-    expect(fishingRecommendation?.recommended.preset).not.toBe(
-      defenderRecommendation?.recommended.preset
-    );
+    expect(fishingRecommendation?.recommended.score).toBeLessThan(100);
+    expect(defenderRecommendation?.recommended.score).toBeLessThan(100);
+    expect(fishingRecommendation?.reason.toLowerCase()).toContain("strike-window");
+    expect(defenderRecommendation?.reason.toLowerCase()).toContain("hold-ground");
     expect(fishingRecommendation?.recommended.text).not.toMatch(BAIT_PATTERN);
     expect(defenderRecommendation?.recommended.text).not.toMatch(
       FORCED_ENGAGEMENT_PATTERN
@@ -353,8 +355,66 @@ describe("platform pack hook engine v2", () => {
     /balanced first-frame clarity|balanced facebook cover readability|context fit/
   );
 });
+  it("keeps same-species mirror-match hashtags at five unique clean tags", () => {
+    const hashtags = buildHashtags("Bull Elk", "Bull Elk", "Giant vs giant clash", {
+      count: 5,
+      contentLane: "Rut Battle",
+    }).split(/\s+/);
 
-it("flags clickbait hooks and forced-engagement CTAs in the publish guard", () => {
+    expect(hashtags).toHaveLength(5);
+    expect(new Set(hashtags).size).toBe(5);
+    expect(hashtags).toEqual([
+      "#wildlife",
+      "#bullelk",
+      "#rutbattle",
+      "#animalclash",
+      "#usa",
+    ]);
+  });
+
+  it("falls back to arc-led Facebook copy when Rut Battle is not species-compatible", () => {
+    const pack = buildPlatformPack(
+      "Grizzly Bear",
+      "Bison",
+      "Giant vs giant clash",
+      "Yellowstone open meadow and dry grassland",
+      "Rut Battle"
+    );
+    const serializedFacebook = JSON.stringify(pack.facebook).toLowerCase();
+
+    expect(serializedFacebook).not.toMatch(/antler|rut-season/);
+    expect(pack.facebook.hashtags).not.toContain("#rutbattle");
+    expect(pack.facebook.facebookOverlayRecommendation?.reason.toLowerCase()).not.toContain(
+      "rut posture"
+    );
+  });
+
+  it("creates real Facebook cover and overlay score separation instead of saturating at 100", () => {
+    const pack = buildPlatformPack(
+      "Mountain Lion",
+      "White-tailed Deer",
+      "Ambush attack",
+      "Rocky Mountain forest edge and open meadow",
+      "Auto"
+    );
+    const coverScores =
+      pack.facebook.facebookCoverFrameRanking?.ranked.map((entry) => entry.score) ?? [];
+    const overlayRecommendation = pack.facebook.facebookOverlayRecommendation;
+    const overlayScores = overlayRecommendation
+      ? [overlayRecommendation.recommended, ...overlayRecommendation.alternatives].map(
+          (entry) => entry.score
+        )
+      : [];
+
+    expect(coverScores).toHaveLength(5);
+    expect(Math.max(...coverScores)).toBeLessThan(100);
+    expect(new Set(coverScores).size).toBeGreaterThan(1);
+    expect(Math.max(...overlayScores)).toBeLessThan(100);
+    expect(new Set(overlayScores).size).toBeGreaterThan(1);
+  });
+
+
+  it("flags clickbait hooks and forced-engagement CTAs in the publish guard", () => {
     const report = runFacebookPublishGuard({
       hookText: "You won't believe what happens next.",
       ctaText: "Comment who wins.",

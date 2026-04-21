@@ -334,8 +334,10 @@ export function buildGeneratedPackageDraft(
     input.prey,
     input.finalArc,
     input.finalEnvironment,
-    input.contentLane
+    input.contentLane,
+    input.finalHook
   );
+  const primaryHook = platformPack.facebook.hook;
   const seoTitle = buildSEOTitle(input.predator, input.prey, input.finalArc);
   const altTextPrompt = buildAltTextPrompt(
     input.predator,
@@ -443,7 +445,7 @@ export function buildGeneratedPackageDraft(
     motionStrength,
     capCutPlan,
     clipChaining,
-    hook: input.finalHook,
+    hook: primaryHook,
     hook2026: input.finalHook2026 ?? [],
     recommendedHookIndex: input.recommendedHookIndex,
     caption: input.shortCaption ?? "",
@@ -553,7 +555,7 @@ export function buildGeneratedPackageDraft(
     usAudienceScore: input.usAudienceScore,
     openingFrameScore: input.openingFrameScore,
     performanceSnapshot: input.performanceSnapshot ?? undefined,
-    primaryHook: input.finalHook,
+    primaryHook,
   };
 }
 

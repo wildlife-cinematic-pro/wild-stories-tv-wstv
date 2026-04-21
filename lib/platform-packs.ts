@@ -41,6 +41,7 @@ import {
   buildContentLaneLongCaptionLead,
   buildContentLaneShortCaptionLead,
   getContentLaneHashtag,
+  isContentLaneCompatible,
 } from "@/lib/content-lanes";
 
 const HOOK_FAMILY_ORDER = ["danger", "curiosity", "reversal"] as const;
@@ -994,6 +995,23 @@ function clampFacebookScore(score: number): number {
   return Math.max(0, Math.min(100, Math.round(score)));
 }
 
+function facebookFrameQualityTieBreak(
+  heuristics?: FacebookFrameHeuristics
+): number {
+  if (!heuristics) return 0;
+
+  let score = 0;
+  if (heuristics.speciesReadability === "high") score += 6;
+  else if (heuristics.speciesReadability === "low") score -= 6;
+  if (heuristics.textAnimalCollisionRisk === "low") score += 5;
+  else if (heuristics.textAnimalCollisionRisk === "high") score -= 8;
+  if (heuristics.silhouetteConflictRisk === "low") score += 4;
+  else if (heuristics.silhouetteConflictRisk === "high") score -= 6;
+  if (heuristics.leftRightSubjectFit === "strong") score += 5;
+  else if (heuristics.leftRightSubjectFit === "crowded") score -= 7;
+  return score;
+}
+
 function facebookSpeciesTerms(predator: string, prey: string): string[] {
   return [normalizeCopy(predator), normalizeCopy(prey)]
     .filter(Boolean)
@@ -1279,30 +1297,30 @@ function coverFrameChoiceBias(
 ): number {
   if (frame1Choice === "species-first") {
     switch (preset) {
-      case "species_pressure":
-        return 14;
       case "two_line_cover":
-        return 12;
-      case "species_question":
         return 7;
-      case "short_documentary":
+      case "species_pressure":
         return 4;
+      case "species_question":
+        return 3;
+      case "short_documentary":
+        return 2;
       case "conflict_statement":
-        return -6;
+        return -3;
     }
   }
 
   switch (preset) {
-    case "species_pressure":
-      return 14;
-    case "short_documentary":
-      return 8;
     case "two_line_cover":
-      return 8;
-    case "species_question":
+      return 7;
+    case "short_documentary":
+      return 5;
+    case "species_pressure":
       return 3;
+    case "species_question":
+      return 2;
     case "conflict_statement":
-      return -4;
+      return -1;
   }
 
   return 0;
@@ -1314,28 +1332,28 @@ function overlayFrameChoiceBias(
 ): number {
   if (frame1Choice === "species-first") {
     switch (preset) {
-      case "facebook_species_first":
-        return 16;
       case "facebook_two_line_readable":
-        return 12;
+        return 7;
+      case "facebook_species_first":
+        return 6;
       case "facebook_documentary_tension":
-        return 4;
+        return 3;
       case "facebook_observational_question":
         return 2;
       case "facebook_short_pressure":
-        return -2;
+        return -3;
     }
   }
 
   switch (preset) {
-    case "facebook_short_pressure":
-      return 16;
-    case "facebook_documentary_tension":
-      return 10;
     case "facebook_two_line_readable":
+      return 7;
+    case "facebook_short_pressure":
       return 6;
-    case "facebook_observational_question":
+    case "facebook_documentary_tension":
       return 4;
+    case "facebook_observational_question":
+      return 3;
     case "facebook_species_first":
       return 0;
   }
@@ -1371,77 +1389,81 @@ function scoreFacebookCoverFramePreset(
     mode: "cover",
   });
 
-  let score = 35;
+  let score = 12;
 
   if (speciesClear) {
-    score += 20;
+    score += 12;
     signals.push("species stays clear at Facebook thumbnail size");
   } else {
     score -= 14;
   }
 
   if (speciesLead) {
-    score += 6;
+    score += 3;
     signals.push("species leads the cover line");
   }
 
   if (readable) {
-    score += 26;
+    score += 14;
     signals.push("holds as a compact 1-2 line cover");
   } else {
-    score -= 22;
+    score -= 20;
   }
 
   if (pressureClear) {
-    score += 18;
+    score += 8;
     signals.push("tension cue still reads at thumbnail size");
   } else {
     score -= 10;
   }
 
   if (!bait) {
-    score += 15;
+    score += 6;
     signals.push("stays documentary and non-bait");
   } else {
     score -= 35;
   }
 
   if (frameHeuristics.speciesReadability === "high") {
-    score += 10;
+    score += 5;
     signals.push("keeps species readability high");
   } else if (frameHeuristics.speciesReadability === "low") {
-    score -= 10;
+    score -= 12;
   }
 
   if (frameHeuristics.textAnimalCollisionRisk === "low") {
-    score += 12;
+    score += 7;
     signals.push("avoids crowding the animals");
-  } else if (frameHeuristics.textAnimalCollisionRisk === "high") {
+  } else if (frameHeuristics.textAnimalCollisionRisk === "medium") {
+    score -= 3;
+  } else {
     score -= 18;
   }
 
   if (frameHeuristics.silhouetteConflictRisk === "low") {
-    score += 8;
+    score += 5;
     signals.push("keeps text off the main silhouette");
-  } else if (frameHeuristics.silhouetteConflictRisk === "high") {
+  } else if (frameHeuristics.silhouetteConflictRisk === "medium") {
+    score -= 2;
+  } else {
     score -= 14;
   }
 
   if (frameHeuristics.leftRightSubjectFit === "strong") {
-    score += 8;
+    score += 6;
     signals.push("fits cleanly in the upper frame");
   } else if (frameHeuristics.leftRightSubjectFit === "crowded") {
-    score -= 8;
+    score -= 10;
   }
 
   score += coverFrameChoiceBias(preset.preset, frameHeuristics.frame1Choice);
   signals.push(buildFrame1CallSignal(frameHeuristics.frame1Choice));
 
-  if (preset.preset === "species_pressure") score += 10;
-  if (preset.preset === "two_line_cover") score += 8;
-  if (preset.preset === "species_question") score += 5;
-  if (preset.preset === "conflict_statement" && pressureClear) score += 4;
-  if (preset.preset === "conflict_statement" && !pressureClear) score -= 10;
+  if (preset.preset === "two_line_cover") score += 5;
+  if (preset.preset === "species_question") score += 2;
+  if (preset.preset === "species_pressure") score += 1;
+  if (preset.preset === "conflict_statement" && pressureClear) score += 2;
+  if (preset.preset === "conflict_statement" && !pressureClear) score -= 8;
 
   return {
     preset: preset.preset,
@@ -1472,6 +1494,8 @@ export function rankFacebookCoverFramePresets(
     .sort(
       (a, b) =>
         b.score - a.score ||
+        facebookFrameQualityTieBreak(b.frameHeuristics) -
+          facebookFrameQualityTieBreak(a.frameHeuristics) ||
         (originalIndex.get(a.preset) ?? 0) - (originalIndex.get(b.preset) ?? 0)
     );
   const best = ranked[0];
@@ -1495,34 +1519,34 @@ function laneOverlayPresetBias(
   > = {
     Auto: {},
     "Pack Hunt": {
-      facebook_short_pressure: 24,
-      facebook_two_line_readable: 18,
-      facebook_species_first: 10,
-      facebook_documentary_tension: 4,
+      facebook_two_line_readable: 9,
+      facebook_short_pressure: 8,
+      facebook_species_first: 4,
+      facebook_documentary_tension: 3,
     },
     Defender: {
-      facebook_documentary_tension: 24,
-      facebook_two_line_readable: 18,
-      facebook_observational_question: 10,
-      facebook_species_first: 8,
+      facebook_two_line_readable: 9,
+      facebook_documentary_tension: 8,
+      facebook_observational_question: 5,
+      facebook_species_first: 4,
     },
     "Fishing Strike": {
-      facebook_short_pressure: 24,
-      facebook_two_line_readable: 18,
-      facebook_observational_question: 12,
-      facebook_species_first: 6,
+      facebook_two_line_readable: 9,
+      facebook_short_pressure: 8,
+      facebook_observational_question: 5,
+      facebook_species_first: 3,
     },
     "Rut Battle": {
-      facebook_documentary_tension: 20,
-      facebook_species_first: 18,
-      facebook_two_line_readable: 12,
-      facebook_observational_question: 4,
+      facebook_two_line_readable: 9,
+      facebook_documentary_tension: 7,
+      facebook_species_first: 7,
+      facebook_observational_question: 3,
     },
     Escape: {
-      facebook_short_pressure: 22,
-      facebook_observational_question: 18,
-      facebook_two_line_readable: 12,
-      facebook_species_first: 6,
+      facebook_two_line_readable: 9,
+      facebook_short_pressure: 7,
+      facebook_observational_question: 5,
+      facebook_species_first: 3,
     },
   };
 
@@ -1537,15 +1561,15 @@ function hookOverlayPresetBias(
   const lower = compact.toLowerCase();
   let score = 0;
 
-  if (compact.length > 72 && preset === "facebook_documentary_tension") score += 10;
-  if (/\?/.test(compact) && preset === "facebook_observational_question") score += 10;
-  if (/(waterline|strike|escape lane|breakaway|pursuit|pressure|lane)/.test(lower)) {
-    if (preset === "facebook_short_pressure") score += 8;
-    if (preset === "facebook_two_line_readable") score += 6;
+  if (compact.length > 72 && preset === "facebook_documentary_tension") score += 4;
+  if (/\?/.test(compact) && preset === "facebook_observational_question") score += 5;
+  if (/(waterline|strike|escape lane|breakaway|pursuit)/.test(lower)) {
+    if (preset === "facebook_two_line_readable") score += 5;
+    if (preset === "facebook_short_pressure") score += 4;
   }
   if (/(boundary|warning-step|stance|dominance|territory|clash)/.test(lower)) {
-    if (preset === "facebook_documentary_tension") score += 8;
-    if (preset === "facebook_species_first") score += 5;
+    if (preset === "facebook_documentary_tension") score += 4;
+    if (preset === "facebook_species_first") score += 3;
   }
 
   return score;
@@ -1579,55 +1603,61 @@ function scoreFacebookOverlayPreset(
     mode: "overlay",
   });
 
-  let score = 35;
+  let score = 12;
 
   if (readable) {
-    score += 25;
+    score += 14;
     signals.push("holds as a compact frame-1 overlay");
   } else {
     score -= 20;
   }
 
   if (speciesClear) {
-    score += 14;
+    score += 8;
     signals.push("keeps the species read obvious");
+  } else {
+    score -= 4;
   }
 
   if (pressureClear) {
-    score += 18;
+    score += 8;
     signals.push("gets to the behavior cue quickly");
   }
 
   if (!bait) {
-    score += 15;
+    score += 6;
     signals.push("stays documentary and non-bait");
   } else {
     score -= 40;
   }
 
   if (frameHeuristics.speciesReadability === "high") {
-    score += 8;
+    score += 6;
     signals.push("keeps species readability high");
   } else if (frameHeuristics.speciesReadability === "low") {
-    score -= 8;
+    score -= 10;
   }
 
   if (frameHeuristics.textAnimalCollisionRisk === "low") {
-    score += 10;
+    score += 5;
     signals.push("avoids crowding the animals");
-  } else if (frameHeuristics.textAnimalCollisionRisk === "high") {
-    score -= 18;
+  } else if (frameHeuristics.textAnimalCollisionRisk === "medium") {
+    score -= 2;
+  } else {
+    score -= 16;
   }
 
   if (frameHeuristics.silhouetteConflictRisk === "low") {
-    score += 8;
+    score += 4;
     signals.push("keeps text off the main silhouette");
-  } else if (frameHeuristics.silhouetteConflictRisk === "high") {
+  } else if (frameHeuristics.silhouetteConflictRisk === "medium") {
+    score -= 2;
+  } else {
     score -= 12;
   }
 
   if (frameHeuristics.leftRightSubjectFit === "strong") {
-    score += 8;
+    score += 5;
     signals.push("fits cleanly in the upper frame");
   } else if (frameHeuristics.leftRightSubjectFit === "crowded") {
     score -= 8;
@@ -1674,6 +1704,8 @@ export function recommendFacebookOverlayPreset(
     .sort(
       (a, b) =>
         b.score - a.score ||
+        facebookFrameQualityTieBreak(b.frameHeuristics) -
+          facebookFrameQualityTieBreak(a.frameHeuristics) ||
         tieBreakScore(b) - tieBreakScore(a) ||
         (originalIndex.get(a.preset) ?? 0) - (originalIndex.get(b.preset) ?? 0)
     );
@@ -1815,8 +1847,7 @@ export function buildHashtags(
   arc: Arc,
   options: HashtagOptions = {}
 ): string {
-  void options;
-
+  const requestedCount = Math.max(1, options.count ?? 5);
   const baseTags = BASE_HASHTAGS[arc] ?? ["#wildlife", getArcHashtag(arc), "#usa"];
   const laneTag = getContentLaneHashtag(
     options.contentLane ?? "Auto",
@@ -1824,15 +1855,27 @@ export function buildHashtags(
     prey,
     arc
   );
-  const tags = [
+  const candidates = [
     baseTags[0] ?? "#wildlife",
     toHashtag(predator),
     toHashtag(prey),
-    laneTag ?? getArcHashtag(arc),
+    laneTag,
+    getArcHashtag(arc),
+    baseTags[1],
     baseTags[2] ?? "#usa",
-  ].filter(Boolean);
+    "#wildlifereels",
+    "#animalbehavior",
+    "#nature",
+    "#usa",
+  ].filter((tag): tag is string => Boolean(tag));
+  const tags: string[] = [];
 
-  return [...new Set(tags)].slice(0, 5).join(" ");
+  for (const candidate of candidates) {
+    if (!tags.includes(candidate)) tags.push(candidate);
+    if (tags.length >= requestedCount) break;
+  }
+
+  return tags.slice(0, requestedCount).join(" ");
 }
 
 /** Separate Facebook-style tags field — clean keywords, not hashtags. */
@@ -1860,21 +1903,35 @@ export function buildPlatformPack(
   prey: string,
   arc: Arc,
   env: string,
-  contentLane: ContentLane = "Auto"
+  contentLane: ContentLane = "Auto",
+  preferredHook = ""
 ): PlatformPack {
   const cleanEnv = sanitizeSocialEnv(env);
-  const hooks = build2026Hook(predator, prey, arc, { contentLane });
+  const effectiveContentLane =
+    contentLane === "Auto" || isContentLaneCompatible(contentLane, predator, prey, arc)
+      ? contentLane
+      : "Auto";
+  const generatedHooks = build2026Hook(predator, prey, arc, {
+    contentLane: effectiveContentLane,
+  });
+  const normalizedPreferredHook = normalizeCopy(preferredHook);
+  const hooks = normalizedPreferredHook
+    ? [
+        normalizedPreferredHook,
+        ...generatedHooks.filter((hook) => hook !== normalizedPreferredHook),
+      ]
+    : generatedHooks;
   const shortCaption = buildShortCaption(predator, prey, cleanEnv, arc, {
     mode: "us-only",
-    contentLane,
+    contentLane: effectiveContentLane,
   });
   const longCaption = buildLongCaption(predator, prey, cleanEnv, arc, {
     mode: "us-only",
-    contentLane,
+    contentLane: effectiveContentLane,
   });
   const hashtags = buildHashtags(predator, prey, arc, {
     count: 5,
-    contentLane,
+    contentLane: effectiveContentLane,
   });
   const tags = buildTags(predator, prey, arc);
   const overlayGuidance = buildFirstFrameOverlayGuidance();
@@ -1910,14 +1967,14 @@ export function buildPlatformPack(
       hooks[0],
       predator,
       prey,
-      contentLane
+      effectiveContentLane
     ),
     facebookCoverFrameRanking: rankFacebookCoverFramePresets(
       facebookCoverFramePresets,
       predator,
       prey,
       hooks[0],
-      contentLane
+      effectiveContentLane
     ),
   };
 

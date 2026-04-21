@@ -110,6 +110,17 @@ describe("build-package refactor seam", () => {
     expect(draft.basePkg.routingNote).not.toContain("Kling Kling");
   });
 
+  it("aligns the publish summary hook with the packaged Facebook hook", () => {
+    const draft = buildGeneratedPackageDraft(makeDraftInput());
+    const { publishFlowSummary } = finalizeGeneratedPackageDraft(draft);
+
+    expect(draft.basePkg.platformPack?.facebook.hook).toBe(draft.primaryHook);
+    expect(draft.basePkg.hook).toBe(draft.basePkg.platformPack?.facebook.hook);
+    expect(publishFlowSummary.primaryHook).toBe(
+      draft.basePkg.platformPack?.facebook.hook
+    );
+  });
+
   it("keeps structured prompt fields populated for the UI and preserves the Nano Banana image path", () => {
     const draft = buildGeneratedPackageDraft(makeDraftInput());
     const prompts = draft.basePkg.structuredPrompts;

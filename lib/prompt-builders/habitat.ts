@@ -35,30 +35,15 @@ function isBroadYellowstoneLandClashEnv(env: string): boolean {
 function isExplicitWaterForwardEnv(env: string): boolean {
   const envLower = env.toLowerCase();
   const hasStrongWaterMarker =
-    envLower.includes("waterline") ||
-    envLower.includes("underwater") ||
-    envLower.includes("riverbank") ||
-    envLower.includes("bank") ||
-    envLower.includes("shoreline") ||
-    envLower.includes("shore") ||
-    envLower.includes("shallow current") ||
-    envLower.includes("current") ||
-    envLower.includes("rapids") ||
-    envLower.includes("water ") ||
-    envLower.startsWith("water") ||
-    envLower.includes("lake") ||
-    envLower.includes("swamp") ||
-    envLower.includes("ocean") ||
-    envLower.includes("sea") ||
-    envLower.includes("reef") ||
-    envLower.includes("coast") ||
-    envLower.includes("marine");
+    /\b(waterline|underwater|riverbank|bank|shoreline|shore|current|rapids|water|lake|swamp|ocean|sea|reef|coast|marine|shallows?)\b/.test(
+      envLower
+    ) || /\briver (mouth|channel|edge|bank)\b/.test(envLower);
 
   if (isBroadYellowstoneLandClashEnv(env)) {
     return hasStrongWaterMarker;
   }
 
-  return hasStrongWaterMarker || envLower.includes("river");
+  return hasStrongWaterMarker;
 }
 
 export function isAquaticEnv(env: string): boolean {
