@@ -20,6 +20,10 @@ import type {
   FacebookCoverFrameRanking,
   FacebookCoverFrameTextPreset,
   FacebookFirstFrameOverlayPreset,
+  FacebookFrameChoice,
+  FacebookFrameHeuristics,
+  FacebookFrameHeuristicLevel,
+  FacebookFrameSubjectFit,
   FacebookOverlayPreset,
   FacebookOverlayPresetScore,
   FacebookOverlayRecommendation,
@@ -82,7 +86,7 @@ const HYPE_FILLER_PATTERNS = [
 ] as const;
 
 const OBSERVATIONAL_SIGNAL_PATTERN =
-  /\b(pressure|spacing|boundary|timing|posture|waterline|window|lane|stance|distance|footing|surface break|read|looked|turn|ground|clash|angle|territory|warning-step|breakaway|survival)\b/i;
+  /\b(pressure|spacing|claim|timing|posture|waterline|window|stance|distance|footing|surface break|brace|turn|ground|clash|angle|territory|warning-step|breakaway|survival|antler|shoulder|standoff|pursuit|strike|contact)\b/i;
 
 const FORCED_ENGAGEMENT_PATTERN =
   /\b(who wins\??|comment below|tag a friend|watch till the end|watch to the end|like if you agree|share before it(?:'|’)s gone)\b/i;
@@ -142,22 +146,22 @@ const VIRAL_HOOKS: Partial<Record<Arc, (predator: string, prey: string) => strin
     `Once the ${predator.toLowerCase()} committed, the ${prey.toLowerCase()} lost space fast.`,
 
   "Defender stands ground": (predator) =>
-    `This ${predator.toLowerCase()} refused to yield once the pressure arrived.`,
+    `This ${predator.toLowerCase()} refused to yield once the push arrived.`,
 
   "Giant vs giant clash": (predator, prey) =>
-    `${predator} and ${prey} got too close. One heavy step changed the standoff.`,
+    `${predator} and ${prey} got too close. One heavy step broke the standoff.`,
 
   "Territory dominance battle": (_predator, prey) =>
-    `The ${prey.toLowerCase()} crossed the wrong boundary.`,
+    `The ${prey.toLowerCase()} stepped into claimed ground.`,
 
   "Pack hunting strategy": (_predator, prey) =>
-    `The ${prey.toLowerCase()} was already losing space before it reacted.`,
+    `The ${prey.toLowerCase()} was already losing the open break before it reacted.`,
 
   "Predator vs predator fight": () =>
     `Two apex predators met too close. There was no safe outcome.`,
 
   "Escape from danger": (_predator, prey) =>
-    `This ${prey.toLowerCase()} had almost no time to read the danger.`,
+    `This ${prey.toLowerCase()} had almost no time to find the exit.`,
 };
 
 // ─────────────────────────────────────────────────────────────
@@ -166,43 +170,43 @@ const VIRAL_HOOKS: Partial<Record<Arc, (predator: string, prey: string) => strin
 const HOOKS_2026: Partial<Record<Arc, (predator: string, prey: string) => string[]>> = {
   "Ambush attack": (predator, prey) => [
     `The ${prey.toLowerCase()} looked up after the ${predator.toLowerCase()} had already closed the space.`,
-    `The ${predator.toLowerCase()} was inside the read before the ${prey.toLowerCase()} changed direction.`,
-    `A quiet opening turned into visible pressure in one beat.`,
+    `The ${predator.toLowerCase()} had already eaten the distance before the ${prey.toLowerCase()} turned.`,
+    `The first quiet second ended with the danger already moving.`,
   ],
   "Chase and takedown": (predator, prey) => [
     `The ${predator.toLowerCase()} committed and the ${prey.toLowerCase()} lost clean running room.`,
     `The ${prey.toLowerCase()} reacted fast, but the closing angle was already there.`,
-    `The lane looked open until the pursuit tightened.`,
+    `The opening looked wide until the pursuit folded inward.`,
   ],
   "Defender stands ground": (predator, prey) => [
-    `The ${predator.toLowerCase()} held position and changed the whole read.`,
+    `The ${predator.toLowerCase()} held position and reset the whole encounter.`,
     `The ${prey.toLowerCase()} kept pressing, but the stance never opened.`,
-    `What looked like an easy push turned into a hard boundary.`,
+    `An easy push met a braced stand instead.`,
   ],
   "Giant vs giant clash": (predator, prey) => [
     `${predator} and ${prey} were already too tight for a clean reset.`,
-    `The weight shift was visible before the full contact landed.`,
-    `A slow standoff turned into impact once the footing gave way.`,
+    `The shoulder line was set before either animal committed.`,
+    `A slow standoff turned heavy once the footing gave way.`,
   ],
   "Territory dominance battle": (predator, prey) => [
-    `The ${prey.toLowerCase()} stepped across a boundary the ${predator.toLowerCase()} was already holding.`,
-    `The warning was readable before the full response landed.`,
+    `The ${prey.toLowerCase()} stepped onto ground the ${predator.toLowerCase()} was already claiming.`,
+    `The warning showed before the full response landed.`,
     `One step changed the encounter from posture to enforcement.`,
   ],
   "Pack hunting strategy": (predator, prey) => [
-    `The ${prey.toLowerCase()} was losing the escape lane before it broke into full flight.`,
-    `The ${predator.toLowerCase()} pressure was organized before full contact.`,
-    `The field looked open until the pursuit angles closed.`,
+    `The ${prey.toLowerCase()} was losing the open break before full flight.`,
+    `The ${predator.toLowerCase()} pursuit was organized before full contact.`,
+    `The field looked open until the angles folded inward.`,
   ],
   "Predator vs predator fight": (predator, prey) => [
     `Two apex predators met at a distance with no easy reset.`,
-    `${predator} and ${prey} read each other before the pressure fully tightened.`,
+    `${predator} and ${prey} measured each other before either gave ground.`,
     `Control shifted as soon as one animal gave up clean position.`,
   ],
   "Escape from danger": (predator, prey) => [
-    `The ${prey.toLowerCase()} had one clear chance to break the line.`,
+    `The ${prey.toLowerCase()} had one clear chance to find daylight.`,
     `The ${predator.toLowerCase()} moved before the ${prey.toLowerCase()} found a clean turn.`,
-    `It looked closed until one survival move reopened the lane.`,
+    `It looked over until one survival move opened a gap.`,
   ],
 };
 
@@ -211,19 +215,19 @@ const HOOKS_2026: Partial<Record<Arc, (predator: string, prey: string) => string
 // ─────────────────────────────────────────────────────────────
 const VIRAL_CAPTIONS: Partial<Record<Arc, (predator: string, prey: string, env: string) => string>> = {
   "Ambush attack": (predator, prey, env) =>
-    `In the ${env}, the ${prey.toLowerCase()} lost one second and the ${predator.toLowerCase()} used it. The whole moment works because the pressure becomes readable immediately.`,
+    `In the ${env}, the ${prey.toLowerCase()} lost one second and the ${predator.toLowerCase()} used it. The danger becomes clear before the full move lands.`,
   "Chase and takedown": (predator, prey, env) =>
-    `Across the ${env}, the ${predator.toLowerCase()} committed early and the ${prey.toLowerCase()} had almost no time to recover. The shift in control is the real story beat.`,
+    `Across the ${env}, the ${predator.toLowerCase()} committed early and the ${prey.toLowerCase()} had almost no time to recover. The closing angle is the real story beat.`,
   "Defender stands ground": (predator, prey, env) =>
-    `In the ${env}, every instinct said move. This ${predator.toLowerCase()} stayed put, and that choice changed the whole read once the ${prey.toLowerCase()} kept pressing.`,
+    `In the ${env}, every instinct said move. This ${predator.toLowerCase()} stayed put, and that choice shifted the encounter once the ${prey.toLowerCase()} kept pressing.`,
   "Giant vs giant clash": (predator, prey, env) =>
-    `Two heavy animals met in the ${env}, and neither wanted to give space. The tension lands because the weight transfer is visible before the real impact.`,
+    `Two heavy animals met in the ${env}, and neither wanted to give space. The shoulder weight and footing show the impact before it arrives.`,
   "Territory dominance battle": (predator, prey, env) =>
-    `In the ${env}, the boundary was already clear before the response landed. The ${prey.toLowerCase()} stepped into it, and the ${predator.toLowerCase()} answered right away.`,
+    `In the ${env}, the claim was already clear before the response landed. The ${prey.toLowerCase()} stepped into it, and the ${predator.toLowerCase()} answered right away.`,
   "Pack hunting strategy": (predator, prey, env) =>
-    `At first, the ${prey.toLowerCase()} looked free. Then the shape of the trap became readable. In the ${env}, the ${predator.toLowerCase()} wins space before full contact.`,
+    `At first, the ${prey.toLowerCase()} looked free. Then the trap shape appeared. In the ${env}, the ${predator.toLowerCase()} wins position before full contact.`,
   "Predator vs predator fight": (predator, prey, env) =>
-    `A ${predator.toLowerCase()} and a ${prey.toLowerCase()} in the ${env} creates a different kind of pressure. Both animals understand the cost of a bad read, so every movement matters more.`,
+    `A ${predator.toLowerCase()} and a ${prey.toLowerCase()} in the ${env} create a slower kind of tension. Both animals understand the cost of a bad step, so every movement matters more.`,
   "Escape from danger": (predator, prey, env) =>
     `Everything in the ${env} changed in a second. The ${prey.toLowerCase()} had almost no time to process the danger before the ${predator.toLowerCase()} was already moving.`,
 };
@@ -239,117 +243,117 @@ const SHORT_CAPTIONS_2026: Partial<Record<Arc, (predator: string, prey: string, 
   "Defender stands ground": (predator, prey) =>
     `The ${prey.toLowerCase()} kept pressing. This ${predator.toLowerCase()} never gave ground.`,
   "Giant vs giant clash": (predator, prey) =>
-    `${predator} and ${prey} got too close. One heavy step changed the standoff.`,
+    `${predator} and ${prey} got too close. One heavy step broke the standoff.`,
   "Territory dominance battle": (predator, prey) =>
     `The ${prey.toLowerCase()} crossed the wrong line. The ${predator.toLowerCase()} answered immediately.`,
   "Pack hunting strategy": (predator, prey) =>
-    `The ${prey.toLowerCase()} looked free for a second. Then the ${predator.toLowerCase()} closed the escape lane.`,
+    `The ${prey.toLowerCase()} looked free for a second. Then the ${predator.toLowerCase()} folded the angles inward.`,
   "Predator vs predator fight": (predator, prey) =>
-    `${predator} and ${prey} met too close. One bad read shifted control fast.`,
+    `${predator} and ${prey} met too close. One bad step shifted control fast.`,
   "Escape from danger": (predator, prey) =>
     `The ${predator.toLowerCase()} moved first. The ${prey.toLowerCase()} had almost no time to turn.`,
 };
 
 const CAPTIONS_2026: Partial<Record<Arc, (predator: string, prey: string, env: string) => string>> = {
   "Ambush attack": (predator, prey, env) =>
-    `In the ${env}, the danger was readable before the full move.
+    `In the ${env}, the danger was visible before the full move.
 
-The ${prey.toLowerCase()} looked up too late and the ${predator.toLowerCase()} was already inside the pressure zone. That is what makes a real ambush land on screen: no long setup, just one bad second and immediate pressure.
+The ${prey.toLowerCase()} looked up too late and the ${predator.toLowerCase()} was already inside striking distance. That is what makes a real ambush land on screen: no long setup, just one bad second and immediate danger.
 
-What changed the outcome first?`,
+Which second gave the ambush away?`,
   "Chase and takedown": (predator, prey, env) =>
     `Across the ${env}, the escape window disappeared fast.
 
-The ${predator.toLowerCase()} committed cleanly and the ${prey.toLowerCase()} had almost no time to reset. What makes this kind of chase work on short-form is how clearly the pressure builds from the first stride.
+The ${predator.toLowerCase()} committed cleanly and the ${prey.toLowerCase()} had almost no time to reset. What makes this kind of chase work on short-form is how clearly the closing angle shows from the first stride.
 
-Which movement changed the read?`,
+Which turn mattered most?`,
   "Defender stands ground": (predator, prey, env) =>
     `In the ${env}, every instinct said move. This ${predator.toLowerCase()} did the opposite.
 
-When the ${prey.toLowerCase()} kept pressing forward, the encounter stopped feeling like pressure and started feeling like a boundary. The hold is what makes the moment memorable.
+When the ${prey.toLowerCase()} kept moving forward, the encounter stopped feeling like a bluff and started feeling like a real stand. The hold is what makes the moment memorable.
 
-What made the pressure feel obvious?`,
+What told you the stand would hold?`,
   "Giant vs giant clash": (predator, prey, env) =>
     `Two huge animals met in the ${env}, and neither wanted to give space.
 
-A ${predator.toLowerCase()} and a ${prey.toLowerCase()} create a different kind of tension: slower, heavier, and driven by posture before the full contact lands.
+A ${predator.toLowerCase()} and a ${prey.toLowerCase()} create a slower kind of tension: heavy shoulders, set footing, and posture before the full contact lands.
 
-Which shift in posture changed the read?`,
+Which body shift made contact feel inevitable?`,
   "Territory dominance battle": (predator, prey, env) =>
     `In the ${env}, territory is never symbolic.
 
-The ${prey.toLowerCase()} stepped into the wrong space and the ${predator.toLowerCase()} answered immediately. The whole encounter works because the boundary is readable before the full reaction lands.
+The ${prey.toLowerCase()} stepped into the wrong space and the ${predator.toLowerCase()} answered immediately. The whole encounter works because the claim is visible before the full reaction lands.
 
-Would you have read the boundary earlier?`,
+Would you have noticed the claim earlier?`,
   "Pack hunting strategy": (predator, prey, env) =>
     `At first, the ${prey.toLowerCase()} looked mobile. Then the space started disappearing.
 
-In the ${env}, the ${predator.toLowerCase()} becomes dangerous before full contact because the pressure is already organized. It is timing, spacing, angle control, and a closing escape lane.
+In the ${env}, the ${predator.toLowerCase()} becomes dangerous before full contact because the pursuit is already organized. It is timing, spacing, angle control, and a closing path.
 
-What made the pressure feel obvious first?`,
+Which angle closed the escape first?`,
   "Predator vs predator fight": (predator, prey, env) =>
     `Two apex predators. No easy reset.
 
 A ${predator.toLowerCase()} facing a ${prey.toLowerCase()} in the ${env} feels intense because both animals understand the cost of a bad decision. These encounters escalate fast once control starts to shift.
 
-Which movement changed the read first?`,
+Which animal gave up position first?`,
   "Escape from danger": (predator, prey, env) =>
     `Everything changed in under a second in the ${env}.
 
 The ${prey.toLowerCase()} had almost no time to react before the ${predator.toLowerCase()} moved. In moments like this, survival comes down to one decision made fast enough.
 
-Would you have read the danger earlier?`,
+Would you have spotted the danger in time?`,
 };
 
 const CAPTIONS_2026_US_ONLY: Partial<Record<Arc, (predator: string, prey: string, env: string) => string>> = {
   "Ambush attack": (predator, prey, env) =>
-    `In the ${env}, the danger read immediately.
+    `In the ${env}, the ambush gives itself away early.
 
-The ${prey.toLowerCase()} looked up too late and the ${predator.toLowerCase()} was already inside the pressure zone. The whole moment lands because the setup is clear and the pressure arrives fast.
+The ${prey.toLowerCase()} looked up too late and the ${predator.toLowerCase()} was already inside striking distance. The moment lands because the setup stays clear and the danger arrives without a long windup.
 
-What changed the outcome first?`,
+Which second gave the ambush away?`,
   "Chase and takedown": (predator, prey, env) =>
-    `Across the ${env}, the escape window closed fast.
+    `Across the ${env}, the running room disappeared fast.
 
-The ${predator.toLowerCase()} committed early and the ${prey.toLowerCase()} never looked fully reset. The sequence works because the speed is obvious right away.
+The ${predator.toLowerCase()} committed early and the ${prey.toLowerCase()} never looked fully reset. The sequence works because the closing angle is obvious right away.
 
-Which movement changed the read?`,
+Which turn mattered most?`,
   "Defender stands ground": (predator, prey, env) =>
-    `In the ${env}, every instinct said move. This ${predator.toLowerCase()} stayed put.
+    `In the ${env}, every instinct said move. This ${predator.toLowerCase()} stayed planted.
 
-Once the ${prey.toLowerCase()} kept pressing forward, the encounter shifted from pressure to control. The refusal to give space is the whole story beat.
+Once the ${prey.toLowerCase()} kept pressing forward, the encounter shifted from a push to a stand. The refusal to give ground is the whole story beat.
 
-What made the pressure feel obvious?`,
+What told you the stand would hold?`,
   "Giant vs giant clash": (predator, prey, env) =>
     `Two huge animals met in the ${env}, and neither gave ground.
 
-A ${predator.toLowerCase()} and a ${prey.toLowerCase()} create a slower kind of violence because the weight transfer is readable before the hit.
+A ${predator.toLowerCase()} and a ${prey.toLowerCase()} create a slower kind of tension because shoulder weight and footing show the hit before it arrives.
 
-Which shift in posture changed the read?`,
+Which body shift made contact feel inevitable?`,
   "Territory dominance battle": (predator, prey, env) =>
-    `In the ${env}, the boundary was clear before the full answer came.
+    `In the ${env}, the claim was visible before the answer came.
 
-The ${prey.toLowerCase()} stepped into the wrong space and the ${predator.toLowerCase()} answered right away. The whole moment works because the warning is visible before the reaction peaks.
+The ${prey.toLowerCase()} stepped onto held ground and the ${predator.toLowerCase()} answered right away. The moment works because the warning is visible before the reaction peaks.
 
-Would you have read the boundary earlier?`,
+Would you have noticed the claim earlier?`,
   "Pack hunting strategy": (predator, prey, env) =>
-    `At first, the ${prey.toLowerCase()} looked free. Then the lane disappeared.
+    `At first, the ${prey.toLowerCase()} looked free. Then the opening started shrinking.
 
-In the ${env}, the ${predator.toLowerCase()} feels dangerous because the pressure is organized before full contact. The spacing does most of the work.
+In the ${env}, the ${predator.toLowerCase()} feels dangerous because the angles organize before contact. The chase shape does most of the work.
 
-What made the pressure feel obvious first?`,
+Which angle closed the escape first?`,
   "Predator vs predator fight": (predator, prey, env) =>
     `Two apex predators met in the ${env}, and neither had room for a harmless mistake.
 
 The tension works because both animals understand the cost of giving up position. Once control shifts, the whole clip changes.
 
-Which movement changed the read first?`,
+Which animal gave up position first?`,
   "Escape from danger": (predator, prey, env) =>
     `Everything changed fast in the ${env}.
 
-The ${prey.toLowerCase()} had almost no time to react before the ${predator.toLowerCase()} moved. The whole beat depends on one survival read made under pressure.
+The ${prey.toLowerCase()} had almost no time to react before the ${predator.toLowerCase()} moved. The whole beat depends on one breakaway decision made fast enough.
 
-Would you have read the danger earlier?`,
+Would you have spotted the danger in time?`,
 };
 
 // ─────────────────────────────────────────────────────────────
@@ -357,21 +361,21 @@ Would you have read the danger earlier?`,
 // ─────────────────────────────────────────────────────────────
 const VIRAL_CTAS: Partial<Record<Arc, string>> = {
   "Ambush attack":
-    "What changed the outcome first?",
+    "Which second gave the ambush away?",
   "Chase and takedown":
-    "Which movement changed the read?",
+    "Which turn mattered most?",
   "Defender stands ground":
-    "What made the pressure feel obvious?",
+    "What told you the stand would hold?",
   "Giant vs giant clash":
-    "Which shift in posture changed the read?",
+    "Which body shift made contact feel inevitable?",
   "Territory dominance battle":
-    "Would you have read the boundary earlier?",
+    "Would you have noticed the claim earlier?",
   "Pack hunting strategy":
-    "What made the pressure feel obvious first?",
+    "Which angle closed the escape first?",
   "Predator vs predator fight":
-    "Which movement changed the read first?",
+    "Which animal gave up position first?",
   "Escape from danger":
-    "Would you have read the danger earlier?",
+    "Would you have spotted the danger in time?",
 };
 
 // ─────────────────────────────────────────────────────────────
@@ -463,9 +467,17 @@ function trimAtWordBoundary(text: string, maxChars: number): string {
     wordSafe = next;
   }
   const resolved = normalizeCopy(wordSafe.replace(/[,:;/-]+$/g, ""));
+  const terminalQuestionOrBang = compact.match(/[!?]$/)?.[0];
 
   if (!resolved) return compact.trim();
-  return /[.!?]$/.test(resolved) ? resolved : `${resolved}.`;
+  if (/[.!?]$/.test(resolved)) return resolved;
+  if (
+    terminalQuestionOrBang &&
+    `${resolved}${terminalQuestionOrBang}`.length <= maxChars
+  ) {
+    return `${resolved}${terminalQuestionOrBang}`;
+  }
+  return `${resolved}.`;
 }
 
 function finalizeHookCopy(raw: string): string {
@@ -516,7 +528,7 @@ export function build2026Hook(
     HOOKS_2026[arc]?.(predator, prey) ?? [
       `${predator} and ${prey} met too close. One move changed the whole read.`,
       `The space looked open until it closed all at once.`,
-      `It looked settled for a second. Then the pressure flipped.`,
+      `It looked settled for a second. Then control slipped away.`,
     ];
 
   return hooks.map((hook) => finalizeHookCopy(hook));
@@ -606,26 +618,34 @@ function buildHookPressureCue(hook: string): string {
   }
 
   if (/(yield|ground|boundary|warning-step|stance)/.test(lower)) {
-    return "Hold-ground tension";
+    return "Hold-ground stand";
   }
 
-  if (/(dominance|territory|clash|footing)/.test(lower)) {
+  if (/(dominance|territory|clash|footing|antler|shoulder|standoff)/.test(lower)) {
     return "Dominance posture";
   }
 
   if (/(breakaway|survival)/.test(lower)) {
-    return "Breakaway window";
+    return "Breakaway gap";
   }
 
-  if (/(escape lane|pursuit|angles|closing angle|lane)/.test(lower)) {
-    return "Escape lane closing";
+  if (/(escape lane|pursuit|angles|closing angle|lane|running room)/.test(lower)) {
+    return "Closing angle";
+  }
+
+  if (/(ambush|danger|too late|closed the space|distance|already moving)/.test(lower)) {
+    return "Closing danger";
+  }
+
+  if (/(position|measured each other|too close|control shifted|bad step)/.test(lower)) {
+    return "Position breaking";
   }
 
   if (/(pressure|space|read)/.test(lower)) {
-    return "Pressure building";
+    return "Wildlife tension";
   }
 
-  return "Readable pressure";
+  return "Wildlife tension";
 }
 
 function buildObservationalHookQuestion(
@@ -641,7 +661,7 @@ function buildObservationalHookQuestion(
   }
 
   if (/(yield|ground|boundary|warning-step|stance)/.test(lower)) {
-    return "When did the boundary become obvious?";
+    return "When did the stand become clear?";
   }
 
   if (/(dominance|territory|clash|footing)/.test(lower)) {
@@ -653,14 +673,14 @@ function buildObservationalHookQuestion(
   }
 
   if (/(escape lane|pursuit|angles|closing angle|lane)/.test(lower)) {
-    return "When did the escape lane disappear?";
+    return "When did the breakaway gap vanish?";
   }
 
   if (preyName) {
-    return `When did the ${preyName} lose space?`;
+    return `When did the ${preyName} run out of room?`;
   }
 
-  return "What changed the read first?";
+  return "Which shift changed the moment?";
 }
 
 function createOverlayVariant(
@@ -716,7 +736,7 @@ export function buildHookFormattingPresets(
     createOverlayVariant(
       "species_first",
       "Species-first statement",
-      "Lead with the clearest species so the first frame is readable instantly.",
+      "Lead with the clearest species so the first frame lands immediately.",
       `${primarySpecies}: ${pressureCue.toLowerCase()}.`
     ),
     createOverlayVariant(
@@ -733,14 +753,14 @@ export function buildHookFormattingPresets(
     ),
     createOverlayVariant(
       "short_pressure",
-      "Short pressure line",
-      "Compress the hook into a fast, readable pressure cue.",
+      "Short tension line",
+      "Compress the hook into a fast, clean tension cue.",
       pressureCue
     ),
     createOverlayVariantFromLines(
       "two_line_opener",
-      "Two-line readable opener",
-      "Split species identification and pressure into two quick overlay lines.",
+      "Two-line clean opener",
+      "Split species identification and the tension cue into two quick overlay lines.",
       [primarySpecies, pressureCue]
     ),
   ];
@@ -749,11 +769,11 @@ export function buildHookFormattingPresets(
 export function buildFirstFrameOverlayGuidance(): FirstFrameOverlayGuidance {
   return {
     placement:
-      "Keep the overlay in the upper safe zone so both animals and the motion path stay readable.",
+      "Keep the overlay in the upper safe zone and off the heavier silhouette when the frame already feels crowded.",
     textLength:
-      "Use 1 to 2 short lines and keep each line around 28 characters or less for an easy first read.",
+      "Use 1 to 2 short lines and keep each line around 28 characters or less for an easy first read. If both animals already fill the frame, prefer one species line plus one cue line.",
     opener:
-      "Open on readable motion or visible pressure. Avoid a dead-static first beat before the tension is clear.",
+      "Open on clear motion or visible tension. Avoid a dead-static first beat before the behavior cue is clear.",
     audio:
       "Make the overlay understandable with sound off, while still feeling natural if viewers hear the reel.",
     tone:
@@ -876,8 +896,8 @@ export function buildFacebookFirstFrameOverlayPresets(
     ),
     createFacebookOverlayPreset(
       "facebook_short_pressure",
-      "Facebook short pressure opener",
-      "Compact pressure language for fast Facebook feed scanning.",
+      "Facebook short tension opener",
+      "Compact tension language for fast Facebook feed scanning.",
       pressureCue
     ),
     createFacebookOverlayPreset(
@@ -888,8 +908,8 @@ export function buildFacebookFirstFrameOverlayPresets(
     ),
     createFacebookOverlayPresetFromLines(
       "facebook_two_line_readable",
-      "Facebook two-line readable opener",
-      "Splits species and pressure into two clean upper-safe-zone lines.",
+      "Facebook two-line clean opener",
+      "Splits species and the tension cue into two clean upper-safe-zone lines.",
       [primarySpecies, pressureCue]
     ),
   ];
@@ -915,10 +935,10 @@ function buildFacebookCoverFrameQuestion(hook: string): string {
   }
 
   if (/(escape lane|pursuit|angles|closing angle|lane)/.test(lower)) {
-    return "When did the lane close?";
+    return "When did the opening vanish?";
   }
 
-  return "When did the read change?";
+  return "Which move changed the moment?";
 }
 
 export function buildFacebookCoverFramePresets(
@@ -939,8 +959,8 @@ export function buildFacebookCoverFramePresets(
   return [
     createFacebookCoverFramePreset(
       "species_pressure",
-      "Species + pressure",
-      "Readable Facebook grid text with species first and a clear pressure cue.",
+      "Species + tension",
+      "Facebook grid text with species first and a clear tension cue.",
       `${primarySpecies}: ${pressureCue.toLowerCase()}.`
     ),
     createFacebookCoverFramePresetFromLines(
@@ -1029,10 +1049,306 @@ function facebookReason(signals: string[], fallback: string): string {
   return usable.length ? usable.join("; ") : fallback;
 }
 
+function buildFrame1CallSignal(frame1Choice: FacebookFrameChoice): string {
+  return frame1Choice === "species-first"
+    ? "supports a species-first frame 1"
+    : "supports a tension-first frame 1";
+}
+
+function buildFacebookLaneSignal(contentLane: ContentLane): string | null {
+  switch (contentLane) {
+    case "Pack Hunt":
+      return "it matches a closing-angle chase read";
+    case "Defender":
+      return "it supports a clean hold-ground read";
+    case "Fishing Strike":
+      return "it matches a fast strike-window read";
+    case "Rut Battle":
+      return "it keeps rut posture readable";
+    case "Escape":
+      return "it supports a clean breakaway read";
+    default:
+      return null;
+  }
+}
+
+function buildFacebookCoverRecommendationReason(
+  best: FacebookCoverFramePresetScore
+): string {
+  const heuristics = best.frameHeuristics;
+  const parts = [
+    heuristics?.speciesReadability === "high"
+      ? "the species read stays clear at thumbnail size"
+      : "the cover stays readable at Facebook size",
+    heuristics?.textAnimalCollisionRisk === "low"
+      ? "the text avoids crowding the animals"
+      : heuristics?.leftRightSubjectFit === "strong"
+        ? "the text still fits cleanly in the upper frame"
+        : null,
+    heuristics?.frame1Choice === "species-first"
+      ? "it supports a species-first cover test"
+      : "it keeps the tension obvious before playback starts",
+  ].filter(Boolean);
+
+  return `Best cover-frame test: ${best.label} because ${parts
+    .slice(0, 3)
+    .join(", ")}.`;
+}
+
+function buildFacebookOverlayRecommendationReason(
+  recommended: FacebookOverlayPresetScore,
+  contentLane: ContentLane
+): string {
+  const heuristics = recommended.frameHeuristics;
+  const parts = [
+    heuristics?.frame1Choice === "species-first"
+      ? "it keeps the species read obvious in frame 1"
+      : "it gets to the tension immediately in frame 1",
+    heuristics?.textAnimalCollisionRisk === "low"
+      ? "the overlay stays clear of the animals"
+      : heuristics?.leftRightSubjectFit === "strong"
+        ? "the overlay stays compact in the upper frame"
+        : null,
+    buildFacebookLaneSignal(contentLane),
+  ].filter(Boolean);
+
+  return `Best first overlay test: ${recommended.label} because ${parts
+    .slice(0, 3)
+    .join(", ")}.`;
+}
+
+function toFrameLevel(score: number): FacebookFrameHeuristicLevel {
+  if (score <= 0) return "low";
+  if (score === 1) return "medium";
+  return "high";
+}
+
+function toFrameFit(score: number): FacebookFrameSubjectFit {
+  if (score >= 2) return "strong";
+  if (score <= -1) return "crowded";
+  return "balanced";
+}
+
+function titleCaseFrameValue(value: string): string {
+  return `${value.charAt(0).toUpperCase()}${value.slice(1)}`;
+}
+
+function hasBothNamedSpecies(
+  text: string,
+  predator: string,
+  prey: string
+): boolean {
+  const lower = normalizeCopy(text).toLowerCase();
+  const predatorName = normalizeCopy(predator).toLowerCase();
+  const preyName = normalizeCopy(prey).toLowerCase();
+
+  return Boolean(
+    predatorName &&
+      preyName &&
+      lower.includes(predatorName) &&
+      lower.includes(preyName)
+  );
+}
+
+function chooseFacebookFrame1Choice(
+  hook: string,
+  contentLane: ContentLane,
+  text = ""
+): FacebookFrameChoice {
+  const lower = normalizeCopy(`${hook} ${text}`).toLowerCase();
+
+  switch (contentLane) {
+    case "Pack Hunt":
+    case "Fishing Strike":
+    case "Escape":
+    case "Defender":
+      return "tension-first";
+    case "Rut Battle":
+      return "species-first";
+    default:
+      break;
+  }
+
+  if (/(waterline|strike|breakaway|pursuit|angle|ambush|escape|danger)/.test(lower)) {
+    return "tension-first";
+  }
+
+  if (/(warning-step|stance|dominance|territory|clash|footing|shoulder|antler|standoff|claim)/.test(lower)) {
+    return "species-first";
+  }
+
+  return "species-first";
+}
+
+function buildFacebookFrameHeuristics({
+  text,
+  lines,
+  predator,
+  prey,
+  maxLineLength,
+  hook,
+  contentLane = "Auto",
+  mode,
+}: {
+  text: string;
+  lines: string[];
+  predator: string;
+  prey: string;
+  maxLineLength: number;
+  hook: string;
+  contentLane?: ContentLane;
+  mode: "overlay" | "cover";
+}): FacebookFrameHeuristics {
+  const compact = normalizeCopy(text);
+  const lower = compact.toLowerCase();
+  const speciesClear = hasFacebookSpeciesClarity(compact, predator, prey);
+  const speciesLead = startsWithFacebookSpecies(compact, predator, prey);
+  const hasBothSpecies =
+    hasBothNamedSpecies(compact, predator, prey) || /\bvs\b/i.test(compact);
+  const longestSpeciesLength = Math.max(
+    normalizeCopy(predator).length,
+    normalizeCopy(prey).length,
+    0
+  );
+  const longestLine = lines.reduce(
+    (max, line) => Math.max(max, line.length),
+    0
+  );
+  const fillRatio = maxLineLength > 0 ? longestLine / maxLineLength : 1;
+  const twoLine = lines.length === 2;
+  const shortLines =
+    lines.length > 0 &&
+    lines.every((line) => line.length <= Math.round(maxLineLength * 0.68));
+  const frame1Choice = chooseFacebookFrame1Choice(hook, contentLane, compact);
+
+  let speciesScore = 0;
+  if (speciesLead) speciesScore += 2;
+  if (speciesClear) speciesScore += 1;
+  if (!speciesClear) speciesScore -= 2;
+  if (hasBothSpecies && longestSpeciesLength >= 14) speciesScore -= 1;
+
+  let collisionScore = 0;
+  if (fillRatio > 0.9) collisionScore += 2;
+  else if (fillRatio > 0.76) collisionScore += 1;
+  if (hasBothSpecies) collisionScore += 1;
+  if (longestSpeciesLength >= 14 && fillRatio > 0.7) collisionScore += 1;
+  if (/\?/.test(compact) && fillRatio > 0.72) collisionScore += 1;
+  if (mode === "cover" && /\bvs\b/i.test(compact)) collisionScore += 1;
+  if (twoLine) collisionScore -= 1;
+  if (shortLines) collisionScore -= 1;
+
+  let silhouetteScore = 0;
+  if (!twoLine && fillRatio > 0.84) silhouetteScore += 2;
+  else if (fillRatio > 0.72) silhouetteScore += 1;
+  if (hasBothSpecies) silhouetteScore += 1;
+  if (
+    /(vs|clash|strike|pursuit|warning-step|dominance|territory)/.test(lower) &&
+    fillRatio > 0.68
+  ) {
+    silhouetteScore += 1;
+  }
+  if (speciesLead && twoLine) silhouetteScore -= 1;
+  if (shortLines) silhouetteScore -= 1;
+
+  let fitScore = 0;
+  if (twoLine && speciesLead && !hasBothSpecies) fitScore += 2;
+  else if (twoLine && !hasBothSpecies) fitScore += 1;
+  if (shortLines) fitScore += 1;
+  if (hasBothSpecies) fitScore -= 1;
+  if (fillRatio > 0.88) fitScore -= 1;
+
+  const speciesReadability =
+    speciesScore >= 2 ? "high" : speciesScore >= 0 ? "medium" : "low";
+  const textAnimalCollisionRisk = toFrameLevel(collisionScore);
+  const silhouetteConflictRisk = toFrameLevel(silhouetteScore);
+  const leftRightSubjectFit = toFrameFit(fitScore);
+
+  return {
+    speciesReadability,
+    textAnimalCollisionRisk,
+    silhouetteConflictRisk,
+    leftRightSubjectFit,
+    frame1Choice,
+    summary: `${titleCaseFrameValue(speciesReadability)} species readability, ${textAnimalCollisionRisk} text-animal collision risk, ${silhouetteConflictRisk} silhouette conflict risk, ${leftRightSubjectFit} upper-frame subject fit, ${frame1Choice} frame-1 call.`,
+  };
+}
+
+function coverFrameChoiceBias(
+  preset: FacebookCoverFramePreset,
+  frame1Choice: FacebookFrameChoice
+): number {
+  if (frame1Choice === "species-first") {
+    switch (preset) {
+      case "species_pressure":
+        return 14;
+      case "two_line_cover":
+        return 12;
+      case "species_question":
+        return 7;
+      case "short_documentary":
+        return 4;
+      case "conflict_statement":
+        return -6;
+    }
+  }
+
+  switch (preset) {
+    case "species_pressure":
+      return 14;
+    case "short_documentary":
+      return 8;
+    case "two_line_cover":
+      return 8;
+    case "species_question":
+      return 3;
+    case "conflict_statement":
+      return -4;
+  }
+
+  return 0;
+}
+
+function overlayFrameChoiceBias(
+  preset: FacebookFirstFrameOverlayPreset,
+  frame1Choice: FacebookFrameChoice
+): number {
+  if (frame1Choice === "species-first") {
+    switch (preset) {
+      case "facebook_species_first":
+        return 16;
+      case "facebook_two_line_readable":
+        return 12;
+      case "facebook_documentary_tension":
+        return 4;
+      case "facebook_observational_question":
+        return 2;
+      case "facebook_short_pressure":
+        return -2;
+    }
+  }
+
+  switch (preset) {
+    case "facebook_short_pressure":
+      return 16;
+    case "facebook_documentary_tension":
+      return 10;
+    case "facebook_two_line_readable":
+      return 6;
+    case "facebook_observational_question":
+      return 4;
+    case "facebook_species_first":
+      return 0;
+  }
+
+  return 0;
+}
+
 function scoreFacebookCoverFramePreset(
   preset: FacebookCoverFrameTextPreset,
   predator: string,
-  prey: string
+  prey: string,
+  hook = "",
+  contentLane: ContentLane = "Auto"
 ): FacebookCoverFramePresetScore {
   const signals: string[] = [];
   const text = normalizeCopy(preset.text);
@@ -1044,61 +1360,105 @@ function scoreFacebookCoverFramePreset(
     FACEBOOK_COVER_FRAME_MAX_LINE_LENGTH
   );
   const bait = hasBaitLikeCopy(text) || hasForcedEngagementCopy(text);
+  const frameHeuristics = buildFacebookFrameHeuristics({
+    text,
+    lines: preset.lines,
+    predator,
+    prey,
+    maxLineLength: FACEBOOK_COVER_FRAME_MAX_LINE_LENGTH,
+    hook,
+    contentLane,
+    mode: "cover",
+  });
 
   let score = 35;
 
   if (speciesClear) {
     score += 20;
-    signals.push("species-clear for Facebook grid preview");
+    signals.push("species stays clear at Facebook thumbnail size");
   } else {
     score -= 14;
   }
 
   if (speciesLead) {
     score += 6;
-    signals.push("species leads the cover text");
+    signals.push("species leads the cover line");
   }
 
   if (readable) {
     score += 26;
-    signals.push("fits 1-2 short cover lines");
+    signals.push("holds as a compact 1-2 line cover");
   } else {
     score -= 22;
   }
 
   if (pressureClear) {
     score += 18;
-    signals.push("pressure or behavior is readable quickly");
+    signals.push("tension cue still reads at thumbnail size");
   } else {
     score -= 10;
   }
 
   if (!bait) {
     score += 15;
-    signals.push("non-bait documentary wording");
+    signals.push("stays documentary and non-bait");
   } else {
     score -= 35;
   }
+
+  if (frameHeuristics.speciesReadability === "high") {
+    score += 10;
+    signals.push("keeps species readability high");
+  } else if (frameHeuristics.speciesReadability === "low") {
+    score -= 10;
+  }
+
+  if (frameHeuristics.textAnimalCollisionRisk === "low") {
+    score += 12;
+    signals.push("avoids crowding the animals");
+  } else if (frameHeuristics.textAnimalCollisionRisk === "high") {
+    score -= 18;
+  }
+
+  if (frameHeuristics.silhouetteConflictRisk === "low") {
+    score += 8;
+    signals.push("keeps text off the main silhouette");
+  } else if (frameHeuristics.silhouetteConflictRisk === "high") {
+    score -= 14;
+  }
+
+  if (frameHeuristics.leftRightSubjectFit === "strong") {
+    score += 8;
+    signals.push("fits cleanly in the upper frame");
+  } else if (frameHeuristics.leftRightSubjectFit === "crowded") {
+    score -= 8;
+  }
+
+  score += coverFrameChoiceBias(preset.preset, frameHeuristics.frame1Choice);
+  signals.push(buildFrame1CallSignal(frameHeuristics.frame1Choice));
 
   if (preset.preset === "species_pressure") score += 10;
   if (preset.preset === "two_line_cover") score += 8;
   if (preset.preset === "species_question") score += 5;
   if (preset.preset === "conflict_statement" && pressureClear) score += 4;
-  if (preset.preset === "conflict_statement" && !pressureClear) score -= 6;
+  if (preset.preset === "conflict_statement" && !pressureClear) score -= 10;
 
   return {
     preset: preset.preset,
     label: preset.label,
     text: preset.text,
     score: clampFacebookScore(score),
-    reasons: signals.length ? signals : ["balanced Facebook cover readability"],
+    reasons: signals.length ? signals : ["clean Facebook cover readability"],
+    frameHeuristics,
   };
 }
 
 export function rankFacebookCoverFramePresets(
   presets: FacebookCoverFrameTextPreset[],
   predator: string,
-  prey: string
+  prey: string,
+  hook = "",
+  contentLane: ContentLane = "Auto"
 ): FacebookCoverFrameRanking | undefined {
   if (!presets.length) return undefined;
 
@@ -1106,7 +1466,9 @@ export function rankFacebookCoverFramePresets(
     presets.map((preset, index) => [preset.preset, index] as const)
   );
   const ranked = presets
-    .map((preset) => scoreFacebookCoverFramePreset(preset, predator, prey))
+    .map((preset) =>
+      scoreFacebookCoverFramePreset(preset, predator, prey, hook, contentLane)
+    )
     .sort(
       (a, b) =>
         b.score - a.score ||
@@ -1119,10 +1481,7 @@ export function rankFacebookCoverFramePresets(
   return {
     best,
     ranked,
-    reason: `Best cover-frame test: ${best.label} because ${facebookReason(
-      best.reasons,
-      "it balances species clarity and Facebook preview readability"
-    ).toLowerCase()}.`,
+    reason: buildFacebookCoverRecommendationReason(best),
   };
 }
 
@@ -1209,46 +1568,87 @@ function scoreFacebookOverlayPreset(
   );
   const bait = hasBaitLikeCopy(text) || hasForcedEngagementCopy(text);
   const laneBias = laneOverlayPresetBias(contentLane, preset.preset);
+  const frameHeuristics = buildFacebookFrameHeuristics({
+    text,
+    lines: preset.lines,
+    predator,
+    prey,
+    maxLineLength: HOOK_OVERLAY_MAX_LINE_LENGTH,
+    hook,
+    contentLane,
+    mode: "overlay",
+  });
 
   let score = 35;
 
   if (readable) {
     score += 25;
-    signals.push("first-frame readable in 1-2 lines");
+    signals.push("holds as a compact frame-1 overlay");
   } else {
     score -= 20;
   }
 
   if (speciesClear) {
     score += 14;
-    signals.push("keeps species clarity visible");
+    signals.push("keeps the species read obvious");
   }
 
   if (pressureClear) {
     score += 18;
-    signals.push("pressure reads quickly");
+    signals.push("gets to the behavior cue quickly");
   }
 
   if (!bait) {
     score += 15;
-    signals.push("Meta-safe documentary wording");
+    signals.push("stays documentary and non-bait");
   } else {
     score -= 40;
   }
 
+  if (frameHeuristics.speciesReadability === "high") {
+    score += 8;
+    signals.push("keeps species readability high");
+  } else if (frameHeuristics.speciesReadability === "low") {
+    score -= 8;
+  }
+
+  if (frameHeuristics.textAnimalCollisionRisk === "low") {
+    score += 10;
+    signals.push("avoids crowding the animals");
+  } else if (frameHeuristics.textAnimalCollisionRisk === "high") {
+    score -= 18;
+  }
+
+  if (frameHeuristics.silhouetteConflictRisk === "low") {
+    score += 8;
+    signals.push("keeps text off the main silhouette");
+  } else if (frameHeuristics.silhouetteConflictRisk === "high") {
+    score -= 12;
+  }
+
+  if (frameHeuristics.leftRightSubjectFit === "strong") {
+    score += 8;
+    signals.push("fits cleanly in the upper frame");
+  } else if (frameHeuristics.leftRightSubjectFit === "crowded") {
+    score -= 8;
+  }
+
   if (laneBias > 0) {
     score += laneBias;
-    signals.push(`${contentLane} lane fit`);
+    signals.push(buildFacebookLaneSignal(contentLane) ?? "matches the current Facebook test context");
   }
 
   score += hookOverlayPresetBias(hook, preset.preset);
+  score += overlayFrameChoiceBias(preset.preset, frameHeuristics.frame1Choice);
+  signals.push(buildFrame1CallSignal(frameHeuristics.frame1Choice));
 
   return {
     preset: preset.preset,
     label: preset.label,
     text: preset.text,
     score: clampFacebookScore(score),
-    reason: facebookReason(signals, "balanced first-frame readability"),
+    reason: facebookReason(signals, "clean frame-1 overlay read"),
+    frameHeuristics,
   };
 }
 
@@ -1284,7 +1684,7 @@ export function recommendFacebookOverlayPreset(
   return {
     recommended,
     alternatives: ranked.slice(1, 3),
-    reason: `Best first overlay test: ${recommended.label} because ${recommended.reason.toLowerCase()}.`,
+    reason: buildFacebookOverlayRecommendationReason(recommended, contentLane),
   };
 }
 
@@ -1325,7 +1725,7 @@ export function buildCaption(
   const raw =
     SHORT_CAPTIONS_2026[arc]?.(predator, prey, cleanEnv) ??
     VIRAL_CAPTIONS[arc]?.(predator, prey, cleanEnv) ??
-    `${predator} and ${prey} collide in the ${cleanEnv}, and the whole sequence turns on one immediate shift in pressure.`;
+    `${predator} and ${prey} collide in the ${cleanEnv}, and the whole sequence turns on one immediate control shift.`;
 
   const caption =
     options.mode === "us-only"
@@ -1496,11 +1896,11 @@ export function buildPlatformPack(
     hashtags,
     tags,
     bestTime:
-      "Start by testing weekday morning and midday windows, then refine with your own Facebook Insights while keeping the opening motion readable immediately.",
+      "Start with weekday morning or midday, then keep the winner from your own Facebook Insights.",
     cmpNote:
-      "Keep the packaging original, keep overlay text in the upper safe zone, and make sure the reel reads clearly with or without sound.",
+      "Keep the packaging original, keep the overlay in the upper safe zone and clear of the animals, and make sure the reel reads with or without sound.",
     strategyNote:
-      "Pin the reel with the clearest species read, immediate motion, and strongest documentary tension in frame 1.",
+      "Lead with the clearest species read or the clearest danger beat, then keep the overlay compact and off the main silhouette.",
     overlayGuidance,
     hookFormattingPresets: buildHookFormattingPresets(hooks[0], predator, prey),
     facebookOverlayPresets,
@@ -1515,7 +1915,9 @@ export function buildPlatformPack(
     facebookCoverFrameRanking: rankFacebookCoverFramePresets(
       facebookCoverFramePresets,
       predator,
-      prey
+      prey,
+      hooks[0],
+      contentLane
     ),
   };
 
@@ -1524,9 +1926,9 @@ export function buildPlatformPack(
     caption: shortCaption,
     hashtags,
     bestTime:
-      "Start by testing afternoon and evening windows, then refine from account Insights while keeping the opening motion readable instantly.",
+      "Start by testing afternoon and evening windows, then refine from account Insights while keeping the opening motion clear instantly.",
     strategyNote:
-      "Keep the first line species-clear, use upper safe-zone text, and let the opening frame show readable pressure immediately.",
+      "Keep the first line species-clear, use upper safe-zone text, and let the opening frame show clear tension immediately.",
   };
 
   const tiktok: TikTokPack = {
@@ -1536,7 +1938,7 @@ export function buildPlatformPack(
     bestTime:
       "Start by testing late afternoon to evening and refine from retention signals while keeping the tension visible immediately.",
     strategyNote:
-      "Use readable opening motion, support both sound-on and sound-off viewing, and avoid dead-static setup before the tension is visible.",
+      "Use clear opening motion, support both sound-on and sound-off viewing, and avoid dead-static setup before the tension is visible.",
   };
 
   const youtube_shorts: YouTubeShortsPack = {
@@ -1546,7 +1948,7 @@ export function buildPlatformPack(
     bestTime:
       "Keep a consistent cadence and judge performance with your own retention and return-viewer signals.",
     strategyNote:
-      "Write a searchable title and keep the opening seconds documentary, readable, and clearly original before the sequence escalates.",
+      "Write a searchable title and keep the opening seconds documentary, clear, and visibly original before the sequence escalates.",
   };
 
   return { facebook, instagram, tiktok, youtube_shorts };

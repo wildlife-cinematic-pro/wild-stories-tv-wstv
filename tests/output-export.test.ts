@@ -176,6 +176,8 @@ describe("live export TXT path", () => {
 
     expect(text).not.toMatch(/\bClear U\.(?=\s|$)/);
     expect(text).toContain("Clear U.S. wildlife setup.");
+    expect(text).toContain("FRAME HEURISTICS");
+    expect(text).not.toMatch(/balanced first-frame clarity|balanced facebook cover readability|context fit/i);
     expect(text).not.toContain("same environment continuity");
     expect(text).not.toContain("stable clean air");
   });

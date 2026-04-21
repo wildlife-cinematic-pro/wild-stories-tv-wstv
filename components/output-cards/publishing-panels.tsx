@@ -2,11 +2,46 @@
 
 import { useState } from "react";
 
-import type { PlatformPack, PlatformTarget } from "@/types";
+import type {
+  FacebookFrameHeuristics,
+  PlatformPack,
+  PlatformTarget,
+} from "@/types";
 
 import { getUSAPostingTimes } from "@/lib/predator-data";
 
 const HOOK_FAMILY_LABELS = ["Danger", "Curiosity", "Reversal"] as const;
+
+function FacebookFrameHeuristicsSummary({
+  heuristics,
+}: {
+  heuristics?: FacebookFrameHeuristics;
+}) {
+  if (!heuristics) return null;
+
+  return (
+    <div className="mt-3 rounded-lg border border-gray-200 bg-gray-50 px-3 py-2 text-[11px] leading-5 text-gray-700">
+      <div className="grid gap-1 sm:grid-cols-2">
+        <p>
+          <strong>Species readability:</strong> {heuristics.speciesReadability}
+        </p>
+        <p>
+          <strong>Text collision risk:</strong> {heuristics.textAnimalCollisionRisk}
+        </p>
+        <p>
+          <strong>Silhouette conflict:</strong> {heuristics.silhouetteConflictRisk}
+        </p>
+        <p>
+          <strong>Subject fit:</strong> {heuristics.leftRightSubjectFit}
+        </p>
+        <p className="sm:col-span-2">
+          <strong>Frame-1 call:</strong> {heuristics.frame1Choice}
+        </p>
+      </div>
+      <p className="mt-2 text-[11px] text-gray-600">{heuristics.summary}</p>
+    </div>
+  );
+}
 
 export function Hook2026Panel({
   hooks,
@@ -476,6 +511,11 @@ export function PlatformPackPanel({
                   Copy
                 </button>
               </div>
+              <FacebookFrameHeuristicsSummary
+                heuristics={
+                  facebookOverlayRecommendation.recommended.frameHeuristics
+                }
+              />
             </div>
             {facebookOverlayRecommendation.alternatives.length ? (
               <p className="mt-2 text-[11px] leading-5 text-blue-900">
@@ -562,6 +602,9 @@ export function PlatformPackPanel({
                   Copy
                 </button>
               </div>
+              <FacebookFrameHeuristicsSummary
+                heuristics={facebookCoverFrameRanking.best.frameHeuristics}
+              />
             </div>
             <ol className="mt-2 space-y-1 text-[11px] leading-5 text-emerald-950">
               {facebookCoverFrameRanking.ranked.map((entry, index) => (

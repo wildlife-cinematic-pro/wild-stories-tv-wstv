@@ -8,6 +8,17 @@ import {
   weatherOptions,
 } from "@/lib/model-specs";
 import { animalVibes, emotionalTones } from "@/lib/predator-data";
+import {
+  buildStep1FacebookRecommendation,
+  getAnimalPairMicroGuidance,
+  getAnimalVibeMicroGuidance,
+  getArcMicroGuidance,
+  getContentLaneMicroGuidance,
+  getDepthModeMicroGuidance,
+  getHabitatOverrideGuidance,
+  getToneMicroGuidance,
+  getWeatherMicroGuidance,
+} from "@/lib/step-1-guidance";
 
 import type {
   AnimalVibe,
@@ -208,6 +219,23 @@ export default function Step1Setup({
   workflowPresetImportStatus,
   workflowPresetPackStatus,
 }: Step1SetupProps) {
+  const facebookRecommendation = buildStep1FacebookRecommendation({
+    predator,
+    prey,
+    contentLane,
+    arc,
+    habitat,
+    weather,
+    depthMode,
+    driftRisk,
+  });
+  const habitatGuidance = getHabitatOverrideGuidance(habitat, contentLane);
+  const animalPairGuidance = getAnimalPairMicroGuidance(
+    predator,
+    prey,
+    driftRisk
+  );
+
   return (
     <div className="grid gap-6 xl:grid-cols-[minmax(0,1fr)_340px]">
       <div className="space-y-6">
@@ -288,9 +316,12 @@ export default function Step1Setup({
         />
 
         <section className="rounded-2xl border border-gray-200 bg-white p-5 sm:p-6">
-          <h3 className="mb-4 text-[11px] font-semibold uppercase tracking-[0.1em] text-gray-400">
+          <h3 className="text-[11px] font-semibold uppercase tracking-[0.1em] text-gray-400">
             Animals
           </h3>
+          <p className="mb-4 mt-1 text-[11px] leading-relaxed text-gray-500">
+            Start with the pairing viewers can identify fastest. Lower drift risk is usually the safest Facebook first test.
+          </p>
           <div className="grid gap-4 sm:grid-cols-2">
             <div>
               <label className="mb-1.5 block text-[11px] font-medium text-gray-500">
@@ -308,7 +339,7 @@ export default function Step1Setup({
                 ))}
               </select>
               <p className="mt-1 text-[11px] text-gray-400">
-                Controls the encounter and drives opening pressure.
+                Sets the primary behavior cue; choose the animal viewers recognize first.
               </p>
               {customPredatorCount > 0 && (
                 <p className="mt-0.5 text-[11px] text-gray-400">
@@ -336,13 +367,20 @@ export default function Step1Setup({
                 Filtered for realism from the selected lead animal.
               </p>
             </div>
+            <div className="rounded-2xl border border-emerald-100 bg-emerald-50/70 p-3 text-[11px] leading-relaxed text-emerald-800 sm:col-span-2">
+              <span className="font-semibold">Facebook setup hint:</span>{" "}
+              {animalPairGuidance}
+            </div>
           </div>
         </section>
 
         <section className="rounded-2xl border border-gray-200 bg-white p-5 sm:p-6">
-          <h3 className="mb-4 text-[11px] font-semibold uppercase tracking-[0.1em] text-gray-400">
+          <h3 className="text-[11px] font-semibold uppercase tracking-[0.1em] text-gray-400">
             Scene
           </h3>
+          <p className="mb-4 mt-1 text-[11px] leading-relaxed text-gray-500">
+            These controls bias the existing arc engine. Auto choices are safest; lane and habitat choices make the first Facebook test more specific.
+          </p>
           <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
             <div>
               <label className="mb-1.5 block text-[11px] font-medium text-gray-500">
@@ -360,7 +398,7 @@ export default function Step1Setup({
                 ))}
               </select>
               <p className="mt-1 text-[11px] text-gray-400">
-                Biases prey order, arc choice, habitat language, and packaging direction.
+                {getContentLaneMicroGuidance(contentLane)}
               </p>
             </div>
             <div>
@@ -375,7 +413,7 @@ export default function Step1Setup({
                 <option value={arc}>{arc}</option>
               </select>
               <p className="mt-1 text-[11px] text-gray-400">
-                Auto-matched from animal pairing.
+                {getArcMicroGuidance(arc)}
               </p>
             </div>
             <div>
@@ -393,6 +431,9 @@ export default function Step1Setup({
                   </option>
                 ))}
               </select>
+              <p className="mt-1 text-[11px] text-gray-400">
+                {getWeatherMicroGuidance(weather)}
+              </p>
             </div>
             <div>
               <label className="mb-1.5 block text-[11px] font-medium text-gray-500">
@@ -409,6 +450,9 @@ export default function Step1Setup({
                   </option>
                 ))}
               </select>
+              <p className="mt-1 text-[11px] text-gray-400">
+                {getDepthModeMicroGuidance(depthMode)}
+              </p>
             </div>
             <div>
               <label className="mb-1.5 block text-[11px] font-medium text-gray-500">
@@ -425,11 +469,16 @@ export default function Step1Setup({
                   </option>
                 ))}
               </select>
-              {habitat !== "Auto" && (
-                <p className="mt-1 text-[11px] font-medium text-amber-600">
-                  ⚠ Manual override active
-                </p>
-              )}
+              <div
+                className={`mt-1 rounded-xl px-2.5 py-2 text-[11px] leading-relaxed ${
+                  habitatGuidance.isWarning
+                    ? "bg-amber-50 text-amber-700"
+                    : "bg-emerald-50 text-emerald-700"
+                }`}
+              >
+                <span className="font-semibold">{habitatGuidance.label}:</span>{" "}
+                {habitatGuidance.message}
+              </div>
             </div>
             <div>
               <label className="mb-1.5 block text-[11px] font-medium text-gray-500">
@@ -448,6 +497,9 @@ export default function Step1Setup({
                   </option>
                 ))}
               </select>
+              <p className="mt-1 text-[11px] text-gray-400">
+                {getToneMicroGuidance(emotionalTone)}
+              </p>
             </div>
             <div>
               <label className="mb-1.5 block text-[11px] font-medium text-gray-500">
@@ -464,6 +516,9 @@ export default function Step1Setup({
                   </option>
                 ))}
               </select>
+              <p className="mt-1 text-[11px] text-gray-400">
+                {getAnimalVibeMicroGuidance(animalVibe)}
+              </p>
             </div>
           </div>
         </section>
@@ -527,6 +582,29 @@ export default function Step1Setup({
               </div>
               <div className="text-[11px] leading-relaxed text-gray-600">
                 {finalEnvironment}
+              </div>
+            </div>
+            <div className="rounded-2xl border border-emerald-100 bg-emerald-50/70 p-3.5">
+              <div className="mb-1 text-[10px] font-semibold uppercase tracking-wide text-emerald-700">
+                Facebook first test
+              </div>
+              <div className="text-[11px] font-semibold leading-relaxed text-emerald-900">
+                {facebookRecommendation.title}
+              </div>
+              <div className="mt-1 text-[11px] leading-relaxed text-emerald-800">
+                {facebookRecommendation.summary}
+              </div>
+              <div className="mt-3 space-y-2">
+                {facebookRecommendation.hints.map((hint) => (
+                  <div key={hint.label} className="rounded-xl bg-white/75 px-3 py-2">
+                    <span className="font-semibold text-emerald-800">
+                      {hint.label}:
+                    </span>{" "}
+                    <span className="text-[11px] leading-relaxed text-emerald-800">
+                      {hint.text}
+                    </span>
+                  </div>
+                ))}
               </div>
             </div>
             <div className="flex items-center justify-between rounded-2xl border border-gray-100 bg-gray-50 px-3.5 py-3">

@@ -193,6 +193,14 @@ function makePackage(prefix: string): GeneratedPackage {
             text: `${prefix} recommended overlay text`,
             score: 94,
             reason: `${prefix} overlay reason`,
+            frameHeuristics: {
+              speciesReadability: "high",
+              textAnimalCollisionRisk: "low",
+              silhouetteConflictRisk: "low",
+              leftRightSubjectFit: "strong",
+              frame1Choice: "species-first",
+              summary: `${prefix} overlay heuristic summary`,
+            },
           },
           alternatives: [
             {
@@ -201,6 +209,14 @@ function makePackage(prefix: string): GeneratedPackage {
               text: `${prefix} overlay alternative text`,
               score: 88,
               reason: `${prefix} overlay alternative reason`,
+              frameHeuristics: {
+                speciesReadability: "medium",
+                textAnimalCollisionRisk: "low",
+                silhouetteConflictRisk: "medium",
+                leftRightSubjectFit: "balanced",
+                frame1Choice: "tension-first",
+                summary: `${prefix} overlay alternative heuristic summary`,
+              },
             },
           ],
           reason: `${prefix} overlay recommendation reason`,
@@ -212,6 +228,14 @@ function makePackage(prefix: string): GeneratedPackage {
             text: `${prefix} ranked cover text`,
             score: 96,
             reasons: [`${prefix} ranked cover reason`],
+            frameHeuristics: {
+              speciesReadability: "high",
+              textAnimalCollisionRisk: "low",
+              silhouetteConflictRisk: "low",
+              leftRightSubjectFit: "strong",
+              frame1Choice: "species-first",
+              summary: `${prefix} cover heuristic summary`,
+            },
           },
           ranked: [
             {
@@ -220,6 +244,14 @@ function makePackage(prefix: string): GeneratedPackage {
               text: `${prefix} ranked cover text`,
               score: 96,
               reasons: [`${prefix} ranked cover reason`],
+              frameHeuristics: {
+                speciesReadability: "high",
+                textAnimalCollisionRisk: "low",
+                silhouetteConflictRisk: "low",
+                leftRightSubjectFit: "strong",
+                frame1Choice: "species-first",
+                summary: `${prefix} ranked cover heuristic summary`,
+              },
             },
           ],
           reason: `${prefix} cover ranking reason`,
@@ -358,6 +390,20 @@ describe("package section locks", () => {
     );
     expect(merged.platformPack?.facebook.facebookCoverFrameRanking).toEqual(
       lockedPackage.platformPack?.facebook.facebookCoverFrameRanking
+    );
+    expect(
+      merged.platformPack?.facebook.facebookOverlayRecommendation?.recommended
+        .frameHeuristics
+    ).toEqual(
+      lockedPackage.platformPack?.facebook.facebookOverlayRecommendation
+        ?.recommended.frameHeuristics
+    );
+    expect(
+      merged.platformPack?.facebook.facebookCoverFrameRanking?.best
+        .frameHeuristics
+    ).toEqual(
+      lockedPackage.platformPack?.facebook.facebookCoverFrameRanking?.best
+        .frameHeuristics
     );
     expect(merged.platformPack?.instagram.overlayGuidance).toEqual(
       lockedPackage.platformPack?.instagram.overlayGuidance

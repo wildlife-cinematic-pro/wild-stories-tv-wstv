@@ -213,6 +213,35 @@ describe("platform pack hook engine v2", () => {
     );
   });
 
+  it("varies CTAs without falling back to repetitive read or pressure phrasing", () => {
+    const ctas = ALL_ARCS.map((arc) => buildCTA(arc));
+
+    expect(new Set(ctas).size).toBe(ALL_ARCS.length);
+    for (const cta of ctas) {
+      expect(cta).not.toMatch(BAIT_PATTERN);
+      expect(cta).not.toMatch(FORCED_ENGAGEMENT_PATTERN);
+      expect(cta.toLowerCase()).not.toMatch(/changed the read|pressure feel|comment|tag/);
+    }
+  });
+
+  it("sharpens rut and giant-clash copy with heavier documentary body-language detail", () => {
+    const giantHooks = build2026Hook("Bull Elk", "Bull Elk", "Giant vs giant clash");
+    const rutPack = buildPlatformPack(
+      "Bull Elk",
+      "Bull Elk",
+      "Territory dominance battle",
+      "Rocky Mountain meadow",
+      "Rut Battle"
+    );
+    const serializedRut = JSON.stringify(rutPack.facebook).toLowerCase();
+
+    expect(giantHooks.join(" ").toLowerCase()).toMatch(
+      /shoulder line|standoff|footing/
+    );
+    expect(serializedRut).toMatch(/antler|shoulder|rut-season|claim/);
+    expect(serializedRut).not.toMatch(/what looked|changed the read|pressure feel/);
+  });
+
   it("recommends different Facebook overlay presets for different lane contexts", () => {
     const fishingHook =
       "The bald eagle read the waterline before the trout saw the strike window.";
@@ -259,7 +288,73 @@ describe("platform pack hook engine v2", () => {
     );
   });
 
-  it("flags clickbait hooks and forced-engagement CTAs in the publish guard", () => {
+  it("adds frame-aware heuristics to Facebook overlay and cover recommendations", () => {
+  const pack = buildPlatformPack(
+    "Bald Eagle",
+    "Trout",
+    "Ambush attack",
+    "Riverbank reeds and shallow water",
+    "Fishing Strike"
+  );
+
+  const overlayHeuristics =
+    pack.facebook.facebookOverlayRecommendation?.recommended.frameHeuristics;
+  const coverHeuristics =
+    pack.facebook.facebookCoverFrameRanking?.best.frameHeuristics;
+
+  expect(overlayHeuristics).toBeTruthy();
+  expect(coverHeuristics).toBeTruthy();
+  expect(overlayHeuristics?.frame1Choice).toBe("tension-first");
+  expect(coverHeuristics?.summary.toLowerCase()).toContain(
+    "species readability"
+  );
+  expect(
+    JSON.stringify({ overlayHeuristics, coverHeuristics }).toLowerCase()
+  ).not.toMatch(/instagram|tiktok|computer vision|detected/);
+  });
+
+  it("keeps rut battle recommendations species-forward when the frame needs heavy-body readability", () => {
+  const pack = buildPlatformPack(
+    "Bull Elk",
+    "Bull Elk",
+    "Giant vs giant clash",
+    "Rocky Mountain meadow",
+    "Rut Battle"
+  );
+
+  expect(
+    pack.facebook.facebookOverlayRecommendation?.recommended.frameHeuristics
+      ?.frame1Choice
+  ).toBe("species-first");
+  expect(
+    pack.facebook.facebookCoverFrameRanking?.best.frameHeuristics
+      ?.frame1Choice
+  ).toBe("species-first");
+  expect(pack.facebook.facebookCoverFrameRanking?.best.text).toMatch(
+    /Bull Elk|Dominance posture|Tension building/i
+  );
+  });
+
+  it("keeps Facebook recommendation reasons specific and non-generic", () => {
+  const pack = buildPlatformPack(
+    "Bald Eagle",
+    "Trout",
+    "Ambush attack",
+    "Riverbank reeds and shallow water",
+    "Fishing Strike"
+  );
+
+  const combined = `${pack.facebook.facebookOverlayRecommendation?.reason} ${pack.facebook.facebookCoverFrameRanking?.reason}`.toLowerCase();
+
+  expect(combined).toMatch(
+    /frame 1|thumbnail size|animals|strike-window|species read|tension/
+  );
+  expect(combined).not.toMatch(
+    /balanced first-frame clarity|balanced facebook cover readability|context fit/
+  );
+});
+
+it("flags clickbait hooks and forced-engagement CTAs in the publish guard", () => {
     const report = runFacebookPublishGuard({
       hookText: "You won't believe what happens next.",
       ctaText: "Comment who wins.",

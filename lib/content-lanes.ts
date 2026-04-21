@@ -68,24 +68,24 @@ const CONTENT_LANE_CONFIG: Record<Exclude<ContentLane, "Auto">, ContentLaneConfi
       "buffalo",
       "wildebeest",
     ],
-    habitatKeywords: ["pack pressure", "open lane", "chase lane", "escape lane"],
-    habitatClause: "with open lane control and readable pack pressure",
+    habitatKeywords: ["pack angle", "open break", "closing angle", "pursuit shape"],
+    habitatClause: "with open-country angle control and clean pack spacing",
     hooks: [
       preyOnly(
         (prey) =>
-          `The ${prey.toLowerCase()} still had ground, but the pack was already closing the escape lane.`
+          `The ${prey.toLowerCase()} still had daylight, but the pack had already split the escape path.`
       ),
       constantLaneCopy(
-        () => "The pressure changed once the pursuit started arriving from multiple angles."
+        () => "The pursuit stopped feeling like speed once the angles started working together."
       ),
       constantLaneCopy(
-        () => "What looked like open country turned into coordinated pressure in one beat."
+        () => "Open country became a narrowing trap as the pack widened the chase."
       ),
     ],
-    shortLead: constantLaneCopy(() => "The escape lane starts closing before full contact."),
+    shortLead: constantLaneCopy(() => "The pack shape forms before contact."),
     longLead: constantLaneCopy(
       () =>
-        "The escape lane starts closing before full contact because the pursuit geometry is already visible."
+        "The pack shape forms before contact, with the chase already narrowing from both sides."
     ),
   },
   Defender: {
@@ -123,23 +123,23 @@ const CONTENT_LANE_CONFIG: Record<Exclude<ContentLane, "Auto">, ContentLaneConfi
       "wild boar",
     ],
     habitatKeywords: ["hold your ground", "grounded footing", "defender", "stand ground"],
-    habitatClause: "with grounded footing and readable hold-your-ground spacing",
+    habitatClause: "with grounded footing and clear hold-your-ground spacing",
     hooks: [
       predatorOnly(
         (predator) =>
-          `The ${predator.toLowerCase()} refused to yield and the pressure line stopped there.`
+          `The ${predator.toLowerCase()} refused to yield, and the warning step stopped the push.`
       ),
       constantLaneCopy(
-        () => "The warning-step posture was readable before the full push landed."
+        () => "The bluff was visible before the challenger committed."
       ),
       constantLaneCopy(
-        () => "What looked like forward pressure turned into hold-ground tension."
+        () => "A forward rush met a planted stance instead of open space."
       ),
     ],
-    shortLead: constantLaneCopy(() => "The hold-ground read changes the whole sequence."),
+    shortLead: constantLaneCopy(() => "The planted stance changes the sequence."),
     longLead: constantLaneCopy(
       () =>
-        "The hold-ground read changes the whole sequence because the warning-step posture is visible early."
+        "The planted stance changes the sequence because the warning step appears before the push peaks."
     ),
   },
   "Fishing Strike": {
@@ -178,15 +178,15 @@ const CONTENT_LANE_CONFIG: Record<Exclude<ContentLane, "Auto">, ContentLaneConfi
       "crayfish",
       "frog",
     ],
-    habitatKeywords: ["waterline", "shoreline", "river", "shallows", "strike lane"],
-    habitatClause: "with clean strike lanes and readable waterline separation",
+    habitatKeywords: ["waterline", "shoreline", "river", "shallows", "strike window"],
+    habitatClause: "with clean strike windows and open waterline separation",
     hooks: [
       preyOnly(
         (prey) =>
           `The strike window closed at the waterline before the ${prey.toLowerCase()} could turn.`
       ),
       constantLaneCopy(
-        () => "The shallow-bank read looked calm until the timing snapped shut."
+        () => "The shallow-bank scene looked calm until the timing snapped shut."
       ),
       constantLaneCopy(
         () => "One surface break turned a quiet frame into a clean strike."
@@ -230,23 +230,23 @@ const CONTENT_LANE_CONFIG: Record<Exclude<ContentLane, "Auto">, ContentLaneConfi
       "cape buffalo",
       "wild boar",
     ],
-    habitatKeywords: ["clash readability", "open footing", "dominance", "rut"],
-    habitatClause: "with open footing and readable clash spacing",
+    habitatKeywords: ["antler clash", "open footing", "dominance", "rut", "shoulder line"],
+    habitatClause: "with open footing, antler room, and clear rut-season standoff spacing",
     hooks: [
       constantLaneCopy(
-        () => "The dominance posture was readable before the full clash landed."
+        () => "The antler line told the story before contact landed."
       ),
       constantLaneCopy(
-        () => "The territorial boundary showed up in the stance before the contact."
+        () => "The territorial claim showed in the shoulders before the crash."
       ),
       constantLaneCopy(
-        () => "What looked balanced turned into rut pressure once the footing shifted."
+        () => "A balanced standoff turned heavy once the footing shifted."
       ),
     ],
-    shortLead: constantLaneCopy(() => "The dominance read is visible before the clash lands."),
+    shortLead: constantLaneCopy(() => "The rut-season claim is visible before contact."),
     longLead: constantLaneCopy(
       () =>
-        "The dominance read is visible before the clash lands because the posture and boundary are already clear."
+        "The rut-season claim is visible before contact because the shoulder line and footing are already set."
     ),
   },
   Escape: {
@@ -271,19 +271,19 @@ const CONTENT_LANE_CONFIG: Record<Exclude<ContentLane, "Auto">, ContentLaneConfi
       "opossum",
       "pheasant",
     ],
-    habitatKeywords: ["escape lane", "survival", "field transition", "open lane"],
-    habitatClause: "with clear escape lanes and readable survival spacing",
+    habitatKeywords: ["breakaway", "survival", "field transition", "open gap"],
+    habitatClause: "with clear breakaway gaps and survival spacing",
     hooks: [
       preyOnly((prey) => `The ${prey.toLowerCase()} found one narrow breakaway window.`),
       constantLaneCopy(
-        () => "The near-miss read changed the moment before the pressure fully closed."
+        () => "The near miss became clear before the chase fully closed."
       ),
-      constantLaneCopy(() => "What looked finished reopened for one survival move."),
+      constantLaneCopy(() => "A finished-looking moment reopened for one survival move."),
     ],
     shortLead: constantLaneCopy(() => "The breakaway window is smaller than it looks."),
     longLead: constantLaneCopy(
       () =>
-        "The breakaway window is smaller than it looks, and the survival read has to happen before the pressure fully closes."
+        "The breakaway window is smaller than it looks, and the survival move has to happen before the chase fully closes."
     ),
   },
 };
@@ -540,20 +540,20 @@ export function getContentLaneWinnerLabels(contentLane: ContentLane): {
     case "Pack Hunt":
       return {
         overall: "Best pack overall",
-        fastPublish: "Best chase pressure",
+        fastPublish: "Best chase geometry",
         spotlight: "Best pack opener",
         realism: "Best grounded pursuit",
         summary:
-          "Variants stay inside readable group pressure, chase lanes, and nearby escape beats.",
+          "Variants stay inside group pursuit shape, closing angles, and nearby escape beats.",
       };
     case "Defender":
       return {
         overall: "Best defender overall",
-        fastPublish: "Best warning read",
+        fastPublish: "Best warning step",
         spotlight: "Best defender tension",
         realism: "Best grounded stand",
         summary:
-          "Variants stay inside hold-ground tension, warning-step posture, and realistic defender pressure.",
+          "Variants stay inside hold-ground tension, warning-step posture, and realistic defender stands.",
       };
     case "Fishing Strike":
       return {
@@ -567,11 +567,11 @@ export function getContentLaneWinnerLabels(contentLane: ContentLane): {
     case "Rut Battle":
       return {
         overall: "Best rut overall",
-        fastPublish: "Best dominance burst",
+        fastPublish: "Best rut escalation",
         spotlight: "Best rut clash",
-        realism: "Best grounded rut read",
+        realism: "Best grounded rut posture",
         summary:
-          "Variants stay inside dominance posture, clash readability, and rut-season field pressure.",
+          "Variants stay inside antler posture, shoulder-line escalation, and rut-season footing.",
       };
     case "Escape":
       return {
