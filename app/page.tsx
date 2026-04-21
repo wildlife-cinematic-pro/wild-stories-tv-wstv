@@ -886,6 +886,9 @@ export default function Page() {
                 driftRisk={preset.driftRisk}
                 workflowPresets={workflowPresetControls.presets}
                 workflowPresetPacks={workflowPresetControls.presetPacks}
+                workflowPresetLibraries={workflowPresetControls.availableLibraries}
+                activeWorkflowPresetLibrary={workflowPresetControls.activeLibrary}
+                workflowPresetAuthSession={workflowPresetControls.authSession}
                 activeWorkflowPresetId={workflowPresetControls.activePresetId}
                 activeWorkflowPresetPackId={workflowPresetControls.activePresetPackId}
                 defaultWorkflowPresetId={workflowPresetControls.defaultPresetId}
@@ -893,11 +896,26 @@ export default function Page() {
                 workflowPresetPackName={workflowPresetControls.packName}
                 workflowPresetPackDescription={workflowPresetControls.packDescription}
                 workflowPresetPackTagsText={workflowPresetControls.packTagsText}
-                workflowPresetCloudAccountIdInput={
-                  workflowPresetControls.cloudAccountIdInput
+                workflowPresetAuthEmailInput={
+                  workflowPresetControls.authEmailInput
                 }
-                workflowPresetConnectedCloudAccountId={
-                  workflowPresetControls.connectedCloudAccountId
+                workflowPresetAuthPasswordInput={
+                  workflowPresetControls.authPasswordInput
+                }
+                workflowPresetAuthDisplayNameInput={
+                  workflowPresetControls.authDisplayNameInput
+                }
+                workflowPresetSharedLibraryNameInput={
+                  workflowPresetControls.sharedLibraryNameInput
+                }
+                workflowPresetSharedLibraryDescriptionInput={
+                  workflowPresetControls.sharedLibraryDescriptionInput
+                }
+                workflowPresetSharedMemberEmailInput={
+                  workflowPresetControls.sharedMemberEmailInput
+                }
+                workflowPresetSharedMemberRole={
+                  workflowPresetControls.sharedMemberRole
                 }
                 workflowPresetCloudSyncState={
                   workflowPresetControls.cloudSyncStatus.state
@@ -910,6 +928,12 @@ export default function Page() {
                 }
                 suggestedWorkflowPresetName={workflowPresetControls.suggestedPresetName}
                 activeWorkflowPresetIsDirty={workflowPresetControls.activePresetIsDirty}
+                canEditWorkflowPresetLibrary={
+                  workflowPresetControls.canEditActiveLibrary
+                }
+                canManageWorkflowPresetLibrary={
+                  workflowPresetControls.canManageActiveLibrary
+                }
                 onPredatorChange={setPredator}
                 onPreyChange={setPrey}
                 onContentLaneChange={setContentLane}
@@ -928,11 +952,29 @@ export default function Page() {
                 onWorkflowPresetPackTagsTextChange={
                   workflowPresetControls.setPackTagsText
                 }
-                onWorkflowPresetCloudAccountIdInputChange={
-                  workflowPresetControls.setCloudAccountIdInput
+                onWorkflowPresetAuthEmailInputChange={
+                  workflowPresetControls.setAuthEmailInput
                 }
-                onActiveWorkflowPresetPackChange={
-                  workflowPresetControls.setActivePresetPackId
+                onWorkflowPresetAuthPasswordInputChange={
+                  workflowPresetControls.setAuthPasswordInput
+                }
+                onWorkflowPresetAuthDisplayNameInputChange={
+                  workflowPresetControls.setAuthDisplayNameInput
+                }
+                onWorkflowPresetSharedLibraryNameInputChange={
+                  workflowPresetControls.setSharedLibraryNameInput
+                }
+                onWorkflowPresetSharedLibraryDescriptionInputChange={
+                  workflowPresetControls.setSharedLibraryDescriptionInput
+                }
+                onWorkflowPresetSharedMemberEmailInputChange={
+                  workflowPresetControls.setSharedMemberEmailInput
+                }
+                onWorkflowPresetSharedMemberRoleChange={
+                  workflowPresetControls.setSharedMemberRole
+                }
+                onSelectedWorkflowPresetLibraryChange={
+                  workflowPresetControls.setSelectedLibraryId
                 }
                 onSaveWorkflowPreset={workflowPresetControls.saveCurrentAsPreset}
                 onUpdateWorkflowPreset={workflowPresetControls.updatePresetFromCurrent}
@@ -952,14 +994,26 @@ export default function Page() {
                   workflowPresetControls.importPresetPackFromJson
                 }
                 onApplyWorkflowPresetPack={workflowPresetControls.applyPresetPack}
-                onConnectWorkflowPresetCloudLibrary={
-                  workflowPresetControls.connectCloudLibrary
-                }
-                onDisconnectWorkflowPresetCloudLibrary={
-                  workflowPresetControls.disconnectCloudLibrary
-                }
-                onSyncWorkflowPresetCloudLibrary={() => {
-                  void workflowPresetControls.syncCloudLibrary("manual");
+                onSignInWorkflowPresetLibrary={() => {
+                  void workflowPresetControls.signIn();
+                }}
+                onSignUpWorkflowPresetLibrary={() => {
+                  void workflowPresetControls.signUp();
+                }}
+                onSignOutWorkflowPresetLibrary={() => {
+                  void workflowPresetControls.signOut();
+                }}
+                onSyncWorkflowPresetLibrary={() => {
+                  void workflowPresetControls.syncActiveLibrary();
+                }}
+                onCreateSharedWorkflowPresetLibrary={() => {
+                  void workflowPresetControls.createSharedLibrary();
+                }}
+                onSaveSharedWorkflowPresetLibraryMember={() => {
+                  void workflowPresetControls.saveSharedLibraryMember();
+                }}
+                onRemoveSharedWorkflowPresetLibraryMember={(userId) => {
+                  void workflowPresetControls.removeSharedLibraryMember(userId);
                 }}
                 workflowPresetImportStatus={workflowPresetControls.importStatus}
                 workflowPresetPackStatus={workflowPresetControls.packStatus}

@@ -25,7 +25,6 @@ import type {
   SavedPrompt,
   SavedWorkflowPreset,
   SavedWorkflowPresetPack,
-  WorkflowPresetCloudSession,
   PromptVersion,
   AIProvider,
   ContentLane,
@@ -59,7 +58,8 @@ const VERSIONS_KEY = "wildlife_versions_v1";
 const WORKFLOW_PRESETS_KEY = "wildlife_workflow_presets_v1";
 const WORKFLOW_PRESET_PACKS_KEY = "wildlife_workflow_preset_packs_v1";
 const DEFAULT_WORKFLOW_PRESET_KEY = "wildlife_default_workflow_preset_v1";
-const WORKFLOW_PRESET_CLOUD_SESSION_KEY = "wildlife_workflow_preset_cloud_session_v1";
+const WORKFLOW_PRESET_LIBRARY_SELECTION_KEY =
+  "wildlife_workflow_preset_library_selection_v1";
 
 export const MAX_HISTORY = 20;
 export const MAX_FAVORITES = 50;
@@ -339,48 +339,26 @@ export function writeWorkflowPresetPacks(
   } catch {}
 }
 
-export function readWorkflowPresetCloudSession():
-  | WorkflowPresetCloudSession
-  | undefined {
+export function readWorkflowPresetLibrarySelection(): string | undefined {
   if (typeof window === "undefined") return undefined;
   try {
-    const raw = localStorage.getItem(WORKFLOW_PRESET_CLOUD_SESSION_KEY);
-    const parsed = raw ? safeJsonParse<unknown>(raw) : null;
-    if (!parsed || typeof parsed !== "object" || Array.isArray(parsed)) {
-      return undefined;
-    }
-
-    const record = parsed as Record<string, unknown>;
-    const accountId =
-      typeof record.accountId === "string" ? record.accountId.trim() : "";
-    if (!accountId) return undefined;
-
-    return {
-      accountId,
-      connectedAt:
-        typeof record.connectedAt === "string"
-          ? record.connectedAt
-          : new Date(0).toISOString(),
-    };
+    const raw = localStorage.getItem(WORKFLOW_PRESET_LIBRARY_SELECTION_KEY);
+    return typeof raw === "string" && raw.trim() ? raw.trim() : undefined;
   } catch {
     return undefined;
   }
 }
 
-export function writeWorkflowPresetCloudSession(
-  session: WorkflowPresetCloudSession | undefined
+export function writeWorkflowPresetLibrarySelection(
+  libraryId: string | undefined
 ): void {
   if (typeof window === "undefined") return;
   try {
-    if (!session?.accountId) {
-      localStorage.removeItem(WORKFLOW_PRESET_CLOUD_SESSION_KEY);
-      return;
+    if (libraryId) {
+      localStorage.setItem(WORKFLOW_PRESET_LIBRARY_SELECTION_KEY, libraryId);
+    } else {
+      localStorage.removeItem(WORKFLOW_PRESET_LIBRARY_SELECTION_KEY);
     }
-
-    localStorage.setItem(
-      WORKFLOW_PRESET_CLOUD_SESSION_KEY,
-      JSON.stringify(session)
-    );
   } catch {}
 }
 

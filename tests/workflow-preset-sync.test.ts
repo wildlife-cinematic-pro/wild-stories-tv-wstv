@@ -7,11 +7,18 @@ import {
   createWorkflowPresetPack,
 } from "@/lib/workflow-presets";
 import {
+  buildPersonalCloudLibraryId,
+  buildPersonalWorkflowPresetLibraryRecord,
   buildLocalOnlyCloudPresetLibrary,
+  buildSharedWorkflowPresetLibraryRecord,
+  canManageWorkflowPresetLibrary,
+  canWriteWorkflowPresetLibrary,
+  createCloudPresetLibrary,
   getCloudPresetLibraryFingerprint,
   mergeCloudPresetLibraries,
-  normalizeCloudAccountId,
+  normalizeCloudLibraryId,
   normalizeCloudPresetLibrary,
+  normalizeWorkflowPresetSharedStoredRecord,
 } from "@/lib/workflow-preset-sync";
 
 function makeSnapshot(
@@ -65,12 +72,12 @@ describe("workflow preset cloud sync", () => {
       }
     );
 
-    const localLibrary = buildLocalOnlyCloudPresetLibrary("team-usa", {
+    const localLibrary = buildLocalOnlyCloudPresetLibrary("library-team-usa", {
       presets: [localPreset],
       defaultPresetId: localPreset.id,
       updatedAt: "2026-04-20T00:00:00.000Z",
     });
-    const cloudLibrary = buildLocalOnlyCloudPresetLibrary("team-usa", {
+    const cloudLibrary = buildLocalOnlyCloudPresetLibrary("library-team-usa", {
       presets: [cloudPreset],
       defaultPresetId: cloudPreset.id,
       updatedAt: "2026-04-20T02:00:00.000Z",
@@ -102,10 +109,10 @@ describe("workflow preset cloud sync", () => {
     );
 
     const report = mergeCloudPresetLibraries(
-      buildLocalOnlyCloudPresetLibrary("team-usa", {
+      buildLocalOnlyCloudPresetLibrary("library-team-usa", {
         presets: [localPreset],
       }),
-      buildLocalOnlyCloudPresetLibrary("team-usa", {
+      buildLocalOnlyCloudPresetLibrary("library-team-usa", {
         presets: [cloudPreset],
       }),
       { now: "2026-04-20T03:00:00.000Z" }
@@ -125,7 +132,7 @@ describe("workflow preset cloud sync", () => {
       name: "Escape Fast Publish",
       now: "2026-04-20T00:00:00.000Z",
     });
-    const localLibrary = buildLocalOnlyCloudPresetLibrary("team-usa", {
+    const localLibrary = buildLocalOnlyCloudPresetLibrary("library-team-usa", {
       presets: [preset],
       defaultPresetId: preset.id,
       updatedAt: "2026-04-20T00:00:00.000Z",
@@ -158,11 +165,11 @@ describe("workflow preset cloud sync", () => {
     );
 
     const report = mergeCloudPresetLibraries(
-      buildLocalOnlyCloudPresetLibrary("team-usa", {
+      buildLocalOnlyCloudPresetLibrary("library-team-usa", {
         presets: [localPreset],
         defaultPresetId: "missing-local-default",
       }),
-      buildLocalOnlyCloudPresetLibrary("team-usa", {
+      buildLocalOnlyCloudPresetLibrary("library-team-usa", {
         presets: [cloudPreset],
         defaultPresetId: cloudPreset.id,
       }),
@@ -194,11 +201,11 @@ describe("workflow preset cloud sync", () => {
     });
 
     const report = mergeCloudPresetLibraries(
-      buildLocalOnlyCloudPresetLibrary("team-usa", {
+      buildLocalOnlyCloudPresetLibrary("library-team-usa", {
         presets: [sharedPreset],
         presetPacks: [localPack],
       }),
-      buildLocalOnlyCloudPresetLibrary("team-usa", {
+      buildLocalOnlyCloudPresetLibrary("library-team-usa", {
         presets: [sharedPreset],
         presetPacks: [cloudPack],
       }),
@@ -214,19 +221,133 @@ describe("workflow preset cloud sync", () => {
     expect(report.packConflictCount).toBe(1);
   });
 
-  it("normalizes cloud library input safely and refuses invalid account ids", () => {
+  it("hydrates a signed-in personal library safely from cloud and local state", () => {
+    const user = {
+      id: "user-owner",
+      email: "owner@example.com",
+      displayName: "Owner",
+      createdAt: "2026-04-20T00:00:00.000Z",
+    };
+    const personalLibraryId = buildPersonalCloudLibraryId(user.id);
+    const localPreset = createWorkflowPreset(makeSnapshot(), {
+      id: "preset-local",
+      name: "Local Defender",
+      now: "2026-04-20T00:00:00.000Z",
+    });
+    const cloudPreset = createWorkflowPreset(
+      makeSnapshot({ contentLane: "Escape", arc: "Escape from danger" }),
+      {
+        id: "preset-cloud",
+        name: "Cloud Escape",
+        now: "2026-04-20T02:00:00.000Z",
+      }
+    );
+
+    const report = mergeCloudPresetLibraries(
+      createCloudPresetLibrary(personalLibraryId, {
+        presets: [localPreset],
+        defaultPresetId: localPreset.id,
+        updatedAt: "2026-04-20T00:00:00.000Z",
+      }),
+      createCloudPresetLibrary(personalLibraryId, {
+        presets: [cloudPreset],
+        defaultPresetId: cloudPreset.id,
+        updatedAt: "2026-04-20T02:00:00.000Z",
+      }),
+      { now: "2026-04-20T03:00:00.000Z" }
+    );
+    const personalRecord = buildPersonalWorkflowPresetLibraryRecord(
+      user,
+      report.library
+    );
+
+    expect(personalRecord.scope).toBe("personal");
+    expect(personalRecord.role).toBe("owner");
+    expect(personalRecord.canWrite).toBe(true);
+    expect(personalRecord.canManage).toBe(false);
+    expect(report.library.presets.map((preset) => preset.name)).toEqual([
+      "Cloud Escape",
+      "Local Defender",
+    ]);
+  });
+
+  it("builds shared library access safely for owner, editor, and viewer roles", () => {
+    const stored = normalizeWorkflowPresetSharedStoredRecord({
+      id: "shared-rut-battle",
+      name: "Rut Battle Team",
+      description: "Shared cinematic presets.",
+      createdAt: "2026-04-20T00:00:00.000Z",
+      updatedAt: "2026-04-20T02:00:00.000Z",
+      ownerUserId: "user-owner",
+      ownerEmail: "owner@example.com",
+      members: [
+        {
+          userId: "user-editor",
+          email: "editor@example.com",
+          role: "editor",
+          addedAt: "2026-04-20T00:30:00.000Z",
+        },
+        {
+          userId: "user-viewer",
+          email: "viewer@example.com",
+          role: "viewer",
+          addedAt: "2026-04-20T01:00:00.000Z",
+        },
+      ],
+      data: createCloudPresetLibrary("shared-rut-battle", {
+        presets: [
+          createWorkflowPreset(makeSnapshot(), {
+            id: "preset-rut",
+            name: "Rut Battle Cinematic",
+            now: "2026-04-20T02:00:00.000Z",
+          }),
+        ],
+      }),
+    });
+
+    expect(stored).not.toBeNull();
+
+    const ownerLibrary = buildSharedWorkflowPresetLibraryRecord(
+      stored!,
+      "user-owner"
+    );
+    const editorLibrary = buildSharedWorkflowPresetLibraryRecord(
+      stored!,
+      "user-editor"
+    );
+    const viewerLibrary = buildSharedWorkflowPresetLibraryRecord(
+      stored!,
+      "user-viewer"
+    );
+
+    expect(ownerLibrary?.role).toBe("owner");
+    expect(ownerLibrary?.canWrite).toBe(true);
+    expect(ownerLibrary?.canManage).toBe(true);
+    expect(editorLibrary?.role).toBe("editor");
+    expect(editorLibrary?.canWrite).toBe(true);
+    expect(editorLibrary?.canManage).toBe(false);
+    expect(viewerLibrary?.role).toBe("viewer");
+    expect(viewerLibrary?.canWrite).toBe(false);
+    expect(viewerLibrary?.canManage).toBe(false);
+    expect(canWriteWorkflowPresetLibrary("editor")).toBe(true);
+    expect(canWriteWorkflowPresetLibrary("viewer")).toBe(false);
+    expect(canManageWorkflowPresetLibrary("owner")).toBe(true);
+    expect(canManageWorkflowPresetLibrary("editor")).toBe(false);
+  });
+
+  it("normalizes cloud library input safely and refuses invalid library ids", () => {
     const normalized = normalizeCloudPresetLibrary(
       {
-        accountId: "TEAM-USA",
+        libraryId: "TEAM-USA",
         presets: [],
         presetPacks: [],
         defaultPresetId: "missing",
       },
-      { accountId: "fallback" }
+      { libraryId: "fallback" }
     );
 
-    expect(normalized?.accountId).toBe("team-usa");
+    expect(normalized?.libraryId).toBe("team-usa");
     expect(normalized?.defaultPresetId).toBeUndefined();
-    expect(normalizeCloudAccountId(" x ")).toBeUndefined();
+    expect(normalizeCloudLibraryId(" x ")).toBeUndefined();
   });
 });

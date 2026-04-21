@@ -1,13 +1,24 @@
 import { NextResponse } from "next/server";
 
 import {
+  assertSharedLibraryWriteAccess,
   isCloudPresetLibraryConfigured,
-  readCloudPresetLibraryFromStore,
-  writeCloudPresetLibraryToStore,
+  listSharedPresetLibrariesForUser,
+  readPersonalPresetLibraryFromStore,
+  writePersonalPresetLibraryToStore,
+  writeSharedPresetLibraryToStore,
 } from "@/lib/cloud-preset-library-server";
 import {
+  isPresetLibraryAuthConfigured,
+  readPresetLibrarySessionFromCookieHeader,
+} from "@/lib/preset-library-auth-server";
+import {
+  buildPersonalCloudLibraryId,
+  buildPersonalWorkflowPresetLibraryRecord,
+  buildSharedWorkflowPresetLibraryRecord,
   createCloudPresetLibrary,
-  normalizeCloudAccountId,
+  mergeCloudPresetLibraries,
+  normalizeCloudLibraryId,
   normalizeCloudPresetLibrary,
 } from "@/lib/workflow-preset-sync";
 
@@ -21,48 +32,77 @@ function unavailableResponse() {
   return NextResponse.json(
     {
       available: false,
-      library: null,
+      catalog: null,
       message:
-        "Cloud preset library is not configured for this deployment. Local presets stay active.",
+        "Auth-backed preset libraries are not configured for this deployment. Local presets stay active.",
     },
     { status: 503 }
   );
 }
 
+async function requireSession(req: Request) {
+  const session = await readPresetLibrarySessionFromCookieHeader(
+    req.headers.get("cookie")
+  );
+  if (!session) return null;
+  return session;
+}
+
 export async function GET(req: Request) {
-  if (!isCloudPresetLibraryConfigured()) {
+  if (!isCloudPresetLibraryConfigured() || !isPresetLibraryAuthConfigured()) {
     return unavailableResponse();
   }
 
-  const accountId = normalizeCloudAccountId(
-    new URL(req.url).searchParams.get("accountId")
-  );
-  if (!accountId) {
-    return jsonError("A valid cloud account ID is required.", 400);
+  const session = await requireSession(req);
+  if (!session) {
+    return NextResponse.json(
+      {
+        available: true,
+        catalog: null,
+        message: "Sign in to load your personal and shared preset libraries.",
+      },
+      { status: 401 }
+    );
   }
 
   try {
-    const library = await readCloudPresetLibraryFromStore(accountId);
+    const personalLibrary =
+      (await readPersonalPresetLibraryFromStore(session.user.id)) ??
+      createCloudPresetLibrary(buildPersonalCloudLibraryId(session.user.id));
+    const sharedLibraries = await listSharedPresetLibrariesForUser(session.user.id);
+
     return NextResponse.json({
       available: true,
-      library,
-      message: library
-        ? undefined
-        : "No cloud preset library found for this account yet.",
+      catalog: {
+        personalLibrary: buildPersonalWorkflowPresetLibraryRecord(
+          session.user,
+          personalLibrary
+        ),
+        sharedLibraries: sharedLibraries
+          .map((library) =>
+            buildSharedWorkflowPresetLibraryRecord(library, session.user.id)
+          )
+          .filter(Boolean),
+      },
     });
   } catch (error) {
     return jsonError(
       error instanceof Error
         ? error.message
-        : "Cloud preset library could not be loaded.",
+        : "Preset library catalog could not be loaded.",
       500
     );
   }
 }
 
 export async function PUT(req: Request) {
-  if (!isCloudPresetLibraryConfigured()) {
+  if (!isCloudPresetLibraryConfigured() || !isPresetLibraryAuthConfigured()) {
     return unavailableResponse();
+  }
+
+  const session = await requireSession(req);
+  if (!session) {
+    return jsonError("Sign in to sync a cloud preset library.", 401);
   }
 
   let body: unknown;
@@ -77,33 +117,66 @@ export async function PUT(req: Request) {
   }
 
   const record = body as Record<string, unknown>;
-  const accountId = normalizeCloudAccountId(record.accountId);
-  if (!accountId) {
-    return jsonError("A valid cloud account ID is required.", 400);
-  }
-
+  const requestedLibraryId = normalizeCloudLibraryId(record.libraryId);
+  const personalLibraryId = buildPersonalCloudLibraryId(session.user.id);
+  const libraryId = requestedLibraryId ?? personalLibraryId;
   const normalizedLibrary = normalizeCloudPresetLibrary(record.library, {
-    accountId,
+    libraryId,
   });
   if (!normalizedLibrary) {
-    return jsonError("Cloud preset library payload is invalid.", 400);
+    return jsonError("Preset library payload is invalid.", 400);
   }
 
   try {
-    const savedLibrary = await writeCloudPresetLibraryToStore(
-      accountId,
-      createCloudPresetLibrary(accountId, normalizedLibrary)
+    if (libraryId === personalLibraryId) {
+      const currentLibrary = await readPersonalPresetLibraryFromStore(
+        session.user.id
+      );
+      const merged = mergeCloudPresetLibraries(normalizedLibrary, currentLibrary, {
+        now: new Date().toISOString(),
+      });
+      const savedLibrary = await writePersonalPresetLibraryToStore(
+        session.user.id,
+        merged.library
+      );
+      return NextResponse.json({
+        available: true,
+        library: buildPersonalWorkflowPresetLibraryRecord(
+          session.user,
+          savedLibrary
+        ),
+        message: "Personal preset library synced.",
+      });
+    }
+
+    const currentSharedLibrary = await assertSharedLibraryWriteAccess(
+      libraryId,
+      session.user.id
     );
+    const merged = mergeCloudPresetLibraries(
+      normalizedLibrary,
+      currentSharedLibrary.data,
+      { now: new Date().toISOString() }
+    );
+    const savedLibrary = await writeSharedPresetLibraryToStore({
+      ...currentSharedLibrary,
+      data: merged.library,
+    });
+    const visibleLibrary = buildSharedWorkflowPresetLibraryRecord(
+      savedLibrary,
+      session.user.id
+    );
+
     return NextResponse.json({
       available: true,
-      library: savedLibrary,
-      message: "Cloud preset library synced.",
+      library: visibleLibrary,
+      message: "Shared preset library synced.",
     });
   } catch (error) {
     return jsonError(
       error instanceof Error
         ? error.message
-        : "Cloud preset library could not be saved.",
+        : "Preset library could not be saved.",
       500
     );
   }
