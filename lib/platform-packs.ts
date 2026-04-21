@@ -15,9 +15,12 @@
 import type {
   Arc,
   ContentLane,
-  PlatformPack,
   FacebookPack,
+  FirstFrameOverlayGuidance,
+  HookFormattingPreset,
+  HookOverlayVariant,
   InstagramPack,
+  PlatformPack,
   TikTokPack,
   YouTubeShortsPack,
 } from "@/types";
@@ -43,6 +46,9 @@ export type HashtagOptions = {
   count?: number;
   contentLane?: ContentLane;
 };
+
+export const HOOK_OVERLAY_MAX_LINE_LENGTH = 28;
+export const HOOK_OVERLAY_MAX_LINES = 2;
 
 const CLICKBAIT_PATTERNS = [
   /\byou won['’]t believe\b/i,
@@ -527,6 +533,224 @@ export function buildCTA(arc: Arc): string {
   );
 }
 
+function cleanOverlayLine(line: string): string {
+  return normalizeCopy(line).replace(/\s*[:;-]\s*$/g, "").trim();
+}
+
+function buildOverlayLines(
+  text: string,
+  maxLineLength = HOOK_OVERLAY_MAX_LINE_LENGTH,
+  maxLines = HOOK_OVERLAY_MAX_LINES
+): string[] {
+  const compact = normalizeCopy(text).replace(/\n+/g, " ").trim();
+  if (!compact) return [];
+
+  const words = compact.split(/\s+/).filter(Boolean);
+  const lines: string[] = [];
+  let index = 0;
+
+  while (index < words.length && lines.length < maxLines) {
+    let line = "";
+
+    while (index < words.length) {
+      const candidate = line ? `${line} ${words[index]}` : words[index];
+      if (candidate.length > maxLineLength && line) break;
+      line = candidate;
+      index += 1;
+      if (candidate.length > maxLineLength) break;
+    }
+
+    if (lines.length === maxLines - 1 && index < words.length) {
+      const remainder = [line, ...words.slice(index)].filter(Boolean).join(" ");
+      line = trimAtWordBoundary(remainder, maxLineLength).replace(/[.]+$/g, "").trim();
+      index = words.length;
+    }
+
+    const cleaned = cleanOverlayLine(line);
+    if (cleaned) lines.push(cleaned);
+  }
+
+  return lines.filter(Boolean).slice(0, maxLines);
+}
+
+function findPrimarySpeciesFromHook(
+  hook: string,
+  predator: string,
+  prey: string
+): string {
+  const compactHook = normalizeCopy(hook).toLowerCase();
+  const species = [normalizeCopy(predator), normalizeCopy(prey)].filter(Boolean);
+  const ranked = species
+    .map((name) => ({ name, index: compactHook.indexOf(name.toLowerCase()) }))
+    .filter((entry) => entry.index >= 0)
+    .sort((a, b) => a.index - b.index);
+
+  return ranked[0]?.name ?? species[0] ?? "Wildlife";
+}
+
+function buildHookPressureCue(hook: string): string {
+  const lower = normalizeCopy(hook).toLowerCase();
+
+  if (/(waterline|strike|surface break|shallows?)/.test(lower)) {
+    return "Waterline strike";
+  }
+
+  if (/(yield|ground|boundary|warning-step|stance)/.test(lower)) {
+    return "Hold-ground tension";
+  }
+
+  if (/(dominance|territory|clash|footing)/.test(lower)) {
+    return "Dominance posture";
+  }
+
+  if (/(breakaway|survival)/.test(lower)) {
+    return "Breakaway window";
+  }
+
+  if (/(escape lane|pursuit|angles|closing angle|lane)/.test(lower)) {
+    return "Escape lane closing";
+  }
+
+  if (/(pressure|space|read)/.test(lower)) {
+    return "Pressure building";
+  }
+
+  return "Readable pressure";
+}
+
+function buildObservationalHookQuestion(
+  hook: string,
+  predator: string,
+  prey: string
+): string {
+  const lower = normalizeCopy(hook).toLowerCase();
+  const preyName = normalizeCopy(prey) || normalizeCopy(predator);
+
+  if (/(waterline|strike|surface break|shallows?)/.test(lower)) {
+    return "When did the strike window close?";
+  }
+
+  if (/(yield|ground|boundary|warning-step|stance)/.test(lower)) {
+    return "When did the boundary become obvious?";
+  }
+
+  if (/(dominance|territory|clash|footing)/.test(lower)) {
+    return "When did the clash become unavoidable?";
+  }
+
+  if (/(breakaway|survival)/.test(lower)) {
+    return "When did the survival move appear?";
+  }
+
+  if (/(escape lane|pursuit|angles|closing angle|lane)/.test(lower)) {
+    return "When did the escape lane disappear?";
+  }
+
+  if (preyName) {
+    return `When did the ${preyName} lose space?`;
+  }
+
+  return "What changed the read first?";
+}
+
+function createOverlayVariant(
+  preset: HookFormattingPreset,
+  label: string,
+  note: string,
+  text: string
+): HookOverlayVariant {
+  const lines = buildOverlayLines(text);
+
+  return {
+    preset,
+    label,
+    note,
+    lines,
+    text: lines.join("\n"),
+  };
+}
+
+function createOverlayVariantFromLines(
+  preset: HookFormattingPreset,
+  label: string,
+  note: string,
+  inputLines: string[]
+): HookOverlayVariant {
+  const lines = inputLines
+    .map((line) => cleanOverlayLine(trimAtWordBoundary(line, HOOK_OVERLAY_MAX_LINE_LENGTH)))
+    .filter(Boolean)
+    .slice(0, HOOK_OVERLAY_MAX_LINES);
+
+  return {
+    preset,
+    label,
+    note,
+    lines,
+    text: lines.join("\n"),
+  };
+}
+
+export function buildHookFormattingPresets(
+  hook: string,
+  predator: string,
+  prey: string
+): HookOverlayVariant[] {
+  const primarySpecies = findPrimarySpeciesFromHook(hook, predator, prey);
+  const pressureCue = buildHookPressureCue(hook);
+  const documentaryLine = trimAtWordBoundary(
+    normalizeCopy(hook),
+    HOOK_OVERLAY_MAX_LINE_LENGTH * HOOK_OVERLAY_MAX_LINES
+  ).replace(/[.]+$/g, "");
+
+  return [
+    createOverlayVariant(
+      "species_first",
+      "Species-first statement",
+      "Lead with the clearest species so the first frame is readable instantly.",
+      `${primarySpecies}: ${pressureCue.toLowerCase()}.`
+    ),
+    createOverlayVariant(
+      "documentary_tension",
+      "Documentary tension line",
+      "Keep the observation intact, trimmed for a clean documentary opener.",
+      documentaryLine
+    ),
+    createOverlayVariant(
+      "observational_question",
+      "Observational question",
+      "Use a discussion-safe question that stays observational instead of bait-driven.",
+      buildObservationalHookQuestion(hook, predator, prey)
+    ),
+    createOverlayVariant(
+      "short_pressure",
+      "Short pressure line",
+      "Compress the hook into a fast, readable pressure cue.",
+      pressureCue
+    ),
+    createOverlayVariantFromLines(
+      "two_line_opener",
+      "Two-line readable opener",
+      "Split species identification and pressure into two quick overlay lines.",
+      [primarySpecies, pressureCue]
+    ),
+  ];
+}
+
+export function buildFirstFrameOverlayGuidance(): FirstFrameOverlayGuidance {
+  return {
+    placement:
+      "Keep the overlay in the upper safe zone so both animals and the motion path stay readable.",
+    textLength:
+      "Use 1 to 2 short lines and keep each line around 28 characters or less for an easy first read.",
+    opener:
+      "Open on readable motion or visible pressure. Avoid a dead-static first beat before the tension is clear.",
+    audio:
+      "Make the overlay understandable with sound off, while still feeling natural if viewers hear the reel.",
+    tone:
+      "Keep the wording observational, documentary, and original. Avoid bait phrasing, hype filler, and forced-engagement language.",
+  };
+}
+
 function finalizeShortCaption(raw: string): string {
   const compact = normalizeCopy(raw);
   const sentences = splitSentences(compact);
@@ -716,41 +940,55 @@ export function buildPlatformPack(
     contentLane,
   });
   const tags = buildTags(predator, prey, arc);
+  const overlayGuidance = buildFirstFrameOverlayGuidance();
 
   const facebook: FacebookPack = {
     hook: hooks[0],
     caption: longCaption,
     hashtags,
     tags,
-        bestTime: "Start by testing weekday morning and midday windows, then refine with your own Facebook Insights while keeping the opening motion readable immediately.",
-        cmpNote:
+    bestTime:
+      "Start by testing weekday morning and midday windows, then refine with your own Facebook Insights while keeping the opening motion readable immediately.",
+    cmpNote:
       "Keep the packaging original, keep overlay text in the upper safe zone, and make sure the reel reads clearly with or without sound.",
-        strategyNote:
+    strategyNote:
       "Pin the reel with the clearest species read, immediate motion, and strongest documentary tension in frame 1.",
+    overlayGuidance,
+    hookFormattingPresets: buildHookFormattingPresets(hooks[0], predator, prey),
   };
 
   const instagram: InstagramPack = {
     hook: hooks[1],
     caption: shortCaption,
     hashtags,
-    bestTime: "Start by testing afternoon and evening windows, then refine from account Insights while keeping the opening motion readable instantly.",
-    strategyNote: "Keep the first line species-clear, use upper safe-zone text, and let the opening frame show readable pressure immediately.",
+    bestTime:
+      "Start by testing afternoon and evening windows, then refine from account Insights while keeping the opening motion readable instantly.",
+    strategyNote:
+      "Keep the first line species-clear, use upper safe-zone text, and let the opening frame show readable pressure immediately.",
+    overlayGuidance,
+    hookFormattingPresets: buildHookFormattingPresets(hooks[1], predator, prey),
   };
 
   const tiktok: TikTokPack = {
     hook: hooks[2],
     caption: shortCaption,
     hashtags,
-    bestTime: "Start by testing late afternoon to evening and refine from retention signals while keeping the tension visible immediately.",
-    strategyNote: "Use readable opening motion, support both sound-on and sound-off viewing, and avoid dead-static setup before the tension is visible.",
+    bestTime:
+      "Start by testing late afternoon to evening and refine from retention signals while keeping the tension visible immediately.",
+    strategyNote:
+      "Use readable opening motion, support both sound-on and sound-off viewing, and avoid dead-static setup before the tension is visible.",
+    overlayGuidance,
+    hookFormattingPresets: buildHookFormattingPresets(hooks[2], predator, prey),
   };
 
   const youtube_shorts: YouTubeShortsPack = {
     title: `${predator} vs ${prey} — ${arc} | Wild Stories TV`,
     description: longCaption,
     tags,
-    bestTime: "Keep a consistent cadence and judge performance with your own retention and return-viewer signals.",
-    strategyNote: "Write a searchable title and keep the opening seconds documentary, readable, and clearly original before the sequence escalates.",
+    bestTime:
+      "Keep a consistent cadence and judge performance with your own retention and return-viewer signals.",
+    strategyNote:
+      "Write a searchable title and keep the opening seconds documentary, readable, and clearly original before the sequence escalates.",
   };
 
   return { facebook, instagram, tiktok, youtube_shorts };

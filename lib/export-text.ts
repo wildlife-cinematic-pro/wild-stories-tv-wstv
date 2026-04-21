@@ -119,6 +119,50 @@ function buildSoundDesignText(data: GeneratedPackage) {
   ].join("\n\n");
 }
 
+
+function buildFirstFrameOverlayText(data: GeneratedPackage) {
+  if (!data.platformPack) return "";
+
+  const sections = [
+    { label: "Facebook", platform: data.platformPack.facebook },
+    { label: "Instagram", platform: data.platformPack.instagram },
+    { label: "TikTok", platform: data.platformPack.tiktok },
+  ]
+    .map(({ label, platform }) => {
+      if (!platform.overlayGuidance && !platform.hookFormattingPresets?.length) {
+        return "";
+      }
+
+      return [
+        `=== ${label.toUpperCase()} FIRST-FRAME OVERLAY ===`,
+        platform.overlayGuidance
+          ? [
+              `Placement: ${platform.overlayGuidance.placement}`,
+              `Text length: ${platform.overlayGuidance.textLength}`,
+              `Opener: ${platform.overlayGuidance.opener}`,
+              `Audio: ${platform.overlayGuidance.audio}`,
+              `Tone: ${platform.overlayGuidance.tone}`,
+            ].join("\n")
+          : "",
+        platform.hookFormattingPresets?.length
+          ? platform.hookFormattingPresets
+              .map(
+                (preset) =>
+                  `${preset.label}
+${safeStr(preset.text)}
+Note: ${safeStr(preset.note)}`
+              )
+              .join("\n\n")
+          : "",
+      ]
+        .filter(Boolean)
+        .join("\n\n");
+    })
+    .filter(Boolean);
+
+  return sections.join("\n\n");
+}
+
 export function buildCopyAllPacksText(data: GeneratedPackage) {
   const seedance = (data.seedanceShots ?? [])
     .map((s, i) => `Seedance Shot ${i + 1}\n${safeStr(s)}`)
@@ -136,6 +180,7 @@ export function buildCopyAllPacksText(data: GeneratedPackage) {
   const capCutScript = buildCapCutScriptText(data);
   const animalBehavior = buildAnimalBehaviorText(data);
   const soundDesign = buildSoundDesignText(data);
+  const firstFrameOverlay = buildFirstFrameOverlayText(data);
   const shotImagePlanText = (data.shotImagePlan ?? [])
     .map(
       (plan, i) =>
@@ -180,6 +225,8 @@ export function buildCopyAllPacksText(data: GeneratedPackage) {
     animalBehavior,
     "",
     soundDesign,
+    "",
+    firstFrameOverlay,
   ]
     .filter(Boolean)
     .join("\n"));

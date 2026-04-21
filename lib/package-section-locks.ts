@@ -152,7 +152,13 @@ function mergePlatformPackLocks(
   return {
     facebook: {
       ...candidatePack.facebook,
-      ...(locks.hook ? { hook: lockedPack.facebook.hook } : {}),
+      ...(locks.hook
+        ? {
+            hook: lockedPack.facebook.hook,
+            overlayGuidance: lockedPack.facebook.overlayGuidance,
+            hookFormattingPresets: lockedPack.facebook.hookFormattingPresets,
+          }
+        : {}),
       ...(locks.caption ? { caption: lockedPack.facebook.caption } : {}),
       ...(locks.hashtags
         ? {
@@ -163,7 +169,13 @@ function mergePlatformPackLocks(
     },
     instagram: {
       ...candidatePack.instagram,
-      ...(locks.hook ? { hook: lockedPack.instagram.hook } : {}),
+      ...(locks.hook
+        ? {
+            hook: lockedPack.instagram.hook,
+            overlayGuidance: lockedPack.instagram.overlayGuidance,
+            hookFormattingPresets: lockedPack.instagram.hookFormattingPresets,
+          }
+        : {}),
       ...(locks.caption ? { caption: lockedPack.instagram.caption } : {}),
       ...(locks.hashtags
         ? {
@@ -174,7 +186,13 @@ function mergePlatformPackLocks(
     },
     tiktok: {
       ...candidatePack.tiktok,
-      ...(locks.hook ? { hook: lockedPack.tiktok.hook } : {}),
+      ...(locks.hook
+        ? {
+            hook: lockedPack.tiktok.hook,
+            overlayGuidance: lockedPack.tiktok.overlayGuidance,
+            hookFormattingPresets: lockedPack.tiktok.hookFormattingPresets,
+          }
+        : {}),
       ...(locks.caption ? { caption: lockedPack.tiktok.caption } : {}),
       ...(locks.hashtags
         ? {

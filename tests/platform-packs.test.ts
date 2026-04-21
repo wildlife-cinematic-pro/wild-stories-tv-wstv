@@ -4,7 +4,10 @@ import { runFacebookPublishGuard } from "@/lib/facebookPublishGuard";
 import {
   build2026Hook,
   buildCTA,
+  buildFirstFrameOverlayGuidance,
+  buildHookFormattingPresets,
   buildPlatformPack,
+  HOOK_OVERLAY_MAX_LINE_LENGTH,
 } from "@/lib/platform-packs";
 import type { Arc } from "@/types";
 
@@ -49,9 +52,69 @@ describe("platform pack hook engine v2", () => {
 
     expect(pack.facebook.cmpNote.toLowerCase()).toContain("upper safe zone");
     expect(pack.facebook.cmpNote.toLowerCase()).toContain("with or without sound");
-    expect(pack.instagram.strategyNote.toLowerCase()).toContain("species-clear");
-    expect(pack.tiktok.strategyNote.toLowerCase()).toContain("sound-on and sound-off");
+    expect(pack.instagram.strategyNote?.toLowerCase()).toContain("species-clear");
+    expect(pack.tiktok.strategyNote?.toLowerCase()).toContain("sound-on and sound-off");
     expect(guidance).not.toMatch(/invite-only|algorithm|85%|mid-action/);
+  });
+
+  it("keeps overlay guidance supportable and adds readable formatting presets", () => {
+    const guidance = buildFirstFrameOverlayGuidance();
+    const overlayPresets = buildHookFormattingPresets(
+      "The mountain lion closed the space before the deer changed direction.",
+      "Mountain Lion",
+      "White-tailed Deer"
+    );
+    const serializedGuidance = JSON.stringify(guidance).toLowerCase();
+
+    expect(serializedGuidance).toContain("upper safe zone");
+    expect(serializedGuidance).toContain("sound off");
+    expect(serializedGuidance).not.toMatch(/algorithm|85%|mid-action|officially/);
+    expect(overlayPresets).toHaveLength(5);
+
+    for (const preset of overlayPresets) {
+      expect(preset.text).not.toMatch(BAIT_PATTERN);
+      expect(preset.text).not.toMatch(FORCED_ENGAGEMENT_PATTERN);
+      expect(preset.lines.length).toBeGreaterThan(0);
+      expect(preset.lines.length).toBeLessThanOrEqual(2);
+      for (const line of preset.lines) {
+        expect(line.length).toBeLessThanOrEqual(HOOK_OVERLAY_MAX_LINE_LENGTH);
+      }
+    }
+  });
+
+  it("keeps species-first and observational-question presets readable and safe", () => {
+    const overlayPresets = buildHookFormattingPresets(
+      "The mountain lion closed the space before the deer changed direction.",
+      "Mountain Lion",
+      "White-tailed Deer"
+    );
+
+    const speciesFirst = overlayPresets.find(
+      (preset) => preset.preset === "species_first"
+    );
+    const questionPreset = overlayPresets.find(
+      (preset) => preset.preset === "observational_question"
+    );
+
+    expect(speciesFirst?.text.startsWith("Mountain Lion")).toBe(true);
+    expect(questionPreset?.text.endsWith("?")).toBe(true);
+    expect(questionPreset?.text).not.toMatch(FORCED_ENGAGEMENT_PATTERN);
+  });
+
+  it("includes overlay guidance and hook formatting presets in platform packs", () => {
+    const pack = buildPlatformPack(
+      "Mountain Lion",
+      "White-tailed Deer",
+      "Escape from danger",
+      "Rocky Mountain forest edge and open meadow"
+    );
+
+    expect(pack.facebook.overlayGuidance?.placement.toLowerCase()).toContain(
+      "upper safe zone"
+    );
+    expect(pack.facebook.hookFormattingPresets).toHaveLength(5);
+    expect(pack.instagram.hookFormattingPresets?.[0]?.label).toBeTruthy();
+    expect(pack.tiktok.hookFormattingPresets?.[0]?.text).toBeTruthy();
   });
 
   it("flags clickbait hooks and forced-engagement CTAs in the publish guard", () => {
@@ -66,8 +129,12 @@ describe("platform pack hook engine v2", () => {
     });
 
     expect(report.isPass).toBe(false);
-    expect(report.warnings.join(" ").toLowerCase()).toMatch(/clickbait|discussion-safe|documentary/);
-    expect(report.fixes?.join(" ").toLowerCase()).toMatch(/species-clear|behavior-led|documentary/);
+    expect(report.warnings.join(" ").toLowerCase()).toMatch(
+      /clickbait|discussion-safe|documentary/
+    );
+    expect(report.fixes?.join(" ").toLowerCase()).toMatch(
+      /species-clear|behavior-led|documentary/
+    );
   });
 
   it("passes documentary hook and CTA language through the publish guard", () => {

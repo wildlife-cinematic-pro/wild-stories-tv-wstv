@@ -370,6 +370,73 @@ export function PlatformPackPanel({
           </div>
         )}
 
+        {data.overlayGuidance ? (
+          <div className="rounded-lg border border-sky-200 bg-sky-50 p-3 text-xs text-sky-900">
+            <p className="text-xs font-bold uppercase tracking-[0.08em] text-sky-700">
+              First-Frame Overlay Guidance
+            </p>
+            <div className="mt-2 space-y-2 leading-5">
+              <p>
+                <strong>Placement:</strong> {data.overlayGuidance.placement}
+              </p>
+              <p>
+                <strong>Text length:</strong> {data.overlayGuidance.textLength}
+              </p>
+              <p>
+                <strong>Opener:</strong> {data.overlayGuidance.opener}
+              </p>
+              <p>
+                <strong>Audio:</strong> {data.overlayGuidance.audio}
+              </p>
+              <p>
+                <strong>Tone:</strong> {data.overlayGuidance.tone}
+              </p>
+            </div>
+          </div>
+        ) : null}
+
+        {data.hookFormattingPresets?.length ? (
+          <div className="rounded-lg border border-indigo-200 bg-indigo-50 p-3">
+            <div className="mb-2 flex items-center justify-between gap-2">
+              <p className="text-xs font-bold uppercase tracking-[0.08em] text-indigo-700">
+                Hook Text Formatting Presets
+              </p>
+              <span className="rounded bg-white px-2 py-0.5 text-[10px] font-semibold text-indigo-700">
+                Overlay-ready
+              </span>
+            </div>
+            <div className="space-y-2">
+              {data.hookFormattingPresets.map((preset) => (
+                <div
+                  key={preset.preset}
+                  className="rounded-lg border border-indigo-100 bg-white p-3"
+                >
+                  <div className="flex items-start justify-between gap-3">
+                    <div>
+                      <p className="text-xs font-bold text-gray-800">{preset.label}</p>
+                      <p className="mt-1 text-[11px] leading-5 text-gray-500">
+                        {preset.note}
+                      </p>
+                    </div>
+                    <button
+                      onClick={() => onCopy(preset.text)}
+                      className="shrink-0 rounded bg-gray-900 px-2 py-1 text-xs text-white"
+                      type="button"
+                    >
+                      Copy
+                    </button>
+                  </div>
+                  <div className="mt-2 rounded bg-gray-50 px-3 py-2">
+                    <p className="whitespace-pre-line text-sm font-semibold leading-6 text-gray-900">
+                      {preset.text}
+                    </p>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        ) : null}
+
         <div className="rounded-lg bg-gray-50 p-3">
           <p className="text-xs font-bold text-gray-500">
             {"description" in data ? "Description" : "Caption"}
