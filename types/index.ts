@@ -313,21 +313,20 @@ export type WorkflowPresetPackImportReport = {
 
 export type WorkflowPresetCloudSyncState =
   | "local-only"
+  | "authenticating"
   | "syncing"
   | "synced"
   | "conflict-resolved"
   | "sync-error";
 
-export type WorkflowPresetCloudSession = {
-  accountId: string;
-  connectedAt: string;
-};
+export type WorkflowPresetLibraryRole = "owner" | "editor" | "viewer";
+export type WorkflowPresetLibraryScope = "personal" | "shared";
 
 export type CloudPresetLibrary = {
   schema: "wstv.workflow-preset-library";
-  version: 1;
+  version: 2;
   source: "wild-stories-tv-wstv";
-  accountId: string;
+  libraryId: string;
   updatedAt: string;
   defaultPresetId?: string;
   presets: SavedWorkflowPreset[];
@@ -342,6 +341,58 @@ export type CloudPresetLibraryMergeReport = {
   packRenameCount: number;
   conflictResolved: boolean;
   usedCloudDefault: boolean;
+};
+
+export type WorkflowPresetAuthUser = {
+  id: string;
+  email: string;
+  displayName: string;
+  createdAt: string;
+};
+
+export type WorkflowPresetAuthSession = {
+  user: WorkflowPresetAuthUser;
+  issuedAt: string;
+  expiresAt: string;
+};
+
+export type WorkflowPresetSharedLibraryMember = {
+  userId: string;
+  email: string;
+  role: WorkflowPresetLibraryRole;
+  addedAt: string;
+};
+
+export type WorkflowPresetSharedLibraryStoredRecord = {
+  id: string;
+  scope: "shared";
+  name: string;
+  description: string;
+  createdAt: string;
+  updatedAt: string;
+  ownerUserId: string;
+  members: WorkflowPresetSharedLibraryMember[];
+  data: CloudPresetLibrary;
+};
+
+export type WorkflowPresetLibraryRecord = {
+  id: string;
+  scope: WorkflowPresetLibraryScope;
+  name: string;
+  description: string;
+  createdAt: string;
+  updatedAt: string;
+  role: WorkflowPresetLibraryRole;
+  canWrite: boolean;
+  canManage: boolean;
+  ownerUserId?: string;
+  members?: WorkflowPresetSharedLibraryMember[];
+  data: CloudPresetLibrary;
+};
+
+export type WorkflowPresetLibraryCatalog = {
+  personalLibrary: WorkflowPresetLibraryRecord;
+  sharedLibraries: WorkflowPresetLibraryRecord[];
 };
 
 // ─────────────────────────────────────────────────────────────

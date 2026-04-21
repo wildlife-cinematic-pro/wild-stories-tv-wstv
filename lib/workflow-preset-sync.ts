@@ -3,6 +3,11 @@ import type {
   CloudPresetLibraryMergeReport,
   SavedWorkflowPreset,
   SavedWorkflowPresetPack,
+  WorkflowPresetAuthUser,
+  WorkflowPresetLibraryRecord,
+  WorkflowPresetLibraryRole,
+  WorkflowPresetSharedLibraryMember,
+  WorkflowPresetSharedLibraryStoredRecord,
 } from "@/types";
 
 import {
@@ -15,7 +20,7 @@ import {
 } from "@/lib/workflow-presets";
 
 export const CLOUD_PRESET_LIBRARY_SCHEMA = "wstv.workflow-preset-library";
-export const CLOUD_PRESET_LIBRARY_VERSION = 1;
+export const CLOUD_PRESET_LIBRARY_VERSION = 2;
 
 function isRecord(value: unknown): value is Record<string, unknown> {
   return Boolean(value) && typeof value === "object" && !Array.isArray(value);
@@ -29,10 +34,6 @@ function normalizeTimestamp(value: string | undefined): number {
   if (!value) return 0;
   const parsed = Date.parse(value);
   return Number.isFinite(parsed) ? parsed : 0;
-}
-
-function cleanAccountId(value: unknown): string {
-  return cleanString(value).toLowerCase().slice(0, 120);
 }
 
 function getUniqueName(
@@ -71,6 +72,102 @@ function sortByUpdatedAtDesc<T extends { updatedAt: string; createdAt?: string }
 
 function serializeComparableValue(value: unknown): string {
   return JSON.stringify(value);
+}
+
+function cleanEmail(value: unknown): string {
+  return cleanString(value).toLowerCase().slice(0, 160);
+}
+
+function normalizeMemberRole(value: unknown): WorkflowPresetLibraryRole | undefined {
+  return value === "owner" || value === "editor" || value === "viewer"
+    ? value
+    : undefined;
+}
+
+function normalizeSharedLibraryMembers(
+  value: unknown,
+  ownerUserId: string
+): WorkflowPresetSharedLibraryMember[] {
+  if (!Array.isArray(value)) return [];
+
+  const seen = new Set<string>();
+  return value
+    .map((item) => {
+      if (!isRecord(item)) return null;
+
+      const userId = cleanString(item.userId).slice(0, 120);
+      const email = cleanEmail(item.email);
+      const role =
+        userId === ownerUserId
+          ? "owner"
+          : normalizeMemberRole(item.role) ?? "viewer";
+      if (!userId || !email) return null;
+
+      return {
+        userId,
+        email,
+        role,
+        addedAt: cleanString(item.addedAt, new Date(0).toISOString()),
+      };
+    })
+    .filter(
+      (member): member is WorkflowPresetSharedLibraryMember => Boolean(member)
+    )
+    .filter((member) => {
+      if (seen.has(member.userId)) return false;
+      seen.add(member.userId);
+      return true;
+    })
+    .sort((a, b) => {
+      if (a.role === "owner" && b.role !== "owner") return -1;
+      if (b.role === "owner" && a.role !== "owner") return 1;
+      return a.email.localeCompare(b.email);
+    });
+}
+
+function resolvePresetNameCollisions(presets: SavedWorkflowPreset[]) {
+  const usedNames = new Set<string>();
+  let renamedCount = 0;
+
+  const resolved = [...presets]
+    .sort(sortByUpdatedAtDesc)
+    .map((preset) => {
+      const fallbackName = buildWorkflowPresetName(preset.snapshot);
+      const nextName = getUniqueName(
+        cleanString(preset.name, fallbackName),
+        usedNames,
+        "Synced"
+      );
+      if (nextName !== preset.name) renamedCount += 1;
+      return nextName === preset.name ? preset : { ...preset, name: nextName };
+    });
+
+  return {
+    presets: resolved,
+    renamedCount,
+  };
+}
+
+function resolvePackNameCollisions(packs: SavedWorkflowPresetPack[]) {
+  const usedNames = new Set<string>();
+  let renamedCount = 0;
+
+  const resolved = [...packs]
+    .sort(sortByUpdatedAtDesc)
+    .map((pack) => {
+      const nextName = getUniqueName(
+        cleanString(pack.name, "Synced Preset Pack"),
+        usedNames,
+        "Synced"
+      );
+      if (nextName !== pack.name) renamedCount += 1;
+      return nextName === pack.name ? pack : { ...pack, name: nextName };
+    });
+
+  return {
+    packs: resolved,
+    renamedCount,
+  };
 }
 
 function chooseLatestPreset(
@@ -141,59 +238,50 @@ function chooseLatestPack(
   };
 }
 
-function resolvePresetNameCollisions(presets: SavedWorkflowPreset[]) {
-  const usedNames = new Set<string>();
-  let renamedCount = 0;
-
-  const resolved = [...presets]
-    .sort(sortByUpdatedAtDesc)
-    .map((preset) => {
-      const fallbackName = buildWorkflowPresetName(preset.snapshot);
-      const nextName = getUniqueName(
-        cleanString(preset.name, fallbackName),
-        usedNames,
-        "Synced"
-      );
-      if (nextName !== preset.name) renamedCount += 1;
-      return nextName === preset.name ? preset : { ...preset, name: nextName };
-    });
-
-  return {
-    presets: resolved,
-    renamedCount,
-  };
+export function normalizeCloudLibraryId(value: unknown): string | undefined {
+  const libraryId = cleanString(value)
+    .toLowerCase()
+    .replace(/[^a-z0-9_-]+/g, "-")
+    .replace(/^-+|-+$/g, "")
+    .slice(0, 120);
+  return libraryId.length >= 3 ? libraryId : undefined;
 }
 
-function resolvePackNameCollisions(packs: SavedWorkflowPresetPack[]) {
-  const usedNames = new Set<string>();
-  let renamedCount = 0;
+export function buildPersonalCloudLibraryId(userId: string): string {
+  const safeUserId = normalizeCloudLibraryId(userId);
+  if (!safeUserId) {
+    throw new Error("A valid user id is required to build the personal library id.");
+  }
+  return `personal_${safeUserId}`;
+}
 
-  const resolved = [...packs]
-    .sort(sortByUpdatedAtDesc)
-    .map((pack) => {
-      const nextName = getUniqueName(
-        cleanString(pack.name, "Synced Preset Pack"),
-        usedNames,
-        "Synced"
-      );
-      if (nextName !== pack.name) renamedCount += 1;
-      return nextName === pack.name ? pack : { ...pack, name: nextName };
-    });
+export function normalizeWorkflowPresetLibraryRole(
+  value: unknown,
+  fallback: WorkflowPresetLibraryRole = "viewer"
+): WorkflowPresetLibraryRole {
+  return normalizeMemberRole(value) ?? fallback;
+}
 
-  return {
-    packs: resolved,
-    renamedCount,
-  };
+export function canWriteWorkflowPresetLibrary(
+  role: WorkflowPresetLibraryRole
+): boolean {
+  return role === "owner" || role === "editor";
+}
+
+export function canManageWorkflowPresetLibrary(
+  role: WorkflowPresetLibraryRole
+): boolean {
+  return role === "owner";
 }
 
 export function normalizeCloudPresetLibrary(
   value: unknown,
-  options: { accountId?: string } = {}
+  options: { libraryId?: string } = {}
 ): CloudPresetLibrary | null {
   if (!isRecord(value)) return null;
 
-  const accountId = cleanAccountId(value.accountId ?? options.accountId);
-  if (!accountId) return null;
+  const libraryId = normalizeCloudLibraryId(value.libraryId ?? options.libraryId);
+  if (!libraryId) return null;
 
   const presets = normalizeWorkflowPresets(value.presets);
   const presetPacks = normalizeWorkflowPresetPacks(value.presetPacks);
@@ -206,7 +294,7 @@ export function normalizeCloudPresetLibrary(
     schema: CLOUD_PRESET_LIBRARY_SCHEMA,
     version: CLOUD_PRESET_LIBRARY_VERSION,
     source: "wild-stories-tv-wstv",
-    accountId,
+    libraryId,
     updatedAt: cleanString(value.updatedAt, new Date(0).toISOString()),
     ...(defaultPresetId ? { defaultPresetId } : {}),
     presets,
@@ -215,7 +303,7 @@ export function normalizeCloudPresetLibrary(
 }
 
 export function createCloudPresetLibrary(
-  accountId: string,
+  libraryId: string,
   input: {
     presets?: SavedWorkflowPreset[];
     presetPacks?: SavedWorkflowPresetPack[];
@@ -223,9 +311,9 @@ export function createCloudPresetLibrary(
     updatedAt?: string;
   } = {}
 ): CloudPresetLibrary {
-  const safeAccountId = cleanAccountId(accountId);
-  if (!safeAccountId) {
-    throw new Error("Cloud preset library account ID is required");
+  const safeLibraryId = normalizeCloudLibraryId(libraryId);
+  if (!safeLibraryId) {
+    throw new Error("Cloud preset library id is required");
   }
 
   const presets = normalizeWorkflowPresets(input.presets ?? []);
@@ -239,12 +327,24 @@ export function createCloudPresetLibrary(
     schema: CLOUD_PRESET_LIBRARY_SCHEMA,
     version: CLOUD_PRESET_LIBRARY_VERSION,
     source: "wild-stories-tv-wstv",
-    accountId: safeAccountId,
+    libraryId: safeLibraryId,
     updatedAt: input.updatedAt ?? new Date().toISOString(),
     ...(defaultPresetId ? { defaultPresetId } : {}),
     presets,
     presetPacks,
   };
+}
+
+export function buildLocalOnlyCloudPresetLibrary(
+  libraryId: string,
+  input: {
+    presets?: SavedWorkflowPreset[];
+    presetPacks?: SavedWorkflowPresetPack[];
+    defaultPresetId?: string;
+    updatedAt?: string;
+  } = {}
+): CloudPresetLibrary {
+  return createCloudPresetLibrary(libraryId, input);
 }
 
 export function getCloudPresetLibraryFingerprint(
@@ -257,27 +357,18 @@ export function getCloudPresetLibraryFingerprint(
   });
 }
 
-export function buildLocalOnlyCloudPresetLibrary(
-  accountId: string,
-  input: {
-    presets?: SavedWorkflowPreset[];
-    presetPacks?: SavedWorkflowPresetPack[];
-    defaultPresetId?: string;
-    updatedAt?: string;
-  } = {}
-): CloudPresetLibrary {
-  return createCloudPresetLibrary(accountId, input);
-}
-
 export function mergeCloudPresetLibraries(
   localLibrary: CloudPresetLibrary,
   cloudLibrary: CloudPresetLibrary | null,
   options: { now?: string } = {}
 ): CloudPresetLibraryMergeReport {
-  const normalizedLocal = createCloudPresetLibrary(localLibrary.accountId, localLibrary);
+  const normalizedLocal = createCloudPresetLibrary(
+    localLibrary.libraryId,
+    localLibrary
+  );
   const normalizedCloud =
-    cloudLibrary && cleanAccountId(cloudLibrary.accountId) === normalizedLocal.accountId
-      ? createCloudPresetLibrary(cloudLibrary.accountId, cloudLibrary)
+    cloudLibrary && cloudLibrary.libraryId === normalizedLocal.libraryId
+      ? createCloudPresetLibrary(cloudLibrary.libraryId, cloudLibrary)
       : null;
 
   if (!normalizedCloud) {
@@ -344,7 +435,7 @@ export function mergeCloudPresetLibraries(
   );
   const defaultPresetId = localDefaultPresetId ?? cloudDefaultPresetId;
 
-  const library = createCloudPresetLibrary(normalizedLocal.accountId, {
+  const library = createCloudPresetLibrary(normalizedLocal.libraryId, {
     presets: resolvedPresetNames.presets,
     presetPacks: resolvedPackNames.packs.map((pack) => {
       const normalizedPack = normalizeWorkflowPresetPack({
@@ -382,7 +473,96 @@ export function mergeCloudPresetLibraries(
   };
 }
 
-export function normalizeCloudAccountId(value: unknown): string | undefined {
-  const accountId = cleanAccountId(value);
-  return accountId.length >= 3 ? accountId : undefined;
+export function getSharedLibraryMember(
+  members: WorkflowPresetSharedLibraryMember[] | undefined,
+  userId: string
+): WorkflowPresetSharedLibraryMember | undefined {
+  return members?.find((member) => member.userId === userId);
 }
+
+export function normalizeWorkflowPresetSharedStoredRecord(
+  value: unknown
+): WorkflowPresetSharedLibraryStoredRecord | null {
+  if (!isRecord(value)) return null;
+
+  const id = normalizeCloudLibraryId(value.id);
+  const ownerUserId = normalizeCloudLibraryId(value.ownerUserId);
+  if (!id || !ownerUserId) return null;
+
+  const data = normalizeCloudPresetLibrary(value.data, { libraryId: id });
+  if (!data) return null;
+
+  const members = normalizeSharedLibraryMembers(value.members, ownerUserId);
+  const ownerMember =
+    getSharedLibraryMember(members, ownerUserId) ??
+    ({
+      userId: ownerUserId,
+      email: cleanEmail(value.ownerEmail),
+      role: "owner",
+      addedAt: cleanString(value.createdAt, new Date(0).toISOString()),
+    } satisfies WorkflowPresetSharedLibraryMember);
+
+  return {
+    id,
+    scope: "shared",
+    name: cleanString(value.name, "Shared Library"),
+    description: cleanString(value.description),
+    createdAt: cleanString(value.createdAt, new Date(0).toISOString()),
+    updatedAt: cleanString(value.updatedAt, new Date(0).toISOString()),
+    ownerUserId,
+    members: [ownerMember, ...members.filter((member) => member.userId !== ownerUserId)],
+    data,
+  };
+}
+
+export function buildPersonalWorkflowPresetLibraryRecord(
+  user: WorkflowPresetAuthUser,
+  library: CloudPresetLibrary
+): WorkflowPresetLibraryRecord {
+  return {
+    id: library.libraryId,
+    scope: "personal",
+    name: "My Library",
+    description: `Personal preset library for ${user.displayName || user.email}.`,
+    createdAt: user.createdAt,
+    updatedAt: library.updatedAt,
+    role: "owner",
+    canWrite: true,
+    canManage: false,
+    ownerUserId: user.id,
+    data: library,
+  };
+}
+
+export function buildSharedWorkflowPresetLibraryRecord(
+  storedRecord: WorkflowPresetSharedLibraryStoredRecord,
+  userId: string
+): WorkflowPresetLibraryRecord | null {
+  const member =
+    storedRecord.ownerUserId === userId
+      ? {
+          userId,
+          email:
+            getSharedLibraryMember(storedRecord.members, userId)?.email ?? "",
+          role: "owner" as const,
+          addedAt: storedRecord.createdAt,
+        }
+      : getSharedLibraryMember(storedRecord.members, userId);
+  if (!member) return null;
+
+  return {
+    id: storedRecord.id,
+    scope: "shared",
+    name: storedRecord.name,
+    description: storedRecord.description,
+    createdAt: storedRecord.createdAt,
+    updatedAt: storedRecord.updatedAt,
+    role: member.role,
+    canWrite: canWriteWorkflowPresetLibrary(member.role),
+    canManage: canManageWorkflowPresetLibrary(member.role),
+    ownerUserId: storedRecord.ownerUserId,
+    members: storedRecord.members,
+    data: storedRecord.data,
+  };
+}
+
