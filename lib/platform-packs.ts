@@ -44,6 +44,77 @@ export type HashtagOptions = {
   contentLane?: ContentLane;
 };
 
+const CLICKBAIT_PATTERNS = [
+  /\byou won['’]t believe\b/i,
+  /\bwait for it\b/i,
+  /\bnobody expected\b/i,
+  /\bwatch till the end\b/i,
+  /\bwatch to the end\b/i,
+  /\bcomment who wins\b/i,
+  /\bcomment below\b/i,
+  /\btag a friend\b/i,
+  /\bshare before it(?:'|’)s gone\b/i,
+  /\blike if you agree\b/i,
+] as const;
+
+const HYPE_FILLER_PATTERNS = [
+  /\bshocking\b/i,
+  /\bbrutal\b/i,
+  /\binsane\b/i,
+  /\bcraziest\b/i,
+  /\bunbelievable\b/i,
+] as const;
+
+const OBSERVATIONAL_SIGNAL_PATTERN =
+  /\b(pressure|spacing|boundary|timing|posture|waterline|window|lane|stance|distance|footing|surface break|read|looked|turn|ground|clash|angle|territory|warning-step|breakaway|survival)\b/i;
+
+const FORCED_ENGAGEMENT_PATTERN =
+  /\b(who wins\??|comment below|tag a friend|watch till the end|watch to the end|like if you agree|share before it(?:'|’)s gone)\b/i;
+
+export function hasBaitLikeCopy(text: string): boolean {
+  const compact = String(text ?? "");
+  return [...CLICKBAIT_PATTERNS, ...HYPE_FILLER_PATTERNS].some((pattern) =>
+    pattern.test(compact)
+  );
+}
+
+export function hasForcedEngagementCopy(text: string): boolean {
+  return FORCED_ENGAGEMENT_PATTERN.test(String(text ?? ""));
+}
+
+export function evaluateHookCopyQuality(
+  text: string,
+  predator = "",
+  prey = ""
+): {
+  score: number;
+  hasSpeciesClarity: boolean;
+  hasObservationalTone: boolean;
+  hasBait: boolean;
+} {
+  const compact = normalizeCopy(text);
+  const lower = compact.toLowerCase();
+  const speciesTerms = [predator, prey]
+    .map((value) => normalizeCopy(value).toLowerCase())
+    .filter(Boolean);
+  const hasSpeciesClarity = speciesTerms.some((term) => lower.includes(term));
+  const hasObservationalTone = OBSERVATIONAL_SIGNAL_PATTERN.test(lower);
+  const hasBait = hasBaitLikeCopy(compact) || hasForcedEngagementCopy(compact);
+
+  let score = 40;
+  if (hasSpeciesClarity) score += 20;
+  if (hasObservationalTone) score += 20;
+  if (!hasBait) score += 15;
+  if (compact.length > 0 && compact.length <= 96) score += 5;
+
+  return {
+    score: Math.max(0, Math.min(100, score)),
+    hasSpeciesClarity,
+    hasObservationalTone,
+    hasBait,
+  };
+}
+
 // ─────────────────────────────────────────────────────────────
 // 1. VIRAL HOOKS  (legacy — one hook per arc)
 // ─────────────────────────────────────────────────────────────
@@ -55,7 +126,7 @@ const VIRAL_HOOKS: Partial<Record<Arc, (predator: string, prey: string) => strin
     `Once the ${predator.toLowerCase()} committed, the ${prey.toLowerCase()} lost space fast.`,
 
   "Defender stands ground": (predator) =>
-    `Nobody expected this ${predator.toLowerCase()} to hold its ground.`,
+    `This ${predator.toLowerCase()} refused to yield once the pressure arrived.`,
 
   "Giant vs giant clash": (predator, prey) =>
     `${predator} and ${prey} got too close. One heavy step changed the standoff.`,
@@ -78,44 +149,44 @@ const VIRAL_HOOKS: Partial<Record<Arc, (predator: string, prey: string) => strin
 // ─────────────────────────────────────────────────────────────
 const HOOKS_2026: Partial<Record<Arc, (predator: string, prey: string) => string[]>> = {
   "Ambush attack": (predator, prey) => [
-    `The ${prey.toLowerCase()} looked up too late.`,
-    `The ${predator.toLowerCase()} was already inside the danger zone.`,
-    `One quiet second turned into open pressure.`,
+    `The ${prey.toLowerCase()} looked up after the ${predator.toLowerCase()} had already closed the space.`,
+    `The ${predator.toLowerCase()} was inside the read before the ${prey.toLowerCase()} changed direction.`,
+    `A quiet opening turned into visible pressure in one beat.`,
   ],
   "Chase and takedown": (predator, prey) => [
-    `The ${predator.toLowerCase()} committed and the escape window vanished.`,
-    `The ${prey.toLowerCase()} reacted fast. The gap still closed.`,
-    `For a beat it looked open. Then the chase flipped.`,
+    `The ${predator.toLowerCase()} committed and the ${prey.toLowerCase()} lost clean running room.`,
+    `The ${prey.toLowerCase()} reacted fast, but the closing angle was already there.`,
+    `The lane looked open until the pursuit tightened.`,
   ],
   "Defender stands ground": (predator, prey) => [
-    `Nobody expected this ${predator.toLowerCase()} to hold position.`,
-    `The ${prey.toLowerCase()} thought this was an easy push. It wasn't.`,
-    `The easy push turned into a hard stop instantly.`,
+    `The ${predator.toLowerCase()} held position and changed the whole read.`,
+    `The ${prey.toLowerCase()} kept pressing, but the stance never opened.`,
+    `What looked like an easy push turned into a hard boundary.`,
   ],
   "Giant vs giant clash": (predator, prey) => [
-    `${predator} and ${prey} were too close for either one to back off.`,
-    `One heavy step turned this into a real collision.`,
-    `It looked like a standoff until the impact flipped the moment.`,
+    `${predator} and ${prey} were already too tight for a clean reset.`,
+    `The weight shift was visible before the full contact landed.`,
+    `A slow standoff turned into impact once the footing gave way.`,
   ],
   "Territory dominance battle": (predator, prey) => [
-    `The ${prey.toLowerCase()} crossed the wrong boundary.`,
-    `This is ${predator}'s ground and the ${prey.toLowerCase()} felt it instantly.`,
-    `One step too far turned a warning into a full answer.`,
+    `The ${prey.toLowerCase()} stepped across a boundary the ${predator.toLowerCase()} was already holding.`,
+    `The warning was readable before the full response landed.`,
+    `One step changed the encounter from posture to enforcement.`,
   ],
   "Pack hunting strategy": (predator, prey) => [
-    `The ${prey.toLowerCase()} was already losing space before it reacted.`,
-    `This is why ${predator.toLowerCase()}s feel dangerous before full contact.`,
-    `It looked wide open until the escape lane vanished.`,
+    `The ${prey.toLowerCase()} was losing the escape lane before it broke into full flight.`,
+    `The ${predator.toLowerCase()} pressure was organized before full contact.`,
+    `The field looked open until the pursuit angles closed.`,
   ],
   "Predator vs predator fight": (predator, prey) => [
-    `Two apex predators. One space. No safe outcome.`,
-    `${predator} and ${prey} turned this into open pressure instantly.`,
-    `One bad read flipped control immediately.`,
+    `Two apex predators met at a distance with no easy reset.`,
+    `${predator} and ${prey} read each other before the pressure fully tightened.`,
+    `Control shifted as soon as one animal gave up clean position.`,
   ],
   "Escape from danger": (predator, prey) => [
-    `This ${prey.toLowerCase()} had less than a second to react.`,
-    `The ${predator.toLowerCase()} moved before the ${prey.toLowerCase()} read the danger.`,
-    `It looked finished until one move changed the outcome.`,
+    `The ${prey.toLowerCase()} had one clear chance to break the line.`,
+    `The ${predator.toLowerCase()} moved before the ${prey.toLowerCase()} found a clean turn.`,
+    `It looked closed until one survival move reopened the lane.`,
   ],
 };
 
@@ -165,40 +236,104 @@ const SHORT_CAPTIONS_2026: Partial<Record<Arc, (predator: string, prey: string, 
 
 const CAPTIONS_2026: Partial<Record<Arc, (predator: string, prey: string, env: string) => string>> = {
   "Ambush attack": (predator, prey, env) =>
-    `In the ${env}, the danger was readable before the full move.\n\nThe ${prey.toLowerCase()} looked up too late and the ${predator.toLowerCase()} was already inside the pressure zone. That is what makes a real ambush hit so hard on screen: no long setup, just one bad second and immediate pressure.\n\nAt what point did the outcome start to feel inevitable?`,
+    `In the ${env}, the danger was readable before the full move.
+
+The ${prey.toLowerCase()} looked up too late and the ${predator.toLowerCase()} was already inside the pressure zone. That is what makes a real ambush land on screen: no long setup, just one bad second and immediate pressure.
+
+What changed the outcome first?`,
   "Chase and takedown": (predator, prey, env) =>
-    `Across the ${env}, the escape window disappeared fast.\n\nThe ${predator.toLowerCase()} committed cleanly and the ${prey.toLowerCase()} had almost no time to reset. What makes this kind of chase work on short-form is how clearly the pressure builds from the first stride.\n\nDid the ${prey.toLowerCase()} ever have enough space to recover?`,
+    `Across the ${env}, the escape window disappeared fast.
+
+The ${predator.toLowerCase()} committed cleanly and the ${prey.toLowerCase()} had almost no time to reset. What makes this kind of chase work on short-form is how clearly the pressure builds from the first stride.
+
+Which movement changed the read?`,
   "Defender stands ground": (predator, prey, env) =>
-    `In the ${env}, every instinct said move. This ${predator.toLowerCase()} did the opposite.\n\nWhen the ${prey.toLowerCase()} kept pressing forward, the encounter stopped feeling like pressure and started feeling like a statement. The hold is what makes the moment memorable.\n\nDid you expect it to stand its ground that long?`,
+    `In the ${env}, every instinct said move. This ${predator.toLowerCase()} did the opposite.
+
+When the ${prey.toLowerCase()} kept pressing forward, the encounter stopped feeling like pressure and started feeling like a boundary. The hold is what makes the moment memorable.
+
+What made the pressure feel obvious?`,
   "Giant vs giant clash": (predator, prey, env) =>
-    `Two huge animals met in the ${env}, and neither wanted to give space.\n\nA ${predator.toLowerCase()} and a ${prey.toLowerCase()} create a different kind of tension: slower, heavier, and much more violent the second contact happens.\n\nWho controlled the moment first?`,
+    `Two huge animals met in the ${env}, and neither wanted to give space.
+
+A ${predator.toLowerCase()} and a ${prey.toLowerCase()} create a different kind of tension: slower, heavier, and driven by posture before the full contact lands.
+
+Which shift in posture changed the read?`,
   "Territory dominance battle": (predator, prey, env) =>
-    `In the ${env}, territory is never symbolic.\n\nThe ${prey.toLowerCase()} stepped into the wrong space and the ${predator.toLowerCase()} answered immediately. The whole encounter works because the boundary is readable before the full reaction lands.\n\nWould you have backed off earlier?`,
+    `In the ${env}, territory is never symbolic.
+
+The ${prey.toLowerCase()} stepped into the wrong space and the ${predator.toLowerCase()} answered immediately. The whole encounter works because the boundary is readable before the full reaction lands.
+
+Would you have read the boundary earlier?`,
   "Pack hunting strategy": (predator, prey, env) =>
-    `At first, the ${prey.toLowerCase()} looked mobile. Then the space started disappearing.\n\nIn the ${env}, the ${predator.toLowerCase()} becomes dangerous before full contact because the pressure is already organized. It is timing, spacing, angle control, and a closing escape lane.\n\nAt what point did the ${prey.toLowerCase()} start losing the field?`,
+    `At first, the ${prey.toLowerCase()} looked mobile. Then the space started disappearing.
+
+In the ${env}, the ${predator.toLowerCase()} becomes dangerous before full contact because the pressure is already organized. It is timing, spacing, angle control, and a closing escape lane.
+
+What made the pressure feel obvious first?`,
   "Predator vs predator fight": (predator, prey, env) =>
-    `Two apex predators. No safe outcome.\n\nA ${predator.toLowerCase()} facing a ${prey.toLowerCase()} in the ${env} feels intense because both animals understand the cost of a bad decision. These encounters escalate fast once control starts to shift.\n\nWhich animal looked more in control first?`,
+    `Two apex predators. No easy reset.
+
+A ${predator.toLowerCase()} facing a ${prey.toLowerCase()} in the ${env} feels intense because both animals understand the cost of a bad decision. These encounters escalate fast once control starts to shift.
+
+Which movement changed the read first?`,
   "Escape from danger": (predator, prey, env) =>
-    `Everything changed in under a second in the ${env}.\n\nThe ${prey.toLowerCase()} had almost no time to react before the ${predator.toLowerCase()} moved. In moments like this, survival comes down to one decision made fast enough.\n\nDid the ${prey.toLowerCase()} escape in time?`,
+    `Everything changed in under a second in the ${env}.
+
+The ${prey.toLowerCase()} had almost no time to react before the ${predator.toLowerCase()} moved. In moments like this, survival comes down to one decision made fast enough.
+
+Would you have read the danger earlier?`,
 };
 
 const CAPTIONS_2026_US_ONLY: Partial<Record<Arc, (predator: string, prey: string, env: string) => string>> = {
   "Ambush attack": (predator, prey, env) =>
-    `In the ${env}, the danger read immediately.\n\nThe ${prey.toLowerCase()} looked up too late and the ${predator.toLowerCase()} was already inside the pressure zone. The whole moment lands because the setup is clear and the pressure arrives fast.\n\nWhat second made the situation feel lost?`,
+    `In the ${env}, the danger read immediately.
+
+The ${prey.toLowerCase()} looked up too late and the ${predator.toLowerCase()} was already inside the pressure zone. The whole moment lands because the setup is clear and the pressure arrives fast.
+
+What changed the outcome first?`,
   "Chase and takedown": (predator, prey, env) =>
-    `Across the ${env}, the escape window closed fast.\n\nThe ${predator.toLowerCase()} committed early and the ${prey.toLowerCase()} never looked fully reset. The sequence works because the speed is obvious right away.\n\nDid it ever feel like the chase reopened?`,
+    `Across the ${env}, the escape window closed fast.
+
+The ${predator.toLowerCase()} committed early and the ${prey.toLowerCase()} never looked fully reset. The sequence works because the speed is obvious right away.
+
+Which movement changed the read?`,
   "Defender stands ground": (predator, prey, env) =>
-    `In the ${env}, every instinct said move. This ${predator.toLowerCase()} stayed put.\n\nOnce the ${prey.toLowerCase()} kept pressing forward, the encounter shifted from pressure to control. The refusal to give space is the whole story beat.\n\nWhen did the balance start to flip?`,
+    `In the ${env}, every instinct said move. This ${predator.toLowerCase()} stayed put.
+
+Once the ${prey.toLowerCase()} kept pressing forward, the encounter shifted from pressure to control. The refusal to give space is the whole story beat.
+
+What made the pressure feel obvious?`,
   "Giant vs giant clash": (predator, prey, env) =>
-    `Two huge animals met in the ${env}, and neither gave ground.\n\nA ${predator.toLowerCase()} and a ${prey.toLowerCase()} create a slower kind of violence because the weight transfer is readable before the hit.\n\nWhich step changed the whole sequence?`,
+    `Two huge animals met in the ${env}, and neither gave ground.
+
+A ${predator.toLowerCase()} and a ${prey.toLowerCase()} create a slower kind of violence because the weight transfer is readable before the hit.
+
+Which shift in posture changed the read?`,
   "Territory dominance battle": (predator, prey, env) =>
-    `In the ${env}, the boundary was clear before the full answer came.\n\nThe ${prey.toLowerCase()} stepped into the wrong space and the ${predator.toLowerCase()} answered right away. The whole moment works because the warning is visible before the reaction peaks.\n\nWould you have backed off sooner?`,
+    `In the ${env}, the boundary was clear before the full answer came.
+
+The ${prey.toLowerCase()} stepped into the wrong space and the ${predator.toLowerCase()} answered right away. The whole moment works because the warning is visible before the reaction peaks.
+
+Would you have read the boundary earlier?`,
   "Pack hunting strategy": (predator, prey, env) =>
-    `At first, the ${prey.toLowerCase()} looked free. Then the lane disappeared.\n\nIn the ${env}, the ${predator.toLowerCase()} feels dangerous because the pressure is organized before full contact. The spacing does most of the work.\n\nWhat moment made the escape feel closed?`,
+    `At first, the ${prey.toLowerCase()} looked free. Then the lane disappeared.
+
+In the ${env}, the ${predator.toLowerCase()} feels dangerous because the pressure is organized before full contact. The spacing does most of the work.
+
+What made the pressure feel obvious first?`,
   "Predator vs predator fight": (predator, prey, env) =>
-    `Two apex predators met in the ${env}, and neither had room for a harmless mistake.\n\nThe tension works because both animals understand the cost of giving up position. Once control shifts, the whole clip changes.\n\nWho looked settled first?`,
+    `Two apex predators met in the ${env}, and neither had room for a harmless mistake.
+
+The tension works because both animals understand the cost of giving up position. Once control shifts, the whole clip changes.
+
+Which movement changed the read first?`,
   "Escape from danger": (predator, prey, env) =>
-    `Everything changed fast in the ${env}.\n\nThe ${prey.toLowerCase()} had almost no time to react before the ${predator.toLowerCase()} moved. The whole beat depends on one survival read made under pressure.\n\nWhat move gave the ${prey.toLowerCase()} a chance?`,
+    `Everything changed fast in the ${env}.
+
+The ${prey.toLowerCase()} had almost no time to react before the ${predator.toLowerCase()} moved. The whole beat depends on one survival read made under pressure.
+
+Would you have read the danger earlier?`,
 };
 
 // ─────────────────────────────────────────────────────────────
@@ -206,21 +341,21 @@ const CAPTIONS_2026_US_ONLY: Partial<Record<Arc, (predator: string, prey: string
 // ─────────────────────────────────────────────────────────────
 const VIRAL_CTAS: Partial<Record<Arc, string>> = {
   "Ambush attack":
-    "What second made the danger feel obvious to you?",
+    "What changed the outcome first?",
   "Chase and takedown":
-    "Did the prey ever have enough space to recover?",
+    "Which movement changed the read?",
   "Defender stands ground":
-    "Did you expect that stand to hold?",
+    "What made the pressure feel obvious?",
   "Giant vs giant clash":
-    "Which step changed the standoff for you?",
+    "Which shift in posture changed the read?",
   "Territory dominance battle":
-    "Would you have backed off earlier?",
+    "Would you have read the boundary earlier?",
   "Pack hunting strategy":
-    "When did the escape lane start closing?",
+    "What made the pressure feel obvious first?",
   "Predator vs predator fight":
-    "Which animal looked more in control first?",
+    "Which movement changed the read first?",
   "Escape from danger":
-    "Did the prey read the danger in time?",
+    "Would you have read the danger earlier?",
 };
 
 // ─────────────────────────────────────────────────────────────
@@ -587,35 +722,35 @@ export function buildPlatformPack(
     caption: longCaption,
     hashtags,
     tags,
-        bestTime: "Test weekday 8–10 AM ET and 12–3 PM ET first, then refine with Facebook Insights while prioritizing reels with fast readable openings.",
+        bestTime: "Start by testing weekday morning and midday windows, then refine with your own Facebook Insights while keeping the opening motion readable immediately.",
         cmpNote:
-      "Facebook Content Monetization beta is invite-only. Eligible formats include reels, photos, stories, and text posts. Meta prioritizes original content and stronger viewer retention signals.",
+      "Keep the packaging original, keep overlay text in the upper safe zone, and make sure the reel reads clearly with or without sound.",
         strategyNote:
-      "Use the Page Featured section to pin the reel with the clearest first-frame tension and fastest readable wildlife setup.",
+      "Pin the reel with the clearest species read, immediate motion, and strongest documentary tension in frame 1.",
   };
 
   const instagram: InstagramPack = {
     hook: hooks[1],
     caption: shortCaption,
     hashtags,
-    bestTime: "Test afternoon and evening windows, then optimize from account Insights while keeping the opening frame instantly readable.",
-    strategyNote: "Keep the first line punchy and make sure the opening frame shows readable pressure immediately.",
+    bestTime: "Start by testing afternoon and evening windows, then refine from account Insights while keeping the opening motion readable instantly.",
+    strategyNote: "Keep the first line species-clear, use upper safe-zone text, and let the opening frame show readable pressure immediately.",
   };
 
   const tiktok: TikTokPack = {
     hook: hooks[2],
     caption: shortCaption,
     hashtags,
-    bestTime: "Test late afternoon to evening and refine using retention, not only views, especially on clips with immediate visible tension.",
-    strategyNote: "Use larger caption beats, faster opening language, and no slow setup before the tension is visible.",
+    bestTime: "Start by testing late afternoon to evening and refine from retention signals while keeping the tension visible immediately.",
+    strategyNote: "Use readable opening motion, support both sound-on and sound-off viewing, and avoid dead-static setup before the tension is visible.",
   };
 
   const youtube_shorts: YouTubeShortsPack = {
     title: `${predator} vs ${prey} — ${arc} | Wild Stories TV`,
     description: longCaption,
     tags,
-    bestTime: "Keep a consistent cadence and judge by retention plus returning viewers.",
-    strategyNote: "Write a searchable title and make the opening seconds instantly readable before the sequence escalates.",
+    bestTime: "Keep a consistent cadence and judge performance with your own retention and return-viewer signals.",
+    strategyNote: "Write a searchable title and keep the opening seconds documentary, readable, and clearly original before the sequence escalates.",
   };
 
   return { facebook, instagram, tiktok, youtube_shorts };

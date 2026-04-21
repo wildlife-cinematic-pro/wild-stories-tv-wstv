@@ -12,6 +12,7 @@ import { buildAutoSceneDescription } from "@/lib/page-build-helpers";
 import { getBestHookFamilyForDurationLane } from "@/lib/performanceMemory";
 import {
   build2026HookByFamily,
+  buildCTA,
   buildHashtags,
   buildLongCaption,
   buildShortCaption,
@@ -939,6 +940,13 @@ export function buildConceptVariantLab(
       blueprint.fastPublishMode,
       blueprint.hookFamily
     );
+    const primaryHook = build2026HookByFamily(
+      input.predator,
+      input.prey,
+      blueprint.arc,
+      blueprint.hookFamily,
+      { contentLane: input.contentLane }
+    );
     const usViewsMode = buildUSViewsModeReport({
       durationLane: blueprint.durationLane,
       hookFamily: blueprint.hookFamily,
@@ -951,6 +959,8 @@ export function buildConceptVariantLab(
         contentLane: input.contentLane,
       },
       openingFrame: openingFrameInput,
+      hookText: primaryHook,
+      ctaText: buildCTA(blueprint.arc),
       caption,
       hashtags: hashtagList,
       originalityConfirmed: input.strictOriginalityGuard,
@@ -1052,13 +1062,7 @@ export function buildConceptVariantLab(
       emphasis: blueprint.emphasis,
       sceneDescription,
       sceneDescriptionVariant: blueprint.sceneDescriptionVariant,
-      primaryHook: build2026HookByFamily(
-        input.predator,
-        input.prey,
-        blueprint.arc,
-        blueprint.hookFamily,
-        { contentLane: input.contentLane }
-      ),
+      primaryHook,
       caption,
       hashtags,
       usAudienceScore: usViewsMode.audienceScore,

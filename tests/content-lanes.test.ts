@@ -77,4 +77,49 @@ describe("Content Lane system", () => {
     expect(caption.toLowerCase()).toMatch(/strike|waterline/);
     expect(hashtags).toContain("#fishingstrike");
   });
+
+
+  it("keeps lane-specific hooks distinct instead of drifting into generic copy", () => {
+    const packHook = build2026HookByFamily(
+      "Gray Wolf",
+      "Bull Elk",
+      "Pack hunting strategy",
+      "danger",
+      { contentLane: "Pack Hunt" }
+    );
+    const defenderHook = build2026HookByFamily(
+      "Bison",
+      "Gray Wolf",
+      "Defender stands ground",
+      "danger",
+      { contentLane: "Defender" }
+    );
+    const fishingHook = build2026HookByFamily(
+      "Bald Eagle",
+      "Salmon",
+      "Ambush attack",
+      "danger",
+      { contentLane: "Fishing Strike" }
+    );
+    const rutHook = build2026HookByFamily(
+      "Bull Elk",
+      "Bull Elk",
+      "Territory dominance battle",
+      "danger",
+      { contentLane: "Rut Battle" }
+    );
+    const escapeHook = build2026HookByFamily(
+      "Mountain Lion",
+      "White-tailed Deer",
+      "Escape from danger",
+      "danger",
+      { contentLane: "Escape" }
+    );
+
+    expect(packHook.toLowerCase()).toMatch(/pack|escape lane/);
+    expect(defenderHook.toLowerCase()).toMatch(/yield|pressure line/);
+    expect(fishingHook.toLowerCase()).toMatch(/waterline|strike window/);
+    expect(rutHook.toLowerCase()).toMatch(/dominance posture|clash/);
+    expect(escapeHook.toLowerCase()).toMatch(/breakaway|survival/);
+  });
 });

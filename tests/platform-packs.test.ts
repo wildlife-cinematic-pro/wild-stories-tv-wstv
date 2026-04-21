@@ -1,0 +1,88 @@
+import { describe, expect, it } from "vitest";
+
+import { runFacebookPublishGuard } from "@/lib/facebookPublishGuard";
+import {
+  build2026Hook,
+  buildCTA,
+  buildPlatformPack,
+} from "@/lib/platform-packs";
+import type { Arc } from "@/types";
+
+const ALL_ARCS: Arc[] = [
+  "Ambush attack",
+  "Chase and takedown",
+  "Defender stands ground",
+  "Giant vs giant clash",
+  "Territory dominance battle",
+  "Pack hunting strategy",
+  "Predator vs predator fight",
+  "Escape from danger",
+];
+
+const BAIT_PATTERN =
+  /you won['’]t believe|wait for it|nobody expected|watch till the end|watch to the end|comment who wins|comment below|tag a friend|share before it(?:'|’)s gone|like if you agree|shocking|brutal|insane|craziest|unbelievable/i;
+
+const FORCED_ENGAGEMENT_PATTERN =
+  /who wins\??|comment below|tag a friend|watch till the end|watch to the end|like if you agree/i;
+
+describe("platform pack hook engine v2", () => {
+  it("keeps generated hooks and CTAs away from bait-style phrasing", () => {
+    for (const arc of ALL_ARCS) {
+      const hooks = build2026Hook("Mountain Lion", "White-tailed Deer", arc);
+      const cta = buildCTA(arc);
+
+      for (const hook of hooks) {
+        expect(hook).not.toMatch(BAIT_PATTERN);
+      }
+      expect(cta).not.toMatch(FORCED_ENGAGEMENT_PATTERN);
+    }
+  });
+
+  it("keeps platform guidance observational, documentary, and supportable", () => {
+    const pack = buildPlatformPack(
+      "Mountain Lion",
+      "White-tailed Deer",
+      "Ambush attack",
+      "Rocky Mountain forest edge and open meadow"
+    );
+    const guidance = JSON.stringify(pack).toLowerCase();
+
+    expect(pack.facebook.cmpNote.toLowerCase()).toContain("upper safe zone");
+    expect(pack.facebook.cmpNote.toLowerCase()).toContain("with or without sound");
+    expect(pack.instagram.strategyNote.toLowerCase()).toContain("species-clear");
+    expect(pack.tiktok.strategyNote.toLowerCase()).toContain("sound-on and sound-off");
+    expect(guidance).not.toMatch(/invite-only|algorithm|85%|mid-action/);
+  });
+
+  it("flags clickbait hooks and forced-engagement CTAs in the publish guard", () => {
+    const report = runFacebookPublishGuard({
+      hookText: "You won't believe what happens next.",
+      ctaText: "Comment who wins.",
+      caption: "This shocking wildlife moment is insane.",
+      hashtags: ["#wildlife", "#usa", "#mountainlion", "#deer", "#wstv"],
+      originalityConfirmed: true,
+      predator: "Mountain Lion",
+      prey: "White-tailed Deer",
+    });
+
+    expect(report.isPass).toBe(false);
+    expect(report.warnings.join(" ").toLowerCase()).toMatch(/clickbait|discussion-safe|documentary/);
+    expect(report.fixes?.join(" ").toLowerCase()).toMatch(/species-clear|behavior-led|documentary/);
+  });
+
+  it("passes documentary hook and CTA language through the publish guard", () => {
+    const report = runFacebookPublishGuard({
+      hookText: "The mountain lion closed the space before the deer changed direction.",
+      ctaText: "What changed the outcome first?",
+      caption:
+        "The deer read the pressure late, and the mountain lion was already inside the lane.",
+      hashtags: ["#wildlife", "#usa", "#mountainlion", "#deer", "#wstv"],
+      originalityConfirmed: true,
+      predator: "Mountain Lion",
+      prey: "White-tailed Deer",
+    });
+
+    expect(report.isPass).toBe(true);
+    expect(report.warnings).toHaveLength(0);
+  });
+});
