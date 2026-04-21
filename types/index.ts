@@ -535,6 +535,34 @@ export type FacebookCoverFrameTextPreset = {
   note: string;
 };
 
+export type FacebookOverlayPresetScore = {
+  preset: FacebookFirstFrameOverlayPreset;
+  label: string;
+  text: string;
+  score: number;
+  reason: string;
+};
+
+export type FacebookOverlayRecommendation = {
+  recommended: FacebookOverlayPresetScore;
+  alternatives: FacebookOverlayPresetScore[];
+  reason: string;
+};
+
+export type FacebookCoverFramePresetScore = {
+  preset: FacebookCoverFramePreset;
+  label: string;
+  text: string;
+  score: number;
+  reasons: string[];
+};
+
+export type FacebookCoverFrameRanking = {
+  best: FacebookCoverFramePresetScore;
+  ranked: FacebookCoverFramePresetScore[];
+  reason: string;
+};
+
 export type FirstFrameOverlayGuidance = {
   placement: string;
   textLength: string;
@@ -558,6 +586,8 @@ export type FacebookPack = PlatformPostCommon & {
   cmpNote: string;
   facebookOverlayPresets?: FacebookOverlayPreset[];
   facebookCoverFramePresets?: FacebookCoverFrameTextPreset[];
+  facebookOverlayRecommendation?: FacebookOverlayRecommendation;
+  facebookCoverFrameRanking?: FacebookCoverFrameRanking;
 };
 
 export type InstagramPack = PlatformPostCommon & {

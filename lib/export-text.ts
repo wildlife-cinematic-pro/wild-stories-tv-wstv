@@ -135,6 +135,21 @@ function buildFirstFrameOverlayText(data: GeneratedPackage) {
           `Tone: ${facebook.overlayGuidance.tone}`,
         ].join("\n")
       : "",
+    facebook.facebookOverlayRecommendation
+      ? [
+          "FACEBOOK RECOMMENDED OVERLAY",
+          `${facebook.facebookOverlayRecommendation.recommended.label} (${facebook.facebookOverlayRecommendation.recommended.score})`,
+          safeStr(facebook.facebookOverlayRecommendation.recommended.text),
+          `Why: ${safeStr(facebook.facebookOverlayRecommendation.reason)}`,
+          facebook.facebookOverlayRecommendation.alternatives.length
+            ? `Secondary tests: ${facebook.facebookOverlayRecommendation.alternatives
+                .map((entry) => `${entry.label} (${entry.score})`)
+                .join(", ")}`
+            : "",
+        ]
+          .filter(Boolean)
+          .join("\n")
+      : "",
     facebook.facebookOverlayPresets?.length
       ? [
           "FACEBOOK OVERLAY PRESETS",
@@ -160,6 +175,21 @@ Note: ${safeStr(preset.note)}`
               .join("\n\n"),
           ].join("\n\n")
         : "",
+    facebook.facebookCoverFrameRanking
+      ? [
+          "FACEBOOK COVER-FRAME RANKING",
+          `Best: ${facebook.facebookCoverFrameRanking.best.label} (${facebook.facebookCoverFrameRanking.best.score})`,
+          safeStr(facebook.facebookCoverFrameRanking.best.text),
+          `Why: ${safeStr(facebook.facebookCoverFrameRanking.reason)}`,
+          "Ranked presets:",
+          facebook.facebookCoverFrameRanking.ranked
+            .map(
+              (entry, index) =>
+                `#${index + 1} ${entry.label} (${entry.score}) — ${entry.reasons.join("; ")}`
+            )
+            .join("\n"),
+        ].join("\n")
+      : "",
     facebook.facebookCoverFramePresets?.length
       ? [
           "FACEBOOK COVER-FRAME TEXT PRESETS",

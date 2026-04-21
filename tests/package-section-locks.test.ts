@@ -186,6 +186,44 @@ function makePackage(prefix: string): GeneratedPackage {
             note: `${prefix} facebook cover note`,
           },
         ],
+        facebookOverlayRecommendation: {
+          recommended: {
+            preset: "facebook_species_first",
+            label: `${prefix} recommended overlay`,
+            text: `${prefix} recommended overlay text`,
+            score: 94,
+            reason: `${prefix} overlay reason`,
+          },
+          alternatives: [
+            {
+              preset: "facebook_two_line_readable",
+              label: `${prefix} overlay alternative`,
+              text: `${prefix} overlay alternative text`,
+              score: 88,
+              reason: `${prefix} overlay alternative reason`,
+            },
+          ],
+          reason: `${prefix} overlay recommendation reason`,
+        },
+        facebookCoverFrameRanking: {
+          best: {
+            preset: "species_pressure",
+            label: `${prefix} ranked cover best`,
+            text: `${prefix} ranked cover text`,
+            score: 96,
+            reasons: [`${prefix} ranked cover reason`],
+          },
+          ranked: [
+            {
+              preset: "species_pressure",
+              label: `${prefix} ranked cover best`,
+              text: `${prefix} ranked cover text`,
+              score: 96,
+              reasons: [`${prefix} ranked cover reason`],
+            },
+          ],
+          reason: `${prefix} cover ranking reason`,
+        },
       },
       instagram: {
         hook: `${prefix} ig hook`,
@@ -314,6 +352,12 @@ describe("package section locks", () => {
     );
     expect(merged.platformPack?.facebook.facebookCoverFramePresets).toEqual(
       lockedPackage.platformPack?.facebook.facebookCoverFramePresets
+    );
+    expect(merged.platformPack?.facebook.facebookOverlayRecommendation).toEqual(
+      lockedPackage.platformPack?.facebook.facebookOverlayRecommendation
+    );
+    expect(merged.platformPack?.facebook.facebookCoverFrameRanking).toEqual(
+      lockedPackage.platformPack?.facebook.facebookCoverFrameRanking
     );
     expect(merged.platformPack?.instagram.overlayGuidance).toEqual(
       lockedPackage.platformPack?.instagram.overlayGuidance

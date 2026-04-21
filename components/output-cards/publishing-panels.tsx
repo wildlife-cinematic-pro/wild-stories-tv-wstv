@@ -315,6 +315,10 @@ export function PlatformPackPanel({
   };
 
   const data = pack[platform];
+  const facebookOverlayRecommendation =
+    platform === "facebook" ? pack.facebook.facebookOverlayRecommendation : undefined;
+  const facebookCoverFrameRanking =
+    platform === "facebook" ? pack.facebook.facebookCoverFrameRanking : undefined;
 
   return (
     <div className="rounded-xl border border-gray-200 bg-white p-4 shadow-sm">
@@ -437,6 +441,52 @@ export function PlatformPackPanel({
           </div>
         ) : null}
 
+        {facebookOverlayRecommendation ? (
+          <div className="rounded-lg border border-blue-300 bg-blue-50 p-3">
+            <div className="mb-2 flex flex-wrap items-start justify-between gap-2">
+              <div>
+                <p className="text-xs font-bold uppercase tracking-[0.08em] text-blue-700">
+                  Recommended Facebook Overlay
+                </p>
+                <p className="mt-1 text-[11px] leading-5 text-blue-900">
+                  {facebookOverlayRecommendation.reason}
+                </p>
+              </div>
+              <span className="rounded bg-white px-2 py-0.5 text-[10px] font-semibold text-blue-700">
+                Score {facebookOverlayRecommendation.recommended.score}
+              </span>
+            </div>
+            <div className="rounded bg-white px-3 py-2">
+              <div className="flex items-start justify-between gap-3">
+                <div>
+                  <p className="text-xs font-bold text-gray-800">
+                    {facebookOverlayRecommendation.recommended.label}
+                  </p>
+                  <p className="mt-1 whitespace-pre-line text-sm font-semibold leading-6 text-gray-900">
+                    {facebookOverlayRecommendation.recommended.text}
+                  </p>
+                </div>
+                <button
+                  onClick={() =>
+                    onCopy(facebookOverlayRecommendation.recommended.text)
+                  }
+                  className="shrink-0 rounded bg-blue-700 px-2 py-1 text-xs text-white"
+                  type="button"
+                >
+                  Copy
+                </button>
+              </div>
+            </div>
+            {facebookOverlayRecommendation.alternatives.length ? (
+              <p className="mt-2 text-[11px] leading-5 text-blue-900">
+                Secondary tests: {facebookOverlayRecommendation.alternatives
+                  .map((entry) => `${entry.label} (${entry.score})`)
+                  .join(", ")}
+              </p>
+            ) : null}
+          </div>
+        ) : null}
+
         {platform === "facebook" && pack.facebook.facebookOverlayPresets?.length ? (
           <div className="rounded-lg border border-blue-200 bg-blue-50 p-3">
             <div className="mb-2 flex items-center justify-between gap-2">
@@ -476,6 +526,53 @@ export function PlatformPackPanel({
                 </div>
               ))}
             </div>
+          </div>
+        ) : null}
+
+        {facebookCoverFrameRanking ? (
+          <div className="rounded-lg border border-emerald-300 bg-emerald-50 p-3">
+            <div className="mb-2 flex flex-wrap items-start justify-between gap-2">
+              <div>
+                <p className="text-xs font-bold uppercase tracking-[0.08em] text-emerald-700">
+                  Best Facebook Cover-Frame Choice
+                </p>
+                <p className="mt-1 text-[11px] leading-5 text-emerald-900">
+                  {facebookCoverFrameRanking.reason}
+                </p>
+              </div>
+              <span className="rounded bg-white px-2 py-0.5 text-[10px] font-semibold text-emerald-700">
+                Score {facebookCoverFrameRanking.best.score}
+              </span>
+            </div>
+            <div className="rounded bg-white px-3 py-2">
+              <div className="flex items-start justify-between gap-3">
+                <div>
+                  <p className="text-xs font-bold text-gray-800">
+                    {facebookCoverFrameRanking.best.label}
+                  </p>
+                  <p className="mt-1 whitespace-pre-line text-sm font-semibold leading-6 text-gray-900">
+                    {facebookCoverFrameRanking.best.text}
+                  </p>
+                </div>
+                <button
+                  onClick={() => onCopy(facebookCoverFrameRanking.best.text)}
+                  className="shrink-0 rounded bg-emerald-700 px-2 py-1 text-xs text-white"
+                  type="button"
+                >
+                  Copy
+                </button>
+              </div>
+            </div>
+            <ol className="mt-2 space-y-1 text-[11px] leading-5 text-emerald-950">
+              {facebookCoverFrameRanking.ranked.map((entry, index) => (
+                <li key={entry.preset} className="flex justify-between gap-3">
+                  <span>
+                    #{index + 1} {entry.label}
+                  </span>
+                  <span className="font-semibold">{entry.score}</span>
+                </li>
+              ))}
+            </ol>
           </div>
         ) : null}
 

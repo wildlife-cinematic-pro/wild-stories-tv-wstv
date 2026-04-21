@@ -160,6 +160,10 @@ function mergePlatformPackLocks(
             facebookOverlayPresets: lockedPack.facebook.facebookOverlayPresets,
             facebookCoverFramePresets:
               lockedPack.facebook.facebookCoverFramePresets,
+            facebookOverlayRecommendation:
+              lockedPack.facebook.facebookOverlayRecommendation,
+            facebookCoverFrameRanking:
+              lockedPack.facebook.facebookCoverFrameRanking,
           }
         : {}),
       ...(locks.caption ? { caption: lockedPack.facebook.caption } : {}),

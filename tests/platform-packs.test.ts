@@ -7,6 +7,8 @@ import {
   buildFacebookCoverFramePresets,
   buildFacebookFirstFrameOverlayPresets,
   buildFirstFrameOverlayGuidance,
+  rankFacebookCoverFramePresets,
+  recommendFacebookOverlayPreset,
   buildHookFormattingPresets,
   buildPlatformPack,
   FACEBOOK_COVER_FRAME_MAX_LINE_LENGTH,
@@ -118,8 +120,16 @@ describe("platform pack hook engine v2", () => {
     expect(pack.facebook.hookFormattingPresets).toHaveLength(5);
     expect(pack.facebook.facebookOverlayPresets).toHaveLength(5);
     expect(pack.facebook.facebookCoverFramePresets).toHaveLength(5);
+    expect(pack.facebook.facebookOverlayRecommendation?.recommended).toBeTruthy();
+    expect(pack.facebook.facebookCoverFrameRanking?.ranked).toHaveLength(5);
     expect(pack.instagram.hookFormattingPresets).toBeUndefined();
     expect(pack.tiktok.hookFormattingPresets).toBeUndefined();
+    expect(
+      (pack.instagram as Record<string, unknown>).facebookCoverFrameRanking
+    ).toBeUndefined();
+    expect(
+      (pack.tiktok as Record<string, unknown>).facebookOverlayRecommendation
+    ).toBeUndefined();
   });
 
   it("keeps Facebook overlay presets non-bait and readable", () => {
@@ -176,6 +186,77 @@ describe("platform pack hook engine v2", () => {
         );
       }
     }
+  });
+
+  it("ranks Facebook cover-frame presets by readable species-clear safety", () => {
+    const presets = buildFacebookCoverFramePresets(
+      "The mountain lion closed the space before the deer changed direction.",
+      "Mountain Lion",
+      "White-tailed Deer",
+      "Escape from danger"
+    );
+    const ranking = rankFacebookCoverFramePresets(
+      presets,
+      "Mountain Lion",
+      "White-tailed Deer"
+    );
+
+    expect(ranking?.ranked).toHaveLength(5);
+    expect(ranking?.best.text).toMatch(/Mountain Lion|White-tailed Deer/i);
+    expect(ranking?.best.text).not.toMatch(BAIT_PATTERN);
+    expect(ranking?.best.text).not.toMatch(FORCED_ENGAGEMENT_PATTERN);
+    expect(ranking?.reason.toLowerCase()).toContain("best cover-frame test");
+    expect(ranking?.ranked.map((entry) => entry.score)).toEqual(
+      [...(ranking?.ranked.map((entry) => entry.score) ?? [])].sort(
+        (a, b) => b - a
+      )
+    );
+  });
+
+  it("recommends different Facebook overlay presets for different lane contexts", () => {
+    const fishingHook =
+      "The bald eagle read the waterline before the trout saw the strike window.";
+    const defenderHook =
+      "The cow elk held the boundary while the wolf pack tested the warning-step.";
+    const fishingRecommendation = recommendFacebookOverlayPreset(
+      buildFacebookFirstFrameOverlayPresets(
+        fishingHook,
+        "Bald Eagle",
+        "Trout"
+      ),
+      fishingHook,
+      "Bald Eagle",
+      "Trout",
+      "Fishing Strike"
+    );
+    const defenderRecommendation = recommendFacebookOverlayPreset(
+      buildFacebookFirstFrameOverlayPresets(
+        defenderHook,
+        "Wolf Pack",
+        "Cow Elk"
+      ),
+      defenderHook,
+      "Wolf Pack",
+      "Cow Elk",
+      "Defender"
+    );
+
+    expect(fishingRecommendation?.recommended.preset).toBe(
+      "facebook_short_pressure"
+    );
+    expect(defenderRecommendation?.recommended.preset).toBe(
+      "facebook_documentary_tension"
+    );
+    expect(fishingRecommendation?.recommended.preset).not.toBe(
+      defenderRecommendation?.recommended.preset
+    );
+    expect(fishingRecommendation?.recommended.text).not.toMatch(BAIT_PATTERN);
+    expect(defenderRecommendation?.recommended.text).not.toMatch(
+      FORCED_ENGAGEMENT_PATTERN
+    );
+    expect(fishingRecommendation?.reason.toLowerCase()).toContain(
+      "best first overlay test"
+    );
   });
 
   it("flags clickbait hooks and forced-engagement CTAs in the publish guard", () => {

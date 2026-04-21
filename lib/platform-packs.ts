@@ -16,9 +16,13 @@ import type {
   Arc,
   ContentLane,
   FacebookCoverFramePreset,
+  FacebookCoverFramePresetScore,
+  FacebookCoverFrameRanking,
   FacebookCoverFrameTextPreset,
   FacebookFirstFrameOverlayPreset,
   FacebookOverlayPreset,
+  FacebookOverlayPresetScore,
+  FacebookOverlayRecommendation,
   FacebookPack,
   FirstFrameOverlayGuidance,
   HookFormattingPreset,
@@ -966,6 +970,324 @@ export function buildFacebookCoverFramePresets(
   ];
 }
 
+function clampFacebookScore(score: number): number {
+  return Math.max(0, Math.min(100, Math.round(score)));
+}
+
+function facebookSpeciesTerms(predator: string, prey: string): string[] {
+  return [normalizeCopy(predator), normalizeCopy(prey)]
+    .filter(Boolean)
+    .flatMap((name) => {
+      const parts = name.split(/\s+/).filter((part) => part.length >= 4);
+      return [name, ...parts];
+    })
+    .map((term) => term.toLowerCase());
+}
+
+function hasFacebookSpeciesClarity(
+  text: string,
+  predator: string,
+  prey: string
+): boolean {
+  const lower = normalizeCopy(text).toLowerCase();
+  return facebookSpeciesTerms(predator, prey).some((term) =>
+    lower.includes(term)
+  );
+}
+
+function startsWithFacebookSpecies(
+  text: string,
+  predator: string,
+  prey: string
+): boolean {
+  const lower = normalizeCopy(text).toLowerCase();
+  return [normalizeCopy(predator), normalizeCopy(prey)]
+    .filter(Boolean)
+    .some((name) => lower.startsWith(name.toLowerCase()));
+}
+
+function hasFacebookPressureClarity(text: string): boolean {
+  const lower = normalizeCopy(text).toLowerCase();
+  return (
+    OBSERVATIONAL_SIGNAL_PATTERN.test(lower) ||
+    /\b(vs|pressure|strike|clash|boundary|escape|breakaway|dominance|waterline|lane|line|space|read|tension|pursuit|window|ground)\b/i.test(
+      lower
+    )
+  );
+}
+
+function hasReadableFacebookLines(lines: string[], maxLineLength: number): boolean {
+  return (
+    lines.length > 0 &&
+    lines.length <= 2 &&
+    lines.every((line) => line.length <= maxLineLength)
+  );
+}
+
+function facebookReason(signals: string[], fallback: string): string {
+  const usable = signals.slice(0, 3);
+  return usable.length ? usable.join("; ") : fallback;
+}
+
+function scoreFacebookCoverFramePreset(
+  preset: FacebookCoverFrameTextPreset,
+  predator: string,
+  prey: string
+): FacebookCoverFramePresetScore {
+  const signals: string[] = [];
+  const text = normalizeCopy(preset.text);
+  const speciesClear = hasFacebookSpeciesClarity(text, predator, prey);
+  const speciesLead = startsWithFacebookSpecies(text, predator, prey);
+  const pressureClear = hasFacebookPressureClarity(text);
+  const readable = hasReadableFacebookLines(
+    preset.lines,
+    FACEBOOK_COVER_FRAME_MAX_LINE_LENGTH
+  );
+  const bait = hasBaitLikeCopy(text) || hasForcedEngagementCopy(text);
+
+  let score = 35;
+
+  if (speciesClear) {
+    score += 20;
+    signals.push("species-clear for Facebook grid preview");
+  } else {
+    score -= 14;
+  }
+
+  if (speciesLead) {
+    score += 6;
+    signals.push("species leads the cover text");
+  }
+
+  if (readable) {
+    score += 26;
+    signals.push("fits 1-2 short cover lines");
+  } else {
+    score -= 22;
+  }
+
+  if (pressureClear) {
+    score += 18;
+    signals.push("pressure or behavior is readable quickly");
+  } else {
+    score -= 10;
+  }
+
+  if (!bait) {
+    score += 15;
+    signals.push("non-bait documentary wording");
+  } else {
+    score -= 35;
+  }
+
+  if (preset.preset === "species_pressure") score += 10;
+  if (preset.preset === "two_line_cover") score += 8;
+  if (preset.preset === "species_question") score += 5;
+  if (preset.preset === "conflict_statement" && pressureClear) score += 4;
+  if (preset.preset === "conflict_statement" && !pressureClear) score -= 6;
+
+  return {
+    preset: preset.preset,
+    label: preset.label,
+    text: preset.text,
+    score: clampFacebookScore(score),
+    reasons: signals.length ? signals : ["balanced Facebook cover readability"],
+  };
+}
+
+export function rankFacebookCoverFramePresets(
+  presets: FacebookCoverFrameTextPreset[],
+  predator: string,
+  prey: string
+): FacebookCoverFrameRanking | undefined {
+  if (!presets.length) return undefined;
+
+  const originalIndex = new Map(
+    presets.map((preset, index) => [preset.preset, index] as const)
+  );
+  const ranked = presets
+    .map((preset) => scoreFacebookCoverFramePreset(preset, predator, prey))
+    .sort(
+      (a, b) =>
+        b.score - a.score ||
+        (originalIndex.get(a.preset) ?? 0) - (originalIndex.get(b.preset) ?? 0)
+    );
+  const best = ranked[0];
+
+  if (!best) return undefined;
+
+  return {
+    best,
+    ranked,
+    reason: `Best cover-frame test: ${best.label} because ${facebookReason(
+      best.reasons,
+      "it balances species clarity and Facebook preview readability"
+    ).toLowerCase()}.`,
+  };
+}
+
+function laneOverlayPresetBias(
+  contentLane: ContentLane,
+  preset: FacebookFirstFrameOverlayPreset
+): number {
+  const bias: Record<
+    ContentLane,
+    Partial<Record<FacebookFirstFrameOverlayPreset, number>>
+  > = {
+    Auto: {},
+    "Pack Hunt": {
+      facebook_short_pressure: 24,
+      facebook_two_line_readable: 18,
+      facebook_species_first: 10,
+      facebook_documentary_tension: 4,
+    },
+    Defender: {
+      facebook_documentary_tension: 24,
+      facebook_two_line_readable: 18,
+      facebook_observational_question: 10,
+      facebook_species_first: 8,
+    },
+    "Fishing Strike": {
+      facebook_short_pressure: 24,
+      facebook_two_line_readable: 18,
+      facebook_observational_question: 12,
+      facebook_species_first: 6,
+    },
+    "Rut Battle": {
+      facebook_documentary_tension: 20,
+      facebook_species_first: 18,
+      facebook_two_line_readable: 12,
+      facebook_observational_question: 4,
+    },
+    Escape: {
+      facebook_short_pressure: 22,
+      facebook_observational_question: 18,
+      facebook_two_line_readable: 12,
+      facebook_species_first: 6,
+    },
+  };
+
+  return bias[contentLane]?.[preset] ?? 0;
+}
+
+function hookOverlayPresetBias(
+  hook: string,
+  preset: FacebookFirstFrameOverlayPreset
+): number {
+  const compact = normalizeCopy(hook);
+  const lower = compact.toLowerCase();
+  let score = 0;
+
+  if (compact.length > 72 && preset === "facebook_documentary_tension") score += 10;
+  if (/\?/.test(compact) && preset === "facebook_observational_question") score += 10;
+  if (/(waterline|strike|escape lane|breakaway|pursuit|pressure|lane)/.test(lower)) {
+    if (preset === "facebook_short_pressure") score += 8;
+    if (preset === "facebook_two_line_readable") score += 6;
+  }
+  if (/(boundary|warning-step|stance|dominance|territory|clash)/.test(lower)) {
+    if (preset === "facebook_documentary_tension") score += 8;
+    if (preset === "facebook_species_first") score += 5;
+  }
+
+  return score;
+}
+
+function scoreFacebookOverlayPreset(
+  preset: FacebookOverlayPreset,
+  hook: string,
+  predator: string,
+  prey: string,
+  contentLane: ContentLane
+): FacebookOverlayPresetScore {
+  const signals: string[] = [];
+  const text = normalizeCopy(preset.text);
+  const speciesClear = hasFacebookSpeciesClarity(text, predator, prey);
+  const pressureClear = hasFacebookPressureClarity(text);
+  const readable = hasReadableFacebookLines(
+    preset.lines,
+    HOOK_OVERLAY_MAX_LINE_LENGTH
+  );
+  const bait = hasBaitLikeCopy(text) || hasForcedEngagementCopy(text);
+  const laneBias = laneOverlayPresetBias(contentLane, preset.preset);
+
+  let score = 35;
+
+  if (readable) {
+    score += 25;
+    signals.push("first-frame readable in 1-2 lines");
+  } else {
+    score -= 20;
+  }
+
+  if (speciesClear) {
+    score += 14;
+    signals.push("keeps species clarity visible");
+  }
+
+  if (pressureClear) {
+    score += 18;
+    signals.push("pressure reads quickly");
+  }
+
+  if (!bait) {
+    score += 15;
+    signals.push("Meta-safe documentary wording");
+  } else {
+    score -= 40;
+  }
+
+  if (laneBias > 0) {
+    score += laneBias;
+    signals.push(`${contentLane} lane fit`);
+  }
+
+  score += hookOverlayPresetBias(hook, preset.preset);
+
+  return {
+    preset: preset.preset,
+    label: preset.label,
+    text: preset.text,
+    score: clampFacebookScore(score),
+    reason: facebookReason(signals, "balanced first-frame readability"),
+  };
+}
+
+export function recommendFacebookOverlayPreset(
+  presets: FacebookOverlayPreset[],
+  hook: string,
+  predator: string,
+  prey: string,
+  contentLane: ContentLane = "Auto"
+): FacebookOverlayRecommendation | undefined {
+  if (!presets.length) return undefined;
+
+  const originalIndex = new Map(
+    presets.map((preset, index) => [preset.preset, index] as const)
+  );
+  const tieBreakScore = (entry: FacebookOverlayPresetScore) =>
+    laneOverlayPresetBias(contentLane, entry.preset) +
+    hookOverlayPresetBias(hook, entry.preset);
+  const ranked = presets
+    .map((preset) =>
+      scoreFacebookOverlayPreset(preset, hook, predator, prey, contentLane)
+    )
+    .sort(
+      (a, b) =>
+        b.score - a.score ||
+        tieBreakScore(b) - tieBreakScore(a) ||
+        (originalIndex.get(a.preset) ?? 0) - (originalIndex.get(b.preset) ?? 0)
+    );
+  const recommended = ranked[0];
+
+  if (!recommended) return undefined;
+
+  return {
+    recommended,
+    alternatives: ranked.slice(1, 3),
+    reason: `Best first overlay test: ${recommended.label} because ${recommended.reason.toLowerCase()}.`,
+  };
+}
+
 function finalizeShortCaption(raw: string): string {
   const compact = normalizeCopy(raw);
   const sentences = splitSentences(compact);
@@ -1156,6 +1478,17 @@ export function buildPlatformPack(
   });
   const tags = buildTags(predator, prey, arc);
   const overlayGuidance = buildFirstFrameOverlayGuidance();
+  const facebookOverlayPresets = buildFacebookFirstFrameOverlayPresets(
+    hooks[0],
+    predator,
+    prey
+  );
+  const facebookCoverFramePresets = buildFacebookCoverFramePresets(
+    hooks[0],
+    predator,
+    prey,
+    arc
+  );
 
   const facebook: FacebookPack = {
     hook: hooks[0],
@@ -1170,16 +1503,19 @@ export function buildPlatformPack(
       "Pin the reel with the clearest species read, immediate motion, and strongest documentary tension in frame 1.",
     overlayGuidance,
     hookFormattingPresets: buildHookFormattingPresets(hooks[0], predator, prey),
-    facebookOverlayPresets: buildFacebookFirstFrameOverlayPresets(
-      hooks[0],
-      predator,
-      prey
-    ),
-    facebookCoverFramePresets: buildFacebookCoverFramePresets(
+    facebookOverlayPresets,
+    facebookCoverFramePresets,
+    facebookOverlayRecommendation: recommendFacebookOverlayPreset(
+      facebookOverlayPresets,
       hooks[0],
       predator,
       prey,
-      arc
+      contentLane
+    ),
+    facebookCoverFrameRanking: rankFacebookCoverFramePresets(
+      facebookCoverFramePresets,
+      predator,
+      prey
     ),
   };
 
