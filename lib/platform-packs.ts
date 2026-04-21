@@ -15,6 +15,10 @@
 import type {
   Arc,
   ContentLane,
+  FacebookCoverFramePreset,
+  FacebookCoverFrameTextPreset,
+  FacebookFirstFrameOverlayPreset,
+  FacebookOverlayPreset,
   FacebookPack,
   FirstFrameOverlayGuidance,
   HookFormattingPreset,
@@ -49,6 +53,8 @@ export type HashtagOptions = {
 
 export const HOOK_OVERLAY_MAX_LINE_LENGTH = 28;
 export const HOOK_OVERLAY_MAX_LINES = 2;
+export const FACEBOOK_COVER_FRAME_MAX_LINE_LENGTH = 26;
+export const FACEBOOK_COVER_FRAME_MAX_LINES = 2;
 
 const CLICKBAIT_PATTERNS = [
   /\byou won['’]t believe\b/i,
@@ -751,6 +757,215 @@ export function buildFirstFrameOverlayGuidance(): FirstFrameOverlayGuidance {
   };
 }
 
+function createFacebookOverlayPreset(
+  preset: FacebookFirstFrameOverlayPreset,
+  label: string,
+  note: string,
+  text: string
+): FacebookOverlayPreset {
+  const lines = buildOverlayLines(
+    text,
+    HOOK_OVERLAY_MAX_LINE_LENGTH,
+    HOOK_OVERLAY_MAX_LINES
+  );
+
+  return {
+    preset,
+    label,
+    note,
+    lines,
+    text: lines.join("\n"),
+  };
+}
+
+function createFacebookOverlayPresetFromLines(
+  preset: FacebookFirstFrameOverlayPreset,
+  label: string,
+  note: string,
+  inputLines: string[]
+): FacebookOverlayPreset {
+  const lines = inputLines
+    .map((line) =>
+      cleanOverlayLine(trimAtWordBoundary(line, HOOK_OVERLAY_MAX_LINE_LENGTH))
+    )
+    .filter(Boolean)
+    .slice(0, HOOK_OVERLAY_MAX_LINES);
+
+  return {
+    preset,
+    label,
+    note,
+    lines,
+    text: lines.join("\n"),
+  };
+}
+
+function createFacebookCoverFramePreset(
+  preset: FacebookCoverFramePreset,
+  label: string,
+  note: string,
+  text: string
+): FacebookCoverFrameTextPreset {
+  const lines = buildOverlayLines(
+    text,
+    FACEBOOK_COVER_FRAME_MAX_LINE_LENGTH,
+    FACEBOOK_COVER_FRAME_MAX_LINES
+  );
+
+  return {
+    preset,
+    label,
+    note,
+    lines,
+    text: lines.join("\n"),
+  };
+}
+
+function createFacebookCoverFramePresetFromLines(
+  preset: FacebookCoverFramePreset,
+  label: string,
+  note: string,
+  inputLines: string[]
+): FacebookCoverFrameTextPreset {
+  const lines = inputLines
+    .map((line) =>
+      cleanOverlayLine(
+        trimAtWordBoundary(line, FACEBOOK_COVER_FRAME_MAX_LINE_LENGTH)
+      )
+    )
+    .filter(Boolean)
+    .slice(0, FACEBOOK_COVER_FRAME_MAX_LINES);
+
+  return {
+    preset,
+    label,
+    note,
+    lines,
+    text: lines.join("\n"),
+  };
+}
+
+export function buildFacebookFirstFrameOverlayPresets(
+  hook: string,
+  predator: string,
+  prey: string
+): FacebookOverlayPreset[] {
+  const primarySpecies = findPrimarySpeciesFromHook(hook, predator, prey);
+  const pressureCue = buildHookPressureCue(hook);
+  const documentaryLine = trimAtWordBoundary(
+    normalizeCopy(hook),
+    HOOK_OVERLAY_MAX_LINE_LENGTH * HOOK_OVERLAY_MAX_LINES
+  ).replace(/[.]+$/g, "");
+
+  return [
+    createFacebookOverlayPreset(
+      "facebook_species_first",
+      "Facebook species-first opener",
+      "Best first test for Facebook Reels when species clarity matters most.",
+      `${primarySpecies}: ${pressureCue.toLowerCase()}.`
+    ),
+    createFacebookOverlayPreset(
+      "facebook_documentary_tension",
+      "Facebook documentary tension opener",
+      "Keeps the hook observational while trimming it for first-frame readability.",
+      documentaryLine
+    ),
+    createFacebookOverlayPreset(
+      "facebook_short_pressure",
+      "Facebook short pressure opener",
+      "Compact pressure language for fast Facebook feed scanning.",
+      pressureCue
+    ),
+    createFacebookOverlayPreset(
+      "facebook_observational_question",
+      "Facebook observational question opener",
+      "Discussion-safe question wording without vote bait or forced engagement.",
+      buildObservationalHookQuestion(hook, predator, prey)
+    ),
+    createFacebookOverlayPresetFromLines(
+      "facebook_two_line_readable",
+      "Facebook two-line readable opener",
+      "Splits species and pressure into two clean upper-safe-zone lines.",
+      [primarySpecies, pressureCue]
+    ),
+  ];
+}
+
+function buildFacebookCoverFrameQuestion(hook: string): string {
+  const lower = normalizeCopy(hook).toLowerCase();
+
+  if (/(waterline|strike|surface break|shallows?)/.test(lower)) {
+    return "When did the strike turn?";
+  }
+
+  if (/(yield|ground|boundary|warning-step|stance)/.test(lower)) {
+    return "When did the line hold?";
+  }
+
+  if (/(dominance|territory|clash|footing)/.test(lower)) {
+    return "When did the clash turn?";
+  }
+
+  if (/(breakaway|survival)/.test(lower)) {
+    return "When did escape open?";
+  }
+
+  if (/(escape lane|pursuit|angles|closing angle|lane)/.test(lower)) {
+    return "When did the lane close?";
+  }
+
+  return "When did the read change?";
+}
+
+export function buildFacebookCoverFramePresets(
+  hook: string,
+  predator: string,
+  prey: string,
+  arc: Arc
+): FacebookCoverFrameTextPreset[] {
+  const primarySpecies = findPrimarySpeciesFromHook(hook, predator, prey);
+  const pressureCue = buildHookPressureCue(hook);
+  const safeQuestion = buildFacebookCoverFrameQuestion(hook);
+  const conflictLine = `${normalizeCopy(predator)} vs ${normalizeCopy(prey)}`;
+  const documentaryLine = trimAtWordBoundary(
+    normalizeCopy(hook),
+    FACEBOOK_COVER_FRAME_MAX_LINE_LENGTH * FACEBOOK_COVER_FRAME_MAX_LINES
+  ).replace(/[.]+$/g, "");
+
+  return [
+    createFacebookCoverFramePreset(
+      "species_pressure",
+      "Species + pressure",
+      "Readable Facebook grid text with species first and a clear pressure cue.",
+      `${primarySpecies}: ${pressureCue.toLowerCase()}.`
+    ),
+    createFacebookCoverFramePresetFromLines(
+      "species_question",
+      "Species + question",
+      "Question-style cover copy that asks about the behavior, not engagement.",
+      [primarySpecies, safeQuestion]
+    ),
+    createFacebookCoverFramePreset(
+      "conflict_statement",
+      "Conflict statement",
+      "Simple species-vs-species cover copy for shares and grid previews.",
+      conflictLine
+    ),
+    createFacebookCoverFramePreset(
+      "short_documentary",
+      "Short documentary line",
+      "A concise documentary-style cover line for the selected arc.",
+      documentaryLine || `${primarySpecies}: ${arc.toLowerCase()}.`
+    ),
+    createFacebookCoverFramePresetFromLines(
+      "two_line_cover",
+      "Two-line cover preset",
+      "Two-line cover text for Facebook grid readability and clean share previews.",
+      [primarySpecies, pressureCue]
+    ),
+  ];
+}
+
 function finalizeShortCaption(raw: string): string {
   const compact = normalizeCopy(raw);
   const sentences = splitSentences(compact);
@@ -955,6 +1170,17 @@ export function buildPlatformPack(
       "Pin the reel with the clearest species read, immediate motion, and strongest documentary tension in frame 1.",
     overlayGuidance,
     hookFormattingPresets: buildHookFormattingPresets(hooks[0], predator, prey),
+    facebookOverlayPresets: buildFacebookFirstFrameOverlayPresets(
+      hooks[0],
+      predator,
+      prey
+    ),
+    facebookCoverFramePresets: buildFacebookCoverFramePresets(
+      hooks[0],
+      predator,
+      prey,
+      arc
+    ),
   };
 
   const instagram: InstagramPack = {
@@ -965,8 +1191,6 @@ export function buildPlatformPack(
       "Start by testing afternoon and evening windows, then refine from account Insights while keeping the opening motion readable instantly.",
     strategyNote:
       "Keep the first line species-clear, use upper safe-zone text, and let the opening frame show readable pressure immediately.",
-    overlayGuidance,
-    hookFormattingPresets: buildHookFormattingPresets(hooks[1], predator, prey),
   };
 
   const tiktok: TikTokPack = {
@@ -977,8 +1201,6 @@ export function buildPlatformPack(
       "Start by testing late afternoon to evening and refine from retention signals while keeping the tension visible immediately.",
     strategyNote:
       "Use readable opening motion, support both sound-on and sound-off viewing, and avoid dead-static setup before the tension is visible.",
-    overlayGuidance,
-    hookFormattingPresets: buildHookFormattingPresets(hooks[2], predator, prey),
   };
 
   const youtube_shorts: YouTubeShortsPack = {

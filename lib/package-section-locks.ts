@@ -157,6 +157,9 @@ function mergePlatformPackLocks(
             hook: lockedPack.facebook.hook,
             overlayGuidance: lockedPack.facebook.overlayGuidance,
             hookFormattingPresets: lockedPack.facebook.hookFormattingPresets,
+            facebookOverlayPresets: lockedPack.facebook.facebookOverlayPresets,
+            facebookCoverFramePresets:
+              lockedPack.facebook.facebookCoverFramePresets,
           }
         : {}),
       ...(locks.caption ? { caption: lockedPack.facebook.caption } : {}),

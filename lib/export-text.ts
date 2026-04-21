@@ -121,46 +121,61 @@ function buildSoundDesignText(data: GeneratedPackage) {
 
 
 function buildFirstFrameOverlayText(data: GeneratedPackage) {
-  if (!data.platformPack) return "";
+  const facebook = data.platformPack?.facebook;
+  if (!facebook) return "";
 
-  const sections = [
-    { label: "Facebook", platform: data.platformPack.facebook },
-    { label: "Instagram", platform: data.platformPack.instagram },
-    { label: "TikTok", platform: data.platformPack.tiktok },
-  ]
-    .map(({ label, platform }) => {
-      if (!platform.overlayGuidance && !platform.hookFormattingPresets?.length) {
-        return "";
-      }
-
-      return [
-        `=== ${label.toUpperCase()} FIRST-FRAME OVERLAY ===`,
-        platform.overlayGuidance
-          ? [
-              `Placement: ${platform.overlayGuidance.placement}`,
-              `Text length: ${platform.overlayGuidance.textLength}`,
-              `Opener: ${platform.overlayGuidance.opener}`,
-              `Audio: ${platform.overlayGuidance.audio}`,
-              `Tone: ${platform.overlayGuidance.tone}`,
-            ].join("\n")
-          : "",
-        platform.hookFormattingPresets?.length
-          ? platform.hookFormattingPresets
+  return [
+    "=== FACEBOOK FIRST-FRAME OVERLAY ===",
+    facebook.overlayGuidance
+      ? [
+          `Placement: ${facebook.overlayGuidance.placement}`,
+          `Text length: ${facebook.overlayGuidance.textLength}`,
+          `Opener: ${facebook.overlayGuidance.opener}`,
+          `Audio: ${facebook.overlayGuidance.audio}`,
+          `Tone: ${facebook.overlayGuidance.tone}`,
+        ].join("\n")
+      : "",
+    facebook.facebookOverlayPresets?.length
+      ? [
+          "FACEBOOK OVERLAY PRESETS",
+          facebook.facebookOverlayPresets
+            .map(
+              (preset) =>
+                `${preset.label}
+${safeStr(preset.text)}
+Note: ${safeStr(preset.note)}`
+            )
+            .join("\n\n"),
+        ].join("\n\n")
+      : facebook.hookFormattingPresets?.length
+        ? [
+            "FACEBOOK OVERLAY PRESETS",
+            facebook.hookFormattingPresets
               .map(
                 (preset) =>
                   `${preset.label}
 ${safeStr(preset.text)}
 Note: ${safeStr(preset.note)}`
               )
-              .join("\n\n")
-          : "",
-      ]
-        .filter(Boolean)
-        .join("\n\n");
-    })
-    .filter(Boolean);
-
-  return sections.join("\n\n");
+              .join("\n\n"),
+          ].join("\n\n")
+        : "",
+    facebook.facebookCoverFramePresets?.length
+      ? [
+          "FACEBOOK COVER-FRAME TEXT PRESETS",
+          facebook.facebookCoverFramePresets
+            .map(
+              (preset) =>
+                `${preset.label}
+${safeStr(preset.text)}
+Note: ${safeStr(preset.note)}`
+            )
+            .join("\n\n"),
+        ].join("\n\n")
+      : "",
+  ]
+    .filter(Boolean)
+    .join("\n\n");
 }
 
 export function buildCopyAllPacksText(data: GeneratedPackage) {

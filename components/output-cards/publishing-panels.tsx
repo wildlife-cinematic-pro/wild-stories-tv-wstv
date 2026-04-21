@@ -437,6 +437,90 @@ export function PlatformPackPanel({
           </div>
         ) : null}
 
+        {platform === "facebook" && pack.facebook.facebookOverlayPresets?.length ? (
+          <div className="rounded-lg border border-blue-200 bg-blue-50 p-3">
+            <div className="mb-2 flex items-center justify-between gap-2">
+              <p className="text-xs font-bold uppercase tracking-[0.08em] text-blue-700">
+                Facebook First-Frame Overlay Presets
+              </p>
+              <span className="rounded bg-white px-2 py-0.5 text-[10px] font-semibold text-blue-700">
+                Reels-ready
+              </span>
+            </div>
+            <div className="space-y-2">
+              {pack.facebook.facebookOverlayPresets.map((preset) => (
+                <div
+                  key={preset.preset}
+                  className="rounded-lg border border-blue-100 bg-white p-3"
+                >
+                  <div className="flex items-start justify-between gap-3">
+                    <div>
+                      <p className="text-xs font-bold text-gray-800">{preset.label}</p>
+                      <p className="mt-1 text-[11px] leading-5 text-gray-500">
+                        {preset.note}
+                      </p>
+                    </div>
+                    <button
+                      onClick={() => onCopy(preset.text)}
+                      className="shrink-0 rounded bg-blue-700 px-2 py-1 text-xs text-white"
+                      type="button"
+                    >
+                      Copy
+                    </button>
+                  </div>
+                  <div className="mt-2 rounded bg-gray-50 px-3 py-2">
+                    <p className="whitespace-pre-line text-sm font-semibold leading-6 text-gray-900">
+                      {preset.text}
+                    </p>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        ) : null}
+
+        {platform === "facebook" && pack.facebook.facebookCoverFramePresets?.length ? (
+          <div className="rounded-lg border border-emerald-200 bg-emerald-50 p-3">
+            <div className="mb-2 flex items-center justify-between gap-2">
+              <p className="text-xs font-bold uppercase tracking-[0.08em] text-emerald-700">
+                Facebook Cover-Frame Text Presets
+              </p>
+              <span className="rounded bg-white px-2 py-0.5 text-[10px] font-semibold text-emerald-700">
+                Grid/share preview
+              </span>
+            </div>
+            <div className="space-y-2">
+              {pack.facebook.facebookCoverFramePresets.map((preset) => (
+                <div
+                  key={preset.preset}
+                  className="rounded-lg border border-emerald-100 bg-white p-3"
+                >
+                  <div className="flex items-start justify-between gap-3">
+                    <div>
+                      <p className="text-xs font-bold text-gray-800">{preset.label}</p>
+                      <p className="mt-1 text-[11px] leading-5 text-gray-500">
+                        {preset.note}
+                      </p>
+                    </div>
+                    <button
+                      onClick={() => onCopy(preset.text)}
+                      className="shrink-0 rounded bg-emerald-700 px-2 py-1 text-xs text-white"
+                      type="button"
+                    >
+                      Copy
+                    </button>
+                  </div>
+                  <div className="mt-2 rounded bg-gray-50 px-3 py-2">
+                    <p className="whitespace-pre-line text-sm font-semibold leading-6 text-gray-900">
+                      {preset.text}
+                    </p>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        ) : null}
+
         <div className="rounded-lg bg-gray-50 p-3">
           <p className="text-xs font-bold text-gray-500">
             {"description" in data ? "Description" : "Caption"}

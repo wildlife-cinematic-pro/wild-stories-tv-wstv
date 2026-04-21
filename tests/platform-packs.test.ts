@@ -4,9 +4,12 @@ import { runFacebookPublishGuard } from "@/lib/facebookPublishGuard";
 import {
   build2026Hook,
   buildCTA,
+  buildFacebookCoverFramePresets,
+  buildFacebookFirstFrameOverlayPresets,
   buildFirstFrameOverlayGuidance,
   buildHookFormattingPresets,
   buildPlatformPack,
+  FACEBOOK_COVER_FRAME_MAX_LINE_LENGTH,
   HOOK_OVERLAY_MAX_LINE_LENGTH,
 } from "@/lib/platform-packs";
 import type { Arc } from "@/types";
@@ -101,7 +104,7 @@ describe("platform pack hook engine v2", () => {
     expect(questionPreset?.text).not.toMatch(FORCED_ENGAGEMENT_PATTERN);
   });
 
-  it("includes overlay guidance and hook formatting presets in platform packs", () => {
+  it("adds Facebook-first overlay and cover-frame presets without adding new Instagram or TikTok overlay output", () => {
     const pack = buildPlatformPack(
       "Mountain Lion",
       "White-tailed Deer",
@@ -113,8 +116,66 @@ describe("platform pack hook engine v2", () => {
       "upper safe zone"
     );
     expect(pack.facebook.hookFormattingPresets).toHaveLength(5);
-    expect(pack.instagram.hookFormattingPresets?.[0]?.label).toBeTruthy();
-    expect(pack.tiktok.hookFormattingPresets?.[0]?.text).toBeTruthy();
+    expect(pack.facebook.facebookOverlayPresets).toHaveLength(5);
+    expect(pack.facebook.facebookCoverFramePresets).toHaveLength(5);
+    expect(pack.instagram.hookFormattingPresets).toBeUndefined();
+    expect(pack.tiktok.hookFormattingPresets).toBeUndefined();
+  });
+
+  it("keeps Facebook overlay presets non-bait and readable", () => {
+    const presets = buildFacebookFirstFrameOverlayPresets(
+      "The mountain lion closed the space before the deer changed direction.",
+      "Mountain Lion",
+      "White-tailed Deer"
+    );
+    const speciesFirst = presets.find(
+      (preset) => preset.preset === "facebook_species_first"
+    );
+    const question = presets.find(
+      (preset) => preset.preset === "facebook_observational_question"
+    );
+
+    expect(speciesFirst?.text.startsWith("Mountain Lion")).toBe(true);
+    expect(question?.text.endsWith("?")).toBe(true);
+
+    for (const preset of presets) {
+      expect(preset.text).not.toMatch(BAIT_PATTERN);
+      expect(preset.text).not.toMatch(FORCED_ENGAGEMENT_PATTERN);
+      expect(preset.lines.length).toBeLessThanOrEqual(2);
+      for (const line of preset.lines) {
+        expect(line.length).toBeLessThanOrEqual(HOOK_OVERLAY_MAX_LINE_LENGTH);
+      }
+    }
+  });
+
+  it("keeps Facebook cover-frame presets concise, species-clear, and discussion-safe", () => {
+    const presets = buildFacebookCoverFramePresets(
+      "The mountain lion closed the space before the deer changed direction.",
+      "Mountain Lion",
+      "White-tailed Deer",
+      "Escape from danger"
+    );
+    const speciesPressure = presets.find(
+      (preset) => preset.preset === "species_pressure"
+    );
+    const speciesQuestion = presets.find(
+      (preset) => preset.preset === "species_question"
+    );
+
+    expect(speciesPressure?.text.startsWith("Mountain Lion")).toBe(true);
+    expect(speciesQuestion?.text).toContain("?");
+    expect(speciesQuestion?.text).not.toMatch(FORCED_ENGAGEMENT_PATTERN);
+
+    for (const preset of presets) {
+      expect(preset.text).not.toMatch(BAIT_PATTERN);
+      expect(preset.text).not.toMatch(FORCED_ENGAGEMENT_PATTERN);
+      expect(preset.lines.length).toBeLessThanOrEqual(2);
+      for (const line of preset.lines) {
+        expect(line.length).toBeLessThanOrEqual(
+          FACEBOOK_COVER_FRAME_MAX_LINE_LENGTH
+        );
+      }
+    }
   });
 
   it("flags clickbait hooks and forced-engagement CTAs in the publish guard", () => {
