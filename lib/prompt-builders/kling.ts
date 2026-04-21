@@ -3,6 +3,7 @@ import type {
   Weather,
   EmotionalTone,
   AnimalVibe,
+  CameraAnglePreset,
   QualityOptions,
   KlingModel,
   StructuredPrompt,
@@ -32,6 +33,7 @@ import {
   buildStructuredPrompt,
   promptPackToLegacyText,
 } from "@/lib/prompt-builders/shared";
+import { buildKlingCameraPresetLine } from "@/lib/camera-angle-presets";
 import {
   KLING_CHAR_LIMIT,
   validateKlingPromptLength,
@@ -53,7 +55,8 @@ export function buildKlingPromptPack(
   emotionalTone: EmotionalTone,
   animalVibe: AnimalVibe,
   sceneDesc?: string,
-  quality?: QualityOptions
+  quality?: QualityOptions,
+  cameraAnglePreset: CameraAnglePreset = "Auto"
 ): KlingPromptPack {
   const note = KLING_STYLE_NOTE[model];
   const tone = emotionalTonePrompt[emotionalTone];
@@ -80,6 +83,15 @@ export function buildKlingPromptPack(
   const habitatMode = getHabitatMode(predator, prey, env);
   const isAquatic = habitatMode === "aquatic";
   const isShoreline = habitatMode === "shoreline";
+  const cameraPresetLine = buildKlingCameraPresetLine(
+    cameraAnglePreset,
+    habitatMode,
+    env
+  );
+  const cameraPromptTail = cameraPresetLine ? ` ${cameraPresetLine}` : "";
+  const cameraBreakdownLine = cameraPresetLine
+    ? `\nCamera preset: ${cameraPresetLine}`
+    : "";
   const beat1 = oneActionArcBeat(arc, "establish", gateOn, habitatMode);
   const beat3 = oneActionArcBeat(arc, "action", gateOn, habitatMode);
   const beat4 = oneActionArcBeat(arc, "aftermath", gateOn, habitatMode);
@@ -160,26 +172,26 @@ ${maybeGuard(s1.guardLine)}${context}
 
 ═══ PASTE-READY KLING PROMPT (copy this block into Kling) ═══
 ${sanitizeVideoBeatText(isAquatic
-  ? `Wide opening hold with a subtle push-in. ${predator} holds controlled pressure through the water on the left. ${prey} stays fully alert and reactive on the right. Both subjects are fully readable from frame one with locked eye-line, clear spacing, and immediate visible tension. ${buildKlingLocationLine(env, weather, quality?.motionOnlyI2V).replace(/^Lighting & Location:\s*/i, "")}. ${extra1} Then both subjects hold position.`
+  ? `Wide opening hold with a subtle push-in.${cameraPromptTail} ${predator} holds controlled pressure through the water on the left. ${prey} stays fully alert and reactive on the right. Both subjects are fully readable from frame one with locked eye-line, clear spacing, and immediate visible tension. ${buildKlingLocationLine(env, weather, quality?.motionOnlyI2V).replace(/^Lighting & Location:\s*/i, "")}. ${extra1} Then both subjects hold position.`
   : isShoreline
-    ? `Wide opening hold with a subtle push-in. ${predator} holds visible pressure at the waterline on the left. ${prey} stays fully alert near the bank on the right. Both subjects are fully readable from frame one with locked eye-line, clear spacing, and immediate visible tension. ${buildKlingLocationLine(env, weather, quality?.motionOnlyI2V).replace(/^Lighting & Location:\s*/i, "")}. ${extra1} Then both subjects hold position.`
-    : `Wide opening hold with a subtle push-in. ${formatActionSubject(predator, s1.predatorBeat)}. ${prey} ${s1.preyBeat}. Both subjects are fully readable from frame one with locked eye-line, clear spacing, and immediate visible tension. ${buildKlingLocationLine(env, weather, quality?.motionOnlyI2V).replace(/^Lighting & Location:\s*/i, "")}. ${extra1} Then both subjects hold position.`
+    ? `Wide opening hold with a subtle push-in.${cameraPromptTail} ${predator} holds visible pressure at the waterline on the left. ${prey} stays fully alert near the bank on the right. Both subjects are fully readable from frame one with locked eye-line, clear spacing, and immediate visible tension. ${buildKlingLocationLine(env, weather, quality?.motionOnlyI2V).replace(/^Lighting & Location:\s*/i, "")}. ${extra1} Then both subjects hold position.`
+    : `Wide opening hold with a subtle push-in.${cameraPromptTail} ${formatActionSubject(predator, s1.predatorBeat)}. ${prey} ${s1.preyBeat}. Both subjects are fully readable from frame one with locked eye-line, clear spacing, and immediate visible tension. ${buildKlingLocationLine(env, weather, quality?.motionOnlyI2V).replace(/^Lighting & Location:\s*/i, "")}. ${extra1} Then both subjects hold position.`
 )}
 
 ─── FULL BREAKDOWN (reference only) ───
 Characters: ${characterLine.replace(/^Characters:\s*/i, "")}
 Action: ${formatActionSubject(predator, s1.predatorBeat)}. ${prey} ${s1.preyBeat}.
-${locationLine}
+${locationLine}${cameraBreakdownLine}
 Extra: ${buildKlingExtraLine(extra1, quality?.motionOnlyI2V)}
 
 ${audio1}
 
 Kling settings: Motion intensity ${mi1.toFixed(2)} | Enable Bind Subject for identity lock | Negative prompt: use the Kling Negative Prompt card`,
       pasteReady: sanitizeVideoBeatText(isAquatic
-        ? `Wide opening hold with a subtle push-in. ${predator} holds controlled pressure through the water on the left. ${prey} stays fully alert and reactive on the right. Both subjects are fully readable from frame one with locked eye-line, clear spacing, and immediate visible tension. ${buildKlingLocationLine(env, weather, quality?.motionOnlyI2V).replace(/^Lighting & Location:\s*/i, "")}. ${extra1} Then both subjects hold position.`
+        ? `Wide opening hold with a subtle push-in.${cameraPromptTail} ${predator} holds controlled pressure through the water on the left. ${prey} stays fully alert and reactive on the right. Both subjects are fully readable from frame one with locked eye-line, clear spacing, and immediate visible tension. ${buildKlingLocationLine(env, weather, quality?.motionOnlyI2V).replace(/^Lighting & Location:\s*/i, "")}. ${extra1} Then both subjects hold position.`
         : isShoreline
-          ? `Wide opening hold with a subtle push-in. ${predator} holds visible pressure at the waterline on the left. ${prey} stays fully alert near the bank on the right. Both subjects are fully readable from frame one with locked eye-line, clear spacing, and immediate visible tension. ${buildKlingLocationLine(env, weather, quality?.motionOnlyI2V).replace(/^Lighting & Location:\s*/i, "")}. ${extra1} Then both subjects hold position.`
-          : `Wide opening hold with a subtle push-in. ${formatActionSubject(predator, s1.predatorBeat)}. ${prey} ${s1.preyBeat}. Both subjects are fully readable from frame one with locked eye-line, clear spacing, and immediate visible tension. ${buildKlingLocationLine(env, weather, quality?.motionOnlyI2V).replace(/^Lighting & Location:\s*/i, "")}. ${extra1} Then both subjects hold position.`
+          ? `Wide opening hold with a subtle push-in.${cameraPromptTail} ${predator} holds visible pressure at the waterline on the left. ${prey} stays fully alert near the bank on the right. Both subjects are fully readable from frame one with locked eye-line, clear spacing, and immediate visible tension. ${buildKlingLocationLine(env, weather, quality?.motionOnlyI2V).replace(/^Lighting & Location:\s*/i, "")}. ${extra1} Then both subjects hold position.`
+          : `Wide opening hold with a subtle push-in.${cameraPromptTail} ${formatActionSubject(predator, s1.predatorBeat)}. ${prey} ${s1.preyBeat}. Both subjects are fully readable from frame one with locked eye-line, clear spacing, and immediate visible tension. ${buildKlingLocationLine(env, weather, quality?.motionOnlyI2V).replace(/^Lighting & Location:\s*/i, "")}. ${extra1} Then both subjects hold position.`
       ),
       audio: audio1,
       settings: [
@@ -209,16 +221,16 @@ ${context}
 
 ═══ PASTE-READY KLING PROMPT (copy this block into Kling) ═══
 ${sanitizeVideoBeatText(isAquatic
-  ? `Wide pressure-build tracking shot with a subtle forward creep. ${pressurePredator}. ${pressurePrey}. Clear predator-to-prey line, readable spacing, no overlap. Water displacement and current pressure build naturally. ${buildKlingLocationLine(env, weather, quality?.motionOnlyI2V).replace(/^Lighting & Location:\s*/i, "")}. Then both subjects settle into a controlled hold.`
+  ? `Wide pressure-build tracking shot with a subtle forward creep.${cameraPromptTail} ${pressurePredator}. ${pressurePrey}. Clear predator-to-prey line, readable spacing, no overlap. Water displacement and current pressure build naturally. ${buildKlingLocationLine(env, weather, quality?.motionOnlyI2V).replace(/^Lighting & Location:\s*/i, "")}. Then both subjects settle into a controlled hold.`
   : isShoreline
-    ? `Wide pressure-build tracking shot with a subtle forward creep. ${pressurePredator}. ${pressurePrey}. Clear predator-to-prey line, readable spacing, no overlap. Splash and muddy bank response build naturally. ${buildKlingLocationLine(env, weather, quality?.motionOnlyI2V).replace(/^Lighting & Location:\s*/i, "")}. Then both subjects settle into a controlled hold.`
-    : `Wide pressure-build tracking shot with a subtle forward creep. ${pressurePredator}. ${pressurePrey}. Clear predator-to-prey line, readable spacing, no overlap. Grounded weight transfer and surface response stay controlled. ${buildKlingLocationLine(env, weather, quality?.motionOnlyI2V).replace(/^Lighting & Location:\s*/i, "")}. Then both subjects settle into a controlled hold.`
+    ? `Wide pressure-build tracking shot with a subtle forward creep.${cameraPromptTail} ${pressurePredator}. ${pressurePrey}. Clear predator-to-prey line, readable spacing, no overlap. Splash and muddy bank response build naturally. ${buildKlingLocationLine(env, weather, quality?.motionOnlyI2V).replace(/^Lighting & Location:\s*/i, "")}. Then both subjects settle into a controlled hold.`
+    : `Wide pressure-build tracking shot with a subtle forward creep.${cameraPromptTail} ${pressurePredator}. ${pressurePrey}. Clear predator-to-prey line, readable spacing, no overlap. Grounded weight transfer and surface response stay controlled. ${buildKlingLocationLine(env, weather, quality?.motionOnlyI2V).replace(/^Lighting & Location:\s*/i, "")}. Then both subjects settle into a controlled hold.`
 )}
 
 ─── FULL BREAKDOWN (reference only) ───
 Characters: ${characterLine.replace(/^Characters:\s*/i, "")}
 Action: ${pressurePredator}. ${pressurePrey}.
-${locationLine}
+${locationLine}${cameraBreakdownLine}
 Extra: ${buildKlingExtraLine(
   isAquatic
     ? `Surface response, readable water pressure, ${micro}. Physics priority: coherent limbs, controlled spacing, rising tension`
@@ -232,10 +244,10 @@ ${audio2}
 
 Kling settings: Motion intensity ${mi2.toFixed(2)} | WIDE framing enforced | Use Shot 1 last frame only if it remains a clean full-body handoff frame; otherwise use the master still or a manually selected clean reference frame`,
       pasteReady: sanitizeVideoBeatText(isAquatic
-        ? `Wide pressure-build tracking shot with a subtle forward creep. ${pressurePredator}. ${pressurePrey}. Clear predator-to-prey line, readable spacing, no overlap. Water displacement and current pressure build naturally. ${buildKlingLocationLine(env, weather, quality?.motionOnlyI2V).replace(/^Lighting & Location:\s*/i, "")}. Then both subjects settle into a controlled hold.`
+        ? `Wide pressure-build tracking shot with a subtle forward creep.${cameraPromptTail} ${pressurePredator}. ${pressurePrey}. Clear predator-to-prey line, readable spacing, no overlap. Water displacement and current pressure build naturally. ${buildKlingLocationLine(env, weather, quality?.motionOnlyI2V).replace(/^Lighting & Location:\s*/i, "")}. Then both subjects settle into a controlled hold.`
         : isShoreline
-          ? `Wide pressure-build tracking shot with a subtle forward creep. ${pressurePredator}. ${pressurePrey}. Clear predator-to-prey line, readable spacing, no overlap. Splash and muddy bank response build naturally. ${buildKlingLocationLine(env, weather, quality?.motionOnlyI2V).replace(/^Lighting & Location:\s*/i, "")}. Then both subjects settle into a controlled hold.`
-          : `Wide pressure-build tracking shot with a subtle forward creep. ${pressurePredator}. ${pressurePrey}. Clear predator-to-prey line, readable spacing, no overlap. Grounded weight transfer and surface response stay controlled. ${buildKlingLocationLine(env, weather, quality?.motionOnlyI2V).replace(/^Lighting & Location:\s*/i, "")}. Then both subjects settle into a controlled hold.`
+          ? `Wide pressure-build tracking shot with a subtle forward creep.${cameraPromptTail} ${pressurePredator}. ${pressurePrey}. Clear predator-to-prey line, readable spacing, no overlap. Splash and muddy bank response build naturally. ${buildKlingLocationLine(env, weather, quality?.motionOnlyI2V).replace(/^Lighting & Location:\s*/i, "")}. Then both subjects settle into a controlled hold.`
+          : `Wide pressure-build tracking shot with a subtle forward creep.${cameraPromptTail} ${pressurePredator}. ${pressurePrey}. Clear predator-to-prey line, readable spacing, no overlap. Grounded weight transfer and surface response stay controlled. ${buildKlingLocationLine(env, weather, quality?.motionOnlyI2V).replace(/^Lighting & Location:\s*/i, "")}. Then both subjects settle into a controlled hold.`
       ),
       audio: audio2,
       settings: [
@@ -274,7 +286,7 @@ ${sanitizeVideoBeatText(isAquatic
 ─── FULL BREAKDOWN (reference only) ───
 Characters: ${characterLine.replace(/^Characters:\s*/i, "")}
 Action: ${formatActionSubject(predator, s3.predatorBeat)}. ${prey} ${s3.preyBeat}.
-${locationLine}
+${locationLine}${cameraBreakdownLine}
 Extra: ${buildKlingExtraLine(extra3, quality?.motionOnlyI2V)}
 
 ${audio3}
@@ -318,7 +330,7 @@ ${sanitizeVideoBeatText(`Locked wide aftermath hold with a subtle pull-back. ${f
 ─── FULL BREAKDOWN (reference only) ───
 Characters: ${characterLine.replace(/^Characters:\s*/i, "")}
 Action: ${formatActionSubject(predator, s4.predatorBeat)}. ${prey} ${s4.preyBeat}.
-${locationLine}
+${locationLine}${cameraBreakdownLine}
 Extra: ${buildKlingExtraLine(extra3, quality?.motionOnlyI2V)}
 
 ${audio4}

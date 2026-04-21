@@ -1,6 +1,7 @@
 import type {
   Arc,
   AnimalVibe,
+  CameraAnglePreset,
   CapCutScript,
   ContentLane,
   DepthMode,
@@ -122,6 +123,7 @@ export type GeneratedPackageDraftInput = {
   finalEnvironment: string;
   finalArc: Arc;
   contentLane: ContentLane;
+  cameraAnglePreset: CameraAnglePreset;
   weather: Weather;
   depthMode: DepthMode;
   emotionalTone: EmotionalTone;
@@ -156,6 +158,7 @@ export type GeneratedPackageDraft = {
   marketMode: PublishFlowMarketMode;
   durationLane: DurationLane;
   contentLane: ContentLane;
+  cameraAnglePreset: CameraAnglePreset;
   fastPublishMode: boolean;
   strictOriginalityGuard: boolean;
   hookFamily: HookFamily;
@@ -222,7 +225,8 @@ export function buildGeneratedPackageDraft(
     input.animalVibe,
     input.sceneInject,
     input.quality,
-    "NANO_BANANA_2"
+    "NANO_BANANA_2",
+    input.cameraAnglePreset
   );
   const shotImagePlan = buildShotImagePlan(
     input.predator,
@@ -230,7 +234,8 @@ export function buildGeneratedPackageDraft(
     input.finalEnvironment,
     input.finalArc,
     input.weather,
-    input.quality
+    input.quality,
+    input.cameraAnglePreset
   );
   const runwayPack = buildRunwayPromptPack(
     input.predator,
@@ -242,7 +247,8 @@ export function buildGeneratedPackageDraft(
     input.emotionalTone,
     input.animalVibe,
     input.sceneInject,
-    input.quality
+    input.quality,
+    input.cameraAnglePreset
   );
   const seedancePack = buildSeedancePromptPack(
     input.predator,
@@ -265,7 +271,8 @@ export function buildGeneratedPackageDraft(
     input.emotionalTone,
     input.animalVibe,
     input.sceneInject,
-    input.quality
+    input.quality,
+    input.cameraAnglePreset
   );
   const fourShotWorkflowPack = buildFourShotWorkflowPromptPack({
     predator: input.predator,
@@ -280,6 +287,7 @@ export function buildGeneratedPackageDraft(
     animalVibe: input.animalVibe,
     sceneDesc: input.sceneInject,
     quality: input.quality,
+    cameraAnglePreset: input.cameraAnglePreset,
   });
   const klingNative15sCard = buildKlingNative15sCard(
     input.predator,
@@ -395,6 +403,7 @@ export function buildGeneratedPackageDraft(
     predatorName: input.predator,
     preyName: input.prey,
     arcName: input.finalArc,
+    cameraAnglePreset: input.cameraAnglePreset,
     imagePrompt: imagePromptCard.fullText,
     negativePrompt: negativePromptForKling,
     thumbnailPrompt,
@@ -547,6 +556,7 @@ export function buildGeneratedPackageDraft(
     marketMode: input.marketMode,
     durationLane: input.durationLane,
     contentLane: input.contentLane,
+    cameraAnglePreset: input.cameraAnglePreset,
     fastPublishMode: input.fastPublishMode,
     strictOriginalityGuard: input.strictOriginalityGuard,
     hookFamily: input.hookFamily,

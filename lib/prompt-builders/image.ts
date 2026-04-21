@@ -4,6 +4,7 @@ import type {
   Weather,
   EmotionalTone,
   AnimalVibe,
+  CameraAnglePreset,
   ImagePromptTarget,
   QualityOptions,
   ShotImagePlan,
@@ -33,6 +34,10 @@ import {
   sanitizeVideoBeatText,
 } from "@/lib/prompt-builders/sanitizers";
 import { weatherVariants } from "@/lib/predator-data";
+import {
+  buildCameraLightingContinuityLine,
+  buildImageCameraPresetLine,
+} from "@/lib/camera-angle-presets";
 
 function buildNanoBananaImagePrompt(
   predator: string,
@@ -45,7 +50,8 @@ function buildNanoBananaImagePrompt(
   animalVibe: AnimalVibe,
   habitatMode: ReturnType<typeof getHabitatMode>,
   sanitizedSceneDesc: string,
-  quality?: QualityOptions
+  quality?: QualityOptions,
+  cameraAnglePreset: CameraAnglePreset = "Auto"
 ): string {
   const vibe = animalVibePrompt[animalVibe];
 
@@ -68,7 +74,18 @@ function buildNanoBananaImagePrompt(
         ? "Wide 9:16 vertical frame, telephoto framing, clear midground separation, both animals fully visible."
         : "Wide 9:16 vertical frame, telephoto framing, deep background visible, both animals fully visible.";
 
-  const atmosphereLine = `Lighting: ${cleanLighting}. Clear air, terrain visible from foreground to background.`;
+  const cameraPresetLine = buildImageCameraPresetLine(
+    cameraAnglePreset,
+    habitatMode,
+    cleanEnv
+  );
+  const cameraLightingLine = buildCameraLightingContinuityLine(
+    cameraAnglePreset,
+    habitatMode,
+    cleanEnv
+  );
+
+  const atmosphereLine = `Lighting: ${cleanLighting}. Clear air, terrain visible from foreground to background.${cameraLightingLine ? ` ${cameraLightingLine}` : ""}`;
   const detailLine = vibe.texture
     ? `Photoreal wildlife detail with ${cleanTexture}. ${vibe.texture}.`
     : `Photoreal wildlife detail with ${cleanTexture}.`;
@@ -84,7 +101,7 @@ function buildNanoBananaImagePrompt(
     ? ` Scene note: ${clipPromptContext(sanitizedSceneDesc, 120)}`
     : "";
 
-  return `${subjectLine} ${tensionLine} ${compositionLine} Depth of field: ${depth.depth}. ${atmosphereLine} ${detailLine} ${anatomyLine} Photorealistic wildlife documentary style.${sceneNote}`;
+  return `${subjectLine} ${tensionLine} ${compositionLine}${cameraPresetLine ? ` ${cameraPresetLine}` : ""} Depth of field: ${depth.depth}. ${atmosphereLine} ${detailLine} ${anatomyLine} Photorealistic wildlife documentary style.${sceneNote}`;
 }
 
 export function buildImagePromptCard(
@@ -101,7 +118,8 @@ export function buildImagePromptCard(
   animalVibe: AnimalVibe,
   sceneDesc?: string,
   quality?: QualityOptions,
-  target: ImagePromptTarget = "NANO_BANANA_2"
+  target: ImagePromptTarget = "NANO_BANANA_2",
+  cameraAnglePreset: CameraAnglePreset = "Auto"
 ): StructuredPrompt {
   void emotionalTone;
   void cameraGear;
@@ -126,7 +144,8 @@ export function buildImagePromptCard(
       animalVibe,
       habitatMode,
       sanitizedSceneDesc,
-      quality
+      quality,
+      cameraAnglePreset
     )
   );
 
@@ -155,7 +174,8 @@ export function buildImagePrompt(
   animalVibe: AnimalVibe,
   sceneDesc?: string,
   quality?: QualityOptions,
-  target: ImagePromptTarget = "NANO_BANANA_2"
+  target: ImagePromptTarget = "NANO_BANANA_2",
+  cameraAnglePreset: CameraAnglePreset = "Auto"
 ): string {
   return buildImagePromptCard(
     predator,
@@ -171,7 +191,8 @@ export function buildImagePrompt(
     animalVibe,
     sceneDesc,
     quality,
-    target
+    target,
+    cameraAnglePreset
   ).fullText;
 }
 
@@ -181,12 +202,18 @@ export function buildShotImagePlan(
   env: string,
   arc: Arc,
   weather: Weather,
-  quality?: QualityOptions
+  quality?: QualityOptions,
+  cameraAnglePreset: CameraAnglePreset = "Auto"
 ): ShotImagePlan[] {
   const habitatMode = getHabitatMode(predator, prey, env);
   const cleanEnv = sanitizeImageEnv(env);
   const cleanWeather = sanitizeWeatherPhrase(weatherVariants[weather]);
   const micro = buildMicroMotionLine(weather, env);
+  const cameraPresetLine = buildImageCameraPresetLine(
+    cameraAnglePreset,
+    habitatMode
+  );
+  const cameraLine = cameraPresetLine ? `${cameraPresetLine} ` : "";
   const gateOn = !!quality?.singleActionRule;
 
   const action = oneActionArcBeat(arc, "action", gateOn, habitatMode);
@@ -235,7 +262,7 @@ export function buildShotImagePlan(
       title: "Shot 1 Image — Opening Tension",
       source: "master",
       prompt: finalizePrompt(
-        `${masterBase} ${continuityLock} Reframe into a wide opening shot with both subjects fully readable from frame one. The ${predator} ${openingPredator}. The ${prey} ${openingPrey}. Keep the existing style and composition family intact. ${atmosphereLock}`
+        `${masterBase} ${continuityLock} ${cameraLine}Reframe into a wide opening shot with both subjects fully readable from frame one. The ${predator} ${openingPredator}. The ${prey} ${openingPrey}. Keep the existing style and composition family intact. ${atmosphereLock}`
       ),
     },
     {

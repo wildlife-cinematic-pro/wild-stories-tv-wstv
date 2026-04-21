@@ -5,6 +5,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type {
   AIProvider,
   Arc,
+  CameraAnglePreset,
   DepthMode,
   ContentLane,
   EmotionalTone,
@@ -49,6 +50,7 @@ import {
   RUNWAY_MODELS,
   KLING_MODELS,
 } from "@/lib/model-specs";
+import { DEFAULT_CAMERA_ANGLE_PRESET } from "@/lib/camera-angle-presets";
 import {
   useBuildPreview,
   type DurationLaneMode,
@@ -93,6 +95,7 @@ type QualityState = {
 const DEFAULT_PREDATOR = "Mountain Lion";
 const DEFAULT_PREY = "White-tailed Deer";
 const DEFAULT_CONTENT_LANE: ContentLane = "Auto";
+const DEFAULT_CAMERA_PRESET: CameraAnglePreset = DEFAULT_CAMERA_ANGLE_PRESET;
 const DEFAULT_ARC: Arc = "Ambush attack";
 const DEFAULT_WEATHER: Weather = "Golden Hour";
 const DEFAULT_HABITAT: HabitatPreset = "Auto";
@@ -107,6 +110,9 @@ export default function Page() {
   const [predator, setPredator] = useState(DEFAULT_PREDATOR);
   const [prey, setPrey] = useState(DEFAULT_PREY);
   const [contentLane, setContentLane] = useState<ContentLane>(DEFAULT_CONTENT_LANE);
+  const [cameraAnglePreset, setCameraAnglePreset] = useState<CameraAnglePreset>(
+    DEFAULT_CAMERA_PRESET
+  );
   const [arc, setArc] = useState<Arc>(DEFAULT_ARC);
   const [conceptArcOverride, setConceptArcOverride] = useState<Arc | null>(null);
   const [weather, setWeather] = useState<Weather>(DEFAULT_WEATHER);
@@ -161,6 +167,7 @@ export default function Page() {
     setPredator(snapshot.predator);
     setPrey(snapshot.prey);
     setContentLane(snapshot.contentLane);
+    setCameraAnglePreset(snapshot.cameraAnglePreset);
     setArc(snapshot.arc);
     setConceptArcOverride(null);
     setWeather(snapshot.weather);
@@ -195,6 +202,7 @@ export default function Page() {
     setPredator(DEFAULT_PREDATOR);
     setPrey(DEFAULT_PREY);
     setContentLane(DEFAULT_CONTENT_LANE);
+    setCameraAnglePreset(DEFAULT_CAMERA_PRESET);
     setArc(DEFAULT_ARC);
     setConceptArcOverride(null);
     setWeather(DEFAULT_WEATHER);
@@ -209,6 +217,7 @@ export default function Page() {
     prey,
     arc,
     contentLane,
+    cameraAnglePreset,
     weather,
     depthMode,
     habitat,
@@ -226,6 +235,7 @@ export default function Page() {
     setPrey,
     setArc,
     setContentLane,
+    setCameraAnglePreset,
     setWeather,
     setDepthMode,
     setHabitat,
@@ -329,6 +339,7 @@ export default function Page() {
       predator,
       prey,
       contentLane,
+      cameraAnglePreset,
       arc: previewArc,
       habitat,
       weather,
@@ -357,6 +368,7 @@ export default function Page() {
       activeProvider,
       animalVibe,
       autoApplyHighDrift,
+      cameraAnglePreset,
       contentLane,
       depthMode,
       durationLane,
@@ -506,6 +518,7 @@ export default function Page() {
       finalEnvironment,
       finalArc: previewArc,
       contentLane,
+      cameraAnglePreset,
       weather,
       depthMode,
       emotionalTone,
@@ -873,6 +886,7 @@ export default function Page() {
                 predator={predator}
                 prey={prey}
                 contentLane={contentLane}
+                cameraAnglePreset={cameraAnglePreset}
                 arc={arc}
                 weather={weather}
                 depthMode={depthMode}
@@ -937,6 +951,7 @@ export default function Page() {
                 onPredatorChange={setPredator}
                 onPreyChange={setPrey}
                 onContentLaneChange={setContentLane}
+                onCameraAnglePresetChange={setCameraAnglePreset}
                 onWeatherChange={setWeather}
                 onDepthModeChange={setDepthMode}
                 onHabitatChange={setHabitat}

@@ -11,10 +11,12 @@ import {
 } from "@/lib/storage";
 import { KLING_MODELS, RUNWAY_MODELS } from "@/lib/model-specs";
 import { isContentLane } from "@/lib/content-lanes";
+import { isCameraAnglePreset } from "@/lib/camera-angle-presets";
 
 import type {
   AIProvider,
   Arc,
+  CameraAnglePreset,
   ContentLane,
   DepthMode,
   HabitatPreset,
@@ -29,6 +31,7 @@ type UseBuildPersistenceInput = {
   prey: string;
   arc: Arc;
   contentLane: ContentLane;
+  cameraAnglePreset: CameraAnglePreset;
   weather: Weather;
   depthMode: DepthMode;
   habitat: HabitatPreset;
@@ -46,6 +49,7 @@ type UseBuildPersistenceInput = {
   setPrey: Dispatch<SetStateAction<string>>;
   setArc: Dispatch<SetStateAction<Arc>>;
   setContentLane: Dispatch<SetStateAction<ContentLane>>;
+  setCameraAnglePreset: Dispatch<SetStateAction<CameraAnglePreset>>;
   setWeather: Dispatch<SetStateAction<Weather>>;
   setDepthMode: Dispatch<SetStateAction<DepthMode>>;
   setHabitat: Dispatch<SetStateAction<HabitatPreset>>;
@@ -66,6 +70,7 @@ export function useBuildPersistence({
   prey,
   arc,
   contentLane,
+  cameraAnglePreset,
   weather,
   depthMode,
   habitat,
@@ -83,6 +88,7 @@ export function useBuildPersistence({
   setPrey,
   setArc,
   setContentLane,
+  setCameraAnglePreset,
   setWeather,
   setDepthMode,
   setHabitat,
@@ -105,6 +111,9 @@ export function useBuildPersistence({
     if (shared.arc) setArc(shared.arc as Arc);
     if (shared.contentLane && isContentLane(shared.contentLane)) {
       setContentLane(shared.contentLane);
+    }
+    if (shared.cameraAnglePreset && isCameraAnglePreset(shared.cameraAnglePreset)) {
+      setCameraAnglePreset(shared.cameraAnglePreset);
     }
     if (shared.weather) setWeather(shared.weather);
     if (shared.depthMode) setDepthMode(shared.depthMode);
@@ -136,6 +145,9 @@ export function useBuildPersistence({
     if (saved?.contentLane && isContentLane(saved.contentLane)) {
       setContentLane(saved.contentLane);
     }
+    if (saved?.cameraAnglePreset && isCameraAnglePreset(saved.cameraAnglePreset)) {
+      setCameraAnglePreset(saved.cameraAnglePreset);
+    }
 
     const autoApply = (saved as Record<string, unknown>)?.autoApplyHighDrift;
     if (typeof autoApply === "boolean") setAutoApplyHighDrift(autoApply);
@@ -144,6 +156,7 @@ export function useBuildPersistence({
     setPrey,
     setArc,
     setContentLane,
+    setCameraAnglePreset,
     setWeather,
     setDepthMode,
     setHabitat,
@@ -173,6 +186,7 @@ export function useBuildPersistence({
       autoApplyHighDrift,
       habitat,
       contentLane,
+      cameraAnglePreset,
     });
   }, [
     activeProvider,
@@ -187,9 +201,28 @@ export function useBuildPersistence({
     autoApplyHighDrift,
     habitat,
     contentLane,
+    cameraAnglePreset,
   ]);
 
   useEffect(() => {
-    writeShareState({ predator, prey, arc, weather, depthMode, habitat, contentLane });
-  }, [predator, prey, arc, weather, depthMode, habitat, contentLane]);
+    writeShareState({
+      predator,
+      prey,
+      arc,
+      weather,
+      depthMode,
+      habitat,
+      contentLane,
+      cameraAnglePreset,
+    });
+  }, [
+    predator,
+    prey,
+    arc,
+    weather,
+    depthMode,
+    habitat,
+    contentLane,
+    cameraAnglePreset,
+  ]);
 }

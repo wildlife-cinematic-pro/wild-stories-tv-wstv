@@ -3,6 +3,7 @@ import type {
   Weather,
   EmotionalTone,
   AnimalVibe,
+  CameraAnglePreset,
   DurationLane,
   QualityOptions,
   RunwayModel,
@@ -36,6 +37,10 @@ import { buildRunwayPromptPack } from "@/lib/prompt-builders/runway";
 import { buildKlingPromptPack } from "@/lib/prompt-builders/kling";
 import { buildSeedancePromptPack } from "@/lib/prompt-builders/seedance";
 import {
+  buildKlingCameraPresetLine,
+  buildRunwayCameraPresetLine,
+} from "@/lib/camera-angle-presets";
+import {
   clipPromptContext,
   sanitizeRunwayFPS,
   sanitizeVideoBeatText,
@@ -55,7 +60,8 @@ export function buildHybridPromptPack(
   emotionalTone: EmotionalTone,
   animalVibe: AnimalVibe,
   sceneDesc?: string,
-  quality?: QualityOptions
+  quality?: QualityOptions,
+  cameraAnglePreset: CameraAnglePreset = "Auto"
 ): WorkflowPromptPack {
   const runway = buildRunwayPromptPack(
     predator,
@@ -67,7 +73,8 @@ export function buildHybridPromptPack(
     emotionalTone,
     animalVibe,
     sceneDesc,
-    quality
+    quality,
+    cameraAnglePreset
   );
   const kling = buildKlingPromptPack(
     predator,
@@ -79,7 +86,8 @@ export function buildHybridPromptPack(
     emotionalTone,
     animalVibe,
     sceneDesc,
-    quality
+    quality,
+    cameraAnglePreset
   );
 
   return {
@@ -101,7 +109,8 @@ export function buildHybridFourShotWorkflow(
   emotionalTone: EmotionalTone,
   animalVibe: AnimalVibe,
   sceneDesc?: string,
-  quality?: QualityOptions
+  quality?: QualityOptions,
+  cameraAnglePreset: CameraAnglePreset = "Auto"
 ): { shot1: string; shot2: string; shot3: string; shot4: string } {
   return promptPackToLegacyText(
     buildHybridPromptPack(
@@ -115,7 +124,8 @@ export function buildHybridFourShotWorkflow(
       emotionalTone,
       animalVibe,
       sceneDesc,
-      quality
+      quality,
+      cameraAnglePreset
     )
   );
 }
@@ -131,7 +141,8 @@ export function buildHybridLongPromptPack(
   emotionalTone: EmotionalTone,
   animalVibe: AnimalVibe,
   sceneDesc?: string,
-  quality?: QualityOptions
+  quality?: QualityOptions,
+  cameraAnglePreset: CameraAnglePreset = "Auto"
 ): WorkflowPromptPack {
   const runwayNote = RUNWAY_STYLE_NOTE[runwayModel];
   const klingNote = KLING_STYLE_NOTE[klingModel];
@@ -141,6 +152,28 @@ export function buildHybridLongPromptPack(
   const habitatMode = getHabitatMode(predator, prey, env);
   const isAquatic = habitatMode === "aquatic";
   const isShoreline = habitatMode === "shoreline";
+  const runwayCameraPresetLine = buildRunwayCameraPresetLine(
+    cameraAnglePreset,
+    habitatMode,
+    env
+  );
+  const klingCameraPresetLine = buildKlingCameraPresetLine(
+    cameraAnglePreset,
+    habitatMode,
+    env
+  );
+  const runwayCameraTail = runwayCameraPresetLine
+    ? ` ${runwayCameraPresetLine}`
+    : "";
+  const klingCameraTail = klingCameraPresetLine
+    ? ` ${klingCameraPresetLine}`
+    : "";
+  const runwayCameraBreakdown = runwayCameraPresetLine
+    ? `\nCamera preset: ${runwayCameraPresetLine}`
+    : "";
+  const klingCameraBreakdown = klingCameraPresetLine
+    ? `\nCamera preset: ${klingCameraPresetLine}`
+    : "";
 
   const runwayLead = buildQualityLead(quality, "runway");
   const klingLead = buildQualityLead(quality, "kling");
@@ -227,34 +260,34 @@ export function buildHybridLongPromptPack(
 
   const longShot1PasteReady = sanitizeRunwayFPS(
     isAquatic
-      ? `Wide opening hold for first-frame clarity, then a restrained slow push-in over the full 10-second beat. Both subjects stay fully readable from frame one. The left subject ${openingPredator}. The right subject ${openingPrey}. Let the setup breathe before the tension tightens. Clear spacing, one clean threat line, no sudden action spike. ${micro}${quality?.seamlessShot ? " Continuous, seamless shot." : ""}`.trim()
+      ? `Wide opening hold for first-frame clarity, then a restrained slow push-in over the full 10-second beat. Both subjects stay fully readable from frame one. The left subject ${openingPredator}. The right subject ${openingPrey}. Let the setup breathe before the tension tightens. Clear spacing, one clean threat line, no sudden action spike.${runwayCameraTail} ${micro}${quality?.seamlessShot ? " Continuous, seamless shot." : ""}`.trim()
       : isShoreline
-        ? `Wide opening hold for first-frame clarity, then a restrained slow push-in over the full 10-second beat. Both subjects stay fully readable from frame one. The left subject ${openingPredator}. The right subject ${openingPrey}. Let the readable shoreline setup breathe before the tension tightens. Clear spacing, one clean threat line, no sudden action spike. ${micro}${quality?.seamlessShot ? " Continuous, seamless shot." : ""}`.trim()
-        : `Wide opening hold for first-frame clarity, then a restrained slow push-in over the full 10-second beat. Both subjects stay fully readable from frame one. The left subject ${openingPredator}. The right subject ${openingPrey}. Let the readable setup breathe before the tension tightens. Clear spacing, one clean threat line, no sudden action spike. ${micro}${quality?.seamlessShot ? " Continuous, seamless shot." : ""}`.trim()
+        ? `Wide opening hold for first-frame clarity, then a restrained slow push-in over the full 10-second beat. Both subjects stay fully readable from frame one. The left subject ${openingPredator}. The right subject ${openingPrey}. Let the readable shoreline setup breathe before the tension tightens. Clear spacing, one clean threat line, no sudden action spike.${runwayCameraTail} ${micro}${quality?.seamlessShot ? " Continuous, seamless shot." : ""}`.trim()
+        : `Wide opening hold for first-frame clarity, then a restrained slow push-in over the full 10-second beat. Both subjects stay fully readable from frame one. The left subject ${openingPredator}. The right subject ${openingPrey}. Let the readable setup breathe before the tension tightens. Clear spacing, one clean threat line, no sudden action spike.${runwayCameraTail} ${micro}${quality?.seamlessShot ? " Continuous, seamless shot." : ""}`.trim()
   );
 
   const longShot2PasteReady = sanitizeVideoBeatText(
     isAquatic
-      ? `Locked wide pressure-build shot with a very slow forward creep across 15 seconds. ${pressurePredator}. ${pressurePrey}. Let the spacing collapse gradually, keep the body language readable, and hold the threat line long enough for pressure to build. No full collision yet. ${locationCore}. Surface turbulence and water displacement stay controlled. Then both subjects settle into a tense pre-action hold.`
+      ? `Locked wide pressure-build shot with a very slow forward creep across 15 seconds.${klingCameraTail} ${pressurePredator}. ${pressurePrey}. Let the spacing collapse gradually, keep the body language readable, and hold the threat line long enough for pressure to build. No full collision yet. ${locationCore}. Surface turbulence and water displacement stay controlled. Then both subjects settle into a tense pre-action hold.`
       : isShoreline
-        ? `Locked wide pressure-build shot with a very slow forward creep across 15 seconds. ${pressurePredator}. ${pressurePrey}. Let the spacing collapse gradually, keep the body language readable, and hold the threat line long enough for pressure to build. No full collision yet. ${locationCore}. Splash and bank disturbance stay controlled. Then both subjects settle into a tense pre-action hold.`
-        : `Locked wide pressure-build shot with a very slow forward creep across 15 seconds. ${pressurePredator}. ${pressurePrey}. Let the spacing collapse gradually, keep the body language readable, and hold the threat line long enough for pressure to build. No full collision yet. ${locationCore}. Grounded weight transfer stays controlled. Then both subjects settle into a tense pre-action hold.`
+        ? `Locked wide pressure-build shot with a very slow forward creep across 15 seconds.${klingCameraTail} ${pressurePredator}. ${pressurePrey}. Let the spacing collapse gradually, keep the body language readable, and hold the threat line long enough for pressure to build. No full collision yet. ${locationCore}. Splash and bank disturbance stay controlled. Then both subjects settle into a tense pre-action hold.`
+        : `Locked wide pressure-build shot with a very slow forward creep across 15 seconds.${klingCameraTail} ${pressurePredator}. ${pressurePrey}. Let the spacing collapse gradually, keep the body language readable, and hold the threat line long enough for pressure to build. No full collision yet. ${locationCore}. Grounded weight transfer stays controlled. Then both subjects settle into a tense pre-action hold.`
   );
 
   const longShot3PasteReady = sanitizeVideoBeatText(
     isAquatic
-      ? `Wide main-action payoff across 15 seconds with restrained handheld energy. ${formatActionSubject(predator, s3.predatorBeat)}. ${prey} ${s3.preyBeat}. Peak pressure lands once, stays readable, then eases into a clean chained end-state. Clear spacing, no chaotic overlap. ${locationCore}. Water displacement and turbulence stay forceful but controlled.`
+      ? `Wide main-action payoff across 15 seconds with restrained handheld energy.${klingCameraTail} ${formatActionSubject(predator, s3.predatorBeat)}. ${prey} ${s3.preyBeat}. Peak pressure lands once, stays readable, then eases into a clean chained end-state. Clear spacing, no chaotic overlap. ${locationCore}. Water displacement and turbulence stay forceful but controlled.`
       : isShoreline
-        ? `Wide main-action payoff across 15 seconds with restrained handheld energy. ${formatActionSubject(predator, s3.predatorBeat)}. ${prey} ${s3.preyBeat}. Peak pressure lands once, stays readable, then eases into a clean chained end-state. Clear spacing, no chaotic overlap. ${locationCore}. Splash and bank response stay forceful but controlled.`
-        : `Wide main-action payoff across 15 seconds with restrained handheld energy. ${formatActionSubject(predator, s3.predatorBeat)}. ${prey} ${s3.preyBeat}. Peak pressure lands once, stays readable, then eases into a clean chained end-state. Clear spacing, no chaotic overlap. ${locationCore}. Grounded weight transfer and surface response stay forceful but controlled.`
+        ? `Wide main-action payoff across 15 seconds with restrained handheld energy.${klingCameraTail} ${formatActionSubject(predator, s3.predatorBeat)}. ${prey} ${s3.preyBeat}. Peak pressure lands once, stays readable, then eases into a clean chained end-state. Clear spacing, no chaotic overlap. ${locationCore}. Splash and bank response stay forceful but controlled.`
+        : `Wide main-action payoff across 15 seconds with restrained handheld energy.${klingCameraTail} ${formatActionSubject(predator, s3.predatorBeat)}. ${prey} ${s3.preyBeat}. Peak pressure lands once, stays readable, then eases into a clean chained end-state. Clear spacing, no chaotic overlap. ${locationCore}. Grounded weight transfer and surface response stay forceful but controlled.`
   );
 
   const longShot4PasteReady = sanitizeRunwayFPS(
     isAquatic
-      ? `Wide aftermath hold with a slow pull-back over the full 10-second resolve. Both subjects remain fully readable. The left subject ${s4.predatorBeat}. The right subject ${s4.preyBeat}. Let the winner hold, retreat, or stare-down settle without adding new action. Residual turbulence fades while final spacing stays clean for the last frame. ${micro}${quality?.seamlessShot ? " Continuous, seamless shot." : ""}`.trim()
+      ? `Wide aftermath hold with a slow pull-back over the full 10-second resolve. Both subjects remain fully readable. The left subject ${s4.predatorBeat}. The right subject ${s4.preyBeat}. Let the winner hold, retreat, or stare-down settle without adding new action. Residual turbulence fades while final spacing stays clean for the last frame.${runwayCameraTail} ${micro}${quality?.seamlessShot ? " Continuous, seamless shot." : ""}`.trim()
       : isShoreline
-        ? `Wide aftermath hold with a slow pull-back over the full 10-second resolve. Both subjects remain fully readable. The left subject ${s4.predatorBeat}. The right subject ${s4.preyBeat}. Let the winner hold, retreat, or stare-down settle without adding new action. Residual splash and shoreline disturbance fade while final spacing stays clean for the last frame. ${micro}${quality?.seamlessShot ? " Continuous, seamless shot." : ""}`.trim()
-        : `Wide aftermath hold with a slow pull-back over the full 10-second resolve. Both subjects remain fully readable. The left subject ${s4.predatorBeat}. The right subject ${s4.preyBeat}. Let the winner hold, retreat, or stare-down settle without adding new action. Residual atmosphere fades while final spacing stays clean for the last frame. ${micro}${quality?.seamlessShot ? " Continuous, seamless shot." : ""}`.trim()
+        ? `Wide aftermath hold with a slow pull-back over the full 10-second resolve. Both subjects remain fully readable. The left subject ${s4.predatorBeat}. The right subject ${s4.preyBeat}. Let the winner hold, retreat, or stare-down settle without adding new action. Residual splash and shoreline disturbance fade while final spacing stays clean for the last frame.${runwayCameraTail} ${micro}${quality?.seamlessShot ? " Continuous, seamless shot." : ""}`.trim()
+        : `Wide aftermath hold with a slow pull-back over the full 10-second resolve. Both subjects remain fully readable. The left subject ${s4.predatorBeat}. The right subject ${s4.preyBeat}. Let the winner hold, retreat, or stare-down settle without adding new action. Residual atmosphere fades while final spacing stays clean for the last frame.${runwayCameraTail} ${micro}${quality?.seamlessShot ? " Continuous, seamless shot." : ""}`.trim()
   );
 
   return {
@@ -276,9 +309,9 @@ Camera motion: wide opening hold first, then restrained slow push-in only.
 Timing: 0-4s clear setup, 4-8s pressure hold, 8-10s subtle tightening.
 Subject action: left subject ${openingPredator}.
 Right-side reaction: right subject ${openingPrey}.
-Environment motion: ${micro}.
+Environment motion: ${micro}.${runwayCameraBreakdown}
 Tone: ${tone.video}.
-Framing: wide opening read, full-body visibility, clean silhouette separation.
+Framing: wide opening read, full-body visibility, clean silhouette separation.${runwayCameraBreakdown}
 Duration: 10 seconds for the long-lane hybrid workflow.
 FPS: 24 or 25 (set in Advanced).
 ⚠️ No negative prompt — Runway does not support negatives.
@@ -312,7 +345,7 @@ ${longShot2PasteReady}
 ─── FULL BREAKDOWN (reference only) ───
 Characters: ${characterLine.replace(/^Characters:\s*/i, "")}
 Action: ${pressurePredator}. ${pressurePrey}.
-${locationLine}
+${locationLine}${klingCameraBreakdown}
 Extra: ${buildKlingExtraLine(
   isAquatic
     ? `Surface response, readable water pressure, ${micro}. Physics priority: coherent limbs, controlled spacing, slower suspense build`
@@ -360,7 +393,7 @@ ${longShot3PasteReady}
 ─── FULL BREAKDOWN (reference only) ───
 Characters: ${characterLine.replace(/^Characters:\s*/i, "")}
 Action: ${formatActionSubject(predator, s3.predatorBeat)}. ${prey} ${s3.preyBeat}.
-${locationLine}
+${locationLine}${klingCameraBreakdown}
 Extra: ${buildKlingExtraLine(
   isAquatic
     ? `${micro}. Peak pressure lands once, bodies separate cleanly, and the shot ends on a stable chained frame`
@@ -410,7 +443,7 @@ Subject action: left subject ${s4.predatorBeat}.
 Right-side reaction: right subject ${s4.preyBeat}.
 Environment motion: residual atmosphere — ${micro}.
 Mood: ${tone.image}.
-Framing: wide aftermath readability, full-body visibility, clean separation.
+Framing: wide aftermath readability, full-body visibility, clean separation.${runwayCameraBreakdown}
 Duration: 10 seconds for the long-lane hybrid workflow.
 ⚠️ Use Shot 3 last frame as I2V input only if it remains a clean full-body handoff frame. Otherwise reuse the master still or a manually selected clean continuity frame.`,
       pasteReady: longShot4PasteReady,
@@ -438,7 +471,8 @@ export function buildHybridLongFourShotWorkflow(
   emotionalTone: EmotionalTone,
   animalVibe: AnimalVibe,
   sceneDesc?: string,
-  quality?: QualityOptions
+  quality?: QualityOptions,
+  cameraAnglePreset: CameraAnglePreset = "Auto"
 ): { shot1: string; shot2: string; shot3: string; shot4: string } {
   return promptPackToLegacyText(
     buildHybridLongPromptPack(
@@ -452,7 +486,8 @@ export function buildHybridLongFourShotWorkflow(
       emotionalTone,
       animalVibe,
       sceneDesc,
-      quality
+      quality,
+      cameraAnglePreset
     )
   );
 }
@@ -471,6 +506,7 @@ export function buildFourShotWorkflowPromptPack(opts: {
   animalVibe: AnimalVibe;
   sceneDesc?: string;
   quality?: QualityOptions;
+  cameraAnglePreset?: CameraAnglePreset;
 }): WorkflowPromptPack {
   const {
     mode = "hybrid",
@@ -486,6 +522,7 @@ export function buildFourShotWorkflowPromptPack(opts: {
     animalVibe,
     sceneDesc,
     quality,
+    cameraAnglePreset = "Auto",
   } = opts;
 
   switch (mode) {
@@ -502,7 +539,8 @@ export function buildFourShotWorkflowPromptPack(opts: {
             emotionalTone,
             animalVibe,
             sceneDesc,
-            quality
+            quality,
+            cameraAnglePreset
           )
         : buildHybridPromptPack(
             predator,
@@ -515,7 +553,8 @@ export function buildFourShotWorkflowPromptPack(opts: {
             emotionalTone,
             animalVibe,
             sceneDesc,
-            quality
+            quality,
+            cameraAnglePreset
           );
     case "runway-only":
       return buildRunwayPromptPack(
@@ -528,7 +567,8 @@ export function buildFourShotWorkflowPromptPack(opts: {
         emotionalTone,
         animalVibe,
         sceneDesc,
-        quality
+        quality,
+        cameraAnglePreset
       );
     case "kling-only":
       return buildKlingPromptPack(
@@ -541,7 +581,8 @@ export function buildFourShotWorkflowPromptPack(opts: {
         emotionalTone,
         animalVibe,
         sceneDesc,
-        quality
+        quality,
+        cameraAnglePreset
       );
     case "seedance": {
       const pack = buildSeedancePromptPack(
@@ -583,6 +624,7 @@ export function buildFourShotWorkflow(opts: {
   animalVibe: AnimalVibe;
   sceneDesc?: string;
   quality?: QualityOptions;
+  cameraAnglePreset?: CameraAnglePreset;
 }): { shot1: string; shot2: string; shot3: string; shot4: string } {
   return promptPackToLegacyText(buildFourShotWorkflowPromptPack(opts));
 }

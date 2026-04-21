@@ -49,6 +49,16 @@ export type ContentLane =
   | "Rut Battle"
   | "Escape";
 
+export type CameraAnglePreset =
+  | "Auto"
+  | "Front full-body"
+  | "Side profile"
+  | "Low-angle power"
+  | "Over-the-shoulder"
+  | "Overhead"
+  | "Waterline"
+  | "Ground-level tension";
+
 export type EmotionalTone =
   | "Raw Tension"
   | "Silent Dread"
@@ -223,6 +233,7 @@ export type BuildWorkflowPresetSnapshot = {
   predator: string;
   prey: string;
   contentLane: ContentLane;
+  cameraAnglePreset: CameraAnglePreset;
   arc: Arc;
   habitat: HabitatPreset;
   weather: Weather;
@@ -657,6 +668,7 @@ export type GeneratedPackage = {
   predatorName?: string;
   preyName?: string;
   arcName?: Arc;
+  cameraAnglePreset?: CameraAnglePreset;
 
   // ── Kling multi-shot (old pro) ──
   klingNative15s?: string;
@@ -772,6 +784,7 @@ export type ShareState = {
   depthMode: DepthMode;
   habitat: HabitatPreset;
   contentLane: ContentLane;
+  cameraAnglePreset: CameraAnglePreset;
 };
 
 // ─────────────────────────────────────────────────────────────

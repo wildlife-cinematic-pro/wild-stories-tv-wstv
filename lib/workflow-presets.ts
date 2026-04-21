@@ -3,6 +3,7 @@ import type {
   AnimalVibe,
   Arc,
   BuildWorkflowPresetSnapshot,
+  CameraAnglePreset,
   ContentLane,
   DepthMode,
   DurationLane,
@@ -29,6 +30,7 @@ import {
   weatherOptions,
 } from "@/lib/model-specs";
 import { contentLaneOptions } from "@/lib/content-lanes";
+import { cameraAnglePresetOptions } from "@/lib/camera-angle-presets";
 import { animalVibes, emotionalTones } from "@/lib/predator-data";
 
 export const MAX_WORKFLOW_PRESETS = 40;
@@ -213,6 +215,11 @@ export function normalizeWorkflowPresetSnapshot(
     contentLane: pickOption<ContentLane>(
       value.contentLane,
       contentLaneOptions,
+      "Auto"
+    ),
+    cameraAnglePreset: pickOption<CameraAnglePreset>(
+      value.cameraAnglePreset,
+      cameraAnglePresetOptions,
       "Auto"
     ),
     arc: pickOption<Arc>(value.arc, arcs, "Ambush attack"),
