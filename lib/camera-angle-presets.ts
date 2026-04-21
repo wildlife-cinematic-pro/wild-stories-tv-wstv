@@ -50,29 +50,29 @@ export const cameraAnglePresetDefinitions: Record<
     value: "Front full-body",
     label: "Front full-body",
     helper:
-      "Best when both animals need instant species readability and clean full-body scale.",
+      "Safest Facebook first test when both species need instant recognition, clean scale, and readable footing.",
     imageFraming:
-      "Camera angle preset: front full-body wildlife read, both animals squared clearly to camera, full legs visible, clean 9:16 spacing.",
+      "Front full-body wildlife framing, subjects squared cleanly to camera, full legs visible, clean 9:16 spacing.",
     runwayFraming:
-      "Camera preset: frontal full-body read; keep both subjects visible through the move.",
+      "Frontal full-body framing with both subjects visible through the move.",
     klingFraming:
-      "Camera preset: front full-body framing with both subjects readable and separated.",
+      "Front full-body framing with both subjects readable and separated.",
     lightingContinuity:
-      "Keep the same frontal light direction and readable rim separation across all continuity images.",
+      "Keep frontal light direction consistent so body outline and scale stay easy to read.",
   },
   "Side profile": {
     value: "Side profile",
     label: "Side profile",
     helper:
-      "Best for chase geometry, body length, stride clarity, and left-to-right pressure.",
+      "Best for chase line, body length, stride read, and clean left-to-right pressure.",
     imageFraming:
-      "Camera angle preset: side-profile documentary framing, movement line visible across the frame, both full bodies readable.",
+      "Side-profile wildlife framing, movement line visible across the frame, both full bodies readable.",
     runwayFraming:
-      "Camera preset: side-profile tracking read; preserve the movement line and full-body spacing.",
+      "Side-profile tracking bias that preserves the movement line and full-body spacing.",
     klingFraming:
-      "Camera preset: side-profile wildlife framing with the action line visible across the frame.",
+      "Side-profile wildlife framing with the action line visible across the frame.",
     lightingContinuity:
-      "Keep side light consistent enough that silhouettes and body outlines stay easy to read.",
+      "Keep side light consistent so silhouettes and stride shape stay readable.",
   },
   "Low-angle power": {
     value: "Low-angle power",
@@ -80,11 +80,11 @@ export const cameraAnglePresetDefinitions: Record<
     helper:
       "Best for dominance, rut clash, defender posture, and grounded impact without hiding anatomy.",
     imageFraming:
-      "Camera angle preset: low camera position with a slight upward read, full bodies still visible, grounded paw or hoof contact clear.",
+      "Low-angle wildlife framing from a low camera position with a slight upward read, full bodies still visible, grounded paw or hoof contact clear.",
     runwayFraming:
-      "Camera preset: low camera height with a slight upward read; keep full bodies visible.",
+      "Low camera height with a slight upward read while full bodies stay visible.",
     klingFraming:
-      "Camera preset: low-angle documentary power framing, full bodies visible with grounded contact.",
+      "Low-angle power framing with grounded contact and full-body readability.",
     lightingContinuity:
       "Keep low-angle rim light stable so silhouettes stay separated from the habitat.",
   },
@@ -92,57 +92,57 @@ export const cameraAnglePresetDefinitions: Record<
     value: "Over-the-shoulder",
     label: "Over-the-shoulder",
     helper:
-      "Best for tense standoffs where one animal frames the danger approaching from the far side.",
+      "Use when one animal can frame the threat without hiding the other subject; best after a safe default test.",
     imageFraming:
-      "Camera angle preset: over-the-shoulder wildlife relationship, foreground shoulder edge framing the distant opponent, both subjects still readable.",
+      "Over-the-shoulder wildlife framing with a clear foreground edge, a distant opponent, and readable spacing between both subjects.",
     runwayFraming:
-      "Camera preset: over-shoulder relationship read; foreground edge stays stable while the far subject remains readable.",
+      "Over-shoulder relationship framing with a stable foreground edge and a readable far subject.",
     klingFraming:
-      "Camera preset: over-the-shoulder wildlife framing with a readable foreground-to-background threat line.",
+      "Over-the-shoulder framing with a readable foreground-to-background threat line.",
     lightingContinuity:
-      "Match foreground and background lighting so the shoulder edge does not swallow the distant subject.",
+      "Match foreground and background light so the near shoulder never swallows the far subject.",
   },
   Overhead: {
     value: "Overhead",
     label: "Overhead",
     helper:
-      "Best for spacing, escape routes, pack geometry, and readable predator-prey positioning.",
+      "Best when spacing, escape route, or pack geometry matters more than eye-level intimacy.",
     imageFraming:
-      "Camera angle preset: overhead high-angle documentary read, spacing geometry visible, silhouettes separated, terrain layout clear.",
+      "High overhead wildlife framing with spacing geometry, silhouette separation, and terrain layout clear.",
     runwayFraming:
-      "Camera preset: high overhead read; keep spacing geometry and movement paths clear.",
+      "High overhead framing that keeps spacing geometry and movement paths clear.",
     klingFraming:
-      "Camera preset: overhead wildlife geometry, with subjects separated and movement paths readable.",
+      "High overhead wildlife geometry with separated subjects and readable movement paths.",
     lightingContinuity:
-      "Keep top-light and shadow direction consistent so overhead silhouettes remain clear.",
+      "Keep top-light and shadow direction consistent so overhead silhouettes stay legible.",
   },
   Waterline: {
     value: "Waterline",
     label: "Waterline",
     helper:
-      "Use only for riverbank, marsh, shallow-water, or shoreline scenes where the water edge matters.",
+      "Only for real bank, marsh, shallow-water, or shoreline scenes; land scenes fall back automatically.",
     imageFraming:
-      "Camera angle preset: waterline-level framing at the bank, wet foreground edge, subjects readable above the surface.",
+      "Waterline wildlife framing at the bank with a wet foreground edge and both subjects readable above the surface.",
     runwayFraming:
-      "Camera preset: waterline-height read; keep the bank edge and subject spacing visible.",
+      "Waterline-height framing that keeps the bank edge and subject spacing visible.",
     klingFraming:
-      "Camera preset: waterline wildlife framing with readable bank-edge timing and clear subject separation.",
+      "Waterline wildlife framing with bank-edge timing and clear subject separation.",
     lightingContinuity:
-      "Keep water-edge highlights consistent without adding glare that hides animal silhouettes.",
+      "Keep water-edge highlights consistent without glare swallowing the animal outlines.",
   },
   "Ground-level tension": {
     value: "Ground-level tension",
     label: "Ground-level tension",
     helper:
-      "Best for close terrain texture, stalking tension, and first-frame threat without a full redesign.",
+      "Best for stalking pressure, terrain texture, and low first-frame tension while keeping legs visible.",
     imageFraming:
-      "Camera angle preset: ground-level animal-height framing, foreground terrain texture, low readable tension without hiding legs.",
+      "Ground-level animal-height wildlife framing with foreground terrain texture and low readable tension without hiding legs.",
     runwayFraming:
-      "Camera preset: ground-level animal-height read; keep legs and spacing visible.",
+      "Ground-level animal-height framing that keeps legs and spacing visible.",
     klingFraming:
-      "Camera preset: ground-level wildlife tension with foreground texture and full-body readability.",
+      "Ground-level wildlife tension framing with foreground texture and full-body readability.",
     lightingContinuity:
-      "Keep low foreground shadows controlled so terrain texture does not obscure the animals.",
+      "Keep low foreground shadows controlled so terrain texture never obscures the animals.",
   },
 };
 

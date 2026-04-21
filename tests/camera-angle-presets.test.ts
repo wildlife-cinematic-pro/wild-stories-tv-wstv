@@ -170,7 +170,10 @@ describe("camera angle presets", () => {
 
     expect(imagePrompt).toMatch(/low camera position/i);
     expect(runway.shot1.pasteReady).toMatch(/low camera height/i);
-    expect(kling.shot1.pasteReady).toMatch(/low-angle documentary power/i);
+    expect(kling.shot1.pasteReady).toMatch(/low-angle power framing/i);
+    expect(imagePrompt).not.toMatch(/camera angle preset:/i);
+    expect(runway.shot1.pasteReady).not.toMatch(/camera preset:/i);
+    expect(kling.shot1.pasteReady).not.toMatch(/camera preset:/i);
   });
 
   it("adds overhead and over-the-shoulder framing language when selected", () => {
@@ -209,8 +212,8 @@ describe("camera angle presets", () => {
       "Over-the-shoulder"
     );
 
-    expect(overhead).toMatch(/overhead high-angle documentary read/i);
-    expect(overShoulder).toMatch(/over-the-shoulder wildlife relationship/i);
+    expect(overhead).toMatch(/high overhead wildlife framing/i);
+    expect(overShoulder).toMatch(/over-the-shoulder wildlife framing/i);
   });
 
   it("uses waterline language only for water-compatible habitats", () => {
@@ -249,9 +252,9 @@ describe("camera angle presets", () => {
       "Waterline"
     );
 
-    expect(fishingStrike).toMatch(/waterline-level framing/i);
+    expect(fishingStrike).toMatch(/waterline wildlife framing|waterline-height|wet foreground edge/i);
     expect(dryGround).not.toMatch(/waterline-level|bank-edge|water-edge/i);
-    expect(dryGround).toMatch(/ground-level animal-height framing/i);
+    expect(dryGround).toMatch(/ground-level animal-height wildlife framing/i);
   });
 
   it("threads the selected preset through package assembly", () => {
@@ -260,9 +263,9 @@ describe("camera angle presets", () => {
     );
 
     expect(draft.basePkg.cameraAnglePreset).toBe("Side profile");
-    expect(draft.basePkg.imagePrompt).toMatch(/side-profile documentary framing/i);
+    expect(draft.basePkg.imagePrompt).toMatch(/side-profile wildlife framing/i);
     expect(draft.basePkg.structuredPrompts?.workflowShots?.[0].pasteReady).toMatch(
-      /side-profile tracking read/i
+      /side-profile tracking bias/i
     );
   });
 });
