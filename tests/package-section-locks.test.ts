@@ -152,6 +152,22 @@ function makePackage(prefix: string): GeneratedPackage {
         tags: `${prefix} fb tags`,
         bestTime: "7 PM",
         cmpNote: "cmp",
+        overlayGuidance: {
+          placement: `${prefix} placement`,
+          textLength: `${prefix} text length`,
+          opener: `${prefix} opener`,
+          audio: `${prefix} audio`,
+          tone: `${prefix} tone`,
+        },
+        hookFormattingPresets: [
+          {
+            preset: "species_first",
+            label: `${prefix} fb preset`,
+            text: `${prefix} fb overlay`,
+            lines: [`${prefix} fb line 1`, `${prefix} fb line 2`],
+            note: `${prefix} fb note`,
+          },
+        ],
       },
       instagram: {
         hook: `${prefix} ig hook`,
@@ -159,6 +175,22 @@ function makePackage(prefix: string): GeneratedPackage {
         hashtags: `${prefix} ig hashtags`,
         tags: `${prefix} ig tags`,
         bestTime: "7 PM",
+        overlayGuidance: {
+          placement: `${prefix} ig placement`,
+          textLength: `${prefix} ig text length`,
+          opener: `${prefix} ig opener`,
+          audio: `${prefix} ig audio`,
+          tone: `${prefix} ig tone`,
+        },
+        hookFormattingPresets: [
+          {
+            preset: "documentary_tension",
+            label: `${prefix} ig preset`,
+            text: `${prefix} ig overlay`,
+            lines: [`${prefix} ig line 1`, `${prefix} ig line 2`],
+            note: `${prefix} ig note`,
+          },
+        ],
       },
       tiktok: {
         hook: `${prefix} tt hook`,
@@ -166,6 +198,22 @@ function makePackage(prefix: string): GeneratedPackage {
         hashtags: `${prefix} tt hashtags`,
         tags: `${prefix} tt tags`,
         bestTime: "7 PM",
+        overlayGuidance: {
+          placement: `${prefix} tt placement`,
+          textLength: `${prefix} tt text length`,
+          opener: `${prefix} tt opener`,
+          audio: `${prefix} tt audio`,
+          tone: `${prefix} tt tone`,
+        },
+        hookFormattingPresets: [
+          {
+            preset: "short_pressure",
+            label: `${prefix} tt preset`,
+            text: `${prefix} tt overlay`,
+            lines: [`${prefix} tt line 1`],
+            note: `${prefix} tt note`,
+          },
+        ],
       },
       youtube_shorts: {
         title: `${prefix} yt title`,
@@ -240,11 +288,20 @@ describe("package section locks", () => {
     expect(merged.platformPack?.facebook.hook).toBe(
       lockedPackage.platformPack?.facebook.hook
     );
+    expect(merged.platformPack?.facebook.hookFormattingPresets).toEqual(
+      lockedPackage.platformPack?.facebook.hookFormattingPresets
+    );
+    expect(merged.platformPack?.instagram.overlayGuidance).toEqual(
+      lockedPackage.platformPack?.instagram.overlayGuidance
+    );
     expect(merged.platformPack?.instagram.caption).toBe(
       lockedPackage.platformPack?.instagram.caption
     );
     expect(merged.platformPack?.tiktok.hashtags).toBe(
       lockedPackage.platformPack?.tiktok.hashtags
+    );
+    expect(merged.platformPack?.tiktok.hookFormattingPresets).toEqual(
+      lockedPackage.platformPack?.tiktok.hookFormattingPresets
     );
     expect(merged.voiceoverLine).toBe(candidatePackage.voiceoverLine);
   });

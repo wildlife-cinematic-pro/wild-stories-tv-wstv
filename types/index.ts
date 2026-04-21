@@ -490,9 +490,34 @@ export type FiveShotPlan = {
 // ─────────────────────────────────────────────────────────────
 // PLATFORM PACKS
 // ─────────────────────────────────────────────────────────────
+export type HookFormattingPreset =
+  | "species_first"
+  | "documentary_tension"
+  | "observational_question"
+  | "short_pressure"
+  | "two_line_opener";
+
+export type HookOverlayVariant = {
+  preset: HookFormattingPreset;
+  label: string;
+  text: string;
+  lines: string[];
+  note: string;
+};
+
+export type FirstFrameOverlayGuidance = {
+  placement: string;
+  textLength: string;
+  opener: string;
+  audio: string;
+  tone: string;
+};
+
 export type PlatformPostCommon = {
   bestTime: string;
   strategyNote?: string;
+  overlayGuidance?: FirstFrameOverlayGuidance;
+  hookFormattingPresets?: HookOverlayVariant[];
 };
 
 export type FacebookPack = PlatformPostCommon & {
