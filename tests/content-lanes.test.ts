@@ -116,10 +116,42 @@ describe("Content Lane system", () => {
       { contentLane: "Escape" }
     );
 
-    expect(packHook.toLowerCase()).toMatch(/pack|escape lane/);
-    expect(defenderHook.toLowerCase()).toMatch(/yield|pressure line/);
+    expect(packHook.toLowerCase()).toMatch(/pack|escape path/);
+    expect(defenderHook.toLowerCase()).toMatch(/yield|warning step/);
     expect(fishingHook.toLowerCase()).toMatch(/waterline|strike window/);
-    expect(rutHook.toLowerCase()).toMatch(/dominance posture|clash/);
+    expect(rutHook.toLowerCase()).toMatch(/antler line|shoulders|standoff/);
     expect(escapeHook.toLowerCase()).toMatch(/breakaway|survival/);
   });
+
+  it("keeps Step 1 lane copy from falling back into repetitive generic phrasing", () => {
+    const rutHook = build2026HookByFamily(
+      "Bull Elk",
+      "Bull Elk",
+      "Territory dominance battle",
+      "danger",
+      { contentLane: "Rut Battle" }
+    );
+    const packHook = build2026HookByFamily(
+      "Gray Wolf",
+      "Bull Elk",
+      "Pack hunting strategy",
+      "reversal",
+      { contentLane: "Pack Hunt" }
+    );
+    const defenderHook = build2026HookByFamily(
+      "Bison",
+      "Gray Wolf",
+      "Defender stands ground",
+      "reversal",
+      { contentLane: "Defender" }
+    );
+
+    expect(rutHook.toLowerCase()).toMatch(/antler|shoulder|standoff|footing/);
+    expect(packHook.toLowerCase()).toContain("narrowing trap");
+    expect(defenderHook.toLowerCase()).toContain("planted stance");
+    expect(`${rutHook} ${packHook} ${defenderHook}`.toLowerCase()).not.toMatch(
+      /what looked|changed the read|pressure line/
+    );
+  });
+
 });

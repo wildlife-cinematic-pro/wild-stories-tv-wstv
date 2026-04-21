@@ -74,27 +74,27 @@ export function buildUSViewsModeReport(input: USViewsModeInput): USViewsModeRepo
     performanceReady;
   const nextActions = [
     audience.total < 70
-      ? "Strengthen the U.S. concept with more iconic wildlife, setting, or cleaner conflict stakes."
+      ? "Use a more iconic U.S. animal pair, cleaner habitat cue, or stronger Content Lane fit before publishing."
       : "",
     opening.total < 60
-      ? "Rebuild the opening frame so both subjects and the threat read immediately."
+      ? "Rework frame 1 so the species, spacing, and first point of tension are obvious without explanation."
       : "",
     !publish.isPass
       ? publish.fixes?.[0] ??
-        "Tighten the caption, use exactly 5 clean hashtags, and confirm originality before publishing."
+        "Tighten the hook and caption pack until it reads clean, documentary, and discussion-safe."
       : "",
     !performanceReady
-      ? "Current performance memory does not support this publish setup yet. Use the safer lane or stronger hook family."
+      ? "Performance memory is soft for this setup. Start with the safer lane or a cleaner first-frame hook before scaling."
       : "",
     performanceSnapshot && input.durationLane === "long" && performanceSnapshot.completionRate < 0.62
-      ? "The long lane benchmark is soft. Use the short lane until retention improves."
+      ? "Long-lane retention is still soft. Use the short lane until the opener and caption pack carry better."
       : "",
   ].filter(Boolean);
 
   const summaryBits = [
     audience.summary,
     opening.summary,
-    publish.summary ?? (publish.isPass ? "Packaging is publish-safe." : "Packaging needs cleanup."),
+    publish.summary ?? (publish.isPass ? "Packaging stays Facebook-safe." : "Packaging needs Facebook-safe cleanup."),
     performanceSnapshot?.summary ?? "",
   ].filter(Boolean);
 

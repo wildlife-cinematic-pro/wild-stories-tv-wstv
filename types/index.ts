@@ -535,12 +535,26 @@ export type FacebookCoverFrameTextPreset = {
   note: string;
 };
 
+export type FacebookFrameHeuristicLevel = "low" | "medium" | "high";
+export type FacebookFrameSubjectFit = "strong" | "balanced" | "crowded";
+export type FacebookFrameChoice = "species-first" | "tension-first";
+
+export type FacebookFrameHeuristics = {
+  speciesReadability: FacebookFrameHeuristicLevel;
+  textAnimalCollisionRisk: FacebookFrameHeuristicLevel;
+  silhouetteConflictRisk: FacebookFrameHeuristicLevel;
+  leftRightSubjectFit: FacebookFrameSubjectFit;
+  frame1Choice: FacebookFrameChoice;
+  summary: string;
+};
+
 export type FacebookOverlayPresetScore = {
   preset: FacebookFirstFrameOverlayPreset;
   label: string;
   text: string;
   score: number;
   reason: string;
+  frameHeuristics?: FacebookFrameHeuristics;
 };
 
 export type FacebookOverlayRecommendation = {
@@ -555,6 +569,7 @@ export type FacebookCoverFramePresetScore = {
   text: string;
   score: number;
   reasons: string[];
+  frameHeuristics?: FacebookFrameHeuristics;
 };
 
 export type FacebookCoverFrameRanking = {

@@ -141,6 +141,35 @@ function buildFirstFrameOverlayText(data: GeneratedPackage) {
           `${facebook.facebookOverlayRecommendation.recommended.label} (${facebook.facebookOverlayRecommendation.recommended.score})`,
           safeStr(facebook.facebookOverlayRecommendation.recommended.text),
           `Why: ${safeStr(facebook.facebookOverlayRecommendation.reason)}`,
+          facebook.facebookOverlayRecommendation.recommended.frameHeuristics
+            ? [
+                "FRAME HEURISTICS",
+                `Species readability: ${safeStr(
+                  facebook.facebookOverlayRecommendation.recommended
+                    .frameHeuristics.speciesReadability
+                )}`,
+                `Text collision risk: ${safeStr(
+                  facebook.facebookOverlayRecommendation.recommended
+                    .frameHeuristics.textAnimalCollisionRisk
+                )}`,
+                `Silhouette conflict: ${safeStr(
+                  facebook.facebookOverlayRecommendation.recommended
+                    .frameHeuristics.silhouetteConflictRisk
+                )}`,
+                `Subject fit: ${safeStr(
+                  facebook.facebookOverlayRecommendation.recommended
+                    .frameHeuristics.leftRightSubjectFit
+                )}`,
+                `Frame-1 call: ${safeStr(
+                  facebook.facebookOverlayRecommendation.recommended
+                    .frameHeuristics.frame1Choice
+                )}`,
+                `Summary: ${safeStr(
+                  facebook.facebookOverlayRecommendation.recommended
+                    .frameHeuristics.summary
+                )}`,
+              ].join("\n")
+            : "",
           facebook.facebookOverlayRecommendation.alternatives.length
             ? `Secondary tests: ${facebook.facebookOverlayRecommendation.alternatives
                 .map((entry) => `${entry.label} (${entry.score})`)
@@ -181,11 +210,43 @@ Note: ${safeStr(preset.note)}`
           `Best: ${facebook.facebookCoverFrameRanking.best.label} (${facebook.facebookCoverFrameRanking.best.score})`,
           safeStr(facebook.facebookCoverFrameRanking.best.text),
           `Why: ${safeStr(facebook.facebookCoverFrameRanking.reason)}`,
+          facebook.facebookCoverFrameRanking.best.frameHeuristics
+            ? [
+                "FRAME HEURISTICS",
+                `Species readability: ${safeStr(
+                  facebook.facebookCoverFrameRanking.best.frameHeuristics
+                    .speciesReadability
+                )}`,
+                `Text collision risk: ${safeStr(
+                  facebook.facebookCoverFrameRanking.best.frameHeuristics
+                    .textAnimalCollisionRisk
+                )}`,
+                `Silhouette conflict: ${safeStr(
+                  facebook.facebookCoverFrameRanking.best.frameHeuristics
+                    .silhouetteConflictRisk
+                )}`,
+                `Subject fit: ${safeStr(
+                  facebook.facebookCoverFrameRanking.best.frameHeuristics
+                    .leftRightSubjectFit
+                )}`,
+                `Frame-1 call: ${safeStr(
+                  facebook.facebookCoverFrameRanking.best.frameHeuristics
+                    .frame1Choice
+                )}`,
+                `Summary: ${safeStr(
+                  facebook.facebookCoverFrameRanking.best.frameHeuristics.summary
+                )}`,
+              ].join("\n")
+            : "",
           "Ranked presets:",
           facebook.facebookCoverFrameRanking.ranked
             .map(
               (entry, index) =>
-                `#${index + 1} ${entry.label} (${entry.score}) — ${entry.reasons.join("; ")}`
+                `#${index + 1} ${entry.label} (${entry.score}) — ${entry.reasons.join("; ")}${
+                  entry.frameHeuristics
+                    ? ` | ${entry.frameHeuristics.summary}`
+                    : ""
+                }`
             )
             .join("\n"),
         ].join("\n")
