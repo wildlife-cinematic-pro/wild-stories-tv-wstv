@@ -1,3 +1,4 @@
+import { isContentLaneCompatible } from "@/lib/content-lanes";
 import type {
   AnimalVibe,
   Arc,
@@ -160,6 +161,59 @@ export function getAnimalPairMicroGuidance(
   return `${predator} vs ${prey} is higher drift risk; use conservative habitat and simple action first.`;
 }
 
+function getLaneCompatibilityFallbackHint(
+  contentLane: ContentLane,
+  arc: Arc
+): string {
+  switch (contentLane) {
+    case "Pack Hunt":
+      return `Strongest Facebook test: keep ${arc} arc-led and avoid coordinated pack-hunt copy unless grouped predators are visible.`;
+    case "Defender":
+      return `Strongest Facebook test: keep ${arc} arc-led and avoid calf-protection or hold-ground copy unless the defender posture is obvious.`;
+    case "Fishing Strike":
+      return `Strongest Facebook test: keep ${arc} arc-led and avoid waterline strike copy unless the habitat visibly supports it.`;
+    case "Rut Battle":
+      return `Strongest Facebook test: treat this as a giant clash or territorial standoff, not a rut or antler setup.`;
+    case "Escape":
+      return `Strongest Facebook test: keep ${arc} arc-led and avoid forced near-miss copy unless the breakaway window is visible.`;
+    default:
+      return LANE_STRONGEST_HINT.Auto;
+  }
+}
+
+function buildStep1LaneRead(input: {
+  predator: string;
+  prey: string;
+  contentLane: ContentLane;
+  arc: Arc;
+}): { targetingLabel: string; strongestHint: string } {
+  if (input.contentLane === "Auto") {
+    return {
+      targetingLabel: "animal-first targeting",
+      strongestHint: LANE_STRONGEST_HINT.Auto,
+    };
+  }
+
+  if (
+    isContentLaneCompatible(
+      input.contentLane,
+      input.predator,
+      input.prey,
+      input.arc
+    )
+  ) {
+    return {
+      targetingLabel: `${input.contentLane} targeting`,
+      strongestHint: LANE_STRONGEST_HINT[input.contentLane],
+    };
+  }
+
+  return {
+    targetingLabel: `${input.contentLane} selected, but ${input.arc} should stay arc-led`,
+    strongestHint: getLaneCompatibilityFallbackHint(input.contentLane, input.arc),
+  };
+}
+
 export function getHabitatOverrideGuidance(
   habitat: HabitatPreset,
   contentLane: ContentLane
@@ -206,13 +260,14 @@ export function buildStep1FacebookRecommendation({
     weather === "Golden Hour" || weather === "Dawn" || depthMode === "Balanced Depth"
       ? "Current light/depth choices are fast-test friendly: clear subjects, low explanation cost."
       : "For the fastest first test, use Golden Hour or Balanced Depth if this setup feels too stylized.";
+  const laneRead = buildStep1LaneRead({ predator, prey, contentLane, arc });
 
   return {
     title: `${predator} vs ${prey}: Facebook first-test read`,
-    summary: `${arc} with ${contentLane === "Auto" ? "animal-first targeting" : `${contentLane} targeting`} is the current story shape. ${LANE_STRONGEST_HINT[contentLane]}`,
+    summary: `${arc} with ${laneRead.targetingLabel} is the current story shape. ${laneRead.strongestHint}`,
     hints: [
       { label: "Safest", text: safest },
-      { label: "Strongest", text: LANE_STRONGEST_HINT[contentLane] },
+      { label: "Strongest", text: laneRead.strongestHint },
       { label: "Fastest", text: fastest },
     ],
   };

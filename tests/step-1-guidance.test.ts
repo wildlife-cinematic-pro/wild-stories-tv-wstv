@@ -73,4 +73,23 @@ describe("Step 1 setup guidance", () => {
     expect(serialized).toContain("grouped predators");
     expect(serialized).not.toMatch(/instagram|tiktok/);
   });
+  it("does not frame incompatible Rut Battle setups as antler-valid", () => {
+    const recommendation = buildStep1FacebookRecommendation({
+      predator: "Grizzly Bear",
+      prey: "Bison",
+      contentLane: "Rut Battle",
+      arc: "Giant vs giant clash",
+      habitat: "Auto",
+      weather: "Golden Hour",
+      depthMode: "Balanced Depth",
+      driftRisk: "MEDIUM",
+    });
+    const serialized = JSON.stringify(recommendation).toLowerCase();
+
+    expect(serialized).toContain("should stay arc-led");
+    expect(serialized).toContain("not a rut or antler setup");
+    expect(serialized).not.toContain("antler room");
+  });
+
+
 });

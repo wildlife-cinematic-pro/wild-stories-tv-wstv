@@ -305,6 +305,24 @@ function getContentLaneConfig(contentLane: ContentLane): ContentLaneConfig | nul
   return contentLane === "Auto" ? null : CONTENT_LANE_CONFIG[contentLane];
 }
 
+function isRutBattleSpeciesPair(predator: string, prey: string): boolean {
+  const rutSpecies = [
+    "bull elk",
+    "elk",
+    "bison",
+    "moose",
+    "musk ox",
+    "cape buffalo",
+    "wild boar",
+  ];
+  const predatorText = normalizeText(predator);
+  const preyText = normalizeText(prey);
+  const predatorMatch = rutSpecies.some((species) => predatorText.includes(species));
+  const preyMatch = rutSpecies.some((species) => preyText.includes(species));
+
+  return predatorMatch && preyMatch;
+}
+
 export function isContentLane(value: string): value is ContentLane {
   return (contentLaneOptions as readonly string[]).includes(value);
 }
@@ -376,7 +394,7 @@ export function isContentLaneCompatible(
     case "Fishing Strike":
       return predatorMatch || preyMatch || arcMatch;
     case "Rut Battle":
-      return predatorMatch || preyMatch || arcMatch;
+      return isRutBattleSpeciesPair(predator, prey);
     case "Defender":
       return predatorMatch || preyMatch || arcMatch;
     case "Escape":
@@ -484,6 +502,10 @@ export function getUSAudienceLaneBonus(input: {
   let bonus = 0;
   const arc = input.arc as Arc;
 
+  if (!isContentLaneCompatible(contentLane, input.predator, input.prey, arc)) {
+    return 0;
+  }
+
   if (config.preferredArcs.includes(arc)) bonus += 4;
   if (includesKeyword(input.predator, config.predatorKeywords)) bonus += 2;
   if (includesKeyword(input.prey, config.preyKeywords)) bonus += 2;
@@ -506,14 +528,21 @@ export function scoreContentLaneFit(input: {
   const config = getContentLaneConfig(input.contentLane);
   if (!config) return 84;
 
-  let score = isContentLaneCompatible(
+  const compatible = isContentLaneCompatible(
     input.contentLane,
     input.predator,
     input.prey,
     input.arc
-  )
-    ? 74
-    : 62;
+  );
+
+  if (!compatible) {
+    let mismatchScore = 54;
+    if (config.nearbyArcs.includes(input.arc)) mismatchScore += 6;
+    if (config.preferredHookFamily === input.hookFamily) mismatchScore += 3;
+    return Math.min(68, mismatchScore);
+  }
+
+  let score = 74;
 
   if (config.preferredArcs.includes(input.arc)) score += 12;
   else if (config.nearbyArcs.includes(input.arc)) score += 8;

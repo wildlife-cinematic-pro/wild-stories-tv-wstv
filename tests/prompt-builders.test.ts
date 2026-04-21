@@ -669,6 +669,39 @@ describe("Step 12 — export cleanup guards", () => {
     expect(exportText).not.toContain("Keep everything else in the image exactly the same");
   });
 
+  it("keeps dry-ground Runway prompts from inheriting water motion language", () => {
+    const shots = buildRunwayShots(
+      "Bull Elk",
+      "Bull Elk",
+      "Rocky Mountain meadow with rut-season footing and dry grass",
+      "Giant vs giant clash",
+      "Golden Hour",
+      "Gen-4.5",
+      "Calm Dominance",
+      "BBC Earth Documentary",
+      "Two bull elk square off on dry meadow ground with clean spacing.",
+      {
+        realismMode: "Reference Locked",
+        motionOnlyI2V: true,
+        referenceLock: true,
+        singleActionRule: true,
+        microMotion: true,
+        heroVeo: false,
+      }
+    );
+    const runwayPaste =
+      shots.shot1
+        .split("═══ PASTE-READY I2V PROMPT (copy this into Runway) ═══")[1]
+        ?.split("─── SHOT BREAKDOWN ───")[0]
+        ?.trim()
+        .toLowerCase() ?? "";
+
+    expect(runwayPaste).not.toMatch(
+      /waterline|surface ripples|caustic|underwater|riverbank|shoreline|shallow current|in-water|in water/
+    );
+    expect(runwayPaste).toMatch(/grass|brush|fur|terrain|vegetation/);
+  });
+
   it("keeps long scene context export-safe when United States continuity text is present", () => {
     const p = buildImagePrompt(
       "Mountain Lion",
