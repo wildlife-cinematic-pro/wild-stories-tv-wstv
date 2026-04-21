@@ -582,6 +582,11 @@ export function finalizeGeneratedPackageDraft(
       contentLane: draft.contentLane,
     },
     openingFrame: draft.openingFrameInput,
+    hookText:
+      typeof enhanced.hook === "string" && enhanced.hook.trim().length > 0
+        ? enhanced.hook
+        : draft.primaryHook,
+    ctaText: draft.basePkg.cta,
     caption: finalPublishCaption,
     hashtags: draft.basePkg.hashtags.split(/\s+/).filter(Boolean),
     originalityConfirmed: draft.strictOriginalityGuard,

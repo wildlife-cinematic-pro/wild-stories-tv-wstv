@@ -1,9 +1,18 @@
 import type { PublishGuardReport } from "@/types";
+import {
+  evaluateHookCopyQuality,
+  hasBaitLikeCopy,
+  hasForcedEngagementCopy,
+} from "@/lib/platform-packs";
 
 export interface PublishGuardInput {
   caption: string;
   hashtags: string[];
   originalityConfirmed: boolean;
+  hookText?: string;
+  ctaText?: string;
+  predator?: string;
+  prey?: string;
 }
 
 const REQUIRED_HASHTAGS = 5;
@@ -14,13 +23,42 @@ export function runFacebookPublishGuard(input: PublishGuardInput): PublishGuardR
   const warnings: string[] = [];
 
   if (!input.originalityConfirmed) {
-    const warning = "Originality not confirmed. Facebook is currently prioritizing original content.";
+    const warning = "Originality not confirmed. Facebook-safe publishing starts with original commentary and packaging.";
     blockers.push(warning);
     warnings.push(warning);
   }
 
   if (input.caption.length > MAX_CAPTION_LENGTH) {
-    warnings.push('Caption is too long for the default Facebook-safe mode.');
+    warnings.push("Caption is too long for the default Facebook-safe mode.");
+  }
+
+  if (hasBaitLikeCopy(input.caption)) {
+    warnings.push(
+      "Caption leans on hype or bait phrasing. Keep it observational and documentary instead."
+    );
+  }
+
+  const hookQuality = input.hookText
+    ? evaluateHookCopyQuality(
+        input.hookText,
+        input.predator ?? "",
+        input.prey ?? ""
+      )
+    : null;
+  if (hookQuality?.hasBait) {
+    warnings.push(
+      "Hook reads like clickbait. Rewrite it as a species-clear observation with readable pressure."
+    );
+  } else if (hookQuality && hookQuality.score < 65) {
+    warnings.push(
+      "Hook is too generic. Name the species or describe the timing, spacing, posture, or pressure more clearly."
+    );
+  }
+
+  if (input.ctaText && hasForcedEngagementCopy(input.ctaText)) {
+    warnings.push(
+      "CTA pushes engagement too directly. Use a discussion-safe behavior question instead."
+    );
   }
 
   if (input.hashtags.length !== REQUIRED_HASHTAGS) {
@@ -29,17 +67,31 @@ export function runFacebookPublishGuard(input: PublishGuardInput): PublishGuardR
 
   const unique = new Set(input.hashtags.map((tag) => tag.toLowerCase()));
   if (unique.size !== input.hashtags.length) {
-    warnings.push('Duplicate hashtags detected.');
+    warnings.push("Duplicate hashtags detected.");
   }
 
   const isPass = blockers.length === 0 && warnings.length === 0;
   const fixes = [
-    !input.originalityConfirmed ? "Confirm originality before publishing." : "",
-    input.caption.length > MAX_CAPTION_LENGTH ? "Trim the publish caption for faster Facebook-safe readability." : "",
-    input.hashtags.length !== REQUIRED_HASHTAGS ? "Use exactly 5 clean hashtags." : "",
-    new Set(input.hashtags.map((tag) => tag.toLowerCase())).size !== input.hashtags.length
-      ? "Remove duplicate hashtags."
+    !input.originalityConfirmed
+      ? "Confirm originality before publishing."
       : "",
+    hasBaitLikeCopy(input.caption)
+      ? "Rewrite the caption lead with documentary language and readable behavior detail."
+      : "",
+    hookQuality?.hasBait
+      ? "Rewrite the hook with species-clear, observational language instead of clickbait."
+      : "",
+    hookQuality && !hookQuality.hasBait && hookQuality.score < 65
+      ? "Tighten the hook around visible posture, timing, spacing, or pressure."
+      : "",
+    input.ctaText && hasForcedEngagementCopy(input.ctaText)
+      ? "Use a behavior-led CTA instead of asking for likes, tags, or winner votes."
+      : "",
+    input.caption.length > MAX_CAPTION_LENGTH
+      ? "Trim the publish caption for faster Facebook-safe readability."
+      : "",
+    input.hashtags.length !== REQUIRED_HASHTAGS ? "Use exactly 5 clean hashtags." : "",
+    unique.size !== input.hashtags.length ? "Remove duplicate hashtags." : "",
   ].filter(Boolean);
 
   return {

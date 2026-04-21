@@ -71,12 +71,22 @@ const CONTENT_LANE_CONFIG: Record<Exclude<ContentLane, "Auto">, ContentLaneConfi
     habitatKeywords: ["pack pressure", "open lane", "chase lane", "escape lane"],
     habitatClause: "with open lane control and readable pack pressure",
     hooks: [
-      preyOnly((prey) => `The ${prey.toLowerCase()} looked clear until the lane disappeared.`),
-      constantLaneCopy(() => "The pressure started before the full move landed."),
-      constantLaneCopy(() => "It looked open for a second. Then the pack took it away."),
+      preyOnly(
+        (prey) =>
+          `The ${prey.toLowerCase()} still had ground, but the pack was already closing the escape lane.`
+      ),
+      constantLaneCopy(
+        () => "The pressure changed once the pursuit started arriving from multiple angles."
+      ),
+      constantLaneCopy(
+        () => "What looked like open country turned into coordinated pressure in one beat."
+      ),
     ],
-    shortLead: constantLaneCopy(() => "The pressure starts before full contact."),
-    longLead: constantLaneCopy(() => "The pressure starts before the full move ever lands."),
+    shortLead: constantLaneCopy(() => "The escape lane starts closing before full contact."),
+    longLead: constantLaneCopy(
+      () =>
+        "The escape lane starts closing before full contact because the pursuit geometry is already visible."
+    ),
   },
   Defender: {
     preferredArcs: ["Defender stands ground"],
@@ -115,12 +125,22 @@ const CONTENT_LANE_CONFIG: Record<Exclude<ContentLane, "Auto">, ContentLaneConfi
     habitatKeywords: ["hold your ground", "grounded footing", "defender", "stand ground"],
     habitatClause: "with grounded footing and readable hold-your-ground spacing",
     hooks: [
-      predatorOnly((predator) => `The ${predator.toLowerCase()} held ground and the whole read changed.`),
-      constantLaneCopy(() => "The push looked safe until the defender refused to move."),
-      constantLaneCopy(() => "One held position turned the pressure around."),
+      predatorOnly(
+        (predator) =>
+          `The ${predator.toLowerCase()} refused to yield and the pressure line stopped there.`
+      ),
+      constantLaneCopy(
+        () => "The warning-step posture was readable before the full push landed."
+      ),
+      constantLaneCopy(
+        () => "What looked like forward pressure turned into hold-ground tension."
+      ),
     ],
-    shortLead: constantLaneCopy(() => "One held position changes the whole read."),
-    longLead: constantLaneCopy(() => "One held position changes the entire read before the peak move lands."),
+    shortLead: constantLaneCopy(() => "The hold-ground read changes the whole sequence."),
+    longLead: constantLaneCopy(
+      () =>
+        "The hold-ground read changes the whole sequence because the warning-step posture is visible early."
+    ),
   },
   "Fishing Strike": {
     preferredArcs: ["Ambush attack", "Chase and takedown"],
@@ -161,12 +181,21 @@ const CONTENT_LANE_CONFIG: Record<Exclude<ContentLane, "Auto">, ContentLaneConfi
     habitatKeywords: ["waterline", "shoreline", "river", "shallows", "strike lane"],
     habitatClause: "with clean strike lanes and readable waterline separation",
     hooks: [
-      preyOnly((prey) => `The strike came off the waterline before the ${prey.toLowerCase()} could turn.`),
-      constantLaneCopy(() => "It looked calm for a beat. Then the strike zone closed."),
-      constantLaneCopy(() => "One surface break changed the whole sequence."),
+      preyOnly(
+        (prey) =>
+          `The strike window closed at the waterline before the ${prey.toLowerCase()} could turn.`
+      ),
+      constantLaneCopy(
+        () => "The shallow-bank read looked calm until the timing snapped shut."
+      ),
+      constantLaneCopy(
+        () => "One surface break turned a quiet frame into a clean strike."
+      ),
     ],
-    shortLead: constantLaneCopy(() => "The strike lands fast at the waterline."),
-    longLead: constantLaneCopy(() => "The strike lands fast at the waterline, before the frame has time to settle."),
+    shortLead: constantLaneCopy(() => "The strike window closes at the waterline."),
+    longLead: constantLaneCopy(
+      () => "The strike window closes at the waterline before the frame has time to settle."
+    ),
   },
   "Rut Battle": {
     preferredArcs: ["Territory dominance battle", "Giant vs giant clash"],
@@ -204,12 +233,21 @@ const CONTENT_LANE_CONFIG: Record<Exclude<ContentLane, "Auto">, ContentLaneConfi
     habitatKeywords: ["clash readability", "open footing", "dominance", "rut"],
     habitatClause: "with open footing and readable clash spacing",
     hooks: [
-      constantLaneCopy(() => "One step turned the standoff into a full clash."),
-      constantLaneCopy(() => "The pressure was there before the first real contact."),
-      constantLaneCopy(() => "It looked even until the footing and force took over."),
+      constantLaneCopy(
+        () => "The dominance posture was readable before the full clash landed."
+      ),
+      constantLaneCopy(
+        () => "The territorial boundary showed up in the stance before the contact."
+      ),
+      constantLaneCopy(
+        () => "What looked balanced turned into rut pressure once the footing shifted."
+      ),
     ],
-    shortLead: constantLaneCopy(() => "The clash is readable before full impact."),
-    longLead: constantLaneCopy(() => "The clash is readable before full impact because the pressure is already visible in the stance."),
+    shortLead: constantLaneCopy(() => "The dominance read is visible before the clash lands."),
+    longLead: constantLaneCopy(
+      () =>
+        "The dominance read is visible before the clash lands because the posture and boundary are already clear."
+    ),
   },
   Escape: {
     preferredArcs: ["Escape from danger"],
@@ -236,12 +274,17 @@ const CONTENT_LANE_CONFIG: Record<Exclude<ContentLane, "Auto">, ContentLaneConfi
     habitatKeywords: ["escape lane", "survival", "field transition", "open lane"],
     habitatClause: "with clear escape lanes and readable survival spacing",
     hooks: [
-      preyOnly((prey) => `The ${prey.toLowerCase()} had one move to stay alive.`),
-      constantLaneCopy(() => "The escape window was smaller than it looked."),
-      constantLaneCopy(() => "It looked finished until the survival line reopened."),
+      preyOnly((prey) => `The ${prey.toLowerCase()} found one narrow breakaway window.`),
+      constantLaneCopy(
+        () => "The near-miss read changed the moment before the pressure fully closed."
+      ),
+      constantLaneCopy(() => "What looked finished reopened for one survival move."),
     ],
-    shortLead: constantLaneCopy(() => "The survival read has to happen instantly."),
-    longLead: constantLaneCopy(() => "The survival read has to happen instantly, before the pressure fully closes."),
+    shortLead: constantLaneCopy(() => "The breakaway window is smaller than it looks."),
+    longLead: constantLaneCopy(
+      () =>
+        "The breakaway window is smaller than it looks, and the survival read has to happen before the pressure fully closes."
+    ),
   },
 };
 

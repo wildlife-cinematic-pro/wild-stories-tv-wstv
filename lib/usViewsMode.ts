@@ -26,6 +26,8 @@ export interface USViewsModeInput {
   caption: string;
   hashtags: string[];
   originalityConfirmed: boolean;
+  hookText?: string;
+  ctaText?: string;
   audienceScore?: USAudienceScoreResult;
   openingFrameScore?: OpeningFrameScore;
   publishGuardReport?: PublishGuardReport;
@@ -46,6 +48,10 @@ export function buildUSViewsModeReport(input: USViewsModeInput): USViewsModeRepo
       caption: input.caption,
       hashtags: input.hashtags,
       originalityConfirmed: input.originalityConfirmed,
+      hookText: input.hookText,
+      ctaText: input.ctaText,
+      predator: input.concept.predator,
+      prey: input.concept.prey,
     });
   const hookFamily =
     input.hookFamily ??
@@ -74,7 +80,8 @@ export function buildUSViewsModeReport(input: USViewsModeInput): USViewsModeRepo
       ? "Rebuild the opening frame so both subjects and the threat read immediately."
       : "",
     !publish.isPass
-      ? "Tighten the caption, use exactly 5 clean hashtags, and confirm originality before publishing."
+      ? publish.fixes?.[0] ??
+        "Tighten the caption, use exactly 5 clean hashtags, and confirm originality before publishing."
       : "",
     !performanceReady
       ? "Current performance memory does not support this publish setup yet. Use the safer lane or stronger hook family."
