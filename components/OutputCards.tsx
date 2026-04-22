@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 
 import PromptVersionsPanel from "@/components/PromptVersionsPanel";
 import WSTVWorkflowDiagram from "@/components/WSTVWorkflowDiagram";
@@ -83,6 +83,19 @@ export default function OutputCards({
     useState<VideoWorkspaceTab>("hybrid");
   const [directWorkspace, setDirectWorkspace] =
     useState<DirectWorkspaceTab>("seedance");
+  const workspaceTabRailRef = useRef<HTMLDivElement | null>(null);
+
+  useEffect(() => {
+    const activeTab = workspaceTabRailRef.current?.querySelector<HTMLButtonElement>(
+      `[data-workspace-tab="${activeWorkspace}"]`
+    );
+
+    activeTab?.scrollIntoView({
+      behavior: "smooth",
+      block: "nearest",
+      inline: "nearest",
+    });
+  }, [activeWorkspace]);
 
   const runwayShots = useMemo(
     () => (data.runwayShots ?? []).map((shot) => String(shot ?? "")),
@@ -455,10 +468,15 @@ export default function OutputCards({
       </div>
 
       <div className="sticky top-3 z-20 rounded-2xl border border-[color:var(--border)] bg-[color:var(--surface-elevated)] p-2 shadow-[var(--surface-shadow)] backdrop-blur">
-        <div className="flex flex-wrap gap-2 sm:flex-nowrap">
+        <div
+          ref={workspaceTabRailRef}
+          className="flex gap-2 overflow-x-auto pb-1 scroll-smooth overscroll-x-contain [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+          aria-label="Output workspace navigation"
+        >
           {workspaceTabs.map((item) => (
             <WorkspaceTabButton
               key={item.key}
+              tabKey={item.key}
               label={item.label}
               detail={item.detail}
               badge={item.badge}
