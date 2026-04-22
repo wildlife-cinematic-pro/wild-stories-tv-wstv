@@ -38,6 +38,7 @@ import type {
   PredatorInfo,
   CustomPredatorForm,
   HabitatPreset,
+  WildlifeScopeMode,
 } from "@/types";
 
 import { weatherOptions, depthModes, habitatOptions } from "@/lib/model-specs";
@@ -128,6 +129,7 @@ export type StoredSettings = {
   habitat?: HabitatPreset;
   contentLane?: ContentLane;
   cameraAnglePreset?: CameraAnglePreset;
+  wildlifeScopeMode?: WildlifeScopeMode;
 };
 
 export function readSettings(): StoredSettings {

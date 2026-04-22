@@ -5,6 +5,7 @@ import type {
   BuildWorkflowPresetSnapshot,
   CameraAnglePreset,
   ContentLane,
+  WildlifeScopeMode,
   DepthMode,
   DurationLane,
   EmotionalTone,
@@ -31,7 +32,12 @@ import {
 } from "@/lib/model-specs";
 import { contentLaneOptions } from "@/lib/content-lanes";
 import { cameraAnglePresetOptions } from "@/lib/camera-angle-presets";
-import { animalVibes, emotionalTones } from "@/lib/predator-data";
+import {
+  animalVibes,
+  emotionalTones,
+  isUSAWildlifeAnimal,
+  wildlifeScopeOptions,
+} from "@/lib/predator-data";
 
 export const MAX_WORKFLOW_PRESETS = 40;
 export const MAX_WORKFLOW_PRESET_PACKS = 24;
@@ -203,6 +209,9 @@ export function normalizeWorkflowPresetSnapshot(
   if (!predator || !prey) return null;
 
   const sceneDescription = cleanString(value.sceneDescription);
+  const defaultWildlifeScopeMode: WildlifeScopeMode = isUSAWildlifeAnimal(predator)
+    ? "USA Wildlife"
+    : "World Wildlife";
   const sceneDescriptionMode = pickOption(
     value.sceneDescriptionMode,
     ["auto", "manual"] as const,
@@ -212,6 +221,11 @@ export function normalizeWorkflowPresetSnapshot(
   return {
     predator,
     prey,
+    wildlifeScopeMode: pickOption<WildlifeScopeMode>(
+      value.wildlifeScopeMode,
+      wildlifeScopeOptions,
+      defaultWildlifeScopeMode
+    ),
     contentLane: pickOption<ContentLane>(
       value.contentLane,
       contentLaneOptions,

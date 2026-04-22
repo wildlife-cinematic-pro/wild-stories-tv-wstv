@@ -11,6 +11,7 @@ import {
 } from "@/lib/storage";
 import { KLING_MODELS, RUNWAY_MODELS } from "@/lib/model-specs";
 import { isContentLane } from "@/lib/content-lanes";
+import { isWildlifeScopeMode } from "@/lib/predator-data";
 import { isCameraAnglePreset } from "@/lib/camera-angle-presets";
 
 import type {
@@ -21,6 +22,7 @@ import type {
   DepthMode,
   HabitatPreset,
   KlingModel,
+  WildlifeScopeMode,
   RealismMode,
   RunwayModel,
   Weather,
@@ -30,6 +32,7 @@ type UseBuildPersistenceInput = {
   predator: string;
   prey: string;
   arc: Arc;
+  wildlifeScopeMode: WildlifeScopeMode;
   contentLane: ContentLane;
   cameraAnglePreset: CameraAnglePreset;
   weather: Weather;
@@ -48,6 +51,7 @@ type UseBuildPersistenceInput = {
   setPredator: Dispatch<SetStateAction<string>>;
   setPrey: Dispatch<SetStateAction<string>>;
   setArc: Dispatch<SetStateAction<Arc>>;
+  setWildlifeScopeMode: Dispatch<SetStateAction<WildlifeScopeMode>>;
   setContentLane: Dispatch<SetStateAction<ContentLane>>;
   setCameraAnglePreset: Dispatch<SetStateAction<CameraAnglePreset>>;
   setWeather: Dispatch<SetStateAction<Weather>>;
@@ -69,6 +73,7 @@ export function useBuildPersistence({
   predator,
   prey,
   arc,
+  wildlifeScopeMode,
   contentLane,
   cameraAnglePreset,
   weather,
@@ -87,6 +92,7 @@ export function useBuildPersistence({
   setPredator,
   setPrey,
   setArc,
+  setWildlifeScopeMode,
   setContentLane,
   setCameraAnglePreset,
   setWeather,
@@ -142,6 +148,9 @@ export function useBuildPersistence({
     if (saved?.microMotion !== undefined) setMicroMotion(saved.microMotion);
     if (saved?.heroVeo !== undefined) setHeroVeo(saved.heroVeo);
     if (saved?.habitat) setHabitat(saved.habitat);
+    if (saved?.wildlifeScopeMode && isWildlifeScopeMode(saved.wildlifeScopeMode)) {
+      setWildlifeScopeMode(saved.wildlifeScopeMode);
+    }
     if (saved?.contentLane && isContentLane(saved.contentLane)) {
       setContentLane(saved.contentLane);
     }
@@ -155,6 +164,7 @@ export function useBuildPersistence({
     setPredator,
     setPrey,
     setArc,
+    setWildlifeScopeMode,
     setContentLane,
     setCameraAnglePreset,
     setWeather,
@@ -185,6 +195,7 @@ export function useBuildPersistence({
       heroVeo,
       autoApplyHighDrift,
       habitat,
+      wildlifeScopeMode,
       contentLane,
       cameraAnglePreset,
     });
@@ -200,6 +211,7 @@ export function useBuildPersistence({
     heroVeo,
     autoApplyHighDrift,
     habitat,
+    wildlifeScopeMode,
     contentLane,
     cameraAnglePreset,
   ]);

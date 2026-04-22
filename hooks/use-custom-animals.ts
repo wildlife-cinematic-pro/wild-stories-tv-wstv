@@ -3,7 +3,11 @@
 import { useMemo, useState } from "react";
 
 import { habitatPromptMap } from "@/lib/habitat-presets";
-import { predatorData, suggestArc } from "@/lib/predator-data";
+import {
+  filterPredatorOptionsByWildlifeScope,
+  predatorData,
+  suggestArc,
+} from "@/lib/predator-data";
 import {
   readCustomPredators,
   writeCustomPredators,
@@ -14,6 +18,7 @@ import type {
   CustomPredatorForm,
   HabitatPreset,
   PredatorInfo,
+  WildlifeScopeMode,
 } from "@/types";
 
 export type CustomAnimalFormState = {
@@ -33,6 +38,7 @@ type CustomAnimalSelection = {
 
 type UseCustomAnimalsInput = {
   currentPredator: string;
+  wildlifeScopeMode: WildlifeScopeMode;
   defaultPrey: string;
   defaultHabitat: HabitatPreset;
   onSelectCustomAnimal: (selection: CustomAnimalSelection) => void;
@@ -49,6 +55,7 @@ const defaultCustomForm: CustomAnimalFormState = {
 
 export function useCustomAnimals({
   currentPredator,
+  wildlifeScopeMode,
   defaultPrey,
   defaultHabitat,
   onSelectCustomAnimal,
@@ -62,48 +69,16 @@ export function useCustomAnimals({
     useState<CustomAnimalFormState>(defaultCustomForm);
 
   const predatorOptions = useMemo(() => {
-    const base = Object.keys(predatorData);
-    const extra = customPredators.map((item) => item.name);
-    const usaPriority = [
-      "Mountain Lion",
-      "Wolf Pack",
-      "Grizzly Bear",
-      "Alligator",
-      "Bison",
-      "Coyote",
-      "Bald Eagle",
-      "Moose",
-      "Bull Elk",
-      "Black Bear",
-      "Cougar",
-      "Bobcat",
-      "Wolf",
-      "Wild Boar",
-      "Great Horned Owl",
-      "Red Fox",
-      "Beaver",
-      "River Otter",
-      "Badger",
-      "Raccoon",
-      "White-tailed Deer",
-      "Dolphin",
-      "Orca",
-      "Shark",
-    ];
-    const all = Array.from(new Set([...base, ...extra]));
+    const builtInOptions = filterPredatorOptionsByWildlifeScope(
+      Object.keys(predatorData),
+      wildlifeScopeMode
+    );
+    const customOptions = customPredators
+      .map((item) => item.name)
+      .sort((a, b) => a.localeCompare(b));
 
-    return all.sort((a, b) => {
-      const ai = usaPriority.indexOf(a);
-      const bi = usaPriority.indexOf(b);
-      const aPinned = ai !== -1;
-      const bPinned = bi !== -1;
-
-      if (aPinned && bPinned) return ai - bi;
-      if (aPinned) return -1;
-      if (bPinned) return 1;
-      return a.localeCompare(b);
-    });
-  }, [customPredators]);
+    return Array.from(new Set([...builtInOptions, ...customOptions]));
+  }, [customPredators, wildlifeScopeMode]);
 
   function openCustomAnimalModal({
     defaultArc,

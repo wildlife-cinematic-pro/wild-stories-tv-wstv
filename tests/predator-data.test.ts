@@ -1,10 +1,37 @@
 import { describe, expect, it } from "vitest";
 import {
-  suggestArc,
-  suggestHabitat,
+  filterPredatorOptionsByWildlifeScope,
   generateMonthlyCalendar,
   generateUSAViral30DayCalendar,
+  suggestArc,
+  suggestHabitat,
 } from "@/lib/predator-data";
+
+describe("wildlife scope filtering", () => {
+  it("keeps USA mode centered on U.S.-recognizable lead animals", () => {
+    const filtered = filterPredatorOptionsByWildlifeScope(
+      ["Lion", "Mountain Lion", "Wolf Pack", "Bald Eagle", "Jaguar", "Bull Elk"],
+      "USA Wildlife"
+    );
+
+    expect(filtered).toEqual(
+      expect.arrayContaining(["Mountain Lion", "Wolf Pack", "Bald Eagle", "Bull Elk"])
+    );
+    expect(filtered).not.toContain("Lion");
+    expect(filtered).not.toContain("Jaguar");
+  });
+
+  it("preserves broader access in World Wildlife mode", () => {
+    const filtered = filterPredatorOptionsByWildlifeScope(
+      ["Lion", "Mountain Lion", "Wolf Pack", "Bald Eagle", "Jaguar", "Bull Elk"],
+      "World Wildlife"
+    );
+
+    expect(filtered).toEqual(
+      expect.arrayContaining(["Lion", "Mountain Lion", "Wolf Pack", "Bald Eagle", "Jaguar", "Bull Elk"])
+    );
+  });
+});
 
 describe("suggestArc realism matching", () => {
   it("matches Grizzly Bear vs Bull Elk to giant clash", () => {
