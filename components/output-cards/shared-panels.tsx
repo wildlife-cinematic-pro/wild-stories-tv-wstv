@@ -383,7 +383,7 @@ export function WorkspaceTabButton({
     <button
       type="button"
       onClick={onClick}
-      className={`min-w-[180px] rounded-2xl border px-4 py-3 text-left transition ${
+      className={`min-w-0 flex-1 basis-[calc(50%-0.25rem)] rounded-2xl border px-3 py-3 text-left transition sm:min-w-[180px] sm:basis-auto sm:px-4 ${
         active
           ? "border-gray-900 bg-gray-900 text-white shadow-sm"
           : "border-gray-200 bg-white text-gray-700 hover:border-gray-300 hover:bg-gray-50"
