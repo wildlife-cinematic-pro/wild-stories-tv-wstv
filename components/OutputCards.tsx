@@ -398,8 +398,8 @@ export default function OutputCards({
   ];
 
   return (
-    <div className="space-y-6">
-      <div className="rounded-3xl border border-slate-200 bg-gradient-to-br from-white via-slate-50 to-amber-50 p-5 shadow-sm">
+    <div className="space-y-5 sm:space-y-6">
+      <div className="rounded-3xl border border-[color:var(--border)] bg-[color:var(--surface-elevated)] p-4 shadow-[var(--surface-shadow)] sm:p-5">
         <div className="flex flex-wrap items-start justify-between gap-4">
           <div className="max-w-3xl">
             <div className="text-[11px] font-black uppercase tracking-[0.24em] text-slate-500">
@@ -454,8 +454,8 @@ export default function OutputCards({
         </div>
       </div>
 
-      <div className="sticky top-3 z-20 overflow-x-auto rounded-2xl border border-slate-200 bg-white/95 p-2 shadow-sm backdrop-blur">
-        <div className="flex gap-2">
+      <div className="sticky top-3 z-20 rounded-2xl border border-[color:var(--border)] bg-[color:var(--surface-elevated)] p-2 shadow-[var(--surface-shadow)] backdrop-blur">
+        <div className="flex flex-wrap gap-2 sm:flex-nowrap">
           {workspaceTabs.map((item) => (
             <WorkspaceTabButton
               key={item.key}

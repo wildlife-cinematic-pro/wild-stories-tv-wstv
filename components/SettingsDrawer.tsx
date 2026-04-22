@@ -342,11 +342,9 @@ export default function SettingsDrawer() {
         type="button"
         onClick={toggle}
         className={[
-          "fixed bottom-4 left-4 z-40",
-          "rounded-full border border-black/10 bg-white/90 text-slate-900 shadow-lg backdrop-blur",
-          "px-3 py-2 text-sm font-medium",
-          "hover:bg-white focus:outline-none focus:ring-2 focus:ring-[rgb(var(--accent-rgb))] focus:ring-offset-2",
-          "dark:border-white/10 dark:bg-slate-900/80 dark:text-slate-50 dark:hover:bg-slate-900",
+          "inline-flex items-center rounded-full border border-[color:var(--border)] bg-[color:color-mix(in_oklab,var(--panel-strong)_88%,transparent)] text-[color:var(--text)] shadow-[0_10px_24px_rgba(2,6,23,0.18)] backdrop-blur",
+          "px-3 py-2 text-xs font-semibold sm:text-sm",
+          "hover:bg-[color:color-mix(in_oklab,var(--surface-muted)_90%,transparent)] focus:outline-none focus:ring-2 focus:ring-[rgb(var(--accent-rgb))] focus:ring-offset-2 focus:ring-offset-[color:var(--bg)]",
         ].join(" ")}
         aria-haspopup="dialog"
         aria-expanded={open}

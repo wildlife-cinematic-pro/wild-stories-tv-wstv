@@ -8,6 +8,10 @@
   --border: rgba(255, 255, 255, 0.08);
   --text: #f8fafc;
   --muted: #94a3b8;
+  --surface-elevated: rgba(255, 255, 255, 0.92);
+  --surface-muted: rgba(248, 250, 252, 0.92);
+  --surface-stronger: rgba(241, 245, 249, 0.96);
+  --surface-shadow: 0 14px 34px rgba(15, 23, 42, 0.08);
 
   /* User-tunable tokens */
   --accent: #6366f1;
@@ -36,6 +40,17 @@ html[data-theme="light"] {
   --border: rgba(15, 23, 42, 0.12);
   --text: #0f172a;
   --muted: #475569;
+  --surface-elevated: rgba(255, 255, 255, 0.94);
+  --surface-muted: rgba(248, 250, 252, 0.95);
+  --surface-stronger: rgba(241, 245, 249, 0.98);
+  --surface-shadow: 0 14px 34px rgba(15, 23, 42, 0.08);
+}
+
+html:not([data-theme="light"]) {
+  --surface-elevated: rgba(15, 23, 42, 0.9);
+  --surface-muted: rgba(30, 41, 59, 0.76);
+  --surface-stronger: rgba(15, 23, 42, 0.96);
+  --surface-shadow: 0 20px 42px rgba(2, 6, 23, 0.34);
 }
 
 html[data-density="compact"] {
@@ -87,6 +102,18 @@ body {
     radial-gradient(circle at 80% 20%, rgba(168, 85, 247, 0.14), transparent 28%),
     linear-gradient(180deg, #06070b 0%, #0b1020 45%, #070b14 100%);
   font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+}
+
+html[data-theme="light"] body {
+  background:
+    radial-gradient(circle at top, rgba(var(--accent-rgb) / 0.12), transparent 30%),
+    radial-gradient(circle at 82% 18%, rgba(14, 165, 233, 0.08), transparent 24%),
+    linear-gradient(180deg, #f8fafc 0%, #eef2ff 44%, #f8fafc 100%);
+}
+
+html,
+body {
+  overflow-x: hidden;
 }
 
 
@@ -209,4 +236,122 @@ html[data-radius="soft"] :where(.rounded-2xl) { border-radius: 1.35rem !importan
   letter-spacing: 0.08em;
   text-transform: uppercase;
   font-size: 0.78rem;
+}
+
+.ui-theme-scope {
+  color: var(--text);
+}
+
+html:not([data-theme="light"]) .ui-theme-scope .bg-white,
+html:not([data-theme="light"]) .ui-theme-scope .bg-white\/80,
+html:not([data-theme="light"]) .ui-theme-scope .bg-white\/90,
+html:not([data-theme="light"]) .ui-theme-scope .bg-white\/95 {
+  background-color: var(--surface-elevated) !important;
+}
+
+html:not([data-theme="light"]) .ui-theme-scope .bg-gray-50,
+html:not([data-theme="light"]) .ui-theme-scope .bg-gray-50\/80,
+html:not([data-theme="light"]) .ui-theme-scope .bg-gray-50\/95,
+html:not([data-theme="light"]) .ui-theme-scope .bg-gray-100,
+html:not([data-theme="light"]) .ui-theme-scope .bg-slate-50 {
+  background-color: var(--surface-muted) !important;
+}
+
+html:not([data-theme="light"]) .ui-theme-scope .border-gray-100,
+html:not([data-theme="light"]) .ui-theme-scope .border-gray-200,
+html:not([data-theme="light"]) .ui-theme-scope .border-gray-200\/80,
+html:not([data-theme="light"]) .ui-theme-scope .border-gray-300,
+html:not([data-theme="light"]) .ui-theme-scope .border-slate-200,
+html:not([data-theme="light"]) .ui-theme-scope .border-slate-300 {
+  border-color: color-mix(in oklab, var(--border) 75%, rgba(148, 163, 184, 0.22)) !important;
+}
+
+html:not([data-theme="light"]) .ui-theme-scope .text-gray-900,
+html:not([data-theme="light"]) .ui-theme-scope .text-gray-800,
+html:not([data-theme="light"]) .ui-theme-scope .text-slate-900,
+html:not([data-theme="light"]) .ui-theme-scope .text-slate-800 {
+  color: color-mix(in oklab, var(--text) 94%, transparent) !important;
+}
+
+html:not([data-theme="light"]) .ui-theme-scope .text-gray-700,
+html:not([data-theme="light"]) .ui-theme-scope .text-gray-600,
+html:not([data-theme="light"]) .ui-theme-scope .text-slate-700,
+html:not([data-theme="light"]) .ui-theme-scope .text-slate-600 {
+  color: color-mix(in oklab, var(--text) 78%, transparent) !important;
+}
+
+html:not([data-theme="light"]) .ui-theme-scope .text-gray-500,
+html:not([data-theme="light"]) .ui-theme-scope .text-gray-400,
+html:not([data-theme="light"]) .ui-theme-scope .text-slate-500,
+html:not([data-theme="light"]) .ui-theme-scope .text-slate-400 {
+  color: color-mix(in oklab, var(--muted) 88%, transparent) !important;
+}
+
+html:not([data-theme="light"]) .ui-theme-scope .shadow-sm,
+html:not([data-theme="light"]) .ui-theme-scope .shadow-\[0_12px_30px_rgba\(15\,23\,42\,0\.08\)\],
+html:not([data-theme="light"]) .ui-theme-scope .shadow-\[0_18px_40px_rgba\(15\,23\,42\,0\.18\)\] {
+  box-shadow: var(--surface-shadow) !important;
+}
+
+html:not([data-theme="light"]) .ui-theme-scope .bg-blue-50,
+html:not([data-theme="light"]) .ui-theme-scope .bg-blue-50\/80 {
+  background-color: color-mix(in oklab, rgb(59 130 246 / 0.16) 42%, var(--surface-stronger)) !important;
+}
+
+html:not([data-theme="light"]) .ui-theme-scope .bg-emerald-50,
+html:not([data-theme="light"]) .ui-theme-scope .bg-emerald-50\/70 {
+  background-color: color-mix(in oklab, rgb(16 185 129 / 0.16) 42%, var(--surface-stronger)) !important;
+}
+
+html:not([data-theme="light"]) .ui-theme-scope .bg-violet-50,
+html:not([data-theme="light"]) .ui-theme-scope .bg-violet-50\/40,
+html:not([data-theme="light"]) .ui-theme-scope .bg-violet-50\/80 {
+  background-color: color-mix(in oklab, rgb(139 92 246 / 0.16) 42%, var(--surface-stronger)) !important;
+}
+
+html:not([data-theme="light"]) .ui-theme-scope .bg-amber-50,
+html:not([data-theme="light"]) .ui-theme-scope .bg-orange-50,
+html:not([data-theme="light"]) .ui-theme-scope .bg-yellow-50,
+html:not([data-theme="light"]) .ui-theme-scope .bg-red-50,
+html:not([data-theme="light"]) .ui-theme-scope .bg-green-50,
+html:not([data-theme="light"]) .ui-theme-scope .bg-indigo-50,
+html:not([data-theme="light"]) .ui-theme-scope .bg-purple-50,
+html:not([data-theme="light"]) .ui-theme-scope .bg-sky-50 {
+  background-color: color-mix(in oklab, rgba(255, 255, 255, 0.06) 28%, var(--surface-stronger)) !important;
+}
+
+html:not([data-theme="light"]) .ui-theme-scope .bg-red-100,
+html:not([data-theme="light"]) .ui-theme-scope .bg-orange-100,
+html:not([data-theme="light"]) .ui-theme-scope .bg-amber-100,
+html:not([data-theme="light"]) .ui-theme-scope .bg-yellow-100,
+html:not([data-theme="light"]) .ui-theme-scope .bg-green-100,
+html:not([data-theme="light"]) .ui-theme-scope .bg-emerald-100,
+html:not([data-theme="light"]) .ui-theme-scope .bg-blue-100,
+html:not([data-theme="light"]) .ui-theme-scope .bg-indigo-100,
+html:not([data-theme="light"]) .ui-theme-scope .bg-violet-100,
+html:not([data-theme="light"]) .ui-theme-scope .bg-purple-100 {
+  background-color: rgba(255, 255, 255, 0.08) !important;
+}
+
+html:not([data-theme="light"]) .ui-theme-scope .border-red-100,
+html:not([data-theme="light"]) .ui-theme-scope .border-red-200,
+html:not([data-theme="light"]) .ui-theme-scope .border-orange-100,
+html:not([data-theme="light"]) .ui-theme-scope .border-orange-200,
+html:not([data-theme="light"]) .ui-theme-scope .border-amber-100,
+html:not([data-theme="light"]) .ui-theme-scope .border-amber-200,
+html:not([data-theme="light"]) .ui-theme-scope .border-yellow-200,
+html:not([data-theme="light"]) .ui-theme-scope .border-green-100,
+html:not([data-theme="light"]) .ui-theme-scope .border-green-200,
+html:not([data-theme="light"]) .ui-theme-scope .border-emerald-100,
+html:not([data-theme="light"]) .ui-theme-scope .border-emerald-200,
+html:not([data-theme="light"]) .ui-theme-scope .border-blue-100,
+html:not([data-theme="light"]) .ui-theme-scope .border-blue-200,
+html:not([data-theme="light"]) .ui-theme-scope .border-indigo-100,
+html:not([data-theme="light"]) .ui-theme-scope .border-indigo-200,
+html:not([data-theme="light"]) .ui-theme-scope .border-violet-100,
+html:not([data-theme="light"]) .ui-theme-scope .border-violet-200,
+html:not([data-theme="light"]) .ui-theme-scope .border-purple-100,
+html:not([data-theme="light"]) .ui-theme-scope .border-purple-200,
+html:not([data-theme="light"]) .ui-theme-scope .border-sky-200 {
+  border-color: rgba(255, 255, 255, 0.12) !important;
 }

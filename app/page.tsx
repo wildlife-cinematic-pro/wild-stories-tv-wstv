@@ -760,7 +760,7 @@ export default function Page() {
   // ─── RENDER ───────────────────────────────────────────────────────────────
 
   return (
-    <main className="min-h-screen w-full bg-gray-50">
+    <main className="ui-theme-scope min-h-screen w-full bg-[color:var(--bg)] text-[color:var(--text)]">
 
       {/* ── APP HEADER — dark cinematic anchor ─────────────────────────── */}
       <header className="sticky top-0 z-40 border-b border-white/[0.07] bg-gray-950/95 backdrop-blur-xl">
@@ -820,8 +820,8 @@ export default function Page() {
 
           {activeTab === "build" && (
             <div className="border-t border-white/[0.06] pb-3 pt-2">
-              <div className="overflow-hidden rounded-[24px] border border-gray-200/80 bg-gradient-to-b from-gray-100 via-white to-gray-50/95 shadow-[0_12px_30px_rgba(15,23,42,0.08)] backdrop-blur-xl">
-                <div className="flex items-center gap-2 overflow-x-auto px-2 py-2.5 sm:px-3">
+              <div className="overflow-hidden rounded-[24px] border border-[color:var(--border)] bg-[color:var(--surface-elevated)] shadow-[var(--surface-shadow)] backdrop-blur-xl">
+                <div className="flex flex-wrap items-center gap-2 px-2 py-2.5 sm:flex-nowrap sm:px-3">
                   {([
                     { step: 1 as Step, label: "Wildlife Setup" },
                     { step: 2 as Step, label: "Engine & Quality" },
@@ -836,7 +836,7 @@ export default function Page() {
                             ? "border-gray-900 bg-gray-900 text-white shadow-sm"
                             : step > s.step
                             ? "border-emerald-200 bg-emerald-50 text-emerald-700 hover:bg-emerald-100"
-                            : "border-transparent bg-transparent text-gray-400 hover:border-gray-200 hover:bg-gray-50 hover:text-gray-700"
+                            : "border-transparent bg-transparent text-[color:var(--muted)] hover:border-[color:var(--border)] hover:bg-[color:var(--surface-muted)] hover:text-[color:var(--text)]"
                         }`}
                       >
                         <span
@@ -845,7 +845,7 @@ export default function Page() {
                               ? "bg-white/15 text-white"
                               : step > s.step
                               ? "bg-emerald-100 text-emerald-700"
-                              : "bg-gray-100 text-gray-500"
+                              : "bg-[color:var(--surface-muted)] text-[color:var(--muted)]"
                           }`}
                         >
                           {step > s.step ? "✓" : s.step}
@@ -860,7 +860,7 @@ export default function Page() {
                         </span>
                       </button>
                       {i < 2 && (
-                        <span className="shrink-0 rounded-full bg-gray-100 px-2 py-1 text-[10px] font-semibold text-gray-300">
+                        <span className="hidden shrink-0 rounded-full bg-[color:var(--surface-muted)] px-2 py-1 text-[10px] font-semibold text-[color:var(--muted)] sm:inline-flex">
                           ›
                         </span>
                       )}
@@ -879,7 +879,7 @@ export default function Page() {
       {activeTab === "build" && (
         <>
           {/* Page content */}
-          <div className="mx-auto w-full max-w-[var(--main-max-width)] px-4 py-6 sm:px-6 sm:py-8 lg:px-8">
+          <div className="mx-auto w-full max-w-[var(--main-max-width)] px-4 py-5 sm:px-6 sm:py-8 lg:px-8">
 
             {step === 1 && (
               <Step1Setup
