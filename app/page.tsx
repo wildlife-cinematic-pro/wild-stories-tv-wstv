@@ -21,6 +21,7 @@ import type {
   KlingModel,
   PromptVersion,
   HabitatPreset,
+  HookFamily,
   SavedWorkflowPreset,
   WildlifeScopeMode,
 } from "@/types";
@@ -60,7 +61,10 @@ import {
   type SceneDescriptionMode,
 } from "@/hooks/use-build-preview";
 import { useBuildPersistence } from "@/hooks/use-build-persistence";
-import { useConceptVariantLab } from "@/hooks/use-concept-variant-lab";
+import {
+  useConceptVariantLab,
+  type PromotedVariantPublishCopyOverride,
+} from "@/hooks/use-concept-variant-lab";
 import { useCustomAnimals } from "@/hooks/use-custom-animals";
 import { useWorkflowPresets } from "@/hooks/use-workflow-presets";
 
@@ -89,6 +93,10 @@ type QualityState = {
   singleActionRule: boolean;
   microMotion: boolean;
   heroVeo: boolean;
+};
+
+type ActivePromotedPublishCopyOverride = PromotedVariantPublishCopyOverride & {
+  hookFamily: HookFamily;
 };
 
 // ─── DEFAULTS ────────────────────────────────────────────────────────────────
@@ -165,6 +173,8 @@ export default function Page() {
   const [fastPublishMode, setFastPublishMode] = useState(true);
   const [strictOriginalityGuard, setStrictOriginalityGuard] = useState(true);
   const [publishFlowSummary, setPublishFlowSummary] = useState<PublishFlowSummary | null>(null);
+  const [promotedPublishCopyOverride, setPromotedPublishCopyOverride] =
+    useState<PromotedVariantPublishCopyOverride | null>(null);
 
   const applyWorkflowPreset = useCallback((preset: SavedWorkflowPreset) => {
     const snapshot = preset.snapshot;
@@ -201,6 +211,7 @@ export default function Page() {
     setStrictOriginalityGuard(snapshot.strictOriginalityGuard);
     setPkg(null);
     setPublishFlowSummary(null);
+    setPromotedPublishCopyOverride(null);
     setError("");
   }, []);
 
@@ -217,6 +228,7 @@ export default function Page() {
     setDepthMode(DEFAULT_DEPTH_MODE);
     setEmotionalTone(DEFAULT_EMOTIONAL_TONE);
     setAnimalVibe(DEFAULT_ANIMAL_VIBE);
+    setPromotedPublishCopyOverride(null);
   }
 
   useBuildPersistence({
@@ -419,6 +431,33 @@ export default function Page() {
     ]
   );
 
+  const activePromotedPublishCopyOverride = useMemo<ActivePromotedPublishCopyOverride | null>(
+    () => {
+      if (!promotedPublishCopyOverride) return null;
+      if (promotedPublishCopyOverride.predator !== predator) return null;
+      if (promotedPublishCopyOverride.prey !== prey) return null;
+      if (promotedPublishCopyOverride.contentLane !== contentLane) return null;
+      if (promotedPublishCopyOverride.arc !== previewArc) return null;
+      if (promotedPublishCopyOverride.habitat !== habitat) return null;
+      if (promotedPublishCopyOverride.durationLane !== durationLane) return null;
+      if (promotedPublishCopyOverride.fastPublishMode !== fastPublishMode) return null;
+      if (promotedPublishCopyOverride.hookFamily !== previewHookFamily) return null;
+
+      return promotedPublishCopyOverride;
+    },
+    [
+      contentLane,
+      durationLane,
+      fastPublishMode,
+      habitat,
+      predator,
+      prey,
+      previewArc,
+      previewHookFamily,
+      promotedPublishCopyOverride,
+    ]
+  );
+
   const workflowPresetControls = useWorkflowPresets({
     currentSnapshot: currentWorkflowPresetSnapshot,
     onLoadPreset: applyWorkflowPreset,
@@ -433,6 +472,7 @@ export default function Page() {
     winners: conceptVariantWinners,
     activeVariantId: activeConceptVariantId,
     promoteVariant: promoteConceptVariant,
+    autoCleanupVariant: autoCleanupConceptVariant,
   } = useConceptVariantLab({
     predator,
     prey,
@@ -466,6 +506,7 @@ export default function Page() {
     setSceneDescriptionMode,
     setSceneDescriptionTouched,
     setSceneDescriptionVariant,
+    setPromotedPublishCopyOverride,
   });
 
   function captureCurrentQuality(): QualityState {
@@ -556,11 +597,24 @@ export default function Page() {
       selectedPipelineStyle,
       sceneInject,
       quality,
-      finalHook2026: previewHook2026,
-      finalHook: previewPrimaryHook || previewHook2026[0] || "",
-      shortCaption: previewShortCaption,
-      longCaption: previewLongCaption,
-      hashtags: previewHashtags,
+      finalHook2026: activePromotedPublishCopyOverride
+        ? [
+            activePromotedPublishCopyOverride.hook,
+            ...previewHook2026.filter(
+              (hook) => hook !== activePromotedPublishCopyOverride.hook
+            ),
+          ]
+        : previewHook2026,
+      finalHook:
+        activePromotedPublishCopyOverride?.hook ??
+        previewPrimaryHook ??
+        previewHook2026[0] ??
+        "",
+      shortCaption:
+        activePromotedPublishCopyOverride?.caption ?? previewShortCaption,
+      longCaption:
+        activePromotedPublishCopyOverride?.caption ?? previewLongCaption,
+      hashtags: activePromotedPublishCopyOverride?.hashtags ?? previewHashtags,
       tags: previewTags,
       recommendedHookIndex: previewRecommendedHookIndex,
       hookFamily: previewHookFamily,
@@ -1139,6 +1193,7 @@ export default function Page() {
                 conceptVariantWinners={conceptVariantWinners}
                 activeConceptVariantId={activeConceptVariantId}
                 onPromoteConceptVariant={promoteConceptVariant}
+                onAutoCleanupConceptVariant={autoCleanupConceptVariant}
                 onRestoreVersion={handleRestoreVersion}
                 onBack={() => setStep(2)}
               />

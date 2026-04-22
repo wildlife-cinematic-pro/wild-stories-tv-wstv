@@ -16,6 +16,7 @@ type ConceptVariantLabProps = {
   winners: ConceptVariantLabWinners;
   activeVariantId: string | null;
   onPromoteVariant: (variant: ConceptVariant) => void;
+  onAutoCleanupVariant: (variant: ConceptVariant) => void;
 };
 
 function getWinnerVariant(variants: ConceptVariant[], id?: string): ConceptVariant | null {
@@ -28,6 +29,7 @@ export default function ConceptVariantLab({
   winners,
   activeVariantId,
   onPromoteVariant,
+  onAutoCleanupVariant,
 }: ConceptVariantLabProps) {
   if (variants.length === 0) return null;
 
@@ -117,6 +119,8 @@ export default function ConceptVariantLab({
       <div className="mt-4 grid gap-3 xl:grid-cols-2">
         {variants.map((variant) => {
           const isActive = activeVariantId === variant.id;
+          const showCleanupAction =
+            !variant.publishGuardReport.isPass && !variant.publishCleanup?.applied;
 
           return (
             <div
@@ -139,6 +143,11 @@ export default function ConceptVariantLab({
                         {tagLabels[tag]}
                       </span>
                     ))}
+                    {variant.publishCleanup?.applied && (
+                      <span className="rounded-full border border-emerald-400/30 bg-emerald-400/10 px-2 py-1 text-[10px] font-semibold text-emerald-100">
+                        Cleanup applied
+                      </span>
+                    )}
                   </div>
                   <div className="mt-1 text-[11px] leading-relaxed text-white/45">
                     {variant.summary}
@@ -229,22 +238,51 @@ export default function ConceptVariantLab({
                 </div>
               </div>
 
+              <div className="mt-3 rounded-xl border border-white/8 bg-white/[0.04] px-3 py-2">
+                <div className="text-[10px] font-semibold uppercase tracking-[0.08em] text-white/35">
+                  Publish cleanup
+                </div>
+                <div className="mt-1 text-[11px] leading-relaxed text-white/65">
+                  {variant.publishCleanup?.summary ??
+                    variant.publishGuardReport.warnings[0] ??
+                    "Packaging already reads clean, documentary, and publish-safe."}
+                </div>
+                {variant.publishCleanup?.notes?.length ? (
+                  <ul className="mt-2 space-y-1 text-[11px] text-white/45">
+                    {variant.publishCleanup.notes.map((note) => (
+                      <li key={note}>• {note}</li>
+                    ))}
+                  </ul>
+                ) : null}
+              </div>
+
               <div className="mt-3 flex flex-wrap items-center justify-between gap-3">
-                <div className="text-[11px] text-white/45">
+                <div className="max-w-2xl text-[11px] text-white/45">
                   {variant.caption}
                 </div>
-                <button
-                  type="button"
-                  onClick={() => onPromoteVariant(variant)}
-                  disabled={isActive}
-                  className={`rounded-xl px-4 py-2 text-xs font-semibold transition-all active:scale-[0.98] ${
-                    isActive
-                      ? "cursor-default border border-white/10 bg-white/[0.06] text-white/45"
-                      : "bg-white text-gray-900 hover:bg-gray-100"
-                  }`}
-                >
-                  {isActive ? "Live in Main Flow" : "Promote to Main Flow"}
-                </button>
+                <div className="flex flex-wrap items-center gap-2">
+                  {showCleanupAction && (
+                    <button
+                      type="button"
+                      onClick={() => onAutoCleanupVariant(variant)}
+                      className="rounded-xl border border-white/12 bg-white/[0.06] px-4 py-2 text-xs font-semibold text-white/85 transition-all hover:bg-white/[0.1] active:scale-[0.98]"
+                    >
+                      Auto cleanup copy
+                    </button>
+                  )}
+                  <button
+                    type="button"
+                    onClick={() => onPromoteVariant(variant)}
+                    disabled={isActive}
+                    className={`rounded-xl px-4 py-2 text-xs font-semibold transition-all active:scale-[0.98] ${
+                      isActive
+                        ? "cursor-default border border-white/10 bg-white/[0.06] text-white/45"
+                        : "bg-white text-gray-900 hover:bg-gray-100"
+                    }`}
+                  >
+                    {isActive ? "Live in Main Flow" : "Promote to Main Flow"}
+                  </button>
+                </div>
               </div>
             </div>
           );

@@ -175,6 +175,17 @@ export type ConceptVariantWinnerTag =
 
 export type ConceptVariantEmphasis = "balanced" | "fast-publish" | "cinematic";
 
+export type PublishCleanupField = "hook" | "caption" | "hashtags" | "cta";
+
+export type ConceptVariantPublishCleanup = {
+  applied: boolean;
+  changedFields: PublishCleanupField[];
+  summary: string;
+  notes: string[];
+  warningsResolved: number;
+  remainingWarnings: number;
+};
+
 export type ConceptVariantLabEntry = {
   id: string;
   label: string;
@@ -205,6 +216,7 @@ export type ConceptVariantLabEntry = {
   overallScore: number;
   publishWorthy: boolean;
   winnerTags: ConceptVariantWinnerTag[];
+  publishCleanup?: ConceptVariantPublishCleanup;
 };
 
 export type ConceptVariant = ConceptVariantLabEntry;
