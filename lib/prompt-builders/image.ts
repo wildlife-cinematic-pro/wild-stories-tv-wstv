@@ -18,6 +18,9 @@ import {
   getSafeArcLabel,
   oneActionArcBeat,
   buildMicroMotionLine,
+  isWaterForwardPreyScenario,
+  isRutMirrorMatchScenario,
+  getRutMirrorMatchCue,
 } from "@/lib/prompt-builders/habitat";
 import {
   getDepthPrompt,
@@ -55,20 +58,33 @@ function buildNanoBananaImagePrompt(
 ): string {
   const vibe = animalVibePrompt[animalVibe];
 
-  const subjectLine =
-    habitatMode === "shoreline"
+  const isWaterForwardStrike = isWaterForwardPreyScenario(predator, prey, cleanEnv);
+  const isRutMirrorMatch = isRutMirrorMatchScenario(predator, prey, arc, cleanEnv);
+  const rutCue = getRutMirrorMatchCue(predator);
+
+  const subjectLine = isRutMirrorMatch
+    ? `Two ${predator} rivals share one frame in ${cleanEnv} during a high-tension rut standoff.`
+    : habitatMode === "shoreline"
       ? `${predator} and ${prey} share one frame at the waterline in ${cleanEnv} during a high-tension ${getSafeArcLabel(arc)} beat.`
       : `${predator} and ${prey} share one frame in ${cleanEnv} during a high-tension ${getSafeArcLabel(arc)} beat.`;
 
-  const tensionLine =
-    habitatMode === "aquatic"
+  const tensionLine = isRutMirrorMatch
+    ? `Both rivals hold ${rutCue.summary} before the clash.`
+    : habitatMode === "aquatic"
       ? `${predator} holds visible pressure through the water while ${prey} stays alert and reactive, with biologically plausible spacing.`
       : habitatMode === "shoreline"
-        ? `${predator} holds visible pressure at the bank while ${prey} stays alert near the waterline, with natural shoreline spacing.`
+        ? isWaterForwardStrike
+          ? `${predator} holds low at the bank while ${prey} shows a tense surface-break read inside the shallow strike window, with natural shoreline spacing.`
+          : `${predator} holds visible pressure at the bank while ${prey} stays alert near the waterline, with natural shoreline spacing.`
         : `${predator} holds visible pre-action pressure while ${prey} stays alert and reactive, with biologically plausible spacing.`;
 
-  const compositionLine =
-    depth.lensNote === "cinematic telephoto depth separation"
+  const compositionLine = isRutMirrorMatch
+    ? depth.lensNote === "cinematic telephoto depth separation"
+      ? `Wide 9:16 vertical frame, telephoto compression, strong shallow depth separation, both rivals fully visible with ${rutCue.line} geometry clean.`
+      : depth.lensNote === "balanced documentary depth"
+        ? `Wide 9:16 vertical frame, telephoto framing, clear midground separation, both rivals fully visible with ${rutCue.room} preserved.`
+        : `Wide 9:16 vertical frame, telephoto framing, deep background visible, both rivals fully visible with ${rutCue.room} preserved.`
+    : depth.lensNote === "cinematic telephoto depth separation"
       ? "Wide 9:16 vertical frame, telephoto compression, strong shallow depth separation, both animals fully visible."
       : depth.lensNote === "balanced documentary depth"
         ? "Wide 9:16 vertical frame, telephoto framing, clear midground separation, both animals fully visible."
@@ -209,9 +225,13 @@ export function buildShotImagePlan(
   const cleanEnv = sanitizeImageEnv(env);
   const cleanWeather = sanitizeWeatherPhrase(weatherVariants[weather]);
   const micro = buildMicroMotionLine(weather, env);
+  const isWaterForwardStrike = isWaterForwardPreyScenario(predator, prey, env);
+  const isRutMirrorMatch = isRutMirrorMatchScenario(predator, prey, arc, env);
+  const rutCue = getRutMirrorMatchCue(predator);
   const cameraPresetLine = buildImageCameraPresetLine(
     cameraAnglePreset,
-    habitatMode
+    habitatMode,
+    env
   );
   const cameraLine = cameraPresetLine ? `${cameraPresetLine} ` : "";
   const gateOn = !!quality?.singleActionRule;
@@ -220,35 +240,61 @@ export function buildShotImagePlan(
   const aftermath = oneActionArcBeat(arc, "aftermath", gateOn, habitatMode);
 
   const openingPredator =
-    habitatMode === "aquatic"
-      ? "holds controlled pressure through the water on the left"
-      : habitatMode === "shoreline"
-        ? "holds low visible pressure at the waterline on the left"
-        : "holds readable pre-action pressure on the left";
+    isRutMirrorMatch
+      ? `holds the ${rutCue.line} on the left with ${rutCue.room}`
+      : habitatMode === "aquatic"
+        ? "holds controlled pressure through the water on the left"
+        : habitatMode === "shoreline"
+          ? isWaterForwardStrike
+            ? "holds low at the bank on the left with the shallow strike window visible"
+            : "holds low visible pressure at the waterline on the left"
+          : "holds readable pre-action pressure on the left";
 
   const openingPrey =
-    habitatMode === "shoreline"
-      ? "stays fully alert near the bank on the right"
-      : "stays fully alert and reactive on the right";
+    isRutMirrorMatch
+      ? "answers on the right with matching shoulder tension and planted footing"
+      : isWaterForwardStrike
+        ? "shows a tense near-surface hold on the right inside the bank-edge current"
+        : habitatMode === "shoreline"
+          ? "stays fully alert near the bank on the right"
+          : "stays fully alert and reactive on the right";
 
   const pressurePredator =
-    habitatMode === "aquatic"
-      ? "leans into stronger forward water pressure without breaking spacing"
-      : habitatMode === "shoreline"
-        ? "leans farther forward from the bank with stronger visible ambush pressure"
-        : "leans farther forward with stronger visible pressure";
+    isRutMirrorMatch
+      ? `edges forward with heavier shoulder-line pressure while keeping ${rutCue.room}`
+      : habitatMode === "aquatic"
+        ? "leans into stronger forward water pressure without breaking spacing"
+        : habitatMode === "shoreline"
+          ? isWaterForwardStrike
+            ? "leans farther forward from the bank as the shallow strike window tightens"
+            : "leans farther forward from the bank with stronger visible ambush pressure"
+          : "leans farther forward with stronger visible pressure";
 
   const pressurePrey =
-    habitatMode === "aquatic"
-      ? "makes one tighter defensive adjustment in the current"
-      : habitatMode === "shoreline"
-        ? "lowers into one readable defensive footing adjustment near the bank"
-        : "lowers into one readable defensive adjustment";
+    isRutMirrorMatch
+      ? "braces into one grounded footing reset without giving away the claim line"
+      : habitatMode === "aquatic"
+        ? "makes one tighter defensive adjustment in the current"
+        : habitatMode === "shoreline"
+          ? isWaterForwardStrike
+            ? "breaks the surface once near the bank and stays tight to the shoreline current"
+            : "lowers into one readable defensive footing adjustment near the bank"
+          : "lowers into one readable defensive adjustment";
 
   const peakPredator = sanitizeVideoBeatText(action.predatorBeat);
   const peakPrey = sanitizeVideoBeatText(action.preyBeat);
   const resolvePredator = sanitizeVideoBeatText(aftermath.predatorBeat);
   const resolvePrey = sanitizeVideoBeatText(aftermath.preyBeat);
+  const peakContinuityLine = isRutMirrorMatch
+    ? ` Keep ${rutCue.room}, planted footing, and heavy shoulder alignment readable through the clash geometry.`
+    : isWaterForwardStrike
+      ? " Keep the bank-edge strike window, surface break, and shoreline reaction natural through the action beat."
+      : "";
+  const resolveContinuityLine = isRutMirrorMatch
+    ? ` Let the ${rutCue.line} and claim-space read stay visible as the standoff resets.`
+    : isWaterForwardStrike
+      ? " Let the bank-edge water reaction settle while shoreline spacing stays clean."
+      : "";
 
   const continuityLock = `Keep ${predator} and ${prey} identical in anatomy, markings, scale, lighting family, and habitat continuity in ${cleanEnv}, ${cleanWeather}. Preserve the same 9:16 documentary image family, grounded contact, realistic spacing, and clean silhouette separation.`;
   const atmosphereLock = `Environment stays continuity-safe with ${micro}.`;
@@ -276,14 +322,14 @@ export function buildShotImagePlan(
       title: "Shot 3 Image — Peak Action",
       source: "previous_image",
       prompt: finalizePrompt(
-        `${continuityBase} ${continuityLock} Advance into the peak action beat with one dominant readable action. The ${predator} ${peakPredator}. The ${prey} ${peakPrey}. Preserve full-body readability, clear predator-to-prey spacing, believable traction, and strong biomechanical clarity. ${atmosphereLock}`
+        `${continuityBase} ${continuityLock} Advance into the peak action beat with one dominant readable action. The ${predator} ${peakPredator}. The ${prey} ${peakPrey}. Preserve full-body readability, clear predator-to-prey spacing, believable traction, and strong biomechanical clarity.${peakContinuityLine} ${atmosphereLock}`
       ),
     },
     {
       title: "Shot 4 Image — Resolved Tension",
       source: "previous_image",
       prompt: finalizePrompt(
-        `${continuityBase} ${continuityLock} Move into the immediate aftermath or resolved tension beat. The ${predator} ${resolvePredator}. The ${prey} ${resolvePrey}. Preserve readable spacing to the final frame, stable anatomy, and clean continuity. ${atmosphereLock}`
+        `${continuityBase} ${continuityLock} Move into the immediate aftermath or resolved tension beat. The ${predator} ${resolvePredator}. The ${prey} ${resolvePrey}. Preserve readable spacing to the final frame, stable anatomy, and clean continuity.${resolveContinuityLine} ${atmosphereLock}`
       ),
     },
   ];

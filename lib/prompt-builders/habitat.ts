@@ -54,26 +54,69 @@ export function isAquaticEnv(env: string): boolean {
   return isExplicitWaterForwardEnv(env);
 }
 
-function isAquaticAnimal(name: string): boolean {
+const AQUATIC_ANIMAL_MARKERS = [
+  "shark",
+  "orca",
+  "dolphin",
+  "seal",
+  "fish",
+  "salmon",
+  "trout",
+  "bass",
+  "carp",
+  "catfish",
+  "pike",
+  "sturgeon",
+  "tuna",
+  "marlin",
+  "mackerel",
+  "herring",
+  "cod",
+  "sardine",
+  "anchovy",
+  "eel",
+  "ray",
+  "stingray",
+  "whale",
+  "octopus",
+  "squid",
+  "sea lion",
+  "walrus",
+  "penguin",
+  "otter",
+  "crocodile",
+  "alligator",
+  "caiman",
+  "hippo",
+] as const;
+
+const RUT_MIRROR_SPECIES_MARKERS = [
+  "elk",
+  "moose",
+  "deer",
+  "caribou",
+  "reindeer",
+  "stag",
+  "buck",
+  "ram",
+  "ibex",
+  "bighorn",
+  "antelope",
+] as const;
+
+const ANTLER_MIRROR_SPECIES_MARKERS = [
+  "elk",
+  "moose",
+  "deer",
+  "caribou",
+  "reindeer",
+  "stag",
+  "buck",
+] as const;
+
+export function isAquaticAnimalName(name: string): boolean {
   const n = name.toLowerCase();
-  return [
-    "shark",
-    "orca",
-    "dolphin",
-    "seal",
-    "fish",
-    "whale",
-    "octopus",
-    "squid",
-    "sea lion",
-    "walrus",
-    "penguin",
-    "otter",
-    "crocodile",
-    "alligator",
-    "caiman",
-    "hippo",
-  ].some((x) => n.includes(x));
+  return AQUATIC_ANIMAL_MARKERS.some((marker) => n.includes(marker));
 }
 
 function isSemiAquaticPredator(name: string): boolean {
@@ -83,14 +126,59 @@ function isSemiAquaticPredator(name: string): boolean {
 
 export function getHabitatMode(predator: string, prey: string, env: string): HabitatMode {
   const envAquatic = isAquaticEnv(env);
-  const predatorAquatic = isAquaticAnimal(predator);
-  const preyAquatic = isAquaticAnimal(prey);
+  const predatorAquatic = isAquaticAnimalName(predator);
+  const preyAquatic = isAquaticAnimalName(prey);
   const semiAquaticPred = isSemiAquaticPredator(predator);
 
   if (predatorAquatic && preyAquatic && envAquatic) return "aquatic";
   if (semiAquaticPred && !preyAquatic) return "shoreline";
   if (envAquatic && predatorAquatic && !preyAquatic) return "shoreline";
+  if (envAquatic && preyAquatic && !predatorAquatic) return "shoreline";
   return "land";
+}
+
+export function isWaterForwardPreyScenario(
+  predator: string,
+  prey: string,
+  env: string
+): boolean {
+  return isAquaticEnv(env) && isAquaticAnimalName(prey) && !isAquaticAnimalName(predator);
+}
+
+export function isRutMirrorMatchScenario(
+  predator: string,
+  prey: string,
+  arc: string,
+  env: string
+): boolean {
+  const predatorText = predator.trim().toLowerCase();
+  const preyText = prey.trim().toLowerCase();
+  const sameSpecies = predatorText === preyText;
+  const rutSpeciesMatch = RUT_MIRROR_SPECIES_MARKERS.some((marker) =>
+    predatorText.includes(marker)
+  );
+  const rutContext = /\b(rut|antler|dominance|territory|clash)\b/i.test(`${arc} ${env}`);
+
+  return sameSpecies && rutSpeciesMatch && rutContext;
+}
+
+export function getRutMirrorMatchCue(subject: string): {
+  room: string;
+  line: string;
+  summary: string;
+} {
+  const lower = subject.toLowerCase();
+  const usesAntlerLanguage = ANTLER_MIRROR_SPECIES_MARKERS.some((marker) =>
+    lower.includes(marker)
+  );
+  const room = usesAntlerLanguage ? "open antler room" : "open clash room";
+  const line = usesAntlerLanguage ? "frontal antler line" : "frontal clash line";
+
+  return {
+    room,
+    line,
+    summary: `${room}, shoulder-line tension, planted footing, and clear claim-space pressure`,
+  };
 }
 
 export function oneActionArcBeat(
