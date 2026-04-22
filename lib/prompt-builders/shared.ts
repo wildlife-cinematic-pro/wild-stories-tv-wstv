@@ -15,6 +15,7 @@ import {
   getHabitatMode,
   buildMicroMotionLine,
   getSafeArcPrint,
+  isWaterForwardPreyScenario,
 } from "@/lib/prompt-builders/habitat";
 import {
   finalizePrompt,
@@ -159,6 +160,7 @@ export function buildKlingAudioPrompt(
   const habitatMode = getHabitatMode(predator, prey, env);
   const isAquatic = habitatMode === "aquatic";
   const isShoreline = habitatMode === "shoreline";
+  const isWaterForwardStrike = isWaterForwardPreyScenario(predator, prey, env);
 
   const isArcticLike =
     envLower.includes("arctic") ||
@@ -221,21 +223,27 @@ export function buildKlingAudioPrompt(
       animalAudio = isAquatic
         ? `${predator} controlled body movement through water, subtle fin or tail displacement, ${prey} tense reactive movement in the current`
         : isShoreline
-          ? `${predator} restrained low movement at the water's edge, subtle body pressure in the shallows, ${prey} tense footing adjustment near the bank`
+          ? isWaterForwardStrike
+            ? `${predator} restrained low movement at the bank edge, subtle body pressure over the shallows, ${prey} tense near-surface hold inside the strike window`
+            : `${predator} restrained low movement at the water's edge, subtle body pressure in the shallows, ${prey} tense footing adjustment near the bank`
           : `${predator} slow controlled breathing through nostrils, ${prey} alert stillness with occasional tension exhale`;
       break;
     case "action":
       animalAudio = isAquatic
         ? `${predator} explosive water displacement, rapid current turbulence, ${prey} frantic splash or dart movement, bubble and spray burst`
         : isShoreline
-          ? `${predator} explosive surge from the shoreline, shallow splash burst, mud scatter, ${prey} frantic leap or turn on unstable ground`
+          ? isWaterForwardStrike
+            ? `${predator} explosive bank-edge strike, shallow splash burst, surface break, ${prey} frantic dart and turn through the shoreline current`
+            : `${predator} explosive surge from the shoreline, shallow splash burst, mud scatter, ${prey} frantic leap or turn on unstable ground`
           : `heavy ground impact from ${predator} movement, explosive burst sounds, ${prey} distress vocalization, debris scatter`;
       break;
     case "aftermath":
       animalAudio = isAquatic
         ? `${predator} slower water movement settling, residual turbulence fading, ${prey} cautious repositioning through the water`
         : isShoreline
-          ? `${predator} slower edge movement settling, residual splash fading, ${prey} cautious repositioning on wet unstable ground`
+          ? isWaterForwardStrike
+            ? `${predator} slower bank-edge movement settling, residual splash fading, ${prey} cautious repositioning through the near-surface current`
+            : `${predator} slower edge movement settling, residual splash fading, ${prey} cautious repositioning on wet unstable ground`
           : `${predator} heavy rhythmic breathing settling, terrain debris settling, ${prey} cautious repositioning footsteps`;
       break;
   }
@@ -255,6 +263,7 @@ export function buildKlingAudioShort(
   const habitatMode = getHabitatMode(predator, prey, env);
   const isAquatic = habitatMode === "aquatic";
   const isShoreline = habitatMode === "shoreline";
+  const isWaterForwardStrike = isWaterForwardPreyScenario(predator, prey, env);
   const envLower = env.toLowerCase();
 
   const isArcticLike =
@@ -292,10 +301,16 @@ export function buildKlingAudioShort(
 
   const animalTag =
     beat === "establish"
-      ? `${predator} controlled breathing, ${prey} alert stillness`
+      ? isWaterForwardStrike
+        ? `${predator} bank-edge hold, ${prey} near-surface tension`
+        : `${predator} controlled breathing, ${prey} alert stillness`
       : beat === "action"
-        ? `${predator} impact, ${prey} distress vocalization, debris`
-        : `${predator} breathing settling, ${prey} cautious repositioning`;
+        ? isWaterForwardStrike
+          ? `${predator} strike burst, ${prey} surface-break dart, shoreline splash`
+          : `${predator} impact, ${prey} distress vocalization, debris`
+        : isWaterForwardStrike
+          ? `${predator} settling at the bank edge, ${prey} cautious current repositioning`
+          : `${predator} breathing settling, ${prey} cautious repositioning`;
 
   return finalizePrompt(`Audio: ${ambientTag}, ${weatherTag}. ${animalTag}. No music.`);
 }

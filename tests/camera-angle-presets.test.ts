@@ -5,7 +5,7 @@ import {
   buildOpeningFrameInput,
   type GeneratedPackageDraftInput,
 } from "@/lib/build-package";
-import { buildImagePrompt } from "@/lib/prompt-builders/image";
+import { buildImagePrompt, buildShotImagePlan } from "@/lib/prompt-builders/image";
 import { buildKlingPromptPack } from "@/lib/prompt-builders/kling";
 import { buildRunwayPromptPack } from "@/lib/prompt-builders/runway";
 
@@ -255,6 +255,38 @@ describe("camera angle presets", () => {
     expect(fishingStrike).toMatch(/waterline wildlife framing|waterline-height|wet foreground edge/i);
     expect(dryGround).not.toMatch(/waterline-level|bank-edge|water-edge/i);
     expect(dryGround).toMatch(/ground-level animal-height wildlife framing/i);
+  });
+
+  it("keeps Waterline framing alive through the shot-image continuity plan", () => {
+    const shots = buildShotImagePlan(
+      "Bald Eagle",
+      "Salmon",
+      "Riverbank Reeds",
+      "Ambush attack",
+      "Dawn",
+      undefined,
+      "Waterline"
+    );
+    const serialized = shots.map((shot) => shot.prompt).join(" ").toLowerCase();
+
+    expect(serialized).toMatch(/waterline wildlife framing|wet foreground edge|bank edge/);
+    expect(serialized).not.toMatch(/ground-level animal-height wildlife framing/);
+  });
+
+  it("falls back to ground-level continuity framing for dry-ground Waterline scenes", () => {
+    const shots = buildShotImagePlan(
+      "Mountain Lion",
+      "White-tailed Deer",
+      "Dry Prairie Plain",
+      "Ambush attack",
+      "Golden Hour",
+      undefined,
+      "Waterline"
+    );
+    const serialized = shots.map((shot) => shot.prompt).join(" ").toLowerCase();
+
+    expect(serialized).toMatch(/ground-level animal-height wildlife framing/);
+    expect(serialized).not.toMatch(/waterline wildlife framing|wet foreground edge|bank edge/);
   });
 
   it("threads the selected preset through package assembly", () => {

@@ -702,6 +702,109 @@ describe("Step 12 — export cleanup guards", () => {
     expect(runwayPaste).toMatch(/grass|brush|fur|terrain|vegetation/);
   });
 
+  it("keeps Fishing Strike water-forward motion language out of land-biased Runway and Kling prompts", () => {
+    const runway = buildRunwayPromptPack(
+      "Bald Eagle",
+      "Salmon",
+      "Riverbank Reeds",
+      "Ambush attack",
+      "Dawn",
+      "Gen-4.5",
+      "Raw Tension",
+      "National Geographic Wild",
+      "A bald eagle tracks a salmon at the bank edge.",
+      {
+        realismMode: "Reference Locked",
+        motionOnlyI2V: true,
+        referenceLock: true,
+        singleActionRule: true,
+        microMotion: true,
+        heroVeo: false,
+      }
+    );
+    const kling = buildKlingPromptPack(
+      "Bald Eagle",
+      "Salmon",
+      "Riverbank Reeds",
+      "Ambush attack",
+      "Dawn",
+      "Kling 3.0 Pro",
+      "Raw Tension",
+      "National Geographic Wild",
+      "A bald eagle tracks a salmon at the bank edge.",
+      {
+        realismMode: "Reference Locked",
+        motionOnlyI2V: true,
+        referenceLock: true,
+        singleActionRule: true,
+        microMotion: true,
+        heroVeo: false,
+      }
+    );
+    const combined = `${runway.shot2.pasteReady} ${kling.shot2.pasteReady}`.toLowerCase();
+
+    expect(combined).toMatch(/bank-edge|surface break|shoreline reaction|strike window/);
+    expect(combined).not.toMatch(/ground compression|grounded weight transfer|footing adjustment/);
+  });
+
+  it("sharpens rut mirror-match prompts with antler-room and footing cues", () => {
+    const imagePrompt = buildImagePrompt(
+      "Bull Elk",
+      "Bull Elk",
+      "Rocky Mountain meadow with rut-season footing and dry grass",
+      "Giant vs giant clash",
+      "frozen dusk rim light",
+      "Canon EOS R5, 200mm wildlife lens",
+      "wet fur and antler detail",
+      "Balanced Depth",
+      "Frozen Dusk",
+      "Calm Dominance",
+      "BBC Earth Documentary"
+    ).toLowerCase();
+    const runway = buildRunwayPromptPack(
+      "Bull Elk",
+      "Bull Elk",
+      "Rocky Mountain meadow with rut-season footing and dry grass",
+      "Giant vs giant clash",
+      "Frozen Dusk",
+      "Gen-4.5",
+      "Calm Dominance",
+      "BBC Earth Documentary",
+      "Two bull elk square off on dry meadow ground with clean spacing.",
+      {
+        realismMode: "Reference Locked",
+        motionOnlyI2V: true,
+        referenceLock: true,
+        singleActionRule: true,
+        microMotion: true,
+        heroVeo: false,
+      }
+    );
+    const kling = buildKlingPromptPack(
+      "Bull Elk",
+      "Bull Elk",
+      "Rocky Mountain meadow with rut-season footing and dry grass",
+      "Giant vs giant clash",
+      "Frozen Dusk",
+      "Kling 3.0 Pro",
+      "Calm Dominance",
+      "BBC Earth Documentary",
+      "Two bull elk square off on dry meadow ground with clean spacing.",
+      {
+        realismMode: "Reference Locked",
+        motionOnlyI2V: true,
+        referenceLock: true,
+        singleActionRule: true,
+        microMotion: true,
+        heroVeo: false,
+      }
+    );
+    const combined = `${runway.shot2.pasteReady} ${kling.shot3.pasteReady}`.toLowerCase();
+
+    expect(imagePrompt).toMatch(/antler room|claim-space pressure|frontal antler line/);
+    expect(combined).toMatch(/antler room|rut footing|claim line|planted footing|heavy shoulder/);
+  });
+
   it("keeps long scene context export-safe when United States continuity text is present", () => {
     const p = buildImagePrompt(
       "Mountain Lion",
