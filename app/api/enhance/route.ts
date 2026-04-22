@@ -11,27 +11,19 @@ import {
   parseProviderJsonObject,
 } from "@/lib/enhance-provider";
 import { hasUsableGeneratedPackageEnhancements } from "@/lib/generated-package";
+import { createFixedWindowRateLimiter } from "@/lib/in-memory-rate-limit";
 
 /**
- * Rate limit (simple in-memory)
+ * Rate limit (bounded in-memory fixed window)
  */
-const rateLimitMap = new Map<string, { count: number; resetAt: number }>();
 const RATE_LIMIT_MAX = 25;
 const RATE_LIMIT_WINDOW = 60_000;
-
-function checkRateLimit(ip: string): boolean {
-  const now = Date.now();
-  const entry = rateLimitMap.get(ip);
-
-  if (!entry || now > entry.resetAt) {
-    rateLimitMap.set(ip, { count: 1, resetAt: now + RATE_LIMIT_WINDOW });
-    return true;
-  }
-
-  if (entry.count >= RATE_LIMIT_MAX) return false;
-  entry.count++;
-  return true;
-}
+const RATE_LIMIT_MAX_ENTRIES = 1000;
+const enhanceRateLimiter = createFixedWindowRateLimiter({
+  limit: RATE_LIMIT_MAX,
+  windowMs: RATE_LIMIT_WINDOW,
+  maxEntries: RATE_LIMIT_MAX_ENTRIES,
+});
 
 function getClientIp(req: Request) {
   const h = req.headers;
@@ -49,7 +41,12 @@ function sanitizeString(v: unknown, maxLen = 8000): string {
  * details object भयो भने UI मा [object Object] देखिन्छ।
  * त्यसैले details लाई ALWAYS string बनाइदिन्छौं।
  */
-function jsonError(message: string, status = 400, details?: unknown) {
+function jsonError(
+  message: string,
+  status = 400,
+  details?: unknown,
+  headers?: HeadersInit
+) {
   const detailsText =
     typeof details === "string"
       ? details
@@ -63,7 +60,10 @@ function jsonError(message: string, status = 400, details?: unknown) {
             }
           })();
 
-  return NextResponse.json({ error: message, details: detailsText }, { status });
+  return NextResponse.json(
+    { error: message, details: detailsText },
+    { status, headers }
+  );
 }
 
 type Provider = "gemini" | "claude";
@@ -384,7 +384,12 @@ function normalizeGeminiCopyPolishObject(obj: Record<string, unknown>): Record<s
 
 export async function POST(req: Request) {
   const ip = getClientIp(req);
-  if (!checkRateLimit(ip)) return jsonError("Rate limit exceeded", 429);
+  const rateLimit = enhanceRateLimiter.check(ip);
+  if (!rateLimit.allowed) {
+    return jsonError("Rate limit exceeded", 429, undefined, {
+      "Retry-After": String(rateLimit.retryAfterSeconds),
+    });
+  }
 
   const body = await req.json().catch(() => null);
   if (!body) return jsonError("Invalid JSON body");

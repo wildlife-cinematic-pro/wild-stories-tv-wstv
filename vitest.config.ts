@@ -10,5 +10,15 @@ export default defineConfig({
     alias: {
       "@": path.resolve(__dirname, "."),
     },
+    coverage: {
+      provider: "v8",
+      reporter: ["text", "json-summary", "html"],
+      thresholds: {
+        lines: 40,
+        functions: 40,
+        statements: 40,
+        branches: 30,
+      },
+    },
   },
 });

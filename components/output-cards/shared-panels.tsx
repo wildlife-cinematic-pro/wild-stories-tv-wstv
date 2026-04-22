@@ -367,12 +367,14 @@ export function SectionLabel({ label }: { label: string }) {
 }
 
 export function WorkspaceTabButton({
+  tabKey,
   label,
   detail,
   badge,
   active,
   onClick,
 }: {
+  tabKey?: string;
   label: string;
   detail: string;
   badge: string;
@@ -383,7 +385,10 @@ export function WorkspaceTabButton({
     <button
       type="button"
       onClick={onClick}
-      className={`min-w-0 flex-1 basis-[calc(50%-0.25rem)] rounded-2xl border px-3 py-3 text-left transition sm:min-w-[180px] sm:basis-auto sm:px-4 ${
+      data-workspace-tab={tabKey}
+      aria-pressed={active}
+      aria-label={`${label} workspace`}
+      className={`min-w-[180px] flex-none snap-start rounded-2xl border px-3 py-3 text-left transition sm:min-w-[190px] sm:px-4 ${
         active
           ? "border-gray-900 bg-gray-900 text-white shadow-sm"
           : "border-gray-200 bg-white text-gray-700 hover:border-gray-300 hover:bg-gray-50"
