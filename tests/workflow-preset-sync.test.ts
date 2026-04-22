@@ -27,6 +27,7 @@ function makeSnapshot(
   return {
     predator: "Wolf Pack",
     prey: "Bull Elk",
+    wildlifeScopeMode: "USA Wildlife",
     contentLane: "Pack Hunt",
     cameraAnglePreset: "Auto",
     arc: "Pack hunting strategy",

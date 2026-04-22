@@ -11,7 +11,11 @@ import {
   depthModes,
   weatherOptions,
 } from "@/lib/model-specs";
-import { animalVibes, emotionalTones } from "@/lib/predator-data";
+import {
+  animalVibes,
+  emotionalTones,
+  wildlifeScopeOptions,
+} from "@/lib/predator-data";
 import {
   buildStep1FacebookRecommendation,
   getAnimalPairMicroGuidance,
@@ -36,6 +40,7 @@ import type {
   SavedWorkflowPreset,
   SavedWorkflowPresetPack,
   Weather,
+  WildlifeScopeMode,
   WorkflowPresetAuthSession,
   WorkflowPresetCloudSyncState,
   WorkflowPresetLibraryRecord,
@@ -45,6 +50,7 @@ import type {
 type Step1SetupProps = {
   predator: string;
   prey: string;
+  wildlifeScopeMode: WildlifeScopeMode;
   contentLane: ContentLane;
   cameraAnglePreset: CameraAnglePreset;
   arc: Arc;
@@ -86,6 +92,7 @@ type Step1SetupProps = {
   canManageWorkflowPresetLibrary: boolean;
   onPredatorChange: (value: string) => void;
   onPreyChange: (value: string) => void;
+  onWildlifeScopeModeChange: (value: WildlifeScopeMode) => void;
   onContentLaneChange: (value: ContentLane) => void;
   onCameraAnglePresetChange: (value: CameraAnglePreset) => void;
   onWeatherChange: (value: Weather) => void;
@@ -141,6 +148,7 @@ type Step1SetupProps = {
 export default function Step1Setup({
   predator,
   prey,
+  wildlifeScopeMode,
   contentLane,
   cameraAnglePreset,
   arc,
@@ -182,6 +190,7 @@ export default function Step1Setup({
   canManageWorkflowPresetLibrary,
   onPredatorChange,
   onPreyChange,
+  onWildlifeScopeModeChange,
   onContentLaneChange,
   onCameraAnglePresetChange,
   onWeatherChange,
@@ -333,6 +342,27 @@ export default function Step1Setup({
             Start with the pairing viewers can identify fastest. Lower drift risk is usually the safest Facebook first test.
           </p>
           <div className="grid gap-4 sm:grid-cols-2">
+            <div className="sm:col-span-2">
+              <label className="mb-1.5 block text-[11px] font-medium text-gray-500">
+                Wildlife Focus
+              </label>
+              <select
+                value={wildlifeScopeMode}
+                onChange={(event) =>
+                  onWildlifeScopeModeChange(event.target.value as WildlifeScopeMode)
+                }
+                className="w-full rounded-xl border border-gray-200 bg-gray-50 px-3 py-2.5 text-sm font-medium text-gray-900 focus:border-gray-400 focus:outline-none"
+              >
+                {wildlifeScopeOptions.map((option) => (
+                  <option key={option} value={option}>
+                    {option}
+                  </option>
+                ))}
+              </select>
+              <p className="mt-1 text-[11px] text-gray-400">
+                USA Wildlife keeps Step 1 centered on strong U.S.-recognizable species for WSTV. World Wildlife restores the full built-in animal list. Custom animals stay available in either mode.
+              </p>
+            </div>
             <div>
               <label className="mb-1.5 block text-[11px] font-medium text-gray-500">
                 Lead Animal

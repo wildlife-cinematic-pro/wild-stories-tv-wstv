@@ -59,6 +59,8 @@ export type CameraAnglePreset =
   | "Waterline"
   | "Ground-level tension";
 
+export type WildlifeScopeMode = "USA Wildlife" | "World Wildlife";
+
 export type EmotionalTone =
   | "Raw Tension"
   | "Silent Dread"
@@ -232,6 +234,7 @@ export type PackageLockState = Record<PackageLockKey, boolean>;
 export type BuildWorkflowPresetSnapshot = {
   predator: string;
   prey: string;
+  wildlifeScopeMode: WildlifeScopeMode;
   contentLane: ContentLane;
   cameraAnglePreset: CameraAnglePreset;
   arc: Arc;

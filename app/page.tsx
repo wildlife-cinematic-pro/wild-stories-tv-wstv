@@ -22,6 +22,7 @@ import type {
   PromptVersion,
   HabitatPreset,
   SavedWorkflowPreset,
+  WildlifeScopeMode,
 } from "@/types";
 
 import {
@@ -94,6 +95,7 @@ type QualityState = {
 
 const DEFAULT_PREDATOR = "Mountain Lion";
 const DEFAULT_PREY = "White-tailed Deer";
+const DEFAULT_WILDLIFE_SCOPE_MODE: WildlifeScopeMode = "USA Wildlife";
 const DEFAULT_CONTENT_LANE: ContentLane = "Auto";
 const DEFAULT_CAMERA_PRESET: CameraAnglePreset = DEFAULT_CAMERA_ANGLE_PRESET;
 const DEFAULT_ARC: Arc = "Ambush attack";
@@ -109,6 +111,9 @@ export default function Page() {
   // STEP 1
   const [predator, setPredator] = useState(DEFAULT_PREDATOR);
   const [prey, setPrey] = useState(DEFAULT_PREY);
+  const [wildlifeScopeMode, setWildlifeScopeMode] = useState<WildlifeScopeMode>(
+    DEFAULT_WILDLIFE_SCOPE_MODE
+  );
   const [contentLane, setContentLane] = useState<ContentLane>(DEFAULT_CONTENT_LANE);
   const [cameraAnglePreset, setCameraAnglePreset] = useState<CameraAnglePreset>(
     DEFAULT_CAMERA_PRESET
@@ -166,6 +171,7 @@ export default function Page() {
 
     setPredator(snapshot.predator);
     setPrey(snapshot.prey);
+    setWildlifeScopeMode(snapshot.wildlifeScopeMode);
     setContentLane(snapshot.contentLane);
     setCameraAnglePreset(snapshot.cameraAnglePreset);
     setArc(snapshot.arc);
@@ -201,6 +207,7 @@ export default function Page() {
   function handleResetDefaults() {
     setPredator(DEFAULT_PREDATOR);
     setPrey(DEFAULT_PREY);
+    setWildlifeScopeMode(DEFAULT_WILDLIFE_SCOPE_MODE);
     setContentLane(DEFAULT_CONTENT_LANE);
     setCameraAnglePreset(DEFAULT_CAMERA_PRESET);
     setArc(DEFAULT_ARC);
@@ -216,6 +223,7 @@ export default function Page() {
     predator,
     prey,
     arc,
+    wildlifeScopeMode,
     contentLane,
     cameraAnglePreset,
     weather,
@@ -234,6 +242,7 @@ export default function Page() {
     setPredator,
     setPrey,
     setArc,
+    setWildlifeScopeMode,
     setContentLane,
     setCameraAnglePreset,
     setWeather,
@@ -263,6 +272,7 @@ export default function Page() {
     deleteCustomAnimal,
   } = useCustomAnimals({
     currentPredator: predator,
+    wildlifeScopeMode,
     defaultPrey: DEFAULT_PREY,
     defaultHabitat: DEFAULT_HABITAT,
     onSelectCustomAnimal: (selection) => {
@@ -273,6 +283,18 @@ export default function Page() {
     },
     onResetDefaults: handleResetDefaults,
   });
+
+  useEffect(() => {
+    if (!predatorOptions.length || predatorOptions.includes(predator)) return;
+
+    const fallbackPredator = predatorOptions.includes(DEFAULT_PREDATOR)
+      ? DEFAULT_PREDATOR
+      : predatorOptions[0];
+
+    if (fallbackPredator && predator !== fallbackPredator) {
+      setPredator(fallbackPredator);
+    }
+  }, [predator, predatorOptions]);
 
   const {
     preset,
@@ -338,6 +360,7 @@ export default function Page() {
     () => ({
       predator,
       prey,
+      wildlifeScopeMode,
       contentLane,
       cameraAnglePreset,
       arc: previewArc,
@@ -392,6 +415,7 @@ export default function Page() {
       singleActionRule,
       strictOriginalityGuard,
       weather,
+      wildlifeScopeMode,
     ]
   );
 
@@ -885,6 +909,7 @@ export default function Page() {
               <Step1Setup
                 predator={predator}
                 prey={prey}
+                wildlifeScopeMode={wildlifeScopeMode}
                 contentLane={contentLane}
                 cameraAnglePreset={cameraAnglePreset}
                 arc={arc}
@@ -950,6 +975,7 @@ export default function Page() {
                 }
                 onPredatorChange={setPredator}
                 onPreyChange={setPrey}
+                onWildlifeScopeModeChange={setWildlifeScopeMode}
                 onContentLaneChange={setContentLane}
                 onCameraAnglePresetChange={setCameraAnglePreset}
                 onWeatherChange={setWeather}

@@ -28,6 +28,7 @@ function makeSnapshot(
   return {
     predator: "Wolf Pack",
     prey: "Bull Elk",
+    wildlifeScopeMode: "USA Wildlife",
     contentLane: "Pack Hunt",
     cameraAnglePreset: "Auto",
     arc: "Pack hunting strategy",
@@ -95,6 +96,7 @@ describe("workflow presets", () => {
 
     expect(preset.snapshot.predator).toBe("Bald Eagle");
     expect(preset.snapshot.prey).toBe("Salmon");
+    expect(preset.snapshot.wildlifeScopeMode).toBe("USA Wildlife");
     expect(preset.snapshot.contentLane).toBe("Fishing Strike");
     expect(preset.snapshot.arc).toBe("Ambush attack");
     expect(preset.snapshot.durationLane).toBe("long");
@@ -187,6 +189,7 @@ describe("workflow presets", () => {
     expect(normalized).toMatchObject({
       predator: "Mountain Lion",
       prey: "White-tailed Deer",
+      wildlifeScopeMode: "USA Wildlife",
       contentLane: "Auto",
       arc: "Ambush attack",
       habitat: "Auto",
@@ -200,6 +203,16 @@ describe("workflow presets", () => {
       sceneDescriptionMode: "manual",
       sceneDescriptionTouched: true,
     });
+  });
+
+  it("keeps legacy world-animal presets loadable by defaulting them to World Wildlife", () => {
+    const normalized = normalizeWorkflowPresetSnapshot({
+      predator: "Lion",
+      prey: "Zebra",
+      arc: "Chase and takedown",
+    });
+
+    expect(normalized?.wildlifeScopeMode).toBe("World Wildlife");
   });
 
   it("exports a single preset with versioned portable JSON metadata", () => {

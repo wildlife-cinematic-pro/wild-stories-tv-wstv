@@ -37,6 +37,7 @@ import type {
   EarningsEstimate,
   PostingDay,
   CalendarDay,
+  WildlifeScopeMode,
 } from "@/types";
 
 import {
@@ -686,6 +687,83 @@ export const predatorData: Record<string, PredatorInfo> = {
     driftRisk: "MEDIUM",
   },
 };
+
+
+export const wildlifeScopeOptions: WildlifeScopeMode[] = [
+  "USA Wildlife",
+  "World Wildlife",
+];
+
+const USA_WILDLIFE_PRIORITY = [
+  "Mountain Lion",
+  "Wolf Pack",
+  "Grizzly Bear",
+  "Alligator",
+  "Bison",
+  "Coyote",
+  "Bald Eagle",
+  "Moose",
+  "Bull Elk",
+  "Black Bear",
+  "Cougar",
+  "Wolf",
+  "Bobcat",
+  "White-tailed Deer",
+  "Mule Deer",
+  "Elk",
+  "Wild Boar",
+  "Great Horned Owl",
+  "Red Fox",
+  "River Otter",
+  "Beaver",
+  "Badger",
+  "Raccoon",
+  "Wolverine",
+  "Salmon",
+  "Shark",
+  "Orca",
+  "Dolphin",
+] as const;
+
+const USA_WILDLIFE_SET = new Set<string>(USA_WILDLIFE_PRIORITY);
+
+export function isWildlifeScopeMode(value: unknown): value is WildlifeScopeMode {
+  return (
+    typeof value === "string" &&
+    (wildlifeScopeOptions as readonly string[]).includes(value)
+  );
+}
+
+export function isUSAWildlifeAnimal(name: string): boolean {
+  return USA_WILDLIFE_SET.has(name);
+}
+
+function sortPredatorOptionsByUSAPriority(options: string[]): string[] {
+  return [...options].sort((a, b) => {
+    const ai = USA_WILDLIFE_PRIORITY.indexOf(a as (typeof USA_WILDLIFE_PRIORITY)[number]);
+    const bi = USA_WILDLIFE_PRIORITY.indexOf(b as (typeof USA_WILDLIFE_PRIORITY)[number]);
+    const aPinned = ai !== -1;
+    const bPinned = bi !== -1;
+
+    if (aPinned && bPinned) return ai - bi;
+    if (aPinned) return -1;
+    if (bPinned) return 1;
+    return a.localeCompare(b);
+  });
+}
+
+export function filterPredatorOptionsByWildlifeScope(
+  options: string[],
+  wildlifeScopeMode: WildlifeScopeMode
+): string[] {
+  const unique = Array.from(new Set(options));
+  const filtered =
+    wildlifeScopeMode === "USA Wildlife"
+      ? unique.filter((option) => isUSAWildlifeAnimal(option))
+      : unique;
+
+  return sortPredatorOptionsByUSAPriority(filtered);
+}
 
 // ─────────────────────────────────────────────────────────────
 // WEATHER VARIANTS
