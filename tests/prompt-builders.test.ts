@@ -22,6 +22,7 @@ import {
   validateKlingPromptLength,
   validateEngineConstraints,
 } from "@/lib/prompt-builders";
+import { getHabitatMode, isWaterForwardPreyScenario } from "@/lib/prompt-builders/habitat";
 
 describe("buildImagePrompt – Nano Banana image path", () => {
   const args = {
@@ -745,6 +746,11 @@ describe("Step 12 — export cleanup guards", () => {
 
     expect(combined).toMatch(/bank-edge|surface break|shoreline reaction|strike window/);
     expect(combined).not.toMatch(/ground compression|grounded weight transfer|footing adjustment/);
+  });
+
+  it("keeps Gray Wolf land-based in salmon shoreline classifications", () => {
+    expect(getHabitatMode("Gray Wolf", "Salmon", "Riverbank Reeds")).toBe("shoreline");
+    expect(isWaterForwardPreyScenario("Gray Wolf", "Salmon", "Riverbank Reeds")).toBe(true);
   });
 
   it("sharpens rut mirror-match prompts with antler-room and footing cues", () => {

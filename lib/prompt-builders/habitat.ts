@@ -75,7 +75,6 @@ const AQUATIC_ANIMAL_MARKERS = [
   "sardine",
   "anchovy",
   "eel",
-  "ray",
   "stingray",
   "whale",
   "octopus",
