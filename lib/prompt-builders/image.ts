@@ -42,6 +42,280 @@ import {
   buildImageCameraPresetLine,
 } from "@/lib/camera-angle-presets";
 
+type SceneLockState = {
+  habitatLabel: string;
+  habitatLocation: string;
+  groundState: string;
+  lightingFamily: string;
+  atmosphereFamily: string;
+};
+
+function normalizeSceneText(value: string): string {
+  return String(value ?? "")
+    .toLowerCase()
+    .replace(/[^a-z0-9\s-]/g, " ")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
+function buildSceneLockHabitat(
+  cleanEnv: string
+): Pick<SceneLockState, "habitatLabel" | "habitatLocation"> {
+  const normalized = normalizeSceneText(cleanEnv);
+
+  if (/river|bank|reed|cattail|willow|cottonwood|shoreline/.test(normalized)) {
+    return {
+      habitatLabel: "riverbank reeds",
+      habitatLocation: "along riverbank reeds",
+    };
+  }
+
+  if (/cypress|swamp/.test(normalized)) {
+    return {
+      habitatLabel: "cypress swamp edge",
+      habitatLocation: "at a cypress swamp edge",
+    };
+  }
+
+  if (/everglades|marsh|wetland|sawgrass/.test(normalized)) {
+    return {
+      habitatLabel: "marsh edge",
+      habitatLocation: "at a marsh edge",
+    };
+  }
+
+  if (/coastal|cliff|ocean|salt|pacific/.test(normalized)) {
+    return {
+      habitatLabel: "coastal cliffline",
+      habitatLocation: "along a coastal cliffline",
+    };
+  }
+
+  if (/pine|aspen|forest|timber|woodland/.test(normalized)) {
+    return {
+      habitatLabel: "pine-aspen forest clearing",
+      habitatLocation: "in a pine-aspen forest clearing",
+    };
+  }
+
+  if (/rocky mountain|meadow|sage|valley/.test(normalized)) {
+    return {
+      habitatLabel: "Rocky Mountain meadow edge",
+      habitatLocation: "at a Rocky Mountain meadow edge",
+    };
+  }
+
+  if (/prairie|grassland|plain|savanna/.test(normalized)) {
+    return {
+      habitatLabel: "open prairie grassland",
+      habitatLocation: "in open prairie grassland",
+    };
+  }
+
+  return {
+    habitatLabel: cleanEnv,
+    habitatLocation: `in ${cleanEnv}`,
+  };
+}
+
+function buildSceneLockGround(
+  cleanEnv: string,
+  weather: Weather,
+  habitatMode: ReturnType<typeof getHabitatMode>,
+  isWaterForwardStrike: boolean
+): string {
+  const normalized = normalizeSceneText(`${cleanEnv} ${weather}`);
+
+  if (habitatMode === "aquatic") {
+    return "broken water surface and shallow current";
+  }
+
+  if (habitatMode === "shoreline") {
+    return isWaterForwardStrike
+      ? "muddy bank edge with shallow current"
+      : "wet shoreline mud with reeds at the edge";
+  }
+
+  if (/heavy snowfall|snow-covered|deep snow|blizzard/.test(normalized) || weather === "Winter Blizzard") {
+    return "snow-covered clearing";
+  }
+
+  if (/snow|frozen|frost|winter/.test(normalized) || weather === "Frozen Dusk") {
+    return "patchy early snow over dirt and grass";
+  }
+
+  if (/forest|pine|aspen|woodland|leaf litter/.test(normalized)) {
+    return "dry leaf litter and patchy grass";
+  }
+
+  if (/rock|cliff|scree/.test(normalized)) {
+    return "rocky dirt with sparse grass";
+  }
+
+  if (/marsh|swamp|wetland|mud/.test(normalized)) {
+    return "muddy wet ground with reeds";
+  }
+
+  return "dry grass and packed earth";
+}
+
+function buildSceneLockLighting(cleanLighting: string, weather: Weather, cleanEnv: string): string {
+  const normalized = normalizeSceneText(`${cleanLighting} ${cleanEnv}`);
+  const winterLike = /snow|frozen|winter|ice/.test(normalized);
+
+  switch (weather) {
+    case "Golden Hour":
+      return winterLike ? "cold late-day winter light" : "warm late-day golden light";
+    case "Storm":
+      return "storm-dark filtered daylight";
+    case "Overcast":
+      return winterLike ? "cold overcast afternoon light" : "soft cloudy daylight";
+    case "Dawn":
+      return /cloud|overcast|diffuse/.test(normalized)
+        ? "soft cloudy dawn light"
+        : "cold dawn light";
+    case "Midday Heat":
+      return "hard midday sun";
+    case "Winter Blizzard":
+      return "cold overcast afternoon light";
+    case "Frozen Dusk":
+      return "winter dusk with a purple-orange sky";
+    default:
+      return /golden|backlight|rim light/.test(normalized)
+        ? "warm late-day golden light"
+        : /overcast|cloud|diffuse/.test(normalized)
+          ? "soft cloudy daylight"
+          : /dawn|blue hour|first light/.test(normalized)
+            ? "cold dawn light"
+            : "natural documentary daylight";
+  }
+}
+
+function buildSceneLockLightingAccent(cleanLighting: string): string {
+  const normalized = normalizeSceneText(cleanLighting);
+  const accents: string[] = [];
+
+  if (/hard side light/.test(normalized)) {
+    accents.push("hard side light");
+  } else if (/side light/.test(normalized)) {
+    accents.push("side light");
+  }
+
+  if (/cool rim light/.test(normalized)) {
+    accents.push("cool rim light");
+  } else if (/rim light/.test(normalized)) {
+    accents.push("rim light");
+  } else if (/backlight/.test(normalized)) {
+    accents.push("backlight");
+  }
+
+  if (!accents.length) {
+    return "";
+  }
+
+  return accents.length === 1
+    ? `Keep the light direction ${accents[0]}.`
+    : `Keep the light direction ${accents[0]} with ${accents[1]}.`;
+}
+
+function buildSceneLockAtmosphere(
+  cleanEnv: string,
+  weather: Weather,
+  habitatMode: ReturnType<typeof getHabitatMode>,
+  isWaterForwardStrike: boolean
+): string {
+  const normalized = normalizeSceneText(cleanEnv);
+
+  if (habitatMode === "aquatic") {
+    return "clean moving water and a readable surface break";
+  }
+
+  if (habitatMode === "shoreline") {
+    return isWaterForwardStrike
+      ? "clean shoreline air and a tight surface-break window"
+      : "clean shoreline air with light water movement";
+  }
+
+  if (weather === "Storm") {
+    return "storm-heavy air with distant cloud build";
+  }
+
+  if (weather === "Winter Blizzard") {
+    return "cold snowfall held low in clear readable layers";
+  }
+
+  if (weather === "Frozen Dusk" || /snow|frozen|winter/.test(normalized)) {
+    return "clear cold air";
+  }
+
+  if (weather === "Dawn") {
+    return "cool clear morning air";
+  }
+
+  if (/forest|pine|aspen|woodland/.test(normalized)) {
+    return "clean forest air";
+  }
+
+  return "clear open air";
+}
+
+function buildSceneLockState(
+  cleanEnv: string,
+  cleanLighting: string,
+  weather: Weather,
+  habitatMode: ReturnType<typeof getHabitatMode>,
+  isWaterForwardStrike: boolean
+): SceneLockState {
+  const habitat = buildSceneLockHabitat(cleanEnv);
+
+  return {
+    ...habitat,
+    groundState: buildSceneLockGround(cleanEnv, weather, habitatMode, isWaterForwardStrike),
+    lightingFamily: buildSceneLockLighting(cleanLighting, weather, cleanEnv),
+    atmosphereFamily: buildSceneLockAtmosphere(
+      cleanEnv,
+      weather,
+      habitatMode,
+      isWaterForwardStrike
+    ),
+  };
+}
+
+function buildSceneNoteBlockingCue(
+  sanitizedSceneDesc: string,
+  predator: string,
+  prey: string,
+  habitatMode: ReturnType<typeof getHabitatMode>,
+  isWaterForwardStrike: boolean,
+  isRutMirrorMatch: boolean,
+  rutCue: ReturnType<typeof getRutMirrorMatchCue>
+): string {
+  if (!sanitizedSceneDesc) return "";
+
+  const normalized = normalizeSceneText(sanitizedSceneDesc);
+
+  if (/\bleft\b/.test(normalized) && /\bright\b/.test(normalized)) {
+    return clipPromptContext(sanitizedSceneDesc, 110);
+  }
+
+  if (isRutMirrorMatch && /(standoff|square off|antler|claim|shoulder|footing)/.test(normalized)) {
+    return `Keep the standoff frontal with ${rutCue.room} and planted footing.`;
+  }
+
+  if (
+    (habitatMode === "shoreline" || isWaterForwardStrike) &&
+    /(bank|waterline|surface|shallows?|strike|shoreline)/.test(normalized)
+  ) {
+    return "Keep the bank edge open, the shoreline gap clean, and the surface-break lane readable.";
+  }
+
+  if (/(advance|closing|close|pressure|spacing|turn|breakaway|step|hold)/.test(normalized)) {
+    return `Let ${predator} own one readable advance while ${prey} keeps a clean reaction lane.`;
+  }
+
+  return "";
+}
+
 function buildNanoBananaImagePrompt(
   predator: string,
   prey: string,
@@ -53,6 +327,7 @@ function buildNanoBananaImagePrompt(
   animalVibe: AnimalVibe,
   habitatMode: ReturnType<typeof getHabitatMode>,
   sanitizedSceneDesc: string,
+  weather: Weather,
   quality?: QualityOptions,
   cameraAnglePreset: CameraAnglePreset = "Auto"
 ): string {
@@ -61,63 +336,75 @@ function buildNanoBananaImagePrompt(
   const isWaterForwardStrike = isWaterForwardPreyScenario(predator, prey, cleanEnv);
   const isRutMirrorMatch = isRutMirrorMatchScenario(predator, prey, arc, cleanEnv);
   const rutCue = getRutMirrorMatchCue(predator);
+  const sceneLock = buildSceneLockState(
+    cleanEnv,
+    cleanLighting,
+    weather,
+    habitatMode,
+    isWaterForwardStrike
+  );
 
   const subjectLine = isRutMirrorMatch
-    ? `Two ${predator} rivals share one frame in ${cleanEnv} during a high-tension rut standoff.`
-    : habitatMode === "shoreline"
-      ? `${predator} and ${prey} share one frame at the waterline in ${cleanEnv} during a high-tension ${getSafeArcLabel(arc)} beat.`
-      : `${predator} and ${prey} share one frame in ${cleanEnv} during a high-tension ${getSafeArcLabel(arc)} beat.`;
+    ? `Two ${predator} rivals share one frame ${sceneLock.habitatLocation} during a rut standoff on ${sceneLock.groundState}.`
+    : `${predator} and ${prey} share one frame ${sceneLock.habitatLocation} during a high-tension ${getSafeArcLabel(arc)} beat on ${sceneLock.groundState}.`;
 
-  const tensionLine = isRutMirrorMatch
-    ? `Both rivals hold ${rutCue.summary} before the clash.`
+  const baseBlockingLine = isRutMirrorMatch
+    ? `Keep one ${predator} planted on the left and the other on the right with ${rutCue.room}, a clean frontal antler line, and open claim-space between them.`
     : habitatMode === "aquatic"
-      ? `${predator} holds visible pressure through the water while ${prey} stays alert and reactive, with biologically plausible spacing.`
+      ? `Keep ${predator} on the left and ${prey} on the right with one clean water lane between them while both bodies stay fully readable.`
       : habitatMode === "shoreline"
         ? isWaterForwardStrike
-          ? `${predator} holds low at the bank while ${prey} shows a tense surface-break read inside the shallow strike window, with natural shoreline spacing.`
-          : `${predator} holds visible pressure at the bank while ${prey} stays alert near the waterline, with natural shoreline spacing.`
-        : `${predator} holds visible pre-action pressure while ${prey} stays alert and reactive, with biologically plausible spacing.`;
+          ? `Keep ${predator} low on the left at the bank and ${prey} on the right inside the shallow strike window with one clean reaction lane between them.`
+          : `Keep ${predator} low on the left at the waterline and ${prey} on the right with one clean shoreline lane between them.`
+        : `Keep ${predator} on the left and ${prey} on the right with one clean reaction lane between them while both bodies stay fully readable.`;
 
-  const compositionLine = isRutMirrorMatch
-    ? depth.lensNote === "cinematic telephoto depth separation"
-      ? `Wide 9:16 vertical frame, telephoto compression, strong shallow depth separation, both rivals fully visible with ${rutCue.line} geometry clean.`
-      : depth.lensNote === "balanced documentary depth"
-        ? `Wide 9:16 vertical frame, telephoto framing, clear midground separation, both rivals fully visible with ${rutCue.room} preserved.`
-        : `Wide 9:16 vertical frame, telephoto framing, deep background visible, both rivals fully visible with ${rutCue.room} preserved.`
-    : depth.lensNote === "cinematic telephoto depth separation"
-      ? "Wide 9:16 vertical frame, telephoto compression, strong shallow depth separation, both animals fully visible."
-      : depth.lensNote === "balanced documentary depth"
-        ? "Wide 9:16 vertical frame, telephoto framing, clear midground separation, both animals fully visible."
-        : "Wide 9:16 vertical frame, telephoto framing, deep background visible, both animals fully visible.";
+  const sceneNoteCue = buildSceneNoteBlockingCue(
+    sanitizedSceneDesc,
+    predator,
+    prey,
+    habitatMode,
+    isWaterForwardStrike,
+    isRutMirrorMatch,
+    rutCue
+  );
+  const blockingLine = sceneNoteCue ? `${baseBlockingLine} ${sceneNoteCue}` : baseBlockingLine;
 
+  const compositionBase = isRutMirrorMatch
+    ? `Use a wide 9:16 vertical frame with both rivals fully visible, clear clash geometry, and ${rutCue.room} preserved.`
+    : `Use a wide 9:16 vertical frame with both animals fully visible and spacing that reads clean from frame one.`;
+  const depthLine =
+    depth.lensNote === "cinematic telephoto depth separation"
+      ? "Telephoto compression keeps the frame tight while the subjects stay separated."
+      : depth.lensNote === "balanced documentary depth"
+        ? "Telephoto framing keeps the midground readable without crowding the animals."
+        : "Telephoto framing keeps the habitat readable behind the animals.";
   const cameraPresetLine = buildImageCameraPresetLine(
     cameraAnglePreset,
     habitatMode,
     cleanEnv
   );
+  const compositionLine = `${compositionBase}${cameraPresetLine ? ` ${cameraPresetLine}` : ""} ${depthLine}`;
+
+  const lightingAccentLine = buildSceneLockLightingAccent(cleanLighting);
   const cameraLightingLine = buildCameraLightingContinuityLine(
     cameraAnglePreset,
     habitatMode,
     cleanEnv
   );
-
-  const atmosphereLine = `Lighting: ${cleanLighting}. Clear air, terrain visible from foreground to background.${cameraLightingLine ? ` ${cameraLightingLine}` : ""}`;
-  const detailLine = vibe.texture
-    ? `Photoreal wildlife detail with ${cleanTexture}. ${vibe.texture}.`
-    : `Photoreal wildlife detail with ${cleanTexture}.`;
+  const atmosphereLine = `${sceneLock.lightingFamily} with ${sceneLock.atmosphereFamily}.${lightingAccentLine ? ` ${lightingAccentLine}` : ""}${cameraLightingLine ? ` ${cameraLightingLine}` : ""}`;
 
   const anatomyLine =
     quality?.realismMode === "High Naturalism"
-      ? "Accurate predator and prey anatomy, natural coat markings, visible paw or hoof contact with the ground, realistic fur imperfections and biological wear."
+      ? "Keep anatomy exact, coat markings stable, grounded paw or hoof contact visible, and natural biological wear intact."
       : quality?.realismMode === "Reference Locked"
-        ? "Accurate predator and prey anatomy, natural coat markings, stable silhouettes, and visible paw or hoof contact with the ground."
-        : "Accurate predator and prey anatomy, natural coat markings, and visible paw or hoof contact with the ground.";
+        ? "Keep anatomy exact, coat markings stable, and grounded paw or hoof contact visible."
+        : "Keep anatomy exact, coat markings stable, and body mechanics natural.";
 
-  const sceneNote = sanitizedSceneDesc
-    ? ` Scene note: ${clipPromptContext(sanitizedSceneDesc, 120)}`
-    : "";
+  const detailLine = vibe.texture
+    ? `Photoreal wildlife documentary detail with ${cleanTexture} and ${vibe.texture.toLowerCase()}. ${anatomyLine}`
+    : `Photoreal wildlife documentary detail with ${cleanTexture}. ${anatomyLine}`;
 
-  return `${subjectLine} ${tensionLine} ${compositionLine}${cameraPresetLine ? ` ${cameraPresetLine}` : ""} Depth of field: ${depth.depth}. ${atmosphereLine} ${detailLine} ${anatomyLine} Photorealistic wildlife documentary style.${sceneNote}`;
+  return `${subjectLine} ${blockingLine} ${compositionLine} ${atmosphereLine} ${detailLine}`;
 }
 
 export function buildImagePromptCard(
@@ -160,6 +447,7 @@ export function buildImagePromptCard(
       animalVibe,
       habitatMode,
       sanitizedSceneDesc,
+      weather,
       quality,
       cameraAnglePreset
     )

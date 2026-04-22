@@ -163,6 +163,52 @@ describe("buildImagePrompt – Nano Banana image path", () => {
 
     expect(p).not.toMatch(/\bClear U\.(?=\s|$)/);
   });
+
+  it("locks NB2 image prompts to one ground family and one lighting family", () => {
+    const prompt = buildImagePrompt(
+      "Bull Elk",
+      "Bull Elk",
+      "Rocky Mountain meadow with snow patches and dry grass",
+      "Giant vs giant clash",
+      "frozen dusk rim light",
+      "Canon EOS R5, 200mm wildlife lens",
+      "wet fur and antler detail",
+      "Balanced Depth",
+      "Frozen Dusk",
+      "Calm Dominance",
+      "BBC Earth Documentary",
+      "The left bull stays planted while the right bull advances one step."
+    ).toLowerCase();
+
+    expect(prompt).toContain("patchy early snow over dirt and grass");
+    expect(prompt).toContain("winter dusk with a purple-orange sky");
+    expect(prompt).toContain("clear cold air");
+    expect(prompt).not.toMatch(/snow-covered clearing|dry leaf litter and patchy grass/);
+    expect(prompt).not.toMatch(/soft cloudy daylight|cold overcast afternoon light/);
+    expect(prompt).not.toMatch(/depth of field:|lighting:/);
+  });
+
+  it("keeps water-forward NB2 prompts locked to shoreline habitat and strike spacing", () => {
+    const prompt = buildImagePrompt(
+      "Bald Eagle",
+      "Salmon",
+      "Riverbank Reeds",
+      "Ambush attack",
+      "dawn river light",
+      "Canon EOS R5, 200mm wildlife lens",
+      "feather and scale detail",
+      "Balanced Depth",
+      "Dawn",
+      "Raw Tension",
+      "National Geographic Wild",
+      "The eagle stays low on the left at the bank while the salmon holds right in the shallows."
+    ).toLowerCase();
+
+    expect(prompt).toContain("along riverbank reeds");
+    expect(prompt).toContain("muddy bank edge with shallow current");
+    expect(prompt).toMatch(/surface-break window|shallow strike window/);
+    expect(prompt).not.toMatch(/dry grass and packed earth|pine-aspen forest clearing/);
+  });
 });
 
 describe("Step 6 — prompt sanitization split", () => {
