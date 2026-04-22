@@ -37,6 +37,7 @@ type Step3GenerateProps = {
   conceptVariantWinners: ConceptVariantLabWinners;
   activeConceptVariantId: string | null;
   onPromoteConceptVariant: (variant: ConceptVariant) => void;
+  onAutoCleanupConceptVariant: (variant: ConceptVariant) => void;
   onRestoreVersion: (version: PromptVersion) => void;
   onBack: () => void;
 };
@@ -61,6 +62,7 @@ export default function Step3Generate({
   conceptVariantWinners,
   activeConceptVariantId,
   onPromoteConceptVariant,
+  onAutoCleanupConceptVariant,
   onRestoreVersion,
   onBack,
 }: Step3GenerateProps) {
@@ -118,6 +120,7 @@ export default function Step3Generate({
           winners={conceptVariantWinners}
           activeVariantId={activeConceptVariantId}
           onPromoteVariant={onPromoteConceptVariant}
+          onAutoCleanupVariant={onAutoCleanupConceptVariant}
         />
 
         <button
