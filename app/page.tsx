@@ -784,6 +784,7 @@ export default function Page() {
                   workflowPresetControls.cloudSyncStatus.lastSyncedAt
                 }
                 suggestedWorkflowPresetName={workflowPresetControls.suggestedPresetName}
+                workflowPresetStatus={workflowPresetControls.presetStatus}
                 activeWorkflowPresetIsDirty={workflowPresetControls.activePresetIsDirty}
                 canEditWorkflowPresetLibrary={
                   workflowPresetControls.canEditActiveLibrary

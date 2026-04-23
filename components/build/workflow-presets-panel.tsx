@@ -39,6 +39,7 @@ type WorkflowPresetsPanelProps = {
   canEditActiveLibrary: boolean;
   canManageActiveLibrary: boolean;
   suggestedPresetName: string;
+  presetStatus: string;
   onPresetNameChange: (value: string) => void;
   onPresetPackNameChange: (value: string) => void;
   onPresetPackDescriptionChange: (value: string) => void;
@@ -139,6 +140,7 @@ export default function WorkflowPresetsPanel({
   canEditActiveLibrary,
   canManageActiveLibrary,
   suggestedPresetName,
+  presetStatus,
   onPresetNameChange,
   onPresetPackNameChange,
   onPresetPackDescriptionChange,
@@ -390,6 +392,7 @@ export default function WorkflowPresetsPanel({
                   Library context
                 </label>
                 <select
+                  aria-label="Preset library context"
                   value={activeLibrary.id}
                   onChange={(event) => onActiveLibraryChange(event.target.value)}
                   className="w-full rounded-xl border border-gray-200 bg-white px-3 py-2.5 text-sm font-medium text-gray-900 focus:border-gray-400 focus:outline-none"
@@ -412,6 +415,7 @@ export default function WorkflowPresetsPanel({
 
               <div className="grid gap-2 sm:grid-cols-[minmax(0,1fr)_minmax(0,1fr)_auto]">
                 <input
+                  aria-label="Shared library name"
                   value={sharedLibraryNameInput}
                   onChange={(event) =>
                     onSharedLibraryNameInputChange(event.target.value)
@@ -420,6 +424,7 @@ export default function WorkflowPresetsPanel({
                   className="w-full rounded-xl border border-gray-200 bg-white px-3 py-2.5 text-sm font-medium text-gray-900 placeholder:text-gray-400 focus:border-gray-400 focus:outline-none"
                 />
                 <input
+                  aria-label="Shared library description"
                   value={sharedLibraryDescriptionInput}
                   onChange={(event) =>
                     onSharedLibraryDescriptionInputChange(event.target.value)
@@ -437,6 +442,12 @@ export default function WorkflowPresetsPanel({
                 </button>
               </div>
             </div>
+
+            <p className="text-[11px] leading-relaxed text-gray-500">
+              Owners manage access. Editors can save, update, delete, import, and sync.
+              Viewers can browse, load, apply, and export only. Members need an existing
+              preset-library account before you add them.
+            </p>
 
             {activeLibrary.scope === "shared" && (
               <div className="rounded-xl border border-gray-100 bg-white p-3">
@@ -459,6 +470,7 @@ export default function WorkflowPresetsPanel({
                 {canManageActiveLibrary && (
                   <div className="grid gap-2 sm:grid-cols-[minmax(0,1fr)_140px_auto]">
                     <input
+                      aria-label="Shared library member email"
                       value={sharedMemberEmailInput}
                       onChange={(event) =>
                         onSharedMemberEmailInputChange(event.target.value)
@@ -467,6 +479,7 @@ export default function WorkflowPresetsPanel({
                       className="w-full rounded-xl border border-gray-200 bg-gray-50 px-3 py-2 text-xs font-medium text-gray-900 placeholder:text-gray-400 focus:border-gray-400 focus:outline-none"
                     />
                     <select
+                      aria-label="Shared library member role"
                       value={sharedMemberRole}
                       onChange={(event) =>
                         onSharedMemberRoleChange(
@@ -536,6 +549,7 @@ export default function WorkflowPresetsPanel({
             Preset name
           </label>
           <input
+            aria-label="Workflow preset name"
             value={presetName}
             onChange={(event) => onPresetNameChange(event.target.value)}
             placeholder={suggestedPresetName}
@@ -566,6 +580,7 @@ export default function WorkflowPresetsPanel({
             Saved preset
           </label>
           <select
+            aria-label="Saved workflow preset"
             value={resolvedSelectedPresetId}
             onChange={(event) => setSelectedPresetId(event.target.value)}
             disabled={!hasPresets}
@@ -626,6 +641,12 @@ export default function WorkflowPresetsPanel({
         </div>
       </div>
 
+      {presetStatus && (
+        <div className="mt-3 text-[11px] font-medium text-gray-500" data-testid="workflow-preset-status">
+          {presetStatus}
+        </div>
+      )}
+
       <div className="mt-4 rounded-2xl border border-gray-100 bg-gray-50 p-3.5">
         <div className="mb-2 flex flex-wrap items-start justify-between gap-3">
           <div>
@@ -660,6 +681,7 @@ export default function WorkflowPresetsPanel({
         </div>
 
         <textarea
+          aria-label="Preset JSON import"
           value={importText}
           onChange={(event) => setImportText(event.target.value)}
           placeholder="Paste exported preset JSON here..."
@@ -714,12 +736,14 @@ export default function WorkflowPresetsPanel({
           <div className="space-y-2">
             <div className="grid gap-2 sm:grid-cols-2">
               <input
+                aria-label="Workflow preset pack name"
                 value={packName}
                 onChange={(event) => onPresetPackNameChange(event.target.value)}
                 placeholder="USA Pack Hunt Starter Pack"
                 className="w-full rounded-xl border border-gray-200 bg-gray-50 px-3 py-2 text-xs font-medium text-gray-900 placeholder:text-gray-400 focus:border-gray-400 focus:outline-none"
               />
               <input
+                aria-label="Workflow preset pack tags"
                 value={packTagsText}
                 onChange={(event) =>
                   onPresetPackTagsTextChange(event.target.value)
@@ -729,6 +753,7 @@ export default function WorkflowPresetsPanel({
               />
             </div>
             <textarea
+              aria-label="Workflow preset pack description"
               value={packDescription}
               onChange={(event) =>
                 onPresetPackDescriptionChange(event.target.value)
@@ -811,6 +836,7 @@ export default function WorkflowPresetsPanel({
 
           <div className="space-y-2">
             <select
+              aria-label="Saved workflow preset pack"
               value={resolvedSelectedPackId}
               onChange={(event) => setSelectedPackId(event.target.value)}
               disabled={!hasPresetPacks}
@@ -873,6 +899,7 @@ export default function WorkflowPresetsPanel({
               </button>
             </div>
             <textarea
+              aria-label="Preset pack JSON import"
               value={packImportText}
               onChange={(event) => setPackImportText(event.target.value)}
               placeholder="Paste exported preset pack JSON here..."
