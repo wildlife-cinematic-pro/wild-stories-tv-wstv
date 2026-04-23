@@ -315,6 +315,24 @@ describe("Seedance prompt builder", () => {
     expect(shots.workflowGuide).toContain("Default WSTV workflow: generate 4 separate video shots.");
     expect(shots.workflowGuide).not.toContain("3-shot");
   });
+  it("locks later Seedance shots to the Shot 1 world plate without breaking shot readability", () => {
+    const pack = buildSeedancePromptPack(
+      "Wolf",
+      "Bull Elk",
+      "Rocky Mountain meadow",
+      "Pack hunting strategy",
+      "Overcast",
+      "Raw Tension",
+      "National Geographic Wild",
+      "The pack tightens one lane while the elk keeps a clean escape read.",
+      quality
+    );
+
+    expect(pack.shot2.pasteReady).toContain("Stay inside the exact Shot 1 world plate");
+    expect(pack.shot3.pasteReady).toContain("same background layout");
+    expect(pack.shot4.pasteReady).toContain("Camera holds wide with a subtle pull-back");
+    expect(pack.shot3.pasteReady).toContain("dominant readable action beat");
+  });
 });
 
 describe("Clip chaining guidance", () => {
@@ -875,6 +893,27 @@ describe("Step 12 — export cleanup guards", () => {
   it("keeps Gray Wolf land-based in salmon shoreline classifications", () => {
     expect(getHabitatMode("Gray Wolf", "Salmon", "Riverbank Reeds")).toBe("shoreline");
     expect(isWaterForwardPreyScenario("Gray Wolf", "Salmon", "Riverbank Reeds")).toBe(true);
+  });
+
+  it("keeps NB2 master-still prompts scene-locked while trimming composition density", () => {
+    const prompt = buildImagePrompt(
+      "Mountain Lion",
+      "White-tailed Deer",
+      "Rocky Mountain meadow",
+      "Ambush attack",
+      "golden hour rim light",
+      "Canon EOS R5, 200mm wildlife lens",
+      "natural fur and hoof detail",
+      "Balanced Depth",
+      "Golden Hour",
+      "Raw Tension",
+      "National Geographic Wild"
+    );
+
+    expect(prompt).toContain("Wide 9:16 documentary framing");
+    expect(prompt).not.toContain("Use a wide 9:16 vertical frame");
+    expect(prompt).toContain("Telephoto framing keeps the midground readable.");
+    expect(prompt).toContain("in clear open air.");
   });
 
   it("sharpens rut mirror-match prompts with antler-room and footing cues", () => {

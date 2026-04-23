@@ -109,7 +109,7 @@ export function buildKlingLocationLine(
 }
 
 export function buildShotWorldContinuityLock(
-  engine: "image" | "runway" | "kling"
+  engine: "image" | "runway" | "kling" | "seedance"
 ): string {
   const lock =
     "preserve the Shot 1 world plate: same background layout, terrain contours, horizon line, key tree/reed/rock placement, light direction, weather density, and habitat identity; no environment drift, only the action beat and camera move change";
@@ -120,6 +120,10 @@ export function buildShotWorldContinuityLock(
 
   if (engine === "runway") {
     return `Continuity lock: ${lock}.`;
+  }
+
+  if (engine === "seedance") {
+    return "Stay inside the exact Shot 1 world plate: same background layout, terrain contours, horizon line, key tree/reed/rock placement, light direction, weather density, and habitat identity. No environment drift; only the action beat and camera move change.";
   }
 
   return "Continue inside the exact Shot 1 world plate: same background layout, terrain contours, horizon line, key tree/reed/rock placement, light direction, weather density, and habitat identity. No environment drift; only the action beat and camera move change.";

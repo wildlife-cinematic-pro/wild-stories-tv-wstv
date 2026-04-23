@@ -355,9 +355,9 @@ function buildNanoBananaImagePrompt(
       ? `Keep ${predator} on the left and ${prey} on the right with one clean water lane between them while both bodies stay fully readable.`
       : habitatMode === "shoreline"
         ? isWaterForwardStrike
-          ? `Keep ${predator} low on the left at the bank and ${prey} on the right inside the shallow strike window with one clean reaction lane between them.`
-          : `Keep ${predator} low on the left at the waterline and ${prey} on the right with one clean shoreline lane between them.`
-        : `Keep ${predator} on the left and ${prey} on the right with one clean reaction lane between them while both bodies stay fully readable.`;
+          ? `Keep ${predator} low on the left at the bank and ${prey} on the right inside the shallow strike window with one open reaction lane between them.`
+          : `Keep ${predator} low on the left at the waterline and ${prey} on the right with one open shoreline lane between them.`
+        : `Keep ${predator} on the left and ${prey} on the right with one open reaction lane between them and both bodies fully readable.`;
 
   const sceneNoteCue = buildSceneNoteBlockingCue(
     sanitizedSceneDesc,
@@ -371,14 +371,14 @@ function buildNanoBananaImagePrompt(
   const blockingLine = sceneNoteCue ? `${baseBlockingLine} ${sceneNoteCue}` : baseBlockingLine;
 
   const compositionBase = isRutMirrorMatch
-    ? `Use a wide 9:16 vertical frame with both rivals fully visible, clear clash geometry, and ${rutCue.room} preserved.`
-    : `Use a wide 9:16 vertical frame with both animals fully visible and spacing that reads clean from frame one.`;
+    ? `Wide 9:16 documentary framing keeps both rivals fully visible, clash geometry clean, and ${rutCue.room} preserved.`
+    : `Wide 9:16 documentary framing keeps both animals fully visible with clean first-frame spacing.`;
   const depthLine =
     depth.lensNote === "cinematic telephoto depth separation"
-      ? "Telephoto compression keeps the frame tight while the subjects stay separated."
+      ? "Telephoto compression keeps the subjects separated."
       : depth.lensNote === "balanced documentary depth"
-        ? "Telephoto framing keeps the midground readable without crowding the animals."
-        : "Telephoto framing keeps the habitat readable behind the animals.";
+        ? "Telephoto framing keeps the midground readable."
+        : "The habitat stays readable behind them.";
   const cameraPresetLine = buildImageCameraPresetLine(
     cameraAnglePreset,
     habitatMode,
@@ -392,11 +392,11 @@ function buildNanoBananaImagePrompt(
     habitatMode,
     cleanEnv
   );
-  const atmosphereLine = `${sceneLock.lightingFamily} with ${sceneLock.atmosphereFamily}.${lightingAccentLine ? ` ${lightingAccentLine}` : ""}${cameraLightingLine ? ` ${cameraLightingLine}` : ""}`;
+  const atmosphereLine = `${sceneLock.lightingFamily} in ${sceneLock.atmosphereFamily}.${lightingAccentLine ? ` ${lightingAccentLine}` : ""}${cameraLightingLine ? ` ${cameraLightingLine}` : ""}`;
 
   const anatomyLine =
     quality?.realismMode === "High Naturalism"
-      ? "Keep anatomy exact, coat markings stable, grounded paw or hoof contact visible, and natural biological wear intact."
+      ? "Keep anatomy exact, coat markings stable, grounded paw or hoof contact visible, and natural wear intact."
       : quality?.realismMode === "Reference Locked"
         ? "Keep anatomy exact, coat markings stable, and grounded paw or hoof contact visible."
         : "Keep anatomy exact, coat markings stable, and body mechanics natural.";
