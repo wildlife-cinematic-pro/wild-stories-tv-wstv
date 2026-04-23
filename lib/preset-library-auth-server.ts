@@ -28,10 +28,9 @@ function getBlobToken(): string | undefined {
 }
 
 function getAuthSecret(): string | undefined {
-  const secret =
-    process.env.PRESET_LIBRARY_AUTH_SECRET?.trim() ??
-    process.env.BLOB_READ_WRITE_TOKEN?.trim();
-  return secret || undefined;
+  const explicitSecret = process.env.PRESET_LIBRARY_AUTH_SECRET?.trim();
+  const blobTokenFallback = process.env.BLOB_READ_WRITE_TOKEN?.trim();
+  return explicitSecret || blobTokenFallback || undefined;
 }
 
 function cleanString(value: unknown, fallback = ""): string {
@@ -79,6 +78,15 @@ function signPayload(payload: string): string {
     throw new Error("Preset library auth is not configured for this deployment.");
   }
   return createHmac("sha256", secret).update(payload).digest("base64url");
+}
+
+function safeSignatureMatch(expected: string, actual: string): boolean {
+  const expectedBuffer = Buffer.from(expected);
+  const actualBuffer = Buffer.from(actual);
+  return (
+    expectedBuffer.length === actualBuffer.length &&
+    timingSafeEqual(expectedBuffer, actualBuffer)
+  );
 }
 
 function encodeSessionPayload(
@@ -338,7 +346,7 @@ export async function readPresetLibrarySessionFromCookieHeader(
 
   const [payload, signature] = token.split(".");
   if (!payload || !signature) return null;
-  if (signPayload(payload) !== signature) return null;
+  if (!safeSignatureMatch(signPayload(payload), signature)) return null;
 
   const parsed = decodeSessionPayload(payload);
   if (!parsed?.userId || !parsed.user?.email) return null;

@@ -300,6 +300,9 @@ export default function WorkflowPresetsPanel({
           <div className="grid gap-3 lg:grid-cols-[minmax(0,1fr)_auto]">
             <div className="grid gap-2 sm:grid-cols-3">
               <input
+                type="email"
+                autoComplete="email"
+                aria-label="Preset library email"
                 value={authEmailInput}
                 onChange={(event) => onAuthEmailInputChange(event.target.value)}
                 placeholder="you@example.com"
@@ -307,6 +310,8 @@ export default function WorkflowPresetsPanel({
               />
               <input
                 type="password"
+                autoComplete="current-password"
+                aria-label="Preset library password"
                 value={authPasswordInput}
                 onChange={(event) =>
                   onAuthPasswordInputChange(event.target.value)
@@ -315,6 +320,8 @@ export default function WorkflowPresetsPanel({
                 className="w-full rounded-xl border border-gray-200 bg-white px-3 py-2.5 text-sm font-medium text-gray-900 placeholder:text-gray-400 focus:border-gray-400 focus:outline-none"
               />
               <input
+                autoComplete="name"
+                aria-label="Preset library display name"
                 value={authDisplayNameInput}
                 onChange={(event) =>
                   onAuthDisplayNameInputChange(event.target.value)
@@ -323,6 +330,9 @@ export default function WorkflowPresetsPanel({
                 className="w-full rounded-xl border border-gray-200 bg-white px-3 py-2.5 text-sm font-medium text-gray-900 placeholder:text-gray-400 focus:border-gray-400 focus:outline-none"
               />
             </div>
+            <p className="text-[11px] leading-relaxed text-gray-500 lg:hidden">
+              Enter email and password to sign in. New accounts need an 8+ character password; local presets stay available if cloud auth fails.
+            </p>
             <div className="flex flex-wrap items-end gap-2">
               <button
                 type="button"
@@ -341,13 +351,16 @@ export default function WorkflowPresetsPanel({
                 Create Account
               </button>
             </div>
+            <p className="hidden max-w-[280px] text-[11px] leading-relaxed text-gray-500 lg:block">
+              Enter email and password to sign in. New accounts need an 8+ character password; local presets stay available if cloud auth fails.
+            </p>
           </div>
         ) : (
           <div className="space-y-3">
             <div className="flex flex-wrap items-center justify-between gap-3">
               <div>
                 <div className="text-[11px] font-semibold text-gray-700">
-                  {authSession.user.displayName}
+                  {authSession.user.displayName || authSession.user.email}
                 </div>
                 <div className="text-[11px] text-gray-500">
                   {authSession.user.email}
