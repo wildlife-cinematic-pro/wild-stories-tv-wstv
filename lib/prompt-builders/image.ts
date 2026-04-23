@@ -25,6 +25,7 @@ import {
 import {
   getDepthPrompt,
   buildStructuredPrompt,
+  buildShotWorldContinuityLock,
 } from "@/lib/prompt-builders/shared";
 import {
   finalizePrompt,
@@ -586,8 +587,9 @@ export function buildShotImagePlan(
 
   const continuityLock = `Keep ${predator} and ${prey} identical in anatomy, markings, scale, lighting family, and habitat continuity in ${cleanEnv}, ${cleanWeather}. Preserve the same 9:16 documentary image family, grounded contact, realistic spacing, and clean silhouette separation.`;
   const atmosphereLock = `Environment stays continuity-safe with ${micro}.`;
+  const shotWorldContinuityLock = buildShotWorldContinuityLock("image");
   const masterBase =
-    "Base image: use the Nano Banana 2 / Gemini master still as the continuity anchor.";
+    "Base image: use the Nano Banana 2 / Gemini master still as the Shot 1 visual-world anchor.";
   const continuityBase =
     "Base image: use the previous continuity image derived from the Nano Banana master still.";
 
@@ -603,21 +605,21 @@ export function buildShotImagePlan(
       title: "Shot 2 Image — Pressure Build",
       source: "previous_image",
       prompt: finalizePrompt(
-        `${continuityBase} ${continuityLock} Tighten the frame slightly for the pressure-build beat. The ${predator} ${pressurePredator}. The ${prey} ${pressurePrey}. Keep the lighting family and visual continuity stable. ${atmosphereLock}`
+        `${continuityBase} ${continuityLock} Tighten the frame slightly for the pressure-build beat. The ${predator} ${pressurePredator}. The ${prey} ${pressurePrey}. ${shotWorldContinuityLock} ${atmosphereLock}`
       ),
     },
     {
       title: "Shot 3 Image — Peak Action",
       source: "previous_image",
       prompt: finalizePrompt(
-        `${continuityBase} ${continuityLock} Advance into the peak action beat with one dominant readable action. The ${predator} ${peakPredator}. The ${prey} ${peakPrey}. Preserve full-body readability, clear predator-to-prey spacing, believable traction, and strong biomechanical clarity.${peakContinuityLine} ${atmosphereLock}`
+        `${continuityBase} ${continuityLock} Advance into the peak action beat with one dominant readable action. The ${predator} ${peakPredator}. The ${prey} ${peakPrey}. Preserve full-body readability, clear predator-to-prey spacing, believable traction, and strong biomechanical clarity.${peakContinuityLine} ${shotWorldContinuityLock} ${atmosphereLock}`
       ),
     },
     {
       title: "Shot 4 Image — Resolved Tension",
       source: "previous_image",
       prompt: finalizePrompt(
-        `${continuityBase} ${continuityLock} Move into the immediate aftermath or resolved tension beat. The ${predator} ${resolvePredator}. The ${prey} ${resolvePrey}. Preserve readable spacing to the final frame, stable anatomy, and clean continuity.${resolveContinuityLine} ${atmosphereLock}`
+        `${continuityBase} ${continuityLock} Move into the immediate aftermath or resolved tension beat. The ${predator} ${resolvePredator}. The ${prey} ${resolvePrey}. Preserve readable spacing to the final frame, stable anatomy, and clean continuity.${resolveContinuityLine} ${shotWorldContinuityLock} ${atmosphereLock}`
       ),
     },
   ];
