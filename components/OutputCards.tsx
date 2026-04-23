@@ -29,6 +29,7 @@ import {
   WorkspaceTabButton,
 } from "@/components/output-cards/shared-panels";
 import { RealGenerationEvidencePanel } from "@/components/output-cards/evidence-panel";
+import { FacebookPublishReadinessPanel } from "@/components/output-cards/facebook-publish-readiness-panel";
 import { WorkflowPromptMap } from "@/components/output-cards/workflow-prompt-map";
 import {
   getImagePromptCard,
@@ -56,15 +57,6 @@ type OutputWorkspaceTab =
 type VideoWorkspaceTab = "hybrid" | "seedance" | "runway" | "kling";
 type DirectWorkspaceTab = "seedance" | "kling15" | "kling6";
 
-const HOOK_FAMILY_LABELS = ["Danger", "Curiosity", "Reversal"] as const;
-
-function formatHookFamilyLabel(value: string): string {
-  return value
-    .split(/[_\-\s]+/)
-    .filter(Boolean)
-    .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
-    .join(" ");
-}
 
 export default function OutputCards({
   data,
@@ -206,88 +198,6 @@ export default function OutputCards({
   const hybridRouteSummary = isLongHybridLane
     ? "This long lane keeps the same continuity-safe hybrid route, but gives Shot 1 a slower readable setup, Shot 2-3 a stronger 15-second build/payoff, and Shot 4 a cleaner aftermath resolve."
     : "This primary route keeps the opening and resolve cleaner in Runway, while using Kling for the middle pressure/action beats. It matches the main mixed-engine WSTV workflow.";
-
-  const publishReadiness = useMemo(() => {
-    const usViewsModeReport = (data.usViewsModeReport ??
-      null) as Record<string, unknown> | null;
-    const audienceSource = (data.usAudienceScore ??
-      usViewsModeReport?.audienceScore ??
-      null) as Record<string, unknown> | null;
-    const openingSource = (data.openingFrameScore ??
-      usViewsModeReport?.openingFrameScore ??
-      null) as Record<string, unknown> | null;
-    const guardSource = (data.publishGuardReport ??
-      usViewsModeReport?.publishGuard ??
-      null) as Record<string, unknown> | null;
-
-    const audienceTotal =
-      typeof audienceSource?.total === "number" ? audienceSource.total : null;
-    const audienceSummary =
-      typeof audienceSource?.summary === "string"
-        ? audienceSource.summary.trim()
-        : typeof audienceSource?.verdict === "string"
-          ? formatHookFamilyLabel(audienceSource.verdict)
-          : "";
-
-    const openingTotal =
-      typeof openingSource?.total === "number" ? openingSource.total : null;
-    const openingSummary =
-      typeof openingSource?.summary === "string"
-        ? openingSource.summary.trim()
-        : typeof openingSource?.note === "string"
-          ? openingSource.note.trim()
-          : "";
-
-    const publishGuardWarnings = Array.isArray(guardSource?.warnings)
-      ? guardSource.warnings.map((warning) => safeStr(warning)).filter(Boolean)
-      : [];
-    const publishGuardPass =
-      typeof guardSource?.isPass === "boolean"
-        ? guardSource.isPass
-        : typeof guardSource?.pass === "boolean"
-          ? guardSource.pass
-          : null;
-
-    const rawHookFamily =
-      typeof data.hookFamily === "string"
-        ? data.hookFamily
-        : typeof usViewsModeReport?.hookFamily === "string"
-          ? String(usViewsModeReport.hookFamily)
-          : "";
-    const bestHookFamily = rawHookFamily
-      ? formatHookFamilyLabel(rawHookFamily)
-      : typeof data.recommendedHookIndex === "number" &&
-          HOOK_FAMILY_LABELS[data.recommendedHookIndex]
-        ? HOOK_FAMILY_LABELS[data.recommendedHookIndex]
-        : "";
-
-    const shouldPublish =
-      typeof usViewsModeReport?.shouldPublish === "boolean"
-        ? usViewsModeReport.shouldPublish
-        : audienceTotal !== null &&
-            openingTotal !== null &&
-            publishGuardPass !== null
-          ? audienceTotal >= 70 && openingTotal >= 60 && publishGuardPass
-          : null;
-
-    return {
-      audienceTotal,
-      audienceSummary,
-      openingTotal,
-      openingSummary,
-      publishGuardPass,
-      publishGuardWarnings,
-      bestHookFamily,
-      shouldPublish,
-    };
-  }, [
-    data.hookFamily,
-    data.openingFrameScore,
-    data.publishGuardReport,
-    data.recommendedHookIndex,
-    data.usAudienceScore,
-    data.usViewsModeReport,
-  ]);
 
   function buildCopyAllPacksText() {
     return buildCopyAllPacksTextFromPackage(data);
@@ -1165,141 +1075,7 @@ export default function OutputCards({
             hashtags, platform pack, अनि posting time guidance.
           </div>
 
-          {(publishReadiness.audienceTotal !== null ||
-            publishReadiness.openingTotal !== null ||
-            publishReadiness.publishGuardPass !== null ||
-            publishReadiness.publishGuardWarnings.length > 0 ||
-            publishReadiness.bestHookFamily ||
-            publishReadiness.shouldPublish !== null) && (
-            <div className="rounded-2xl border border-gray-200 bg-white p-4 shadow-sm">
-              <div className="flex flex-wrap items-start justify-between gap-3">
-                <div>
-                  <div className="text-sm font-extrabold text-gray-900">
-                    Fast Publish Check
-                  </div>
-                  <p className="mt-1 text-xs leading-relaxed text-gray-600">
-                    Main publish path simple राख्न go/no-go, U.S. fit, opening
-                    read, and publish guard warnings यही माथि summarize गरिएको
-                    छ.
-                  </p>
-                </div>
-              </div>
-
-              <div className="mt-4 grid gap-3 md:grid-cols-2 xl:grid-cols-4">
-                {publishReadiness.shouldPublish !== null && (
-                  <div className="rounded-xl border border-gray-200 bg-gray-50 p-3">
-                    <div className="text-[11px] font-bold uppercase tracking-wide text-gray-500">
-                      Should Publish
-                    </div>
-                    <div
-                      className={`mt-2 text-lg font-black ${
-                        publishReadiness.shouldPublish
-                          ? "text-emerald-700"
-                          : "text-rose-700"
-                      }`}
-                    >
-                      {publishReadiness.shouldPublish ? "Yes" : "No"}
-                    </div>
-                  </div>
-                )}
-
-                {publishReadiness.audienceTotal !== null && (
-                  <div className="rounded-xl border border-blue-200 bg-blue-50 p-3">
-                    <div className="text-[11px] font-bold uppercase tracking-wide text-blue-600">
-                      U.S. Audience Score
-                    </div>
-                    <div className="mt-2 text-lg font-black text-blue-900">
-                      {publishReadiness.audienceTotal}/100
-                    </div>
-                    {publishReadiness.audienceSummary && (
-                      <p className="mt-1 text-xs leading-relaxed text-blue-800">
-                        {publishReadiness.audienceSummary}
-                      </p>
-                    )}
-                  </div>
-                )}
-
-                {publishReadiness.openingTotal !== null && (
-                  <div className="rounded-xl border border-violet-200 bg-violet-50 p-3">
-                    <div className="text-[11px] font-bold uppercase tracking-wide text-violet-600">
-                      Opening-Frame Score
-                    </div>
-                    <div className="mt-2 text-lg font-black text-violet-900">
-                      {publishReadiness.openingTotal}/100
-                    </div>
-                    {publishReadiness.openingSummary && (
-                      <p className="mt-1 text-xs leading-relaxed text-violet-800">
-                        {publishReadiness.openingSummary}
-                      </p>
-                    )}
-                  </div>
-                )}
-
-                {publishReadiness.bestHookFamily && (
-                  <div className="rounded-xl border border-amber-200 bg-amber-50 p-3">
-                    <div className="text-[11px] font-bold uppercase tracking-wide text-amber-600">
-                      Best Hook Family
-                    </div>
-                    <div className="mt-2 text-lg font-black text-amber-900">
-                      {publishReadiness.bestHookFamily}
-                    </div>
-                    <p className="mt-1 text-xs leading-relaxed text-amber-800">
-                      Recommended hook direction for faster testing.
-                    </p>
-                  </div>
-                )}
-              </div>
-
-              {(publishReadiness.publishGuardPass !== null ||
-                publishReadiness.publishGuardWarnings.length > 0) && (
-                <div
-                  className={`mt-4 rounded-xl border p-3 ${
-                    publishReadiness.publishGuardPass
-                      ? "border-emerald-200 bg-emerald-50"
-                      : "border-amber-200 bg-amber-50"
-                  }`}
-                >
-                  <div className="flex flex-wrap items-center justify-between gap-2">
-                    <div className="text-sm font-bold text-gray-900">
-                      Publish Guard Warnings
-                    </div>
-                    {publishReadiness.publishGuardPass !== null && (
-                      <span
-                        className={`rounded-full px-2.5 py-1 text-[11px] font-bold ${
-                          publishReadiness.publishGuardPass
-                            ? "bg-emerald-100 text-emerald-700"
-                            : "bg-amber-100 text-amber-700"
-                        }`}
-                      >
-                        {publishReadiness.publishGuardPass
-                          ? "Pass"
-                          : "Needs cleanup"}
-                      </span>
-                    )}
-                  </div>
-
-                  {publishReadiness.publishGuardWarnings.length > 0 ? (
-                    <div className="mt-3 space-y-2">
-                      {publishReadiness.publishGuardWarnings.map(
-                        (warning, index) => (
-                          <div
-                            key={`${warning}-${index}`}
-                            className="rounded-lg border border-white/70 bg-white/80 px-3 py-2 text-xs leading-relaxed text-gray-700"
-                          >
-                            {warning}
-                          </div>
-                        )
-                      )}
-                    </div>
-                  ) : (
-                    <p className="mt-2 text-xs text-gray-600">
-                      No publish guard warnings in the current package.
-                    </p>
-                  )}
-                </div>
-              )}
-            </div>
-          )}
+          <FacebookPublishReadinessPanel data={data} />
 
           <SectionLabel label="Hooks & Copy" />
 

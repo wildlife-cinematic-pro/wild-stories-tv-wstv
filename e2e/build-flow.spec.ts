@@ -52,6 +52,10 @@ test("main build flow generates output, keeps workspace tabs reachable, and show
     /Evidence saved for this generation\./i
   );
 
+  await page.locator('[data-workspace-tab="publishing"]').click();
+  await expect(page.getByTestId("facebook-publish-readiness-panel")).toBeVisible();
+  await expect(page.getByText(/Latest evidence call/i)).toBeVisible();
+
   await page.reload();
 
   await expect(page.getByTestId("last-generated-restore-notice")).toHaveText(
@@ -62,4 +66,7 @@ test("main build flow generates output, keeps workspace tabs reachable, and show
   await expect(page.getByLabel(/What looked strong\?/i)).toHaveValue(
     /Strong first frame and clean spacing\./i
   );
+  await page.locator('[data-workspace-tab="publishing"]').click();
+  await expect(page.getByTestId("facebook-publish-readiness-panel")).toBeVisible();
+  await expect(page.getByText(/Latest evidence call/i)).toBeVisible();
 });
