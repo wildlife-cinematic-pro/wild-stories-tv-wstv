@@ -108,6 +108,23 @@ export function buildKlingLocationLine(
     : `Lighting & Location: ${cleanEnv}, ${cleanWeather}.`;
 }
 
+export function buildShotWorldContinuityLock(
+  engine: "image" | "runway" | "kling"
+): string {
+  const lock =
+    "preserve the Shot 1 world plate: same background layout, terrain contours, horizon line, key tree/reed/rock placement, light direction, weather density, and habitat identity; no environment drift, only the action beat and camera move change";
+
+  if (engine === "image") {
+    return "Preserve the Shot 1 world plate: same background layout, terrain contours, horizon line, key tree/reed/rock placement, light direction, weather density, and habitat identity. No environment drift; only the action beat and framing change.";
+  }
+
+  if (engine === "runway") {
+    return `Continuity lock: ${lock}.`;
+  }
+
+  return "Continue inside the exact Shot 1 world plate: same background layout, terrain contours, horizon line, key tree/reed/rock placement, light direction, weather density, and habitat identity. No environment drift; only the action beat and camera move change.";
+}
+
 export function buildKlingExtraLine(base: string, motionOnlyI2V?: boolean): string {
   return motionOnlyI2V ? base : `${base}.`;
 }

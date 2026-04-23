@@ -716,6 +716,84 @@ describe("Step 12 — export cleanup guards", () => {
     expect(exportText).not.toContain("Keep everything else in the image exactly the same");
   });
 
+  it("locks Shot 2 through Shot 4 image plans to the Shot 1 world plate", () => {
+    const shots = buildShotImagePlan(
+      "Mountain Lion",
+      "White-tailed Deer",
+      "Rocky Mountain meadow with pine edge",
+      "Ambush attack",
+      "Golden Hour",
+      {
+        realismMode: "Reference Locked",
+        motionOnlyI2V: true,
+        referenceLock: true,
+        singleActionRule: true,
+        microMotion: true,
+        heroVeo: false,
+      }
+    );
+
+    expect(shots[0].prompt).toContain("Shot 1 visual-world anchor");
+    for (const shot of shots.slice(1)) {
+      expect(shot.prompt).toContain("Preserve the Shot 1 world plate");
+      expect(shot.prompt).toContain("same background layout");
+      expect(shot.prompt).toContain("terrain contours");
+      expect(shot.prompt).toContain("horizon line");
+      expect(shot.prompt).toContain("light direction");
+      expect(shot.prompt).toContain("weather density");
+      expect(shot.prompt).toContain("No environment drift");
+    }
+  });
+
+  it("adds world-plate continuity locks to Runway and Kling later-shot prompts", () => {
+    const quality = {
+      realismMode: "Reference Locked",
+      motionOnlyI2V: true,
+      referenceLock: true,
+      singleActionRule: true,
+      microMotion: true,
+      heroVeo: false,
+    } as const;
+    const runway = buildRunwayPromptPack(
+      "Wolf Pack",
+      "Bull Elk",
+      "Rocky Mountain meadow with pine edge",
+      "Pack hunting strategy",
+      "Golden Hour",
+      "Gen-4.5",
+      "Raw Tension",
+      "BBC Earth Documentary",
+      "The pack holds the elk inside the same meadow opening.",
+      quality
+    );
+    const kling = buildKlingPromptPack(
+      "Wolf Pack",
+      "Bull Elk",
+      "Rocky Mountain meadow with pine edge",
+      "Pack hunting strategy",
+      "Golden Hour",
+      "Kling 3.0 Pro",
+      "Raw Tension",
+      "BBC Earth Documentary",
+      "The pack holds the elk inside the same meadow opening.",
+      quality
+    );
+
+    for (const shot of [runway.shot2, runway.shot3, runway.shot4]) {
+      expect(shot.pasteReady).toContain("Continuity lock: preserve the Shot 1 world plate");
+      expect(shot.pasteReady).toContain("same background layout");
+      expect(shot.pasteReady).toContain("light direction");
+      expect(shot.pasteReady).toContain("no environment drift");
+    }
+
+    for (const shot of [kling.shot2, kling.shot3, kling.shot4]) {
+      expect(shot.pasteReady).toContain("Continue inside the exact Shot 1 world plate");
+      expect(shot.pasteReady).toContain("same background layout");
+      expect(shot.pasteReady).toContain("light direction");
+      expect(shot.pasteReady).toContain("No environment drift");
+    }
+  });
+
   it("keeps dry-ground Runway prompts from inheriting water motion language", () => {
     const shots = buildRunwayShots(
       "Bull Elk",
