@@ -1,0 +1,133 @@
+export function getGeminiModelStable(): string {
+  return process.env.GEMINI_MODEL?.trim() || "gemini-2.5-flash";
+}
+
+export function getGeminiModelFallback(): string {
+  return "gemini-flash-latest";
+}
+
+export async function callGeminiText(modelId: string, apiKey: string, prompt: string) {
+  const url = `https://generativelanguage.googleapis.com/v1beta/models/${modelId}:generateContent?key=${encodeURIComponent(
+    apiKey
+  )}`;
+
+  const res = await fetch(url, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      contents: [{ role: "user", parts: [{ text: prompt }] }],
+    }),
+  });
+
+  const data = await res.json().catch(() => ({}));
+  return { res, data };
+}
+
+export async function callGeminiVision(
+  modelId: string,
+  apiKey: string,
+  args: { prompt: string; mimeType: string; base64Data: string }
+) {
+  const url = `https://generativelanguage.googleapis.com/v1beta/models/${modelId}:generateContent?key=${encodeURIComponent(
+    apiKey
+  )}`;
+
+  const res = await fetch(url, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      contents: [
+        {
+          role: "user",
+          parts: [
+            { text: args.prompt },
+            {
+              inline_data: {
+                mime_type: args.mimeType,
+                data: args.base64Data,
+              },
+            },
+          ],
+        },
+      ],
+    }),
+  });
+
+  const data = await res.json().catch(() => ({}));
+  return { res, data };
+}
+
+export async function callClaudeText(apiKey: string, prompt: string) {
+  const model = process.env.CLAUDE_MODEL?.trim() || "claude-opus-4-6";
+
+  const res = await fetch("https://api.anthropic.com/v1/messages", {
+    method: "POST",
+    headers: {
+      "content-type": "application/json",
+      "x-api-key": apiKey,
+      "anthropic-version": "2023-06-01",
+    },
+    body: JSON.stringify({
+      model,
+      max_tokens: 800,
+      messages: [{ role: "user", content: prompt }],
+    }),
+  });
+
+  const data = await res.json().catch(() => ({}));
+  return { res, data };
+}
+
+export async function callClaudeVision(
+  apiKey: string,
+  args: { prompt: string; mimeType: string; base64Data: string }
+) {
+  const model = process.env.CLAUDE_MODEL?.trim() || "claude-opus-4-6";
+
+  const res = await fetch("https://api.anthropic.com/v1/messages", {
+    method: "POST",
+    headers: {
+      "content-type": "application/json",
+      "x-api-key": apiKey,
+      "anthropic-version": "2023-06-01",
+    },
+    body: JSON.stringify({
+      model,
+      max_tokens: 1200,
+      messages: [
+        {
+          role: "user",
+          content: [
+            { type: "text", text: args.prompt },
+            {
+              type: "image",
+              source: {
+                type: "base64",
+                media_type: args.mimeType,
+                data: args.base64Data,
+              },
+            },
+          ],
+        },
+      ],
+    }),
+  });
+
+  const data = await res.json().catch(() => ({}));
+  return { res, data };
+}
+
+export function extractGeminiText(data: Record<string, unknown>): string {
+  const candidates = data?.candidates as
+    | { content?: { parts?: { text?: string }[] } }[]
+    | undefined;
+  const parts = candidates?.[0]?.content?.parts;
+  const joined = (parts ?? []).map((p) => p?.text ?? "").join("");
+  return joined || parts?.[0]?.text || "";
+}
+
+export function extractClaudeText(data: Record<string, unknown>): string {
+  const content = data?.content as { text?: string }[] | undefined;
+  const joined = (content ?? []).map((c) => c?.text ?? "").join("");
+  return joined || content?.[0]?.text || "";
+}
