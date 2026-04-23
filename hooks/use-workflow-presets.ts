@@ -841,16 +841,39 @@ export function useWorkflowPresets({
     return report;
   }
 
+  function validateAuthInputs(action: "sign-in" | "sign-up") {
+    const email = authEmailInput.trim();
+    const password = authPasswordInput.trim();
+
+    if (!email || !password) {
+      setCloudSyncStatus({
+        state: "sync-error",
+        message: "Enter both email and password to use cloud preset libraries.",
+      });
+      return null;
+    }
+
+    if (action === "sign-up" && password.length < 8) {
+      setCloudSyncStatus({
+        state: "sync-error",
+        message: "Use a password with at least 8 characters to create an account.",
+      });
+      return null;
+    }
+
+    return { email, password };
+  }
+
   async function signIn() {
+    const authInput = validateAuthInputs("sign-in");
+    if (!authInput) return;
+
     try {
       setCloudSyncStatus({
         state: "authenticating",
         message: "Signing in to your cloud preset library...",
       });
-      const result = await signInPresetLibraryUser({
-        email: authEmailInput,
-        password: authPasswordInput,
-      });
+      const result = await signInPresetLibraryUser(authInput);
       if (!result.available || !result.data) {
         setCloudSyncStatus({
           state: "local-only",
@@ -873,15 +896,17 @@ export function useWorkflowPresets({
   }
 
   async function signUp() {
+    const authInput = validateAuthInputs("sign-up");
+    if (!authInput) return;
+
     try {
       setCloudSyncStatus({
         state: "authenticating",
         message: "Creating your cloud preset library account...",
       });
       const result = await signUpPresetLibraryUser({
-        email: authEmailInput,
-        password: authPasswordInput,
-        displayName: authDisplayNameInput,
+        ...authInput,
+        displayName: authDisplayNameInput.trim() || undefined,
       });
       if (!result.available || !result.data) {
         setCloudSyncStatus({
@@ -912,6 +937,7 @@ export function useWorkflowPresets({
     }
 
     setAuthSession(null);
+    setAuthPasswordInput("");
     setSharedLibraries([]);
     setSelectedLibraryId(PERSONAL_LIBRARY_SELECTION_ID);
     setCloudSyncStatus({

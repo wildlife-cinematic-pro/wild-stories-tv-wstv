@@ -14,6 +14,10 @@ test("main build flow generates output, keeps workspace tabs reachable, and show
   await page.goto("/");
 
   await expect(page.getByText("Wildlife Focus")).toBeVisible();
+  await expect(
+    page.getByText(/New accounts need an 8\+ character password/i).filter({ visible: true }),
+  ).toBeVisible();
+  await expect(page.getByRole("button", { name: "Sign In" })).toBeDisabled();
   await page.getByRole("button", { name: /Continue.*Engine & Quality/i }).click();
 
   await expect(page.getByText("Image Prompt Engine")).toBeVisible();
