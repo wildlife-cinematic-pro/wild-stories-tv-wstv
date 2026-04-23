@@ -93,23 +93,29 @@ export async function PUT(
 
   const record = body as Record<string, unknown>;
   const email = typeof record.email === "string" ? record.email.trim() : "";
-  const role = normalizeWorkflowPresetLibraryRole(record.role, "viewer");
+  const requestedRole = normalizeWorkflowPresetLibraryRole(record.role, "viewer");
   if (!email) {
     return jsonError("Member email is required.", 400);
+  }
+  if (requestedRole === "owner") {
+    return jsonError("Shared members can only be editors or viewers.", 400);
   }
 
   try {
     const storedLibrary = await upsertSharedPresetLibraryMemberInStore(libraryId, {
       email,
-      role,
+      role: requestedRole,
     });
+    const savedRole =
+      storedLibrary.members.find((member) => member.email === email.toLowerCase())?.role ??
+      requestedRole;
     return NextResponse.json({
       available: true,
       library: buildSharedWorkflowPresetLibraryRecord(
         storedLibrary,
         session.user.id
       ),
-      message: `Updated shared library access for ${email}.`,
+      message: `Saved ${savedRole} access for ${email}.`,
     });
   } catch (error) {
     return jsonError(

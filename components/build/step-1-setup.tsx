@@ -87,6 +87,7 @@ type Step1SetupProps = {
   workflowPresetCloudSyncMessage: string;
   workflowPresetCloudSyncLastSyncedAt?: string;
   suggestedWorkflowPresetName: string;
+  workflowPresetStatus: string;
   activeWorkflowPresetIsDirty: boolean;
   canEditWorkflowPresetLibrary: boolean;
   canManageWorkflowPresetLibrary: boolean;
@@ -185,6 +186,7 @@ export default function Step1Setup({
   workflowPresetCloudSyncMessage,
   workflowPresetCloudSyncLastSyncedAt,
   suggestedWorkflowPresetName,
+  workflowPresetStatus,
   activeWorkflowPresetIsDirty,
   canEditWorkflowPresetLibrary,
   canManageWorkflowPresetLibrary,
@@ -287,6 +289,7 @@ export default function Step1Setup({
           canEditActiveLibrary={canEditWorkflowPresetLibrary}
           canManageActiveLibrary={canManageWorkflowPresetLibrary}
           suggestedPresetName={suggestedWorkflowPresetName}
+          presetStatus={workflowPresetStatus}
           onPresetNameChange={onWorkflowPresetNameChange}
           onPresetPackNameChange={onWorkflowPresetPackNameChange}
           onPresetPackDescriptionChange={onWorkflowPresetPackDescriptionChange}

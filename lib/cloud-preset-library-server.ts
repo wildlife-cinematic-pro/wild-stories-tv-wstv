@@ -334,6 +334,10 @@ export async function upsertSharedPresetLibraryMemberInStore(
   }
 
   const nextRole = normalizeWorkflowPresetLibraryRole(input.role, "viewer");
+  if (nextRole === "owner") {
+    throw new Error("Shared members can only be editors or viewers.");
+  }
+
   const now = new Date().toISOString();
   const nextMembers = [...library.members];
   const existingIndex = nextMembers.findIndex((member) => member.userId === user.id);
@@ -376,6 +380,9 @@ export async function removeSharedPresetLibraryMemberFromStore(
   }
   if (library.ownerUserId === safeMemberUserId) {
     throw new Error("The library owner cannot be removed.");
+  }
+  if (!library.members.some((member) => member.userId === safeMemberUserId)) {
+    throw new Error("Shared library member was not found.");
   }
 
   const saved = await writeSharedPresetLibraryToStore({

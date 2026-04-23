@@ -121,6 +121,7 @@ export function useWorkflowPresets({
   );
   const [activePresetPackId, setActivePresetPackId] = useState<string | null>(null);
   const [presetName, setPresetName] = useState(initialState.presetName);
+  const [presetStatus, setPresetStatus] = useState("");
   const [importStatus, setImportStatus] = useState("");
   const [packName, setPackName] = useState("");
   const [packDescription, setPackDescription] = useState("");
@@ -213,6 +214,10 @@ export function useWorkflowPresets({
     activeLibrary.scope === "personal" ? true : Boolean(activeLibrary.canWrite);
   const activeLibraryCanManage =
     activeLibrary.scope === "personal" ? false : Boolean(activeLibrary.canManage);
+
+  function getLibraryLabel(library: WorkflowPresetLibraryRecord = activeLibrary): string {
+    return library.scope === "personal" ? "My Library" : library.name;
+  }
 
   const activePreset = useMemo(
     () =>
@@ -523,6 +528,7 @@ export function useWorkflowPresets({
     updateActiveLibraryData(nextData);
     setActivePresetId(preset.id);
     setPresetName(preset.name);
+    setPresetStatus(`Saved ${preset.name} to ${getLibraryLabel()}.`);
     return preset;
   }
 
@@ -550,6 +556,7 @@ export function useWorkflowPresets({
     const updated = nextPresets.find((preset) => preset.id === target.id);
     setActivePresetId(target.id);
     setPresetName(updated?.name ?? target.name);
+    setPresetStatus(`Updated ${updated?.name ?? target.name} in ${getLibraryLabel()}.`);
     return updated;
   }
 
@@ -560,6 +567,7 @@ export function useWorkflowPresets({
     loadPresetRef.current(preset);
     setActivePresetId(preset.id);
     setPresetName(preset.name);
+    setPresetStatus(`Loaded ${preset.name} from ${getLibraryLabel()} into the main workflow.`);
     return preset;
   }
 
@@ -569,6 +577,7 @@ export function useWorkflowPresets({
       return;
     }
 
+    const deletedPreset = presets.find((preset) => preset.id === id);
     const nextPresets = deleteWorkflowPreset(presets, id);
     const nextDefaultId = defaultPresetId === id ? undefined : defaultPresetId;
     const nextData = createCloudPresetLibrary(activeLibrary.data.libraryId, {
@@ -582,6 +591,10 @@ export function useWorkflowPresets({
       setActivePresetId(null);
       setPresetName(buildWorkflowPresetName(currentSnapshot));
     }
+
+    if (deletedPreset) {
+      setPresetStatus(`Deleted ${deletedPreset.name} from ${getLibraryLabel()}.`);
+    }
   }
 
   function setPresetAsDefault(id: string): void {
@@ -590,6 +603,9 @@ export function useWorkflowPresets({
       return;
     }
 
+    const preset = presets.find((item) => item.id === id);
+    if (!preset) return;
+
     const safeDefaultId = getSafeDefaultWorkflowPresetId(presets, id);
     const nextData = createCloudPresetLibrary(activeLibrary.data.libraryId, {
       presets,
@@ -597,6 +613,7 @@ export function useWorkflowPresets({
       defaultPresetId: safeDefaultId,
     });
     updateActiveLibraryData(nextData);
+    setPresetStatus(`Set ${preset.name} as the default preset for ${getLibraryLabel()}.`);
   }
 
   function clearDefaultPreset(): void {
@@ -610,6 +627,7 @@ export function useWorkflowPresets({
       presetPacks,
     });
     updateActiveLibraryData(nextData);
+    setPresetStatus(`Cleared the default preset for ${getLibraryLabel()}.`);
   }
 
   function exportPreset(id: string): string | undefined {
@@ -620,6 +638,7 @@ export function useWorkflowPresets({
       defaultPresetId: defaultPresetId === id ? id : undefined,
     });
     downloadJson(buildExportFilename(`wstv-preset-${preset.name}`), payload);
+    setPresetStatus(`Downloaded ${preset.name} as portable JSON.`);
     return stringifyWorkflowPresetExportPayload(payload);
   }
 
@@ -630,6 +649,7 @@ export function useWorkflowPresets({
       defaultPresetId,
     });
     downloadJson("wstv-workflow-presets.json", payload);
+    setPresetStatus(`Downloaded all presets from ${getLibraryLabel()}.`);
     return stringifyWorkflowPresetExportPayload(payload);
   }
 
@@ -841,6 +861,11 @@ export function useWorkflowPresets({
     return report;
   }
 
+  function selectLibrary(libraryId: string) {
+    setSelectedLibraryId(libraryId);
+    setPresetStatus("");
+  }
+
   function validateAuthInputs(action: "sign-in" | "sign-up") {
     const email = authEmailInput.trim();
     const password = authPasswordInput.trim();
@@ -938,8 +963,14 @@ export function useWorkflowPresets({
 
     setAuthSession(null);
     setAuthPasswordInput("");
+    setAuthDisplayNameInput("");
+    setSharedLibraryNameInput("");
+    setSharedLibraryDescriptionInput("");
+    setSharedMemberEmailInput("");
+    setSharedMemberRole("viewer");
+    setPresetStatus("");
     setSharedLibraries([]);
-    setSelectedLibraryId(PERSONAL_LIBRARY_SELECTION_ID);
+    selectLibrary(PERSONAL_LIBRARY_SELECTION_ID);
     setCloudSyncStatus({
       state: "local-only",
       message: "Signed out. Local presets remain active on this device.",
@@ -997,12 +1028,15 @@ export function useWorkflowPresets({
       }
 
       replaceSharedLibrary(result.data);
-      setSelectedLibraryId(result.data.id);
+      selectLibrary(result.data.id);
       setSharedLibraryNameInput("");
       setSharedLibraryDescriptionInput("");
+      const sharedLibraryMessage = result.message?.includes("You are the owner")
+        ? result.message
+        : `${result.message ?? `Created shared library ${result.data.name}.`} You are the owner.`;
       setCloudSyncStatus({
         state: "synced",
-        message: result.message ?? `Created ${result.data.name}.`,
+        message: sharedLibraryMessage,
         lastSyncedAt: result.data.updatedAt,
       });
     } catch (error) {
@@ -1116,6 +1150,7 @@ export function useWorkflowPresets({
     activePresetIsDirty,
     defaultPresetId,
     presetName,
+    presetStatus,
     importStatus,
     packName,
     packDescription,
@@ -1146,7 +1181,7 @@ export function useWorkflowPresets({
     setSharedLibraryDescriptionInput,
     setSharedMemberEmailInput,
     setSharedMemberRole,
-    setSelectedLibraryId,
+    setSelectedLibraryId: selectLibrary,
     saveCurrentAsPreset,
     updatePresetFromCurrent,
     loadPreset,
