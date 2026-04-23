@@ -658,6 +658,48 @@ export type PlatformPack = {
   youtube_shorts: YouTubeShortsPack;
 };
 
+export type RealGenerationEvidenceRecommendation =
+  | "keep"
+  | "retry-with-fixes"
+  | "retry";
+
+export type RealGenerationEvidenceScores = {
+  firstFrameReadability: number;
+  spacingClarity: number;
+  worldLightingContinuity: number;
+  anatomyPhysicsRealism: number;
+  actionReadability: number;
+  facebookOpeningStrength: number;
+};
+
+export type RealGenerationEvidenceNotes = {
+  strongPoints: string;
+  driftObserved: string;
+  failedPoints: string;
+  retryPlan: string;
+  masterStill: string;
+  runway: string;
+  kling: string;
+  seedance: string;
+};
+
+export type RealGenerationEvidenceRecord = {
+  id: string;
+  generationId: string;
+  generationLabel: string;
+  generatedAt?: string;
+  capturedAt: string;
+  predatorName: string;
+  preyName: string;
+  arcName: string;
+  pipelineStyle?: PipelineStyle;
+  scores: RealGenerationEvidenceScores;
+  overallScore: number;
+  suggestedRecommendation: RealGenerationEvidenceRecommendation;
+  userRecommendation: RealGenerationEvidenceRecommendation;
+  notes: RealGenerationEvidenceNotes;
+};
+
 // ─────────────────────────────────────────────────────────────
 // GENERATED PACKAGE  (main output of buildPackage)
 // ─────────────────────────────────────────────────────────────
@@ -684,6 +726,8 @@ export type GeneratedPackage = {
   preyName?: string;
   arcName?: Arc;
   cameraAnglePreset?: CameraAnglePreset;
+  generationId?: string;
+  generatedAt?: string;
 
   // ── Kling multi-shot (old pro) ──
   klingNative15s?: string;

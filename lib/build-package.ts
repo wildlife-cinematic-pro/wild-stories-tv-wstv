@@ -159,6 +159,8 @@ export type GeneratedPackageDraft = {
   durationLane: DurationLane;
   contentLane: ContentLane;
   cameraAnglePreset: CameraAnglePreset;
+  generationId: string;
+  generatedAt: string;
   fastPublishMode: boolean;
   strictOriginalityGuard: boolean;
   hookFamily: HookFamily;
@@ -192,6 +194,14 @@ function buildPrimaryShotTitles(durationLane: DurationLane): string[] {
       ];
 }
 
+function buildPackageGenerationId(): string {
+  if (typeof crypto !== "undefined" && typeof crypto.randomUUID === "function") {
+    return crypto.randomUUID();
+  }
+
+  return `gen_${Date.now().toString(36)}_${Math.random().toString(36).slice(2, 10)}`;
+}
+
 function buildPrimaryShotWhy(durationLane: DurationLane): string[] {
   return durationLane === "long"
     ? [
@@ -211,6 +221,9 @@ function buildPrimaryShotWhy(durationLane: DurationLane): string[] {
 export function buildGeneratedPackageDraft(
   input: GeneratedPackageDraftInput
 ): GeneratedPackageDraft {
+  const generatedAt = new Date().toISOString();
+  const generationId = buildPackageGenerationId();
+
   const imagePromptCard = buildImagePromptCard(
     input.predator,
     input.prey,
@@ -404,6 +417,8 @@ export function buildGeneratedPackageDraft(
     preyName: input.prey,
     arcName: input.finalArc,
     cameraAnglePreset: input.cameraAnglePreset,
+    generationId,
+    generatedAt,
     imagePrompt: imagePromptCard.fullText,
     negativePrompt: negativePromptForKling,
     thumbnailPrompt,
@@ -557,6 +572,8 @@ export function buildGeneratedPackageDraft(
     durationLane: input.durationLane,
     contentLane: input.contentLane,
     cameraAnglePreset: input.cameraAnglePreset,
+    generationId,
+    generatedAt,
     fastPublishMode: input.fastPublishMode,
     strictOriginalityGuard: input.strictOriginalityGuard,
     hookFamily: input.hookFamily,

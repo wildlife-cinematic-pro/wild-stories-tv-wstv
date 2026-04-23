@@ -3,8 +3,11 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 import { createDefaultPackageLockState } from "@/lib/package-section-locks";
 import {
   readLastGeneratedOutput,
+  readRealGenerationEvidenceForGeneration,
+  readRealGenerationEvidenceHistory,
   readSettings,
   writeLastGeneratedOutput,
+  writeRealGenerationEvidenceHistory,
   writeSettings,
   type LastGeneratedOutputRecord,
 } from "@/lib/storage";
@@ -25,6 +28,42 @@ function installLocalStorageMock() {
       store.clear();
     },
   });
+}
+
+
+function makeRealGenerationEvidenceRecord() {
+  return {
+    id: "evidence_1",
+    generationId: "generation_1",
+    generationLabel: "Mountain Lion vs White-tailed Deer • Escape from danger • 4-shot • 2026-04-24 00:00",
+    generatedAt: "2026-04-24T00:00:00.000Z",
+    capturedAt: "2026-04-24T01:00:00.000Z",
+    predatorName: "Mountain Lion",
+    preyName: "White-tailed Deer",
+    arcName: "Escape from danger",
+    pipelineStyle: "4-shot",
+    scores: {
+      firstFrameReadability: 4,
+      spacingClarity: 4,
+      worldLightingContinuity: 3,
+      anatomyPhysicsRealism: 4,
+      actionReadability: 3,
+      facebookOpeningStrength: 4,
+    },
+    overallScore: 70,
+    suggestedRecommendation: "retry-with-fixes",
+    userRecommendation: "retry-with-fixes",
+    notes: {
+      strongPoints: "Strong opening frame.",
+      driftObserved: "Shot 3 lost some hillside alignment.",
+      failedPoints: "Peak action got a little soft.",
+      retryPlan: "Retry only the action beat.",
+      masterStill: "Still is stable.",
+      runway: "Runway held the environment.",
+      kling: "Kling pushed action well.",
+      seedance: "",
+    },
+  } as const;
 }
 
 function makeLastGeneratedOutputRecord(): LastGeneratedOutputRecord {
@@ -141,6 +180,33 @@ describe("settings storage", () => {
     writeLastGeneratedOutput(record);
 
     expect(readLastGeneratedOutput()).toEqual(record);
+  });
+
+
+  it("persists real-generation evidence history and can read the current generation record", () => {
+    installLocalStorageMock();
+
+    const record = makeRealGenerationEvidenceRecord();
+    writeRealGenerationEvidenceHistory([record]);
+
+    expect(readRealGenerationEvidenceHistory()).toEqual([record]);
+    expect(readRealGenerationEvidenceForGeneration("generation_1")).toEqual(record);
+  });
+
+  it("drops malformed real-generation evidence payloads safely", () => {
+    installLocalStorageMock();
+
+    localStorage.setItem(
+      "wildlife_real_generation_evidence_v1",
+      JSON.stringify({
+        schema: "wstv.real-generation-evidence",
+        version: 1,
+        records: [{ id: "bad" }],
+      })
+    );
+
+    expect(readRealGenerationEvidenceHistory()).toEqual([]);
+    expect(localStorage.getItem("wildlife_real_generation_evidence_v1")).toBeNull();
   });
 
   it("drops malformed last generated output payloads safely", () => {

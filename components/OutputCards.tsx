@@ -28,6 +28,7 @@ import {
   WorkspaceJumpCard,
   WorkspaceTabButton,
 } from "@/components/output-cards/shared-panels";
+import { RealGenerationEvidencePanel } from "@/components/output-cards/evidence-panel";
 import { WorkflowPromptMap } from "@/components/output-cards/workflow-prompt-map";
 import {
   getImagePromptCard,
@@ -49,6 +50,7 @@ type OutputWorkspaceTab =
   | "video"
   | "direct"
   | "publishing"
+  | "evidence"
   | "advanced";
 
 type VideoWorkspaceTab = "hybrid" | "seedance" | "runway" | "kling";
@@ -366,6 +368,12 @@ export default function OutputCards({
       badge: "Post",
     },
     {
+      key: "evidence",
+      label: "Evidence",
+      detail: "Score real generations, drift notes, keep/retry",
+      badge: "QA",
+    },
+    {
       key: "advanced",
       label: "Advanced",
       detail: "CapCut, sound, behavior, analytics",
@@ -421,6 +429,14 @@ export default function OutputCards({
       detail:
         "Social copy, platform packs, and final posting guidance are separated from the build phase.",
       footer: "Open publishing workspace",
+    },
+    {
+      key: "evidence" as const,
+      eyebrow: "Evidence",
+      title: "Real generation QA loop",
+      detail:
+        "Score actual outputs, capture drift, and keep a small evidence trail linked to this generation.",
+      footer: "Open evidence workspace",
     },
     {
       key: "advanced" as const,
@@ -1346,6 +1362,13 @@ export default function OutputCards({
           <SectionLabel label="Posting Strategy" />
           <PostingTimesPanel />
         </div>
+      )}
+
+      {activeWorkspace === "evidence" && (
+        <RealGenerationEvidencePanel
+          key={data.generationId ?? `${data.predatorName ?? ""}|${data.preyName ?? ""}|${String(data.arcName ?? "")}|${data.generatedAt ?? ""}`}
+          data={data}
+        />
       )}
 
       {activeWorkspace === "advanced" && (
