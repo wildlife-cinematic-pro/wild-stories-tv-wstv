@@ -1,6 +1,8 @@
 import type {
   GeneratedPackage,
   PipelineStyle,
+  RealGenerationEvidenceAttachment,
+  RealGenerationEvidenceAttachmentSlot,
   RealGenerationEvidenceNotes,
   RealGenerationEvidenceRecommendation,
   RealGenerationEvidenceRecord,
@@ -22,6 +24,113 @@ const RECOMMENDATION_LABELS: Record<RealGenerationEvidenceRecommendation, string
   retry: "Retry",
 };
 
+export type RealGenerationEvidenceAttachmentSlotMeta = {
+  slot: RealGenerationEvidenceAttachmentSlot;
+  label: string;
+  engineLabel: string;
+  detail: string;
+  accept: string;
+};
+
+export const REAL_GENERATION_EVIDENCE_ATTACHMENT_SLOT_META: readonly RealGenerationEvidenceAttachmentSlotMeta[] = [
+  {
+    slot: "master-still",
+    label: "Master Still",
+    engineLabel: "NB2 / Gemini still",
+    detail: "Attach the anchor still that defines the world plate for the full package.",
+    accept: "image/*",
+  },
+  {
+    slot: "runway-shot-1",
+    label: "Runway Shot 1",
+    engineLabel: "Runway",
+    detail: "Use the opening shot that sets the first readable motion beat.",
+    accept: "image/*,video/*",
+  },
+  {
+    slot: "kling-shot-2",
+    label: "Kling Shot 2",
+    engineLabel: "Kling",
+    detail: "Attach the second shot to review spacing drift and continuity pressure.",
+    accept: "image/*,video/*",
+  },
+  {
+    slot: "kling-shot-3",
+    label: "Kling Shot 3",
+    engineLabel: "Kling",
+    detail: "Attach the third shot to inspect action clarity and world consistency.",
+    accept: "image/*,video/*",
+  },
+  {
+    slot: "runway-shot-4",
+    label: "Runway Shot 4",
+    engineLabel: "Runway",
+    detail: "Use the closing shot to confirm the world plate stayed locked through the finish.",
+    accept: "image/*,video/*",
+  },
+  {
+    slot: "seedance-output",
+    label: "Optional Seedance Output",
+    engineLabel: "Seedance",
+    detail: "Attach any Seedance render worth comparing against the main shot pack.",
+    accept: "image/*,video/*",
+  },
+  {
+    slot: "thumbnail-cover",
+    label: "Thumbnail / Cover",
+    engineLabel: "Facebook cover",
+    detail: "Attach the image you plan to use for the cover or grid thumbnail review.",
+    accept: "image/*",
+  },
+] as const;
+
+const ATTACHMENT_SLOT_ORDER = new Map(
+  REAL_GENERATION_EVIDENCE_ATTACHMENT_SLOT_META.map((item, index) => [item.slot, index])
+);
+
+function isRealGenerationEvidenceAttachmentSlot(
+  value: unknown
+): value is RealGenerationEvidenceAttachmentSlot {
+  return REAL_GENERATION_EVIDENCE_ATTACHMENT_SLOT_META.some((item) => item.slot === value);
+}
+
+function isRealGenerationEvidenceAttachmentMediaKind(value: unknown): value is "image" | "video" {
+  return value === "image" || value === "video";
+}
+
+function normalizeRealGenerationEvidenceAttachment(
+  value: unknown
+): RealGenerationEvidenceAttachment | null {
+  if (!value || typeof value !== "object" || Array.isArray(value)) return null;
+
+  const candidate = value as Record<string, unknown>;
+  const id = typeof candidate.id === "string" ? candidate.id.trim() : "";
+  const slot = candidate.slot;
+  const fileName = typeof candidate.fileName === "string" ? candidate.fileName.trim() : "";
+  const mimeType = typeof candidate.mimeType === "string" ? candidate.mimeType.trim() : "";
+  const sizeBytes = Number(candidate.sizeBytes);
+  const storedAt = typeof candidate.storedAt === "string" ? candidate.storedAt.trim() : "";
+  const mediaKind = candidate.mediaKind;
+
+  if (!id || !isRealGenerationEvidenceAttachmentSlot(slot) || !fileName || !mimeType || !storedAt) {
+    return null;
+  }
+
+  return {
+    id,
+    slot,
+    mediaKind: isRealGenerationEvidenceAttachmentMediaKind(mediaKind)
+      ? mediaKind
+      : mimeType.startsWith("video/")
+        ? "video"
+        : "image",
+    fileName,
+    mimeType,
+    sizeBytes: Number.isFinite(sizeBytes) ? Math.max(0, Math.round(sizeBytes)) : 0,
+    storedAt,
+  };
+}
+
 export function clampRealGenerationEvidenceScore(value: number): number {
   if (!Number.isFinite(value)) return 3;
   return Math.max(1, Math.min(5, Math.round(value)));
@@ -40,6 +149,10 @@ export function createDefaultRealGenerationEvidenceScores(
     actionReadability: score,
     facebookOpeningStrength: score,
   };
+}
+
+export function createEmptyRealGenerationEvidenceAttachments(): RealGenerationEvidenceAttachment[] {
+  return [];
 }
 
 export function createEmptyRealGenerationEvidenceNotes(): RealGenerationEvidenceNotes {
@@ -70,6 +183,66 @@ export function normalizeRealGenerationEvidenceNotes(
     kling: String(safe.kling ?? "").trim(),
     seedance: String(safe.seedance ?? "").trim(),
   };
+}
+
+export function normalizeRealGenerationEvidenceAttachments(
+  attachments: unknown
+): RealGenerationEvidenceAttachment[] {
+  if (!Array.isArray(attachments)) return [];
+
+  const latestBySlot = new Map<RealGenerationEvidenceAttachmentSlot, RealGenerationEvidenceAttachment>();
+
+  for (const entry of attachments) {
+    const normalized = normalizeRealGenerationEvidenceAttachment(entry);
+    if (!normalized) continue;
+
+    const existing = latestBySlot.get(normalized.slot);
+    if (!existing || normalized.storedAt.localeCompare(existing.storedAt) >= 0) {
+      latestBySlot.set(normalized.slot, normalized);
+    }
+  }
+
+  return [...latestBySlot.values()].sort(
+    (left, right) =>
+      (ATTACHMENT_SLOT_ORDER.get(left.slot) ?? 99) - (ATTACHMENT_SLOT_ORDER.get(right.slot) ?? 99)
+  );
+}
+
+export function upsertRealGenerationEvidenceAttachmentMetadata(
+  attachments: RealGenerationEvidenceAttachment[],
+  attachment: RealGenerationEvidenceAttachment
+): RealGenerationEvidenceAttachment[] {
+  return normalizeRealGenerationEvidenceAttachments([
+    ...attachments.filter((entry) => entry.slot !== attachment.slot),
+    attachment,
+  ]);
+}
+
+export function removeRealGenerationEvidenceAttachmentMetadata(
+  attachments: RealGenerationEvidenceAttachment[],
+  slot: RealGenerationEvidenceAttachmentSlot
+): RealGenerationEvidenceAttachment[] {
+  return normalizeRealGenerationEvidenceAttachments(
+    attachments.filter((entry) => entry.slot !== slot)
+  );
+}
+
+export function getRealGenerationEvidenceAttachmentSlotMeta(
+  slot: RealGenerationEvidenceAttachmentSlot
+): RealGenerationEvidenceAttachmentSlotMeta | undefined {
+  return REAL_GENERATION_EVIDENCE_ATTACHMENT_SLOT_META.find((item) => item.slot === slot);
+}
+
+export function getRealGenerationEvidenceAttachmentSlots(
+  pkg: GeneratedPackage
+): RealGenerationEvidenceAttachmentSlotMeta[] {
+  const hasSeedance = Boolean(
+    (pkg.seedanceShots && pkg.seedanceShots.length > 0) || pkg.seedanceMultiShotPrompt
+  );
+
+  return REAL_GENERATION_EVIDENCE_ATTACHMENT_SLOT_META.filter(
+    (item) => item.slot !== "seedance-output" || hasSeedance
+  );
 }
 
 export function calculateRealGenerationEvidenceOverallScore(

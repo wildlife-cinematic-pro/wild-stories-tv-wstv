@@ -193,6 +193,31 @@ describe("settings storage", () => {
     expect(readRealGenerationEvidenceForGeneration("generation_1")).toEqual(record);
   });
 
+  it("persists evidence attachment metadata when present", () => {
+    installLocalStorageMock();
+
+    const record = {
+      ...makeRealGenerationEvidenceRecord(),
+      attachments: [
+        {
+          id: "attachment_1",
+          slot: "master-still",
+          mediaKind: "image",
+          fileName: "master-still.png",
+          mimeType: "image/png",
+          sizeBytes: 2048,
+          storedAt: "2026-04-24T01:05:00.000Z",
+        },
+      ],
+    };
+
+    writeRealGenerationEvidenceHistory([record]);
+
+    expect(readRealGenerationEvidenceForGeneration("generation_1")?.attachments).toEqual(
+      record.attachments
+    );
+  });
+
   it("drops malformed real-generation evidence payloads safely", () => {
     installLocalStorageMock();
 
