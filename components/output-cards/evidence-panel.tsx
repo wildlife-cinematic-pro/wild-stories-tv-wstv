@@ -1,23 +1,35 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 
 import type {
   GeneratedPackage,
+  RealGenerationEvidenceAttachment,
+  RealGenerationEvidenceAttachmentSlot,
   RealGenerationEvidenceNotes,
   RealGenerationEvidenceRecommendation,
   RealGenerationEvidenceRecord,
   RealGenerationEvidenceScores,
 } from "@/types";
 import {
+  deleteEvidenceAttachmentBlob,
+  readEvidenceAttachmentBlob,
+  writeEvidenceAttachmentBlob,
+} from "@/lib/evidence-media-storage";
+import {
   buildRealGenerationEvidenceLabel,
   buildRealGenerationEvidenceSummary,
   calculateRealGenerationEvidenceOverallScore,
   createDefaultRealGenerationEvidenceScores,
+  createEmptyRealGenerationEvidenceAttachments,
   createEmptyRealGenerationEvidenceNotes,
   formatRealGenerationEvidenceRecommendation,
+  getRealGenerationEvidenceAttachmentSlotMeta,
+  getRealGenerationEvidenceAttachmentSlots,
   getRealGenerationEvidenceGenerationId,
+  removeRealGenerationEvidenceAttachmentMetadata,
   suggestRealGenerationEvidenceRecommendation,
+  upsertRealGenerationEvidenceAttachmentMetadata,
 } from "@/lib/real-generation-evidence";
 import {
   newId,
@@ -30,6 +42,13 @@ type EvidenceDraft = {
   scores: RealGenerationEvidenceScores;
   userRecommendation: RealGenerationEvidenceRecommendation;
   notes: RealGenerationEvidenceNotes;
+  attachments: RealGenerationEvidenceAttachment[];
+};
+
+type AttachmentPreviewState = {
+  url?: string;
+  loading: boolean;
+  missing: boolean;
 };
 
 type InitialEvidenceState = {
@@ -89,6 +108,7 @@ function buildDefaultDraft(): EvidenceDraft {
     scores,
     userRecommendation: suggestRealGenerationEvidenceRecommendation(scores),
     notes: createEmptyRealGenerationEvidenceNotes(),
+    attachments: createEmptyRealGenerationEvidenceAttachments(),
   };
 }
 
@@ -97,6 +117,7 @@ function toDraft(record: RealGenerationEvidenceRecord): EvidenceDraft {
     scores: record.scores,
     userRecommendation: record.userRecommendation,
     notes: record.notes,
+    attachments: record.attachments ?? createEmptyRealGenerationEvidenceAttachments(),
   };
 }
 
@@ -119,12 +140,18 @@ function formatSavedAt(value: string): string {
   return date.toLocaleString();
 }
 
+function formatFileSize(value: number): string {
+  if (!Number.isFinite(value) || value <= 0) return "0 KB";
+  if (value < 1024 * 1024) {
+    return `${Math.max(1, Math.round(value / 102.4) / 10)} KB`;
+  }
+  return `${Math.round((value / (1024 * 1024)) * 10) / 10} MB`;
+}
+
 export function RealGenerationEvidencePanel({ data }: { data: GeneratedPackage }) {
   const generationId = useMemo(() => getRealGenerationEvidenceGenerationId(data), [data]);
   const generationLabel = useMemo(() => buildRealGenerationEvidenceLabel(data), [data]);
-  const hasSeedance = Boolean(
-    (data.seedanceShots && data.seedanceShots.length > 0) || data.seedanceMultiShotPrompt
-  );
+  const attachmentSlots = useMemo(() => getRealGenerationEvidenceAttachmentSlots(data), [data]);
   const initialState = useMemo(() => buildInitialEvidenceState(generationId), [generationId]);
   const [draft, setDraft] = useState<EvidenceDraft>(initialState.draft);
   const [history, setHistory] = useState<RealGenerationEvidenceRecord[]>(initialState.history);
@@ -132,6 +159,61 @@ export function RealGenerationEvidencePanel({ data }: { data: GeneratedPackage }
   const [recommendationTouched, setRecommendationTouched] = useState(
     initialState.recommendationTouched
   );
+  const [busySlot, setBusySlot] = useState<RealGenerationEvidenceAttachmentSlot | null>(null);
+  const [attachmentPreviews, setAttachmentPreviews] = useState<
+    Record<string, AttachmentPreviewState>
+  >({});
+  const inputRefs = useRef<
+    Partial<Record<RealGenerationEvidenceAttachmentSlot, HTMLInputElement | null>>
+  >({});
+
+  useEffect(() => {
+    if (draft.attachments.length === 0) {
+      return;
+    }
+
+    let active = true;
+    const createdUrls: string[] = [];
+
+    void Promise.all(
+      draft.attachments.map(async (attachment) => {
+        const blob = await readEvidenceAttachmentBlob(attachment.id);
+        if (!blob) {
+          return [
+            attachment.id,
+            { loading: false, missing: true } satisfies AttachmentPreviewState,
+          ] as const;
+        }
+
+        const url = URL.createObjectURL(blob);
+        createdUrls.push(url);
+        return [
+          attachment.id,
+          { url, loading: false, missing: false } satisfies AttachmentPreviewState,
+        ] as const;
+      })
+    )
+      .then((entries) => {
+        if (!active) return;
+        setAttachmentPreviews(Object.fromEntries(entries));
+      })
+      .catch(() => {
+        if (!active) return;
+        setAttachmentPreviews(
+          Object.fromEntries(
+            draft.attachments.map((attachment) => [
+              attachment.id,
+              { loading: false, missing: true } satisfies AttachmentPreviewState,
+            ])
+          )
+        );
+      });
+
+    return () => {
+      active = false;
+      createdUrls.forEach((url) => URL.revokeObjectURL(url));
+    };
+  }, [draft.attachments]);
 
   const existingRecord = useMemo(
     () => history.find((record) => record.generationId === generationId),
@@ -146,6 +228,7 @@ export function RealGenerationEvidencePanel({ data }: { data: GeneratedPackage }
     () => suggestRealGenerationEvidenceRecommendation(draft.scores),
     [draft.scores]
   );
+  const attachmentCount = draft.attachments.length;
 
   function updateScore(key: keyof RealGenerationEvidenceScores, value: number) {
     setDraft((current) => {
@@ -174,9 +257,20 @@ export function RealGenerationEvidencePanel({ data }: { data: GeneratedPackage }
     }));
   }
 
-  function saveEvidence() {
+  function persistDraft(
+    nextDraft: EvidenceDraft,
+    notice: string,
+    options?: { touchRecommendation?: boolean }
+  ) {
+    const nextOverallScore = calculateRealGenerationEvidenceOverallScore(nextDraft.scores);
+    const nextSuggestedRecommendation = suggestRealGenerationEvidenceRecommendation(
+      nextDraft.scores
+    );
     const record: RealGenerationEvidenceRecord = {
-      id: existingRecord?.id ?? newId(),
+      id:
+        existingRecord?.id ??
+        readRealGenerationEvidenceForGeneration(generationId)?.id ??
+        newId(),
       generationId,
       generationLabel,
       generatedAt: data.generatedAt,
@@ -185,26 +279,100 @@ export function RealGenerationEvidencePanel({ data }: { data: GeneratedPackage }
       preyName: data.preyName ?? "",
       arcName: String(data.arcName ?? ""),
       pipelineStyle: data.pipelineStyle,
-      scores: draft.scores,
-      overallScore,
-      suggestedRecommendation,
-      userRecommendation: draft.userRecommendation,
-      notes: draft.notes,
+      scores: nextDraft.scores,
+      overallScore: nextOverallScore,
+      suggestedRecommendation: nextSuggestedRecommendation,
+      userRecommendation: nextDraft.userRecommendation,
+      notes: nextDraft.notes,
+      attachments: nextDraft.attachments.length > 0 ? nextDraft.attachments : undefined,
     };
 
     upsertRealGenerationEvidenceRecord(record);
     setHistory(readRealGenerationEvidenceHistory());
     setDraft(toDraft(record));
-    setRecommendationTouched(true);
-    setSavedNotice("Evidence saved for this generation.");
+    if ((record.attachments?.length ?? 0) === 0) {
+      setAttachmentPreviews({});
+    }
+    if (typeof options?.touchRecommendation === "boolean") {
+      setRecommendationTouched(options.touchRecommendation);
+    }
+    setSavedNotice(notice);
+  }
+
+  async function handleAttachmentSelected(
+    slot: RealGenerationEvidenceAttachmentSlot,
+    file: File | null
+  ) {
+    if (!file) return;
+
+    const slotMeta = getRealGenerationEvidenceAttachmentSlotMeta(slot);
+    if (!slotMeta) return;
+
+    setBusySlot(slot);
+
+    const previous = draft.attachments.find((attachment) => attachment.slot === slot);
+    const mediaKind = file.type.startsWith("video/") ? "video" : "image";
+    const attachment: RealGenerationEvidenceAttachment = {
+      id: newId(),
+      slot,
+      mediaKind,
+      fileName: file.name.trim() || `${slot}.asset`,
+      mimeType: file.type || (mediaKind === "video" ? "video/mp4" : "image/png"),
+      sizeBytes: file.size,
+      storedAt: new Date().toISOString(),
+    };
+
+    const stored = await writeEvidenceAttachmentBlob(attachment.id, file);
+    if (previous) {
+      await deleteEvidenceAttachmentBlob(previous.id);
+    }
+
+    const nextDraft: EvidenceDraft = {
+      ...draft,
+      attachments: upsertRealGenerationEvidenceAttachmentMetadata(
+        draft.attachments,
+        attachment
+      ),
+    };
+
+    persistDraft(
+      nextDraft,
+      stored
+        ? `${slotMeta.label} attached to this evidence pass.`
+        : `${slotMeta.label} metadata saved, but this browser could not keep the local preview file.`
+    );
+    setBusySlot(null);
+  }
+
+  async function handleRemoveAttachment(slot: RealGenerationEvidenceAttachmentSlot) {
+    const existing = draft.attachments.find((attachment) => attachment.slot === slot);
+    if (!existing) return;
+
+    const slotMeta = getRealGenerationEvidenceAttachmentSlotMeta(slot);
+    setBusySlot(slot);
+    await deleteEvidenceAttachmentBlob(existing.id);
+
+    const nextDraft: EvidenceDraft = {
+      ...draft,
+      attachments: removeRealGenerationEvidenceAttachmentMetadata(draft.attachments, slot),
+    };
+
+    persistDraft(nextDraft, `${slotMeta?.label ?? "Attachment"} removed from this evidence pass.`);
+    setBusySlot(null);
+  }
+
+  function saveEvidence() {
+    persistDraft(draft, "Evidence saved for this generation.", {
+      touchRecommendation: true,
+    });
   }
 
   return (
     <div className="space-y-6" data-testid="real-generation-evidence-panel">
       <div className="rounded-2xl border border-cyan-200 bg-cyan-50 p-4 text-sm text-cyan-900 shadow-sm">
         Real-generation evidence pass lives here. Score the actual outputs you got,
-        log drift or failures, and keep a small evidence trail linked to this
-        generation so later prompt changes can be judged against real results.
+        attach the media you want to review, and keep a small evidence trail linked to
+        this generation so later prompt changes can be judged against real results.
       </div>
 
       <div className="rounded-2xl border border-gray-200 bg-white p-4 shadow-sm">
@@ -226,11 +394,14 @@ export function RealGenerationEvidencePanel({ data }: { data: GeneratedPackage }
               <span className="rounded-full border border-blue-200 bg-blue-50 px-2.5 py-1 text-blue-800">
                 Kling shots
               </span>
-              {hasSeedance && (
+              {attachmentSlots.some((slot) => slot.slot === "seedance-output") && (
                 <span className="rounded-full border border-orange-200 bg-orange-50 px-2.5 py-1 text-orange-800">
                   Seedance optional
                 </span>
               )}
+              <span className="rounded-full border border-gray-200 bg-gray-50 px-2.5 py-1 text-gray-700">
+                {attachmentCount} media attached
+              </span>
             </div>
           </div>
 
@@ -262,6 +433,148 @@ export function RealGenerationEvidencePanel({ data }: { data: GeneratedPackage }
             {savedNotice}
           </div>
         )}
+      </div>
+
+      <div className="rounded-2xl border border-gray-200 bg-white p-4 shadow-sm">
+        <div className="flex flex-wrap items-start justify-between gap-3">
+          <div>
+            <div className="text-sm font-extrabold text-gray-900">Evidence media</div>
+            <p className="mt-1 max-w-3xl text-xs leading-relaxed text-gray-600">
+              Attach the actual stills or rendered clips you want to judge. WSTV keeps the
+              evidence metadata in this saved pass and stores local previews in this browser
+              when the browser supports it.
+            </p>
+          </div>
+          <div className="rounded-full border border-gray-200 bg-gray-50 px-2.5 py-1 text-[11px] font-bold text-gray-700">
+            Local browser review only
+          </div>
+        </div>
+
+        <div className="mt-4 grid gap-4 xl:grid-cols-2">
+          {attachmentSlots.map((slotMeta) => {
+            const attachment = draft.attachments.find(
+              (entry) => entry.slot === slotMeta.slot
+            );
+            const preview = attachment ? attachmentPreviews[attachment.id] : undefined;
+            const isBusy = busySlot === slotMeta.slot;
+
+            return (
+              <div
+                key={slotMeta.slot}
+                className="rounded-2xl border border-gray-200 bg-gray-50 p-3"
+                data-testid={`evidence-attachment-${slotMeta.slot}`}
+              >
+                <div className="flex flex-wrap items-start justify-between gap-3">
+                  <div>
+                    <div className="text-sm font-bold text-gray-900">{slotMeta.label}</div>
+                    <div className="mt-1 flex flex-wrap gap-2 text-[11px] font-bold">
+                      <span className="rounded-full border border-white/80 bg-white px-2.5 py-1 text-gray-700">
+                        {slotMeta.engineLabel}
+                      </span>
+                      <span className="rounded-full border border-white/80 bg-white px-2.5 py-1 text-gray-600">
+                        {attachment?.mediaKind === "video" ? "Video" : attachment ? "Image" : "Attach image or video"}
+                      </span>
+                    </div>
+                    <p className="mt-2 max-w-xl text-xs leading-relaxed text-gray-600">
+                      {slotMeta.detail}
+                    </p>
+                  </div>
+                  <input
+                    ref={(node) => {
+                      inputRefs.current[slotMeta.slot] = node;
+                    }}
+                    type="file"
+                    accept={slotMeta.accept}
+                    className="hidden"
+                    data-evidence-slot={slotMeta.slot}
+                    onChange={(event) => {
+                      const input = event.target;
+                      const file = input.files?.[0] ?? null;
+                      input.value = "";
+                      void handleAttachmentSelected(slotMeta.slot, file);
+                    }}
+                  />
+                  <div className="flex gap-2">
+                    <button
+                      type="button"
+                      onClick={() => inputRefs.current[slotMeta.slot]?.click()}
+                      className="rounded-xl border border-cyan-200 bg-cyan-50 px-3 py-2 text-xs font-extrabold text-cyan-900 hover:bg-cyan-100 disabled:cursor-not-allowed disabled:opacity-60"
+                      disabled={isBusy}
+                    >
+                      {attachment ? "Replace" : "Attach"}
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => void handleRemoveAttachment(slotMeta.slot)}
+                      className="rounded-xl border border-gray-300 bg-white px-3 py-2 text-xs font-extrabold text-gray-700 hover:bg-gray-100 disabled:cursor-not-allowed disabled:opacity-60"
+                      disabled={!attachment || isBusy}
+                    >
+                      Remove
+                    </button>
+                  </div>
+                </div>
+
+                <div className="mt-4 overflow-hidden rounded-2xl border border-dashed border-gray-300 bg-white">
+                  {attachment ? (
+                    <div className="space-y-3 p-3">
+                      <div className="flex flex-wrap items-center justify-between gap-2 text-xs text-gray-600">
+                        <div className="min-w-0 flex-1">
+                          <div className="truncate font-bold text-gray-900">{attachment.fileName}</div>
+                          <div className="mt-1 flex flex-wrap gap-2">
+                            <span>{formatFileSize(attachment.sizeBytes)}</span>
+                            <span>Saved {formatSavedAt(attachment.storedAt)}</span>
+                          </div>
+                        </div>
+                        {isBusy && (
+                          <span className="rounded-full border border-cyan-200 bg-cyan-50 px-2.5 py-1 text-[11px] font-bold text-cyan-700">
+                            Updating...
+                          </span>
+                        )}
+                      </div>
+
+                      {!preview || preview.loading ? (
+                        <div className="flex h-44 items-center justify-center rounded-xl bg-gray-100 text-xs font-semibold text-gray-500">
+                          Loading local preview…
+                        </div>
+                      ) : preview?.url ? (
+                        attachment.mediaKind === "video" ? (
+                          <video
+                            src={preview.url}
+                            controls
+                            muted
+                            playsInline
+                            className="h-56 w-full rounded-xl bg-black object-contain"
+                          />
+                        ) : (
+                          // eslint-disable-next-line @next/next/no-img-element
+                          <img
+                            src={preview.url}
+                            alt={slotMeta.label}
+                            className="h-56 w-full rounded-xl bg-gray-100 object-cover"
+                          />
+                        )
+                      ) : (
+                        <div className="rounded-xl border border-amber-200 bg-amber-50 p-3 text-xs leading-relaxed text-amber-900">
+                          {preview?.missing
+                            ? "Attachment metadata is saved, but the local preview file is not available in this browser anymore. Reattach it if you want an inline preview again."
+                            : "Attach a file to review it inline here."}
+                        </div>
+                      )}
+                    </div>
+                  ) : (
+                    <div className="flex h-44 flex-col items-center justify-center px-4 text-center">
+                      <div className="text-sm font-bold text-gray-900">No media attached yet</div>
+                      <p className="mt-2 max-w-sm text-xs leading-relaxed text-gray-600">
+                        Add the actual render for this slot so you can review it alongside the
+                        scorecard, notes, and final publish readiness call.
+                      </p>
+                    </div>
+                  )}
+                </div>
+              </div>
+            );
+          })}
+        </div>
       </div>
 
       <div className="rounded-2xl border border-gray-200 bg-white p-4 shadow-sm">
@@ -391,7 +704,7 @@ export function RealGenerationEvidencePanel({ data }: { data: GeneratedPackage }
                 className="mt-1 min-h-20 w-full rounded-xl border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 outline-none transition focus:border-cyan-500 focus:ring-2 focus:ring-cyan-100"
               />
             </div>
-            {hasSeedance && (
+            {attachmentSlots.some((slot) => slot.slot === "seedance-output") && (
               <div>
                 <label className="text-xs font-bold uppercase tracking-wide text-gray-500" htmlFor="evidence-seedance">
                   Seedance note
@@ -462,6 +775,7 @@ export function RealGenerationEvidencePanel({ data }: { data: GeneratedPackage }
               {history.length > 0 ? (
                 history.slice(0, 6).map((record) => {
                   const isCurrent = record.generationId === generationId;
+                  const recordAttachmentCount = record.attachments?.length ?? 0;
                   return (
                     <div
                       key={record.id}
@@ -480,6 +794,11 @@ export function RealGenerationEvidencePanel({ data }: { data: GeneratedPackage }
                           {buildRealGenerationEvidenceSummary(record)}
                         </div>
                       </div>
+                      {recordAttachmentCount > 0 && (
+                        <div className="mt-2 text-xs font-semibold text-gray-600">
+                          {recordAttachmentCount} media attachment{recordAttachmentCount === 1 ? "" : "s"}
+                        </div>
+                      )}
                       {(record.notes.strongPoints || record.notes.driftObserved || record.notes.retryPlan) && (
                         <div className="mt-3 space-y-1 text-xs leading-relaxed text-gray-700">
                           {record.notes.strongPoints && <p><span className="font-bold">Strong:</span> {record.notes.strongPoints}</p>}
@@ -492,7 +811,7 @@ export function RealGenerationEvidencePanel({ data }: { data: GeneratedPackage }
                 })
               ) : (
                 <div className="rounded-2xl border border-dashed border-gray-300 bg-gray-50 p-4 text-xs leading-relaxed text-gray-600">
-                  No evidence saved yet. Once you review a real generation, score it here and save the result.
+                  No evidence saved yet. Once you review a real generation, score it here, attach the outputs you want to compare, and save the result.
                 </div>
               )}
             </div>

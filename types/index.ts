@@ -672,6 +672,27 @@ export type RealGenerationEvidenceScores = {
   facebookOpeningStrength: number;
 };
 
+export type RealGenerationEvidenceAttachmentSlot =
+  | "master-still"
+  | "runway-shot-1"
+  | "kling-shot-2"
+  | "kling-shot-3"
+  | "runway-shot-4"
+  | "seedance-output"
+  | "thumbnail-cover";
+
+export type RealGenerationEvidenceAttachmentMediaKind = "image" | "video";
+
+export type RealGenerationEvidenceAttachment = {
+  id: string;
+  slot: RealGenerationEvidenceAttachmentSlot;
+  mediaKind: RealGenerationEvidenceAttachmentMediaKind;
+  fileName: string;
+  mimeType: string;
+  sizeBytes: number;
+  storedAt: string;
+};
+
 export type RealGenerationEvidenceNotes = {
   strongPoints: string;
   driftObserved: string;
@@ -698,6 +719,7 @@ export type RealGenerationEvidenceRecord = {
   suggestedRecommendation: RealGenerationEvidenceRecommendation;
   userRecommendation: RealGenerationEvidenceRecommendation;
   notes: RealGenerationEvidenceNotes;
+  attachments?: RealGenerationEvidenceAttachment[];
 };
 
 // ─────────────────────────────────────────────────────────────

@@ -46,6 +46,18 @@ test("main build flow generates output, keeps workspace tabs reachable, and show
 
   await page.locator('[data-workspace-tab="evidence"]').click();
   await expect(page.getByTestId("real-generation-evidence-panel")).toBeVisible();
+  await page.locator('input[data-evidence-slot="master-still"]').setInputFiles({
+    name: "master-still.png",
+    mimeType: "image/png",
+    buffer: Buffer.from(
+      "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVQIHWP4////fwAJ+wP9KobjigAAAABJRU5ErkJggg==",
+      "base64"
+    ),
+  });
+  await expect(page.getByTestId("real-generation-evidence-save-notice")).toHaveText(
+    /Master Still attached to this evidence pass\./i
+  );
+  await expect(page.getByText(/master-still\.png/i)).toBeVisible();
   await page.getByLabel(/What looked strong\?/i).fill("Strong first frame and clean spacing.");
   await page.getByRole("button", { name: /Save Evidence Pass/i }).click();
   await expect(page.getByTestId("real-generation-evidence-save-notice")).toHaveText(
@@ -66,6 +78,7 @@ test("main build flow generates output, keeps workspace tabs reachable, and show
   await expect(page.getByLabel(/What looked strong\?/i)).toHaveValue(
     /Strong first frame and clean spacing\./i
   );
+  await expect(page.getByText(/master-still\.png/i)).toBeVisible();
   await page.locator('[data-workspace-tab="publishing"]').click();
   await expect(page.getByTestId("facebook-publish-readiness-panel")).toBeVisible();
   await expect(page.getByText(/Latest evidence call/i)).toBeVisible();

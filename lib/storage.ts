@@ -63,6 +63,7 @@ import {
   clampRealGenerationEvidenceScore,
   createEmptyRealGenerationEvidenceNotes,
   calculateRealGenerationEvidenceOverallScore,
+  normalizeRealGenerationEvidenceAttachments,
   sortRealGenerationEvidenceRecords,
   suggestRealGenerationEvidenceRecommendation,
 } from "@/lib/real-generation-evidence";
@@ -479,6 +480,7 @@ function normalizeRealGenerationEvidenceRecord(
   const overallScore = Number.isFinite(Number(value.overallScore))
     ? Math.max(0, Math.min(100, Math.round(Number(value.overallScore))))
     : calculateRealGenerationEvidenceOverallScore(scores);
+  const attachments = normalizeRealGenerationEvidenceAttachments(value.attachments);
 
   return {
     id,
@@ -495,6 +497,7 @@ function normalizeRealGenerationEvidenceRecord(
     suggestedRecommendation,
     userRecommendation,
     notes: normalizeRealGenerationEvidenceNotes(value.notes),
+    attachments: attachments.length > 0 ? attachments : undefined,
   };
 }
 
