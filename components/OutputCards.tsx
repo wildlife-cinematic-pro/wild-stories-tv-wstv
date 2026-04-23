@@ -1,6 +1,8 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+
+import { copyTextToClipboard } from "@/components/CopyButton";
 
 import PromptVersionsPanel from "@/components/PromptVersionsPanel";
 import WSTVWorkflowDiagram from "@/components/WSTVWorkflowDiagram";
@@ -54,12 +56,6 @@ type DirectWorkspaceTab = "seedance" | "kling15" | "kling6";
 
 const HOOK_FAMILY_LABELS = ["Danger", "Curiosity", "Reversal"] as const;
 
-function copyToClipboard(text: string) {
-  if (typeof navigator !== "undefined" && navigator.clipboard) {
-    navigator.clipboard.writeText(text).catch(() => {});
-  }
-}
-
 function formatHookFamilyLabel(value: string): string {
   return value
     .split(/[_\-\s]+/)
@@ -75,7 +71,6 @@ export default function OutputCards({
   data: GeneratedPackage;
   onRestoreVersion?: (version: PromptVersion) => void;
 }) {
-  const onCopy = copyToClipboard;
   const [showWSTVWorkflowDiagram, setShowWSTVWorkflowDiagram] = useState(false);
   const [activeWorkspace, setActiveWorkspace] =
     useState<OutputWorkspaceTab>("overview");
@@ -84,6 +79,38 @@ export default function OutputCards({
   const [directWorkspace, setDirectWorkspace] =
     useState<DirectWorkspaceTab>("seedance");
   const workspaceTabRailRef = useRef<HTMLDivElement | null>(null);
+  const copyFeedbackTimersRef = useRef(new WeakMap<HTMLButtonElement, number>());
+
+  const onCopy = useCallback(async (text: string) => {
+    const copied = await copyTextToClipboard(text);
+    const trigger =
+      typeof document !== "undefined" &&
+      document.activeElement instanceof HTMLButtonElement
+        ? document.activeElement
+        : null;
+
+    if (trigger) {
+      const originalLabel =
+        trigger.dataset.copyIdleLabel ?? trigger.textContent?.trim() ?? "Copy";
+      const existingTimer = copyFeedbackTimersRef.current.get(trigger);
+      if (existingTimer) window.clearTimeout(existingTimer);
+
+      trigger.dataset.copyIdleLabel = originalLabel;
+      trigger.dataset.copyStatus = copied ? "copied" : "failed";
+      trigger.style.minWidth = `${Math.ceil(trigger.getBoundingClientRect().width)}px`;
+      trigger.textContent = copied ? "Copied" : "Copy failed";
+
+      const timer = window.setTimeout(() => {
+        trigger.textContent = originalLabel;
+        trigger.dataset.copyStatus = "idle";
+        trigger.style.minWidth = "";
+        copyFeedbackTimersRef.current.delete(trigger);
+      }, 1600);
+      copyFeedbackTimersRef.current.set(trigger, timer);
+    }
+
+    return copied;
+  }, []);
 
   useEffect(() => {
     const activeTab = workspaceTabRailRef.current?.querySelector<HTMLButtonElement>(
@@ -269,12 +296,7 @@ export default function OutputCards({
   }
 
   async function copyAllPacks() {
-    const text = buildCopyAllPacksText();
-    try {
-      await navigator.clipboard.writeText(text);
-    } catch {
-      onCopy(text);
-    }
+    await onCopy(buildCopyAllPacksText());
   }
 
   function exportTxt() {

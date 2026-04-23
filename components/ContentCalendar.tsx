@@ -105,7 +105,7 @@ export default function ContentCalendar({
     if (!text) return;
     await copy(text);
     setCopiedKey(key);
-    window.setTimeout(() => setCopiedKey(""), 800);
+    window.setTimeout(() => setCopiedKey(""), 1600);
   }
 
   const copyPack = useMemo(() => {
@@ -199,7 +199,7 @@ export default function ContentCalendar({
               onClick={() => handleCopy("hook", selected?.hook ?? "")}
               className="rounded-lg border border-gray-300 bg-white px-3 py-1.5 text-xs font-extrabold text-gray-800 hover:bg-gray-50 active:scale-95"
             >
-              {copiedKey === "hook" ? "✅ Copied" : "Copy"}
+              {copiedKey === "hook" ? "Copied" : "Copy"}
             </button>
           </div>
           <pre className="max-h-28 overflow-auto whitespace-pre-wrap text-xs leading-relaxed text-gray-800">
@@ -215,7 +215,7 @@ export default function ContentCalendar({
                 onClick={() => handleCopy("caption", selected?.caption ?? "")}
                 className="rounded-lg border border-gray-300 bg-white px-3 py-1.5 text-xs font-extrabold text-gray-800 hover:bg-gray-50 active:scale-95"
               >
-                {copiedKey === "caption" ? "✅ Copied" : "Copy"}
+                {copiedKey === "caption" ? "Copied" : "Copy"}
               </button>
             </div>
             <pre className="max-h-40 overflow-auto whitespace-pre-wrap text-xs leading-relaxed text-gray-800">
@@ -231,7 +231,7 @@ export default function ContentCalendar({
                 onClick={() => handleCopy("hashtags", selected?.hashtags ?? "")}
                 className="rounded-lg border border-gray-300 bg-white px-3 py-1.5 text-xs font-extrabold text-gray-800 hover:bg-gray-50 active:scale-95"
               >
-                {copiedKey === "hashtags" ? "✅ Copied" : "Copy"}
+                {copiedKey === "hashtags" ? "Copied" : "Copy"}
               </button>
             </div>
             <pre className="max-h-24 overflow-auto whitespace-pre-wrap text-xs leading-relaxed text-gray-800">
@@ -244,7 +244,7 @@ export default function ContentCalendar({
             onClick={() => handleCopy("pack", copyPack)}
             className="w-full rounded-xl bg-gray-900 px-4 py-2.5 text-sm font-extrabold text-white hover:bg-black active:scale-[0.98]"
           >
-            {copiedKey === "pack" ? "✅ Copied Full Pack" : "📋 Copy Full Post Pack"}
+            {copiedKey === "pack" ? "Copied" : "📋 Copy Full Post Pack"}
           </button>
         </div>
       </div>
