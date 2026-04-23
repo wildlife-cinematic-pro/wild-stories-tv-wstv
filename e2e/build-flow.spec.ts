@@ -44,11 +44,22 @@ test("main build flow generates output, keeps workspace tabs reachable, and show
     .poll(() => copyAllHandle!.evaluate((button) => button.textContent ?? ""))
     .toMatch(/Copied/);
 
+  await page.locator('[data-workspace-tab="evidence"]').click();
+  await expect(page.getByTestId("real-generation-evidence-panel")).toBeVisible();
+  await page.getByLabel(/What looked strong\?/i).fill("Strong first frame and clean spacing.");
+  await page.getByRole("button", { name: /Save Evidence Pass/i }).click();
+  await expect(page.getByTestId("real-generation-evidence-save-notice")).toHaveText(
+    /Evidence saved for this generation\./i
+  );
+
   await page.reload();
 
   await expect(page.getByTestId("last-generated-restore-notice")).toHaveText(
     /Restored your last generated output from this browser\./i
   );
   await expect(page.getByText("Generated Output", { exact: true })).toBeVisible();
-  await expect(page.locator('[data-workspace-tab="overview"]')).toBeVisible();
+  await page.locator('[data-workspace-tab="evidence"]').click();
+  await expect(page.getByLabel(/What looked strong\?/i)).toHaveValue(
+    /Strong first frame and clean spacing\./i
+  );
 });

@@ -40,10 +40,15 @@ import type {
   PredatorInfo,
   CustomPredatorForm,
   HabitatPreset,
+  PipelineStyle,
   WildlifeScopeMode,
   BuildWorkflowPresetSnapshot,
   GeneratedPackage,
   PackageLockState,
+  RealGenerationEvidenceNotes,
+  RealGenerationEvidenceRecommendation,
+  RealGenerationEvidenceRecord,
+  RealGenerationEvidenceScores,
 } from "@/types";
 import type { PublishFlowSummary } from "@/lib/build-package";
 
@@ -54,6 +59,13 @@ import {
   isCameraAnglePreset,
 } from "@/lib/camera-angle-presets";
 import { createDefaultPackageLockState } from "@/lib/package-section-locks";
+import {
+  clampRealGenerationEvidenceScore,
+  createEmptyRealGenerationEvidenceNotes,
+  calculateRealGenerationEvidenceOverallScore,
+  sortRealGenerationEvidenceRecords,
+  suggestRealGenerationEvidenceRecommendation,
+} from "@/lib/real-generation-evidence";
 import {
   getSafeDefaultWorkflowPresetId,
   normalizeWorkflowPresetPacks,
@@ -75,6 +87,7 @@ const DEFAULT_WORKFLOW_PRESET_KEY = "wildlife_default_workflow_preset_v1";
 const WORKFLOW_PRESET_LIBRARY_SELECTION_KEY =
   "wildlife_workflow_preset_library_selection_v1";
 const LAST_GENERATED_OUTPUT_KEY = "wildlife_last_generated_output_v1";
+const REAL_GENERATION_EVIDENCE_KEY = "wildlife_real_generation_evidence_v1";
 
 export const MAX_HISTORY = 20;
 export const MAX_FAVORITES = 50;
@@ -383,6 +396,199 @@ export function writeWorkflowPresetLibrarySelection(
   } catch {}
 }
 
+
+
+const REAL_GENERATION_EVIDENCE_SCHEMA = "wstv.real-generation-evidence";
+const MAX_REAL_GENERATION_EVIDENCE_RECORDS = 30;
+
+type RealGenerationEvidenceStore = {
+  schema: typeof REAL_GENERATION_EVIDENCE_SCHEMA;
+  version: 1;
+  records: RealGenerationEvidenceRecord[];
+};
+
+function isRealGenerationEvidenceRecommendation(
+  value: unknown
+): value is RealGenerationEvidenceRecommendation {
+  return value === "keep" || value === "retry-with-fixes" || value === "retry";
+}
+
+function isPipelineStyle(value: unknown): value is PipelineStyle {
+  return value === "4-shot" || value === "long-hybrid-4-shot";
+}
+
+function normalizeRealGenerationEvidenceScores(
+  value: unknown
+): RealGenerationEvidenceScores | null {
+  if (!isObjectRecord(value)) return null;
+
+  return {
+    firstFrameReadability: clampRealGenerationEvidenceScore(Number(value.firstFrameReadability)),
+    spacingClarity: clampRealGenerationEvidenceScore(Number(value.spacingClarity)),
+    worldLightingContinuity: clampRealGenerationEvidenceScore(Number(value.worldLightingContinuity)),
+    anatomyPhysicsRealism: clampRealGenerationEvidenceScore(Number(value.anatomyPhysicsRealism)),
+    actionReadability: clampRealGenerationEvidenceScore(Number(value.actionReadability)),
+    facebookOpeningStrength: clampRealGenerationEvidenceScore(Number(value.facebookOpeningStrength)),
+  };
+}
+
+function normalizeRealGenerationEvidenceNotes(
+  value: unknown
+): RealGenerationEvidenceNotes {
+  if (!isObjectRecord(value)) return createEmptyRealGenerationEvidenceNotes();
+
+  return {
+    strongPoints: typeof value.strongPoints === "string" ? value.strongPoints.trim() : "",
+    driftObserved: typeof value.driftObserved === "string" ? value.driftObserved.trim() : "",
+    failedPoints: typeof value.failedPoints === "string" ? value.failedPoints.trim() : "",
+    retryPlan: typeof value.retryPlan === "string" ? value.retryPlan.trim() : "",
+    masterStill: typeof value.masterStill === "string" ? value.masterStill.trim() : "",
+    runway: typeof value.runway === "string" ? value.runway.trim() : "",
+    kling: typeof value.kling === "string" ? value.kling.trim() : "",
+    seedance: typeof value.seedance === "string" ? value.seedance.trim() : "",
+  };
+}
+
+function normalizeRealGenerationEvidenceRecord(
+  value: unknown
+): RealGenerationEvidenceRecord | null {
+  if (!isObjectRecord(value)) return null;
+
+  const id = typeof value.id === "string" ? value.id.trim() : "";
+  const generationId = typeof value.generationId === "string" ? value.generationId.trim() : "";
+  const generationLabel =
+    typeof value.generationLabel === "string" ? value.generationLabel.trim() : "";
+  const capturedAt = typeof value.capturedAt === "string" ? value.capturedAt.trim() : "";
+  const predatorName = typeof value.predatorName === "string" ? value.predatorName.trim() : "";
+  const preyName = typeof value.preyName === "string" ? value.preyName.trim() : "";
+  const arcName = typeof value.arcName === "string" ? value.arcName.trim() : "";
+  const scores = normalizeRealGenerationEvidenceScores(value.scores);
+
+  if (!id || !generationId || !generationLabel || !capturedAt || !predatorName || !preyName || !arcName || !scores) {
+    return null;
+  }
+
+  const suggestedRecommendation = isRealGenerationEvidenceRecommendation(
+    value.suggestedRecommendation
+  )
+    ? value.suggestedRecommendation
+    : suggestRealGenerationEvidenceRecommendation(scores);
+  const userRecommendation = isRealGenerationEvidenceRecommendation(value.userRecommendation)
+    ? value.userRecommendation
+    : suggestedRecommendation;
+  const overallScore = Number.isFinite(Number(value.overallScore))
+    ? Math.max(0, Math.min(100, Math.round(Number(value.overallScore))))
+    : calculateRealGenerationEvidenceOverallScore(scores);
+
+  return {
+    id,
+    generationId,
+    generationLabel,
+    generatedAt: typeof value.generatedAt === "string" ? value.generatedAt.trim() : undefined,
+    capturedAt,
+    predatorName,
+    preyName,
+    arcName,
+    pipelineStyle: isPipelineStyle(value.pipelineStyle) ? value.pipelineStyle : undefined,
+    scores,
+    overallScore,
+    suggestedRecommendation,
+    userRecommendation,
+    notes: normalizeRealGenerationEvidenceNotes(value.notes),
+  };
+}
+
+function normalizeRealGenerationEvidenceStore(
+  value: unknown
+): RealGenerationEvidenceStore | null {
+  if (!isObjectRecord(value)) return null;
+  if (value.schema !== REAL_GENERATION_EVIDENCE_SCHEMA || value.version !== 1) {
+    return null;
+  }
+  if (!Array.isArray(value.records)) return null;
+
+  const records = sortRealGenerationEvidenceRecords(
+    value.records
+      .map((entry) => normalizeRealGenerationEvidenceRecord(entry))
+      .filter((entry): entry is RealGenerationEvidenceRecord => Boolean(entry))
+  ).slice(0, MAX_REAL_GENERATION_EVIDENCE_RECORDS);
+
+  if (value.records.length > 0 && records.length === 0) {
+    return null;
+  }
+
+  return {
+    schema: REAL_GENERATION_EVIDENCE_SCHEMA,
+    version: 1,
+    records,
+  };
+}
+
+export function readRealGenerationEvidenceHistory(): RealGenerationEvidenceRecord[] {
+  if (typeof window === "undefined") return [];
+  try {
+    const raw = localStorage.getItem(REAL_GENERATION_EVIDENCE_KEY);
+    if (!raw) return [];
+
+    const normalized = normalizeRealGenerationEvidenceStore(safeJsonParse<unknown>(raw));
+    if (!normalized) {
+      localStorage.removeItem(REAL_GENERATION_EVIDENCE_KEY);
+      return [];
+    }
+
+    return normalized.records;
+  } catch {
+    return [];
+  }
+}
+
+export function writeRealGenerationEvidenceHistory(
+  records: RealGenerationEvidenceRecord[]
+): void {
+  if (typeof window === "undefined") return;
+  try {
+    const cleaned = sortRealGenerationEvidenceRecords(
+      records
+        .map((record) => normalizeRealGenerationEvidenceRecord(record))
+        .filter((record): record is RealGenerationEvidenceRecord => Boolean(record))
+    ).slice(0, MAX_REAL_GENERATION_EVIDENCE_RECORDS);
+
+    localStorage.setItem(
+      REAL_GENERATION_EVIDENCE_KEY,
+      JSON.stringify({
+        schema: REAL_GENERATION_EVIDENCE_SCHEMA,
+        version: 1,
+        records: cleaned,
+      } satisfies RealGenerationEvidenceStore)
+    );
+  } catch {}
+}
+
+export function readRealGenerationEvidenceForGeneration(
+  generationId: string
+): RealGenerationEvidenceRecord | undefined {
+  const cleanId = generationId.trim();
+  if (!cleanId) return undefined;
+  return readRealGenerationEvidenceHistory().find(
+    (record) => record.generationId === cleanId
+  );
+}
+
+export function upsertRealGenerationEvidenceRecord(
+  record: RealGenerationEvidenceRecord
+): void {
+  const cleaned = normalizeRealGenerationEvidenceRecord(record);
+  if (!cleaned) return;
+
+  const next = [
+    cleaned,
+    ...readRealGenerationEvidenceHistory().filter(
+      (entry) => entry.generationId !== cleaned.generationId
+    ),
+  ];
+
+  writeRealGenerationEvidenceHistory(next);
+}
 
 export type LastGeneratedOutputRecord = {
   schema: "wstv.last-generated-output";
