@@ -14,39 +14,17 @@ import type {
   RealismMode,
   GeneratedPackage,
   MediaAnalysisResult,
-  PackageLockKey,
   PackageLockState,
-  PredatorInfo,
   RunwayModel,
   KlingModel,
-  PromptVersion,
   HabitatPreset,
   HookFamily,
   SavedWorkflowPreset,
   WildlifeScopeMode,
 } from "@/types";
 
-import {
-  appendPromptVersion,
-  getNextVersionNumber,
-  makePromptVersionKey,
-} from "@/lib/versioning";
-import { copyPolishResponseSchema } from "@/lib/schemas";
-import {
-  hasUsableGeneratedPackageEnhancements,
-  type GeneratedPackageEnhancements,
-} from "@/lib/generated-package";
-import {
-  buildGeneratedPackageDraft,
-  finalizeGeneratedPackageDraft,
-  type GeneratedPackageDraft,
-  type PublishFlowSummary,
-} from "@/lib/build-package";
-import {
-  applyPackageSectionLocks,
-  createDefaultPackageLockState,
-  hasLockedPackageSections,
-} from "@/lib/package-section-locks";
+import type { PublishFlowSummary } from "@/lib/build-package";
+import { createDefaultPackageLockState } from "@/lib/package-section-locks";
 
 import {
   RUNWAY_MODELS,
@@ -61,6 +39,7 @@ import {
   type SceneDescriptionMode,
 } from "@/hooks/use-build-preview";
 import { useBuildPersistence } from "@/hooks/use-build-persistence";
+import { useBuildGenerationActions } from "@/hooks/use-build-generation-actions";
 import {
   useConceptVariantLab,
   type PromotedVariantPublishCopyOverride,
@@ -75,12 +54,6 @@ import CustomAnimalModal from "@/components/build/custom-animal-modal";
 import Step1Setup from "@/components/build/step-1-setup";
 import Step2EngineQuality from "@/components/build/step-2-engine-quality";
 import Step3Generate from "@/components/build/step-3-generate";
-
-type SafeMediaAnalysis = MediaAnalysisResult & {
-  imagePromptInject?: string;
-  image?: string;
-  video?: string;
-};
 
 type Step = 1 | 2 | 3;
 type TopTab = "build" | "workflows";
@@ -241,6 +214,10 @@ export default function Page() {
     weather,
     depthMode,
     habitat,
+    durationLane,
+    hookMode,
+    fastPublishMode,
+    strictOriginalityGuard,
     activeProvider,
     runwayModel,
     klingModel,
@@ -260,6 +237,10 @@ export default function Page() {
     setWeather,
     setDepthMode,
     setHabitat,
+    setDurationLane,
+    setHookMode,
+    setFastPublishMode,
+    setStrictOriginalityGuard,
     setActiveProvider,
     setRunwayModel,
     setKlingModel,
@@ -545,280 +526,63 @@ export default function Page() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [autoApplyHighDrift, qualityReco.level, predator, prey, arc, preset.driftRisk, runwayModel, klingModel]);
 
-  function handleTogglePackageLock(key: PackageLockKey) {
-    setPackageLocks((current) => ({
-      ...current,
-      [key]: !current[key],
-    }));
-  }
-
-  function buildCurrentPackageDraft(sceneInjectOverride?: string) {
-    if (!predator || !prey) throw new Error("Missing predator or prey");
-
-    const safeMedia = (mediaAnalysis ?? null) as SafeMediaAnalysis | null;
-    const sceneInjectFromMedia = safeMedia?.imagePromptInject ?? "";
-    const sceneInjectFromUser = sceneDescription.trim();
-    const sceneInject =
-      sceneInjectOverride ??
-      (sceneInjectFromUser.length > 0
-        ? sceneInjectFromUser
-        : sceneInjectFromMedia);
-    const quality = {
-      realismMode,
-      motionOnlyI2V,
-      referenceLock,
-      singleActionRule,
-      microMotion,
-      heroVeo,
-    };
-
-    return buildGeneratedPackageDraft({
-      predator,
-      prey,
-      presetLighting: preset.lighting,
-      presetCameraGear: preset.cameraGear,
-      presetTexture: preset.texture,
-      presetDriftRisk: preset.driftRisk,
-      presetForIdeas: { ...preset, environment: finalEnvironment } as PredatorInfo,
-      finalEnvironment,
-      finalArc: previewArc,
-      contentLane,
-      cameraAnglePreset,
-      weather,
-      depthMode,
-      emotionalTone,
-      animalVibe,
-      runwayModel,
-      klingModel,
-      durationLane,
-      marketMode,
-      fastPublishMode,
-      strictOriginalityGuard,
-      selectedPipelineStyle,
-      sceneInject,
-      quality,
-      finalHook2026: activePromotedPublishCopyOverride
-        ? [
-            activePromotedPublishCopyOverride.hook,
-            ...previewHook2026.filter(
-              (hook) => hook !== activePromotedPublishCopyOverride.hook
-            ),
-          ]
-        : previewHook2026,
-      finalHook:
-        activePromotedPublishCopyOverride?.hook ??
-        previewPrimaryHook ??
-        previewHook2026[0] ??
-        "",
-      shortCaption:
-        activePromotedPublishCopyOverride?.caption ?? previewShortCaption,
-      longCaption:
-        activePromotedPublishCopyOverride?.caption ?? previewLongCaption,
-      hashtags: activePromotedPublishCopyOverride?.hashtags ?? previewHashtags,
-      tags: previewTags,
-      recommendedHookIndex: previewRecommendedHookIndex,
-      hookFamily: previewHookFamily,
-      usAudienceScore: previewAudienceScore,
-      openingFrameInput: previewOpeningFrameInput,
-      openingFrameScore: previewOpeningFrameScore,
-      performanceSnapshot: previewPerformanceSnapshot,
-    });
-  }
-
-  async function buildEnhancementsForDraft(
-    draft: GeneratedPackageDraft
-  ): Promise<GeneratedPackageEnhancements> {
-    if (activeProvider === "none") return {};
-
-    const res = await fetch("/api/enhance", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        provider: activeProvider,
-        predator,
-        prey,
-        env: finalEnvironment,
-        arc: previewArc,
-        weather,
-        emotionalTone,
-        animalVibe,
-        base: {
-          imagePrompt: draft.basePkg.imagePrompt,
-          hook: draft.basePkg.hook,
-          caption: draft.basePkg.caption ?? "",
-          voiceoverLine: draft.basePkg.voiceoverLine,
-        },
-      }),
-    });
-    const data = await res.json().catch(() => ({} as unknown));
-    if (!res.ok) {
-      throw new Error(
-        ((data as Record<string, unknown>)?.error as string) ||
-          `AI polish failed (${res.status})`
-      );
-    }
-    const parsedEnhanced = copyPolishResponseSchema.safeParse(data);
-    if (!parsedEnhanced.success) throw new Error("Invalid AI polish response");
-
-    const enhanced: GeneratedPackageEnhancements = {
-      ...(parsedEnhanced.data.imagePrompt
-        ? { imagePrompt: parsedEnhanced.data.imagePrompt }
-        : {}),
-      ...(parsedEnhanced.data.hook ? { hook: parsedEnhanced.data.hook } : {}),
-      ...(parsedEnhanced.data.caption
-        ? { caption: parsedEnhanced.data.caption }
-        : {}),
-      ...(parsedEnhanced.data.voiceoverLine
-        ? { voiceoverLine: parsedEnhanced.data.voiceoverLine }
-        : {}),
-      aiEnhanced: true,
-    };
-
-    if (!hasUsableGeneratedPackageEnhancements(enhanced)) {
-      throw new Error("AI polish returned no usable prompt or copy updates");
-    }
-
-    return enhanced;
-  }
-
-  function appendGenerationVersion(finalPkg: GeneratedPackage, labelPrefix: string) {
-    try {
-      const key = makePromptVersionKey(
-        finalPkg.predatorName ?? predator,
-        finalPkg.preyName ?? prey,
-        String(finalPkg.arcName ?? arc)
-      );
-      const v: PromptVersion = {
-        version: getNextVersionNumber(key),
-        timestamp: new Date().toISOString(),
-        imagePrompt: finalPkg.imagePrompt,
-        hook: finalPkg.hook ?? "",
-        caption: finalPkg.caption ?? "",
-        voiceoverLine: finalPkg.voiceoverLine ?? "",
-        label: `${labelPrefix} • ${
-          activeProvider === "none" ? "Local" : activeProvider
-        } • ${predator} vs ${prey} • ${String(previewArc ?? arc)}`,
-        performanceNote: "",
-      };
-      appendPromptVersion(key, v);
-    } catch {
-      // ignore
-    }
-  }
-
-  function syncPublishSummaryWithPackage(
-    finalPkg: GeneratedPackage,
-    summary: PublishFlowSummary
-  ): PublishFlowSummary {
-    return {
-      ...summary,
-      predatorName: finalPkg.predatorName ?? summary.predatorName,
-      preyName: finalPkg.preyName ?? summary.preyName,
-      arcName: finalPkg.arcName ?? summary.arcName,
-      durationLane: finalPkg.durationLane ?? summary.durationLane,
-      hookFamily: finalPkg.hookFamily ?? summary.hookFamily,
-      pipelineStyle: finalPkg.pipelineStyle ?? summary.pipelineStyle,
-      primaryHook: finalPkg.hook ?? summary.primaryHook,
-      usAudienceScore: finalPkg.usAudienceScore ?? summary.usAudienceScore,
-      openingFrameScore: finalPkg.openingFrameScore ?? summary.openingFrameScore,
-      publishGuardReport:
-        finalPkg.publishGuardReport ?? summary.publishGuardReport,
-      publishWorthy:
-        finalPkg.usViewsModeReport?.shouldPublish ?? summary.publishWorthy,
-    };
-  }
-
-  async function handleGenerate() {
-    setIsGenerating(true);
-    setError("");
-    setPkg(null);
-    setPublishFlowSummary(null);
-    try {
-      const draft = buildCurrentPackageDraft();
-      const enhanced = await buildEnhancementsForDraft(draft);
-      const { finalPkg, publishFlowSummary } = finalizeGeneratedPackageDraft(
-        draft,
-        enhanced
-      );
-
-      setPkg(finalPkg);
-      setPublishFlowSummary(publishFlowSummary);
-      appendGenerationVersion(finalPkg, "GENERATE");
-      setStep(3);
-    } catch (e) {
-      console.error("[generate error]", e);
-      setError(e instanceof Error ? e.message : "Generation failed");
-    } finally {
-      setIsGenerating(false);
-    }
-  }
-
-  async function handleRegenerateUnlockedSections() {
-    if (!pkg) return;
-
-    setIsRegeneratingUnlocked(true);
-    setError("");
-    try {
-      const sceneInjectOverride = packageLocks.sceneDescription
-        ? pkg.sceneDesc ?? ""
-        : undefined;
-      const draft = buildCurrentPackageDraft(sceneInjectOverride);
-      const enhanced = await buildEnhancementsForDraft(draft);
-      const { finalPkg: candidatePkg, publishFlowSummary } =
-        finalizeGeneratedPackageDraft(draft, enhanced);
-      const finalPkg = hasLockedPackageSections(packageLocks)
-        ? applyPackageSectionLocks(pkg, candidatePkg, packageLocks)
-        : candidatePkg;
-
-      setPkg(finalPkg);
-      setPublishFlowSummary(
-        syncPublishSummaryWithPackage(finalPkg, publishFlowSummary)
-      );
-      appendGenerationVersion(finalPkg, "REGENERATE UNLOCKED");
-      setStep(3);
-    } catch (e) {
-      console.error("[regenerate unlocked error]", e);
-      setError(e instanceof Error ? e.message : "Regeneration failed");
-    } finally {
-      setIsRegeneratingUnlocked(false);
-    }
-  }
-
-  function handleRestoreVersion(version: PromptVersion) {
-    setPkg((prev) => {
-      if (!prev) return prev;
-
-      const restored: GeneratedPackage = {
-        ...prev,
-        imagePrompt: version.imagePrompt,
-        hook: version.hook,
-        caption: version.caption,
-        voiceoverLine: version.voiceoverLine ?? prev.voiceoverLine,
-      };
-
-      try {
-        const key = makePromptVersionKey(
-          restored.predatorName ?? predator,
-          restored.preyName ?? prey,
-          String(restored.arcName ?? arc)
-        );
-        appendPromptVersion(key, {
-          version: getNextVersionNumber(key),
-          timestamp: new Date().toISOString(),
-          imagePrompt: restored.imagePrompt,
-          hook: restored.hook ?? "",
-          caption: restored.caption ?? "",
-          voiceoverLine: restored.voiceoverLine ?? "",
-          label: `RESTORE v${version.version} • ${predator} vs ${prey}`,
-          performanceNote: "",
-        });
-      } catch {
-        // ignore
-      }
-
-      return restored;
-    });
-  }
+  const {
+    handleGenerate,
+    handleRegenerateUnlockedSections,
+    handleRestoreVersion,
+    handleTogglePackageLock,
+  } = useBuildGenerationActions({
+    predator,
+    prey,
+    arc,
+    previewArc,
+    contentLane,
+    cameraAnglePreset,
+    weather,
+    depthMode,
+    emotionalTone,
+    animalVibe,
+    runwayModel,
+    klingModel,
+    durationLane,
+    marketMode,
+    fastPublishMode,
+    strictOriginalityGuard,
+    selectedPipelineStyle,
+    finalEnvironment,
+    preset,
+    sceneDescription,
+    mediaAnalysis,
+    activeProvider,
+    activePromotedPublishCopyOverride,
+    previewHook2026,
+    previewPrimaryHook,
+    previewShortCaption,
+    previewLongCaption,
+    previewHashtags,
+    previewTags,
+    previewRecommendedHookIndex,
+    previewHookFamily,
+    previewAudienceScore,
+    previewOpeningFrameInput,
+    previewOpeningFrameScore,
+    previewPerformanceSnapshot,
+    realismMode,
+    motionOnlyI2V,
+    referenceLock,
+    singleActionRule,
+    microMotion,
+    heroVeo,
+    pkg,
+    packageLocks,
+    setPkg,
+    setPackageLocks,
+    setPublishFlowSummary,
+    setIsGenerating,
+    setIsRegeneratingUnlocked,
+    setError,
+    onGenerated: () => setStep(3),
+  });
 
   const qualityPanelProps = {
     realismMode,

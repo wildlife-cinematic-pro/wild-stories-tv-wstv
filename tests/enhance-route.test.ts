@@ -8,6 +8,7 @@ import {
   mediaAnalysisSchema,
   type MediaAnalysisPayload,
 } from "@/lib/schemas";
+import { normalizeGeminiCopyPolishObject } from "@/app/api/enhance/copy-polish";
 import type { MediaAnalysisResult } from "@/types";
 
 describe("media analysis schema alignment", () => {
@@ -60,6 +61,24 @@ describe("enhance route provider helpers", () => {
   it("rejects unsupported Claude vision mime types", () => {
     expect(normalizeClaudeVisionMimeType("image/bmp")).toBeNull();
     expect(normalizeClaudeVisionMimeType("video/mp4")).toBeNull();
+  });
+
+  it("normalizes loose Gemini copy-polish keys without route-level parsing", () => {
+    expect(
+      normalizeGeminiCopyPolishObject({
+        result: {
+          image_prompt: "Cleaner image prompt with stronger continuity and lighting.",
+          voice_over_line: ["First line", "Second line"],
+          changeNotes: ["Trimmed hype"],
+          ai_enhanced: "true",
+        },
+      })
+    ).toEqual({
+      imagePrompt: "Cleaner image prompt with stronger continuity and lighting.",
+      voiceoverLine: "First line\nSecond line",
+      improvements: "Trimmed hype",
+      aiEnhanced: true,
+    });
   });
 
   it("parses JSON-only provider output and rejects malformed text", () => {

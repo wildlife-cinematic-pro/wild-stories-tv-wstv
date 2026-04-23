@@ -19,6 +19,8 @@ import type {
   Arc,
   CameraAnglePreset,
   ContentLane,
+  DurationLane,
+  HookFamily,
   DepthMode,
   HabitatPreset,
   KlingModel,
@@ -27,6 +29,8 @@ import type {
   RunwayModel,
   Weather,
 } from "@/types";
+
+type HookMode = HookFamily | "all";
 
 type UseBuildPersistenceInput = {
   predator: string;
@@ -38,6 +42,10 @@ type UseBuildPersistenceInput = {
   weather: Weather;
   depthMode: DepthMode;
   habitat: HabitatPreset;
+  durationLane: DurationLane;
+  hookMode: HookMode;
+  fastPublishMode: boolean;
+  strictOriginalityGuard: boolean;
   activeProvider: AIProvider;
   runwayModel: RunwayModel;
   klingModel: KlingModel;
@@ -57,6 +65,10 @@ type UseBuildPersistenceInput = {
   setWeather: Dispatch<SetStateAction<Weather>>;
   setDepthMode: Dispatch<SetStateAction<DepthMode>>;
   setHabitat: Dispatch<SetStateAction<HabitatPreset>>;
+  setDurationLane: Dispatch<SetStateAction<DurationLane>>;
+  setHookMode: Dispatch<SetStateAction<HookMode>>;
+  setFastPublishMode: Dispatch<SetStateAction<boolean>>;
+  setStrictOriginalityGuard: Dispatch<SetStateAction<boolean>>;
   setActiveProvider: Dispatch<SetStateAction<AIProvider>>;
   setRunwayModel: Dispatch<SetStateAction<RunwayModel>>;
   setKlingModel: Dispatch<SetStateAction<KlingModel>>;
@@ -69,6 +81,15 @@ type UseBuildPersistenceInput = {
   setAutoApplyHighDrift: Dispatch<SetStateAction<boolean>>;
 };
 
+function isHookMode(value: unknown): value is HookMode {
+  return (
+    value === "all" ||
+    value === "danger" ||
+    value === "curiosity" ||
+    value === "reversal"
+  );
+}
+
 export function useBuildPersistence({
   predator,
   prey,
@@ -79,6 +100,10 @@ export function useBuildPersistence({
   weather,
   depthMode,
   habitat,
+  durationLane,
+  hookMode,
+  fastPublishMode,
+  strictOriginalityGuard,
   activeProvider,
   runwayModel,
   klingModel,
@@ -98,6 +123,10 @@ export function useBuildPersistence({
   setWeather,
   setDepthMode,
   setHabitat,
+  setDurationLane,
+  setHookMode,
+  setFastPublishMode,
+  setStrictOriginalityGuard,
   setActiveProvider,
   setRunwayModel,
   setKlingModel,
@@ -147,6 +176,14 @@ export function useBuildPersistence({
     }
     if (saved?.microMotion !== undefined) setMicroMotion(saved.microMotion);
     if (saved?.heroVeo !== undefined) setHeroVeo(saved.heroVeo);
+    if (saved?.durationLane === "short" || saved?.durationLane === "long") {
+      setDurationLane(saved.durationLane);
+    }
+    if (isHookMode(saved?.hookMode)) setHookMode(saved.hookMode);
+    if (saved?.fastPublishMode !== undefined) setFastPublishMode(saved.fastPublishMode);
+    if (saved?.strictOriginalityGuard !== undefined) {
+      setStrictOriginalityGuard(saved.strictOriginalityGuard);
+    }
     if (saved?.habitat) setHabitat(saved.habitat);
     if (saved?.wildlifeScopeMode && isWildlifeScopeMode(saved.wildlifeScopeMode)) {
       setWildlifeScopeMode(saved.wildlifeScopeMode);
@@ -170,6 +207,10 @@ export function useBuildPersistence({
     setWeather,
     setDepthMode,
     setHabitat,
+    setDurationLane,
+    setHookMode,
+    setFastPublishMode,
+    setStrictOriginalityGuard,
     setActiveProvider,
     setRunwayModel,
     setKlingModel,
@@ -194,6 +235,10 @@ export function useBuildPersistence({
       microMotion,
       heroVeo,
       autoApplyHighDrift,
+      durationLane,
+      hookMode,
+      fastPublishMode,
+      strictOriginalityGuard,
       habitat,
       wildlifeScopeMode,
       contentLane,
@@ -210,6 +255,10 @@ export function useBuildPersistence({
     microMotion,
     heroVeo,
     autoApplyHighDrift,
+    durationLane,
+    hookMode,
+    fastPublishMode,
+    strictOriginalityGuard,
     habitat,
     wildlifeScopeMode,
     contentLane,

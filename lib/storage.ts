@@ -29,6 +29,8 @@ import type {
   AIProvider,
   CameraAnglePreset,
   ContentLane,
+  DurationLane,
+  HookFamily,
   RunwayModel,
   KlingModel,
   RealismMode,
@@ -126,6 +128,10 @@ export type StoredSettings = {
   microMotion?: boolean;
   heroVeo?: boolean;
   autoApplyHighDrift?: boolean;
+  durationLane?: DurationLane;
+  hookMode?: HookFamily | "all";
+  fastPublishMode?: boolean;
+  strictOriginalityGuard?: boolean;
   habitat?: HabitatPreset;
   contentLane?: ContentLane;
   cameraAnglePreset?: CameraAnglePreset;
