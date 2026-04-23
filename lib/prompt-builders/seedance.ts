@@ -18,6 +18,7 @@ import {
   buildQualityLead,
   formatActionSubject,
   buildStructuredPrompt,
+  buildShotWorldContinuityLock,
   promptPackToLegacyText,
   type FourShotPromptPack,
 } from "@/lib/prompt-builders/shared";
@@ -66,9 +67,10 @@ export function buildSeedancePromptPack(
     ? "Seedance 2.0 I2V rule — prompt moving parts only: subject movement, background movement, camera movement. Minimize static look description."
     : "Keep static description light and prioritize motion wording.";
   const seedanceRule =
-    "Conservative WSTV Seedance rule — keep the language simple, movement-led, and aligned with the input frame or reference content.";
+    "Conservative WSTV Seedance rule — keep the prompt simple, movement-led, reference-aware, and easy to paste cleanly.";
   const cameraRule =
-    'WSTV continuity rule — if you describe camera movement, keep the camera instruction explicit, and connect multi-shot transitions with "Cut to".';
+    'WSTV continuity rule — keep the camera instruction explicit, and connect multi-shot transitions with "Cut to" when you need shot changes.';
+  const shotWorldLock = buildShotWorldContinuityLock("seedance");
 
   const s1Predator = sanitizeVideoBeatText(beat1.predatorBeat);
   const s1Prey = sanitizeVideoBeatText(beat1.preyBeat);
@@ -93,25 +95,25 @@ export function buildSeedancePromptPack(
 
   const shot1Body = finalizePrompt(
     sanitizeVideoBeatText(
-      `${formatActionSubject(predator, s1Predator)}. ${prey} ${s1Prey}. ${buildSeedanceBackgroundMotion(habitatMode, micro, "establish")} Camera movement is a wide opening hold with a slow push-in. Both animals stay fully readable from frame one with clear spacing and immediate visible tension. ${cleanWeather}.`
+      `${formatActionSubject(predator, s1Predator)}. ${prey} ${s1Prey}. ${buildSeedanceBackgroundMotion(habitatMode, micro, "establish")} Camera holds wide with a slow push-in. Both animals stay fully readable from frame one with one dominant tension line and clean spacing. ${cleanWeather}.`
     )
   );
 
   const shot2Body = finalizePrompt(
     sanitizeVideoBeatText(
-      `${pressurePredator}. ${pressurePrey}. ${buildSeedanceBackgroundMotion(habitatMode, micro, "pressure")} Camera movement is a wide pressure-build tracking shot with a gentle forward drift. Both animals remain fully readable and the tension line grows stronger without chaotic overlap. ${cleanWeather}.`
+      `${pressurePredator}. ${pressurePrey}. ${buildSeedanceBackgroundMotion(habitatMode, micro, "pressure")} ${shotWorldLock} Camera tracks wide with a gentle forward drift. Keep both bodies separated and the pressure line easy to read. ${cleanWeather}.`
     )
   );
 
   const shot3Body = finalizePrompt(
     sanitizeVideoBeatText(
-      `${formatActionSubject(predator, s2Predator)}. ${prey} ${s2Prey}. ${buildSeedanceBackgroundMotion(habitatMode, micro, "action")} Camera movement is a wide follow shot with restrained handheld energy. Motion feels fast and forceful with readable body mechanics, grounded contact, and clear predator-to-prey spacing. ${cleanWeather}.`
+      `${formatActionSubject(predator, s2Predator)}. ${prey} ${s2Prey}. ${buildSeedanceBackgroundMotion(habitatMode, micro, "action")} ${shotWorldLock} Camera follows wide with restrained handheld energy. Keep one dominant readable action beat, clear body mechanics, and stable predator-to-prey spacing. ${cleanWeather}.`
     )
   );
 
   const shot4Body = finalizePrompt(
     sanitizeVideoBeatText(
-      `${formatActionSubject(predator, s3Predator)}. ${prey} ${s3Prey}. ${buildSeedanceBackgroundMotion(habitatMode, micro, "aftermath")} Camera movement is a locked wide aftermath hold with a subtle pull-back. Motion settles naturally while spacing stays readable to the final frame. ${cleanWeather}.`
+      `${formatActionSubject(predator, s3Predator)}. ${prey} ${s3Prey}. ${buildSeedanceBackgroundMotion(habitatMode, micro, "aftermath")} ${shotWorldLock} Camera holds wide with a subtle pull-back as motion settles. Keep the same habitat plate and readable spacing to the final frame. ${cleanWeather}.`
     )
   );
 
@@ -132,7 +134,8 @@ export function buildSeedancePromptPack(
 10. Default WSTV workflow: generate 4 separate video shots.
 11. Set each individual shot to 5 seconds in the Seedance 2.0 node settings or prompt parameters.
 12. For a combined continuity prompt, connect shots with "Cut to" and describe the new shot after each transition.
-13. Keep motion readable and continuity-safe in ${cleanEnv}, ${cleanWeather}.`);
+13. Keep motion readable and continuity-safe in ${cleanEnv}, ${cleanWeather}.
+14. Reuse the Shot 1 world plate across later shots so background layout, light direction, and weather density stay stable.`);
 
   return {
     shot1: buildStructuredPrompt({
