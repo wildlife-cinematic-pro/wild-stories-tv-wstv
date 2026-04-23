@@ -6,6 +6,11 @@ test("preset panel local workflow saves, updates, defaults, exports, and creates
   await page.goto("/");
 
   await expect(page.getByText("Saved Workflow Templates")).toBeVisible();
+  await expect(
+    page
+      .getByText(/Sign in to keep My Library synced across devices/i)
+      .filter({ visible: true })
+  ).toBeVisible();
 
   const presetNameInput = page.getByLabel("Workflow preset name");
   await presetNameInput.fill("QA Local Preset");
@@ -158,6 +163,7 @@ test("signed-in preset panel shows cloud controls and can create a shared librar
   await expect(page.getByText("owner@example.com", { exact: true })).toBeVisible();
   await expect(page.getByRole("button", { name: "Sync Now" })).toBeVisible();
   await expect(page.getByRole("button", { name: "Sign Out" })).toBeVisible();
+  await expect(page.getByText(/Shared libraries \(optional\)/i)).toBeVisible();
 
   await page.getByLabel("Shared library name").fill("Field Team Library");
   await page.getByLabel("Shared library description").fill("QA shared presets");

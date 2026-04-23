@@ -12,6 +12,7 @@ import type {
   AnimalVibe,
   Weather,
   RealismMode,
+  BuildWorkflowPresetSnapshot,
   GeneratedPackage,
   MediaAnalysisResult,
   PackageLockState,
@@ -19,12 +20,18 @@ import type {
   KlingModel,
   HabitatPreset,
   HookFamily,
-  SavedWorkflowPreset,
   WildlifeScopeMode,
 } from "@/types";
 
 import type { PublishFlowSummary } from "@/lib/build-package";
 import { createDefaultPackageLockState } from "@/lib/package-section-locks";
+import {
+  hasShareStateInUrl,
+  readLastGeneratedOutput,
+  readShareState,
+  shareStateMatchesWorkflowSnapshot,
+  writeLastGeneratedOutput,
+} from "@/lib/storage";
 
 import {
   RUNWAY_MODELS,
@@ -148,45 +155,62 @@ export default function Page() {
   const [publishFlowSummary, setPublishFlowSummary] = useState<PublishFlowSummary | null>(null);
   const [promotedPublishCopyOverride, setPromotedPublishCopyOverride] =
     useState<PromotedVariantPublishCopyOverride | null>(null);
+  const [lastGeneratedRestoreNotice, setLastGeneratedRestoreNotice] =
+    useState<string | null>(null);
 
-  const applyWorkflowPreset = useCallback((preset: SavedWorkflowPreset) => {
-    const snapshot = preset.snapshot;
+  const applyBuildSnapshot = useCallback(
+    (
+      snapshot: BuildWorkflowPresetSnapshot,
+      options: { clearGeneratedOutput?: boolean } = {}
+    ) => {
+      setPredator(snapshot.predator);
+      setPrey(snapshot.prey);
+      setWildlifeScopeMode(snapshot.wildlifeScopeMode);
+      setContentLane(snapshot.contentLane);
+      setCameraAnglePreset(snapshot.cameraAnglePreset);
+      setArc(snapshot.arc);
+      setConceptArcOverride(null);
+      setWeather(snapshot.weather);
+      setHabitat(snapshot.habitat);
+      setDepthMode(snapshot.depthMode);
+      setEmotionalTone(snapshot.emotionalTone);
+      setAnimalVibe(snapshot.animalVibe);
+      setRunwayModel(snapshot.runwayModel);
+      setKlingModel(snapshot.klingModel);
+      setRealismMode(snapshot.realismMode);
+      setMotionOnlyI2V(snapshot.motionOnlyI2V);
+      setReferenceLock(snapshot.referenceLock);
+      setSingleActionRule(snapshot.singleActionRule);
+      setMicroMotion(snapshot.microMotion);
+      setHeroVeo(snapshot.heroVeo);
+      setAutoApplyHighDrift(snapshot.autoApplyHighDrift);
+      setSceneDescription(snapshot.sceneDescription);
+      setSceneDescriptionMode(snapshot.sceneDescriptionMode);
+      setSceneDescriptionTouched(snapshot.sceneDescriptionTouched);
+      setSceneDescriptionVariant(0);
+      setActiveProvider(snapshot.activeProvider);
+      setDurationLane(snapshot.durationLane);
+      setHookMode(snapshot.hookMode);
+      setFastPublishMode(snapshot.fastPublishMode);
+      setStrictOriginalityGuard(snapshot.strictOriginalityGuard);
+      setPromotedPublishCopyOverride(null);
+      setLastGeneratedRestoreNotice(null);
+      setError("");
 
-    setPredator(snapshot.predator);
-    setPrey(snapshot.prey);
-    setWildlifeScopeMode(snapshot.wildlifeScopeMode);
-    setContentLane(snapshot.contentLane);
-    setCameraAnglePreset(snapshot.cameraAnglePreset);
-    setArc(snapshot.arc);
-    setConceptArcOverride(null);
-    setWeather(snapshot.weather);
-    setHabitat(snapshot.habitat);
-    setDepthMode(snapshot.depthMode);
-    setEmotionalTone(snapshot.emotionalTone);
-    setAnimalVibe(snapshot.animalVibe);
-    setRunwayModel(snapshot.runwayModel);
-    setKlingModel(snapshot.klingModel);
-    setRealismMode(snapshot.realismMode);
-    setMotionOnlyI2V(snapshot.motionOnlyI2V);
-    setReferenceLock(snapshot.referenceLock);
-    setSingleActionRule(snapshot.singleActionRule);
-    setMicroMotion(snapshot.microMotion);
-    setHeroVeo(snapshot.heroVeo);
-    setAutoApplyHighDrift(snapshot.autoApplyHighDrift);
-    setSceneDescription(snapshot.sceneDescription);
-    setSceneDescriptionMode(snapshot.sceneDescriptionMode);
-    setSceneDescriptionTouched(snapshot.sceneDescriptionTouched);
-    setSceneDescriptionVariant(0);
-    setActiveProvider(snapshot.activeProvider);
-    setDurationLane(snapshot.durationLane);
-    setHookMode(snapshot.hookMode);
-    setFastPublishMode(snapshot.fastPublishMode);
-    setStrictOriginalityGuard(snapshot.strictOriginalityGuard);
-    setPkg(null);
-    setPublishFlowSummary(null);
-    setPromotedPublishCopyOverride(null);
-    setError("");
-  }, []);
+      if (options.clearGeneratedOutput !== false) {
+        setPkg(null);
+        setPublishFlowSummary(null);
+      }
+    },
+    []
+  );
+
+  const applyWorkflowPreset = useCallback(
+    (preset: { snapshot: BuildWorkflowPresetSnapshot }) => {
+      applyBuildSnapshot(preset.snapshot);
+    },
+    [applyBuildSnapshot]
+  );
 
   function handleResetDefaults() {
     setPredator(DEFAULT_PREDATOR);
@@ -445,6 +469,46 @@ export default function Page() {
   });
 
   useEffect(() => {
+    const restoredOutput = readLastGeneratedOutput();
+    if (!restoredOutput) return;
+
+    const hasSharedState = hasShareStateInUrl();
+    if (
+      hasSharedState &&
+      !shareStateMatchesWorkflowSnapshot(
+        readShareState(),
+        restoredOutput.snapshot
+      )
+    ) {
+      return;
+    }
+
+    applyBuildSnapshot(restoredOutput.snapshot, { clearGeneratedOutput: false });
+    setPkg(restoredOutput.pkg);
+    setPublishFlowSummary(restoredOutput.publishFlowSummary);
+    setPackageLocks(restoredOutput.packageLocks);
+    setStep(3);
+    setActiveTab("build");
+    setLastGeneratedRestoreNotice(
+      "Restored your last generated output from this browser."
+    );
+  }, [applyBuildSnapshot]);
+
+  useEffect(() => {
+    if (!pkg) return;
+
+    writeLastGeneratedOutput({
+      schema: "wstv.last-generated-output",
+      version: 1,
+      storedAt: new Date().toISOString(),
+      snapshot: currentWorkflowPresetSnapshot,
+      pkg,
+      publishFlowSummary,
+      packageLocks,
+    });
+  }, [currentWorkflowPresetSnapshot, packageLocks, pkg, publishFlowSummary]);
+
+  useEffect(() => {
     setConceptArcOverride(null);
   }, [predator, prey, contentLane]);
 
@@ -581,7 +645,10 @@ export default function Page() {
     setIsGenerating,
     setIsRegeneratingUnlocked,
     setError,
-    onGenerated: () => setStep(3),
+    onGenerated: () => {
+      setLastGeneratedRestoreNotice(null);
+      setStep(3);
+    },
   });
 
   const qualityPanelProps = {
@@ -960,6 +1027,10 @@ export default function Page() {
                 onPromoteConceptVariant={promoteConceptVariant}
                 onAutoCleanupConceptVariant={autoCleanupConceptVariant}
                 onRestoreVersion={handleRestoreVersion}
+                lastGeneratedRestoreNotice={lastGeneratedRestoreNotice}
+                onDismissLastGeneratedRestoreNotice={() =>
+                  setLastGeneratedRestoreNotice(null)
+                }
                 onBack={() => setStep(2)}
               />
             )}

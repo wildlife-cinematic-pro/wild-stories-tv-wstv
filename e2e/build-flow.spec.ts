@@ -15,7 +15,9 @@ test("main build flow generates output, keeps workspace tabs reachable, and show
 
   await expect(page.getByText("Wildlife Focus")).toBeVisible();
   await expect(
-    page.getByText(/New accounts need an 8\+ character password/i).filter({ visible: true }),
+    page
+      .getByText(/Sign in to keep My Library synced across devices/i)
+      .filter({ visible: true }),
   ).toBeVisible();
   await expect(page.getByRole("button", { name: "Sign In" })).toBeDisabled();
   await page.getByRole("button", { name: /Continue.*Engine & Quality/i }).click();
@@ -41,4 +43,12 @@ test("main build flow generates output, keeps workspace tabs reachable, and show
   await expect
     .poll(() => copyAllHandle!.evaluate((button) => button.textContent ?? ""))
     .toMatch(/Copied/);
+
+  await page.reload();
+
+  await expect(page.getByTestId("last-generated-restore-notice")).toHaveText(
+    /Restored your last generated output from this browser\./i
+  );
+  await expect(page.getByText("Generated Output", { exact: true })).toBeVisible();
+  await expect(page.locator('[data-workspace-tab="overview"]')).toBeVisible();
 });
