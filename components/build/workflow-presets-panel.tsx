@@ -214,6 +214,7 @@ export default function WorkflowPresetsPanel({
   const effectivePackPresetIds = selectedPackPresetIds;
   const hasPresets = presets.length > 0;
   const hasPresetPacks = presetPacks.length > 0;
+  const isPersonalLibrary = activeLibrary.scope === "personal";
 
   async function handleImportFile(event: ChangeEvent<HTMLInputElement>) {
     const file = event.currentTarget.files?.[0];
@@ -251,8 +252,9 @@ export default function WorkflowPresetsPanel({
             Saved Workflow Templates
           </h3>
           <p className="mt-1 max-w-2xl text-[11px] leading-relaxed text-gray-500">
-            Save the current build setup, sync your personal library, and work
-            inside shared libraries with role-based access.
+            Save the current build setup, keep My Library synced when you sign in,
+            and export JSON anytime for backup. Shared libraries stay available
+            when you need them.
           </p>
         </div>
         <span
@@ -272,11 +274,11 @@ export default function WorkflowPresetsPanel({
         <div className="mb-2 flex flex-wrap items-start justify-between gap-3">
           <div>
             <div className="text-[10px] font-semibold uppercase tracking-[0.1em] text-gray-400">
-              Account & Library
+              My Library
             </div>
             <div className="mt-1 max-w-xl text-[11px] leading-relaxed text-gray-500">
-              Signed-in users sync a personal library automatically and can work
-              inside shared libraries with owner, editor, or viewer access.
+              Keep your solo workflow simple: save to My Library, let it sync when
+              signed in, and use JSON export/import as a backup path anytime.
             </div>
           </div>
           <span
@@ -333,7 +335,7 @@ export default function WorkflowPresetsPanel({
               />
             </div>
             <p className="text-[11px] leading-relaxed text-gray-500 lg:hidden">
-              Enter email and password to sign in. New accounts need an 8+ character password; local presets stay available if cloud auth fails.
+              Sign in to keep My Library synced across devices. If you stay local, presets and JSON backups still work on this browser.
             </p>
             <div className="flex flex-wrap items-end gap-2">
               <button
@@ -354,7 +356,7 @@ export default function WorkflowPresetsPanel({
               </button>
             </div>
             <p className="hidden max-w-[280px] text-[11px] leading-relaxed text-gray-500 lg:block">
-              Enter email and password to sign in. New accounts need an 8+ character password; local presets stay available if cloud auth fails.
+              Sign in to keep My Library synced across devices. If you stay local, presets and JSON backups still work on this browser.
             </p>
           </div>
         ) : (
@@ -386,10 +388,10 @@ export default function WorkflowPresetsPanel({
               </div>
             </div>
 
-            <div className="grid gap-3 lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)]">
-              <div>
+            <div className="grid gap-3 lg:grid-cols-[minmax(0,1fr)_minmax(0,0.95fr)]">
+              <div className="rounded-xl border border-gray-200 bg-white p-3">
                 <label className="mb-1.5 block text-[11px] font-medium text-gray-500">
-                  Library context
+                  Working library
                 </label>
                 <select
                   aria-label="Preset library context"
@@ -406,47 +408,57 @@ export default function WorkflowPresetsPanel({
                     </option>
                   ))}
                 </select>
-                <p className="mt-1 text-[11px] text-gray-400">
-                  {activeLibrary.scope === "personal"
-                    ? "Personal cloud library backed by your signed-in account."
-                    : `${activeLibrary.name} - ${activeLibrary.role} access.`}
+                <p className="mt-1 text-[11px] leading-relaxed text-gray-400">
+                  {isPersonalLibrary
+                    ? authSession
+                      ? "My Library is your main solo workspace. Changes sync to your account and keep a local copy on this device."
+                      : "My Library is local on this device until you sign in. JSON export/import still works for backup."
+                    : `${activeLibrary.name} - ${activeLibrary.role} access. Shared libraries stay available whenever you need collaboration.`}
                 </p>
               </div>
 
-              <div className="grid gap-2 sm:grid-cols-[minmax(0,1fr)_minmax(0,1fr)_auto]">
-                <input
-                  aria-label="Shared library name"
-                  value={sharedLibraryNameInput}
-                  onChange={(event) =>
-                    onSharedLibraryNameInputChange(event.target.value)
-                  }
-                  placeholder="Shared library name"
-                  className="w-full rounded-xl border border-gray-200 bg-white px-3 py-2.5 text-sm font-medium text-gray-900 placeholder:text-gray-400 focus:border-gray-400 focus:outline-none"
-                />
-                <input
-                  aria-label="Shared library description"
-                  value={sharedLibraryDescriptionInput}
-                  onChange={(event) =>
-                    onSharedLibraryDescriptionInputChange(event.target.value)
-                  }
-                  placeholder="Description"
-                  className="w-full rounded-xl border border-gray-200 bg-white px-3 py-2.5 text-sm font-medium text-gray-900 placeholder:text-gray-400 focus:border-gray-400 focus:outline-none"
-                />
-                <button
-                  type="button"
-                  onClick={onCreateSharedLibrary}
-                  disabled={!sharedLibraryNameInput.trim()}
-                  className="rounded-xl bg-gray-900 px-3.5 py-2 text-xs font-semibold text-white shadow-sm shadow-gray-200/80 hover:bg-black disabled:opacity-45 active:scale-[0.98]"
-                >
-                  New Shared Library
-                </button>
+              <div className="rounded-xl border border-gray-200 bg-white p-3">
+                <div className="text-[10px] font-semibold uppercase tracking-[0.1em] text-gray-400">
+                  Shared libraries (optional)
+                </div>
+                <div className="mt-1 text-[11px] leading-relaxed text-gray-500">
+                  Keep My Library as the default solo flow. Create a shared library only when you want presets edited with other people.
+                </div>
+                <div className="mt-3 grid gap-2 sm:grid-cols-[minmax(0,1fr)_minmax(0,1fr)_auto]">
+                  <input
+                    aria-label="Shared library name"
+                    value={sharedLibraryNameInput}
+                    onChange={(event) =>
+                      onSharedLibraryNameInputChange(event.target.value)
+                    }
+                    placeholder="Shared library name"
+                    className="w-full rounded-xl border border-gray-200 bg-white px-3 py-2.5 text-sm font-medium text-gray-900 placeholder:text-gray-400 focus:border-gray-400 focus:outline-none"
+                  />
+                  <input
+                    aria-label="Shared library description"
+                    value={sharedLibraryDescriptionInput}
+                    onChange={(event) =>
+                      onSharedLibraryDescriptionInputChange(event.target.value)
+                    }
+                    placeholder="Description"
+                    className="w-full rounded-xl border border-gray-200 bg-white px-3 py-2.5 text-sm font-medium text-gray-900 placeholder:text-gray-400 focus:border-gray-400 focus:outline-none"
+                  />
+                  <button
+                    type="button"
+                    onClick={onCreateSharedLibrary}
+                    disabled={!sharedLibraryNameInput.trim()}
+                    className="rounded-xl bg-gray-900 px-3.5 py-2 text-xs font-semibold text-white shadow-sm shadow-gray-200/80 hover:bg-black disabled:opacity-45 active:scale-[0.98]"
+                  >
+                    New Shared Library
+                  </button>
+                </div>
               </div>
             </div>
 
             <p className="text-[11px] leading-relaxed text-gray-500">
-              Owners manage access. Editors can save, update, delete, import, and sync.
-              Viewers can browse, load, apply, and export only. Members need an existing
-              preset-library account before you add them.
+              {isPersonalLibrary
+                ? "My Library is the fastest solo path: save here, sync when signed in, and keep JSON exports as a backup or transfer option."
+                : "Owners manage access. Editors can save, update, delete, import, and sync. Viewers can browse, load, apply, and export only. Members need an existing preset-library account before you add them."}
             </p>
 
             {activeLibrary.scope === "shared" && (
@@ -573,6 +585,15 @@ export default function WorkflowPresetsPanel({
               Update Preset
             </button>
           </div>
+          <p className="mt-2 text-[11px] leading-relaxed text-gray-400">
+            {isPersonalLibrary
+              ? authSession
+                ? "Saving here updates My Library and keeps a local copy on this device."
+                : "Saving here keeps presets local on this device. Sign in whenever you want cloud sync."
+              : canEditActiveLibrary
+                ? `Saving here updates ${activeLibrary.name} for everyone with access.`
+                : `Viewer access lets you browse and export ${activeLibrary.name}, but not change it.`}
+          </p>
         </div>
 
         <div>
@@ -654,8 +675,9 @@ export default function WorkflowPresetsPanel({
               Portable JSON
             </div>
             <div className="mt-1 max-w-xl text-[11px] leading-relaxed text-gray-500">
-              Export one preset or the full active library, then import pasted
-              JSON or a downloaded file without overwriting existing presets silently.
+              Export the selected preset or the whole active library as JSON for backup.
+              Import JSON to restore presets on this device or move them from another
+              browser without deleting existing entries.
             </div>
           </div>
           <div className="flex flex-wrap gap-2">
@@ -723,8 +745,8 @@ export default function WorkflowPresetsPanel({
               Preset Packs
             </div>
             <div className="mt-1 max-w-xl text-[11px] leading-relaxed text-gray-500">
-              Bundle multiple workflow presets into reusable packs, then apply
-              a selected pack into My Library without mutating the source pack.
+              Bundle repeatable setups into reusable packs, then apply a selected
+              pack into My Library without changing the source pack.
             </div>
           </div>
           <span className="rounded-full bg-gray-100 px-2.5 py-1 text-[10px] font-semibold text-gray-500">

@@ -41,7 +41,11 @@ import type {
   CustomPredatorForm,
   HabitatPreset,
   WildlifeScopeMode,
+  BuildWorkflowPresetSnapshot,
+  GeneratedPackage,
+  PackageLockState,
 } from "@/types";
+import type { PublishFlowSummary } from "@/lib/build-package";
 
 import { weatherOptions, depthModes, habitatOptions } from "@/lib/model-specs";
 import { contentLaneOptions, isContentLane } from "@/lib/content-lanes";
@@ -49,9 +53,11 @@ import {
   cameraAnglePresetOptions,
   isCameraAnglePreset,
 } from "@/lib/camera-angle-presets";
+import { createDefaultPackageLockState } from "@/lib/package-section-locks";
 import {
   getSafeDefaultWorkflowPresetId,
   normalizeWorkflowPresetPacks,
+  normalizeWorkflowPresetSnapshot,
   normalizeWorkflowPresets,
 } from "@/lib/workflow-presets";
 
@@ -68,6 +74,7 @@ const WORKFLOW_PRESET_PACKS_KEY = "wildlife_workflow_preset_packs_v1";
 const DEFAULT_WORKFLOW_PRESET_KEY = "wildlife_default_workflow_preset_v1";
 const WORKFLOW_PRESET_LIBRARY_SELECTION_KEY =
   "wildlife_workflow_preset_library_selection_v1";
+const LAST_GENERATED_OUTPUT_KEY = "wildlife_last_generated_output_v1";
 
 export const MAX_HISTORY = 20;
 export const MAX_FAVORITES = 50;
@@ -376,6 +383,117 @@ export function writeWorkflowPresetLibrarySelection(
   } catch {}
 }
 
+
+export type LastGeneratedOutputRecord = {
+  schema: "wstv.last-generated-output";
+  version: 1;
+  storedAt: string;
+  snapshot: BuildWorkflowPresetSnapshot;
+  pkg: GeneratedPackage;
+  publishFlowSummary: PublishFlowSummary | null;
+  packageLocks: PackageLockState;
+};
+
+function isObjectRecord(value: unknown): value is Record<string, unknown> {
+  return Boolean(value) && typeof value === "object" && !Array.isArray(value);
+}
+
+function normalizeGeneratedPackage(value: unknown): GeneratedPackage | null {
+  if (!isObjectRecord(value)) return null;
+
+  const pkg = value as GeneratedPackage;
+  if (
+    typeof pkg.imagePrompt !== "string" ||
+    typeof pkg.hook !== "string" ||
+    typeof pkg.caption !== "string"
+  ) {
+    return null;
+  }
+
+  return pkg;
+}
+
+function normalizePublishFlowSummary(
+  value: unknown
+): PublishFlowSummary | null {
+  if (!isObjectRecord(value)) return null;
+
+  const summary = value as PublishFlowSummary;
+  if (
+    typeof summary.predatorName !== "string" ||
+    typeof summary.preyName !== "string" ||
+    typeof summary.primaryHook !== "string" ||
+    !isObjectRecord(summary.usAudienceScore) ||
+    !isObjectRecord(summary.openingFrameScore) ||
+    !isObjectRecord(summary.publishGuardReport)
+  ) {
+    return null;
+  }
+
+  return summary;
+}
+
+function normalizeLastGeneratedOutput(
+  value: unknown
+): LastGeneratedOutputRecord | null {
+  if (!isObjectRecord(value)) return null;
+  if (value.schema !== "wstv.last-generated-output" || value.version !== 1) {
+    return null;
+  }
+
+  const storedAt = typeof value.storedAt === "string" ? value.storedAt.trim() : "";
+  const snapshot = normalizeWorkflowPresetSnapshot(value.snapshot);
+  const pkg = normalizeGeneratedPackage(value.pkg);
+
+  if (!storedAt || !snapshot || !pkg) return null;
+
+  return {
+    schema: "wstv.last-generated-output",
+    version: 1,
+    storedAt,
+    snapshot,
+    pkg,
+    publishFlowSummary: normalizePublishFlowSummary(value.publishFlowSummary),
+    packageLocks: createDefaultPackageLockState(
+      isObjectRecord(value.packageLocks)
+        ? (value.packageLocks as Partial<PackageLockState>)
+        : undefined
+    ),
+  };
+}
+
+export function readLastGeneratedOutput(): LastGeneratedOutputRecord | undefined {
+  if (typeof window === "undefined") return undefined;
+  try {
+    const raw = localStorage.getItem(LAST_GENERATED_OUTPUT_KEY);
+    if (!raw) return undefined;
+
+    const normalized = normalizeLastGeneratedOutput(safeJsonParse<unknown>(raw));
+    if (!normalized) {
+      localStorage.removeItem(LAST_GENERATED_OUTPUT_KEY);
+      return undefined;
+    }
+
+    return normalized;
+  } catch {
+    return undefined;
+  }
+}
+
+export function writeLastGeneratedOutput(record: LastGeneratedOutputRecord): void {
+  if (typeof window === "undefined") return;
+  try {
+    localStorage.setItem(LAST_GENERATED_OUTPUT_KEY, JSON.stringify(record));
+  } catch {}
+}
+
+export function clearLastGeneratedOutput(): void {
+  if (typeof window === "undefined") return;
+  try {
+    localStorage.removeItem(LAST_GENERATED_OUTPUT_KEY);
+  } catch {}
+}
+
 // ─────────────────────────────────────────────────────────────
 // FAVORITES
 // ─────────────────────────────────────────────────────────────
@@ -450,6 +568,23 @@ export function hasShareStateInUrl(): boolean {
   if (typeof window === "undefined") return false;
   const sp = new URLSearchParams(window.location.search);
   return Object.values(QS).some((key) => sp.has(key));
+}
+
+export function shareStateMatchesWorkflowSnapshot(
+  shared: Partial<ShareState>,
+  snapshot: BuildWorkflowPresetSnapshot
+): boolean {
+  return (
+    (!shared.predator || shared.predator === snapshot.predator) &&
+    (!shared.prey || shared.prey === snapshot.prey) &&
+    (!shared.arc || shared.arc === snapshot.arc) &&
+    (!shared.weather || shared.weather === snapshot.weather) &&
+    (!shared.depthMode || shared.depthMode === snapshot.depthMode) &&
+    (!shared.habitat || shared.habitat === snapshot.habitat) &&
+    (!shared.contentLane || shared.contentLane === snapshot.contentLane) &&
+    (!shared.cameraAnglePreset ||
+      shared.cameraAnglePreset === snapshot.cameraAnglePreset)
+  );
 }
 
 /** Read predator / prey / arc / weather / depth from URL params */

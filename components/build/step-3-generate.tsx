@@ -39,6 +39,8 @@ type Step3GenerateProps = {
   onPromoteConceptVariant: (variant: ConceptVariant) => void;
   onAutoCleanupConceptVariant: (variant: ConceptVariant) => void;
   onRestoreVersion: (version: PromptVersion) => void;
+  lastGeneratedRestoreNotice?: string | null;
+  onDismissLastGeneratedRestoreNotice?: () => void;
   onBack: () => void;
 };
 
@@ -64,6 +66,8 @@ export default function Step3Generate({
   onPromoteConceptVariant,
   onAutoCleanupConceptVariant,
   onRestoreVersion,
+  lastGeneratedRestoreNotice,
+  onDismissLastGeneratedRestoreNotice,
   onBack,
 }: Step3GenerateProps) {
   return (
@@ -158,6 +162,30 @@ export default function Step3Generate({
 
       {pkg && (
         <section>
+          {lastGeneratedRestoreNotice && (
+            <div
+              className="mb-4 flex flex-wrap items-start justify-between gap-3 rounded-2xl border border-sky-200 bg-sky-50 px-4 py-3 text-sm text-sky-900 shadow-sm shadow-sky-100/60"
+              data-testid="last-generated-restore-notice"
+            >
+              <div>
+                <div className="text-[10px] font-semibold uppercase tracking-[0.14em] text-sky-600">
+                  Restored Output
+                </div>
+                <div className="mt-1 font-semibold">
+                  {lastGeneratedRestoreNotice}
+                </div>
+              </div>
+              {onDismissLastGeneratedRestoreNotice && (
+                <button
+                  type="button"
+                  onClick={onDismissLastGeneratedRestoreNotice}
+                  className="rounded-xl border border-sky-200 bg-white px-3 py-1.5 text-xs font-semibold text-sky-700 shadow-sm shadow-sky-100/70 hover:bg-sky-100 active:scale-[0.98]"
+                >
+                  Dismiss
+                </button>
+              )}
+            </div>
+          )}
           {publishFlowSummary && (
             <div className="mb-4 grid gap-3 md:grid-cols-2 xl:grid-cols-5">
               <div className="rounded-2xl border border-gray-200 bg-white p-4 shadow-sm shadow-gray-200/60">

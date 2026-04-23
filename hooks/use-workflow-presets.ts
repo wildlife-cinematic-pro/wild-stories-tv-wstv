@@ -4,11 +4,14 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 import {
   readDefaultWorkflowPresetId,
+  readLastGeneratedOutput,
   readWorkflowPresetLibrarySelection,
   readWorkflowPresetPacks,
   readWorkflowPresets,
   downloadJson,
   hasShareStateInUrl,
+  readShareState,
+  shareStateMatchesWorkflowSnapshot,
   writeDefaultWorkflowPresetId,
   writeWorkflowPresetLibrarySelection,
   writeWorkflowPresetPacks,
@@ -82,7 +85,17 @@ function readInitialWorkflowPresetState() {
   const defaultPreset = defaultPresetId
     ? presets.find((preset) => preset.id === defaultPresetId)
     : undefined;
-  const shouldLoadDefault = Boolean(defaultPreset && !hasShareStateInUrl());
+  const sharedState = readShareState();
+  const hasSharedState = hasShareStateInUrl();
+  const restoredOutput = readLastGeneratedOutput();
+  const shouldPreferRestoredOutput = Boolean(
+    restoredOutput &&
+      (!hasSharedState ||
+        shareStateMatchesWorkflowSnapshot(sharedState, restoredOutput.snapshot))
+  );
+  const shouldLoadDefault = Boolean(
+    defaultPreset && !hasSharedState && !shouldPreferRestoredOutput
+  );
 
   return {
     personalLibrary: buildLocalOnlyCloudPresetLibrary(LOCAL_PERSONAL_LIBRARY_ID, {
@@ -138,7 +151,8 @@ export function useWorkflowPresets({
     useState<WorkflowPresetLibraryRole>("viewer");
   const [cloudSyncStatus, setCloudSyncStatus] = useState<CloudSyncStatus>({
     state: "local-only",
-    message: "Local only. Sign in to sync a personal library or use team-shared libraries.",
+    message:
+      "Working locally on this device. Sign in to sync My Library, or export JSON for backup anytime.",
   });
   const loadPresetRef = useRef(onLoadPreset);
   const didApplyDefaultRef = useRef(false);
@@ -285,7 +299,7 @@ export function useWorkflowPresets({
           state: "local-only",
           message:
             catalogResult.message ??
-            "Signed in, but no cloud preset library is available yet.",
+            "Signed in. My Library will sync automatically when you save presets.",
         });
         setSharedLibraries([]);
         return;
@@ -321,8 +335,8 @@ export function useWorkflowPresets({
       setCloudSyncStatus({
         state: mergeReport.conflictResolved ? "conflict-resolved" : "synced",
         message: mergeReport.conflictResolved
-          ? `Merged local and cloud changes for ${session.user.email}.`
-          : `Personal library synced for ${session.user.email}.`,
+          ? `My Library synced and merged local/cloud changes for ${session.user.email}.`
+          : `My Library synced for ${session.user.email}. Local presets stay available on this device.`,
         lastSyncedAt: mergeReport.library.updatedAt,
       });
     },
@@ -362,7 +376,7 @@ export function useWorkflowPresets({
             state: "local-only",
             message:
               sessionResult.message ??
-              "Signed out. Local presets remain active on this device.",
+              "Signed out. My Library stays local on this device. Sign in when you want cloud sync.",
           });
           return;
         }
@@ -404,7 +418,7 @@ export function useWorkflowPresets({
     if (!authSession) {
       setCloudSyncStatus({
         state: "local-only",
-        message: "Sign in to sync preset libraries across devices.",
+        message: "Sign in to sync My Library.",
       });
       return undefined;
     }
@@ -415,8 +429,12 @@ export function useWorkflowPresets({
       state: "syncing",
       message:
         mode === "manual"
-          ? `Syncing ${target === "personal" ? "personal" : target.name} library...`
-          : `Saving ${target === "personal" ? "personal" : target.name} changes...`,
+          ? target === "personal"
+            ? "Syncing My Library..."
+            : `Syncing ${target.name} library...`
+          : target === "personal"
+            ? "Saving My Library changes..."
+            : `Saving ${target.name} changes...`,
     });
 
     try {
@@ -443,7 +461,9 @@ export function useWorkflowPresets({
         state: "synced",
         message:
           result.message ??
-          `${target === "personal" ? "Personal" : target.name} library synced.`,
+          (target === "personal"
+            ? "My Library synced."
+            : `${target.name} library synced.`),
         lastSyncedAt: result.data?.updatedAt ?? result.data?.data.updatedAt,
       });
       return result.data;
@@ -453,7 +473,7 @@ export function useWorkflowPresets({
         message:
           error instanceof Error
             ? error.message
-            : "Cloud preset library sync failed. Local changes remain available.",
+            : "Cloud sync failed. Your local presets are still safe on this device.",
       });
       return undefined;
     }
@@ -873,7 +893,8 @@ export function useWorkflowPresets({
     if (!email || !password) {
       setCloudSyncStatus({
         state: "sync-error",
-        message: "Enter both email and password to use cloud preset libraries.",
+        message:
+          "Enter both email and password to sign in or create your preset library account.",
       });
       return null;
     }
@@ -896,7 +917,7 @@ export function useWorkflowPresets({
     try {
       setCloudSyncStatus({
         state: "authenticating",
-        message: "Signing in to your cloud preset library...",
+        message: "Signing in to My Library...",
       });
       const result = await signInPresetLibraryUser(authInput);
       if (!result.available || !result.data) {
@@ -927,7 +948,7 @@ export function useWorkflowPresets({
     try {
       setCloudSyncStatus({
         state: "authenticating",
-        message: "Creating your cloud preset library account...",
+        message: "Creating your preset library account...",
       });
       const result = await signUpPresetLibraryUser({
         ...authInput,
@@ -973,7 +994,7 @@ export function useWorkflowPresets({
     selectLibrary(PERSONAL_LIBRARY_SELECTION_ID);
     setCloudSyncStatus({
       state: "local-only",
-      message: "Signed out. Local presets remain active on this device.",
+      message: "Signed out. My Library stays local on this device until you sign in again.",
     });
   }
 
@@ -981,7 +1002,7 @@ export function useWorkflowPresets({
     if (!authSession) {
       setCloudSyncStatus({
         state: "local-only",
-        message: "Sign in to sync your preset libraries.",
+        message: "Sign in to sync My Library.",
       });
       return;
     }
