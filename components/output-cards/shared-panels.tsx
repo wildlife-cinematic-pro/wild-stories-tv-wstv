@@ -381,6 +381,40 @@ export function WorkspaceTabButton({
   active: boolean;
   onClick: () => void;
 }) {
+  const accents: Record<string, { active: string; idle: string; chip: string }> = {
+    Overview: {
+      active: "border-gray-900 bg-gray-900 text-white shadow-sm",
+      idle: "border-gray-200 bg-white text-gray-700 hover:border-gray-300 hover:bg-gray-50",
+      chip: "bg-gray-100 text-gray-500",
+    },
+    Prompts: {
+      active: "border-amber-500 bg-amber-500 text-white shadow-sm",
+      idle: "border-amber-200 bg-amber-50/80 text-amber-950 hover:border-amber-300 hover:bg-amber-100/70",
+      chip: "bg-amber-100 text-amber-700",
+    },
+    Video: {
+      active: "border-teal-600 bg-teal-600 text-white shadow-sm",
+      idle: "border-teal-200 bg-teal-50/80 text-teal-950 hover:border-teal-300 hover:bg-teal-100/70",
+      chip: "bg-teal-100 text-teal-700",
+    },
+    Direct: {
+      active: "border-indigo-600 bg-indigo-600 text-white shadow-sm",
+      idle: "border-indigo-200 bg-indigo-50/80 text-indigo-950 hover:border-indigo-300 hover:bg-indigo-100/70",
+      chip: "bg-indigo-100 text-indigo-700",
+    },
+    Publishing: {
+      active: "border-rose-600 bg-rose-600 text-white shadow-sm",
+      idle: "border-rose-200 bg-rose-50/80 text-rose-950 hover:border-rose-300 hover:bg-rose-100/70",
+      chip: "bg-rose-100 text-rose-700",
+    },
+    Advanced: {
+      active: "border-emerald-600 bg-emerald-600 text-white shadow-sm",
+      idle: "border-emerald-200 bg-emerald-50/80 text-emerald-950 hover:border-emerald-300 hover:bg-emerald-100/70",
+      chip: "bg-emerald-100 text-emerald-700",
+    },
+  };
+  const accent = accents[label] ?? accents.Overview;
+
   return (
     <button
       type="button"
@@ -389,16 +423,14 @@ export function WorkspaceTabButton({
       aria-pressed={active}
       aria-label={`${label} workspace`}
       className={`min-w-[180px] flex-none snap-start rounded-2xl border px-3 py-3 text-left transition sm:min-w-[190px] sm:px-4 ${
-        active
-          ? "border-gray-900 bg-gray-900 text-white shadow-sm"
-          : "border-gray-200 bg-white text-gray-700 hover:border-gray-300 hover:bg-gray-50"
+        active ? accent.active : accent.idle
       }`}
     >
       <div className="flex items-center justify-between gap-2">
         <div className="text-sm font-extrabold">{label}</div>
         <span
           className={`rounded-full px-2 py-0.5 text-[10px] font-black uppercase tracking-wide ${
-            active ? "bg-white/15 text-white" : "bg-gray-100 text-gray-500"
+            active ? "bg-white/15 text-white" : accent.chip
           }`}
         >
           {badge}
@@ -430,19 +462,51 @@ export function WorkspaceJumpCard({
   active: boolean;
   onClick: () => void;
 }) {
+  const accents: Record<string, { active: string; idle: string; eyebrow: string }> = {
+    Story: {
+      active: "border-gray-900 bg-gray-900 text-white shadow-sm",
+      idle: "border-gray-200 bg-white/90 text-gray-900 hover:-translate-y-0.5 hover:border-gray-300 hover:shadow-sm",
+      eyebrow: "text-gray-400",
+    },
+    Prompts: {
+      active: "border-amber-500 bg-amber-500 text-white shadow-sm",
+      idle: "border-amber-200 bg-amber-50/80 text-gray-900 hover:-translate-y-0.5 hover:border-amber-300 hover:shadow-sm",
+      eyebrow: "text-amber-600",
+    },
+    Video: {
+      active: "border-teal-600 bg-teal-600 text-white shadow-sm",
+      idle: "border-teal-200 bg-teal-50/80 text-gray-900 hover:-translate-y-0.5 hover:border-teal-300 hover:shadow-sm",
+      eyebrow: "text-teal-600",
+    },
+    Direct: {
+      active: "border-indigo-600 bg-indigo-600 text-white shadow-sm",
+      idle: "border-indigo-200 bg-indigo-50/80 text-gray-900 hover:-translate-y-0.5 hover:border-indigo-300 hover:shadow-sm",
+      eyebrow: "text-indigo-600",
+    },
+    Publishing: {
+      active: "border-rose-600 bg-rose-600 text-white shadow-sm",
+      idle: "border-rose-200 bg-rose-50/80 text-gray-900 hover:-translate-y-0.5 hover:border-rose-300 hover:shadow-sm",
+      eyebrow: "text-rose-600",
+    },
+    Advanced: {
+      active: "border-emerald-600 bg-emerald-600 text-white shadow-sm",
+      idle: "border-emerald-200 bg-emerald-50/80 text-gray-900 hover:-translate-y-0.5 hover:border-emerald-300 hover:shadow-sm",
+      eyebrow: "text-emerald-600",
+    },
+  };
+  const accent = accents[eyebrow] ?? accents.Story;
+
   return (
     <button
       type="button"
       onClick={onClick}
       className={`rounded-2xl border p-4 text-left transition ${
-        active
-          ? "border-gray-900 bg-gray-900 text-white shadow-sm"
-          : "border-gray-200 bg-white/90 text-gray-900 hover:-translate-y-0.5 hover:border-gray-300 hover:shadow-sm"
+        active ? accent.active : accent.idle
       }`}
     >
       <div
         className={`text-[11px] font-black uppercase tracking-[0.18em] ${
-          active ? "text-white/60" : "text-gray-400"
+          active ? "text-white/60" : accent.eyebrow
         }`}
       >
         {eyebrow}

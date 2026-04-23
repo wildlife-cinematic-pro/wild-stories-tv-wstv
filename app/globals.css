@@ -203,6 +203,18 @@ button:active {
   transform: translateY(1px) scale(0.99);
 }
 
+button[data-copy-status="copied"] {
+  box-shadow:
+    0 0 0 1px rgba(16, 185, 129, 0.38),
+    0 10px 26px rgba(16, 185, 129, 0.2);
+}
+
+button[data-copy-status="failed"] {
+  box-shadow:
+    0 0 0 1px rgba(244, 63, 94, 0.35),
+    0 10px 26px rgba(244, 63, 94, 0.16);
+}
+
 html[data-radius="sharp"] :where(.rounded-md) { border-radius: 0.35rem !important; }
 html[data-radius="sharp"] :where(.rounded-lg) { border-radius: 0.5rem !important; }
 html[data-radius="sharp"] :where(.rounded-xl) { border-radius: 0.65rem !important; }

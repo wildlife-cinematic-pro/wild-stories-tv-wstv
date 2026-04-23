@@ -6,6 +6,8 @@
 // ─────────────────────────────────────────────────────────────
 
 import { useRef, useState } from "react";
+
+import { CopyButton } from "@/components/CopyButton";
 import type { AIProvider, MediaAnalysisResult } from "@/types";
 
 // ─────────────────────────────────────────────────────────────
@@ -364,12 +366,12 @@ export default function MediaAnalyzer({
           <div className="rounded-lg border border-amber-200 bg-amber-50 p-3">
             <div className="mb-2 flex items-center justify-between">
               <span className="text-xs font-bold text-amber-800">📸 Image Prompt Inject</span>
-              <button
-                onClick={() => navigator.clipboard.writeText(analysis.imagePromptInject)}
+              <CopyButton
+                text={analysis.imagePromptInject}
                 className="rounded bg-amber-600 px-2 py-1 text-xs text-white hover:bg-amber-700 active:scale-95"
               >
                 Copy
-              </button>
+              </CopyButton>
             </div>
             <p className="line-clamp-3 text-xs leading-relaxed text-amber-900">{analysis.imagePromptInject}</p>
           </div>
@@ -378,12 +380,12 @@ export default function MediaAnalyzer({
           <div className="rounded-lg border border-blue-200 bg-blue-50 p-3">
             <div className="mb-2 flex items-center justify-between">
               <span className="text-xs font-bold text-blue-800">🎬 Video Motion Inject</span>
-              <button
-                onClick={() => navigator.clipboard.writeText(analysis.videoMotionInject)}
+              <CopyButton
+                text={analysis.videoMotionInject}
                 className="rounded bg-blue-600 px-2 py-1 text-xs text-white hover:bg-blue-700 active:scale-95"
               >
                 Copy
-              </button>
+              </CopyButton>
             </div>
             <p className="text-xs leading-relaxed text-blue-900">{analysis.videoMotionInject}</p>
           </div>
