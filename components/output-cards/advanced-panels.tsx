@@ -80,7 +80,7 @@ export function FiveShotPanel({
         </span>
       </div>
 
-      <div className="mb-4 flex overflow-hidden rounded-lg border border-indigo-200 bg-white">
+      <div className="mb-4 flex overflow-hidden rounded-lg border border-indigo-200 bg-[color:var(--surface-elevated)]">
         <button
           onClick={() => setStyle("viral")}
           className={`flex-1 py-2.5 text-xs font-bold transition-all ${
@@ -117,7 +117,7 @@ export function FiveShotPanel({
           <div key={shot.key} className={`rounded-lg border-l-4 p-3 ${shot.color}`}>
             <div className="mb-2 flex items-center justify-between gap-2">
               <div className="flex items-center gap-2">
-                <span className="text-xs font-bold text-gray-800">
+                <span className="text-xs font-bold text-[color:var(--text)]">
                   {shot.label}
                 </span>
                 <span
@@ -140,7 +140,7 @@ export function FiveShotPanel({
                 Copy
               </button>
             </div>
-            <p className="whitespace-pre-wrap text-xs leading-5 text-gray-700">
+            <p className="whitespace-pre-wrap text-xs leading-5 text-[color:var(--muted)]">
               {plan[shot.key as keyof FiveShotPlan] as string}
             </p>
           </div>
@@ -171,7 +171,7 @@ export function WatchTimePanel({ report }: { report: WatchTimeReport }) {
   return (
     <div className="rounded-xl border border-purple-200 bg-purple-50 p-4 shadow-sm">
       <div className="mb-3 flex flex-wrap items-center gap-2">
-        <span className="text-sm font-bold text-gray-900">
+        <span className="text-sm font-bold text-[color:var(--text)]">
           ⏱️ Watch Time + Earnings Optimizer
         </span>
         <span className="rounded bg-purple-100 px-2 py-0.5 text-xs font-bold text-purple-700">
@@ -183,24 +183,24 @@ export function WatchTimePanel({ report }: { report: WatchTimeReport }) {
       </div>
 
       <div className="mb-3 grid gap-2 md:grid-cols-3">
-        <div className="rounded-lg border border-red-200 bg-white p-3 text-center">
-          <p className="text-xs text-gray-400">Short Hybrid Lane</p>
+        <div className="rounded-lg border border-red-200 bg-[color:var(--surface-elevated)] p-3 text-center">
+          <p className="text-xs text-[color:var(--muted)]">Short Hybrid Lane</p>
           <p className="text-xl font-bold text-red-500">18–24s</p>
-          <p className="text-xs text-gray-400">Fast readable short-lane default</p>
+          <p className="text-xs text-[color:var(--muted)]">Fast readable short-lane default</p>
         </div>
-        <div className="rounded-lg border border-green-300 bg-white p-3 text-center">
-          <p className="text-xs text-gray-400">Long Hybrid Lane</p>
+        <div className="rounded-lg border border-green-300 bg-[color:var(--surface-elevated)] p-3 text-center">
+          <p className="text-xs text-[color:var(--muted)]">Long Hybrid Lane</p>
           <p className="text-xl font-bold text-green-600">50s</p>
           <p className="text-xs font-semibold text-green-600">
             ✓ Runway 10 / Kling 15 / Kling 15 / Runway 10
           </p>
         </div>
-        <div className="rounded-lg border border-indigo-200 bg-white p-3 text-center">
-          <p className="text-xs text-gray-400">Watch Time/View</p>
+        <div className="rounded-lg border border-indigo-200 bg-[color:var(--surface-elevated)] p-3 text-center">
+          <p className="text-xs text-[color:var(--muted)]">Watch Time/View</p>
           <p className="text-xl font-bold text-indigo-600">
             {report.watchTimePerView}
           </p>
-          <p className="text-xs text-gray-400">5x improvement</p>
+          <p className="text-xs text-[color:var(--muted)]">5x improvement</p>
         </div>
       </div>
 
@@ -214,7 +214,7 @@ export function WatchTimePanel({ report }: { report: WatchTimeReport }) {
 
       <div className="mb-3 space-y-1.5">
         {report.tipsToIncrease.map((tip, index) => (
-          <div key={index} className="flex items-start gap-2 text-xs text-gray-700">
+          <div key={index} className="flex items-start gap-2 text-xs text-[color:var(--muted)]">
             <span className="mt-0.5 shrink-0">•</span>
             <span>{tip}</span>
           </div>
@@ -223,7 +223,7 @@ export function WatchTimePanel({ report }: { report: WatchTimeReport }) {
 
       <button
         onClick={() => setShowEarnings((value) => !value)}
-        className="w-full rounded-lg border border-purple-300 bg-white py-2 text-xs font-bold text-purple-700 hover:bg-purple-50 active:scale-95"
+        className="w-full rounded-lg border border-purple-300 bg-[color:var(--surface-elevated)] py-2 text-xs font-bold text-purple-700 hover:bg-purple-50 active:scale-95"
         type="button"
       >
         {showEarnings
@@ -233,17 +233,17 @@ export function WatchTimePanel({ report }: { report: WatchTimeReport }) {
 
       {showEarnings && (
         <div className="mt-3">
-          <p className="mb-2 text-xs font-bold text-gray-700">
+          <p className="mb-2 text-xs font-bold text-[color:var(--muted)]">
             Planning ranges only — not guaranteed payouts
           </p>
-          <div className="overflow-x-auto rounded-lg border border-gray-200">
+          <div className="overflow-x-auto rounded-lg border border-[color:var(--border)]">
             <table className="w-full text-xs">
-              <thead className="bg-gray-50">
+              <thead className="bg-[color:var(--surface-muted)]">
                 <tr>
-                  <th className="p-2 text-left font-semibold text-gray-600">
+                  <th className="p-2 text-left font-semibold text-[color:var(--muted)]">
                     Views
                   </th>
-                  <th className="p-2 text-left font-semibold text-gray-600">
+                  <th className="p-2 text-left font-semibold text-[color:var(--muted)]">
                     General
                   </th>
                   <th className="p-2 text-left font-semibold text-green-600">
@@ -255,12 +255,12 @@ export function WatchTimePanel({ report }: { report: WatchTimeReport }) {
                 {earningsTable.map((row, index) => (
                   <tr
                     key={index}
-                    className={index % 2 === 0 ? "bg-white" : "bg-gray-50"}
+                    className={index % 2 === 0 ? "bg-[color:var(--surface-elevated)]" : "bg-[color:var(--surface-muted)]"}
                   >
-                    <td className="p-2 font-semibold text-gray-800">
+                    <td className="p-2 font-semibold text-[color:var(--text)]">
                       {(row.views / 1000).toFixed(0)}K
                     </td>
-                    <td className="p-2 text-gray-600">
+                    <td className="p-2 text-[color:var(--muted)]">
                       {row.minEarnings}–{row.maxEarnings}
                     </td>
                     <td className="p-2 font-bold text-green-700">
@@ -271,7 +271,7 @@ export function WatchTimePanel({ report }: { report: WatchTimeReport }) {
               </tbody>
             </table>
           </div>
-          <p className="mt-2 text-xs text-gray-400">
+          <p className="mt-2 text-xs text-[color:var(--muted)]">
             Use your Professional Dashboard as the source of truth once you gain
             access.
           </p>
@@ -308,7 +308,7 @@ EXPORT: ${script.exportSettings}`;
     <div className="rounded-xl border border-purple-200 bg-purple-50 p-4 shadow-sm">
       <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
         <div className="flex items-center gap-2">
-          <span className="text-sm font-bold text-gray-900">
+          <span className="text-sm font-bold text-[color:var(--text)]">
             ✂️ CapCut Auto-Script
           </span>
           <span className="rounded bg-purple-100 px-2 py-0.5 text-xs font-bold text-purple-700">
@@ -324,7 +324,7 @@ EXPORT: ${script.exportSettings}`;
         </button>
       </div>
 
-      <div className="mb-3 rounded-lg border border-purple-200 bg-white p-2 text-xs text-purple-800">
+      <div className="mb-3 rounded-lg border border-purple-200 bg-[color:var(--surface-elevated)] p-2 text-xs text-purple-800">
         🎵 <strong>Music mood:</strong> {script.musicMood}
       </div>
 
@@ -332,34 +332,34 @@ EXPORT: ${script.exportSettings}`;
         {script.beats.map((beat, index) => (
           <div
             key={index}
-            className="rounded-lg border border-purple-100 bg-white p-3"
+            className="rounded-lg border border-purple-100 bg-[color:var(--surface-elevated)] p-3"
           >
             <div className="mb-2 flex flex-wrap items-center gap-2">
               <span className="rounded bg-purple-600 px-2 py-0.5 text-xs font-bold text-white">
                 {beat.timeIn} → {beat.timeOut}
               </span>
-              <span className="text-xs font-bold text-gray-700">
+              <span className="text-xs font-bold text-[color:var(--muted)]">
                 {beat.shotRef}
               </span>
             </div>
             <div className="grid gap-1 text-xs">
               <div>
-                <span className="font-semibold text-gray-500">📝 Text: </span>
-                <span className="text-gray-700">
+                <span className="font-semibold text-[color:var(--muted)]">📝 Text: </span>
+                <span className="text-[color:var(--muted)]">
                   &quot;{beat.onScreenText}&quot;
                 </span>
               </div>
               <div>
-                <span className="font-semibold text-gray-500">✂️ Cut: </span>
-                <span className="text-gray-700">{beat.transition}</span>
+                <span className="font-semibold text-[color:var(--muted)]">✂️ Cut: </span>
+                <span className="text-[color:var(--muted)]">{beat.transition}</span>
               </div>
               <div>
-                <span className="font-semibold text-gray-500">🔊 SFX: </span>
-                <span className="text-gray-700">{beat.sfx}</span>
+                <span className="font-semibold text-[color:var(--muted)]">🔊 SFX: </span>
+                <span className="text-[color:var(--muted)]">{beat.sfx}</span>
               </div>
               <div>
-                <span className="font-semibold text-gray-500">🎵 Music: </span>
-                <span className="italic text-gray-600">{beat.musicNote}</span>
+                <span className="font-semibold text-[color:var(--muted)]">🎵 Music: </span>
+                <span className="italic text-[color:var(--muted)]">{beat.musicNote}</span>
               </div>
             </div>
             <button
@@ -368,7 +368,7 @@ EXPORT: ${script.exportSettings}`;
                   `[${beat.timeIn}→${beat.timeOut}] ${beat.onScreenText}\nSFX: ${beat.sfx}\nTransition: ${beat.transition}`
                 )
               }
-              className="mt-2 rounded border border-gray-300 bg-white px-2 py-1 text-xs text-gray-600 hover:bg-gray-50 active:scale-95"
+              className="mt-2 rounded border border-[color:var(--border)] bg-[color:var(--surface-elevated)] px-2 py-1 text-xs text-[color:var(--muted)] hover:bg-[color:var(--surface-muted)] active:scale-95"
               type="button"
             >
               Copy Beat
@@ -415,7 +415,7 @@ export function AnimalBehaviorPanel({
   return (
     <div className="rounded-xl border border-amber-200 bg-amber-50 p-4 shadow-sm">
       <div className="mb-3 flex flex-wrap items-center gap-2">
-        <span className="text-sm font-bold text-gray-900">
+        <span className="text-sm font-bold text-[color:var(--text)]">
           🦁 {predator} Behavior Library
         </span>
         <span className="rounded bg-amber-100 px-2 py-0.5 text-xs font-bold text-amber-700">
@@ -431,7 +431,7 @@ export function AnimalBehaviorPanel({
             className={`shrink-0 rounded-lg px-3 py-1.5 text-xs font-semibold transition-all ${
               tab === entry.key
                 ? "bg-amber-600 text-white"
-                : "border border-amber-200 bg-white text-amber-700 hover:bg-amber-50"
+                : "border border-amber-200 bg-[color:var(--surface-elevated)] text-amber-700 hover:bg-amber-50"
             }`}
             type="button"
           >
@@ -444,10 +444,10 @@ export function AnimalBehaviorPanel({
         {content[tab].map((item, index) => (
           <div
             key={index}
-            className="flex items-start gap-2 rounded-lg border border-amber-100 bg-white p-2.5"
+            className="flex items-start gap-2 rounded-lg border border-amber-100 bg-[color:var(--surface-elevated)] p-2.5"
           >
             <span className="mt-0.5 shrink-0 text-amber-500">•</span>
-            <p className="text-xs leading-5 text-gray-700">{item}</p>
+            <p className="text-xs leading-5 text-[color:var(--muted)]">{item}</p>
           </div>
         ))}
       </div>
@@ -516,7 +516,7 @@ export function SoundDesignPanel({
   return (
     <div className="rounded-xl border border-indigo-200 bg-indigo-50 p-4 shadow-sm">
       <div className="mb-3 flex flex-wrap items-center gap-2">
-        <span className="text-sm font-bold text-gray-900">
+        <span className="text-sm font-bold text-[color:var(--text)]">
           🔊 Sound Design Pack
         </span>
         <span className="rounded bg-indigo-100 px-2 py-0.5 text-xs font-bold text-indigo-700">
@@ -529,14 +529,14 @@ export function SoundDesignPanel({
           <div key={index} className={`rounded-lg border p-2.5 ${item.color}`}>
             <div className="flex items-start justify-between gap-2">
               <div>
-                <p className="mb-0.5 text-[11px] font-bold text-gray-500">
+                <p className="mb-0.5 text-[11px] font-bold text-[color:var(--muted)]">
                   {item.label}
                 </p>
-                <p className="text-xs text-gray-700">{item.value}</p>
+                <p className="text-xs text-[color:var(--muted)]">{item.value}</p>
               </div>
               <button
                 onClick={() => onCopy(item.value)}
-                className="shrink-0 rounded border border-gray-300 bg-white px-2 py-1 text-xs text-gray-600 hover:bg-gray-50 active:scale-95"
+                className="shrink-0 rounded border border-[color:var(--border)] bg-[color:var(--surface-elevated)] px-2 py-1 text-xs text-[color:var(--muted)] hover:bg-[color:var(--surface-muted)] active:scale-95"
                 type="button"
               >
                 Copy
@@ -568,12 +568,12 @@ export function SoundDesignPanel({
         {pack.capCutSFX.map((cue, index) => (
           <div
             key={index}
-            className="flex items-start justify-between gap-2 rounded border border-gray-200 bg-white p-2"
+            className="flex items-start justify-between gap-2 rounded border border-[color:var(--border)] bg-[color:var(--surface-elevated)] p-2"
           >
-            <p className="text-xs text-gray-700">{cue}</p>
+            <p className="text-xs text-[color:var(--muted)]">{cue}</p>
             <button
               onClick={() => onCopy(cue)}
-              className="shrink-0 rounded border border-gray-300 bg-white px-2 py-1 text-xs text-gray-500 hover:bg-gray-50 active:scale-95"
+              className="shrink-0 rounded border border-[color:var(--border)] bg-[color:var(--surface-elevated)] px-2 py-1 text-xs text-[color:var(--muted)] hover:bg-[color:var(--surface-muted)] active:scale-95"
               type="button"
             >
               Copy
@@ -582,7 +582,7 @@ export function SoundDesignPanel({
         ))}
         <button
           onClick={() => onCopy(pack.capCutSFX.join("\n"))}
-          className="mt-2 w-full rounded border border-gray-300 bg-white py-1.5 text-xs font-semibold text-gray-700 hover:bg-gray-50 active:scale-95"
+          className="mt-2 w-full rounded border border-[color:var(--border)] bg-[color:var(--surface-elevated)] py-1.5 text-xs font-semibold text-[color:var(--muted)] hover:bg-[color:var(--surface-muted)] active:scale-95"
           type="button"
         >
           Copy All SFX Cues

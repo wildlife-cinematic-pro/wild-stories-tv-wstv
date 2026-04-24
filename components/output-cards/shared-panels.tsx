@@ -10,10 +10,10 @@ export function EngineSpecsPanel() {
   const [open, setOpen] = useState(false);
 
   return (
-    <div className="rounded-xl border border-gray-200 bg-gray-50 p-4 shadow-sm">
+    <div className="rounded-xl border border-[color:var(--border)] bg-[color:var(--surface-muted)] p-4 shadow-sm">
       <div className="flex flex-wrap items-center justify-between gap-2">
         <div className="flex flex-wrap items-center gap-2">
-          <span className="text-sm font-bold text-gray-900">
+          <span className="text-sm font-bold text-[color:var(--text)]">
             ⚙️ Engine Specs (Runway + Kling workflow notes)
           </span>
           <span className="rounded bg-green-100 px-2 py-0.5 text-xs font-bold text-green-700">
@@ -25,7 +25,7 @@ export function EngineSpecsPanel() {
         </div>
         <button
           onClick={() => setOpen((value) => !value)}
-          className="rounded-lg border border-gray-300 bg-white px-3 py-1.5 text-xs font-semibold text-gray-700 hover:bg-gray-50 active:scale-95"
+          className="rounded-lg border border-[color:var(--border)] bg-[color:var(--surface-elevated)] px-3 py-1.5 text-xs font-semibold text-[color:var(--muted)] hover:bg-[color:var(--surface-muted)] active:scale-95"
           type="button"
         >
           {open ? "Hide ▲" : "Show ▼"}
@@ -143,10 +143,10 @@ export function ProShotCard({
   const engineLabel = isRunway ? "Runway" : isSeedance ? "Seedance" : "Kling";
 
   return (
-    <div className={`rounded-xl border ${borderColor} bg-white p-3`}>
+    <div className={`rounded-xl border ${borderColor} bg-[color:var(--surface-elevated)] p-3`}>
       <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
         <div className="flex flex-wrap items-center gap-2">
-          <div className="text-xs font-extrabold text-gray-900">
+          <div className="text-xs font-extrabold text-[color:var(--text)]">
             🎬 {engineLabel} Shot {index + 1}
           </div>
           {motionIntensity !== null && (
@@ -170,7 +170,7 @@ export function ProShotCard({
           <button
             type="button"
             onClick={() => onCopy(shot)}
-            className="rounded border border-gray-300 bg-white px-2 py-1 text-[11px] font-bold text-gray-600 hover:bg-gray-50 active:scale-95"
+            className="rounded border border-[color:var(--border)] bg-[color:var(--surface-elevated)] px-2 py-1 text-[11px] font-bold text-[color:var(--muted)] hover:bg-[color:var(--surface-muted)] active:scale-95"
             title="Copy full shot with instructions"
           >
             Copy FULL
@@ -187,7 +187,7 @@ export function ProShotCard({
         </div>
       </div>
 
-      <pre className="max-h-40 overflow-auto whitespace-pre-wrap text-xs leading-relaxed text-gray-900">
+      <pre className="max-h-40 overflow-auto whitespace-pre-wrap text-xs leading-relaxed text-[color:var(--text)]">
         {promptCard.fullText || shot || "—"}
       </pre>
 
@@ -231,12 +231,12 @@ export function Card({
 }) {
   return (
     <div
-      className={`rounded-xl border bg-white p-4 shadow-sm ${
-        accent ? `border-l-4 ${accent}` : "border-gray-200"
+      className={`rounded-xl border bg-[color:var(--surface-elevated)] p-4 shadow-sm ${
+        accent ? `border-l-4 ${accent}` : "border-[color:var(--border)]"
       } ${aiEnhanced ? "ring-1 ring-purple-200" : ""}`}
     >
       <div className="mb-3 flex items-center justify-between gap-3">
-        <h2 className="flex items-center gap-2 font-bold text-gray-900">
+        <h2 className="flex items-center gap-2 font-bold text-[color:var(--text)]">
           {title}
           {aiEnhanced && (
             <span className="text-xs font-normal text-purple-500">✦ AI</span>
@@ -248,7 +248,7 @@ export function Card({
               key={action.label}
               className={
                 action.className ??
-                "rounded border border-gray-300 bg-white px-3 py-1 text-sm text-gray-700 hover:bg-gray-50 active:scale-95"
+                "rounded border border-[color:var(--border)] bg-[color:var(--surface-elevated)] px-3 py-1 text-sm text-[color:var(--muted)] hover:bg-[color:var(--surface-muted)] active:scale-95"
               }
               onClick={action.onClick}
               type="button"
@@ -265,8 +265,8 @@ export function Card({
           </button>
         </div>
       </div>
-      <p className="whitespace-pre-wrap text-sm leading-7 text-gray-700">
-        {value || <span className="italic text-gray-400">Generate गर्नुस्...</span>}
+      <p className="whitespace-pre-wrap text-sm leading-7 text-[color:var(--muted)]">
+        {value || <span className="italic text-[color:var(--muted)]">Generate गर्नुस्...</span>}
       </p>
     </div>
   );
@@ -282,7 +282,7 @@ export function ShotImagePlanPanel({
   return (
     <div className="rounded-xl border border-amber-200 bg-amber-50 p-4 shadow-sm">
       <div className="mb-3 flex flex-wrap items-center gap-2">
-        <span className="text-sm font-bold text-gray-900">
+        <span className="text-sm font-bold text-[color:var(--text)]">
           🖼️ 4-Shot Image Plan
         </span>
         <span className="rounded bg-amber-100 px-2 py-0.5 text-xs font-bold text-amber-700">
@@ -300,14 +300,14 @@ export function ShotImagePlanPanel({
         {plans.map((plan, index) => (
           <div
             key={`${plan.title}-${index}`}
-            className="rounded-lg border border-amber-200 bg-white p-3"
+            className="rounded-lg border border-amber-200 bg-[color:var(--surface-elevated)] p-3"
           >
             <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
               <div className="flex flex-wrap items-center gap-2">
-                <span className="text-xs font-extrabold text-gray-900">
+                <span className="text-xs font-extrabold text-[color:var(--text)]">
                   {plan.title}
                 </span>
-                <span className="rounded bg-gray-100 px-2 py-0.5 text-[10px] font-bold text-gray-700">
+                <span className="rounded bg-gray-100 px-2 py-0.5 text-[10px] font-bold text-[color:var(--muted)]">
                   Source:{" "}
                   {plan.source === "master"
                     ? "Master image"
@@ -324,7 +324,7 @@ export function ShotImagePlanPanel({
               </button>
             </div>
 
-            <pre className="max-h-40 overflow-auto whitespace-pre-wrap text-xs leading-relaxed text-gray-800">
+            <pre className="max-h-40 overflow-auto whitespace-pre-wrap text-xs leading-relaxed text-[color:var(--text)]">
               {plan.prompt}
             </pre>
           </div>
@@ -358,7 +358,7 @@ export function ShotImagePlanPanel({
 export function SectionLabel({ label }: { label: string }) {
   return (
     <div className="mb-3 mt-8 flex items-center gap-3">
-      <span className="text-xs font-bold uppercase tracking-widest text-gray-400">
+      <span className="text-xs font-bold uppercase tracking-widest text-[color:var(--muted)]">
         {label}
       </span>
       <div className="h-px flex-1 bg-gray-200" />
@@ -384,8 +384,8 @@ export function WorkspaceTabButton({
   const accents: Record<string, { active: string; idle: string; chip: string }> = {
     Overview: {
       active: "border-gray-900 bg-gray-900 text-white shadow-sm",
-      idle: "border-gray-200 bg-white text-gray-700 hover:border-gray-300 hover:bg-gray-50",
-      chip: "bg-gray-100 text-gray-500",
+      idle: "border-[color:var(--border)] bg-[color:var(--surface-elevated)] text-[color:var(--muted)] hover:border-[color:var(--border)] hover:bg-[color:var(--surface-muted)]",
+      chip: "bg-gray-100 text-[color:var(--muted)]",
     },
     Prompts: {
       active: "border-amber-500 bg-amber-500 text-white shadow-sm",
@@ -430,7 +430,7 @@ export function WorkspaceTabButton({
         <div className="text-sm font-extrabold">{label}</div>
         <span
           className={`rounded-full px-2 py-0.5 text-[10px] font-black uppercase tracking-wide ${
-            active ? "bg-white/15 text-white" : accent.chip
+            active ? "bg-[color:var(--surface-elevated)]/15 text-white" : accent.chip
           }`}
         >
           {badge}
@@ -438,7 +438,7 @@ export function WorkspaceTabButton({
       </div>
       <div
         className={`mt-1 text-xs leading-relaxed ${
-          active ? "text-white/80" : "text-gray-500"
+          active ? "text-white/80" : "text-[color:var(--muted)]"
         }`}
       >
         {detail}
@@ -465,32 +465,32 @@ export function WorkspaceJumpCard({
   const accents: Record<string, { active: string; idle: string; eyebrow: string }> = {
     Story: {
       active: "border-gray-900 bg-gray-900 text-white shadow-sm",
-      idle: "border-gray-200 bg-white/90 text-gray-900 hover:-translate-y-0.5 hover:border-gray-300 hover:shadow-sm",
-      eyebrow: "text-gray-400",
+      idle: "border-[color:var(--border)] bg-[color:var(--surface-elevated)]/90 text-[color:var(--text)] hover:-translate-y-0.5 hover:border-[color:var(--border)] hover:shadow-sm",
+      eyebrow: "text-[color:var(--muted)]",
     },
     Prompts: {
       active: "border-amber-500 bg-amber-500 text-white shadow-sm",
-      idle: "border-amber-200 bg-amber-50/80 text-gray-900 hover:-translate-y-0.5 hover:border-amber-300 hover:shadow-sm",
+      idle: "border-amber-200 bg-amber-50/80 text-[color:var(--text)] hover:-translate-y-0.5 hover:border-amber-300 hover:shadow-sm",
       eyebrow: "text-amber-600",
     },
     Video: {
       active: "border-teal-600 bg-teal-600 text-white shadow-sm",
-      idle: "border-teal-200 bg-teal-50/80 text-gray-900 hover:-translate-y-0.5 hover:border-teal-300 hover:shadow-sm",
+      idle: "border-teal-200 bg-teal-50/80 text-[color:var(--text)] hover:-translate-y-0.5 hover:border-teal-300 hover:shadow-sm",
       eyebrow: "text-teal-600",
     },
     Direct: {
       active: "border-indigo-600 bg-indigo-600 text-white shadow-sm",
-      idle: "border-indigo-200 bg-indigo-50/80 text-gray-900 hover:-translate-y-0.5 hover:border-indigo-300 hover:shadow-sm",
+      idle: "border-indigo-200 bg-indigo-50/80 text-[color:var(--text)] hover:-translate-y-0.5 hover:border-indigo-300 hover:shadow-sm",
       eyebrow: "text-indigo-600",
     },
     Publishing: {
       active: "border-rose-600 bg-rose-600 text-white shadow-sm",
-      idle: "border-rose-200 bg-rose-50/80 text-gray-900 hover:-translate-y-0.5 hover:border-rose-300 hover:shadow-sm",
+      idle: "border-rose-200 bg-rose-50/80 text-[color:var(--text)] hover:-translate-y-0.5 hover:border-rose-300 hover:shadow-sm",
       eyebrow: "text-rose-600",
     },
     Advanced: {
       active: "border-emerald-600 bg-emerald-600 text-white shadow-sm",
-      idle: "border-emerald-200 bg-emerald-50/80 text-gray-900 hover:-translate-y-0.5 hover:border-emerald-300 hover:shadow-sm",
+      idle: "border-emerald-200 bg-emerald-50/80 text-[color:var(--text)] hover:-translate-y-0.5 hover:border-emerald-300 hover:shadow-sm",
       eyebrow: "text-emerald-600",
     },
   };
@@ -514,14 +514,14 @@ export function WorkspaceJumpCard({
       <div className="mt-2 text-lg font-black">{title}</div>
       <p
         className={`mt-2 text-sm leading-relaxed ${
-          active ? "text-white/80" : "text-gray-600"
+          active ? "text-white/80" : "text-[color:var(--muted)]"
         }`}
       >
         {detail}
       </p>
       <div
         className={`mt-4 text-xs font-extrabold uppercase tracking-wide ${
-          active ? "text-white" : "text-gray-500"
+          active ? "text-white" : "text-[color:var(--muted)]"
         }`}
       >
         {footer}

@@ -17,9 +17,6 @@ import {
   getSafeArcPrint,
   oneActionArcBeat,
   buildMicroMotionLine,
-  isWaterForwardPreyScenario,
-  isRutMirrorMatchScenario,
-  getRutMirrorMatchCue,
 } from "@/lib/prompt-builders/habitat";
 import {
   buildQualityLead,
@@ -35,9 +32,8 @@ import {
   type FourShotPromptPack,
   buildStructuredPrompt,
   promptPackToLegacyText,
-  buildShotWorldContinuityLock,
 } from "@/lib/prompt-builders/shared";
-import { buildKlingCameraPresetLine } from "@/lib/camera-angle-presets";
+import { buildPromptScenarioContext } from "@/lib/prompt-builders/scenario-context";
 import { sanitizeForEngine } from "@/lib/prompt-builders/safety-vocabulary";
 import {
   KLING_CHAR_LIMIT,
@@ -66,7 +62,6 @@ export function buildKlingPromptPack(
   const note = KLING_STYLE_NOTE[model];
   const tone = emotionalTonePrompt[emotionalTone];
   const vibe = animalVibePrompt[animalVibe];
-  const micro = buildMicroMotionLine(weather, env);
 
   const qLead = buildQualityLead(quality, "kling");
   const context = sceneDesc?.trim() ? `\nScene continuity: ${clipPromptContext(sceneDesc.trim())}` : "";
@@ -84,42 +79,31 @@ export function buildKlingPromptPack(
     : "Keep action focused.";
 
   const wideRule = klingWidePhysicsRule();
-  const gateOn = !!quality?.singleActionRule;
-  const habitatMode = getHabitatMode(predator, prey, env);
-  const isAquatic = habitatMode === "aquatic";
-  const isShoreline = habitatMode === "shoreline";
-  const isWaterForwardStrike = isWaterForwardPreyScenario(predator, prey, env);
-  const isRutMirrorMatch = isRutMirrorMatchScenario(predator, prey, arc, env);
-  const rutCue = getRutMirrorMatchCue(predator);
-  const cameraPresetLine = buildKlingCameraPresetLine(
+  const scenario = buildPromptScenarioContext({
+    predator,
+    prey,
+    env,
+    arc,
+    weather,
+    quality,
     cameraAnglePreset,
-    habitatMode,
-    env
-  );
-  const cameraPromptTail = cameraPresetLine ? ` ${cameraPresetLine}` : "";
-  const cameraBreakdownLine = cameraPresetLine
-    ? `\nCamera preset: ${cameraPresetLine}`
-    : "";
-  const worldPlateContinuity = buildShotWorldContinuityLock("kling");
-  const beat1 = oneActionArcBeat(arc, "establish", gateOn, habitatMode);
-  const beat3 = oneActionArcBeat(arc, "action", gateOn, habitatMode);
-  const beat4 = oneActionArcBeat(arc, "aftermath", gateOn, habitatMode);
-
-  const s1 = {
-    ...beat1,
-    predatorBeat: sanitizeVideoBeatText(beat1.predatorBeat),
-    preyBeat: sanitizeVideoBeatText(beat1.preyBeat),
-  };
-  const s3 = {
-    ...beat3,
-    predatorBeat: sanitizeVideoBeatText(beat3.predatorBeat),
-    preyBeat: sanitizeVideoBeatText(beat3.preyBeat),
-  };
-  const s4 = {
-    ...beat4,
-    predatorBeat: sanitizeVideoBeatText(beat4.predatorBeat),
-    preyBeat: sanitizeVideoBeatText(beat4.preyBeat),
-  };
+    engine: "kling",
+  });
+  const {
+    gateOn,
+    isAquatic,
+    isShoreline,
+    isWaterForwardStrike,
+    isRutMirrorMatch,
+    micro,
+    rutCue,
+    cameraPromptTail,
+    cameraBreakdownLine,
+    worldPlateContinuity,
+    beat1: s1,
+    beat3: s3,
+    beat4: s4,
+  } = scenario;
 
   const mi1 = getKlingMotionIntensity(arc, "establish");
   const mi3 = getKlingMotionIntensity(arc, "action");
@@ -159,25 +143,18 @@ export function buildKlingPromptPack(
     ? baseExtra3
     : `${baseExtra3} ${vibe.style}.`;
 
-  const pressurePredator = isRutMirrorMatch
-    ? `${predator} edges forward with heavier shoulder-line pressure while keeping ${rutCue.room}`
-    : isAquatic
-      ? `${predator} leans into stronger visible water pressure while staying controlled`
-      : isShoreline
-        ? isWaterForwardStrike
-          ? `${predator} leans farther forward from the bank as the shallow strike window tightens`
-          : `${predator} leans farther forward from the shoreline with stronger visible ambush pressure`
-        : `${predator} leans farther forward with stronger visible pressure`;
+  const pressurePredator = isAquatic
+    ? `${predator} leans into stronger visible water pressure while staying controlled`
+    : `${predator} ${scenario.pressurePredator}`;
 
-  const pressurePrey = isRutMirrorMatch
-    ? `${prey} braces into one grounded footing reset without giving away the claim line`
-    : isAquatic
-      ? `${prey} tightens posture and makes one readable defensive adjustment in the current`
-      : isShoreline
-        ? isWaterForwardStrike
-          ? `${prey} shows one tense surface-break adjustment tight to the bank-edge current`
-          : `${prey} lowers into one readable defensive footing adjustment near the bank`
-        : `${prey} lowers into one readable defensive adjustment`;
+  const pressurePrey = isAquatic
+    ? `${prey} tightens posture and makes one readable defensive adjustment in the current`
+    : isShoreline && !isWaterForwardStrike
+      ? `${prey} lowers into one readable defensive footing adjustment near the bank`
+      : `${prey} ${scenario.pressurePrey.replace(
+          "one defensive adjustment",
+          "one readable defensive adjustment"
+        )}`;
 
   return {
     shot1: buildStructuredPrompt({
