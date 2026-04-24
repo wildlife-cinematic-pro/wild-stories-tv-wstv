@@ -26,6 +26,7 @@ import type {
 import type { PublishFlowSummary } from "@/lib/build-package";
 import { createDefaultPackageLockState } from "@/lib/package-section-locks";
 import {
+  createLastGeneratedOutputDebouncer,
   hasShareStateInUrl,
   readLastGeneratedOutput,
   readShareState,
@@ -468,6 +469,11 @@ export default function Page() {
     onLoadPreset: applyWorkflowPreset,
   });
 
+  const lastGeneratedOutputDebouncer = useMemo(
+    () => createLastGeneratedOutputDebouncer(writeLastGeneratedOutput),
+    []
+  );
+
   useEffect(() => {
     const restoredOutput = readLastGeneratedOutput();
     if (!restoredOutput) return;
@@ -495,9 +501,12 @@ export default function Page() {
   }, [applyBuildSnapshot]);
 
   useEffect(() => {
-    if (!pkg) return;
+    if (!pkg) {
+      lastGeneratedOutputDebouncer.cancel();
+      return;
+    }
 
-    writeLastGeneratedOutput({
+    lastGeneratedOutputDebouncer.schedule({
       schema: "wstv.last-generated-output",
       version: 1,
       storedAt: new Date().toISOString(),
@@ -506,7 +515,17 @@ export default function Page() {
       publishFlowSummary,
       packageLocks,
     });
-  }, [currentWorkflowPresetSnapshot, packageLocks, pkg, publishFlowSummary]);
+  }, [
+    currentWorkflowPresetSnapshot,
+    lastGeneratedOutputDebouncer,
+    packageLocks,
+    pkg,
+    publishFlowSummary,
+  ]);
+
+  useEffect(() => () => {
+    lastGeneratedOutputDebouncer.cancel();
+  }, [lastGeneratedOutputDebouncer]);
 
   useEffect(() => {
     setConceptArcOverride(null);

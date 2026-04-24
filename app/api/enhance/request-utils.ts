@@ -1,10 +1,43 @@
+import { isIP } from "node:net";
 import { NextResponse } from "next/server";
 
 export type Provider = "gemini" | "claude";
 
+function normalizeIpCandidate(value: string | null): string | undefined {
+  if (!value) return undefined;
+
+  const trimmed = value.trim();
+  if (!trimmed) return undefined;
+
+  const bracketedMatch = trimmed.match(/^\[([^\]]+)\](?::\d+)?$/);
+  const bracketNormalized = bracketedMatch?.[1] ?? trimmed;
+  if (isIP(bracketNormalized)) return bracketNormalized;
+
+  const ipv4WithPortMatch = bracketNormalized.match(/^(\d{1,3}(?:\.\d{1,3}){3}):\d+$/);
+  if (ipv4WithPortMatch && isIP(ipv4WithPortMatch[1])) {
+    return ipv4WithPortMatch[1];
+  }
+
+  return undefined;
+}
+
 export function getClientIp(req: Request) {
-  const h = req.headers;
-  return h.get("x-forwarded-for")?.split(",")[0]?.trim() || h.get("x-real-ip") || "unknown";
+  const headers = req.headers;
+
+  for (const headerName of ["x-real-ip", "x-vercel-forwarded-for", "cf-connecting-ip"]) {
+    const trustedIp = normalizeIpCandidate(headers.get(headerName));
+    if (trustedIp) return trustedIp;
+  }
+
+  const forwardedFor = headers.get("x-forwarded-for");
+  if (forwardedFor) {
+    for (const part of forwardedFor.split(",")) {
+      const candidate = normalizeIpCandidate(part);
+      if (candidate) return candidate;
+    }
+  }
+
+  return "unknown";
 }
 
 export function sanitizeString(v: unknown, maxLen = 8000): string {

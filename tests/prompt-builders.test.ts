@@ -6,6 +6,7 @@ import {
   buildFourShotWorkflowPromptPack,
   buildFourShotWorkflow,
   buildHybridPromptPack,
+  buildHybridLongPromptPack,
   buildRunwayPromptPack,
   buildRunwayShots,
   buildKlingPromptPack,
@@ -334,6 +335,44 @@ describe("Seedance prompt builder", () => {
     expect(pack.shot3.pasteReady).toContain("same background layout");
     expect(pack.shot4.pasteReady).toContain("Camera holds wide with a subtle pull-back");
     expect(pack.shot3.pasteReady).toContain("dominant readable action beat");
+  });
+});
+
+describe("Long workflow prompt safety", () => {
+  const quality = {
+    realismMode: "Reference Locked",
+    motionOnlyI2V: true,
+    referenceLock: true,
+    singleActionRule: true,
+    microMotion: true,
+    heroVeo: false,
+  } as const;
+
+  it("routes copyable long-workflow prompts through engine-safe final wording", () => {
+    const pack = buildHybridLongPromptPack(
+      "Bald Eagle",
+      "Salmon",
+      "Riverbank Reeds",
+      "Ambush attack",
+      "Dawn",
+      "Gen-4.5",
+      "Kling 3.0 Pro",
+      "Raw Tension",
+      "National Geographic Wild",
+      "Readable shoreline setup with clean first-frame spacing.",
+      quality,
+      "Waterline"
+    );
+
+    const shots = [pack.shot1, pack.shot2, pack.shot3, pack.shot4];
+    for (const shot of shots) {
+      expect(shot.pasteReady).not.toMatch(
+        /\b(no|avoid|never|do not|don't|without|ambush)\b/i
+      );
+    }
+
+    expect(pack.shot2.pasteReady).toContain("first impact waits for the payoff beat");
+    expect(pack.shot3.pasteReady).toMatch(/spacing stays readable/i);
   });
 });
 

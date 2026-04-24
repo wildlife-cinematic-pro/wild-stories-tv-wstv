@@ -40,14 +40,26 @@ import {
   buildKlingCameraPresetLine,
   buildRunwayCameraPresetLine,
 } from "@/lib/camera-angle-presets";
+import { sanitizeForEngine } from "@/lib/prompt-builders/safety-vocabulary";
 import {
   clipPromptContext,
   sanitizeRunwayFPS,
+  sanitizeRunwayPrompt,
   sanitizeVideoBeatText,
 } from "@/lib/prompt-builders/sanitizers";
 
 export type FourShotWorkflowMode = "hybrid" | "runway-only" | "kling-only" | "seedance";
 export type WorkflowPromptPack = FourShotPromptPack<StructuredPrompt>;
+
+function finalizeWorkflowRunwayPasteReady(text: string): string {
+  return sanitizeRunwayPrompt(
+    sanitizeVideoBeatText(sanitizeForEngine(sanitizeRunwayFPS(text), "runway"))
+  );
+}
+
+function finalizeWorkflowKlingPasteReady(text: string): string {
+  return sanitizeForEngine(sanitizeVideoBeatText(text), "kling");
+}
 
 export function buildHybridPromptPack(
   predator: string,
@@ -240,7 +252,7 @@ export function buildHybridLongPromptPack(
   const openingPredator = isAquatic
     ? "glides once with restrained forward pressure through the current"
     : isShoreline
-      ? "holds low at the waterline with visible ambush pressure"
+      ? "holds low at the waterline with visible approach pressure"
       : s1.predatorBeat;
   const openingPrey = isAquatic
     ? "holds tense position once and keeps locked eye-line in the current"
@@ -248,46 +260,46 @@ export function buildHybridLongPromptPack(
       ? "stays tense near the bank with one readable defensive hold"
       : s1.preyBeat;
   const pressurePredator = isAquatic
-    ? `${predator} compresses distance slowly through the water without breaking readable spacing`
+    ? `${predator} compresses distance slowly through the water while spacing stays readable`
     : isShoreline
-      ? `${predator} leans farther forward from the shoreline and compresses space without fully committing`
-      : `${predator} leans farther forward and compresses the distance without fully committing`;
+      ? `${predator} leans farther forward from the shoreline as the spacing tightens before the full commitment lands`
+      : `${predator} leans farther forward as the spacing tightens before the full commitment lands`;
   const pressurePrey = isAquatic
     ? `${prey} makes one readable defensive adjustment in the current and keeps survival tension visible`
     : isShoreline
       ? `${prey} lowers into one readable footing adjustment near the bank and keeps body-language tension visible`
       : `${prey} lowers into one readable defensive adjustment and keeps body-language tension visible`;
 
-  const longShot1PasteReady = sanitizeRunwayFPS(
+  const longShot1PasteReady = finalizeWorkflowRunwayPasteReady(
     isAquatic
-      ? `Wide opening hold for first-frame clarity, then a restrained slow push-in over the full 10-second beat. Both subjects stay fully readable from frame one. The left subject ${openingPredator}. The right subject ${openingPrey}. Let the setup breathe before the tension tightens. Clear spacing, one clean threat line, no sudden action spike.${runwayCameraTail} ${micro}${quality?.seamlessShot ? " Continuous, seamless shot." : ""}`.trim()
+      ? `Wide opening hold for first-frame clarity, then a restrained slow push-in over the full 10-second beat. Both subjects stay fully readable from frame one. The left subject ${openingPredator}. The right subject ${openingPrey}. Let the setup breathe before the tension tightens. Clear spacing, one clean threat line, and a restrained first action beat.${runwayCameraTail} ${micro}${quality?.seamlessShot ? " Continuous, seamless shot." : ""}`.trim()
       : isShoreline
-        ? `Wide opening hold for first-frame clarity, then a restrained slow push-in over the full 10-second beat. Both subjects stay fully readable from frame one. The left subject ${openingPredator}. The right subject ${openingPrey}. Let the readable shoreline setup breathe before the tension tightens. Clear spacing, one clean threat line, no sudden action spike.${runwayCameraTail} ${micro}${quality?.seamlessShot ? " Continuous, seamless shot." : ""}`.trim()
-        : `Wide opening hold for first-frame clarity, then a restrained slow push-in over the full 10-second beat. Both subjects stay fully readable from frame one. The left subject ${openingPredator}. The right subject ${openingPrey}. Let the readable setup breathe before the tension tightens. Clear spacing, one clean threat line, no sudden action spike.${runwayCameraTail} ${micro}${quality?.seamlessShot ? " Continuous, seamless shot." : ""}`.trim()
+        ? `Wide opening hold for first-frame clarity, then a restrained slow push-in over the full 10-second beat. Both subjects stay fully readable from frame one. The left subject ${openingPredator}. The right subject ${openingPrey}. Let the readable shoreline setup breathe before the tension tightens. Clear spacing, one clean threat line, and a restrained first action beat.${runwayCameraTail} ${micro}${quality?.seamlessShot ? " Continuous, seamless shot." : ""}`.trim()
+        : `Wide opening hold for first-frame clarity, then a restrained slow push-in over the full 10-second beat. Both subjects stay fully readable from frame one. The left subject ${openingPredator}. The right subject ${openingPrey}. Let the readable setup breathe before the tension tightens. Clear spacing, one clean threat line, and a restrained first action beat.${runwayCameraTail} ${micro}${quality?.seamlessShot ? " Continuous, seamless shot." : ""}`.trim()
   );
 
-  const longShot2PasteReady = sanitizeVideoBeatText(
+  const longShot2PasteReady = finalizeWorkflowKlingPasteReady(
     isAquatic
-      ? `Locked wide pressure-build shot with a very slow forward creep across 15 seconds.${klingCameraTail} ${pressurePredator}. ${pressurePrey}. Let the spacing collapse gradually, keep the body language readable, and hold the threat line long enough for pressure to build. No full collision yet. ${locationCore}. Surface turbulence and water displacement stay controlled. Then both subjects settle into a tense pre-action hold.`
+      ? `Locked wide pressure-build shot with a very slow forward creep across 15 seconds.${klingCameraTail} ${pressurePredator}. ${pressurePrey}. Let the spacing tighten gradually, keep the body language readable, and hold the threat line long enough for pressure to build. The first impact waits for the payoff beat. ${locationCore}. Surface turbulence and water displacement stay controlled. Then both subjects settle into a tense pre-action hold.`
       : isShoreline
-        ? `Locked wide pressure-build shot with a very slow forward creep across 15 seconds.${klingCameraTail} ${pressurePredator}. ${pressurePrey}. Let the spacing collapse gradually, keep the body language readable, and hold the threat line long enough for pressure to build. No full collision yet. ${locationCore}. Splash and bank disturbance stay controlled. Then both subjects settle into a tense pre-action hold.`
-        : `Locked wide pressure-build shot with a very slow forward creep across 15 seconds.${klingCameraTail} ${pressurePredator}. ${pressurePrey}. Let the spacing collapse gradually, keep the body language readable, and hold the threat line long enough for pressure to build. No full collision yet. ${locationCore}. Grounded weight transfer stays controlled. Then both subjects settle into a tense pre-action hold.`
+        ? `Locked wide pressure-build shot with a very slow forward creep across 15 seconds.${klingCameraTail} ${pressurePredator}. ${pressurePrey}. Let the spacing tighten gradually, keep the body language readable, and hold the threat line long enough for pressure to build. The first impact waits for the payoff beat. ${locationCore}. Splash and bank disturbance stay controlled. Then both subjects settle into a tense pre-action hold.`
+        : `Locked wide pressure-build shot with a very slow forward creep across 15 seconds.${klingCameraTail} ${pressurePredator}. ${pressurePrey}. Let the spacing tighten gradually, keep the body language readable, and hold the threat line long enough for pressure to build. The first impact waits for the payoff beat. ${locationCore}. Grounded weight transfer stays controlled. Then both subjects settle into a tense pre-action hold.`
   );
 
-  const longShot3PasteReady = sanitizeVideoBeatText(
+  const longShot3PasteReady = finalizeWorkflowKlingPasteReady(
     isAquatic
-      ? `Wide main-action payoff across 15 seconds with restrained handheld energy.${klingCameraTail} ${formatActionSubject(predator, s3.predatorBeat)}. ${prey} ${s3.preyBeat}. Peak pressure lands once, stays readable, then eases into a clean chained end-state. Clear spacing, no chaotic overlap. ${locationCore}. Water displacement and turbulence stay forceful but controlled.`
+      ? `Wide main-action payoff across 15 seconds with restrained handheld energy.${klingCameraTail} ${formatActionSubject(predator, s3.predatorBeat)}. ${prey} ${s3.preyBeat}. Peak pressure lands once, stays readable, then eases into a clean chained end-state. Spacing stays readable, and overlap stays controlled. ${locationCore}. Water displacement and turbulence stay forceful but controlled.`
       : isShoreline
-        ? `Wide main-action payoff across 15 seconds with restrained handheld energy.${klingCameraTail} ${formatActionSubject(predator, s3.predatorBeat)}. ${prey} ${s3.preyBeat}. Peak pressure lands once, stays readable, then eases into a clean chained end-state. Clear spacing, no chaotic overlap. ${locationCore}. Splash and bank response stay forceful but controlled.`
-        : `Wide main-action payoff across 15 seconds with restrained handheld energy.${klingCameraTail} ${formatActionSubject(predator, s3.predatorBeat)}. ${prey} ${s3.preyBeat}. Peak pressure lands once, stays readable, then eases into a clean chained end-state. Clear spacing, no chaotic overlap. ${locationCore}. Grounded weight transfer and surface response stay forceful but controlled.`
+        ? `Wide main-action payoff across 15 seconds with restrained handheld energy.${klingCameraTail} ${formatActionSubject(predator, s3.predatorBeat)}. ${prey} ${s3.preyBeat}. Peak pressure lands once, stays readable, then eases into a clean chained end-state. Spacing stays readable, and overlap stays controlled. ${locationCore}. Splash and bank response stay forceful but controlled.`
+        : `Wide main-action payoff across 15 seconds with restrained handheld energy.${klingCameraTail} ${formatActionSubject(predator, s3.predatorBeat)}. ${prey} ${s3.preyBeat}. Peak pressure lands once, stays readable, then eases into a clean chained end-state. Spacing stays readable, and overlap stays controlled. ${locationCore}. Grounded weight transfer and surface response stay forceful but controlled.`
   );
 
-  const longShot4PasteReady = sanitizeRunwayFPS(
+  const longShot4PasteReady = finalizeWorkflowRunwayPasteReady(
     isAquatic
-      ? `Wide aftermath hold with a slow pull-back over the full 10-second resolve. Both subjects remain fully readable. The left subject ${s4.predatorBeat}. The right subject ${s4.preyBeat}. Let the winner hold, retreat, or stare-down settle without adding new action. Residual turbulence fades while final spacing stays clean for the last frame.${runwayCameraTail} ${micro}${quality?.seamlessShot ? " Continuous, seamless shot." : ""}`.trim()
+      ? `Wide aftermath hold with a slow pull-back over the full 10-second resolve. Both subjects remain fully readable. The left subject ${s4.predatorBeat}. The right subject ${s4.preyBeat}. Let the winner hold, retreat, or stare-down settle as the resolve closes cleanly. Residual turbulence fades while final spacing stays clean for the last frame.${runwayCameraTail} ${micro}${quality?.seamlessShot ? " Continuous, seamless shot." : ""}`.trim()
       : isShoreline
-        ? `Wide aftermath hold with a slow pull-back over the full 10-second resolve. Both subjects remain fully readable. The left subject ${s4.predatorBeat}. The right subject ${s4.preyBeat}. Let the winner hold, retreat, or stare-down settle without adding new action. Residual splash and shoreline disturbance fade while final spacing stays clean for the last frame.${runwayCameraTail} ${micro}${quality?.seamlessShot ? " Continuous, seamless shot." : ""}`.trim()
-        : `Wide aftermath hold with a slow pull-back over the full 10-second resolve. Both subjects remain fully readable. The left subject ${s4.predatorBeat}. The right subject ${s4.preyBeat}. Let the winner hold, retreat, or stare-down settle without adding new action. Residual atmosphere fades while final spacing stays clean for the last frame.${runwayCameraTail} ${micro}${quality?.seamlessShot ? " Continuous, seamless shot." : ""}`.trim()
+        ? `Wide aftermath hold with a slow pull-back over the full 10-second resolve. Both subjects remain fully readable. The left subject ${s4.predatorBeat}. The right subject ${s4.preyBeat}. Let the winner hold, retreat, or stare-down settle as the resolve closes cleanly. Residual splash and shoreline disturbance fade while final spacing stays clean for the last frame.${runwayCameraTail} ${micro}${quality?.seamlessShot ? " Continuous, seamless shot." : ""}`.trim()
+        : `Wide aftermath hold with a slow pull-back over the full 10-second resolve. Both subjects remain fully readable. The left subject ${s4.predatorBeat}. The right subject ${s4.preyBeat}. Let the winner hold, retreat, or stare-down settle as the resolve closes cleanly. Residual atmosphere fades while final spacing stays clean for the last frame.${runwayCameraTail} ${micro}${quality?.seamlessShot ? " Continuous, seamless shot." : ""}`.trim()
   );
 
   return {
