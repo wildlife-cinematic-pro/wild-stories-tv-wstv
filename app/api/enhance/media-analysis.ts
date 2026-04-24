@@ -24,6 +24,39 @@ const analyzeMediaRequestSchema = z.object({
   provider: z.enum(["gemini", "claude"]).optional(),
 });
 
+const GEMINI_IMAGE_MIME_TYPES = new Set([
+  "image/jpeg",
+  "image/png",
+  "image/webp",
+  "image/gif",
+]);
+const GEMINI_VIDEO_MIME_TYPES = new Set([
+  "video/mp4",
+  "video/quicktime",
+  "video/webm",
+]);
+
+export function normalizeGeminiVisionMimeType(
+  mediaType: "image" | "video",
+  mimeType: string
+): string | undefined {
+  let normalized = sanitizeString(mimeType, 120).trim().toLowerCase();
+  if (!normalized) return undefined;
+
+  if (normalized === "image/jpg") {
+    normalized = "image/jpeg";
+  }
+
+  if (normalized === "video/mov") {
+    normalized = "video/quicktime";
+  }
+
+  const allowedTypes =
+    mediaType === "video" ? GEMINI_VIDEO_MIME_TYPES : GEMINI_IMAGE_MIME_TYPES;
+
+  return allowedTypes.has(normalized) ? normalized : undefined;
+}
+
 function jsonProviderFailure(detailedData: unknown) {
   if (process.env.NODE_ENV === "production") {
     return jsonError("Provider request failed", 502);
@@ -81,10 +114,20 @@ export async function handleMediaAnalysisRequest(body: unknown) {
       const apiKey = process.env.GEMINI_API_KEY;
       if (!apiKey) return jsonError("Missing GEMINI_API_KEY", 500);
 
+      const geminiMimeType = normalizeGeminiVisionMimeType(mediaType, mimeType);
+      if (!geminiMimeType) {
+        return jsonError(
+          mediaType === "video"
+            ? "Gemini media analysis supports MP4, QuickTime, or WebM videos only."
+            : "Gemini media analysis supports JPEG, PNG, GIF, or WebP images only.",
+          400
+        );
+      }
+
       const stable = getGeminiModelStable();
       let { res, data } = await callGeminiVision(stable, apiKey, {
         prompt: analysisPrompt,
-        mimeType,
+        mimeType: geminiMimeType,
         base64Data,
       });
 
@@ -95,7 +138,7 @@ export async function handleMediaAnalysisRequest(body: unknown) {
           const fb = getGeminiModelFallback();
           ({ res, data } = await callGeminiVision(fb, apiKey, {
             prompt: analysisPrompt,
-            mimeType,
+            mimeType: geminiMimeType,
             base64Data,
           }));
         }

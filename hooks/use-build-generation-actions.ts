@@ -348,8 +348,6 @@ export function useBuildGenerationActions({
 
     setIsGenerating(true);
     setError("");
-    setPkg(null);
-    setPublishFlowSummary(null);
     try {
       const draft = buildCurrentPackageDraft();
       const enhanced = await buildEnhancementsForDraft(draft);

@@ -2,6 +2,7 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 
 import { createDefaultPackageLockState } from "@/lib/package-section-locks";
 import {
+  createLastGeneratedOutputDebouncer,
   readLastGeneratedOutput,
   readRealGenerationEvidenceForGeneration,
   readRealGenerationEvidenceHistory,
@@ -182,6 +183,36 @@ describe("settings storage", () => {
     expect(readLastGeneratedOutput()).toEqual(record);
   });
 
+  it("debounces last generated output writes and keeps only the latest record", () => {
+    vi.useFakeTimers();
+
+    const write = vi.fn<(record: LastGeneratedOutputRecord) => void>();
+    const debouncer = createLastGeneratedOutputDebouncer(write, 50);
+    const firstRecord = makeLastGeneratedOutputRecord();
+    const secondRecord = {
+      ...makeLastGeneratedOutputRecord(),
+      storedAt: "2026-04-24T00:00:01.000Z",
+      pkg: {
+        ...makeLastGeneratedOutputRecord().pkg,
+        hook: "Updated hook after debounce.",
+      },
+    };
+
+    debouncer.schedule(firstRecord);
+    debouncer.schedule(secondRecord);
+
+    expect(write).not.toHaveBeenCalled();
+
+    vi.advanceTimersByTime(49);
+    expect(write).not.toHaveBeenCalled();
+
+    vi.advanceTimersByTime(1);
+    expect(write).toHaveBeenCalledTimes(1);
+    expect(write).toHaveBeenCalledWith(secondRecord);
+
+    debouncer.cancel();
+    vi.useRealTimers();
+  });
 
   it("persists real-generation evidence history and can read the current generation record", () => {
     installLocalStorageMock();

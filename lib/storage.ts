@@ -603,6 +603,33 @@ export type LastGeneratedOutputRecord = {
   packageLocks: PackageLockState;
 };
 
+export const LAST_GENERATED_OUTPUT_WRITE_DEBOUNCE_MS = 250;
+
+export function createLastGeneratedOutputDebouncer(
+  write: (record: LastGeneratedOutputRecord) => void,
+  delayMs = LAST_GENERATED_OUTPUT_WRITE_DEBOUNCE_MS
+) {
+  let timeoutId: ReturnType<typeof setTimeout> | null = null;
+
+  return {
+    schedule(record: LastGeneratedOutputRecord) {
+      if (timeoutId) {
+        clearTimeout(timeoutId);
+      }
+
+      timeoutId = setTimeout(() => {
+        timeoutId = null;
+        write(record);
+      }, delayMs);
+    },
+    cancel() {
+      if (!timeoutId) return;
+      clearTimeout(timeoutId);
+      timeoutId = null;
+    },
+  };
+}
+
 function isObjectRecord(value: unknown): value is Record<string, unknown> {
   return Boolean(value) && typeof value === "object" && !Array.isArray(value);
 }
