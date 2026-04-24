@@ -305,20 +305,27 @@ function getContentLaneConfig(contentLane: ContentLane): ContentLaneConfig | nul
   return contentLane === "Auto" ? null : CONTENT_LANE_CONFIG[contentLane];
 }
 
+const RUT_BATTLE_SPECIES = [
+  "bull elk",
+  "elk",
+  "moose",
+  "white tailed deer",
+  "white-tailed deer",
+  "mule deer",
+  "deer",
+  "caribou",
+  "reindeer",
+] as const;
+
 function isRutBattleSpeciesPair(predator: string, prey: string): boolean {
-  const rutSpecies = [
-    "bull elk",
-    "elk",
-    "bison",
-    "moose",
-    "musk ox",
-    "cape buffalo",
-    "wild boar",
-  ];
   const predatorText = normalizeText(predator);
   const preyText = normalizeText(prey);
-  const predatorMatch = rutSpecies.some((species) => predatorText.includes(species));
-  const preyMatch = rutSpecies.some((species) => preyText.includes(species));
+  const predatorMatch = RUT_BATTLE_SPECIES.some((species) =>
+    predatorText.includes(species)
+  );
+  const preyMatch = RUT_BATTLE_SPECIES.some((species) =>
+    preyText.includes(species)
+  );
 
   return predatorMatch && preyMatch;
 }
@@ -536,10 +543,13 @@ export function scoreContentLaneFit(input: {
   );
 
   if (!compatible) {
-    let mismatchScore = 54;
-    if (config.nearbyArcs.includes(input.arc)) mismatchScore += 6;
-    if (config.preferredHookFamily === input.hookFamily) mismatchScore += 3;
-    return Math.min(68, mismatchScore);
+    const isRutLane = input.contentLane === "Rut Battle";
+    let mismatchScore = isRutLane ? 38 : 54;
+    if (config.nearbyArcs.includes(input.arc)) mismatchScore += isRutLane ? 4 : 6;
+    if (config.preferredHookFamily === input.hookFamily) {
+      mismatchScore += isRutLane ? 2 : 3;
+    }
+    return Math.min(isRutLane ? 46 : 68, mismatchScore);
   }
 
   let score = 74;

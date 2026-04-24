@@ -203,8 +203,31 @@ describe("Content Lane system", () => {
     });
 
     expect(`${hook} ${caption}`.toLowerCase()).not.toMatch(/antler|rut-season/);
-    expect(fitScore).toBeLessThan(70);
+    expect(fitScore).toBeLessThan(50);
     expect(laneScore.total).toBe(baseScore.total);
+  });
+
+
+  it("treats heavy-body mirror matches like bison as non-rut fits", () => {
+    const predator = "Bison";
+    const prey = "Bison";
+    const hook = build2026HookByFamily(
+      predator,
+      prey,
+      "Giant vs giant clash",
+      "danger",
+      { contentLane: "Rut Battle" }
+    );
+    const hashtags = buildHashtags(predator, prey, "Giant vs giant clash", {
+      count: 5,
+      contentLane: "Rut Battle",
+    });
+
+    expect(
+      isContentLaneCompatible("Rut Battle", predator, prey, "Giant vs giant clash")
+    ).toBe(false);
+    expect(hook.toLowerCase()).not.toMatch(/antler|rut-season/);
+    expect(hashtags).not.toContain("#rutbattle");
   });
 
 
