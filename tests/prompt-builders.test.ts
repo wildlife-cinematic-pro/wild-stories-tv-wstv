@@ -22,6 +22,7 @@ import {
   sanitizeSocialCopyText,
   validateKlingPromptLength,
   validateEngineConstraints,
+  buildPromptScenarioContext,
 } from "@/lib/prompt-builders";
 import { getHabitatMode, isWaterForwardPreyScenario } from "@/lib/prompt-builders/habitat";
 
@@ -1784,5 +1785,155 @@ describe("Hybrid workflow engine routing", () => {
     expect(pack.shot2.metadata?.engine).toBe("kling");
     expect(pack.shot3.metadata?.engine).toBe("kling");
     expect(pack.shot4.metadata?.engine).toBe("runway");
+  });
+});
+
+
+describe("Issue #47 — shared scenario context", () => {
+  const quality = {
+    realismMode: "Reference Locked",
+    motionOnlyI2V: true,
+    referenceLock: true,
+    singleActionRule: true,
+    microMotion: true,
+    heroVeo: false,
+  } as const;
+
+  it("returns land pressure beats for mountain lion vs deer in forest meadow", () => {
+    const context = buildPromptScenarioContext({
+      predator: "Mountain Lion",
+      prey: "White-tailed Deer",
+      env: "Forest meadow edge",
+      arc: "Ambush attack",
+      weather: "Golden Hour",
+      quality,
+      engine: "runway",
+    });
+
+    expect(context.scenarioKind).toBe("land");
+    expect(context.isShoreline).toBe(false);
+    expect(context.isWaterForwardStrike).toBe(false);
+    expect(context.pressurePredator).toContain("stronger visible pressure");
+    expect(context.pressurePrey).toContain("defensive adjustment");
+  });
+
+  it("returns shoreline ambush beats for alligator vs wild boar in marsh", () => {
+    const context = buildPromptScenarioContext({
+      predator: "Alligator",
+      prey: "Wild Boar",
+      env: "Everglades marsh shoreline",
+      arc: "Ambush attack",
+      weather: "Overcast",
+      quality,
+      engine: "kling",
+    });
+
+    expect(context.scenarioKind).toBe("shoreline");
+    expect(context.isShoreline).toBe(true);
+    expect(context.isWaterForwardStrike).toBe(false);
+    expect(context.pressurePredator).toContain("ambush pressure");
+    expect(context.pressurePrey).toContain("bank");
+  });
+
+  it("returns water-forward shoreline beats for bald eagle vs salmon", () => {
+    const context = buildPromptScenarioContext({
+      predator: "Bald Eagle",
+      prey: "Salmon",
+      env: "Riverbank Reeds",
+      arc: "Ambush attack",
+      weather: "Dawn",
+      quality,
+      engine: "kling",
+    });
+
+    expect(context.scenarioKind).toBe("shoreline-water-forward");
+    expect(context.isShoreline).toBe(true);
+    expect(context.isWaterForwardStrike).toBe(true);
+    expect(context.pressurePredator).toContain("shallow strike window");
+    expect(context.pressurePrey).toContain("surface-break");
+  });
+
+  it("returns rut mirror-match flags and cues for bull elk", () => {
+    const context = buildPromptScenarioContext({
+      predator: "Bull Elk",
+      prey: "Bull Elk",
+      env: "Rocky Mountain meadow with rut-season footing",
+      arc: "Giant vs giant clash",
+      weather: "Frozen Dusk",
+      quality,
+      engine: "runway",
+    });
+
+    expect(context.scenarioKind).toBe("rut-mirror");
+    expect(context.isRutMirrorMatch).toBe(true);
+    expect(context.rutCue.room).toContain("antler room");
+    expect(context.pressurePredator).toContain(context.rutCue.room);
+  });
+
+  it("returns land pack-hunt pressure beats for wolf pack vs bull elk", () => {
+    const context = buildPromptScenarioContext({
+      predator: "Wolf Pack",
+      prey: "Bull Elk",
+      env: "Rocky Mountain meadow",
+      arc: "Pack hunting strategy",
+      weather: "Golden Hour",
+      quality,
+      engine: "kling",
+    });
+
+    expect(context.scenarioKind).toBe("land");
+    expect(context.habitatMode).toBe("land");
+    expect(context.pressurePredator).toContain("stronger visible pressure");
+    expect(context.pressurePrey).toContain("defensive adjustment");
+  });
+});
+
+describe("Issue #47 — Runway and Kling refactor contracts", () => {
+  const quality = {
+    realismMode: "Reference Locked",
+    motionOnlyI2V: true,
+    referenceLock: true,
+    singleActionRule: true,
+    microMotion: true,
+    heroVeo: false,
+  } as const;
+
+  it("keeps Runway full text guidance for FPS and no negative prompts", () => {
+    const pack = buildRunwayPromptPack(
+      "Wolf Pack",
+      "Bull Elk",
+      "Rocky Mountain meadow",
+      "Pack hunting strategy",
+      "Golden Hour",
+      "Gen-4.5",
+      "Raw Tension",
+      "BBC Earth Documentary",
+      "Both subjects are readable from frame one.",
+      quality
+    );
+
+    expect(pack.shot1.fullText).toContain("FPS: 24 or 25");
+    expect(pack.shot1.fullText).toContain("No negative prompt");
+  });
+
+  it("keeps Kling paste-ready narrative style while full breakdown still keeps labels", () => {
+    const pack = buildKlingPromptPack(
+      "Wolf Pack",
+      "Bull Elk",
+      "Rocky Mountain meadow",
+      "Pack hunting strategy",
+      "Golden Hour",
+      "Kling 3.0 Pro",
+      "Raw Tension",
+      "BBC Earth Documentary",
+      "Both subjects are readable from frame one.",
+      quality
+    );
+
+    expect(pack.shot1.pasteReady).not.toContain("Shot:");
+    expect(pack.shot1.pasteReady).not.toContain("Characters:");
+    expect(pack.shot1.pasteReady).not.toContain("Action:");
+    expect(pack.shot1.fullText).toContain("Characters:");
+    expect(pack.shot1.fullText).toContain("Action:");
   });
 });

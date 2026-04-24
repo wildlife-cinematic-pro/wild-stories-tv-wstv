@@ -13,22 +13,13 @@ import { emotionalTonePrompt } from "@/lib/predator-data";
 import { RUNWAY_STYLE_NOTE } from "@/lib/model-specs";
 
 import {
-  getHabitatMode,
-  oneActionArcBeat,
-  buildMicroMotionLine,
-  isWaterForwardPreyScenario,
-  isRutMirrorMatchScenario,
-  getRutMirrorMatchCue,
-} from "@/lib/prompt-builders/habitat";
-import {
   buildQualityLead,
   maybeGuard,
   type FourShotPromptPack,
   buildStructuredPrompt,
   promptPackToLegacyText,
-  buildShotWorldContinuityLock,
 } from "@/lib/prompt-builders/shared";
-import { buildRunwayCameraPresetLine } from "@/lib/camera-angle-presets";
+import { buildPromptScenarioContext } from "@/lib/prompt-builders/scenario-context";
 import { sanitizeForEngine } from "@/lib/prompt-builders/safety-vocabulary";
 import {
   clipPromptContext,
@@ -60,23 +51,30 @@ export function buildRunwayPromptPack(
   void animalVibe;
   const note = RUNWAY_STYLE_NOTE[model];
   const tone = emotionalTonePrompt[emotionalTone];
-  const micro = buildMicroMotionLine(weather, env);
-  const habitatMode = getHabitatMode(predator, prey, env);
-  const isAquatic = habitatMode === "aquatic";
-  const isShoreline = habitatMode === "shoreline";
-  const isWaterForwardStrike = isWaterForwardPreyScenario(predator, prey, env);
-  const isRutMirrorMatch = isRutMirrorMatchScenario(predator, prey, arc, env);
-  const rutCue = getRutMirrorMatchCue(predator);
-  const cameraPresetLine = buildRunwayCameraPresetLine(
+  const scenario = buildPromptScenarioContext({
+    predator,
+    prey,
+    env,
+    arc,
+    weather,
+    quality,
     cameraAnglePreset,
-    habitatMode,
-    env
-  );
-  const cameraPromptTail = cameraPresetLine ? ` ${cameraPresetLine}` : "";
-  const cameraBreakdownLine = cameraPresetLine
-    ? `\nCamera preset: ${cameraPresetLine}`
-    : "";
-  const worldPlateContinuity = buildShotWorldContinuityLock("runway");
+    engine: "runway",
+  });
+  const {
+    isAquatic,
+    isShoreline,
+    isWaterForwardStrike,
+    isRutMirrorMatch,
+    micro,
+    rutCue,
+    cameraPromptTail,
+    cameraBreakdownLine,
+    worldPlateContinuity,
+    beat1: s1,
+    beat3: s3,
+    beat4: s4,
+  } = scenario;
 
   const qLead = buildQualityLead(quality, "runway");
   const context = sceneDesc?.trim() ? `\nScene continuity: ${clipPromptContext(sceneDesc.trim())}` : "";
@@ -93,46 +91,18 @@ export function buildRunwayPromptPack(
     ? "One primary subject action and one camera move only."
     : "Keep motion readable and limited.";
 
-  const gateOn = !!quality?.singleActionRule;
-  const beat1 = oneActionArcBeat(arc, "establish", gateOn, habitatMode);
-  const beat3 = oneActionArcBeat(arc, "action", gateOn, habitatMode);
-  const beat4 = oneActionArcBeat(arc, "aftermath", gateOn, habitatMode);
+  const pressurePredator = isAquatic
+    ? "leans into stronger forward water pressure without breaking spacing"
+    : scenario.pressurePredator;
 
-  const s1 = {
-    ...beat1,
-    predatorBeat: sanitizeVideoBeatText(beat1.predatorBeat),
-    preyBeat: sanitizeVideoBeatText(beat1.preyBeat),
-  };
-  const s3 = {
-    ...beat3,
-    predatorBeat: sanitizeVideoBeatText(beat3.predatorBeat),
-    preyBeat: sanitizeVideoBeatText(beat3.preyBeat),
-  };
-  const s4 = {
-    ...beat4,
-    predatorBeat: sanitizeVideoBeatText(beat4.predatorBeat),
-    preyBeat: sanitizeVideoBeatText(beat4.preyBeat),
-  };
-
-  const pressurePredator = isRutMirrorMatch
-    ? `edges forward with heavier shoulder-line pressure while keeping ${rutCue.room}`
-    : isAquatic
-      ? "leans into stronger forward water pressure without breaking spacing"
-      : isShoreline
-        ? isWaterForwardStrike
-          ? "leans farther forward from the bank as the shallow strike window tightens"
-          : "leans farther forward from the shoreline with stronger visible ambush pressure"
-        : "leans farther forward with stronger visible pressure";
-
-  const pressurePrey = isRutMirrorMatch
-    ? "braces into one grounded footing reset without giving away the claim line"
-    : isAquatic
-      ? "tightens posture and makes one readable defensive adjustment in the current"
-      : isShoreline
-        ? isWaterForwardStrike
-          ? "shows one tense surface-break adjustment tight to the bank-edge current"
-          : "lowers into one readable defensive footing adjustment near the bank"
-        : "lowers into one readable defensive adjustment";
+  const pressurePrey = isAquatic
+    ? "tightens posture and makes one readable defensive adjustment in the current"
+    : isShoreline && !isWaterForwardStrike
+      ? "lowers into one readable defensive footing adjustment near the bank"
+      : scenario.pressurePrey.replace(
+          "one defensive adjustment",
+          "one readable defensive adjustment"
+        );
 
   const shot1PasteReady = finalizeRunwayPasteReady(sanitizeForEngine(sanitizeRunwayFPS(
     isAquatic

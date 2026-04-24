@@ -86,15 +86,15 @@ export function FacebookPublishReadinessPanel({ data }: { data: GeneratedPackage
 
   return (
     <div
-      className="rounded-2xl border border-gray-200 bg-white p-4 shadow-sm"
+      className="rounded-2xl border border-[color:var(--border)] bg-[color:var(--surface-elevated)] p-4 shadow-sm"
       data-testid="facebook-publish-readiness-panel"
     >
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div className="max-w-3xl">
-          <div className="text-sm font-extrabold text-gray-900">
+          <div className="text-sm font-extrabold text-[color:var(--text)]">
             Facebook Publish Readiness
           </div>
-          <p className="mt-1 text-xs leading-relaxed text-gray-600">
+          <p className="mt-1 text-xs leading-relaxed text-[color:var(--muted)]">
             Final pre-post check for Facebook wildlife reels. This blends the current package,
             publish guard, and latest real-generation evidence so you can decide whether to post,
             revise the packaging, or retry before publishing.
@@ -113,7 +113,7 @@ export function FacebookPublishReadinessPanel({ data }: { data: GeneratedPackage
         </div>
       </div>
 
-      <div className="mt-4 rounded-2xl border border-gray-200 bg-gray-50 p-4 text-sm leading-relaxed text-gray-700">
+      <div className="mt-4 rounded-2xl border border-[color:var(--border)] bg-[color:var(--surface-muted)] p-4 text-sm leading-relaxed text-[color:var(--muted)]">
         {report.summary}
       </div>
 
@@ -132,13 +132,13 @@ export function FacebookPublishReadinessPanel({ data }: { data: GeneratedPackage
       </div>
 
       <div className="mt-4 grid gap-4 xl:grid-cols-[1.1fr_0.9fr]">
-        <div className="rounded-2xl border border-gray-200 bg-white p-4">
-          <div className="text-sm font-extrabold text-gray-900">Why this is the current call</div>
+        <div className="rounded-2xl border border-[color:var(--border)] bg-[color:var(--surface-elevated)] p-4">
+          <div className="text-sm font-extrabold text-[color:var(--text)]">Why this is the current call</div>
           <div className="mt-3 space-y-2">
             {report.reasons.map((reason, index) => (
               <div
                 key={`${reason}-${index}`}
-                className="rounded-xl border border-gray-200 bg-gray-50 px-3 py-2 text-xs leading-relaxed text-gray-700"
+                className="rounded-xl border border-[color:var(--border)] bg-[color:var(--surface-muted)] px-3 py-2 text-xs leading-relaxed text-[color:var(--muted)]"
               >
                 {reason}
               </div>
@@ -154,7 +154,7 @@ export function FacebookPublishReadinessPanel({ data }: { data: GeneratedPackage
                 {report.publishGuardWarnings.map((warning, index) => (
                   <div
                     key={`${warning}-${index}`}
-                    className="rounded-lg border border-white/80 bg-white px-3 py-2 text-xs leading-relaxed text-amber-900"
+                    className="rounded-lg border border-white/80 bg-[color:var(--surface-elevated)] px-3 py-2 text-xs leading-relaxed text-amber-900"
                   >
                     {warning}
                   </div>
@@ -165,8 +165,8 @@ export function FacebookPublishReadinessPanel({ data }: { data: GeneratedPackage
         </div>
 
         <div className="space-y-4">
-          <div className="rounded-2xl border border-gray-200 bg-white p-4">
-            <div className="text-sm font-extrabold text-gray-900">Evidence connection</div>
+          <div className="rounded-2xl border border-[color:var(--border)] bg-[color:var(--surface-elevated)] p-4">
+            <div className="text-sm font-extrabold text-[color:var(--text)]">Evidence connection</div>
             {report.evidenceContext ? (
               <div className="mt-3 rounded-xl border border-cyan-200 bg-cyan-50 p-3 text-xs leading-relaxed text-cyan-900">
                 <div className="font-bold">Latest evidence call</div>
@@ -176,20 +176,20 @@ export function FacebookPublishReadinessPanel({ data }: { data: GeneratedPackage
                 <p className="mt-2 text-cyan-800">{report.evidenceContext.note}</p>
               </div>
             ) : (
-              <div className="mt-3 rounded-xl border border-dashed border-gray-300 bg-gray-50 p-3 text-xs leading-relaxed text-gray-600">
+              <div className="mt-3 rounded-xl border border-dashed border-[color:var(--border)] bg-[color:var(--surface-muted)] p-3 text-xs leading-relaxed text-[color:var(--muted)]">
                 No saved evidence pass yet for this generation. Once you test real outputs,
                 save one evidence review and it will show up here.
               </div>
             )}
           </div>
 
-          <div className="rounded-2xl border border-gray-200 bg-white p-4">
-            <div className="text-sm font-extrabold text-gray-900">Before you post</div>
+          <div className="rounded-2xl border border-[color:var(--border)] bg-[color:var(--surface-elevated)] p-4">
+            <div className="text-sm font-extrabold text-[color:var(--text)]">Before you post</div>
             <div className="mt-3 space-y-2">
               {report.reminders.map((reminder, index) => (
                 <div
                   key={`${reminder}-${index}`}
-                  className="rounded-xl border border-gray-200 bg-gray-50 px-3 py-2 text-xs leading-relaxed text-gray-700"
+                  className="rounded-xl border border-[color:var(--border)] bg-[color:var(--surface-muted)] px-3 py-2 text-xs leading-relaxed text-[color:var(--muted)]"
                 >
                   {reminder}
                 </div>

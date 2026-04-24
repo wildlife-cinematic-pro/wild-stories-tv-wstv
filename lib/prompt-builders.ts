@@ -30,6 +30,8 @@ export {
   stripBackgroundMovementLead,
 } from "@/lib/prompt-builders/habitat";
 
+export { buildPromptScenarioContext } from "@/lib/prompt-builders/scenario-context";
+
 export {
   buildQualityLead,
   RUNWAY_SPECS,
