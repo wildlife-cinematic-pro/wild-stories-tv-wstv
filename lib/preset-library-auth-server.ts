@@ -28,10 +28,9 @@ function getBlobToken(): string | undefined {
 }
 
 function getAuthSecret(): string | undefined {
-  const explicitSecret = process.env.PRESET_LIBRARY_AUTH_SECRET?.trim();
-  const blobTokenFallback = process.env.BLOB_READ_WRITE_TOKEN?.trim();
-  return explicitSecret || blobTokenFallback || undefined;
+  return process.env.PRESET_LIBRARY_AUTH_SECRET?.trim() || undefined;
 }
+// WSTV-AUDIT-FIX: FIX-6 applied
 
 function cleanString(value: unknown, fallback = ""): string {
   return typeof value === "string" ? value.trim() : fallback;

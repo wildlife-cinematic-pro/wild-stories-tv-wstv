@@ -1,3 +1,21 @@
+async function fetchWithProviderTimeout(
+  url: string,
+  init: RequestInit
+): Promise<Response> {
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), 20_000);
+
+  try {
+    return await fetch(url, {
+      ...init,
+      signal: controller.signal,
+    });
+  } finally {
+    clearTimeout(timeout);
+  }
+}
+// WSTV-AUDIT-FIX: FIX-8 applied
+
 export function getGeminiModelStable(): string {
   return process.env.GEMINI_MODEL?.trim() || "gemini-2.5-flash";
 }
@@ -11,7 +29,7 @@ export async function callGeminiText(modelId: string, apiKey: string, prompt: st
     apiKey
   )}`;
 
-  const res = await fetch(url, {
+  const res = await fetchWithProviderTimeout(url, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({
@@ -32,7 +50,7 @@ export async function callGeminiVision(
     apiKey
   )}`;
 
-  const res = await fetch(url, {
+  const res = await fetchWithProviderTimeout(url, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({
@@ -60,7 +78,7 @@ export async function callGeminiVision(
 export async function callClaudeText(apiKey: string, prompt: string) {
   const model = process.env.CLAUDE_MODEL?.trim() || "claude-opus-4-6";
 
-  const res = await fetch("https://api.anthropic.com/v1/messages", {
+  const res = await fetchWithProviderTimeout("https://api.anthropic.com/v1/messages", {
     method: "POST",
     headers: {
       "content-type": "application/json",
@@ -84,7 +102,7 @@ export async function callClaudeVision(
 ) {
   const model = process.env.CLAUDE_MODEL?.trim() || "claude-opus-4-6";
 
-  const res = await fetch("https://api.anthropic.com/v1/messages", {
+  const res = await fetchWithProviderTimeout("https://api.anthropic.com/v1/messages", {
     method: "POST",
     headers: {
       "content-type": "application/json",

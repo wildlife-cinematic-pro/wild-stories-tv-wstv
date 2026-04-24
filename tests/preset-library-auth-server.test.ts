@@ -44,7 +44,7 @@ describe("preset library auth server", () => {
   beforeEach(() => {
     blobStore.clear();
     process.env.BLOB_READ_WRITE_TOKEN = "blob-test-token";
-    process.env.PRESET_LIBRARY_AUTH_SECRET = "";
+    process.env.PRESET_LIBRARY_AUTH_SECRET = "preset-test-secret";
   });
 
   afterEach(() => {

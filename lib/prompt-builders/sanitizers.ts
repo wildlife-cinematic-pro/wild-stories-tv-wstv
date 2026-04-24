@@ -124,6 +124,8 @@ export function sanitizeRunwayNegative(prompt: string): string {
 
 export function sanitizeRunwayPrompt(prompt: string): string {
   return sanitizeRunwayNegative(sanitizeRunwayFPS(prompt))
+    .replace(/\(no contact yet\)/gi, "(contact has not landed yet)")
+    .replace(/no contact yet/gi, "contact has not landed yet")
     .replace(/\s{2,}/g, " ")
     .trim();
 }
