@@ -13,6 +13,9 @@ test("main build flow generates output, keeps workspace tabs reachable, and show
 
   await page.goto("/");
 
+  await expect(
+    page.locator("button[aria-current=\"step\"]").filter({ hasText: "Wildlife Setup" })
+  ).toBeVisible();
   await expect(page.getByText("Wildlife Focus")).toBeVisible();
   await expect(
     page
@@ -22,16 +25,30 @@ test("main build flow generates output, keeps workspace tabs reachable, and show
   await expect(page.getByRole("button", { name: "Sign In" })).toBeDisabled();
   await page.getByRole("button", { name: /Continue.*Engine & Quality/i }).click();
 
+  await expect(
+    page.locator("button[aria-current=\"step\"]").filter({ hasText: "Engine & Quality" })
+  ).toBeVisible();
   await expect(page.getByText("Image Prompt Engine")).toBeVisible();
   await page.getByRole("button", { name: /Continue.*Generate/i }).click();
 
+  await expect(
+    page.locator("button[aria-current=\"step\"]").filter({ hasText: "Generate" })
+  ).toBeVisible();
   await expect(page.getByText("Generate for Reels")).toBeVisible();
   await page.getByRole("button", { name: /Generate.*vs/i }).click();
 
   await expect(page.getByText("Generated Output")).toBeVisible({ timeout: 10_000 });
-  await expect(page.locator('[data-workspace-tab="overview"]')).toBeVisible();
+  await expect(page.getByRole("tablist", { name: /Output workspace navigation/i })).toBeVisible();
+  await expect(page.getByRole("tab", { name: /Overview workspace/i })).toHaveAttribute(
+    "aria-selected",
+    "true"
+  );
 
   await page.locator('[data-workspace-tab="advanced"]').click();
+  await expect(page.getByRole("tab", { name: /Advanced workspace/i })).toHaveAttribute(
+    "aria-selected",
+    "true"
+  );
   await expect(page.getByText(/Advanced workspace research/i)).toBeVisible();
 
   await page.locator('[data-workspace-tab="overview"]').click();

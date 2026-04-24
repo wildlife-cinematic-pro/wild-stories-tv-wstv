@@ -151,6 +151,9 @@ export default function OutputCards({
     },
   ];
 
+  const getWorkspaceTabId = (tab: OutputWorkspaceTab) => `output-workspace-tab-${tab}`;
+  const getWorkspacePanelId = (tab: OutputWorkspaceTab) => `output-workspace-panel-${tab}`;
+
   const workspaceOverviewCards = [
     {
       key: "overview" as const,
@@ -274,6 +277,7 @@ export default function OutputCards({
       <div className="sticky top-3 z-20 rounded-2xl border border-[color:var(--border)] bg-[color:var(--surface-elevated)] p-2 shadow-[var(--surface-shadow)] backdrop-blur">
         <div
           ref={workspaceTabRailRef}
+          role="tablist"
           className="flex gap-2 overflow-x-auto pb-1 scroll-smooth overscroll-x-contain [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
           aria-label="Output workspace navigation"
         >
@@ -281,6 +285,8 @@ export default function OutputCards({
             <WorkspaceTabButton
               key={item.key}
               tabKey={item.key}
+              tabId={getWorkspaceTabId(item.key)}
+              panelId={getWorkspacePanelId(item.key)}
               label={item.label}
               detail={item.detail}
               badge={item.badge}
@@ -292,7 +298,12 @@ export default function OutputCards({
       </div>
 
       {activeWorkspace === "overview" && (
-        <OverviewWorkspace
+        <div
+          id={getWorkspacePanelId("overview")}
+          role="tabpanel"
+          aria-labelledby={getWorkspaceTabId("overview")}
+        >
+          <OverviewWorkspace
           data={data}
           versionKey={versionKey}
           onRestoreVersion={onRestoreVersion}
@@ -302,14 +313,26 @@ export default function OutputCards({
           }
           onCopy={onCopy}
         />
+        </div>
       )}
 
       {activeWorkspace === "prompts" && (
-        <PromptsWorkspace data={data} onCopy={onCopy} />
+        <div
+          id={getWorkspacePanelId("prompts")}
+          role="tabpanel"
+          aria-labelledby={getWorkspaceTabId("prompts")}
+        >
+          <PromptsWorkspace data={data} onCopy={onCopy} />
+        </div>
       )}
 
       {activeWorkspace === "video" && (
-        <VideoWorkspace
+        <div
+          id={getWorkspacePanelId("video")}
+          role="tabpanel"
+          aria-labelledby={getWorkspaceTabId("video")}
+        >
+          <VideoWorkspace
           data={data}
           videoWorkspace={videoWorkspace}
           onVideoWorkspaceChange={setVideoWorkspace}
@@ -317,25 +340,52 @@ export default function OutputCards({
           onOpenWorkspace={setActiveWorkspace}
           onCopy={onCopy}
         />
+        </div>
       )}
 
       {activeWorkspace === "direct" && (
-        <DirectWorkspace
+        <div
+          id={getWorkspacePanelId("direct")}
+          role="tabpanel"
+          aria-labelledby={getWorkspaceTabId("direct")}
+        >
+          <DirectWorkspace
           data={data}
           directWorkspace={directWorkspace}
           onDirectWorkspaceChange={setDirectWorkspace}
           onCopy={onCopy}
         />
+        </div>
       )}
 
       {activeWorkspace === "publishing" && (
-        <PublishingWorkspace data={data} onCopy={onCopy} />
+        <div
+          id={getWorkspacePanelId("publishing")}
+          role="tabpanel"
+          aria-labelledby={getWorkspaceTabId("publishing")}
+        >
+          <PublishingWorkspace data={data} onCopy={onCopy} />
+        </div>
       )}
 
-      {activeWorkspace === "evidence" && <EvidenceWorkspace data={data} />}
+      {activeWorkspace === "evidence" && (
+        <div
+          id={getWorkspacePanelId("evidence")}
+          role="tabpanel"
+          aria-labelledby={getWorkspaceTabId("evidence")}
+        >
+          <EvidenceWorkspace data={data} />
+        </div>
+      )}
 
       {activeWorkspace === "advanced" && (
-        <AdvancedWorkspace data={data} onCopy={onCopy} />
+        <div
+          id={getWorkspacePanelId("advanced")}
+          role="tabpanel"
+          aria-labelledby={getWorkspaceTabId("advanced")}
+        >
+          <AdvancedWorkspace data={data} onCopy={onCopy} />
+        </div>
       )}
     </div>
   );

@@ -3,20 +3,22 @@
 import { arcs } from "@/lib/model-specs";
 import { habitatPromptMap } from "@/lib/habitat-presets";
 
+import type { Arc } from "@/types";
+
 type CustomAnimalModalProps = {
   open: boolean;
   form: {
     name: string;
     prey: string;
     environment: string;
-    defaultArc: string;
+    defaultArc: Arc;
     driftRisk: "LOW" | "MEDIUM" | "HIGH";
   };
   onClose: () => void;
   onNameChange: (value: string) => void;
   onPreyChange: (value: string) => void;
   onEnvironmentChange: (value: string) => void;
-  onDefaultArcChange: (value: string) => void;
+  onDefaultArcChange: (value: Arc) => void;
   onDriftRiskChange: (value: "LOW" | "MEDIUM" | "HIGH") => void;
   onSave: () => void;
   onDelete: () => void;
@@ -127,7 +129,7 @@ export default function CustomAnimalModal({
               </label>
               <select
                 value={form.defaultArc}
-                onChange={(event) => onDefaultArcChange(event.target.value)}
+                onChange={(event) => onDefaultArcChange(event.target.value as Arc)}
                 className="w-full rounded-2xl border border-gray-200 bg-gray-50/80 px-3.5 py-3 text-sm text-gray-800 shadow-sm shadow-gray-100/80 transition focus:border-gray-400 focus:bg-white focus:outline-none focus:ring-4 focus:ring-gray-200/60"
               >
                 {arcs.map((arc) => (

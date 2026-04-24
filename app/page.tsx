@@ -749,7 +749,10 @@ export default function Page() {
           {activeTab === "build" && (
             <div className="border-t border-white/[0.06] pb-3 pt-2">
               <div className="overflow-hidden rounded-[24px] border border-[color:var(--border)] bg-[color:var(--surface-elevated)] shadow-[var(--surface-shadow)] backdrop-blur-xl">
-                <div className="flex flex-wrap items-center gap-2 px-2 py-2.5 sm:flex-nowrap sm:px-3">
+                <nav
+                  aria-label="Build steps"
+                  className="flex flex-wrap items-center gap-2 px-2 py-2.5 sm:flex-nowrap sm:px-3"
+                >
                   {([
                     { step: 1 as Step, label: "Wildlife Setup" },
                     { step: 2 as Step, label: "Engine & Quality" },
@@ -758,6 +761,7 @@ export default function Page() {
                     <div key={s.step} className="flex shrink-0 items-center gap-2">
                       <button
                         type="button"
+                        aria-current={step === s.step ? "step" : undefined}
                         onClick={() => setStep(s.step)}
                         className={`flex items-center gap-2 rounded-2xl border px-3.5 py-2 text-left text-xs font-semibold transition-all active:scale-[0.98] ${
                           step === s.step
@@ -794,7 +798,7 @@ export default function Page() {
                       )}
                     </div>
                   ))}
-                </div>
+                </nav>
               </div>
             </div>
           )}

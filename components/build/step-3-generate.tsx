@@ -1,6 +1,7 @@
 "use client";
 
 import ConceptVariantLab from "@/components/build/concept-variant-lab";
+import GenerationOutputBoundary from "@/components/build/generation-output-boundary";
 import SectionLockControls from "@/components/build/section-lock-controls";
 import OutputCards from "@/components/OutputCards";
 
@@ -161,7 +162,10 @@ export default function Step3Generate({
       )}
 
       {pkg && (
-        <section>
+        <GenerationOutputBoundary
+          resetKey={`${pkg.hook ?? ""}|${pkg.caption ?? ""}|${pkg.routingNote ?? ""}`}
+        >
+          <section>
           {lastGeneratedRestoreNotice && (
             <div
               className="mb-4 flex flex-wrap items-start justify-between gap-3 rounded-2xl border border-sky-200 bg-sky-50 px-4 py-3 text-sm text-sky-900 shadow-sm shadow-sky-100/60"
@@ -322,6 +326,7 @@ export default function Step3Generate({
             <OutputCards data={pkg} onRestoreVersion={onRestoreVersion} />
           </div>
         </section>
+        </GenerationOutputBoundary>
       )}
 
       <div className="flex gap-2 border-t border-gray-200/80 pt-5">

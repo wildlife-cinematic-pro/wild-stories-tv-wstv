@@ -368,6 +368,8 @@ export function SectionLabel({ label }: { label: string }) {
 
 export function WorkspaceTabButton({
   tabKey,
+  tabId,
+  panelId,
   label,
   detail,
   badge,
@@ -375,6 +377,8 @@ export function WorkspaceTabButton({
   onClick,
 }: {
   tabKey?: string;
+  tabId: string;
+  panelId: string;
   label: string;
   detail: string;
   badge: string;
@@ -417,10 +421,14 @@ export function WorkspaceTabButton({
 
   return (
     <button
+      id={tabId}
       type="button"
+      role="tab"
+      tabIndex={active ? 0 : -1}
       onClick={onClick}
       data-workspace-tab={tabKey}
-      aria-pressed={active}
+      aria-selected={active}
+      aria-controls={panelId}
       aria-label={`${label} workspace`}
       className={`min-w-[180px] flex-none snap-start rounded-2xl border px-3 py-3 text-left transition sm:min-w-[190px] sm:px-4 ${
         active ? accent.active : accent.idle

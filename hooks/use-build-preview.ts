@@ -169,7 +169,7 @@ export function useBuildPreview({
         texture:
           "natural fur, feather, or scale detail, grounded body weight, realistic contact with dirt, grass, brush, and uneven terrain",
         driftRisk: custom.driftRisk || "MEDIUM",
-        defaultArc: custom.defaultArc || "Pack hunting strategy",
+        defaultArc: custom.defaultArc ?? "Pack hunting strategy",
       },
       lionFallback
     );

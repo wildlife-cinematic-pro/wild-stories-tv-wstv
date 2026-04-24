@@ -17,7 +17,7 @@ export type NormalizedPreset = {
   lighting: string;
   cameraGear: string;
   texture: string;
-  defaultArc: string;
+  defaultArc: Arc;
   driftRisk: DriftRisk;
 };
 
@@ -172,6 +172,11 @@ function toDriftRisk(value: unknown): DriftRisk {
   return "MEDIUM";
 }
 
+export function normalizeArcValue(value: unknown, fallback: Arc = "Ambush attack"): Arc {
+  if (typeof value !== "string") return fallback;
+  return normalizeArcSuggestion(value) ?? fallback;
+}
+
 export function normalizePreset(input: unknown, fallback: NormalizedPreset): NormalizedPreset {
   const obj = (input ?? {}) as Record<string, unknown>;
   const prey =
@@ -184,8 +189,7 @@ export function normalizePreset(input: unknown, fallback: NormalizedPreset): Nor
   const cameraGear =
     typeof obj.cameraGear === "string" ? obj.cameraGear : fallback.cameraGear;
   const texture = typeof obj.texture === "string" ? obj.texture : fallback.texture;
-  const defaultArc =
-    typeof obj.defaultArc === "string" ? obj.defaultArc : fallback.defaultArc;
+  const defaultArc = normalizeArcValue(obj.defaultArc, fallback.defaultArc);
   const driftRisk = toDriftRisk(obj.driftRisk);
 
   return {

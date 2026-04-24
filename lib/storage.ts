@@ -54,6 +54,7 @@ import type { PublishFlowSummary } from "@/lib/build-package";
 
 import { weatherOptions, depthModes, habitatOptions } from "@/lib/model-specs";
 import { contentLaneOptions, isContentLane } from "@/lib/content-lanes";
+import { normalizeArcValue } from "@/lib/page-build-helpers";
 import {
   cameraAnglePresetOptions,
   isCameraAnglePreset,
@@ -195,7 +196,7 @@ function normalizeCustomPredatorForm(x: unknown): CustomPredatorForm | null {
 
   const prey = typeof obj.prey === "string" ? obj.prey.trim() : "Deer";
   const environment = typeof obj.environment === "string" ? obj.environment.trim() : "Savanna";
-  const defaultArc = typeof obj.defaultArc === "string" ? obj.defaultArc.trim() : "Ambush attack";
+  const defaultArc = normalizeArcValue(obj.defaultArc, "Ambush attack");
   const driftRisk = isDriftRisk(obj.driftRisk) ? obj.driftRisk : "MEDIUM";
 
   return { name, prey, environment, defaultArc, driftRisk };
@@ -216,7 +217,7 @@ function mapToCustomList(map: Record<string, unknown>): CustomPredatorForm[] {
       name,
       prey,
       environment: typeof info?.environment === "string" ? info.environment : "Savanna",
-      defaultArc: typeof info?.defaultArc === "string" ? info.defaultArc : "Ambush attack",
+      defaultArc: normalizeArcValue(info?.defaultArc, "Ambush attack"),
       driftRisk: isDriftRisk(info?.driftRisk) ? info!.driftRisk! : "MEDIUM",
     });
   }

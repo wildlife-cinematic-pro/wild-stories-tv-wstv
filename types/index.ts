@@ -430,7 +430,7 @@ export type PredatorInfo = {
   lighting: string;
   cameraGear: string;
   texture: string;
-  defaultArc: string;
+  defaultArc: Arc;
   driftRisk: "LOW" | "MEDIUM" | "HIGH";
 };
 
@@ -1021,7 +1021,7 @@ export type CustomPredatorForm = {
   name: string;
   prey: string;
   environment: string;
-  defaultArc: string;
+  defaultArc: Arc;
   driftRisk: "LOW" | "MEDIUM" | "HIGH";
 };
 

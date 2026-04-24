@@ -3,6 +3,7 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 import { createDefaultPackageLockState } from "@/lib/package-section-locks";
 import {
   createLastGeneratedOutputDebouncer,
+  readCustomPredators,
   readLastGeneratedOutput,
   readRealGenerationEvidenceForGeneration,
   readRealGenerationEvidenceHistory,
@@ -181,6 +182,33 @@ describe("settings storage", () => {
     writeLastGeneratedOutput(record);
 
     expect(readLastGeneratedOutput()).toEqual(record);
+  });
+
+  it("normalizes invalid custom predator arcs to a safe Arc value", () => {
+    installLocalStorageMock();
+
+    localStorage.setItem(
+      "wildlife_custom_predators_v1",
+      JSON.stringify([
+        {
+          name: "Snow Leopard",
+          prey: "Ibex",
+          environment: "High alpine ridge",
+          defaultArc: "Bad arc input",
+          driftRisk: "MEDIUM",
+        },
+      ])
+    );
+
+    expect(readCustomPredators()).toEqual([
+      {
+        name: "Snow Leopard",
+        prey: "Ibex",
+        environment: "High alpine ridge",
+        defaultArc: "Ambush attack",
+        driftRisk: "MEDIUM",
+      },
+    ]);
   });
 
   it("debounces last generated output writes and keeps only the latest record", () => {

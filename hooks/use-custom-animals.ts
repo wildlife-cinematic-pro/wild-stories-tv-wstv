@@ -4,6 +4,7 @@ import { useMemo, useState } from "react";
 
 import { habitatPromptMap } from "@/lib/habitat-presets";
 import {
+  coerceArc,
   filterPredatorOptionsByWildlifeScope,
   predatorData,
   suggestArc,
@@ -12,6 +13,7 @@ import {
   readCustomPredators,
   writeCustomPredators,
 } from "@/lib/storage";
+import { normalizeArcValue } from "@/lib/page-build-helpers";
 
 import type {
   Arc,
@@ -25,7 +27,7 @@ export type CustomAnimalFormState = {
   name: string;
   prey: string;
   environment: string;
-  defaultArc: string;
+  defaultArc: Arc;
   driftRisk: PredatorInfo["driftRisk"];
 };
 
@@ -91,7 +93,7 @@ export function useCustomAnimals({
       name: "",
       prey: "",
       environment: habitatPromptMap["Rocky Mountain Meadow"],
-      defaultArc: defaultArc || "Pack hunting strategy",
+      defaultArc: normalizeArcValue(defaultArc, "Pack hunting strategy"),
       driftRisk,
     });
     setCustomModalOpen(true);
@@ -125,7 +127,7 @@ export function useCustomAnimals({
       prey: normalizedPrey.length ? normalizedPrey.join(", ") : "White-tailed Deer",
       environment:
         customForm.environment.trim() || habitatPromptMap["Rocky Mountain Meadow"],
-      defaultArc: customForm.defaultArc || "Pack hunting strategy",
+      defaultArc: normalizeArcValue(customForm.defaultArc, "Pack hunting strategy"),
       driftRisk: customForm.driftRisk,
     };
 
@@ -140,7 +142,7 @@ export function useCustomAnimals({
     onSelectCustomAnimal({
       predator: name,
       prey: selectedPrey,
-      arc: suggestArc(name, selectedPrey, entry.defaultArc) as Arc,
+      arc: coerceArc(suggestArc(name, selectedPrey, entry.defaultArc)),
       habitat: defaultHabitat,
     });
     setCustomModalOpen(false);
