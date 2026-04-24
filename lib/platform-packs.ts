@@ -992,7 +992,7 @@ export function buildFacebookCoverFramePresets(
 }
 
 function clampFacebookScore(score: number): number {
-  return Math.max(0, Math.min(100, Math.round(score)));
+  return Math.max(0, Math.min(96, Math.round(score)));
 }
 
 function facebookFrameQualityTieBreak(
@@ -1298,29 +1298,29 @@ function coverFrameChoiceBias(
   if (frame1Choice === "species-first") {
     switch (preset) {
       case "two_line_cover":
-        return 7;
-      case "species_pressure":
         return 4;
-      case "species_question":
-        return 3;
-      case "short_documentary":
+      case "species_pressure":
         return 2;
+      case "species_question":
+        return 2;
+      case "short_documentary":
+        return 1;
       case "conflict_statement":
-        return -3;
+        return -4;
     }
   }
 
   switch (preset) {
     case "two_line_cover":
-      return 7;
+      return 4;
     case "short_documentary":
-      return 5;
-    case "species_pressure":
       return 3;
-    case "species_question":
+    case "species_pressure":
       return 2;
+    case "species_question":
+      return 1;
     case "conflict_statement":
-      return -1;
+      return -2;
   }
 
   return 0;
@@ -1333,29 +1333,29 @@ function overlayFrameChoiceBias(
   if (frame1Choice === "species-first") {
     switch (preset) {
       case "facebook_two_line_readable":
-        return 7;
+        return 4;
       case "facebook_species_first":
-        return 6;
+        return 4;
       case "facebook_documentary_tension":
-        return 3;
-      case "facebook_observational_question":
         return 2;
+      case "facebook_observational_question":
+        return 1;
       case "facebook_short_pressure":
-        return -3;
+        return -4;
     }
   }
 
   switch (preset) {
     case "facebook_two_line_readable":
-      return 7;
-    case "facebook_short_pressure":
-      return 6;
-    case "facebook_documentary_tension":
       return 4;
-    case "facebook_observational_question":
+    case "facebook_short_pressure":
+      return 4;
+    case "facebook_documentary_tension":
       return 3;
+    case "facebook_observational_question":
+      return 2;
     case "facebook_species_first":
-      return 0;
+      return 1;
   }
 
   return 0;
@@ -1459,11 +1459,10 @@ function scoreFacebookCoverFramePreset(
   score += coverFrameChoiceBias(preset.preset, frameHeuristics.frame1Choice);
   signals.push(buildFrame1CallSignal(frameHeuristics.frame1Choice));
 
-  if (preset.preset === "two_line_cover") score += 5;
-  if (preset.preset === "species_question") score += 2;
-  if (preset.preset === "species_pressure") score += 1;
-  if (preset.preset === "conflict_statement" && pressureClear) score += 2;
-  if (preset.preset === "conflict_statement" && !pressureClear) score -= 8;
+  if (preset.preset === "two_line_cover") score += 2;
+  if (preset.preset === "species_question") score += 1;
+  if (preset.preset === "conflict_statement" && pressureClear) score += 1;
+  if (preset.preset === "conflict_statement" && !pressureClear) score -= 10;
 
   return {
     preset: preset.preset,
@@ -1519,34 +1518,34 @@ function laneOverlayPresetBias(
   > = {
     Auto: {},
     "Pack Hunt": {
-      facebook_two_line_readable: 9,
-      facebook_short_pressure: 8,
-      facebook_species_first: 4,
-      facebook_documentary_tension: 3,
+      facebook_two_line_readable: 6,
+      facebook_short_pressure: 5,
+      facebook_species_first: 2,
+      facebook_documentary_tension: 2,
     },
     Defender: {
-      facebook_two_line_readable: 9,
-      facebook_documentary_tension: 8,
-      facebook_observational_question: 5,
-      facebook_species_first: 4,
+      facebook_two_line_readable: 6,
+      facebook_documentary_tension: 5,
+      facebook_observational_question: 3,
+      facebook_species_first: 2,
     },
     "Fishing Strike": {
-      facebook_two_line_readable: 9,
-      facebook_short_pressure: 8,
-      facebook_observational_question: 5,
-      facebook_species_first: 3,
+      facebook_two_line_readable: 6,
+      facebook_short_pressure: 5,
+      facebook_observational_question: 3,
+      facebook_species_first: 2,
     },
     "Rut Battle": {
-      facebook_two_line_readable: 9,
-      facebook_documentary_tension: 7,
-      facebook_species_first: 7,
-      facebook_observational_question: 3,
+      facebook_two_line_readable: 5,
+      facebook_documentary_tension: 4,
+      facebook_species_first: 5,
+      facebook_observational_question: 2,
     },
     Escape: {
-      facebook_two_line_readable: 9,
-      facebook_short_pressure: 7,
-      facebook_observational_question: 5,
-      facebook_species_first: 3,
+      facebook_two_line_readable: 6,
+      facebook_short_pressure: 5,
+      facebook_observational_question: 3,
+      facebook_species_first: 2,
     },
   };
 
@@ -1561,15 +1560,15 @@ function hookOverlayPresetBias(
   const lower = compact.toLowerCase();
   let score = 0;
 
-  if (compact.length > 72 && preset === "facebook_documentary_tension") score += 4;
-  if (/\?/.test(compact) && preset === "facebook_observational_question") score += 5;
+  if (compact.length > 72 && preset === "facebook_documentary_tension") score += 3;
+  if (/\?/.test(compact) && preset === "facebook_observational_question") score += 3;
   if (/(waterline|strike|escape lane|breakaway|pursuit)/.test(lower)) {
-    if (preset === "facebook_two_line_readable") score += 5;
-    if (preset === "facebook_short_pressure") score += 4;
+    if (preset === "facebook_two_line_readable") score += 3;
+    if (preset === "facebook_short_pressure") score += 3;
   }
   if (/(boundary|warning-step|stance|dominance|territory|clash)/.test(lower)) {
-    if (preset === "facebook_documentary_tension") score += 4;
-    if (preset === "facebook_species_first") score += 3;
+    if (preset === "facebook_documentary_tension") score += 3;
+    if (preset === "facebook_species_first") score += 2;
   }
 
   return score;

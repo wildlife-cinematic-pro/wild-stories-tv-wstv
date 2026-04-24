@@ -407,9 +407,9 @@ describe("platform pack hook engine v2", () => {
       : [];
 
     expect(coverScores).toHaveLength(5);
-    expect(Math.max(...coverScores)).toBeLessThan(100);
+    expect(Math.max(...coverScores)).toBeLessThanOrEqual(96);
     expect(new Set(coverScores).size).toBeGreaterThan(1);
-    expect(Math.max(...overlayScores)).toBeLessThan(100);
+    expect(Math.max(...overlayScores)).toBeLessThanOrEqual(96);
     expect(new Set(overlayScores).size).toBeGreaterThan(1);
   });
 
