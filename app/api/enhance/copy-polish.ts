@@ -18,6 +18,14 @@ import { jsonError, sanitizeString, type Provider } from "./request-utils";
 
 const providerResponseSchema = copyPolishResponseSchema;
 
+function jsonProviderFailure(detailedData: unknown) {
+  if (process.env.NODE_ENV === "production") {
+    return jsonError("Provider request failed", 502);
+  }
+  return jsonError("Provider request failed", 502, detailedData);
+}
+// WSTV-AUDIT-FIX: FIX-7 applied
+
 function normalizeLooseKey(key: string): string {
   return key.toLowerCase().replace(/[^a-z0-9]/g, "");
 }
@@ -239,14 +247,14 @@ export async function handleCopyPolishRequest(body: unknown) {
         }
       }
 
-      if (!res.ok) return jsonError("Gemini request failed", 500, data);
+      if (!res.ok) return jsonProviderFailure(data);
 
       const rawGeminiText = sanitizeString(extractGeminiText(data), 40_000);
       let obj: Record<string, unknown>;
       try {
         obj = parseProviderJsonObject(rawGeminiText, "Gemini copy polish");
       } catch (error) {
-        return jsonError("Gemini copy polish returned invalid JSON", 502, {
+        return jsonProviderFailure({
           message:
             error instanceof Error ? error.message : "Gemini returned invalid JSON for copy polish",
           rawGeminiText,
@@ -256,7 +264,7 @@ export async function handleCopyPolishRequest(body: unknown) {
       const normalizedGemini = normalizeGeminiCopyPolishObject(obj);
       const out = providerResponseSchema.safeParse(normalizedGemini);
       if (!out.success) {
-        return jsonError("Invalid Gemini copy polish format", 502, {
+        return jsonProviderFailure({
           issues: out.error.issues.map((issue) => ({
             path: issue.path.join(".") || "(root)",
             message: issue.message,
@@ -266,7 +274,7 @@ export async function handleCopyPolishRequest(body: unknown) {
         });
       }
       if (!hasUsableGeneratedPackageEnhancements(out.data)) {
-        return jsonError("Gemini returned no usable copy polish fields", 502, {
+        return jsonProviderFailure({
           normalizedGeminiObject: normalizedGemini,
           rawGeminiText,
         });
@@ -279,7 +287,7 @@ export async function handleCopyPolishRequest(body: unknown) {
     if (!apiKey) return jsonError("Missing ANTHROPIC_API_KEY", 500);
 
     const { res, data } = await callClaudeText(apiKey, polishPrompt);
-    if (!res.ok) return jsonError("Claude request failed", 500, data);
+    if (!res.ok) return jsonProviderFailure(data);
 
     const text = extractClaudeText(data);
     let obj: Record<string, unknown>;
@@ -293,7 +301,7 @@ export async function handleCopyPolishRequest(body: unknown) {
     }
 
     const out = providerResponseSchema.safeParse(obj);
-    if (!out.success) return jsonError("Invalid Claude copy polish format", 502, out.error.flatten());
+    if (!out.success) return jsonProviderFailure(out.error.flatten());
     if (!hasUsableGeneratedPackageEnhancements(out.data)) {
       return jsonError("Claude returned no usable copy polish fields", 502);
     }

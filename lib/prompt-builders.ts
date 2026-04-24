@@ -1,3 +1,5 @@
+export { sanitizeForEngine } from "@/lib/prompt-builders/safety-vocabulary";
+
 export {
   KLING_CHAR_LIMIT,
   validateKlingPromptLength,

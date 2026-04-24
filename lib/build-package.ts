@@ -661,7 +661,8 @@ export function finalizeGeneratedPackageDraft(
       fastPublishMode: draft.fastPublishMode,
       strictOriginalityGuard: draft.strictOriginalityGuard,
       pipelineStyle: finalPkg.pipelineStyle ?? "4-shot",
-      primaryHook: draft.primaryHook,
+      primaryHook: finalPkg.hook ?? draft.primaryHook,
+      // WSTV-AUDIT-FIX: FIX-3 applied
       usAudienceScore: draft.usAudienceScore,
       openingFrameScore: draft.openingFrameScore,
       publishGuardReport: finalUsViewsModeReport.publishGuard,

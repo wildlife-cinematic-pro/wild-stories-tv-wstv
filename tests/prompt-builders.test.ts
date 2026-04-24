@@ -5,6 +5,7 @@ import {
   buildShotImagePlan,
   buildFourShotWorkflowPromptPack,
   buildFourShotWorkflow,
+  buildHybridPromptPack,
   buildRunwayPromptPack,
   buildRunwayShots,
   buildKlingPromptPack,
@@ -759,7 +760,7 @@ describe("Step 12 — export cleanup guards", () => {
       expect(shot.prompt).toContain("horizon line");
       expect(shot.prompt).toContain("light direction");
       expect(shot.prompt).toContain("weather density");
-      expect(shot.prompt).toContain("No environment drift");
+      expect(shot.prompt).toMatch(/keep the environment anchored/i);
     }
   });
 
@@ -801,14 +802,14 @@ describe("Step 12 — export cleanup guards", () => {
       expect(shot.pasteReady).toContain("Continuity lock: preserve the Shot 1 world plate");
       expect(shot.pasteReady).toContain("same background layout");
       expect(shot.pasteReady).toContain("light direction");
-      expect(shot.pasteReady).toContain("no environment drift");
+      expect(shot.pasteReady).toMatch(/keep the environment anchored/i);
     }
 
     for (const shot of [kling.shot2, kling.shot3, kling.shot4]) {
       expect(shot.pasteReady).toContain("Continue inside the exact Shot 1 world plate");
       expect(shot.pasteReady).toContain("same background layout");
       expect(shot.pasteReady).toContain("light direction");
-      expect(shot.pasteReady).toContain("No environment drift");
+      expect(shot.pasteReady).toMatch(/keep the environment anchored/i);
     }
   });
 
@@ -1686,5 +1687,102 @@ describe("structured prompt refactor guards", () => {
     expect(kling.shot1.pasteReady).toContain("Preserve the input-frame terrain and light continuity");
     expect(kling.shot3.pasteReady).not.toContain("raw tension — both animals at the edge of movement");
     expect(kling.shot4.pasteReady).not.toContain("stable clean air");
+  });
+});
+
+// WSTV-AUDIT-FIX: FIX-9 applied
+
+describe("Runway paste-ready safety", () => {
+  it("contains no negative instructions in any shot", () => {
+    const quality = {
+      realismMode: "Reference Locked" as const,
+      motionOnlyI2V: true,
+      referenceLock: true,
+      singleActionRule: true,
+      microMotion: true,
+      heroVeo: false,
+    };
+
+    const pack = buildRunwayPromptPack(
+      "Wolf",
+      "Bull Elk",
+      "Rocky Mountain meadow edge",
+      "Chase and takedown",
+      "Golden Hour",
+      "Gen-4.5",
+      "Raw Tension",
+      "National Geographic Wild",
+      "Readable first-frame pressure with clear subject spacing.",
+      quality
+    );
+
+    const shots = [pack.shot1, pack.shot2, pack.shot3, pack.shot4];
+    for (const shot of shots) {
+      expect(shot.pasteReady).not.toMatch(/\b(no|avoid|never|do not|don't|do NOT)\b/i);
+    }
+  });
+});
+
+describe("Kling paste-ready safety", () => {
+  it("contains no banned action verbs", () => {
+    const BANNED = /\b(bite|maul|kill|blood|gore|takedown)\b/i;
+    const quality = {
+      realismMode: "Reference Locked" as const,
+      motionOnlyI2V: true,
+      referenceLock: true,
+      singleActionRule: true,
+      microMotion: true,
+      heroVeo: false,
+    };
+
+    const pack = buildKlingPromptPack(
+      "Wolf",
+      "Bull Elk",
+      "Rocky Mountain meadow edge",
+      "Chase and takedown",
+      "Golden Hour",
+      "Kling 3.0 Pro",
+      "Raw Tension",
+      "National Geographic Wild",
+      "Readable first-frame pressure with clear subject spacing.",
+      quality
+    );
+
+    const shots = [pack.shot1, pack.shot2, pack.shot3, pack.shot4];
+    for (const shot of shots) {
+      expect(shot.pasteReady).not.toMatch(BANNED);
+    }
+  });
+});
+
+describe("Hybrid workflow engine routing", () => {
+  it("assigns Runway to shots 1 and 4, Kling to shots 2 and 3", () => {
+    const quality = {
+      realismMode: "Reference Locked" as const,
+      motionOnlyI2V: true,
+      referenceLock: true,
+      singleActionRule: true,
+      microMotion: true,
+      heroVeo: false,
+    };
+
+    const pack = buildHybridPromptPack(
+      "Wolf",
+      "Bull Elk",
+      "Rocky Mountain meadow edge",
+      "Chase and takedown",
+      "Golden Hour",
+      "Gen-4.5",
+      "Kling 3.0 Pro",
+      "Raw Tension",
+      "National Geographic Wild",
+      "Readable first-frame pressure with clear subject spacing.",
+      quality
+    );
+
+    expect(pack.shot1.metadata?.engine).toBe("runway");
+    expect(pack.shot2.metadata?.engine).toBe("kling");
+    expect(pack.shot3.metadata?.engine).toBe("kling");
+    expect(pack.shot4.metadata?.engine).toBe("runway");
   });
 });

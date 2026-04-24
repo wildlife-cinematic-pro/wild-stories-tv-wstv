@@ -29,13 +29,20 @@ import {
   buildShotWorldContinuityLock,
 } from "@/lib/prompt-builders/shared";
 import { buildRunwayCameraPresetLine } from "@/lib/camera-angle-presets";
+import { sanitizeForEngine } from "@/lib/prompt-builders/safety-vocabulary";
 import {
   clipPromptContext,
   sanitizeRunwayFPS,
+  sanitizeRunwayPrompt,
   sanitizeVideoBeatText,
 } from "@/lib/prompt-builders/sanitizers";
 
 export type RunwayPromptPack = FourShotPromptPack<StructuredPrompt>;
+
+function finalizeRunwayPasteReady(text: string): string {
+  return sanitizeRunwayPrompt(sanitizeVideoBeatText(text));
+}
+// WSTV-AUDIT-FIX: FIX-1 applied
 
 export function buildRunwayPromptPack(
   predator: string,
@@ -127,7 +134,7 @@ export function buildRunwayPromptPack(
           : "lowers into one readable defensive footing adjustment near the bank"
         : "lowers into one readable defensive adjustment";
 
-  const shot1PasteReady = sanitizeRunwayFPS(
+  const shot1PasteReady = finalizeRunwayPasteReady(sanitizeForEngine(sanitizeRunwayFPS(
     isAquatic
       ? `Wide opening hold with a subtle push-in. Both subjects are fully readable from frame one. The left subject glides once with controlled forward pressure through the water. The right subject holds tense position with locked eye-line. Clear spacing, readable threat line, clean motion start.${cameraPromptTail} ${micro}${quality?.seamlessShot ? " Continuous, seamless shot." : ""}`.trim()
       : isShoreline
@@ -137,9 +144,9 @@ export function buildRunwayPromptPack(
         : isRutMirrorMatch
           ? `Wide opening hold with a subtle push-in. Both subjects are fully readable from frame one. The left subject holds the ${rutCue.line} with ${rutCue.room}. The right subject answers with matching shoulder tension and planted footing. Clear spacing, locked eye-line, dominance visible from the first second.${cameraPromptTail} ${micro}${quality?.seamlessShot ? " Continuous, seamless shot." : ""}`.trim()
           : `Wide opening hold with a subtle push-in. Both subjects are fully readable from frame one. The left subject ${s1.predatorBeat}. The right subject ${s1.preyBeat}. Clear spacing, locked eye-line, readable tension from the first second.${cameraPromptTail} ${micro}${quality?.seamlessShot ? " Continuous, seamless shot." : ""}`.trim()
-  );
+  ), "runway"));
 
-  const shot2PasteReady = sanitizeRunwayFPS(
+  const shot2PasteReady = finalizeRunwayPasteReady(sanitizeForEngine(sanitizeRunwayFPS(
     isAquatic
       ? `Wide pressure-build tracking shot with a gentle forward drift. Both subjects stay fully visible. The left subject leans into stronger forward water pressure without breaking spacing. The right subject tightens posture and makes one readable defensive adjustment in the current. The tension line grows stronger, spacing stays readable, and overlap stays controlled. Water displacement and current response build naturally. ${worldPlateContinuity}${cameraPromptTail} ${micro}${quality?.seamlessShot ? " Continuous, seamless shot." : ""}`.trim()
       : isShoreline
@@ -149,9 +156,9 @@ export function buildRunwayPromptPack(
         : isRutMirrorMatch
           ? `Wide pressure-build tracking shot with a gentle forward drift. Both subjects stay fully visible. The left subject edges forward with heavier shoulder-line pressure while keeping ${rutCue.room}. The right subject braces into one grounded footing reset without giving away the claim line. The standoff geometry tightens, spacing stays readable, and overlap stays controlled. Hoof traction and churned rut footing stay natural. ${worldPlateContinuity}${cameraPromptTail} ${micro}${quality?.seamlessShot ? " Continuous, seamless shot." : ""}`.trim()
           : `Wide pressure-build tracking shot with a gentle forward drift. Both subjects stay fully visible. The left subject ${pressurePredator}. The right subject ${pressurePrey}. The tension line grows stronger, spacing stays readable, and overlap stays controlled. Ground compression and clean weight transfer stay natural. ${worldPlateContinuity}${cameraPromptTail} ${micro}${quality?.seamlessShot ? " Continuous, seamless shot." : ""}`.trim()
-  );
+  ), "runway"));
 
-  const shot3PasteReady = sanitizeRunwayFPS(
+  const shot3PasteReady = finalizeRunwayPasteReady(sanitizeForEngine(sanitizeRunwayFPS(
     isAquatic
       ? `Wide peak-action read with restrained tracking. Both subjects stay fully visible. The left subject commits to one fast water-pressure burst. The right subject reacts with one evasive dart. Clear pursuit line, readable spacing, no overlap. Water displacement and current response stay forceful but readable. ${worldPlateContinuity}${cameraPromptTail} ${micro}${quality?.seamlessShot ? " Continuous, seamless shot." : ""}`.trim()
       : isShoreline
@@ -161,9 +168,9 @@ export function buildRunwayPromptPack(
         : isRutMirrorMatch
           ? `Wide peak-action read with restrained tracking. Both subjects stay fully visible. The left subject loads weight and commits one heavy clash beat while keeping ${rutCue.room}. The right subject answers with one grounded shove or recoil without losing planted footing. Clear clash line, readable spacing, no overlap. Hoof traction and heavy shoulder transfer stay readable at speed. ${worldPlateContinuity}${cameraPromptTail} ${micro}${quality?.seamlessShot ? " Continuous, seamless shot." : ""}`.trim()
           : `Wide peak-action read with restrained tracking. Both subjects stay fully visible. The left subject ${s3.predatorBeat}. The right subject ${s3.preyBeat}. Clear predator-to-prey line, readable spacing, no overlap. Ground compression and clean weight transfer stay readable at speed. ${worldPlateContinuity}${cameraPromptTail} ${micro}${quality?.seamlessShot ? " Continuous, seamless shot." : ""}`.trim()
-  );
+  ), "runway"));
 
-  const shot4PasteReady = sanitizeRunwayFPS(
+  const shot4PasteReady = finalizeRunwayPasteReady(sanitizeForEngine(sanitizeRunwayFPS(
     isAquatic
       ? `Wide aftermath hold with a slow pull-back. Both subjects remain fully readable. The left subject slows and stabilizes in the water. The right subject holds tense eye-line as residual turbulence settles. Clear spacing remains readable to the end. ${worldPlateContinuity}${cameraPromptTail} ${micro}${quality?.seamlessShot ? " Continuous, seamless shot." : ""}`.trim()
       : isShoreline
@@ -173,7 +180,7 @@ export function buildRunwayPromptPack(
         : isRutMirrorMatch
           ? `Wide aftermath hold with a slow pull-back. Both subjects remain fully readable. The left subject settles weight while keeping the ${rutCue.line} clean. The right subject rebalances once and holds the claim line. Residual atmosphere settles while spacing stays clear to the final frame. ${worldPlateContinuity}${cameraPromptTail} ${micro}${quality?.seamlessShot ? " Continuous, seamless shot." : ""}`.trim()
           : `Wide aftermath hold with a slow pull-back. Both subjects remain fully readable. The left subject ${s4.predatorBeat}. The right subject ${s4.preyBeat}. Residual atmosphere settles while spacing stays clear to the final frame. ${worldPlateContinuity}${cameraPromptTail} ${micro}${quality?.seamlessShot ? " Continuous, seamless shot." : ""}`.trim()
-  );
+  ), "runway"));
 
   return {
     shot1: buildStructuredPrompt({

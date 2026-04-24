@@ -24,6 +24,14 @@ const analyzeMediaRequestSchema = z.object({
   provider: z.enum(["gemini", "claude"]).optional(),
 });
 
+function jsonProviderFailure(detailedData: unknown) {
+  if (process.env.NODE_ENV === "production") {
+    return jsonError("Provider request failed", 502);
+  }
+  return jsonError("Provider request failed", 502, detailedData);
+}
+// WSTV-AUDIT-FIX: FIX-7 applied
+
 function buildAnalysisPrompt() {
   return [
     "You are WSTV Wildlife Media Analyst.",
@@ -93,7 +101,7 @@ export async function handleMediaAnalysisRequest(body: unknown) {
         }
       }
 
-      if (!res.ok) return jsonError("Gemini vision request failed", 500, data);
+      if (!res.ok) return jsonProviderFailure(data);
 
       const text = extractGeminiText(data);
       let obj: Record<string, unknown>;
@@ -114,7 +122,7 @@ export async function handleMediaAnalysisRequest(body: unknown) {
       });
 
       if (!out.success) {
-        return jsonError("Invalid analysis format from Gemini", 502, out.error.flatten());
+        return jsonProviderFailure(out.error.flatten());
       }
 
       return NextResponse.json({ analysis: out.data }, { status: 200 });
@@ -134,7 +142,7 @@ export async function handleMediaAnalysisRequest(body: unknown) {
       base64Data,
     });
 
-    if (!res.ok) return jsonError("Claude vision request failed", 500, data);
+    if (!res.ok) return jsonProviderFailure(data);
 
     const text = extractClaudeText(data);
     let obj: Record<string, unknown>;
@@ -155,7 +163,7 @@ export async function handleMediaAnalysisRequest(body: unknown) {
     });
 
     if (!out.success) {
-      return jsonError("Invalid analysis format from Claude", 502, out.error.flatten());
+      return jsonProviderFailure(out.error.flatten());
     }
 
     return NextResponse.json({ analysis: out.data }, { status: 200 });

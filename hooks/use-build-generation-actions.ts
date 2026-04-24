@@ -1,6 +1,6 @@
 "use client";
 
-import type { Dispatch, SetStateAction } from "react";
+import { useRef, type Dispatch, type SetStateAction } from "react";
 
 import type { PromotedVariantPublishCopyOverride } from "@/hooks/use-concept-variant-lab";
 import type { DurationLaneMode, MarketMode } from "@/hooks/use-build-preview";
@@ -155,6 +155,10 @@ export function useBuildGenerationActions({
   setError,
   onGenerated,
 }: UseBuildGenerationActionsInput) {
+  const activeGenerationIdRef = useRef(0);
+  // WSTV-AUDIT-FIX: FIX-4 applied
+  const latestGenerateRequestIdRef = useRef(0);
+  const latestRegenerateRequestIdRef = useRef(0);
   function handleTogglePackageLock(key: PackageLockKey) {
     setPackageLocks((current) => ({
       ...current,
@@ -338,6 +342,10 @@ export function useBuildGenerationActions({
   }
 
   async function handleGenerate() {
+    const requestId = activeGenerationIdRef.current + 1;
+    activeGenerationIdRef.current = requestId;
+    latestGenerateRequestIdRef.current = requestId;
+
     setIsGenerating(true);
     setError("");
     setPkg(null);
@@ -350,20 +358,29 @@ export function useBuildGenerationActions({
         enhanced
       );
 
+      if (activeGenerationIdRef.current !== requestId) return;
+
       setPkg(finalPkg);
       setPublishFlowSummary(publishFlowSummary);
       appendGenerationVersion(finalPkg, "GENERATE");
       onGenerated();
     } catch (e) {
       console.error("[generate error]", e);
+      if (activeGenerationIdRef.current !== requestId) return;
       setError(e instanceof Error ? e.message : "Generation failed");
     } finally {
-      setIsGenerating(false);
+      if (latestGenerateRequestIdRef.current === requestId) {
+        setIsGenerating(false);
+      }
     }
   }
 
   async function handleRegenerateUnlockedSections() {
     if (!pkg) return;
+
+    const requestId = activeGenerationIdRef.current + 1;
+    activeGenerationIdRef.current = requestId;
+    latestRegenerateRequestIdRef.current = requestId;
 
     setIsRegeneratingUnlocked(true);
     setError("");
@@ -379,6 +396,8 @@ export function useBuildGenerationActions({
         ? applyPackageSectionLocks(pkg, candidatePkg, packageLocks)
         : candidatePkg;
 
+      if (activeGenerationIdRef.current !== requestId) return;
+
       setPkg(finalPkg);
       setPublishFlowSummary(
         syncPublishSummaryWithPackage(finalPkg, publishFlowSummary)
@@ -387,9 +406,12 @@ export function useBuildGenerationActions({
       onGenerated();
     } catch (e) {
       console.error("[regenerate unlocked error]", e);
+      if (activeGenerationIdRef.current !== requestId) return;
       setError(e instanceof Error ? e.message : "Regeneration failed");
     } finally {
-      setIsRegeneratingUnlocked(false);
+      if (latestRegenerateRequestIdRef.current === requestId) {
+        setIsRegeneratingUnlocked(false);
+      }
     }
   }
 

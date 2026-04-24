@@ -38,6 +38,7 @@ import {
   buildShotWorldContinuityLock,
 } from "@/lib/prompt-builders/shared";
 import { buildKlingCameraPresetLine } from "@/lib/camera-angle-presets";
+import { sanitizeForEngine } from "@/lib/prompt-builders/safety-vocabulary";
 import {
   KLING_CHAR_LIMIT,
   validateKlingPromptLength,
@@ -211,7 +212,7 @@ Extra: ${buildKlingExtraLine(extra1, quality?.motionOnlyI2V)}
 ${audio1}
 
 Kling settings: Motion intensity ${mi1.toFixed(2)} | Enable Bind Subject for identity lock | Negative prompt: use the Kling Negative Prompt card`,
-      pasteReady: sanitizeVideoBeatText(isAquatic
+      pasteReady: sanitizeForEngine(sanitizeVideoBeatText(isAquatic
         ? `Wide opening hold with a subtle push-in.${cameraPromptTail} ${predator} holds controlled pressure through the water on the left. ${prey} stays fully alert and reactive on the right. Both subjects are fully readable from frame one with locked eye-line, clear spacing, and immediate visible tension. ${buildKlingLocationLine(env, weather, quality?.motionOnlyI2V).replace(/^Lighting & Location:\s*/i, "")}. ${extra1} Then both subjects hold position.`
         : isShoreline
           ? isWaterForwardStrike
@@ -220,7 +221,7 @@ Kling settings: Motion intensity ${mi1.toFixed(2)} | Enable Bind Subject for ide
           : isRutMirrorMatch
             ? `Wide opening hold with a subtle push-in.${cameraPromptTail} ${predator} holds the ${rutCue.line} with ${rutCue.room} on the left. ${prey} answers on the right with matching shoulder tension and planted footing. Both subjects are fully readable from frame one with locked eye-line, clear spacing, and immediate visible dominance. ${buildKlingLocationLine(env, weather, quality?.motionOnlyI2V).replace(/^Lighting & Location:\s*/i, "")}. ${extra1} Then both subjects hold position.`
             : `Wide opening hold with a subtle push-in.${cameraPromptTail} ${formatActionSubject(predator, s1.predatorBeat)}. ${prey} ${s1.preyBeat}. Both subjects are fully readable from frame one with locked eye-line, clear spacing, and immediate visible tension. ${buildKlingLocationLine(env, weather, quality?.motionOnlyI2V).replace(/^Lighting & Location:\s*/i, "")}. ${extra1} Then both subjects hold position.`
-      ),
+      ), "kling"),
       audio: audio1,
       settings: [
         `Motion intensity ${mi1.toFixed(2)}`,
@@ -279,7 +280,7 @@ Extra: ${buildKlingExtraLine(
 ${audio2}
 
 Kling settings: Motion intensity ${mi2.toFixed(2)} | WIDE framing enforced | Use Shot 1 last frame only if it remains a clean full-body handoff frame; otherwise use the master still or a manually selected clean reference frame`,
-      pasteReady: sanitizeVideoBeatText(isAquatic
+      pasteReady: sanitizeForEngine(sanitizeVideoBeatText(isAquatic
         ? `Wide pressure-build tracking shot with a subtle forward creep.${cameraPromptTail} ${pressurePredator}. ${pressurePrey}. Clear predator-to-prey line, readable spacing, no overlap. Water displacement and current pressure build naturally. ${worldPlateContinuity} ${buildKlingLocationLine(env, weather, quality?.motionOnlyI2V).replace(/^Lighting & Location:\s*/i, "")}. Then both subjects settle into a controlled hold.`
         : isShoreline
           ? isWaterForwardStrike
@@ -288,7 +289,7 @@ Kling settings: Motion intensity ${mi2.toFixed(2)} | WIDE framing enforced | Use
           : isRutMirrorMatch
             ? `Wide pressure-build tracking shot with a subtle forward creep.${cameraPromptTail} ${pressurePredator}. ${pressurePrey}. Clear clash line, readable spacing, no overlap. Hoof traction, planted footing, and heavy shoulder pressure stay controlled. ${worldPlateContinuity} ${buildKlingLocationLine(env, weather, quality?.motionOnlyI2V).replace(/^Lighting & Location:\s*/i, "")}. Then both subjects settle into a controlled hold.`
             : `Wide pressure-build tracking shot with a subtle forward creep.${cameraPromptTail} ${pressurePredator}. ${pressurePrey}. Clear predator-to-prey line, readable spacing, no overlap. Grounded weight transfer and surface response stay controlled. ${worldPlateContinuity} ${buildKlingLocationLine(env, weather, quality?.motionOnlyI2V).replace(/^Lighting & Location:\s*/i, "")}. Then both subjects settle into a controlled hold.`
-      ),
+      ), "kling"),
       audio: audio2,
       settings: [
         `Motion intensity ${mi2.toFixed(2)}`,
@@ -336,7 +337,7 @@ Extra: ${buildKlingExtraLine(extra3, quality?.motionOnlyI2V)}
 ${audio3}
 
 Kling settings: Motion intensity ${mi3.toFixed(2)} | WIDE framing enforced | Use Shot 2 last frame only if it remains a clean full-body handoff frame; otherwise use the master still or a manually selected clean continuity frame`,
-      pasteReady: sanitizeVideoBeatText(isAquatic
+      pasteReady: sanitizeForEngine(sanitizeVideoBeatText(isAquatic
         ? `Wide peak-action read with restrained handheld energy. ${formatActionSubject(predator, s3.predatorBeat)}. ${prey} ${s3.preyBeat}. Clear predator-to-prey spacing stays readable, no overlap. Water displacement and turbulence stay forceful but controlled. ${worldPlateContinuity} ${buildKlingLocationLine(env, weather, quality?.motionOnlyI2V).replace(/^Lighting & Location:\s*/i, "")}. Then both subjects ease into a stable wide stance.`
         : isShoreline
           ? isWaterForwardStrike
@@ -345,7 +346,7 @@ Kling settings: Motion intensity ${mi3.toFixed(2)} | WIDE framing enforced | Use
           : isRutMirrorMatch
             ? `Wide peak-action read with restrained handheld energy. ${predator} loads weight and commits one heavy clash beat while keeping ${rutCue.room}. ${prey} answers with one grounded shove or recoil without losing planted footing. Clear clash spacing stays readable, no overlap. Hoof traction and heavy shoulder transfer stay forceful but controlled. ${worldPlateContinuity} ${buildKlingLocationLine(env, weather, quality?.motionOnlyI2V).replace(/^Lighting & Location:\s*/i, "")}. Then both subjects ease into a stable wide stance.`
             : `Wide peak-action read with restrained handheld energy. ${formatActionSubject(predator, s3.predatorBeat)}. ${prey} ${s3.preyBeat}. Clear predator-to-prey spacing stays readable, no overlap. Grounded weight transfer and surface response stay forceful but controlled. ${worldPlateContinuity} ${buildKlingLocationLine(env, weather, quality?.motionOnlyI2V).replace(/^Lighting & Location:\s*/i, "")}. Then both subjects ease into a stable wide stance.`
-      ),
+      ), "kling"),
       audio: audio3,
       settings: [
         `Motion intensity ${mi3.toFixed(2)}`,
@@ -388,13 +389,14 @@ Extra: ${buildKlingExtraLine(extra3, quality?.motionOnlyI2V)}
 ${audio4}
 
 Kling settings: Motion intensity ${mi4.toFixed(2)} | Optionally set End Frame for final pose | Use Shot 3 last frame only if it remains a clean full-body handoff frame; otherwise use the master still or a manually selected clean continuity frame`,
-      pasteReady: sanitizeVideoBeatText(
+      pasteReady: sanitizeForEngine(
+        sanitizeVideoBeatText(
         isRutMirrorMatch
           ? `Locked wide aftermath hold with a subtle pull-back. ${predator} settles weight while keeping the ${rutCue.line} clean. ${prey} rebalances once and holds the claim line. Spacing stays clear and readable to the final frame. ${worldPlateContinuity} ${buildKlingLocationLine(env, weather, quality?.motionOnlyI2V).replace(/^Lighting & Location:\s*/i, "")}. ${extra3} Then both subjects settle into a composed final position.`
           : isWaterForwardStrike
             ? `Locked wide aftermath hold with a subtle pull-back. ${formatActionSubject(predator, s4.predatorBeat)}. ${prey} holds a tense near-surface line as bank-edge splash settles. Spacing stays clear and readable to the final frame. ${worldPlateContinuity} ${buildKlingLocationLine(env, weather, quality?.motionOnlyI2V).replace(/^Lighting & Location:\s*/i, "")}. ${extra3} Then both subjects settle into a composed final position.`
             : `Locked wide aftermath hold with a subtle pull-back. ${formatActionSubject(predator, s4.predatorBeat)}. ${prey} ${s4.preyBeat}. Spacing stays clear and readable to the final frame. ${worldPlateContinuity} ${buildKlingLocationLine(env, weather, quality?.motionOnlyI2V).replace(/^Lighting & Location:\s*/i, "")}. ${extra3} Then both subjects settle into a composed final position.`
-      ),
+      ), "kling"),
       audio: audio4,
       settings: [
         `Motion intensity ${mi4.toFixed(2)}`,
@@ -618,7 +620,7 @@ HOW TO USE (Kling 3.0 WSTV Workflow):
 7. Use Kling 3.0's available output settings for the final delivery target you need.
 8. Optional: Set End Frame image for final-pose control.
 ✅ Native single-prompt workflow — identity preserved across all 3 beats.`,
-    pasteReady: pasteReadyCore,
+    pasteReady: sanitizeForEngine(pasteReadyCore, "kling"),
     settings: [
       cfgLine,
       `Motion intensities: ${mi1.toFixed(2)} / ${mi2.toFixed(2)} / ${mi3.toFixed(2)}`,
@@ -869,7 +871,7 @@ HOW TO USE (Kling 3.0 WSTV 6-Shot Workflow):
 5. Enable native audio for documentary-quality sound.
 6. Use Kling 3.0's available output settings for the final delivery target you need.
 ✅ One prompt → 6 cinematic shots with consistent identity and audio.`,
-    pasteReady: pasteReadySixShotCore,
+    pasteReady: sanitizeForEngine(pasteReadySixShotCore, "kling"),
     settings: [
       `Guidance Scale: ${cfgBase}`,
       wideRule,
