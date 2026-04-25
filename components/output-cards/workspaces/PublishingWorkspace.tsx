@@ -11,6 +11,8 @@ import {
 
 import type { GeneratedPackage } from "@/types";
 
+import { trackUsage } from "@/lib/usage-tracker";
+
 export function PublishingWorkspace({
   data,
   onCopy,
@@ -18,6 +20,16 @@ export function PublishingWorkspace({
   data: GeneratedPackage;
   onCopy: (text: string) => void | Promise<unknown>;
 }) {
+  const trackedCaptionCopy = (text: string) => {
+    trackUsage({
+      hook: data.hookFamily,
+      score: data.usViewsModeReport?.audienceScore.total ?? data.usAudienceScore?.total,
+      publish: data.usViewsModeReport?.shouldPublish,
+    });
+
+    return onCopy(text);
+  };
+
   return (
     <div className="space-y-6">
       <div className="rounded-2xl border border-emerald-500/30 bg-emerald-500/12 p-4 text-sm text-emerald-900 shadow-sm dark:text-emerald-100">
@@ -49,13 +61,13 @@ export function PublishingWorkspace({
         <Caption2026Panel
           caption2026={data.caption2026}
           captionOld={data.caption}
-          onCopy={onCopy}
+          onCopy={trackedCaptionCopy}
         />
       ) : data.caption ? (
         <Card
           title="📝 Caption"
           value={data.caption}
-          onCopy={onCopy}
+          onCopy={trackedCaptionCopy}
           accent="border-l-emerald-500"
         />
       ) : null}
