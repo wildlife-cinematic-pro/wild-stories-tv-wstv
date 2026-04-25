@@ -10,6 +10,10 @@ on:
     branches:
       - main
 
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   build:
     runs-on: ubuntu-latest
@@ -37,19 +41,26 @@ jobs:
       - name: Lint
         run: npm run lint
 
+      - name: Cache Playwright
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/ms-playwright
+          key: ${{ runner.os }}-playwright
+
       - name: Install Playwright browsers
-        run: npx playwright install --with-deps chromium
+        run: npx playwright install chromium
 
       - name: Test
         run: npm run test:run
-
-      - name: Coverage
-        run: npm run coverage
-
-      - name: Browser smoke
-        run: npm run test:e2e
 
       - name: Build
         run: npm run build
         env:
           CI: true
+
+      - name: Coverage
+        run: npm run coverage
+
+      - name: Browser smoke
+        if: github.ref == 'refs/heads/main'
+        run: npm run test:e2e
