@@ -65,6 +65,42 @@ export default function OutputCards({
     return `${predator}|${prey}|${arc}`;
   }, [data.predatorName, data.preyName, data.arcName]);
 
+  const decision = useMemo(() => {
+    if (!data) return null;
+
+    const score =
+      data.usViewsModeReport?.audienceScore.total ??
+      data.usAudienceScore?.total ??
+      0;
+    const publish = data.usViewsModeReport?.shouldPublish;
+
+    let label = "⚠️ REVIEW";
+    let color = "text-yellow-400";
+
+    if (publish === true && score >= 75) {
+      label = "✅ PUBLISH";
+      color = "text-green-400";
+    } else if (publish === false) {
+      label = "❌ DO NOT PUBLISH";
+      color = "text-red-400";
+    }
+
+    return {
+      label,
+      score,
+      hook:
+        data.hookFamily ??
+        (["danger", "curiosity", "reversal"] as const)[
+          data.recommendedHookIndex ?? 0
+        ] ??
+        "n/a",
+      risk: data.publishGuardReport?.isPass
+        ? "Pass"
+        : data.publishGuardReport?.warnings?.[0] ?? "Needs review",
+      color,
+    };
+  }, [data]);
+
   function safeStr(value: unknown) {
     if (typeof value === "string") return value.trim();
     if (Array.isArray(value)) return value.map(String).join("\n").trim();
@@ -220,6 +256,18 @@ export default function OutputCards({
   return (
     <div className="space-y-5 sm:space-y-6">
       <div className="rounded-3xl border border-[color:var(--border)] bg-[color:var(--surface-elevated)] p-4 shadow-[var(--surface-shadow)] sm:p-5">
+        {decision && (
+          <div className="mb-4 rounded-xl border border-[color:var(--border)] bg-black/80 p-4">
+            <div className={`text-lg font-black ${decision.color}`}>
+              {decision.label}
+            </div>
+            <div className="mt-2 grid grid-cols-2 gap-2 text-xs text-gray-300">
+              <div>US Score: {decision.score}</div>
+              <div>Hook: {decision.hook}</div>
+              <div>Risk: {decision.risk}</div>
+            </div>
+          </div>
+        )}
         <div className="flex flex-wrap items-start justify-between gap-4">
           <div className="max-w-3xl">
             <div className="text-[11px] font-black uppercase tracking-[0.24em] text-slate-500">
