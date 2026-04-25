@@ -42,12 +42,16 @@ jobs:
         run: npm run lint
 
       - name: Cache Playwright
+        id: cache-playwright
         uses: actions/cache@v4
         with:
           path: ~/.cache/ms-playwright
-          key: ${{ runner.os }}-playwright
+          key: ${{ runner.os }}-playwright-${{ hashFiles('package-lock.json') }}
+          restore-keys: |
+            ${{ runner.os }}-playwright-
 
       - name: Install Playwright browsers
+        if: steps.cache-playwright.outputs.cache-hit != 'true'
         run: npx playwright install chromium
 
       - name: Test
@@ -62,5 +66,5 @@ jobs:
         run: npm run coverage
 
       - name: Browser smoke
-        if: github.ref == 'refs/heads/main'
+        if: github.ref == 'refs/heads/main' || github.event_name == 'pull_request'
         run: npm run test:e2e
