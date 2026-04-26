@@ -91,6 +91,9 @@ export type PublishFlowSummary = {
   publishWorthy: boolean;
 };
 
+const FACEBOOK_AI_DISCLOSURE_REMINDER =
+  "⚠️ Reminder: Label this content as AI-generated before publishing to comply with Meta policy and SynthID detection.";
+
 export function buildOpeningFrameInput(
   arc: Arc,
   depthMode: DepthMode,
@@ -332,6 +335,12 @@ export function buildGeneratedPackageDraft(
     input.contentLane,
     input.finalHook
   );
+  platformPack.facebook.publishReminders = [
+    ...new Set([
+      ...(platformPack.facebook.publishReminders ?? []),
+      FACEBOOK_AI_DISCLOSURE_REMINDER,
+    ]),
+  ];
   const primaryHook = platformPack.facebook.hook;
   const seoTitle = buildSEOTitle(input.predator, input.prey, input.finalArc);
   const altTextPrompt = buildAltTextPrompt(

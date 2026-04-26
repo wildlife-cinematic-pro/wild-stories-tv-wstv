@@ -10,6 +10,7 @@ import {
   evaluateHookCopyQuality,
   hasBaitLikeCopy,
   hasForcedEngagementCopy,
+  validateCaptionCTA,
 } from "@/lib/platform-packs";
 
 export type FacebookPublishReadinessVerdict =
@@ -24,6 +25,10 @@ export type FacebookPublishReadinessScores = {
   captionUsefulness: number;
   hashtagHygiene: number;
   packagingQuality: number;
+  shareIntentScore: number;
+  commentDepthIntentScore: number;
+  monetisationSafetyScore: number;
+  ownedFunnelConversionIntentScore: number;
 };
 
 export type FacebookPublishReadinessReport = {
@@ -52,9 +57,25 @@ const VERDICT_LABELS: Record<FacebookPublishReadinessVerdict, string> = {
 const OBSERVATIONAL_PATTERN =
   /\b(pressure|spacing|timing|posture|waterline|territory|survival|breakaway|claim|standoff|surface|escape|window|footing|angle|clash|warning-step)\b/i;
 
+const SHARE_BEAT_PATTERN =
+  /\b(closes|committed|presses|surges|holds ground|breaks away|locks eyes|closes distance|tests the defense|commits forward|retreats|pivots|stands firm|warning|turn|shift|control|footing|claim|escape|pressure)\b/i;
+const ATMOSPHERE_ONLY_PATTERN =
+  /\b(atmosphere-only|atmospheric|golden(?:-| )hour|misty|dreamy|moody|cinematic lighting|beautiful light)\b/i;
+const COMMENT_PROMPT_PATTERN =
+  /\b(what did you notice first|was this patience or panic|which animal actually controlled the scene|what changed the outcome first|was the key mistake physical or mental|which second|which turn|what told you|which body shift|would you have noticed|which angle|which animal gave up position first|would you have spotted)\b/i;
+const CONVERSION_SIGNAL_PATTERN =
+  /\b(wild stories tv|original content|page|series|part 1|part 2|follow the page|affiliate|product path|gear list|shop)\b/i;
+const GRAPHIC_PACKAGING_PATTERN =
+  /\b(gore|bloody|ripped apart|torn open|kill shot|brutal death|bloodbath|massacre|guts|decapitated)\b/i;
+
 function clampScore(value: number): number {
   if (!Number.isFinite(value)) return 0;
   return Math.max(0, Math.min(100, Math.round(value)));
+}
+
+function clampTenPointScore(value: number): number {
+  if (!Number.isFinite(value)) return 0;
+  return Math.max(0, Math.min(10, Math.round(value)));
 }
 
 function normalizeCopy(value: unknown): string {
@@ -274,6 +295,120 @@ function scoreCaptionUsefulness(pkg: GeneratedPackage): number {
   return clampScore(score);
 }
 
+/**
+ * Scores how strongly the package encourages organic shares through a clear action beat.
+ */
+function scoreShareIntent(pkg: GeneratedPackage): number {
+  const hook = normalizeCopy(pkg.platformPack?.facebook.hook ?? pkg.hook);
+  const caption = normalizeCopy(pkg.platformPack?.facebook.caption ?? pkg.caption);
+  const combined = `${hook} ${caption}`.trim();
+  const hookQuality = evaluateHookCopyQuality(
+    hook,
+    normalizeCopy(pkg.predatorName),
+    normalizeCopy(pkg.preyName)
+  );
+
+  let score = 4;
+
+  score += hookQuality.hasSpeciesClarity ? 1 : -1;
+  score += hookQuality.hasObservationalTone ? 2 : 0;
+  score += SHARE_BEAT_PATTERN.test(combined) ? 2 : -2;
+  score += /\b(before|once|until|changed|outcome|turned|window|shifted|control)\b/i.test(
+    combined
+  )
+    ? 1
+    : -1;
+  score += /\?/.test(caption) ? 1 : 0;
+
+  if (ATMOSPHERE_ONLY_PATTERN.test(combined) && !SHARE_BEAT_PATTERN.test(combined)) {
+    score -= 3;
+  }
+
+  if (!/\b(result|outcome|turn|break|escape|claim|control|shift)\b/i.test(combined)) {
+    score -= 1;
+  }
+
+  return clampTenPointScore(score);
+}
+
+/**
+ * Scores how much the packaging invites thoughtful discussion rather than shallow engagement.
+ */
+function scoreCommentDepthIntent(pkg: GeneratedPackage): number {
+  const hook = normalizeCopy(pkg.platformPack?.facebook.hook ?? pkg.hook);
+  const caption = normalizeCopy(pkg.platformPack?.facebook.caption ?? pkg.caption);
+  const cta = normalizeCopy(pkg.cta);
+  const combined = `${hook} ${caption} ${cta}`.trim();
+  const hookQuality = evaluateHookCopyQuality(
+    hook,
+    normalizeCopy(pkg.predatorName),
+    normalizeCopy(pkg.preyName)
+  );
+
+  let score = 3;
+
+  score += validateCaptionCTA(caption) ? 4 : -2;
+  score += COMMENT_PROMPT_PATTERN.test(caption) || COMMENT_PROMPT_PATTERN.test(cta) ? 2 : 0;
+  score += hookQuality.hasSpeciesClarity ? 1 : -1;
+  score += hookQuality.hasObservationalTone ? 1 : 0;
+
+  if (hasForcedEngagementCopy(combined) || hasBaitLikeCopy(combined)) {
+    score -= 4;
+  }
+
+  return clampTenPointScore(score);
+}
+
+/**
+ * Scores how safely monetizable the Facebook package looks for clean-danger wildlife content.
+ */
+function scoreMonetisationSafety(
+  pkg: GeneratedPackage,
+  publishGuardPass: boolean | null,
+  originalityConfidence: number
+): number {
+  const hook = normalizeCopy(pkg.platformPack?.facebook.hook ?? pkg.hook);
+  const caption = normalizeCopy(pkg.platformPack?.facebook.caption ?? pkg.caption);
+  const cta = normalizeCopy(pkg.cta);
+  const combined = `${hook} ${caption} ${cta}`.trim();
+
+  let score = 7;
+
+  score += publishGuardPass === true ? 2 : publishGuardPass === false ? -2 : 0;
+  score += originalityConfidence >= 75 ? 2 : originalityConfidence >= 60 ? 1 : 0;
+  score += hasForcedEngagementCopy(combined) || hasBaitLikeCopy(combined) ? -2 : 1;
+  score += GRAPHIC_PACKAGING_PATTERN.test(combined) ? -4 : 1;
+  score += /\b(pressure|spacing|timing|claim|warning|breakaway|holds ground|tests the defense)\b/i.test(
+    combined
+  )
+    ? 1
+    : 0;
+
+  return clampTenPointScore(score);
+}
+
+/**
+ * Scores whether the package contains a light owned-funnel conversion path instead of distribution-only packaging.
+ */
+function scoreOwnedFunnelConversionIntent(pkg: GeneratedPackage): number {
+  const caption = normalizeCopy(pkg.platformPack?.facebook.caption ?? pkg.caption);
+  const cta = normalizeCopy(pkg.cta);
+  const combined = `${caption} ${cta} ${normalizeCopy(pkg.altTextPrompt ?? "")}`.trim();
+
+  let score = 1;
+
+  score += cta ? 2 : -1;
+  score += validateCaptionCTA(caption) ? 2 : 0;
+  score += CONVERSION_SIGNAL_PATTERN.test(combined) ? 3 : 0;
+  score += /\b(original content|wild stories tv)\b/i.test(combined) ? 1 : 0;
+
+  if (!cta && !CONVERSION_SIGNAL_PATTERN.test(combined)) {
+    score -= 2;
+  }
+
+  return clampTenPointScore(score);
+}
+
 function scoreHashtagHygiene(pkg: GeneratedPackage): number {
   const hashtags = splitHashtags(pkg.platformPack?.facebook.hashtags ?? pkg.hashtags);
   const uniqueCount = new Set(hashtags.map((tag) => tag.toLowerCase())).size;
@@ -342,9 +477,13 @@ export function buildFacebookPublishReadinessReport(
     typeof pkg.usViewsModeReport?.shouldPublish === "boolean"
       ? pkg.usViewsModeReport.shouldPublish
       : null;
+  const captionCtaValid = validateCaptionCTA(
+    normalizeCopy(pkg.platformPack?.facebook.caption ?? pkg.caption)
+  );
+  const originalityConfidence = scoreOriginalityConfidence(pkg, publishGuardPass, evidence);
 
   const scores: FacebookPublishReadinessScores = {
-    originalityConfidence: scoreOriginalityConfidence(pkg, publishGuardPass, evidence),
+    originalityConfidence,
     firstFrameHookReadability: scoreFirstFrameHookReadability(
       pkg,
       overlayRecommendation,
@@ -362,30 +501,49 @@ export function buildFacebookPublishReadinessReport(
       evidence,
       shouldPublish
     ),
+    shareIntentScore: scoreShareIntent(pkg),
+    commentDepthIntentScore: scoreCommentDepthIntent(pkg),
+    monetisationSafetyScore: scoreMonetisationSafety(
+      pkg,
+      publishGuardPass,
+      originalityConfidence
+    ),
+    ownedFunnelConversionIntentScore: scoreOwnedFunnelConversionIntent(pkg),
   };
 
   const overallScore = clampScore(
-    scores.originalityConfidence * 0.2 +
-      scores.firstFrameHookReadability * 0.18 +
-      scores.hookOverlayClarity * 0.18 +
-      scores.captionUsefulness * 0.15 +
-      scores.hashtagHygiene * 0.11 +
-      scores.packagingQuality * 0.18
+    scores.originalityConfidence * 0.15 +
+      scores.firstFrameHookReadability * 0.14 +
+      scores.hookOverlayClarity * 0.12 +
+      scores.captionUsefulness * 0.12 +
+      scores.hashtagHygiene * 0.08 +
+      scores.packagingQuality * 0.12 +
+      scores.shareIntentScore * 10 * 0.08 +
+      scores.commentDepthIntentScore * 10 * 0.07 +
+      scores.monetisationSafetyScore * 10 * 0.07 +
+      scores.ownedFunnelConversionIntentScore * 10 * 0.05
   );
 
   const verdict: FacebookPublishReadinessVerdict =
     evidence?.userRecommendation === "retry" ||
     overallScore < 45 ||
+    scores.monetisationSafetyScore <= 3 ||
+    scores.shareIntentScore <= 3 ||
     (scores.originalityConfidence < 40 && scores.packagingQuality < 45)
       ? "retry-content-before-publish"
       : publishGuardPass === true &&
+          captionCtaValid &&
           overallScore >= 78 &&
           scores.originalityConfidence >= 68 &&
           scores.firstFrameHookReadability >= 65 &&
           scores.hookOverlayClarity >= 60 &&
           scores.captionUsefulness >= 58 &&
           scores.hashtagHygiene >= 65 &&
-          scores.packagingQuality >= 65
+          scores.packagingQuality >= 65 &&
+          scores.shareIntentScore >= 7 &&
+          scores.commentDepthIntentScore >= 6 &&
+          scores.monetisationSafetyScore >= 7 &&
+          scores.ownedFunnelConversionIntentScore >= 4
         ? "ready-to-publish"
         : "review-packaging-before-publish";
 
@@ -429,6 +587,30 @@ export function buildFacebookPublishReadinessReport(
     );
   }
 
+  if (!captionCtaValid) {
+    reasons.push(
+      "The Facebook caption does not end on a clean observational discussion prompt, so publish-readiness stays blocked until the CTA is fixed."
+    );
+  }
+
+  if (scores.shareIntentScore < 6 || scores.commentDepthIntentScore < 6) {
+    reasons.push(
+      "The package still needs a clearer behavioural beat or deeper discussion angle before it is strong enough to publish."
+    );
+  }
+
+  if (scores.monetisationSafetyScore < 7) {
+    reasons.push(
+      "Monetisation safety is still soft, so clean up any bait, graphic wording, or originality risk before posting."
+    );
+  }
+
+  if (scores.ownedFunnelConversionIntentScore < 4) {
+    reasons.push(
+      "The package is still mostly distribution-only. Add a cleaner page or original-series angle if you want stronger owned-funnel follow-through."
+    );
+  }
+
   if (scores.captionUsefulness < 60 || scores.hashtagHygiene < 65) {
     reasons.push("Caption or hashtags still want a cleanup pass before posting.");
   }
@@ -441,6 +623,24 @@ export function buildFacebookPublishReadinessReport(
   if (!evidence) {
     reminders.push(
       "No saved evidence pass yet. After the first real render, log one evidence review for future prompt comparison."
+    );
+  }
+
+  if (!captionCtaValid) {
+    reminders.push(
+      "Replace the caption ending with an observational discussion prompt before you post."
+    );
+  }
+
+  if (scores.shareIntentScore < 6) {
+    reminders.push(
+      "Strengthen the package around one dominant behavioural beat with a clearer outcome shift or replay-worthy turn."
+    );
+  }
+
+  if (scores.ownedFunnelConversionIntentScore < 4) {
+    reminders.push(
+      "Add a subtle page, series, or original-content angle if you want stronger owned-funnel conversion from the post."
     );
   }
 

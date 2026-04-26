@@ -31,6 +31,76 @@ function clampFacebookScore(score: number): number {
   return Math.max(0, Math.min(96, Math.round(score)));
 }
 
+const BANNED_CAPTION_CTA_PATTERNS = [
+  /\bcomment YES\b/i,
+  /\bsmash share\b/i,
+  /\btag a friend\b/i,
+  /\blike if\b/i,
+  /\bshare if\b/i,
+  /\bclick link\b/i,
+  /\bgiveaway\b/i,
+  /\bwin a\b/i,
+] as const;
+
+const OBSERVATIONAL_CTA_PATTERNS = [
+  /\bwhat did you notice first\b/i,
+  /\bwas this patience or panic\b/i,
+  /\bwhich animal actually controlled the scene\b/i,
+  /\bwhat changed the outcome first\b/i,
+  /\bwas the key mistake physical or mental\b/i,
+  /\bwhich second\b/i,
+  /\bwhich turn\b/i,
+  /\bwhat told you\b/i,
+  /\bwhich body shift\b/i,
+  /\bwould you have noticed\b/i,
+  /\bwhich angle\b/i,
+  /\bwhich animal gave up position first\b/i,
+  /\bwould you have spotted\b/i,
+] as const;
+
+/**
+ * Validates that a Facebook caption ends with a discussion-safe observational CTA.
+ */
+export function validateCaptionCTA(caption: string): boolean {
+  const compact = normalizeCopy(caption);
+  if (!compact) return false;
+  if (BANNED_CAPTION_CTA_PATTERNS.some((pattern) => pattern.test(compact))) {
+    return false;
+  }
+
+  const lastLine =
+    compact.split(/\n+/).map(normalizeCopy).filter(Boolean).at(-1) ?? compact;
+  if (!lastLine.endsWith("?")) return false;
+
+  return OBSERVATIONAL_CTA_PATTERNS.some((pattern) => pattern.test(lastLine));
+}
+
+/**
+ * Builds a non-bait observational CTA that stays discussion-led for Facebook packaging.
+ */
+export function buildObservationalCTA(species: string, arc: string): string {
+  const cleanSpecies = normalizeCopy(species);
+
+  switch (arc) {
+    case "Ambush attack":
+    case "Chase and takedown":
+    case "Escape from danger":
+      return "What changed the outcome first?";
+    case "Defender stands ground":
+    case "Territory dominance battle":
+      return "Which animal actually controlled the scene?";
+    case "Giant vs giant clash":
+    case "Predator vs predator fight":
+      return "Was this patience or panic?";
+    case "Pack hunting strategy":
+      return "What did you notice first?";
+    default:
+      return cleanSpecies
+        ? `What did you notice first in the ${cleanSpecies.toLowerCase()} sequence?`
+        : "What did you notice first?";
+  }
+}
+
 function facebookFrameQualityTieBreak(
   heuristics?: FacebookFrameHeuristics
 ): number {

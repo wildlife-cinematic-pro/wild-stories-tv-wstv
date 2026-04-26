@@ -12,8 +12,10 @@ import { isContentLaneCompatible } from "@/lib/content-lanes";
 import {
   buildFacebookCoverFramePresets,
   buildFacebookFirstFrameOverlayPresets,
+  buildObservationalCTA,
   rankFacebookCoverFramePresets,
   recommendFacebookOverlayPreset,
+  validateCaptionCTA,
 } from "@/lib/platform-packs/facebook";
 import { build2026Hook } from "@/lib/platform-packs/hooks";
 import {
@@ -65,8 +67,10 @@ export {
 export {
   buildFacebookCoverFramePresets,
   buildFacebookFirstFrameOverlayPresets,
+  buildObservationalCTA,
   rankFacebookCoverFramePresets,
   recommendFacebookOverlayPreset,
+  validateCaptionCTA,
 } from "@/lib/platform-packs/facebook";
 export {
   build2026Caption,
@@ -106,10 +110,16 @@ export function buildPlatformPack(
     mode: "us-only",
     contentLane: effectiveContentLane,
   });
-  const longCaption = buildLongCaption(predator, prey, cleanEnv, arc, {
+  const longCaptionDraft = buildLongCaption(predator, prey, cleanEnv, arc, {
     mode: "us-only",
     contentLane: effectiveContentLane,
   });
+  const fallbackCaptionCta = buildObservationalCTA(`${predator} vs ${prey}`, arc);
+  const longCaption = validateCaptionCTA(longCaptionDraft)
+    ? longCaptionDraft
+    : `${longCaptionDraft
+        .replace(/[\r\n]{2,}[^\r\n?]+\?\s*$/, "")
+        .trim()}\n\n${fallbackCaptionCta}`.trim();
   const hashtags = buildHashtags(predator, prey, arc, {
     count: 5,
     contentLane: effectiveContentLane,

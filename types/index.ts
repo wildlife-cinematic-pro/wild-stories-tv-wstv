@@ -647,6 +647,7 @@ export type FacebookPack = PlatformPostCommon & {
   hashtags: string;
   tags?: string;
   cmpNote: string;
+  publishReminders?: string[];
   facebookOverlayPresets?: FacebookOverlayPreset[];
   facebookCoverFramePresets?: FacebookCoverFrameTextPreset[];
   facebookOverlayRecommendation?: FacebookOverlayRecommendation;
