@@ -7,7 +7,6 @@ import type {
   ContentLane,
   WildlifeScopeMode,
   DepthMode,
-  DurationLane,
   EmotionalTone,
   HabitatPreset,
   HookFamily,
@@ -32,6 +31,7 @@ import {
 } from "@/lib/model-specs";
 import { contentLaneOptions } from "@/lib/content-lanes";
 import { cameraAnglePresetOptions } from "@/lib/camera-angle-presets";
+import { formatDurationLaneLabel, isDurationLane } from "@/lib/duration-lanes";
 import {
   animalVibes,
   emotionalTones,
@@ -195,7 +195,7 @@ export function buildWorkflowPresetName(
 ): string {
   const laneLead =
     snapshot.contentLane === "Auto" ? "Wildlife" : snapshot.contentLane;
-  const durationLead = snapshot.durationLane === "long" ? "Long Lane" : "Short Form";
+  const durationLead = `${formatDurationLaneLabel(snapshot.durationLane)} Lane`;
   return `${laneLead} ${durationLead} - ${snapshot.predator} vs ${snapshot.prey}`;
 }
 
@@ -239,11 +239,9 @@ export function normalizeWorkflowPresetSnapshot(
     arc: pickOption<Arc>(value.arc, arcs, "Ambush attack"),
     habitat: pickOption<HabitatPreset>(value.habitat, habitatOptions, "Auto"),
     weather: pickOption(value.weather, weatherOptions, "Golden Hour"),
-    durationLane: pickOption<DurationLane>(
-      value.durationLane,
-      ["short", "long"],
-      "short"
-    ),
+    durationLane: isDurationLane(value.durationLane)
+      ? value.durationLane
+      : "short",
     fastPublishMode: cleanBoolean(value.fastPublishMode, true),
     strictOriginalityGuard: cleanBoolean(value.strictOriginalityGuard, true),
     hookMode: pickOption<HookFamily | "all">(value.hookMode, hookModes, "all"),

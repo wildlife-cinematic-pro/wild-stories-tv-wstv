@@ -374,6 +374,50 @@ describe("Long workflow prompt safety", () => {
     expect(pack.shot2.pasteReady).toContain("first impact waits for the payoff beat");
     expect(pack.shot3.pasteReady).toMatch(/spacing stays readable/i);
   });
+
+  it("keeps medium and long workflow packs on valid Kling generation durations", () => {
+    const base = {
+      mode: "hybrid" as const,
+      predator: "Bald Eagle",
+      prey: "Salmon",
+      env: "Riverbank Reeds",
+      arc: "Ambush attack" as const,
+      weather: "Dawn" as const,
+      runwayModel: "Gen-4.5" as const,
+      klingModel: "Kling 3.0 Pro" as const,
+      emotionalTone: "Raw Tension" as const,
+      animalVibe: "National Geographic Wild" as const,
+      sceneDesc: "Readable shoreline setup with clean first-frame spacing.",
+      quality,
+      cameraAnglePreset: "Waterline" as const,
+    };
+
+    const mediumPack = buildFourShotWorkflowPromptPack({
+      ...base,
+      durationLane: "medium",
+    });
+    const longPack = buildFourShotWorkflowPromptPack({
+      ...base,
+      durationLane: "long",
+    });
+
+    expect(mediumPack.shot1.metadata?.durationSeconds).toBe(10);
+    expect(mediumPack.shot2.metadata?.durationSeconds).toBe(10);
+    expect(mediumPack.shot3.metadata?.durationSeconds).toBe(10);
+    expect(mediumPack.shot4.metadata?.durationSeconds).toBe(5);
+    expect(longPack.shot1.metadata?.durationSeconds).toBe(10);
+    expect(longPack.shot2.metadata?.durationSeconds).toBe(10);
+    expect(longPack.shot3.metadata?.durationSeconds).toBe(10);
+    expect(longPack.shot4.metadata?.durationSeconds).toBe(10);
+
+    const klingDurationLeak = /\b(?:6|7|8|9|12|15)\s*(?:seconds?|s)\b/i;
+    expect(`${mediumPack.shot2.fullText} ${mediumPack.shot3.fullText}`).not.toMatch(
+      klingDurationLeak
+    );
+    expect(`${longPack.shot2.fullText} ${longPack.shot3.fullText}`).not.toMatch(
+      klingDurationLeak
+    );
+  });
 });
 
 describe("Clip chaining guidance", () => {
@@ -1585,6 +1629,16 @@ describe("engine constraint regression guards", () => {
     expect(warnings.filter((w) => w.level === "error")).toHaveLength(3);
     expect(warnings.some((w) => /24fps or 25fps only/i.test(w.message))).toBe(true);
     expect(warnings.some((w) => /does not support negative prompts/i.test(w.message))).toBe(true);
+  });
+
+  it("validateEngineConstraints keeps Kling on 5s or 10s for the WSTV workflow", () => {
+    const warnings = validateEngineConstraints({
+      engine: "kling",
+      duration: 15,
+      hasNegativePrompt: true,
+    });
+
+    expect(warnings.some((w) => /5s or 10s for the WSTV workflow/i.test(w.message))).toBe(true);
   });
 });
 

@@ -73,7 +73,7 @@ function makePackage(prefix: string): GeneratedPackage {
       klingNative15s: {
         fullText: `${prefix} kling native`,
         pasteReady: `${prefix} kling native paste`,
-        metadata: { engine: "kling", variant: "native-15s" },
+        metadata: { engine: "kling", variant: "native-10s" },
       },
       klingSixShot: {
         fullText: `${prefix} kling six`,

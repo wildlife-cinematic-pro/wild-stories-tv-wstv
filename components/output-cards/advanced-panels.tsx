@@ -182,17 +182,25 @@ export function WatchTimePanel({ report }: { report: WatchTimeReport }) {
         </span>
       </div>
 
-      <div className="mb-3 grid gap-2 md:grid-cols-3">
+      <div className="mb-3 grid gap-2 md:grid-cols-4">
         <div className="rounded-lg border border-red-200 bg-[color:var(--surface-elevated)] p-3 text-center">
           <p className="text-xs text-[color:var(--muted)]">Short Hybrid Lane</p>
-          <p className="text-xl font-bold text-red-500">18–24s</p>
-          <p className="text-xs text-[color:var(--muted)]">Fast readable short-lane default</p>
+          <p className="text-xl font-bold text-red-500">20s</p>
+          <p className="text-xs text-[color:var(--muted)]">Runway 5 / Kling 5 / Kling 5 / Runway 5</p>
+        </div>
+        <div className="rounded-lg border border-amber-200 bg-[color:var(--surface-elevated)] p-3 text-center">
+          <p className="text-xs text-[color:var(--muted)]">Medium Hybrid Lane</p>
+          <p className="text-xl font-bold text-amber-600">35s</p>
+          <p className="text-xs text-[color:var(--muted)]">Runway 10 / Kling 10 / Kling 10 / Runway 5</p>
         </div>
         <div className="rounded-lg border border-green-300 bg-[color:var(--surface-elevated)] p-3 text-center">
           <p className="text-xs text-[color:var(--muted)]">Long Hybrid Lane</p>
-          <p className="text-xl font-bold text-green-600">50s</p>
+          <p className="text-xl font-bold text-green-600">40s</p>
           <p className="text-xs font-semibold text-green-600">
-            ✓ Runway 10 / Kling 15 / Kling 15 / Runway 10
+            ✓ Runway 10 / Kling 10 / Kling 10 / Runway 10
+          </p>
+          <p className="mt-1 text-[11px] text-[color:var(--muted)]">
+            Optional edit pacing can stretch to 45–50s.
           </p>
         </div>
         <div className="rounded-lg border border-indigo-200 bg-[color:var(--surface-elevated)] p-3 text-center">

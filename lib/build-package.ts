@@ -67,6 +67,10 @@ import {
   type GeneratedPackageEnhancements,
 } from "@/lib/generated-package";
 import { buildUSViewsModeReport } from "@/lib/usViewsMode";
+import {
+  buildDurationLaneRoutingNote,
+  getDurationLaneConfig,
+} from "@/lib/duration-lanes";
 
 type PublishFlowMarketMode = "US_ONLY";
 
@@ -172,26 +176,8 @@ export type GeneratedPackageDraft = {
   primaryHook: string;
 };
 
-function buildPrimaryShotDurations(durationLane: DurationLane): string[] {
-  return durationLane === "long"
-    ? ["0–10s", "10–25s", "25–40s", "40–50s"]
-    : ["0–4s", "4–9s", "9–15s", "15–20s"];
-}
-
 function buildPrimaryShotTitles(durationLane: DurationLane): string[] {
-  return durationLane === "long"
-    ? [
-        "Shot 1 — Opening Tension",
-        "Shot 2 — Pressure Build",
-        "Shot 3 — Main Action Payoff",
-        "Shot 4 — Aftermath Resolve",
-      ]
-    : [
-        "Shot 1 — Opening Tension",
-        "Shot 2 — Pressure Build",
-        "Shot 3 — Peak Action",
-        "Shot 4 — Resolved Tension",
-      ];
+  return getDurationLaneConfig(durationLane).shots.map((shot) => shot.title);
 }
 
 function buildPackageGenerationId(): string {
@@ -203,19 +189,7 @@ function buildPackageGenerationId(): string {
 }
 
 function buildPrimaryShotWhy(durationLane: DurationLane): string[] {
-  return durationLane === "long"
-    ? [
-        "Use Image 1 from the master image for the readable 10-second opening tension and first-frame clarity beat.",
-        "Use Image 2 edited from Shot 1 image for the slower 15-second pressure build with wider spacing collapse and stronger continuity-safe body language.",
-        "Use Image 3 edited from Shot 2 image for the 15-second main action payoff with the clearest readable force transfer.",
-        "Use Image 4 edited from Shot 3 image for the 10-second aftermath hold, winner/retreat resolve, and clean final-frame handoff.",
-      ]
-    : [
-        "Use Image 1 from the master image for the clean first-frame opening.",
-        "Use Image 2 edited from Shot 1 image for a stronger physics-safe pressure build without losing identity.",
-        "Use Image 3 edited from Shot 2 image for the strongest full-body action beat.",
-        "Use Image 4 edited from Shot 3 image for the readable aftermath or final tension hold.",
-      ];
+  return getDurationLaneConfig(durationLane).shots.map((shot) => shot.why);
 }
 
 export function buildGeneratedPackageDraft(
@@ -408,9 +382,15 @@ export function buildGeneratedPackageDraft(
   );
   const animalBehaviorResult = getAnimalBehavior(input.predator);
   const motionStrength = arcMotionStrength[input.finalArc] ?? 70;
-  const primaryShotDurations = buildPrimaryShotDurations(input.durationLane);
+  const durationLaneConfig = getDurationLaneConfig(input.durationLane);
   const primaryShotTitles = buildPrimaryShotTitles(input.durationLane);
   const primaryShotWhy = buildPrimaryShotWhy(input.durationLane);
+  const primaryShotGenerationLabels = durationLaneConfig.shots.map(
+    (shot) => `Generation duration: ${shot.generationSeconds}s`
+  );
+  const primaryShotEditLabels = durationLaneConfig.shots.map(
+    (shot) => `Edit timeline: ${shot.editTimeline}`
+  );
 
   const basePkg: GeneratedPackage = {
     predatorName: input.predator,
@@ -484,7 +464,9 @@ export function buildGeneratedPackageDraft(
         title: primaryShotTitles[0],
         prompt: fourShotWorkflowPack.shot1.fullText,
         motionStrength,
-        durationLabel: primaryShotDurations[0],
+        durationLabel: primaryShotEditLabels[0],
+        generationDurationLabel: primaryShotGenerationLabels[0],
+        editTimelineLabel: primaryShotEditLabels[0],
         why: primaryShotWhy[0],
       },
       {
@@ -492,7 +474,9 @@ export function buildGeneratedPackageDraft(
         title: primaryShotTitles[1],
         prompt: fourShotWorkflowPack.shot2.fullText,
         motionStrength,
-        durationLabel: primaryShotDurations[1],
+        durationLabel: primaryShotEditLabels[1],
+        generationDurationLabel: primaryShotGenerationLabels[1],
+        editTimelineLabel: primaryShotEditLabels[1],
         why: primaryShotWhy[1],
       },
       {
@@ -500,7 +484,9 @@ export function buildGeneratedPackageDraft(
         title: primaryShotTitles[2],
         prompt: fourShotWorkflowPack.shot3.fullText,
         motionStrength,
-        durationLabel: primaryShotDurations[2],
+        durationLabel: primaryShotEditLabels[2],
+        generationDurationLabel: primaryShotGenerationLabels[2],
+        editTimelineLabel: primaryShotEditLabels[2],
         why: primaryShotWhy[2],
       },
       {
@@ -508,7 +494,9 @@ export function buildGeneratedPackageDraft(
         title: primaryShotTitles[3],
         prompt: fourShotWorkflowPack.shot4.fullText,
         motionStrength,
-        durationLabel: primaryShotDurations[3],
+        durationLabel: primaryShotEditLabels[3],
+        generationDurationLabel: primaryShotGenerationLabels[3],
+        editTimelineLabel: primaryShotEditLabels[3],
         why: primaryShotWhy[3],
       },
     ],
@@ -524,10 +512,11 @@ export function buildGeneratedPackageDraft(
       klingPack.shot3.fullText,
       klingPack.shot4.fullText,
     ].join("\n\n---\n\n"),
-    routingNote:
-      input.selectedPipelineStyle === "long-hybrid-4-shot"
-        ? `Primary workflow: true 50-second hybrid 4-shot routing uses Runway ${input.runwayModel} for Shot 1 (10s) and Shot 4 (10s), and ${input.klingModel} for Shot 2 (15s) and Shot 3 (15s). Long lane holds the setup longer, builds pressure more gradually, lands one clearer payoff beat, and preserves a cleaner aftermath resolve.`
-        : `Primary workflow: hybrid 4-shot routing uses Runway ${input.runwayModel} for Shots 1 and 4, and ${input.klingModel} for Shots 2 and 3. Optional bundles: Seedance 2.0, full Runway 4-shot, and full Kling 4-shot outputs remain available.`,
+    routingNote: buildDurationLaneRoutingNote(
+      input.durationLane,
+      input.runwayModel,
+      input.klingModel
+    ),
     pipelineStyle: input.selectedPipelineStyle,
     fiveShotCinematic,
     fiveShotViral,

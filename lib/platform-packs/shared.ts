@@ -46,7 +46,7 @@ export const OBSERVATIONAL_SIGNAL_PATTERN =
   /\b(pressure|spacing|claim|timing|posture|waterline|window|stance|distance|footing|surface break|brace|turn|ground|clash|angle|territory|warning-step|breakaway|survival|antler|shoulder|standoff|pursuit|strike|contact)\b/i;
 
 const FORCED_ENGAGEMENT_PATTERN =
-  /\b(who wins\??|comment below|tag a friend|watch till the end|watch to the end|like if you agree|share before it(?:'|’)s gone)\b/i;
+  /\b(who wins\??|comment below|tag a friend|watch till the end|watch to the end|like if you agree|like and share|comment if you agree|follow for part 2|share this now|comment yes|share before it(?:'|’)s gone)\b/i;
 
 export function hasBaitLikeCopy(text: string): boolean {
   const compact = String(text ?? "");

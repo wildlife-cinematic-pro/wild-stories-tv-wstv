@@ -50,7 +50,7 @@ describe("workflow priority cleanup", () => {
 
     expect(score.breakdown.some((item) => item.tip.includes("4-shot pipeline"))).toBe(true);
     expect(watchTime.currentDuration).toContain("20");
-    expect(watchTime.targetDuration).toContain("4-shot primary runs");
+    expect(watchTime.targetDuration).toContain("20-second short lane");
   });
 
   it("switches the two-part preset into ambush-specific storytelling when the arc is ambush attack", () => {

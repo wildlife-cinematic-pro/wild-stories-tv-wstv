@@ -1,6 +1,7 @@
 // file: lib/recommendations.ts
 
 import { runFacebookPublishGuard } from "@/lib/facebookPublishGuard";
+import { getDurationLanePerformanceTargets } from "@/lib/duration-lanes";
 import { scoreOpeningFrame } from "@/lib/openingFrameScore";
 import {
   getBestHookFamilyForDurationLane,
@@ -207,18 +208,20 @@ export function getQualityRecommendations(input: QualityRecommendationInput): Qu
     }
   }
 
+  const currentTargets = getDurationLanePerformanceTargets(input.durationLane);
+
   if (currentPerformance) {
     why.push(currentPerformance.summary);
 
     if (
-      input.durationLane === "long" &&
-      (currentPerformance.averageWatchTimeSeconds < 45 ||
-        currentPerformance.completionRate < 0.62)
+      input.durationLane !== "short" &&
+      (currentPerformance.averageWatchTimeSeconds < currentTargets.averageWatchTimeSeconds ||
+        currentPerformance.completionRate < currentTargets.completionRate)
     ) {
       warnings.push({
         id: "long-lane-performance-warning",
         severity: "warning",
-        title: "Long lane benchmark is soft",
+        title: `${input.durationLane === "long" ? "Long" : "Medium"} lane benchmark is soft`,
         detail:
           "Current performance memory does not support a longer hold yet. Stay in the short lane until retention and completion improve.",
       });
@@ -284,20 +287,19 @@ export function getQualityRecommendations(input: QualityRecommendationInput): Qu
       input.referenceLock &&
       input.singleActionRule);
 
+  const longTargets = getDurationLanePerformanceTargets("long");
+  const shortTargets = getDurationLanePerformanceTargets("short");
   const longLanePerformanceReady =
     !!longLanePerformance &&
-    longLanePerformance.averageWatchTimeSeconds >= 45 &&
-    longLanePerformance.completionRate >= 0.62;
+    longLanePerformance.averageWatchTimeSeconds >= longTargets.averageWatchTimeSeconds &&
+    longLanePerformance.completionRate >= longTargets.completionRate;
   const shortLanePerformanceReady =
     !!shortLanePerformance &&
-    shortLanePerformance.averageWatchTimeSeconds >= 18 &&
-    shortLanePerformance.completionRate >= 0.7;
+    shortLanePerformance.averageWatchTimeSeconds >= shortTargets.averageWatchTimeSeconds &&
+    shortLanePerformance.completionRate >= shortTargets.completionRate;
   const currentLanePerformanceReady = currentPerformance
-    ? input.durationLane === "long"
-      ? currentPerformance.averageWatchTimeSeconds >= 45 &&
-        currentPerformance.completionRate >= 0.62
-      : currentPerformance.averageWatchTimeSeconds >= 18 &&
-        currentPerformance.completionRate >= 0.7
+    ? currentPerformance.averageWatchTimeSeconds >= currentTargets.averageWatchTimeSeconds &&
+      currentPerformance.completionRate >= currentTargets.completionRate
     : true;
 
   const canUseLongLane =

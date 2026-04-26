@@ -112,6 +112,40 @@ describe("build-package refactor seam", () => {
     expect(draft.basePkg.routingNote).not.toContain("Kling Kling");
   });
 
+  it("keeps short, medium, and long lane generation durations inside the WSTV plan", () => {
+    const shortDraft = buildGeneratedPackageDraft(
+      makeDraftInput({ durationLane: "short", selectedPipelineStyle: "4-shot" })
+    );
+    const mediumDraft = buildGeneratedPackageDraft(
+      makeDraftInput({ durationLane: "medium", selectedPipelineStyle: "4-shot" })
+    );
+    const longDraft = buildGeneratedPackageDraft(
+      makeDraftInput({ durationLane: "long", selectedPipelineStyle: "long-hybrid-4-shot" })
+    );
+
+    expect(shortDraft.basePkg.shotPlan.map((shot) => shot.generationDurationLabel)).toEqual([
+      "Generation duration: 5s",
+      "Generation duration: 5s",
+      "Generation duration: 5s",
+      "Generation duration: 5s",
+    ]);
+    expect(mediumDraft.basePkg.shotPlan.map((shot) => shot.generationDurationLabel)).toEqual([
+      "Generation duration: 10s",
+      "Generation duration: 10s",
+      "Generation duration: 10s",
+      "Generation duration: 5s",
+    ]);
+    expect(longDraft.basePkg.shotPlan.map((shot) => shot.generationDurationLabel)).toEqual([
+      "Generation duration: 10s",
+      "Generation duration: 10s",
+      "Generation duration: 10s",
+      "Generation duration: 10s",
+    ]);
+
+    expect(mediumDraft.basePkg.routingNote).toContain("Shot 2 (10s)");
+    expect(mediumDraft.basePkg.routingNote).toContain("Shot 4 (5s)");
+    expect(longDraft.basePkg.routingNote).not.toMatch(/\b15s\b/);
+  });
   it("aligns the publish summary hook with the packaged Facebook hook", () => {
     const draft = buildGeneratedPackageDraft(makeDraftInput());
     const { publishFlowSummary } = finalizeGeneratedPackageDraft(draft);

@@ -13,6 +13,7 @@ import { KLING_MODELS, RUNWAY_MODELS } from "@/lib/model-specs";
 import { isContentLane } from "@/lib/content-lanes";
 import { isWildlifeScopeMode } from "@/lib/predator-data";
 import { isCameraAnglePreset } from "@/lib/camera-angle-presets";
+import { isDurationLane } from "@/lib/duration-lanes";
 
 import type {
   AIProvider,
@@ -176,7 +177,7 @@ export function useBuildPersistence({
     }
     if (saved?.microMotion !== undefined) setMicroMotion(saved.microMotion);
     if (saved?.heroVeo !== undefined) setHeroVeo(saved.heroVeo);
-    if (saved?.durationLane === "short" || saved?.durationLane === "long") {
+    if (isDurationLane(saved?.durationLane)) {
       setDurationLane(saved.durationLane);
     }
     if (isHookMode(saved?.hookMode)) setHookMode(saved.hookMode);

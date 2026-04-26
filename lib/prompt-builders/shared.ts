@@ -569,11 +569,11 @@ export function validateEngineConstraints(opts: {
   }
 
   if (opts.engine === "kling") {
-    if (opts.duration && (opts.duration < 3 || opts.duration > 15)) {
+    if (opts.duration && opts.duration !== 5 && opts.duration !== 10) {
       warnings.push({
         engine: "kling",
         level: "error",
-        message: `Kling 3.0 duration must be 3–15 seconds. You set ${opts.duration}s.`,
+        message: `Kling 3.0 generation duration must be 5s or 10s for the WSTV workflow. You set ${opts.duration}s.`,
       });
     }
     if (!opts.hasNegativePrompt) {

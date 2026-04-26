@@ -1,7 +1,8 @@
 "use client";
 
 import { ProShotCard, SectionLabel } from "@/components/output-cards/shared-panels";
-import { getPromptCardForEngine } from "@/components/output-cards/prompt-utils";
+import { getPromptCardForEngine, getWorkflowPromptCard } from "@/components/output-cards/prompt-utils";
+import { getDurationLaneConfig } from "@/lib/duration-lanes";
 
 import type { GeneratedPackage } from "@/types";
 import type { DirectWorkspaceTab, VideoWorkspaceTab } from "@/components/output-cards/workspaces/types";
@@ -39,17 +40,13 @@ export function VideoWorkspace({
   const seedancePromptCards = seedanceShots.map((_, index) =>
     getPromptCardForEngine(data, "seedance", index)
   );
-  const isLongHybridLane =
-    data.durationLane === "long" || data.pipelineStyle === "long-hybrid-4-shot";
-  const hybridRouteBadge = isLongHybridLane
-    ? "LONG • 50s total"
-    : "SHORT • Hybrid 4-shot";
-  const hybridRouteTiming = isLongHybridLane
-    ? "Runway 10 / Kling 15 / Kling 15 / Runway 10"
-    : "Runway 1 → Kling 2-3 → Runway 4";
-  const hybridRouteSummary = isLongHybridLane
-    ? "This long lane keeps the same continuity-safe hybrid route, but gives Shot 1 a slower readable setup, Shot 2-3 a stronger 15-second build/payoff, and Shot 4 a cleaner aftermath resolve."
-    : "This primary route keeps the opening and resolve cleaner in Runway, while using Kling for the middle pressure/action beats. It matches the main mixed-engine WSTV workflow.";
+  const resolvedLane =
+    data.durationLane ??
+    (data.pipelineStyle === "long-hybrid-4-shot" ? "long" : "short");
+  const laneConfig = getDurationLaneConfig(resolvedLane);
+  const hybridRouteBadge = `${laneConfig.shortLabel.toUpperCase()} • ${laneConfig.totalEditLabel}`;
+  const hybridRouteTiming = laneConfig.routeTimingLabel;
+  const hybridRouteSummary = laneConfig.summary;
   const primaryShotPlan = (data.shotPlan ?? []).map((item, index) => {
     const title = safeStr(item.title) || `Shot ${index + 1}`;
     const note = title.split("—")[1]?.trim() ?? "";
@@ -61,7 +58,9 @@ export function VideoWorkspace({
       title,
       note,
       durationLabel,
-      promptCard: getPromptCardForEngine(data, isRunway ? "runway" : "kling", index),
+      generationDurationLabel: safeStr(item.generationDurationLabel),
+      editTimelineLabel: safeStr(item.editTimelineLabel),
+      promptCard: getWorkflowPromptCard(data, index),
       cardEngine: isRunway ? ("runway" as const) : ("kling" as const),
       engineLabel: isRunway ? "Runway" : "Kling",
       color: isRunway
@@ -79,9 +78,11 @@ export function VideoWorkspace({
               Video workspace
             </div>
             <p className="mt-1 max-w-3xl text-xs leading-relaxed text-[color:var(--muted)]">
-              {isLongHybridLane
-                ? "Current package is using the true long hybrid 4-shot lane: 50 seconds total with Runway 10 / Kling 15 / Kling 15 / Runway 10. Optional Seedance, full Runway, and full Kling bundles still stay below as secondary views."
-                : "Default WSTV video setup is the primary hybrid 4-shot path. Seedance 2.0, full Runway 4-shot, and full Kling 4-shot bundles stay available below as optional views."}
+              {resolvedLane === "long"
+                ? "Current package is using the extended long hybrid lane: Runway 10 / Kling 10 / Kling 10 / Runway 10, with optional editor pacing out to 45–50 seconds. Optional Seedance, full Runway, and full Kling bundles still stay below as secondary views."
+                : resolvedLane === "medium"
+                  ? "Current package is using the medium hybrid lane: Runway 10 / Kling 10 / Kling 10 / Runway 5 for a cleaner 35-second final edit. Optional Seedance, full Runway, and full Kling bundles still stay below as secondary views."
+                  : "Default WSTV video setup is the primary hybrid 4-shot path. Seedance 2.0, full Runway 4-shot, and full Kling 4-shot bundles stay available below as optional views."}
             </p>
           </div>
 
@@ -116,9 +117,11 @@ export function VideoWorkspace({
           <div className="rounded-2xl border border-violet-500/30 bg-violet-500/12 p-4 shadow-sm">
             <div className="flex flex-wrap items-center justify-between gap-2">
               <div className="text-sm font-extrabold text-violet-900 dark:text-violet-100">
-                {isLongHybridLane
+                {resolvedLane === "long"
                   ? "Primary long hybrid 4-shot route summary"
-                  : "Primary hybrid 4-shot route summary"}
+                  : resolvedLane === "medium"
+                    ? "Primary medium hybrid 4-shot route summary"
+                    : "Primary hybrid 4-shot route summary"}
               </div>
               <div className="flex flex-wrap items-center gap-2">
                 <span className="rounded-full bg-[color:var(--surface-elevated)] px-2 py-0.5 text-[11px] font-bold text-violet-700 ring-1 ring-violet-200 dark:text-violet-200">
@@ -134,17 +137,18 @@ export function VideoWorkspace({
               {hybridRouteSummary}
             </p>
 
-            {isLongHybridLane && (
+            {laneConfig.optionalFinalEditNote && (
               <div className="mt-3 rounded-xl border border-violet-200 bg-[color:var(--surface-elevated)]/80 px-3 py-2 text-[11px] font-semibold text-violet-700 dark:text-violet-200">
-                Long-form hybrid pacing: Shot 1 readable setup, Shot 2 pressure
-                build, Shot 3 main payoff, Shot 4 aftermath resolve.
+                {laneConfig.optionalFinalEditNote}
               </div>
             )}
 
             <p className="mt-3 text-[11px] font-semibold uppercase tracking-wide text-violet-500 dark:text-violet-200/80">
-              {isLongHybridLane
-                ? "Continuity-safe hybrid route preserved"
-                : "Continuity-safe hybrid route"}
+              {resolvedLane === "long"
+                ? "Continuity-safe long hybrid route preserved"
+                : resolvedLane === "medium"
+                  ? "Continuity-safe medium hybrid route"
+                  : "Continuity-safe hybrid route"}
             </p>
 
             <div className="mt-4 grid gap-3 md:grid-cols-2 xl:grid-cols-4">
@@ -158,9 +162,14 @@ export function VideoWorkspace({
                   </div>
                   <div className="mt-2 text-base font-black">{item.engineLabel}</div>
                   <div className="mt-1 text-xs font-medium opacity-80">{item.note}</div>
-                  {item.durationLabel && (
+                  {item.generationDurationLabel && (
                     <div className="mt-2 inline-flex rounded-full bg-[color:var(--surface-elevated)] px-2 py-0.5 text-[10px] font-bold text-violet-700 ring-1 ring-violet-200 dark:text-violet-200">
-                      {item.durationLabel}
+                      {item.generationDurationLabel}
+                    </div>
+                  )}
+                  {item.editTimelineLabel && (
+                    <div className="mt-2 inline-flex rounded-full bg-[color:var(--surface-elevated)] px-2 py-0.5 text-[10px] font-bold text-violet-700 ring-1 ring-violet-200 dark:text-violet-200">
+                      {item.editTimelineLabel}
                     </div>
                   )}
                 </div>
@@ -348,7 +357,7 @@ export function VideoWorkspace({
                 }}
                 className="rounded-lg border border-blue-300 bg-[color:var(--surface-elevated)] px-3 py-1.5 text-xs font-extrabold text-blue-800 hover:bg-blue-500/12 active:scale-95 dark:text-blue-100"
               >
-                Open Kling 15s Direct Prompt
+                Open Kling 10s Direct Prompt
               </button>
             )}
           </div>
