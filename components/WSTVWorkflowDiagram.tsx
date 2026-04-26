@@ -19,26 +19,13 @@
  *
  * Main WSTV lane:
  *   • Gen-4.5 I2V — Shot 1 and Shot 4 (identity lock + cinematic quality).
- *     Confirmed Jan 21 2026: Runway released Gen-4.5 image-to-video.
  *   • Kling 3.0 — Shot 2 and Shot 3 (physics realism + action impact).
- *     Confirmed: Kling 3.0 available inside Runway Workflows as third-party model.
  *   • Seedance 2.0 remains an optional continuity reference lane outside this primary diagram.
  *   • Character lock is represented with real nodes only:
  *     JSON Parse → Prompt Assembler (WSTV) → Nano Banana 2 → Gen-4 Image node (WSTV anchor) →
  *     Extract Frame preferred handoff → Last Frame fallback → First Frame QA.
- *   • Upscale Video is now a native Runway Workflows node (confirmed Nov 21 2025 changelog).
- *     The Topaz AI external upscale step has been retired from this diagram.
- *   • The audio lane is intentionally removed here so the diagram stays focused
- *     on continuity, prompt assembly, QA, and final post.
- *
- * Verified Runway Workflows node names (as of April 2026):
- *   Input:   Text, Image input
- *   LLM:     LLM (Claude Opus 4.5 confirmed in Runway docs)
- *   Utility: JSON Parse, Extract Frame, Last Frame, First Frame, Trim Video,
- *            Stitch, Upscale Video (native — Nov 21 2025),
- *            Add Audio, Extract Audio, Text to Speech, Text to SFX
- *   Models:  Gen-4 Image, Gen-4 Image Turbo, Gen-4.5 (I2V)  ← Runway Native
- *            Nano Banana 2 (gemini_2.5_flash), Kling 3.0      ← Third-Party
+ *   • The audio lane is now included: Text to Speech, Text to SFX, Audio Input,
+ *     Extract Audio reference, and sequential Add Audio passes after Upscale Video.
  */
 
 import {
@@ -79,7 +66,17 @@ type NodeSpec = {
   infoLines?:  string[];
 };
 
-type WireStyle = "main" | "rules" | "preferred" | "fallback" | "anchor" | "qa" | "post" | "meta" | "manual";
+type WireStyle =
+  | "main"
+  | "rules"
+  | "preferred"
+  | "fallback"
+  | "anchor"
+  | "qa"
+  | "post"
+  | "meta"
+  | "manual"
+  | "audio";
 
 type WireDef = {
   from:    [string, string];
@@ -107,6 +104,7 @@ const WIRE_COLORS: Record<WireStyle, string> = {
   post:      "#38bdf8",
   meta:      "#22d3ee",
   manual:    "#f97316",
+  audio:     "#eab308",
 };
 
 const WIRE_STYLE_LABELS: Record<WireStyle, string> = {
@@ -119,6 +117,7 @@ const WIRE_STYLE_LABELS: Record<WireStyle, string> = {
   post: "Assembly + post",
   meta: "Social export only",
   manual: "Optional manual override",
+  audio: "Audio generation + final layering",
 };
 
 const RULE_ROUTE_ANNOTATIONS = [
@@ -157,8 +156,8 @@ const TEXT_MAIN  = "#edf2f8";
 const TEXT_SUB   = "#7b8ca3";
 const TEXT_FAINT = "#526579";
 
-const VIEW_W = 5480;
-const VIEW_H = 1240;
+const VIEW_W = 6320;
+const VIEW_H = 1480;
 
 // ─── LAYOUT CONSTANTS ────────────────────────────────────────────────────────
 const ROW_H       = 20;
@@ -270,6 +269,9 @@ const NODE_SPECS: NodeSpec[] = [
       { id: "continuity", label: "continuity_rules",      kind: "text" },
       { id: "camera",     label: "camera_rules",          kind: "text" },
       { id: "notes",      label: "operator_notes",        kind: "text" },
+      { id: "voice",      label: "voiceover_script",      kind: "text" },
+      { id: "sfx",        label: "sfx_prompt",            kind: "text" },
+      { id: "music_cue",  label: "music_cue",             kind: "text" },
     ],
     infoLines: ["Render-pipeline prompt parts only"],
   }),
@@ -322,21 +324,21 @@ const NODE_SPECS: NodeSpec[] = [
   }),
 
   makeNode("nano_banana_2", {
-    title: "Nano Banana 2", subtitle: "Gemini 2.5 Flash · canonical still", badge: "THIRD-PARTY",
+    title: "Nano Banana 2", subtitle: "Canonical still build", badge: "THIRD-PARTY",
     width: 228, bg: "#051a0e", accent: "#16a34a",
     inputs: [
       { id: "prompt", label: "Prompt", kind: "text",  required: true },
       { id: "image",  label: "Image",  kind: "image" },
     ],
     outputs: [{ id: "image", label: "Image", kind: "image" }],
-    infoLines: ["Reference image + master prompt build the clean anchor still", "gemini_2.5_flash — confirmed in Runway API changelog Sep 2025"],
+    infoLines: ["Reference image + master prompt build the clean anchor still"],
   }),
   makeNode("gen4_anchor", {
     title: "Gen-4 Image", subtitle: "Canonical Anchor (WSTV)", badge: "RUNWAY NATIVE",
     width: 214, bg: "#1a0544", accent: "#c084fc",
     inputs: [{ id: "image", label: "Image", kind: "image", required: true }],
     outputs: [{ id: "image", label: "Image", kind: "image" }],
-    infoLines: ["Gen-4 Image (Turbo variant also available) — WSTV treats its output as a fixed identity source across all four shots"],
+    infoLines: ["Official Gen-4 Image node — WSTV treats its output as a fixed identity source across all four shots"],
   }),
 
   makeNode("combine1", {
@@ -368,7 +370,7 @@ const NODE_SPECS: NodeSpec[] = [
       { id: "prompt", label: "Prompt", kind: "text",  required: true },
     ],
     outputs: [{ id: "video", label: "Video", kind: "video" }],
-    infoLines: ["Gen-4.5 I2V confirmed Jan 21 2026 — image alongside text prompt. Shot 1 opener for the primary hybrid lane."],
+    infoLines: ["Gen-4.5 I2V — Shot 1 opener for the primary hybrid lane (model name confirmed; Workflows node variant inferred)"],
   }),
   makeNode("extract1", {
     title: "Extract Frame", subtitle: "Preferred Handoff 1", badge: "RUNWAY NATIVE",
@@ -548,7 +550,7 @@ const NODE_SPECS: NodeSpec[] = [
       { id: "prompt", label: "Prompt", kind: "text",  required: true },
     ],
     outputs: [{ id: "video", label: "Video", kind: "video" }],
-    infoLines: ["Gen-4.5 I2V confirmed Jan 21 2026. Shot 4 closer for the primary hybrid lane."],
+    infoLines: ["Gen-4.5 I2V — Shot 4 closer for the primary hybrid lane (model name confirmed; Workflows node variant inferred)"],
   }),
   makeNode("qa4", {
     title: "First Frame", subtitle: "QA 4", badge: "RUNWAY NATIVE",
@@ -577,13 +579,98 @@ const NODE_SPECS: NodeSpec[] = [
     outputs: [{ id: "video", label: "Video", kind: "video" }],
     infoLines: ["Tighten runtime after stitch"],
   }),
-  // ── UPSCALE: Now a native Runway Workflows node (confirmed Nov 21 2025) ──
   makeNode("upscale", {
-    title: "Upscale Video", subtitle: "Native Runway Workflows node", badge: "RUNWAY NATIVE",
-    width: 264, bg: "#041218", accent: "#38bdf8",
+    title: "Upscale Video", subtitle: "Native Final Polish", badge: "RUNWAY NATIVE",
+    width: 244, bg: "#030d1a", accent: "#38bdf8",
     inputs: [{ id: "video", label: "Video", kind: "video", required: true }],
     outputs: [{ id: "video", label: "Video", kind: "video" }],
-    infoLines: ["Native Runway Workflows node — added Nov 21 2025.", "Run after Trim Video inside Workflows. No external Topaz step required."],
+    infoLines: ["Native upscale lane before final audio layering"],
+  }),
+  makeNode("music_input", {
+    title: "Audio Input", subtitle: "Optional Music Bed", badge: "RUNWAY NATIVE",
+    width: 214, bg: "#151208", accent: "#eab308",
+    inputs: [],
+    outputs: [{ id: "audio", label: "Audio", kind: "audio" }],
+    infoLines: ["Upload or select music for the final mix"],
+  }),
+  makeNode("manual_music", {
+    title: "Text", subtitle: "Optional Music Cue Override", badge: "WSTV CUSTOM",
+    width: 236, bg: "#1a1207", accent: "#f97316",
+    inputs: [],
+    outputs: [{ id: "text", label: "Text", kind: "text" }],
+    infoLines: ["Optional cue note for choosing a music bed"],
+  }),
+  makeNode("tts", {
+    title: "Text to Speech", subtitle: "Voiceover", badge: "RUNWAY AUDIO",
+    width: 228, bg: "#151208", accent: "#eab308",
+    inputs: [{ id: "text", label: "Text", kind: "text", required: true }],
+    outputs: [{ id: "audio", label: "Audio", kind: "audio" }],
+    infoLines: ["Runway audio node for narration / voiceover"],
+  }),
+  makeNode("manual_voice", {
+    title: "Text", subtitle: "Optional Voiceover Override", badge: "WSTV CUSTOM",
+    width: 236, bg: "#1a1207", accent: "#f97316",
+    inputs: [],
+    outputs: [{ id: "text", label: "Text", kind: "text" }],
+    infoLines: ["Optional direct voiceover script override"],
+  }),
+  makeNode("text_to_sfx", {
+    title: "Text to SFX", subtitle: "Cinematic Wildlife SFX", badge: "RUNWAY AUDIO",
+    width: 236, bg: "#151208", accent: "#eab308",
+    inputs: [{ id: "text", label: "Text", kind: "text", required: true }],
+    outputs: [{ id: "audio", label: "Audio", kind: "audio" }],
+    infoLines: ["Runway audio node for scene-specific effects"],
+  }),
+  makeNode("manual_sfx", {
+    title: "Text", subtitle: "Optional SFX Prompt Override", badge: "WSTV CUSTOM",
+    width: 236, bg: "#1a1207", accent: "#f97316",
+    inputs: [],
+    outputs: [{ id: "text", label: "Text", kind: "text" }],
+    infoLines: ["Optional direct SFX prompt override"],
+  }),
+  makeNode("extract_audio_ref", {
+    title: "Extract Audio", subtitle: "Optional Reference Audio", badge: "RUNWAY NATIVE",
+    width: 224, bg: "#151208", accent: "#eab308", dim: true,
+    inputs: [{ id: "video", label: "Video", kind: "video", required: true }],
+    outputs: [{ id: "audio", label: "Audio", kind: "audio" }],
+    infoLines: ["Reference lane only — not the main final source"],
+  }),
+  makeNode("add_audio_music", {
+    title: "Add Audio", subtitle: "Layer 1 — Music", badge: "RUNWAY NATIVE",
+    width: 214, bg: "#071318", accent: "#38bdf8",
+    inputs: [
+      { id: "video", label: "Video", kind: "video", required: true },
+      { id: "audio", label: "Audio", kind: "audio", required: true },
+    ],
+    outputs: [{ id: "video", label: "Video", kind: "video" }],
+    infoLines: ["Apply the base music bed after upscale"],
+  }),
+  makeNode("add_audio_sfx", {
+    title: "Add Audio", subtitle: "Layer 2 — SFX", badge: "RUNWAY NATIVE",
+    width: 214, bg: "#071318", accent: "#38bdf8",
+    inputs: [
+      { id: "video", label: "Video", kind: "video", required: true },
+      { id: "audio", label: "Audio", kind: "audio", required: true },
+    ],
+    outputs: [{ id: "video", label: "Video", kind: "video" }],
+    infoLines: ["Layer wildlife SFX onto the music pass"],
+  }),
+  makeNode("add_audio_voice", {
+    title: "Add Audio", subtitle: "Layer 3 — Voice", badge: "RUNWAY NATIVE",
+    width: 214, bg: "#071318", accent: "#38bdf8",
+    inputs: [
+      { id: "video", label: "Video", kind: "video", required: true },
+      { id: "audio", label: "Audio", kind: "audio", required: true },
+    ],
+    outputs: [{ id: "video", label: "Video", kind: "video" }],
+    infoLines: ["Final narration layer before export"],
+  }),
+  makeNode("final_output", {
+    title: "Final Video", subtitle: "WSTV Render Output", badge: "EXPORT",
+    width: 214, bg: "#071520", accent: "#22d3ee",
+    inputs: [{ id: "video", label: "Video", kind: "video", required: true }],
+    outputs: [{ id: "video", label: "Video", kind: "video" }],
+    infoLines: ["Ready for upload, packaging, and social export"],
   }),
 ];
 
@@ -637,6 +724,17 @@ const DEFAULT_POSITIONS: Record<string, Point> = {
   stitch:     { x: 4300, y: 230 },
   trim_final: { x: 4584, y: 230 },
   upscale:    { x: 4858, y: 230 },
+  music_input:       { x: 4858, y: 498 },
+  manual_music:      { x: 4858, y: 668 },
+  tts:               { x: 5148, y: 668 },
+  manual_voice:      { x: 5148, y: 842 },
+  text_to_sfx:       { x: 5148, y: 498 },
+  manual_sfx:        { x: 5148, y: 1016 },
+  extract_audio_ref: { x: 4858, y: 842 },
+  add_audio_music:   { x: 5160, y: 230 },
+  add_audio_sfx:     { x: 5450, y: 230 },
+  add_audio_voice:   { x: 5740, y: 230 },
+  final_output:      { x: 6030, y: 230 },
 };
 
 // ─── WIRES ───────────────────────────────────────────────────────────────────
@@ -721,6 +819,30 @@ const WIRES: WireDef[] = [
 
   { from: ["stitch",     "video"], to: ["trim_final", "video"], style: "post" },
   { from: ["trim_final", "video"], to: ["upscale",    "video"], style: "post" },
+
+  // AUDIO PROMPT GENERATION
+  { from: ["parse_json", "voice"], to: ["tts", "text"], style: "audio", route: "pipe", pipeY: 1210 },
+  { from: ["manual_voice", "text"], to: ["tts", "text"], style: "manual", route: "v" },
+
+  { from: ["parse_json", "sfx"], to: ["text_to_sfx", "text"], style: "audio", route: "pipe", pipeY: 1250 },
+  { from: ["manual_sfx", "text"], to: ["text_to_sfx", "text"], style: "manual", route: "v" },
+
+  { from: ["parse_json", "music_cue"], to: ["manual_music", "text"], style: "meta", route: "pipe", pipeY: 1290 },
+
+  // Optional reference lane only
+  { from: ["upscale", "video"], to: ["extract_audio_ref", "video"], style: "audio", route: "v" },
+
+  // FINAL AUDIO LAYERING AFTER UPSCALE
+  { from: ["upscale", "video"], to: ["add_audio_music", "video"], style: "post" },
+  { from: ["music_input", "audio"], to: ["add_audio_music", "audio"], style: "audio", route: "v" },
+
+  { from: ["add_audio_music", "video"], to: ["add_audio_sfx", "video"], style: "post" },
+  { from: ["text_to_sfx", "audio"], to: ["add_audio_sfx", "audio"], style: "audio", route: "v" },
+
+  { from: ["add_audio_sfx", "video"], to: ["add_audio_voice", "video"], style: "post" },
+  { from: ["tts", "audio"], to: ["add_audio_voice", "audio"], style: "audio", route: "v" },
+
+  { from: ["add_audio_voice", "video"], to: ["final_output", "video"], style: "post" },
 ];
 
 // ─── WIRE MARKER ID ──────────────────────────────────────────────────────────
@@ -735,6 +857,7 @@ function markerId(style: WireStyle) {
     post:      "arr-post",
     meta:      "arr-meta",
     manual:    "arr-manual",
+    audio:     "arr-audio",
   };
   return m[style];
 }
@@ -887,12 +1010,12 @@ function InfoPanel() {
           This diagram uses three tiers. Runway Native nodes use official Runway
           Workflows names as they appear in the picker: LLM, JSON Parse, Image input,
           Gen-4 Image, Gen-4.5, Extract Frame, Last Frame, First Frame, Trim Video,
-          Stitch, and Upscale Video. Third-Party Model nodes — Nano Banana 2
-          (gemini_2.5_flash) and Kling 3.0 — are available inside Runway Workflows
-          and labeled with their official model names. WSTV Custom nodes — the
-          Combine Text prompt assemblers and manual override Text nodes — implement
-          production logic with no direct Runway equivalent and are clearly marked
-          as such.
+          Stitch, Upscale Video, Audio Input, Text to Speech, Text to SFX,
+          Extract Audio, and Add Audio. Third-Party Model nodes — Nano Banana 2
+          and Kling 3.0 — are available inside Runway Workflows and labeled with
+          their official model names. WSTV Custom nodes — the Combine Text prompt
+          assemblers and manual override Text nodes — implement production logic
+          with no direct Runway equivalent and are clearly marked as such.
         </p>
       </div>
       <div style={divider} />
@@ -940,14 +1063,14 @@ function InfoPanel() {
         <div style={headStyle}>Pipeline scope</div>
         <p style={bodyStyle}>
           The primary path is a hybrid 4-shot sequence: Shot 1 and Shot 4 use
-          Gen-4.5 I2V (confirmed Jan 21 2026) for clean first-frame readability
-          and stable closing composition. Shots 2 and 3 use Kling 3.0 for
-          physics-realistic predator-prey action. Both models are available inside
-          Runway Workflows. All four shots feed Stitch → Trim Video → Upscale Video.
-          Upscale Video is a native Runway Workflows node (confirmed Nov 21 2025) —
-          no external Topaz step is required. The audio lane is not shown — this
-          diagram covers prompt assembly, identity continuity, QA, and final
-          assembly only.
+          Gen-4.5 I2V for first-frame readability and stable closing composition.
+          Shots 2 and 3 use Kling 3.0 for physics-realistic predator-prey action.
+          All four shots feed Stitch, then Trim Video, then Upscale Video. After
+          upscale, audio is layered in order: Music bed, SFX, Voiceover, then
+          Final Video export. Text to Speech and Text to SFX are Runway audio
+          nodes. Audio Input handles uploaded or selected music. Extract Audio
+          is an optional reference lane only, not the main final source. The
+          Social JSON Parse lane remains export-only.
         </p>
       </div>
     </div>
@@ -1250,7 +1373,7 @@ export default function WSTVWorkflowDiagram({
           {/* SVG wires */}
           <svg width={VIEW_W} height={VIEW_H} style={{ position: "absolute", inset: 0, overflow: "visible" }}>
             <defs>
-              {(["main","rules","preferred","fallback","anchor","qa","post","meta","manual"] as WireStyle[]).map((style) => (
+              {(["main","rules","preferred","fallback","anchor","qa","post","meta","manual","audio"] as WireStyle[]).map((style) => (
                 <marker key={style} id={`arr-${style}`} markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto">
                   <path d="M0,0 L0,6 L7,3 z" fill={WIRE_COLORS[style]} />
                 </marker>
@@ -1276,6 +1399,7 @@ export default function WSTVWorkflowDiagram({
                 wire.style === "fallback" ? 0.82 :
                 wire.style === "meta"     ? 0.76 :
                 wire.style === "manual"   ? 0.82 :
+                wire.style === "audio"    ? 0.92 :
                 wire.style === "rules"    ? 0.92 :
                 wire.style === "preferred"? 0.90 :
                 wire.style === "post"     ? 0.88 : 1;
@@ -1283,6 +1407,7 @@ export default function WSTVWorkflowDiagram({
                 wire.style === "main"      ? 1.9  :
                 wire.style === "meta"      ? 1.1  :
                 wire.style === "manual"    ? 1.45 :
+                wire.style === "audio"     ? 1.35 :
                 wire.style === "rules"     ? 1.25 :
                 wire.style === "preferred" ? 1.6  :
                 wire.style === "post"      ? 1.45 : 1.05;
@@ -1294,7 +1419,7 @@ export default function WSTVWorkflowDiagram({
 
               return (
                 <g key={idx}>
-                  {(wire.style === "main" || wire.style === "rules" || wire.style === "preferred" || wire.style === "post" || wire.style === "manual" || isActive) && (
+                  {(wire.style === "main" || wire.style === "rules" || wire.style === "preferred" || wire.style === "post" || wire.style === "manual" || wire.style === "audio" || isActive) && (
                     <path d={d} fill="none" stroke={color} strokeWidth={glowWidth} opacity={glowOpacity} strokeLinecap="round" strokeLinejoin="round" />
                   )}
                   <path d={d} fill="none" stroke={color}
@@ -1330,20 +1455,22 @@ export default function WSTVWorkflowDiagram({
 
           {/* Section labels */}
           <SectionLabel x={30}   y={88}  text="Inputs" />
-          <SectionLabel x={290}  y={154} text="LLM + Structured Prompt Build" color="#1e5a70" />
-          <SectionLabel x={560}  y={388} text="Social / export only" color="#0ea5b7" />
+          <SectionLabel x={290}  y={154} text="LLM + JSON" color="#1e5a70" />
+          <SectionLabel x={560}  y={388} text="Social export" color="#0ea5b7" />
           <SectionLabel x={560}  y={618} text="Optional manual social text" color="#b45309" />
-          <SectionLabel x={920}  y={120} text="Image / Anchor Chain" color="#9d71ff" />
+          <SectionLabel x={920}  y={120} text="Anchor image" color="#9d71ff" />
           <SectionLabel x={920}  y={426} text="Optional manual master prompt" color="#b45309" />
-          <SectionLabel x={1480} y={118} text="Shot 1 — Gen-4.5 I2V" color="#c084fc" />
-          <SectionLabel x={1788} y={118} text="Preferred Handoff" color="#1f8a70" />
-          <SectionLabel x={1788} y={372} text="Fallback Handoff" color="#b45309" />
-          <SectionLabel x={1480} y={598} text="QA" color="#8c6a10" />
-          <SectionLabel x={1450} y={744} text="Optional manual prompt-pack overrides" color="#b45309" />
-          <SectionLabel x={2310} y={118} text="Shot 2 — Kling 3.0" color="#3b82f6" />
-          <SectionLabel x={3140} y={118} text="Shot 3 — Kling 3.0" color="#3b82f6" />
-          <SectionLabel x={3970} y={118} text="Shot 4 — Gen-4.5 I2V" color="#c084fc" />
-          <SectionLabel x={4300} y={182} text="Assembly + Post" color="#1e5a70" />
+          <SectionLabel x={1480} y={118} text="Shot 1" color="#c084fc" />
+          <SectionLabel x={1788} y={118} text="Preferred Extract Frame continuity" color="#1f8a70" />
+          <SectionLabel x={1788} y={372} text="Last Frame fallback continuity" color="#b45309" />
+          <SectionLabel x={1480} y={598} text="First Frame QA" color="#8c6a10" />
+          <SectionLabel x={1450} y={744} text="Manual override lanes" color="#b45309" />
+          <SectionLabel x={2310} y={118} text="Shot 2" color="#3b82f6" />
+          <SectionLabel x={3140} y={118} text="Shot 3" color="#3b82f6" />
+          <SectionLabel x={3970} y={118} text="Shot 4" color="#c084fc" />
+          <SectionLabel x={4300} y={182} text="Assembly" color="#1e5a70" />
+          <SectionLabel x={4858} y={182} text="Upscale + audio" color="#1e5a70" />
+          <SectionLabel x={4858} y={470} text="Audio generation" color="#a16207" />
 
           {/* Title watermark */}
           <div style={{
@@ -1351,7 +1478,7 @@ export default function WSTVWorkflowDiagram({
             color: "#1e2f42", fontSize: 11, fontWeight: 700,
             letterSpacing: "0.12em", textTransform: "uppercase",
           }}>
-            Wild Stories TV · hybrid 4-shot production workflow · core continuity + social side outputs
+            Wild Stories TV · hybrid 4-shot production workflow · continuity, audio layering, and social side outputs
           </div>
 
           <div style={{
@@ -1494,6 +1621,7 @@ export default function WSTVWorkflowDiagram({
               { label: "Assembly + post",             color: WIRE_COLORS.post,      dashed: false },
               { label: "WSTV manual override",        color: WIRE_COLORS.manual,    dashed: true  },
               { label: "Social export only",          color: WIRE_COLORS.meta,      dashed: true  },
+              { label: "Audio generation + layering", color: WIRE_COLORS.audio,     dashed: false },
             ] as const).map((item) => (
               <div key={item.label} style={{ display: "flex", alignItems: "center", gap: 7 }}>
                 <svg width={34} height={10}>
