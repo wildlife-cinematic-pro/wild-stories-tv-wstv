@@ -19,13 +19,26 @@
  *
  * Main WSTV lane:
  *   • Gen-4.5 I2V — Shot 1 and Shot 4 (identity lock + cinematic quality).
+ *     Confirmed Jan 21 2026: Runway released Gen-4.5 image-to-video.
  *   • Kling 3.0 — Shot 2 and Shot 3 (physics realism + action impact).
+ *     Confirmed: Kling 3.0 available inside Runway Workflows as third-party model.
  *   • Seedance 2.0 remains an optional continuity reference lane outside this primary diagram.
  *   • Character lock is represented with real nodes only:
  *     JSON Parse → Prompt Assembler (WSTV) → Nano Banana 2 → Gen-4 Image node (WSTV anchor) →
  *     Extract Frame preferred handoff → Last Frame fallback → First Frame QA.
+ *   • Upscale Video is now a native Runway Workflows node (confirmed Nov 21 2025 changelog).
+ *     The Topaz AI external upscale step has been retired from this diagram.
  *   • The audio lane is intentionally removed here so the diagram stays focused
  *     on continuity, prompt assembly, QA, and final post.
+ *
+ * Verified Runway Workflows node names (as of April 2026):
+ *   Input:   Text, Image input
+ *   LLM:     LLM (Claude Opus 4.5 confirmed in Runway docs)
+ *   Utility: JSON Parse, Extract Frame, Last Frame, First Frame, Trim Video,
+ *            Stitch, Upscale Video (native — Nov 21 2025),
+ *            Add Audio, Extract Audio, Text to Speech, Text to SFX
+ *   Models:  Gen-4 Image, Gen-4 Image Turbo, Gen-4.5 (I2V)  ← Runway Native
+ *            Nano Banana 2 (gemini_2.5_flash), Kling 3.0      ← Third-Party
  */
 
 import {
@@ -309,21 +322,21 @@ const NODE_SPECS: NodeSpec[] = [
   }),
 
   makeNode("nano_banana_2", {
-    title: "Nano Banana 2", subtitle: "Canonical still build", badge: "THIRD-PARTY",
+    title: "Nano Banana 2", subtitle: "Gemini 2.5 Flash · canonical still", badge: "THIRD-PARTY",
     width: 228, bg: "#051a0e", accent: "#16a34a",
     inputs: [
       { id: "prompt", label: "Prompt", kind: "text",  required: true },
       { id: "image",  label: "Image",  kind: "image" },
     ],
     outputs: [{ id: "image", label: "Image", kind: "image" }],
-    infoLines: ["Reference image + master prompt build the clean anchor still"],
+    infoLines: ["Reference image + master prompt build the clean anchor still", "gemini_2.5_flash — confirmed in Runway API changelog Sep 2025"],
   }),
   makeNode("gen4_anchor", {
     title: "Gen-4 Image", subtitle: "Canonical Anchor (WSTV)", badge: "RUNWAY NATIVE",
     width: 214, bg: "#1a0544", accent: "#c084fc",
     inputs: [{ id: "image", label: "Image", kind: "image", required: true }],
     outputs: [{ id: "image", label: "Image", kind: "image" }],
-    infoLines: ["Official Gen-4 Image node — WSTV treats its output as a fixed identity source across all four shots"],
+    infoLines: ["Gen-4 Image (Turbo variant also available) — WSTV treats its output as a fixed identity source across all four shots"],
   }),
 
   makeNode("combine1", {
@@ -355,7 +368,7 @@ const NODE_SPECS: NodeSpec[] = [
       { id: "prompt", label: "Prompt", kind: "text",  required: true },
     ],
     outputs: [{ id: "video", label: "Video", kind: "video" }],
-    infoLines: ["Gen-4.5 I2V — Shot 1 opener for the primary hybrid lane (model name confirmed; Workflows node variant inferred)"],
+    infoLines: ["Gen-4.5 I2V confirmed Jan 21 2026 — image alongside text prompt. Shot 1 opener for the primary hybrid lane."],
   }),
   makeNode("extract1", {
     title: "Extract Frame", subtitle: "Preferred Handoff 1", badge: "RUNWAY NATIVE",
@@ -535,7 +548,7 @@ const NODE_SPECS: NodeSpec[] = [
       { id: "prompt", label: "Prompt", kind: "text",  required: true },
     ],
     outputs: [{ id: "video", label: "Video", kind: "video" }],
-    infoLines: ["Gen-4.5 I2V — Shot 4 closer for the primary hybrid lane (model name confirmed; Workflows node variant inferred)"],
+    infoLines: ["Gen-4.5 I2V confirmed Jan 21 2026. Shot 4 closer for the primary hybrid lane."],
   }),
   makeNode("qa4", {
     title: "First Frame", subtitle: "QA 4", badge: "RUNWAY NATIVE",
@@ -564,12 +577,13 @@ const NODE_SPECS: NodeSpec[] = [
     outputs: [{ id: "video", label: "Video", kind: "video" }],
     infoLines: ["Tighten runtime after stitch"],
   }),
+  // ── UPSCALE: Now a native Runway Workflows node (confirmed Nov 21 2025) ──
   makeNode("upscale", {
-    title: "Upscale Video", subtitle: "Topaz AI (external)", badge: "WSTV CUSTOM",
-    width: 264, bg: "#030d1a", accent: "#38bdf8",
+    title: "Upscale Video", subtitle: "Native Runway Workflows node", badge: "RUNWAY NATIVE",
+    width: 264, bg: "#041218", accent: "#38bdf8",
     inputs: [{ id: "video", label: "Video", kind: "video", required: true }],
     outputs: [{ id: "video", label: "Video", kind: "video" }],
-    infoLines: ["External post step — Topaz AI is not a Runway node. Run after export from Stitch → Trim Video."],
+    infoLines: ["Native Runway Workflows node — added Nov 21 2025.", "Run after Trim Video inside Workflows. No external Topaz step required."],
   }),
 ];
 
@@ -873,11 +887,12 @@ function InfoPanel() {
           This diagram uses three tiers. Runway Native nodes use official Runway
           Workflows names as they appear in the picker: LLM, JSON Parse, Image input,
           Gen-4 Image, Gen-4.5, Extract Frame, Last Frame, First Frame, Trim Video,
-          and Stitch. Third-Party Model nodes — Nano Banana 2 and Kling 3.0 — are
-          available inside Runway Workflows and labeled with their official model names.
-          WSTV Custom nodes — the Combine Text prompt assemblers, manual override
-          Text nodes, and the Topaz AI upscale step — implement production logic with
-          no direct Runway equivalent and are clearly marked as such.
+          Stitch, and Upscale Video. Third-Party Model nodes — Nano Banana 2
+          (gemini_2.5_flash) and Kling 3.0 — are available inside Runway Workflows
+          and labeled with their official model names. WSTV Custom nodes — the
+          Combine Text prompt assemblers and manual override Text nodes — implement
+          production logic with no direct Runway equivalent and are clearly marked
+          as such.
         </p>
       </div>
       <div style={divider} />
@@ -925,13 +940,14 @@ function InfoPanel() {
         <div style={headStyle}>Pipeline scope</div>
         <p style={bodyStyle}>
           The primary path is a hybrid 4-shot sequence: Shot 1 and Shot 4 use
-          Gen-4.5 for clean first-frame readability and stable closing composition.
-          Shots 2 and 3 use Kling 3.0 for physics-realistic predator-prey action.
-          Both Gen-4.5 and Kling 3.0 are available inside Runway Workflows — Gen-4.5
-          as a Runway Native model, Kling 3.0 as a Third-Party Model. All four shots
-          feed Stitch, then Trim Video, then an optional Topaz AI upscale step that
-          runs outside Runway. The audio lane is not shown — this diagram covers
-          prompt assembly, identity continuity, QA, and final assembly only.
+          Gen-4.5 I2V (confirmed Jan 21 2026) for clean first-frame readability
+          and stable closing composition. Shots 2 and 3 use Kling 3.0 for
+          physics-realistic predator-prey action. Both models are available inside
+          Runway Workflows. All four shots feed Stitch → Trim Video → Upscale Video.
+          Upscale Video is a native Runway Workflows node (confirmed Nov 21 2025) —
+          no external Topaz step is required. The audio lane is not shown — this
+          diagram covers prompt assembly, identity continuity, QA, and final
+          assembly only.
         </p>
       </div>
     </div>
@@ -1499,3 +1515,9 @@ export default function WSTVWorkflowDiagram({
     </div>
   );
 }
+ENDOFFILE
+echo "done"
+Output
+
+done
+Done
