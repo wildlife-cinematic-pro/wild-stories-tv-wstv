@@ -252,6 +252,18 @@ export default function OutputCards({
       )}
 
       <div className="rounded-3xl border border-[color:var(--border)] bg-[color:var(--surface-elevated)] p-4 shadow-[var(--surface-shadow)] sm:p-5">
+        {decision && (
+          <div className="mb-4 rounded-xl border border-[color:var(--border)] bg-black/80 p-4">
+            <div className={`text-lg font-black ${decision.color}`}>
+              {decision.label}
+            </div>
+            <div className="mt-2 grid grid-cols-2 gap-2 text-xs text-gray-300">
+              <div>US Score: {decision.score}</div>
+              <div>Hook: {decision.hook}</div>
+              <div>Risk: {decision.risk}</div>
+            </div>
+          </div>
+        )}
         <div className="flex flex-wrap items-start justify-between gap-4">
           <div className="max-w-3xl">
             <div className="text-[11px] font-black uppercase tracking-[0.24em] text-slate-500">
