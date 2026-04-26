@@ -4,6 +4,7 @@ import {
   buildBlankPerformanceTrackerEntry,
   normalizePerformanceTrackerEntry,
   parsePerformanceTrackerEntryJson,
+  serializePerformanceTrackerEntriesAsCsv,
   serializePerformanceTrackerEntryAsCsvRow,
   serializePerformanceTrackerEntryAsJson,
 } from "@/lib/performance-tracker";
@@ -12,6 +13,7 @@ describe("performance tracker helper", () => {
   it("builds a blank monetized Facebook template and exports JSON + CSV", () => {
     const entry = buildBlankPerformanceTrackerEntry({
       generationId: "generation_123",
+      contentId: "content_123",
       predator: "Wolf Pack",
       prey: "Bull Elk",
       arc: "Pack hunting strategy",
@@ -23,38 +25,48 @@ describe("performance tracker helper", () => {
     });
 
     expect(entry.generationId).toBe("generation_123");
+    expect(entry.contentId).toBe("content_123");
     expect(entry.animalPair).toBe("Wolf Pack vs Bull Elk");
     expect(entry.durationLane).toBe("medium");
     expect(entry.hookFamily).toBe("danger");
     expect(entry.reach).toBe("");
     expect(entry.estimatedEarnings).toBe("");
+    expect(entry.recordId).toBe("generation-123");
 
     const json = serializePerformanceTrackerEntryAsJson(entry);
     const csv = serializePerformanceTrackerEntryAsCsvRow(entry, true);
 
     expect(json).toContain(`"conceptLabel": "Wolf Pack vs Bull Elk • Pack hunting strategy"`);
-    expect(csv).toContain("generationId,postUrl,title,conceptLabel,publishedAt");
+    expect(csv).toContain("generationId,contentId,postUrl,title,conceptLabel,publishedAt");
     expect(csv).toContain("Wolf Pack vs Bull Elk");
   });
 
   it("normalizes imported performance data and clears invalid numeric values", () => {
     const entry = normalizePerformanceTrackerEntry({
+      source: "facebook_csv",
       generationId: "generation_456",
+      contentId: "content_456",
       predator: "Mountain Lion",
       prey: "Mule Deer",
       durationLane: "short",
       hookFamily: "danger",
-      reach: "12000",
+      reach: "12,000",
+      views: "54,000",
       threeSecondViews: 5400,
-      rpm: "5.4",
+      averageWatchTimeSeconds: "01:05",
+      rpm: "$5.4",
       monetizedPlays: -2,
       linkClicks: "oops",
       notes: "Strong replay loop without bait.",
     });
 
+    expect(entry.source).toBe("facebook_csv");
     expect(entry.generationId).toBe("generation_456");
+    expect(entry.contentId).toBe("content_456");
     expect(entry.reach).toBe(12000);
+    expect(entry.views).toBe(54000);
     expect(entry.threeSecondViews).toBe(5400);
+    expect(entry.averageWatchTimeSeconds).toBe(65);
     expect(entry.rpm).toBe(5.4);
     expect(entry.monetizedPlays).toBe("");
     expect(entry.linkClicks).toBe("");
@@ -74,6 +86,17 @@ describe("performance tracker helper", () => {
 
     expect(parsed?.generationId).toBe("generation_789");
     expect(parsed?.estimatedEarnings).toBe(28);
-    expect(parsePerformanceTrackerEntryJson("{ bad json" )).toBeNull();
+    expect(parsePerformanceTrackerEntryJson("{ bad json")).toBeNull();
+  });
+
+  it("exports multiple normalized rows as CSV", () => {
+    const first = buildBlankPerformanceTrackerEntry({ generationId: "generation_1", title: "First post" });
+    const second = buildBlankPerformanceTrackerEntry({ generationId: "generation_2", title: "Second post" });
+
+    const csv = serializePerformanceTrackerEntriesAsCsv([first, second]);
+
+    expect(csv).toContain("generationId,contentId,postUrl,title,conceptLabel,publishedAt");
+    expect(csv).toContain("generation_1");
+    expect(csv).toContain("generation_2");
   });
 });

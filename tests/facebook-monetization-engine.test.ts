@@ -167,6 +167,7 @@ function makePerformance(
 ): PerformanceTrackerEntry {
   return {
     generationId: "generation_1",
+    source: "manual",
     postUrl: "https://facebook.com/post/1",
     title: "Mountain lion pressure closes fast",
     conceptLabel: "Mountain Lion vs Mule Deer • Escape from danger",
@@ -182,6 +183,7 @@ function makePerformance(
     hookFamily: "danger",
     contentLane: "Escape",
     reach: 120000,
+    views: 70000,
     firstHourViews: 18000,
     threeSecondViews: 62000,
     threeSecondHoldRate: 52,
@@ -214,14 +216,20 @@ describe("facebook monetization engine", () => {
     expect(report.scores.revenuePotentialScore).toBeGreaterThanOrEqual(80);
     expect(report.scores.boostWorthyScore).toBeGreaterThanOrEqual(80);
     expect(report.actualPerformanceTier).toMatch(/Strong|Breakout/);
+    expect(report.actualScores.actualRevenueScore).toBeGreaterThanOrEqual(70);
+    expect(report.predictedVsActual.overall.status).toMatch(/matched|overperformed/);
+    expect(report.winnerRemixRecommendations.map((item) => item.label)).toContain(
+      "8–12s short cut"
+    );
   });
 
   it("blocks boosting when no live Facebook data exists yet", () => {
     const report = buildMonetizedFacebookReport(makePackage());
 
-    expect(report.actualPerformanceTier).toBe("No live data yet");
+    expect(report.actualPerformanceTier).toBe("Insufficient data");
     expect(report.boostRecommendation.label).toBe("Do not boost yet");
     expect(report.boostRecommendation.reason).toMatch(/Wait for live Facebook retention/i);
+    expect(report.predictedVsActual.overall.status).toBe("insufficient-data");
   });
 
   it("flags viral packaging as risky when engagement pull is strong but safety is softer", () => {
@@ -267,30 +275,44 @@ describe("facebook monetization engine", () => {
     expect(report.verdict).toBe("Do Not Boost");
     expect(report.boostRecommendation.label).toBe("Do not boost yet");
     expect(report.summary).toMatch(/Do not boost this package yet/i);
+    expect(report.winnerRemixRecommendations.map((item) => item.label)).not.toContain(
+      "Boost candidate"
+    );
   });
 
-  it("keeps moderate but safe packages in the safe growth lane", () => {
+  it("recommends a monetized-safe rewrite when reach is strong but revenue is weak", () => {
     const report = buildMonetizedFacebookReport(
-      makePackage({
-        hook: "Mountain lion tracks the mule deer along a dry meadow edge.",
-        caption:
-          "Mountain lion tracks the mule deer along a dry meadow edge.\n\nWhat did you notice first?",
-        caption2026:
-          "Mountain lion tracks the mule deer along a dry meadow edge.\n\nWhat did you notice first?",
-        platformPack: {
-          ...buildBasePlatformPack(),
-          facebook: {
-            ...buildBasePlatformPack().facebook,
-            hook: "Mountain lion tracks the mule deer along a dry meadow edge.",
-            caption:
-              "Mountain lion tracks the mule deer along a dry meadow edge.\n\nWhat did you notice first?",
-          },
-        },
-        hookFamily: "curiosity",
+      makePackage(),
+      makePerformance({
+        reach: 180000,
+        shares: 290,
+        comments: 130,
+        estimatedEarnings: 2,
+        earningsUsd: 2,
+        rpm: 0.8,
+        monetizedPlays: 1200,
       })
     );
 
-    expect(report.verdict).toBe("Safe Growth Candidate");
-    expect(report.boostRecommendation.label).toBe("Do not boost yet");
+    expect(report.winnerRemixRecommendations.map((item) => item.label)).toContain(
+      "Monetized-safe rewrite"
+    );
+  });
+
+  it("recommends a share-trigger rewrite when comments are strong but shares lag", () => {
+    const report = buildMonetizedFacebookReport(
+      makePackage(),
+      makePerformance({
+        shares: 18,
+        comments: 220,
+        reactions: 2400,
+        watchPercentage: 54,
+        oneMinuteViews: 12000,
+      })
+    );
+
+    expect(report.winnerRemixRecommendations.map((item) => item.label)).toContain(
+      "Share-trigger rewrite"
+    );
   });
 });

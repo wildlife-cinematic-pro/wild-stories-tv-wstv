@@ -2,6 +2,7 @@ import type { Arc, ContentLane, HookFamily, PerformanceTrackerEntry } from "@/ty
 
 export const PERFORMANCE_TRACKER_CSV_HEADER = [
   "generationId",
+  "contentId",
   "postUrl",
   "title",
   "conceptLabel",
@@ -17,6 +18,7 @@ export const PERFORMANCE_TRACKER_CSV_HEADER = [
   "hookFamily",
   "contentLane",
   "reach",
+  "views",
   "firstHourViews",
   "threeSecondViews",
   "threeSecondHoldRate",
@@ -38,10 +40,24 @@ export const PERFORMANCE_TRACKER_CSV_HEADER = [
   "notes",
 ] as const;
 
+const VALID_ARCS: Arc[] = [
+  "Ambush attack",
+  "Predator vs predator fight",
+  "Chase and takedown",
+  "Escape from danger",
+  "Territory dominance battle",
+  "Pack hunting strategy",
+  "Defender stands ground",
+  "Giant vs giant clash",
+];
+
 type PerformanceTrackerSeed = Partial<
   Pick<
     PerformanceTrackerEntry,
+    | "recordId"
+    | "source"
     | "generationId"
+    | "contentId"
     | "postUrl"
     | "title"
     | "conceptLabel"
@@ -54,6 +70,7 @@ type PerformanceTrackerSeed = Partial<
     | "habitat"
     | "durationLane"
     | "reach"
+    | "views"
     | "firstHourViews"
     | "threeSecondViews"
     | "threeSecondHoldRate"
@@ -88,12 +105,18 @@ function coerceTextValue(value: unknown): string {
 /** Coerces arbitrary input into a non-negative numeric tracker value or an empty field. */
 function coerceNumericValue(value: unknown): number | "" {
   if (value === "" || value === null || value === undefined) return "";
-  const numeric =
-    typeof value === "number"
-      ? value
-      : typeof value === "string" && value.trim()
-        ? Number(value)
-        : Number.NaN;
+
+  if (typeof value === "number") {
+    return Number.isFinite(value) && value >= 0 ? value : "";
+  }
+
+  if (typeof value !== "string") return "";
+
+  const trimmed = value.trim();
+  if (!trimmed) return "";
+
+  const normalized = trimmed.replace(/[,$%]/g, "").replace(/\s+/g, " ").trim();
+  const numeric = Number(normalized);
 
   if (!Number.isFinite(numeric) || numeric < 0) {
     return "";
@@ -102,10 +125,43 @@ function coerceNumericValue(value: unknown): number | "" {
   return numeric;
 }
 
+/** Coerces duration-like strings such as mm:ss into seconds for average watch time. */
+function coerceDurationSecondsValue(value: unknown): number | "" {
+  if (typeof value === "number") {
+    return Number.isFinite(value) && value >= 0 ? value : "";
+  }
+
+  if (typeof value !== "string") {
+    return coerceNumericValue(value);
+  }
+
+  const trimmed = value.trim();
+  if (!trimmed) return "";
+
+  if (/^\d+(?:\.\d+)?$/.test(trimmed)) {
+    return coerceNumericValue(trimmed);
+  }
+
+  const parts = trimmed.split(":").map((part) => Number(part));
+  if (parts.some((part) => !Number.isFinite(part) || part < 0)) {
+    return "";
+  }
+
+  if (parts.length === 2) {
+    return parts[0] * 60 + parts[1];
+  }
+
+  if (parts.length === 3) {
+    return parts[0] * 3600 + parts[1] * 60 + parts[2];
+  }
+
+  return "";
+}
+
 /** Escapes a single CSV cell for export. */
 function escapeCsvValue(value: string | number | "" | undefined): string {
   const text = String(value ?? "");
-  if (/[,"\n]/.test(text)) {
+  if (/[",\n]/.test(text)) {
     return `"${text.replace(/"/g, '""')}"`;
   }
   return text;
@@ -116,17 +172,77 @@ function isRecord(value: unknown): value is Record<string, unknown> {
   return Boolean(value) && typeof value === "object" && !Array.isArray(value);
 }
 
+/** Returns a stable local record id for persisted performance rows. */
+export function buildPerformanceTrackerRecordId(
+  value: Partial<PerformanceTrackerEntry>
+): string {
+  const explicit = coerceTextValue(value.recordId);
+  if (explicit) return explicit;
+
+  const candidates = [
+    coerceTextValue(value.generationId),
+    coerceTextValue(value.contentId),
+    coerceTextValue(value.postUrl),
+    [coerceTextValue(value.title), coerceTextValue(value.publishedAt)]
+      .filter(Boolean)
+      .join("|"),
+    [coerceTextValue(value.conceptLabel), coerceTextValue(value.animalPair)]
+      .filter(Boolean)
+      .join("|"),
+  ]
+    .filter(Boolean)
+    .map((part) =>
+      part.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "")
+    );
+
+  return candidates[0] ?? "";
+}
+
+/** Narrows arbitrary source values into the supported local storage source labels. */
+function normalizePerformanceTrackerSource(
+  value: unknown,
+  fallback: PerformanceTrackerEntry["source"] = "manual"
+): PerformanceTrackerEntry["source"] {
+  return value === "facebook_csv" || value === "manual" ? value : fallback;
+}
+
+/** Narrows arbitrary arc text into the supported tracker arc union. */
+function normalizePerformanceTrackerArc(
+  value: unknown,
+  fallback: Arc | "" = ""
+): Arc | "" {
+  const text = coerceTextValue(value);
+  return VALID_ARCS.includes(text as Arc) ? (text as Arc) : fallback;
+}
+
+/** Finalizes a normalized record with derived ids and animal-pair fallbacks. */
+function finalizePerformanceTrackerEntry(
+  value: PerformanceTrackerEntry
+): PerformanceTrackerEntry {
+  const animalPair =
+    value.animalPair || [value.predator, value.prey].filter(Boolean).join(" vs ");
+
+  return {
+    ...value,
+    animalPair,
+    recordId: buildPerformanceTrackerRecordId({ ...value, animalPair }),
+    source: normalizePerformanceTrackerSource(value.source),
+  };
+}
+
 /** Builds a blank local performance template that can be filled manually or imported later. */
 export function buildBlankPerformanceTrackerEntry(
   seed: PerformanceTrackerSeed = {}
 ): PerformanceTrackerEntry {
   const predator = seed.predator ?? "";
   const prey = seed.prey ?? "";
-  const animalPair =
-    seed.animalPair ?? [predator, prey].filter(Boolean).join(" vs ");
+  const animalPair = seed.animalPair ?? [predator, prey].filter(Boolean).join(" vs ");
 
-  return {
+  return finalizePerformanceTrackerEntry({
+    recordId: seed.recordId,
+    source: normalizePerformanceTrackerSource(seed.source, "manual"),
     generationId: seed.generationId ?? "",
+    contentId: seed.contentId ?? "",
     postUrl: seed.postUrl ?? "",
     title: seed.title ?? "",
     conceptLabel: seed.conceptLabel ?? "",
@@ -142,6 +258,7 @@ export function buildBlankPerformanceTrackerEntry(
     hookFamily: seed.hookFamily ?? "",
     contentLane: seed.contentLane ?? "",
     reach: seed.reach ?? "",
+    views: seed.views ?? "",
     firstHourViews: seed.firstHourViews ?? "",
     threeSecondViews: seed.threeSecondViews ?? "",
     threeSecondHoldRate: seed.threeSecondHoldRate ?? "",
@@ -161,7 +278,7 @@ export function buildBlankPerformanceTrackerEntry(
     rpm: seed.rpm ?? "",
     monetizedPlays: seed.monetizedPlays ?? "",
     notes: seed.notes ?? "",
-  };
+  });
 }
 
 /** Normalizes imported or stored performance data into the local tracker shape. */
@@ -172,8 +289,11 @@ export function normalizePerformanceTrackerEntry(
   const base = buildBlankPerformanceTrackerEntry(seed);
   const source = isRecord(value) ? value : {};
 
-  return {
+  return finalizePerformanceTrackerEntry({
+    recordId: coerceTextValue(source.recordId) || base.recordId,
+    source: normalizePerformanceTrackerSource(source.source, base.source),
     generationId: coerceTextValue(source.generationId) || base.generationId,
+    contentId: coerceTextValue(source.contentId) || base.contentId,
     postUrl: coerceTextValue(source.postUrl) || base.postUrl,
     title: coerceTextValue(source.title) || base.title,
     conceptLabel: coerceTextValue(source.conceptLabel) || base.conceptLabel,
@@ -184,7 +304,7 @@ export function normalizePerformanceTrackerEntry(
     predator: coerceTextValue(source.predator) || base.predator,
     prey: coerceTextValue(source.prey) || base.prey,
     habitat: coerceTextValue(source.habitat) || base.habitat,
-    arc: (coerceTextValue(source.arc) as Arc | "") || base.arc,
+    arc: normalizePerformanceTrackerArc(source.arc, base.arc),
     durationLane:
       source.durationLane === "medium" ||
       source.durationLane === "long" ||
@@ -207,11 +327,12 @@ export function normalizePerformanceTrackerEntry(
         ? source.contentLane
         : base.contentLane,
     reach: coerceNumericValue(source.reach),
+    views: coerceNumericValue(source.views),
     firstHourViews: coerceNumericValue(source.firstHourViews),
     threeSecondViews: coerceNumericValue(source.threeSecondViews),
     threeSecondHoldRate: coerceNumericValue(source.threeSecondHoldRate),
     oneMinuteViews: coerceNumericValue(source.oneMinuteViews),
-    averageWatchTimeSeconds: coerceNumericValue(source.averageWatchTimeSeconds),
+    averageWatchTimeSeconds: coerceDurationSecondsValue(source.averageWatchTimeSeconds),
     watchPercentage: coerceNumericValue(source.watchPercentage),
     completionRate: coerceNumericValue(source.completionRate),
     shares: coerceNumericValue(source.shares),
@@ -226,7 +347,7 @@ export function normalizePerformanceTrackerEntry(
     rpm: coerceNumericValue(source.rpm),
     monetizedPlays: coerceNumericValue(source.monetizedPlays),
     notes: coerceTextValue(source.notes) || base.notes,
-  };
+  });
 }
 
 /** Parses a pasted JSON payload into a normalized performance record or returns null if the JSON is invalid. */
@@ -248,6 +369,13 @@ export function serializePerformanceTrackerEntryAsJson(
   return JSON.stringify(entry, null, 2);
 }
 
+/** Serializes multiple performance tracker entries as pretty JSON. */
+export function serializePerformanceTrackerEntriesAsJson(
+  entries: PerformanceTrackerEntry[]
+): string {
+  return JSON.stringify(entries, null, 2);
+}
+
 /** Serializes a performance tracker entry as a CSV row, with an optional header. */
 export function serializePerformanceTrackerEntryAsCsvRow(
   entry: PerformanceTrackerEntry,
@@ -260,4 +388,15 @@ export function serializePerformanceTrackerEntryAsCsvRow(
   return includeHeader
     ? `${PERFORMANCE_TRACKER_CSV_HEADER.join(",")}\n${values}`
     : values;
+}
+
+/** Serializes multiple performance tracker entries as CSV text. */
+export function serializePerformanceTrackerEntriesAsCsv(
+  entries: PerformanceTrackerEntry[],
+  includeHeader = true
+): string {
+  const rows = entries.map((entry) => serializePerformanceTrackerEntryAsCsvRow(entry));
+  return includeHeader
+    ? [PERFORMANCE_TRACKER_CSV_HEADER.join(","), ...rows].join("\n")
+    : rows.join("\n");
 }
