@@ -102,15 +102,23 @@ describe("prompt clarity report", () => {
 
     expect(report.primaryPrompt.label).toBe("PRIMARY PROMPT (Paste this first)");
     expect(report.primaryPrompt.engine).toContain("Image master still");
+    expect(report.primaryPrompt.reason).toContain("Selected automatically");
     expect(report.primaryPrompt.prompt.length).toBeGreaterThan(0);
 
     expect(report.cinematicPrompt.label).toBe("CINEMATIC PROMPT (Advanced control)");
     expect(report.cinematicPrompt.engine).toContain("Gen-4.5");
     expect(report.cinematicPrompt.prompt.length).toBeGreaterThan(0);
+    expect(report.decision.confidenceLevel).toMatch(/High|Medium|Risky/);
+    expect(report.debugCandidates.length).toBeGreaterThanOrEqual(5);
   });
 
   it("builds timeline mode for all four hybrid shots with fixed segment windows", () => {
-    const draft = buildGeneratedPackageDraft(makeDraftInput({ durationLane: "long", selectedPipelineStyle: "long-hybrid-4-shot" }));
+    const draft = buildGeneratedPackageDraft(
+      makeDraftInput({
+        durationLane: "long",
+        selectedPipelineStyle: "long-hybrid-4-shot",
+      })
+    );
     const report = buildPromptClarityReport(draft.basePkg);
 
     expect(report.timelineMode).toHaveLength(4);
@@ -125,11 +133,76 @@ describe("prompt clarity report", () => {
     }
   });
 
-  it("flags unclear subjects, unrealistic behavior, conflicting camera, multiple actions, and long Kling prompts", () => {
+  it("auto-selects the best prompt candidate by decision score", () => {
+    const draft = buildGeneratedPackageDraft(makeDraftInput());
+    const badImage =
+      "A vague animal smiles in an unbelievable majestic cinematic scene with gorgeous beautiful legendary lighting.";
+
+    const pkg = {
+      ...draft.basePkg,
+      imagePrompt: badImage,
+      structuredPrompts: {
+        ...draft.basePkg.structuredPrompts,
+        imagePrompt: {
+          ...draft.basePkg.structuredPrompts!.imagePrompt!,
+          fullText: badImage,
+          pasteReady: badImage,
+        },
+      },
+    };
+
+    const report = buildPromptClarityReport(pkg);
+
+    expect(report.decision.selectedKey).toBe("workflow-1");
+    expect(report.primaryPrompt.engine).toContain("Gen-4.5 Shot 1");
+  });
+
+  it("adds safe mode and fallback recovery for risky primary prompts", () => {
+    const draft = buildGeneratedPackageDraft(makeDraftInput());
+    const hugeTail = " very".repeat(700);
+    const badImage = `A vague animal smiles and laughs while it charges, retreats, pivots, lunges, and spins in an epic majestic incredible unbelievable hyper-detailed stunning gorgeous dramatic cinematic powerful scene.${hugeTail}`;
+    const badWorkflow = `A vague animal smiles and then charges, retreats, pivots, lunges, and spins while the camera does a slow push-in and pull-back with static tracking, epic majestic incredible unbelievable hyper-detailed stunning gorgeous dramatic cinematic powerful lighting.${hugeTail}`;
+
+    const brokenPkg = {
+      ...draft.basePkg,
+      imagePrompt: badImage,
+      structuredPrompts: {
+        ...draft.basePkg.structuredPrompts,
+        imagePrompt: {
+          ...draft.basePkg.structuredPrompts!.imagePrompt!,
+          fullText: badImage,
+          pasteReady: badImage,
+        },
+        workflowShots: draft.basePkg.structuredPrompts!.workflowShots!.map((shot) => ({
+          ...shot,
+          fullText: badWorkflow,
+          pasteReady: badWorkflow,
+        })),
+        seedanceMultiShot: {
+          ...draft.basePkg.structuredPrompts!.seedanceMultiShot!,
+          fullText: "Mountain lion charges mule deer.",
+          pasteReady: "Mountain lion charges mule deer.",
+        },
+      },
+    };
+
+    const report = buildPromptClarityReport(brokenPkg);
+
+    expect(report.decision.confidenceLevel).toBe("Risky");
+    expect(report.decision.safeModeApplied).toBe(true);
+    expect(report.decision.fallback).toBeDefined();
+    expect(report.primaryPrompt.engine).toContain("Safe Mode");
+    expect(report.primaryPrompt.prompt).not.toContain("smiles and laughs");
+  });
+
+  it("flags unclear subjects, unrealistic behavior, conflicting camera, multiple actions, long Kling prompts, and engine hard rules", () => {
     const draft = buildGeneratedPackageDraft(makeDraftInput());
     const hugeTail = " very ".repeat(650);
-    const badPrimary = "A vague animal smiles dramatically in an epic majestic unbelievable cinematic scene with gorgeous powerful intense beautiful legendary dramatic lighting.";
+    const badPrimary =
+      "A vague animal smiles dramatically in an epic majestic unbelievable cinematic scene with gorgeous powerful intense beautiful legendary dramatic lighting.";
     const badKling = `A vague animal smiles and then charges, retreats, pivots, lunges, and spins while the camera does a slow push-in and pull-back with static tracking, epic majestic incredible unbelievable hyper-detailed stunning gorgeous dramatic cinematic powerful lighting.${hugeTail}`;
+    const badRunway =
+      "Mountain lion closes distance on mule deer in rocky meadow, golden-hour rim light, cinematic wildlife realism.";
 
     const brokenPkg = {
       ...draft.basePkg,
@@ -142,18 +215,29 @@ describe("prompt clarity report", () => {
           pasteReady: badPrimary,
         },
         workflowShots: draft.basePkg.structuredPrompts!.workflowShots!.map((shot, index) =>
-          index === 1
+          index === 0
             ? {
                 ...shot,
-                fullText: badKling,
-                pasteReady: badKling,
-                metadata: {
-                  ...shot.metadata,
-                  durationSeconds: 15,
-                },
+                fullText: badRunway,
+                pasteReady: badRunway,
               }
-            : shot
+            : index === 1
+              ? {
+                  ...shot,
+                  fullText: badKling,
+                  pasteReady: badKling,
+                  metadata: {
+                    ...shot.metadata,
+                    durationSeconds: 15,
+                  },
+                }
+              : shot
         ),
+        seedanceMultiShot: {
+          ...draft.basePkg.structuredPrompts!.seedanceMultiShot!,
+          fullText: "Mountain lion charges mule deer.",
+          pasteReady: "Mountain lion charges mule deer.",
+        },
       },
     };
 
@@ -166,6 +250,9 @@ describe("prompt clarity report", () => {
     expect(ids).toContain("excessive-adjectives");
     expect(ids).toContain("conflicting-camera");
     expect(ids).toContain("kling-too-long");
+    expect(ids).toContain("kling-single-action");
+    expect(ids).toContain("runway-camera-clarity");
+    expect(ids).toContain("seedance-structured-flow");
     expect(ids).toContain("engine-compliance");
     expect(report.scores.engineComplianceScore).toBeLessThan(100);
     expect(report.scores.pasteReadinessScore).toBeLessThan(90);

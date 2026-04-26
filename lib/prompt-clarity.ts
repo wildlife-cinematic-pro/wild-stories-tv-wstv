@@ -7,13 +7,25 @@ import {
   validateKlingPromptLength,
 } from "@/lib/prompt-builders";
 
-import type { Arc, GeneratedPackage, StructuredPrompt, Weather } from "@/types";
+import type {
+  Arc,
+  GeneratedPackage,
+  StructuredPrompt,
+  StructuredPromptMetadata,
+  Weather,
+} from "@/types";
+
+export type PromptConfidenceLevel = "High" | "Medium" | "Risky";
+
+type PromptCandidateSource = "image" | "runway" | "kling" | "seedance";
 
 export type PromptGuidanceBlock = {
   label: string;
   engine: string;
   reason: string;
   prompt: string;
+  confidenceLevel?: PromptConfidenceLevel;
+  safeModeApplied?: boolean;
 };
 
 export type PromptTimelineSegment = {
@@ -38,7 +50,10 @@ export type PromptClarityWarning = {
     | "kling-too-long"
     | "excessive-adjectives"
     | "conflicting-camera"
-    | "engine-compliance";
+    | "engine-compliance"
+    | "kling-single-action"
+    | "runway-camera-clarity"
+    | "seedance-structured-flow";
   severity: "warning" | "danger";
   title: string;
   detail: string;
@@ -54,6 +69,55 @@ export type PromptClarityScores = {
   viralHookStrength: number;
 };
 
+export type PromptDecisionRuleId =
+  | PromptClarityWarning["id"];
+
+export type PromptDecisionRule = {
+  id: PromptDecisionRuleId;
+  label: string;
+  passed: boolean;
+  severity: "warning" | "danger";
+  detail: string;
+  penalty: number;
+};
+
+export type PromptDecisionCandidate = {
+  key: string;
+  source: PromptCandidateSource;
+  label: string;
+  engine: string;
+  reason: string;
+  prompt: string;
+  confidenceLevel: PromptConfidenceLevel;
+  combinedDecisionScore: number;
+  pasteReadinessScore: number;
+  subjectClarityScore: number;
+  animalRealismScore: number;
+  motionFeasibilityScore: number;
+  engineComplianceScore: number;
+  viralHookStrength: number;
+  lowScoreReasons: string[];
+  failedRules: PromptDecisionRule[];
+  safeModePrompt?: string;
+};
+
+export type PromptFailureRecovery = {
+  reason: string;
+  why: string;
+  fallbackPrompt: PromptGuidanceBlock;
+};
+
+export type PromptDecisionSummary = {
+  confidenceLevel: PromptConfidenceLevel;
+  explanation: string;
+  selectedKey: string;
+  selectedEngine: string;
+  safeModeApplied: boolean;
+  lowScoreReasons: string[];
+  failedRules: PromptDecisionRule[];
+  fallback?: PromptFailureRecovery;
+};
+
 export type PromptClarityReport = {
   simplePrompt: PromptGuidanceBlock;
   primaryPrompt: PromptGuidanceBlock;
@@ -62,6 +126,18 @@ export type PromptClarityReport = {
   scores: PromptClarityScores;
   warnings: PromptClarityWarning[];
   summary: string;
+  decision: PromptDecisionSummary;
+  debugCandidates: PromptDecisionCandidate[];
+};
+
+type PromptCandidateDefinition = {
+  key: string;
+  source: PromptCandidateSource;
+  label: string;
+  engine: string;
+  reason: string;
+  prompt: string;
+  metadata?: StructuredPromptMetadata;
 };
 
 const LIGHTING_BY_WEATHER: Record<Weather, string> = {
@@ -74,6 +150,13 @@ const LIGHTING_BY_WEATHER: Record<Weather, string> = {
   "Frozen Dusk": "frozen dusk rim light",
 };
 
+const SOURCE_PRIORITY: Record<PromptCandidateSource, number> = {
+  image: 4,
+  runway: 3,
+  kling: 2,
+  seedance: 1,
+};
+
 const STRONG_ACTION_RE = /\b(stalk(?:ing)?|close(?:s|d)? distance|surge(?:s|d)?|press(?:es|ed)?|brace(?:s|d)?|retreat(?:s|ed)?|pivot(?:s|ed)?|charge(?:s|d)?|lunge(?:s|d)?|break(?:s|ing)? away|clash(?:es|ed)?|advance(?:s|d)?)\b/gi;
 const EXCESSIVE_ADJECTIVE_RE = /\b(epic|majestic|incredible|unbelievable|hyper-detailed|ultra-detailed|stunning|gorgeous|dramatic|cinematic|ferocious|massive|intense|legendary|brutal|beautiful|powerful)\b/gi;
 const UNREALISTIC_BEHAVIOR_RE = /\b(smile(?:s|d|ing)?|grin(?:s|ned|ning)?|wink(?:s|ed|ing)?|dance(?:s|d|ing)?|pose(?:s|d|ing)?|handshake|laugh(?:s|ed|ing)?|celebrate(?:s|d|ing)?|high-five|kiss(?:es|ed|ing)?)\b/i;
@@ -81,6 +164,8 @@ const CAMERA_PUSH_RE = /\b(push(?:es|ed)? in|dolly push|slow push-in|push-in)\b/
 const CAMERA_PULL_RE = /\b(pull(?:s|ed)? back|slow pull-back|pull-back|zoom out)\b/i;
 const CAMERA_STATIC_RE = /\b(static|locked-off|locked wide|camera holds)\b/i;
 const CAMERA_TRACK_RE = /\b(track(?:ing)?|orbit(?:ing)?|sweep(?:ing)?|pan(?:ning)?|handheld)\b/i;
+const CAMERA_CLARITY_RE = /\b(camera|lens|push(?:es|ed)? in|dolly push|slow push-in|push-in|pull(?:s|ed)? back|slow pull-back|pull-back|zoom out|track(?:ing)?|orbit(?:ing)?|sweep(?:ing)?|pan(?:ning)?|handheld|locked-off|locked wide|camera holds|wide shot)\b/i;
+const SEEDANCE_FLOW_RE = /(subject movement:|background movement:|camera movement:|shot\s*1|shot\s*2)/i;
 
 function safeText(value: unknown): string {
   if (typeof value === "string") return value.trim();
@@ -190,13 +275,18 @@ function isSubjectUnclear(text: string, pkg: GeneratedPackage): boolean {
   const hasPredator = predator.length > 0 && lower.includes(predator);
   const hasPrey = prey.length > 0 && lower.includes(prey);
   const genericOnly = /\b(animal|creature|beast|subject)\b/i.test(text);
+  const hasStructuredSideLabels = /\bleft subject\b/i.test(text) && /\bright subject\b/i.test(text);
 
+  if (hasStructuredSideLabels && (hasPredator || hasPrey)) return false;
   if (!hasPredator && !hasPrey) return true;
   return genericOnly && (!hasPredator || !hasPrey);
 }
 
 function hasMultipleActions(text: string): boolean {
-  return countMatches(STRONG_ACTION_RE, text) >= 4 && /\b(then|while|before|after|as)\b/i.test(text);
+  return (
+    countMatches(STRONG_ACTION_RE, text) >= 4 &&
+    /\b(then|while|before|after|as)\b/i.test(text)
+  );
 }
 
 function hasConflictingCameraInstructions(text: string): boolean {
@@ -214,6 +304,14 @@ function hasUnrealisticBehavior(text: string): boolean {
   return UNREALISTIC_BEHAVIOR_RE.test(text);
 }
 
+function hasCameraClarity(text: string): boolean {
+  return CAMERA_CLARITY_RE.test(text);
+}
+
+function hasSeedanceStructuredFlow(text: string): boolean {
+  return SEEDANCE_FLOW_RE.test(text);
+}
+
 function clampScore(value: number): number {
   return Math.max(0, Math.min(100, Math.round(value)));
 }
@@ -225,6 +323,13 @@ function pushWarning(
   if (!warnings.some((item) => item.id === warning.id && item.title === warning.title)) {
     warnings.push(warning);
   }
+}
+
+function pushRule(
+  rules: PromptDecisionRule[],
+  rule: PromptDecisionRule
+) {
+  rules.push(rule);
 }
 
 function getPressureBeat(arc: Arc | undefined, predator: string, prey: string): string {
@@ -292,7 +397,7 @@ function buildTimelineMode(pkg: GeneratedPackage): PromptTimelineShot[] {
         text:
           index === 0
             ? `${predator} and ${prey} stay fully readable while the camera establishes the spacing.`
-            : `Carry forward the last frame cleanly and re-establish the new spacing without adding a second action.`,
+            : "Carry forward the last frame cleanly and re-establish the new spacing without adding a second action.",
       },
       {
         window: "2–4s",
@@ -314,178 +419,604 @@ function buildTimelineMode(pkg: GeneratedPackage): PromptTimelineShot[] {
   }));
 }
 
+function getConfidenceLevel(
+  combinedDecisionScore: number,
+  failedRules: PromptDecisionRule[]
+): PromptConfidenceLevel {
+  const dangerCount = failedRules.filter((rule) => rule.severity === "danger").length;
+  const warningCount = failedRules.filter((rule) => rule.severity === "warning").length;
+
+  if (dangerCount >= 1) return "Risky";
+  if (combinedDecisionScore >= 180 && warningCount === 0) return "High";
+  if (combinedDecisionScore >= 150 && warningCount <= 3) {
+    return "Medium";
+  }
+  return "Risky";
+}
+
+function buildSafeModePrompt(
+  pkg: GeneratedPackage,
+  source: PromptCandidateSource
+): string {
+  const predator = safeText(pkg.predatorName || "Predator");
+  const prey = safeText(pkg.preyName || "Prey");
+  const environment = getSimpleEnvironment(pkg);
+  const weather = pkg.weatherName ?? "Golden Hour";
+  const lighting = LIGHTING_BY_WEATHER[weather] ?? "cinematic natural light";
+  const action = getSimpleAction(pkg.arcName, predator, prey);
+
+  if (source === "image") {
+    return buildSimplePrompt(pkg);
+  }
+
+  if (source === "runway") {
+    return cleanCreatorPrompt(
+      `${action} in ${environment}. Camera slow push-in on one readable pressure beat. ${lighting}, cinematic wildlife realism.`,
+      "runway"
+    );
+  }
+
+  if (source === "kling") {
+    return cleanCreatorPrompt(
+      `${action} in ${environment}. One clear action only. One tracking move only. Full bodies stay readable. ${lighting}.`,
+      "kling"
+    );
+  }
+
+  return cleanCreatorPrompt(
+    `Subject movement: ${action}. Background movement: light natural habitat response only. Camera movement: one steady tracking move. Preserve ${environment} and ${lighting}.`,
+    "seedance"
+  );
+}
+
+function buildCandidateWarning(rule: PromptDecisionRule): PromptClarityWarning {
+  switch (rule.id) {
+    case "unclear-subject":
+      return {
+        id: rule.id,
+        severity: rule.severity,
+        title: "Subject clarity is too soft",
+        detail: rule.detail,
+        fix: "Name the animals directly and keep one dominant subject relationship in the first line.",
+      };
+    case "multiple-actions":
+      return {
+        id: rule.id,
+        severity: rule.severity,
+        title: "Multiple actions are competing in one prompt",
+        detail: rule.detail,
+        fix: "Keep one primary action, then move secondary motion into timeline guidance instead of the main paste block.",
+      };
+    case "unrealistic-behavior":
+      return {
+        id: rule.id,
+        severity: rule.severity,
+        title: "Animal behavior reads as unrealistic",
+        detail: rule.detail,
+        fix: "Replace human-style emotion or gestures with posture, spacing, pressure, brace, turn, or breakaway language.",
+      };
+    case "excessive-adjectives":
+      return {
+        id: rule.id,
+        severity: rule.severity,
+        title: "Prompt density is getting adjective-heavy",
+        detail: rule.detail,
+        fix: "Trim decorative adjectives first and keep the core order: subject, action, environment, lighting, style.",
+      };
+    case "conflicting-camera":
+      return {
+        id: rule.id,
+        severity: rule.severity,
+        title: "Camera instructions conflict",
+        detail: rule.detail,
+        fix: "Choose one camera move for the main beat: hold, push, pull-back, track, or orbit — not conflicting combinations.",
+      };
+    case "kling-too-long":
+      return {
+        id: rule.id,
+        severity: rule.severity,
+        title: "Kling paste block is too long",
+        detail: rule.detail,
+        fix: "Keep Kling short, clean, and centered on one dominant action beat.",
+      };
+    case "kling-single-action":
+      return {
+        id: rule.id,
+        severity: rule.severity,
+        title: "Kling needs one dominant action",
+        detail: rule.detail,
+        fix: "Collapse the prompt to one action line, one camera move, and one clean reaction state.",
+      };
+    case "runway-camera-clarity":
+      return {
+        id: rule.id,
+        severity: rule.severity,
+        title: "Runway prompt needs clearer camera direction",
+        detail: rule.detail,
+        fix: "Add one explicit camera move such as slow push-in, pull-back, tracking move, orbit, or locked hold.",
+      };
+    case "seedance-structured-flow":
+      return {
+        id: rule.id,
+        severity: rule.severity,
+        title: "Seedance prompt lost its structured flow",
+        detail: rule.detail,
+        fix: "Keep Seedance in a readable subject movement / background movement / camera movement flow.",
+      };
+    case "engine-compliance":
+    default:
+      return {
+        id: "engine-compliance",
+        severity: rule.severity,
+        title: "Engine compliance needs review",
+        detail: rule.detail,
+        fix: "Keep Kling at 5s or 10s, preserve Runway camera clarity, and keep engine-specific prompt constraints clean.",
+      };
+  }
+}
+
+function buildLowScoreReasons(
+  candidate: PromptCandidateDefinition,
+  failedRules: PromptDecisionRule[],
+  promptLength: number
+): string[] {
+  const reasons = failedRules
+    .filter((rule) => !rule.passed)
+    .sort((a, b) => b.penalty - a.penalty)
+    .map((rule) => rule.label);
+
+  if (candidate.source === "kling" && promptLength > 650) {
+    reasons.push("Kling candidate is denser than it needs to be for a clean single action.");
+  }
+
+  if (candidate.source === "runway" && !hasCameraClarity(candidate.prompt)) {
+    reasons.push("Runway candidate is missing one clean camera instruction.");
+  }
+
+  return Array.from(new Set(reasons)).slice(0, 4);
+}
+
+function evaluatePromptCandidate(
+  pkg: GeneratedPackage,
+  candidate: PromptCandidateDefinition
+): PromptDecisionCandidate {
+  const prompt = cleanCreatorPrompt(candidate.prompt, candidate.source);
+  const source = candidate.source;
+  const hasPredator = prompt.toLowerCase().includes(safeText(pkg.predatorName).toLowerCase());
+  const hasPrey = prompt.toLowerCase().includes(safeText(pkg.preyName).toLowerCase());
+  const subjectUnclear = isSubjectUnclear(prompt, pkg);
+  const multipleActions = source !== "seedance" && hasMultipleActions(prompt);
+  const unrealisticBehavior = hasUnrealisticBehavior(prompt);
+  const excessiveAdjectives = hasExcessiveAdjectives(prompt);
+  const conflictingCamera = source !== "seedance" && hasConflictingCameraInstructions(prompt);
+  const rules: PromptDecisionRule[] = [];
+
+  if (subjectUnclear) {
+    pushRule(rules, {
+      id: "unclear-subject",
+      label: "Subject identity is not clear enough",
+      passed: false,
+      severity: "danger",
+      detail: `${candidate.engine} does not clearly anchor the predator and prey names in a readable way.`,
+      penalty: 18,
+    });
+  }
+
+  if (multipleActions) {
+    pushRule(rules, {
+      id: "multiple-actions",
+      label: "Too many actions are competing in one shot",
+      passed: false,
+      severity: "warning",
+      detail: `${candidate.engine} is trying to land multiple action beats in one paste block.`,
+      penalty: 12,
+    });
+  }
+
+  if (unrealisticBehavior) {
+    pushRule(rules, {
+      id: "unrealistic-behavior",
+      label: "Behavior slips into non-documentary language",
+      passed: false,
+      severity: "danger",
+      detail: `${candidate.engine} contains anthropomorphic or unrealistic animal behavior cues.`,
+      penalty: 20,
+    });
+  }
+
+  if (excessiveAdjectives) {
+    pushRule(rules, {
+      id: "excessive-adjectives",
+      label: "Decorative adjectives are burying the action",
+      passed: false,
+      severity: "warning",
+      detail: `${candidate.engine} becomes harder to paste-read because the descriptive stack is too dense.`,
+      penalty: 8,
+    });
+  }
+
+  if (conflictingCamera) {
+    pushRule(rules, {
+      id: "conflicting-camera",
+      label: "Camera instructions pull in opposite directions",
+      passed: false,
+      severity: "danger",
+      detail: `${candidate.engine} mixes incompatible camera directions in the same shot.`,
+      penalty: 16,
+    });
+  }
+
+  if (source === "kling") {
+    const klingLength = validateKlingPromptLength(prompt);
+    if (klingLength.isOver) {
+      pushRule(rules, {
+        id: "kling-too-long",
+        label: "Kling block is too long",
+        passed: false,
+        severity: "danger",
+        detail: klingLength.warning ?? "Kling prompt length is over the working limit.",
+        penalty: 18,
+      });
+    }
+
+    if (multipleActions) {
+      pushRule(rules, {
+        id: "kling-single-action",
+        label: "Kling hard rule failed: one action only",
+        passed: false,
+        severity: "danger",
+        detail: `${candidate.engine} should stay short, clean, and centered on one dominant action.`,
+        penalty: 12,
+      });
+    }
+  }
+
+  if (source === "runway" && !hasCameraClarity(prompt)) {
+    pushRule(rules, {
+      id: "runway-camera-clarity",
+      label: "Runway hard rule failed: camera move is too soft",
+      passed: false,
+      severity: "danger",
+      detail: `${candidate.engine} needs one explicit camera move so the motion plan is copy-ready for Runway.`,
+      penalty: 12,
+    });
+  }
+
+  if (source === "seedance" && !hasSeedanceStructuredFlow(prompt)) {
+    pushRule(rules, {
+      id: "seedance-structured-flow",
+      label: "Seedance hard rule failed: structured flow is missing",
+      passed: false,
+      severity: "warning",
+      detail: `${candidate.engine} should preserve a readable subject/background/camera flow for multi-shot work.`,
+      penalty: 10,
+    });
+  }
+
+  if (source === "runway" || source === "kling") {
+    const duration = candidate.metadata?.durationSeconds;
+    const engineWarnings = validateEngineConstraints({
+      engine: source,
+      duration,
+      hasNegativePrompt: source === "kling",
+      hasAppearanceInPrompt: false,
+    }).filter((warning) => warning.level !== "info");
+
+    if (engineWarnings.length > 0) {
+      pushRule(rules, {
+        id: "engine-compliance",
+        label: "Engine compliance rule failed",
+        passed: false,
+        severity: engineWarnings.some((warning) => warning.level === "error")
+          ? "danger"
+          : "warning",
+        detail: engineWarnings.map((warning) => warning.message).join(" "),
+        penalty: engineWarnings.some((warning) => warning.level === "error") ? 18 : 10,
+      });
+    }
+  }
+
+  const enginePenalty = rules
+    .filter((rule) =>
+      [
+        "kling-too-long",
+        "kling-single-action",
+        "runway-camera-clarity",
+        "seedance-structured-flow",
+        "engine-compliance",
+        "conflicting-camera",
+      ].includes(rule.id)
+    )
+    .reduce((sum, rule) => sum + rule.penalty, 0);
+
+  const pasteReadinessScore = clampScore(
+    96 -
+      rules.reduce((sum, rule) => sum + rule.penalty, 0) -
+      (prompt.length > 1100 ? 6 : 0) -
+      (source === "kling" && prompt.length > 650 ? 8 : 0)
+  );
+  const subjectClarityScore = clampScore(
+    58 +
+      (hasPredator ? 18 : 0) +
+      (hasPrey ? 16 : 0) +
+      (prompt.length <= 220 ? 8 : 0) -
+      (subjectUnclear ? 20 : 0)
+  );
+  const animalRealismScore = clampScore(
+    92 - (unrealisticBehavior ? 24 : 0) - (excessiveAdjectives ? 8 : 0)
+  );
+  const motionFeasibilityScore = clampScore(
+    92 -
+      (multipleActions ? 16 : 0) -
+      (conflictingCamera ? 18 : 0) -
+      (source === "runway" && !hasCameraClarity(prompt) ? 10 : 0)
+  );
+  const engineComplianceScore = clampScore(100 - enginePenalty);
+  const viralHookStrength = clampScore(
+    (pkg.openingFrameScore?.total ?? 70) * 0.7 +
+      (pkg.usAudienceScore?.total ?? 70) * 0.3 +
+      (pkg.hookFamily === "danger" ? 6 : pkg.hookFamily === "reversal" ? 5 : 4)
+  );
+  const combinedDecisionScore = pasteReadinessScore + engineComplianceScore;
+  const confidenceLevel = getConfidenceLevel(combinedDecisionScore, rules);
+
+  return {
+    key: candidate.key,
+    source,
+    label: candidate.label,
+    engine: candidate.engine,
+    reason: candidate.reason,
+    prompt,
+    confidenceLevel,
+    combinedDecisionScore,
+    pasteReadinessScore,
+    subjectClarityScore,
+    animalRealismScore,
+    motionFeasibilityScore,
+    engineComplianceScore,
+    viralHookStrength,
+    lowScoreReasons: buildLowScoreReasons(candidate, rules, prompt.length),
+    failedRules: rules,
+    safeModePrompt:
+      rules.length > 0 ? buildSafeModePrompt(pkg, source) : undefined,
+  };
+}
+
+function selectPrimaryCandidate(
+  candidates: PromptDecisionCandidate[]
+): PromptDecisionCandidate {
+  const primaryEligible = candidates.filter((candidate) =>
+    candidate.key === "image-master" ||
+    candidate.key === "workflow-1"
+  );
+  const pool = primaryEligible.length ? primaryEligible : candidates;
+
+  return [...pool].sort((a, b) => {
+    if (b.combinedDecisionScore !== a.combinedDecisionScore) {
+      return b.combinedDecisionScore - a.combinedDecisionScore;
+    }
+    if (b.pasteReadinessScore !== a.pasteReadinessScore) {
+      return b.pasteReadinessScore - a.pasteReadinessScore;
+    }
+    return SOURCE_PRIORITY[b.source] - SOURCE_PRIORITY[a.source];
+  })[0];
+}
+
+function buildPrimaryExplanation(
+  candidate: PromptDecisionCandidate,
+  safeModeApplied: boolean
+): string {
+  if (safeModeApplied) {
+    return "Selected automatically because it still has the strongest combined paste readiness and engine compliance, but Safe Mode cleaned the risky version before recommending it.";
+  }
+
+  if (candidate.confidenceLevel === "High") {
+    return "Selected automatically because it has the strongest combined paste readiness and engine compliance and clears the hard engine rules cleanly.";
+  }
+
+  if (candidate.confidenceLevel === "Medium") {
+    return "Selected automatically because it leads the available prompts on paste readiness and engine compliance, but it still benefits from one quick QA review before spend.";
+  }
+
+  return "Selected automatically because it still scores highest among the available prompts, but it needs caution before spend.";
+}
+
+function buildFailureRecovery(
+  pkg: GeneratedPackage,
+  selectedCandidate: PromptDecisionCandidate,
+  simplePrompt: PromptGuidanceBlock,
+  imagePromptText: string
+): PromptFailureRecovery | undefined {
+  const needsRecovery =
+    selectedCandidate.confidenceLevel === "Risky" ||
+    selectedCandidate.failedRules.some((rule) => rule.severity === "danger");
+
+  if (!needsRecovery) return undefined;
+
+  if (selectedCandidate.source === "image") {
+    return {
+      reason: "Failure recovery",
+      why: "If the selected master-still prompt still feels unstable, fall back to the one-line concept prompt to reset subject, action, environment, lighting, and style with less density.",
+      fallbackPrompt: {
+        label: "FALLBACK PROMPT (Recovery)",
+        engine: simplePrompt.engine,
+        reason: "Use this when the selected image prompt still feels too dense or unstable on first paste.",
+        prompt: simplePrompt.prompt,
+      },
+    };
+  }
+
+  return {
+    reason: "Failure recovery",
+    why: "If the selected video prompt drifts or fails, reset identity and scene spacing with the master still before spending more motion credits.",
+    fallbackPrompt: {
+      label: "FALLBACK PROMPT (Recovery)",
+      engine: "Image master still (NB2)",
+      reason: "Use this to rebuild subject identity, spacing, and light continuity before retrying motion.",
+      prompt: imagePromptText,
+    },
+  };
+}
+
+function buildCandidateDefinitions(
+  pkg: GeneratedPackage,
+  imagePrompt: StructuredPrompt,
+  workflowShots: StructuredPrompt[]
+): PromptCandidateDefinition[] {
+  const candidates: PromptCandidateDefinition[] = [
+    {
+      key: "image-master",
+      source: "image",
+      label: "PRIMARY PROMPT (Paste this first)",
+      engine: "Image master still (NB2)",
+      reason:
+        "Best first-paste candidate when you want to lock subject identity, spacing, and lighting before motion generation.",
+      prompt: imagePrompt.pasteReady,
+      metadata: imagePrompt.metadata,
+    },
+  ];
+
+  workflowShots.forEach((shot, index) => {
+    const source = shot.metadata?.engine === "runway" ? "runway" : "kling";
+    const modelName =
+      source === "runway"
+        ? safeText(pkg.modelsUsed?.runway) || "Runway"
+        : safeText(pkg.modelsUsed?.kling) || "Kling";
+
+    candidates.push({
+      key: `workflow-${index + 1}`,
+      source,
+      label: index === 0 ? "CINEMATIC PROMPT (Advanced control)" : `HYBRID SHOT ${index + 1}`,
+      engine: `${modelName} Shot ${index + 1}`,
+      reason:
+        source === "runway"
+          ? "Strong advanced-control candidate when you need motion-led camera direction and a clean hybrid handoff."
+          : "Strong action-beat candidate when you need one clear Kling motion block inside the hybrid route.",
+      prompt: shot.pasteReady,
+      metadata: shot.metadata,
+    });
+  });
+
+  const seedancePrompt = safeText(
+    pkg.structuredPrompts?.seedanceMultiShot?.pasteReady ?? pkg.seedanceMultiShotPrompt
+  );
+  if (seedancePrompt) {
+    candidates.push({
+      key: "seedance-multishot",
+      source: "seedance",
+      label: "SEEDANCE MULTI-SHOT",
+      engine: "Seedance 2.0 multi-shot",
+      reason:
+        "Best optional block when you want one structured Seedance multi-shot paste that preserves subject/background/camera flow.",
+      prompt: seedancePrompt,
+      metadata: pkg.structuredPrompts?.seedanceMultiShot?.metadata,
+    });
+  }
+
+  return candidates;
+}
+
 export function buildPromptClarityReport(pkg: GeneratedPackage): PromptClarityReport {
   const imagePrompt = getStructuredPrompt(
     pkg.structuredPrompts?.imagePrompt,
     safeText(pkg.imagePrompt)
   );
-  const workflowShot1 = getStructuredPrompt(
-    pkg.structuredPrompts?.workflowShots?.[0],
-    safeText(pkg.shotPlan?.[0]?.prompt)
-  );
   const workflowShots = pkg.structuredPrompts?.workflowShots ?? [];
-  const workflowPromptTexts = workflowShots
-    .map((shot) => cleanCreatorPrompt(shot.pasteReady, shot.metadata?.engine))
-    .filter(Boolean);
-
-  const simplePromptText = buildSimplePrompt(pkg);
-  const primaryPromptText = cleanCreatorPrompt(imagePrompt.pasteReady, "image");
-  const cinematicPromptText = cleanCreatorPrompt(
-    workflowShot1.pasteReady,
-    workflowShot1.metadata?.engine
-  );
-  const workflowPromptText = workflowPromptTexts.join(" ");
-  const subjectUnclear = isSubjectUnclear(primaryPromptText, pkg);
-  const multipleActions = hasMultipleActions(
-    `${cinematicPromptText} ${workflowPromptText}`.trim()
-  );
-  const unrealisticBehavior = hasUnrealisticBehavior(
-    `${primaryPromptText} ${cinematicPromptText} ${workflowPromptText}`.trim()
-  );
-  const excessiveAdjectives = hasExcessiveAdjectives(
-    `${primaryPromptText} ${workflowPromptText}`.trim()
-  );
-  const conflictingCamera = hasConflictingCameraInstructions(
-    `${cinematicPromptText} ${workflowPromptText}`.trim()
-  );
 
   const simplePrompt: PromptGuidanceBlock = {
     label: "SIMPLE PROMPT (Fast copy)",
     engine: "Universal concept structure",
     reason:
       "Fast one-line subject/action/environment/light/style version for instant concept testing.",
-    prompt: simplePromptText,
+    prompt: buildSimplePrompt(pkg),
   };
+
+  const candidateDefinitions = buildCandidateDefinitions(pkg, imagePrompt, workflowShots);
+  const debugCandidates = candidateDefinitions
+    .map((candidate) => evaluatePromptCandidate(pkg, candidate))
+    .sort((a, b) => {
+      if (b.combinedDecisionScore !== a.combinedDecisionScore) {
+        return b.combinedDecisionScore - a.combinedDecisionScore;
+      }
+      if (b.pasteReadinessScore !== a.pasteReadinessScore) {
+        return b.pasteReadinessScore - a.pasteReadinessScore;
+      }
+      return SOURCE_PRIORITY[b.source] - SOURCE_PRIORITY[a.source];
+    });
+
+  const selectedCandidate = selectPrimaryCandidate(debugCandidates);
+  const safeModeApplied =
+    selectedCandidate.confidenceLevel === "Risky" ||
+    selectedCandidate.failedRules.some((rule) => rule.severity === "danger");
+  const primaryPromptText =
+    safeModeApplied && selectedCandidate.safeModePrompt
+      ? selectedCandidate.safeModePrompt
+      : selectedCandidate.prompt;
 
   const primaryPrompt: PromptGuidanceBlock = {
     label: "PRIMARY PROMPT (Paste this first)",
-    engine: "Image master still (NB2)",
-    reason:
-      "Paste this first to lock subject identity, scene spacing, and lighting before the video route starts.",
+    engine: safeModeApplied
+      ? `${selectedCandidate.engine} · Safe Mode`
+      : selectedCandidate.engine,
+    reason: `${selectedCandidate.reason} ${buildPrimaryExplanation(
+      selectedCandidate,
+      safeModeApplied
+    )}`,
     prompt: primaryPromptText,
+    confidenceLevel: selectedCandidate.confidenceLevel,
+    safeModeApplied,
   };
+
+  const cinematicCandidate =
+    debugCandidates.find((candidate) => candidate.key === "workflow-1") ??
+    debugCandidates.find((candidate) => candidate.source === "runway") ??
+    selectedCandidate;
 
   const cinematicPrompt: PromptGuidanceBlock = {
     label: "CINEMATIC PROMPT (Advanced control)",
-    engine: `${safeText(pkg.modelsUsed?.runway) || "Runway"} Shot 1`,
+    engine: cinematicCandidate.engine,
     reason:
-      "Advanced motion-led control for the first hybrid video shot once the master still is ready.",
-    prompt: cinematicPromptText,
+      "Advanced motion-led control block. Use this when you want the full cinematic engine prompt instead of the safer first-paste route.",
+    prompt: cinematicCandidate.prompt,
+    confidenceLevel: cinematicCandidate.confidenceLevel,
   };
 
   const warnings: PromptClarityWarning[] = [];
-
-  if (subjectUnclear) {
-    pushWarning(warnings, {
-      id: "unclear-subject",
-      severity: "danger",
-      title: "Subject clarity is too soft",
-      detail: "The main copy path does not clearly anchor the predator and prey names.",
-      fix: "Name the animals directly and keep one dominant subject relationship in the first line.",
-    });
-  }
-
-  if (multipleActions) {
-    pushWarning(warnings, {
-      id: "multiple-actions",
-      severity: "warning",
-      title: "Multiple actions are competing in the video route",
-      detail: "At least one copyable video prompt is trying to do too much in one shot instead of landing one dominant beat.",
-      fix: "Keep one primary action, then push secondary motion into the timeline beat guide instead of the main prompt body.",
-    });
-  }
-
-  if (unrealisticBehavior) {
-    pushWarning(warnings, {
-      id: "unrealistic-behavior",
-      severity: "danger",
-      title: "Animal behavior reads as unrealistic",
-      detail: "The current prompt wording includes anthropomorphic or non-documentary behavior cues.",
-      fix: "Replace human-style emotion or gestures with posture, spacing, pressure, brace, turn, or breakaway language.",
-    });
-  }
-
-  if (excessiveAdjectives) {
-    pushWarning(warnings, {
-      id: "excessive-adjectives",
-      severity: "warning",
-      title: "Prompt density is getting adjective-heavy",
-      detail: "Too many descriptive modifiers can bury the actual action and make paste decisions slower.",
-      fix: "Trim decorative adjectives first and keep the core order: subject, action, environment, lighting, style.",
-    });
-  }
-
-  if (conflictingCamera) {
-    pushWarning(warnings, {
-      id: "conflicting-camera",
-      severity: "danger",
-      title: "Camera instructions conflict",
-      detail: "At least one copyable video prompt mixes camera directions that pull the shot in opposite ways.",
-      fix: "Choose one camera move for the main beat: hold, push, pull-back, track, or orbit — not conflicting combinations.",
-    });
-  }
-
-  for (const shot of workflowShots.filter((item) => item.metadata?.engine === "kling")) {
-    const klingLength = validateKlingPromptLength(shot.pasteReady);
-    if (klingLength.isOver) {
-      pushWarning(warnings, {
-        id: "kling-too-long",
-        severity: "danger",
-        title: "Kling paste block is too long",
-        detail: klingLength.warning ?? "Kling prompt length is over the working limit.",
-        fix: "Keep Kling to one clear action, one camera move, and only the details that affect visible motion.",
-      });
+  for (const candidate of debugCandidates) {
+    for (const rule of candidate.failedRules) {
+      pushWarning(warnings, buildCandidateWarning(rule));
     }
   }
 
-  const engineConstraintWarnings = (pkg.shotPlan ?? []).flatMap((shot, index) => {
-    const metadata = workflowShots[index]?.metadata;
-    const duration = metadata?.durationSeconds;
-    return validateEngineConstraints({
-      engine: shot.engine === "RUNWAY" ? "runway" : "kling",
-      duration,
-      hasNegativePrompt: shot.engine === "KLING",
-      hasAppearanceInPrompt: false,
-    }).filter((warning) => warning.level !== "info");
-  });
-
-  if (engineConstraintWarnings.length > 0) {
-    pushWarning(warnings, {
-      id: "engine-compliance",
-      severity: engineConstraintWarnings.some((warning) => warning.level === "error")
-        ? "danger"
-        : "warning",
-      title: "Engine compliance needs review",
-      detail: engineConstraintWarnings.map((warning) => warning.message).join(" "),
-      fix: "Keep Kling at 5s or 10s, keep Runway inside its supported duration/fps range, and avoid invalid parameter mixes.",
-    });
-  }
-
-  const dangerCount = warnings.filter((warning) => warning.severity === "danger").length;
-  const warningCount = warnings.filter((warning) => warning.severity === "warning").length;
-  const hasPredator = primaryPromptText.toLowerCase().includes(safeText(pkg.predatorName).toLowerCase());
-  const hasPrey = primaryPromptText.toLowerCase().includes(safeText(pkg.preyName).toLowerCase());
-  const engineComplianceScore = clampScore(100 - engineConstraintWarnings.length * 18 - warningCount * 2);
-
   const scores: PromptClarityScores = {
-    pasteReadinessScore: clampScore(
-      96 - dangerCount * 15 - warningCount * 7 - (primaryPromptText.length > 1100 ? 6 : 0)
+    pasteReadinessScore: selectedCandidate.pasteReadinessScore,
+    subjectClarityScore: selectedCandidate.subjectClarityScore,
+    animalRealismScore: selectedCandidate.animalRealismScore,
+    motionFeasibilityScore: Math.min(
+      ...debugCandidates.map((candidate) => candidate.motionFeasibilityScore)
     ),
-    subjectClarityScore: clampScore(
-      58 + (hasPredator ? 18 : 0) + (hasPrey ? 16 : 0) + (simplePromptText.length <= 160 ? 8 : 0) - (subjectUnclear ? 18 : 0)
+    engineComplianceScore: Math.min(
+      ...debugCandidates.map((candidate) => candidate.engineComplianceScore)
     ),
-    animalRealismScore: clampScore(
-      92 - (unrealisticBehavior ? 24 : 0) - (excessiveAdjectives ? 8 : 0)
-    ),
-    motionFeasibilityScore: clampScore(
-      92 - (multipleActions ? 16 : 0) - (conflictingCamera ? 18 : 0)
-    ),
-    engineComplianceScore,
-    viralHookStrength: clampScore(
-      (pkg.openingFrameScore?.total ?? 70) * 0.7 +
-        (pkg.usAudienceScore?.total ?? 70) * 0.3 +
-        (pkg.hookFamily === "danger" ? 6 : pkg.hookFamily === "reversal" ? 5 : 4)
-    ),
+    viralHookStrength: selectedCandidate.viralHookStrength,
+  };
+
+  const fallback = buildFailureRecovery(
+    pkg,
+    selectedCandidate,
+    simplePrompt,
+    cleanCreatorPrompt(imagePrompt.pasteReady, "image")
+  );
+
+  const decision: PromptDecisionSummary = {
+    confidenceLevel: selectedCandidate.confidenceLevel,
+    explanation: buildPrimaryExplanation(selectedCandidate, safeModeApplied),
+    selectedKey: selectedCandidate.key,
+    selectedEngine: selectedCandidate.engine,
+    safeModeApplied,
+    lowScoreReasons: selectedCandidate.lowScoreReasons,
+    failedRules: selectedCandidate.failedRules,
+    fallback,
   };
 
   return {
@@ -496,8 +1027,12 @@ export function buildPromptClarityReport(pkg: GeneratedPackage): PromptClarityRe
     scores,
     warnings,
     summary:
-      warnings.length === 0
-        ? "Copy path is clear: use the simple prompt for fast concepting, the primary prompt first, then the cinematic prompt for deeper motion control."
-        : `Prompt QA flagged ${warnings.length} item(s). Start with the primary prompt, then resolve the warnings before heavy generation spend.`,
+      selectedCandidate.confidenceLevel === "High"
+        ? "Primary prompt is ready: copy the selected first-paste prompt, then move into the advanced cinematic block if you need deeper control."
+        : selectedCandidate.confidenceLevel === "Medium"
+          ? "Primary prompt is usable, but the debug panel explains the few things worth checking before heavy generation spend."
+          : "Primary prompt needed Safe Mode cleanup. Use the fallback recovery block if the selected engine prompt still drifts or fails.",
+    decision,
+    debugCandidates,
   };
 }
