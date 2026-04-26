@@ -5,9 +5,12 @@ import {
   createLastGeneratedOutputDebouncer,
   readCustomPredators,
   readLastGeneratedOutput,
+  readMonetizedPagePerformanceForGeneration,
+  readMonetizedPagePerformanceHistory,
   readRealGenerationEvidenceForGeneration,
   readRealGenerationEvidenceHistory,
   readSettings,
+  upsertMonetizedPagePerformanceRecord,
   writeLastGeneratedOutput,
   writeRealGenerationEvidenceHistory,
   writeSettings,
@@ -240,6 +243,56 @@ describe("settings storage", () => {
 
     debouncer.cancel();
     vi.useRealTimers();
+  });
+
+  it("persists monetized page performance records by generation", () => {
+    installLocalStorageMock();
+
+    upsertMonetizedPagePerformanceRecord({
+      generationId: "generation_1",
+      postUrl: "https://facebook.com/post/1",
+      title: "Mountain lion pressure closes fast",
+      conceptLabel: "Mountain Lion vs White-tailed Deer • Escape from danger",
+      publishedAt: "2026-04-24 08:30 EST",
+      postedAtJST: "",
+      postedAtEST: "",
+      animalPair: "Mountain Lion vs White-tailed Deer",
+      predator: "Mountain Lion",
+      prey: "White-tailed Deer",
+      habitat: "Rocky Mountain Meadow",
+      arc: "Escape from danger",
+      durationLane: "short",
+      hookFamily: "danger",
+      contentLane: "Escape",
+      reach: 12000,
+      firstHourViews: "",
+      threeSecondViews: 5400,
+      threeSecondHoldRate: "",
+      oneMinuteViews: 620,
+      averageWatchTimeSeconds: 15,
+      watchPercentage: 46,
+      completionRate: "",
+      shares: 140,
+      comments: 72,
+      reactions: 880,
+      followsGained: 33,
+      profileVisits: 120,
+      linkClicks: 8,
+      usaFollowerPercent: "",
+      earningsUsd: "",
+      estimatedEarnings: 22,
+      rpm: 4.8,
+      monetizedPlays: 1800,
+      notes: "Strong repeat view signals.",
+    });
+
+    expect(readMonetizedPagePerformanceForGeneration("generation_1")).toMatchObject({
+      generationId: "generation_1",
+      estimatedEarnings: 22,
+      rpm: 4.8,
+      monetizedPlays: 1800,
+    });
+    expect(readMonetizedPagePerformanceHistory()).toHaveLength(1);
   });
 
   it("persists real-generation evidence history and can read the current generation record", () => {
