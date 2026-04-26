@@ -176,6 +176,22 @@ describe("build-package refactor seam", () => {
     expect(prompts?.klingSixShot?.pasteReady.length).toBeGreaterThan(0);
   });
 
+  it("adds the Meta AI disclosure reminder to the Facebook publish reminders without duplicates", () => {
+    const draft = buildGeneratedPackageDraft(makeDraftInput());
+    const reminders = draft.basePkg.platformPack?.facebook.publishReminders ?? [];
+
+    expect(reminders).toContain(
+      "⚠️ Reminder: Label this content as AI-generated before publishing to comply with Meta policy and SynthID detection."
+    );
+    expect(
+      reminders.filter(
+        (item) =>
+          item ===
+          "⚠️ Reminder: Label this content as AI-generated before publishing to comply with Meta policy and SynthID detection."
+      )
+    ).toHaveLength(1);
+  });
+
   it("finalizes the draft with enhancements while preserving generated extras", () => {
     const draft = buildGeneratedPackageDraft(makeDraftInput());
     const { finalPkg, publishFlowSummary } = finalizeGeneratedPackageDraft(

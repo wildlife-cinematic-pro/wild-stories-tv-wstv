@@ -11,7 +11,9 @@ import {
   rankFacebookCoverFramePresets,
   recommendFacebookOverlayPreset,
   buildHookFormattingPresets,
+  buildObservationalCTA,
   buildPlatformPack,
+  validateCaptionCTA,
   FACEBOOK_COVER_FRAME_MAX_LINE_LENGTH,
   HOOK_OVERLAY_MAX_LINE_LENGTH,
 } from "@/lib/platform-packs";
@@ -223,6 +225,41 @@ describe("platform pack hook engine v2", () => {
       expect(cta).not.toMatch(FORCED_ENGAGEMENT_PATTERN);
       expect(cta.toLowerCase()).not.toMatch(/changed the read|pressure feel|comment|tag/);
     }
+  });
+
+  it("validates observational caption CTAs and rejects bait-style CTA endings", () => {
+    expect(
+      validateCaptionCTA(
+        "Mountain lion pressure closes before the mule deer finds a clean turn. What changed the outcome first?"
+      )
+    ).toBe(true);
+    expect(
+      validateCaptionCTA(
+        "Mountain lion pressure closes fast. Comment YES and tag a friend."
+      )
+    ).toBe(false);
+  });
+
+  it("builds non-bait observational CTAs for Facebook packaging", () => {
+    const cta = buildObservationalCTA(
+      "Mountain Lion vs White-tailed Deer",
+      "Escape from danger"
+    );
+
+    expect(cta).toMatch(/\?$/);
+    expect(cta).not.toMatch(FORCED_ENGAGEMENT_PATTERN);
+    expect(cta).toMatch(/what changed the outcome first|what did you notice first|which animal actually controlled the scene|was this patience or panic/i);
+  });
+
+  it("keeps the Facebook long caption on a safe observational CTA after packaging", () => {
+    const pack = buildPlatformPack(
+      "Mountain Lion",
+      "White-tailed Deer",
+      "Escape from danger",
+      "Rocky Mountain forest edge and open meadow"
+    );
+
+    expect(validateCaptionCTA(pack.facebook.caption)).toBe(true);
   });
 
   it("sharpens rut and giant-clash copy with heavier documentary body-language detail", () => {

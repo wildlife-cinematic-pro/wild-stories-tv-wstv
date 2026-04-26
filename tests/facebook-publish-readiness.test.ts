@@ -8,7 +8,7 @@ function buildBasePlatformPack() {
   return {
     facebook: {
       hook: "Mountain lion pressure closes before the mule deer clears the break.",
-      caption: "Mountain lion pressure closes before the mule deer finds a clean turn.",
+      caption: "Mountain lion pressure closes before the mule deer finds a clean turn.\n\nWhat changed the outcome first?",
       hashtags: "#MountainLion #MuleDeer #WildlifeReel #PredatorPrey #NatureShorts",
       bestTime: "7:30 PM EST",
       cmpNote: "Documentary tone.",
@@ -60,7 +60,7 @@ function buildBasePlatformPack() {
     },
     instagram: {
       hook: "Mountain lion pressure closes before the mule deer clears the break.",
-      caption: "Mountain lion pressure closes before the mule deer finds a clean turn.",
+      caption: "Mountain lion pressure closes before the mule deer finds a clean turn.\n\nWhat changed the outcome first?",
       hashtags: "#MountainLion #MuleDeer #WildlifeReel #PredatorPrey #NatureShorts",
       bestTime: "7:30 PM EST",
     },
@@ -95,9 +95,11 @@ function makePackage(overrides: Partial<GeneratedPackage> = {}): GeneratedPackag
     arcName: "Escape from danger",
     hook: "Mountain lion pressure closes before the mule deer clears the break.",
     hook2026: ["Mountain lion pressure closes before the mule deer clears the break."],
-    caption: "Mountain lion pressure closes before the mule deer finds a clean turn.",
-    caption2026: "Mountain lion pressure closes before the mule deer finds a clean turn.",
+    caption: "Mountain lion pressure closes before the mule deer finds a clean turn.\n\nWhat changed the outcome first?",
+    caption2026: "Mountain lion pressure closes before the mule deer finds a clean turn.\n\nWhat changed the outcome first?",
     cta: "What changed the outcome first?",
+    altTextPrompt:
+      "AI-generated cinematic wildlife scene showing Mountain Lion and Mule Deer during an Escape from danger sequence. Wild Stories TV original content.",
     hashtags: "#MountainLion #MuleDeer #WildlifeReel #PredatorPrey #NatureShorts",
     tenIdeas: [],
     shotPlan: [],
@@ -191,6 +193,10 @@ describe("facebook publish readiness workflow", () => {
     expect(report.verdict).toBe("ready-to-publish");
     expect(report.overallScore).toBeGreaterThanOrEqual(78);
     expect(report.scores.originalityConfidence).toBeGreaterThanOrEqual(68);
+    expect(report.scores.shareIntentScore).toBeGreaterThanOrEqual(7);
+    expect(report.scores.commentDepthIntentScore).toBeGreaterThanOrEqual(6);
+    expect(report.scores.monetisationSafetyScore).toBeGreaterThanOrEqual(7);
+    expect(report.scores.ownedFunnelConversionIntentScore).toBeGreaterThanOrEqual(4);
     expect(report.publishGuardPass).toBe(true);
     expect(report.reminders[0]).toMatch(/AI-generated-content label/i);
   });
@@ -247,4 +253,58 @@ describe("facebook publish readiness workflow", () => {
     expect(report.evidenceContext?.recommendationLabel).toBe("Retry");
     expect(report.summary).toMatch(/too risky to post/i);
   });
+
+  it("blocks publish-ready verdicts when the caption loses its observational CTA", () => {
+    const report = buildFacebookPublishReadinessReport(
+      makePackage({
+        caption: "Mountain lion pressure closes before the mule deer finds a clean turn.",
+        platformPack: {
+          ...buildBasePlatformPack(),
+          facebook: {
+            ...buildBasePlatformPack().facebook,
+            caption: "Mountain lion pressure closes before the mule deer finds a clean turn.",
+          },
+        },
+      })
+    );
+
+    expect(report.verdict).toBe("review-packaging-before-publish");
+    expect(report.scores.commentDepthIntentScore).toBeLessThan(6);
+    expect(report.reasons.join(" ")).toMatch(/discussion prompt/i);
+  });
+
+  it("drops monetisation safety when bait or graphic packaging appears", () => {
+    const report = buildFacebookPublishReadinessReport(
+      makePackage({
+        caption: "Brutal death and bloodbath wording turns this into shock bait.",
+        cta: "Comment YES and tag a friend.",
+        platformPack: {
+          ...buildBasePlatformPack(),
+          facebook: {
+            ...buildBasePlatformPack().facebook,
+            caption: "Brutal death and bloodbath wording turns this into shock bait.",
+          },
+        },
+        publishGuardReport: {
+          isPass: false,
+          warnings: ["CTA still feels too engagement-led."],
+        },
+      })
+    );
+
+    expect(report.verdict).toBe("retry-content-before-publish");
+    expect(report.scores.monetisationSafetyScore).toBeLessThanOrEqual(3);
+  });
+
+  it("keeps owned-funnel conversion intent low when no CTA or brand path is present", () => {
+    const report = buildFacebookPublishReadinessReport(
+      makePackage({
+        cta: "",
+        altTextPrompt: "",
+      })
+    );
+
+    expect(report.scores.ownedFunnelConversionIntentScore).toBeLessThan(4);
+  });
+
 });

@@ -1,5 +1,7 @@
 import type { GeneratedPackage } from "@/types";
 
+import { buildFacebookPublishReadinessReport } from "@/lib/facebook-publish-readiness";
+
 export type UsageEvent =
   | "copy_all_packs"
   | "export_txt"
@@ -7,15 +9,7 @@ export type UsageEvent =
   | "view_output"
   | "open_workspace";
 
-type UsageTrackedPackage = Pick<
-  GeneratedPackage,
-  | "usAudienceScore"
-  | "hookFamily"
-  | "publishGuardReport"
-  | "predatorName"
-  | "preyName"
-  | "arcName"
->;
+type UsageTrackedPackage = GeneratedPackage;
 
 type UsagePayload = ReturnType<typeof buildUsagePayload> & {
   tab?: string;
@@ -25,6 +19,17 @@ type UsageRecord = {
   event: UsageEvent;
   data: UsagePayload | Record<string, unknown>;
   time: string;
+};
+
+type UsageSummary = {
+  totalEvents: number;
+  publishCount: number;
+  avgScore: number;
+  avgShareIntentScore: number;
+  avgCommentDepthIntentScore: number;
+  avgMonetisationSafetyScore: number;
+  avgOwnedFunnelConversionIntentScore: number;
+  topHooks: string[];
 };
 
 const STORAGE_KEY = "wstv_history";
@@ -38,7 +43,32 @@ export function getUsageRisk(data: UsageTrackedPackage): "low" | "medium" | "hig
   return "low";
 }
 
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === "object" && value !== null && !Array.isArray(value);
+}
+
+function coerceNumericScore(value: unknown): number {
+  return typeof value === "number" && Number.isFinite(value) ? value : 0;
+}
+
+function averageRounded(values: number[]): number {
+  if (values.length === 0) return 0;
+  return Math.round(values.reduce((sum, value) => sum + value, 0) / values.length);
+}
+
+function getComparablePayload(data: unknown) {
+  if (!isRecord(data)) return data;
+  const comparable = { ...data };
+  delete comparable.timestamp;
+  return comparable;
+}
+
+/**
+ * Builds the shared local analytics payload for a generated package.
+ */
 export function buildUsagePayload(data: UsageTrackedPackage) {
+  const readiness = buildFacebookPublishReadinessReport(data);
+
   return {
     score: data.usAudienceScore?.total ?? 0,
     hook: data.hookFamily ?? "unknown",
@@ -46,12 +76,13 @@ export function buildUsagePayload(data: UsageTrackedPackage) {
     predatorName: data.predatorName ?? "unknown",
     preyName: data.preyName ?? "unknown",
     arcName: data.arcName ?? "unknown",
+    shareIntentScore: readiness.scores.shareIntentScore,
+    commentDepthIntentScore: readiness.scores.commentDepthIntentScore,
+    monetisationSafetyScore: readiness.scores.monetisationSafetyScore,
+    ownedFunnelConversionIntentScore:
+      readiness.scores.ownedFunnelConversionIntentScore,
     timestamp: new Date().toISOString(),
   };
-}
-
-function isRecord(value: unknown): value is Record<string, unknown> {
-  return typeof value === "object" && value !== null && !Array.isArray(value);
 }
 
 function normalizeUsageRecord(value: unknown): UsageRecord | null {
@@ -102,14 +133,10 @@ function writeUsageHistory(history: UsageRecord[]) {
   } catch {}
 }
 
-function getComparablePayload(data: unknown) {
-  if (!isRecord(data)) return data;
-  const comparable = { ...data };
-  delete comparable.timestamp;
-  return comparable;
-}
-
-export function trackUsage(event: UsageEvent, data: unknown = {}) {
+/**
+ * Records one local usage event without changing the storage backend.
+ */
+export function recordEvent(event: UsageEvent, data: unknown = {}) {
   if (typeof window === "undefined") return;
 
   try {
@@ -141,7 +168,14 @@ export function trackUsage(event: UsageEvent, data: unknown = {}) {
   } catch {}
 }
 
-export function getUsageStats() {
+export function trackUsage(event: UsageEvent, data: unknown = {}) {
+  recordEvent(event, data);
+}
+
+/**
+ * Returns aggregate local usage analytics, including averages for the new Facebook intent scores.
+ */
+export function getSummary(): UsageSummary {
   const history = readUsageHistory();
   const scores = history
     .map((entry) =>
@@ -150,6 +184,18 @@ export function getUsageStats() {
         : null
     )
     .filter((value): value is number => value !== null);
+  const shareIntentScores = history.map((entry) =>
+    coerceNumericScore(entry.data.shareIntentScore)
+  );
+  const commentDepthIntentScores = history.map((entry) =>
+    coerceNumericScore(entry.data.commentDepthIntentScore)
+  );
+  const monetisationSafetyScores = history.map((entry) =>
+    coerceNumericScore(entry.data.monetisationSafetyScore)
+  );
+  const ownedFunnelConversionIntentScores = history.map((entry) =>
+    coerceNumericScore(entry.data.ownedFunnelConversionIntentScore)
+  );
   const hookCounts = new Map<string, number>();
 
   history.forEach((entry) => {
@@ -162,15 +208,20 @@ export function getUsageStats() {
     .sort((a, b) => b[1] - a[1] || a[0].localeCompare(b[0]))
     .map(([hook]) => hook);
 
-  const avgScore =
-    scores.length > 0
-      ? Math.round(scores.reduce((sum, score) => sum + score, 0) / scores.length)
-      : 0;
-
   return {
     totalEvents: history.length,
     publishCount: history.filter((entry) => entry.event === "publish_action").length,
-    avgScore,
+    avgScore: averageRounded(scores),
+    avgShareIntentScore: averageRounded(shareIntentScores),
+    avgCommentDepthIntentScore: averageRounded(commentDepthIntentScores),
+    avgMonetisationSafetyScore: averageRounded(monetisationSafetyScores),
+    avgOwnedFunnelConversionIntentScore: averageRounded(
+      ownedFunnelConversionIntentScores
+    ),
     topHooks,
   };
+}
+
+export function getUsageStats() {
+  return getSummary();
 }

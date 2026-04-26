@@ -16,49 +16,84 @@ const SCORE_META: Array<{
   label: string;
   detail: string;
   accent: string;
+  scale: 10 | 100;
 }> = [
   {
     key: "originalityConfidence",
     label: "Originality confidence",
     detail: "How safely original the hook, caption, and CTA feel for Facebook wildlife packaging.",
     accent: "border-emerald-200 bg-emerald-50 text-emerald-900",
+    scale: 100,
   },
   {
     key: "firstFrameHookReadability",
     label: "First-frame hook readability",
     detail: "How quickly the opening hook should read in the first seconds of the reel.",
     accent: "border-violet-200 bg-violet-50 text-violet-900",
+    scale: 100,
   },
   {
     key: "hookOverlayClarity",
     label: "Hook overlay clarity",
     detail: "How usable the Facebook overlay recommendation looks for a real first-frame test.",
     accent: "border-sky-200 bg-sky-50 text-sky-900",
+    scale: 100,
   },
   {
     key: "captionUsefulness",
     label: "Caption usefulness",
     detail: "Whether the caption helps the publish and stays clear of spammy filler.",
     accent: "border-amber-200 bg-amber-50 text-amber-900",
+    scale: 100,
   },
   {
     key: "hashtagHygiene",
     label: "Hashtag hygiene",
     detail: "Count, uniqueness, and clean formatting for the Facebook-ready tag set.",
     accent: "border-fuchsia-200 bg-fuchsia-50 text-fuchsia-900",
+    scale: 100,
   },
   {
     key: "packagingQuality",
     label: "Visible packaging quality",
     detail: "How strong the total packaging looks once cover-frame, overlay, and guard status are combined.",
     accent: "border-cyan-200 bg-cyan-50 text-cyan-900",
+    scale: 100,
+  },
+  {
+    key: "shareIntentScore",
+    label: "Share intent",
+    detail: "How strongly the package carries one replay-worthy behavioural beat instead of atmosphere-only framing.",
+    accent: "border-orange-200 bg-orange-50 text-orange-900",
+    scale: 10,
+  },
+  {
+    key: "commentDepthIntentScore",
+    label: "Comment depth intent",
+    detail: "Whether the package invites thoughtful discussion instead of shallow engagement commands.",
+    accent: "border-lime-200 bg-lime-50 text-lime-900",
+    scale: 10,
+  },
+  {
+    key: "monetisationSafetyScore",
+    label: "Monetisation safety",
+    detail: "How clean the package looks for originality, non-bait wording, and clean-danger wildlife framing.",
+    accent: "border-rose-200 bg-rose-50 text-rose-900",
+    scale: 10,
+  },
+  {
+    key: "ownedFunnelConversionIntentScore",
+    label: "Owned-funnel intent",
+    detail: "Whether the package carries a light page, series, or original-content conversion path beyond distribution only.",
+    accent: "border-indigo-200 bg-indigo-50 text-indigo-900",
+    scale: 10,
   },
 ];
 
-function formatScore(score: number): string {
-  return `${Math.max(0, Math.min(100, Math.round(score)))}/100`;
+function formatScore(score: number, scale: 10 | 100): string {
+  const safe = Math.max(0, Math.min(scale, Math.round(score)));
+  return `${safe}/${scale}`;
 }
-
 function getVerdictAccent(verdict: string): string {
   switch (verdict) {
     case "ready-to-publish":
@@ -109,7 +144,7 @@ export function FacebookPublishReadinessPanel({ data }: { data: GeneratedPackage
             Current verdict
           </div>
           <div className="mt-1 text-lg font-black">{report.verdictLabel}</div>
-          <div className="mt-1 text-xs font-semibold">{formatScore(report.overallScore)}</div>
+          <div className="mt-1 text-xs font-semibold">{formatScore(report.overallScore, 100)}</div>
         </div>
       </div>
 
@@ -124,7 +159,7 @@ export function FacebookPublishReadinessPanel({ data }: { data: GeneratedPackage
               {item.label}
             </div>
             <div className="mt-2 text-2xl font-black">
-              {formatScore(report.scores[item.key])}
+              {formatScore(report.scores[item.key], item.scale)}
             </div>
             <p className="mt-1 text-xs leading-relaxed opacity-85">{item.detail}</p>
           </div>
@@ -171,7 +206,7 @@ export function FacebookPublishReadinessPanel({ data }: { data: GeneratedPackage
               <div className="mt-3 rounded-xl border border-cyan-200 bg-cyan-50 p-3 text-xs leading-relaxed text-cyan-900">
                 <div className="font-bold">Latest evidence call</div>
                 <div className="mt-1">
-                  {report.evidenceContext.recommendationLabel} • {formatScore(report.evidenceContext.overallScore)}
+                  {report.evidenceContext.recommendationLabel} • {formatScore(report.evidenceContext.overallScore, 100)}
                 </div>
                 <p className="mt-2 text-cyan-800">{report.evidenceContext.note}</p>
               </div>
