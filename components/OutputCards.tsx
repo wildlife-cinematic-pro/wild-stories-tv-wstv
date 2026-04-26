@@ -25,8 +25,9 @@ import {
   buildCopyAllPacksText as buildCopyAllPacksTextFromPackage,
   buildExportTxtFull as buildExportTxtFullFromPackage,
 } from "@/lib/export-text";
+import { getDecision } from "@/lib/decision-engine";
 import { downloadText } from "@/lib/storage";
-import { buildUsagePayload, getUsageRisk, trackUsage } from "@/lib/usage-tracker";
+import { buildUsagePayload, trackUsage } from "@/lib/usage-tracker";
 
 import type { GeneratedPackage, PromptVersion } from "@/types";
 
@@ -58,6 +59,17 @@ export default function OutputCards({
       inline: "nearest",
     });
   }, [activeWorkspace]);
+
+  useEffect(() => {
+    trackUsage("view_output", buildUsagePayload(data));
+  }, [data]);
+
+  useEffect(() => {
+    trackUsage("open_workspace", {
+      ...buildUsagePayload(data),
+      tab: activeWorkspace,
+    });
+  }, [activeWorkspace, data]);
 
   const versionKey = useMemo(() => {
     const predator = data.predatorName ?? "";
@@ -157,20 +169,7 @@ export default function OutputCards({
   const getWorkspaceTabId = (tab: OutputWorkspaceTab) => `output-workspace-tab-${tab}`;
   const getWorkspacePanelId = (tab: OutputWorkspaceTab) => `output-workspace-panel-${tab}`;
 
-  const score = data.usAudienceScore?.total ?? 0;
-  const hook = data.hookFamily ?? "unknown";
-  const risk = getUsageRisk(data);
-  const hasBlockers = (data.publishGuardReport?.blockers?.length ?? 0) > 0;
-  const isPass = data.publishGuardReport?.isPass === true;
-  const canPublish = score > 70 && !hasBlockers && isPass;
-
-  const decision = {
-    score,
-    hook,
-    risk,
-    label: canPublish ? "PUBLISH" : "DO NOT PUBLISH",
-    color: canPublish ? "text-green-400" : "text-red-400",
-  };
+  const decision = useMemo(() => getDecision(data), [data]);
 
   const workspaceOverviewCards = [
     {

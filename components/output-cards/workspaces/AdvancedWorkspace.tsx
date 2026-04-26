@@ -7,6 +7,7 @@ import {
   SoundDesignPanel,
   WatchTimePanel,
 } from "@/components/output-cards/advanced-panels";
+import { AnalyticsPanel } from "@/components/output-cards/analytics-panel";
 import { Card, SectionLabel } from "@/components/output-cards/shared-panels";
 import {
   buildBlankPerformanceTrackerEntry,
@@ -221,6 +222,9 @@ ${data.twoPartPart2Final}`
           <SoundDesignPanel pack={data.soundDesignPack} onCopy={onCopy} />
         </>
       )}
+
+      <SectionLabel label="Usage Analytics" />
+      <AnalyticsPanel />
     </div>
   );
 }
