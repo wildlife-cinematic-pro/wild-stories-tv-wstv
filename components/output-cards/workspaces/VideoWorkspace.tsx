@@ -1,6 +1,7 @@
 "use client";
 
 import { ProShotCard, SectionLabel } from "@/components/output-cards/shared-panels";
+import { TimelineModePanel } from "@/components/output-cards/prompt-guidance-panel";
 import { getPromptCardForEngine, getWorkflowPromptCard } from "@/components/output-cards/prompt-utils";
 import { getDurationLaneConfig } from "@/lib/duration-lanes";
 
@@ -111,6 +112,8 @@ export function VideoWorkspace({
       </div>
 
       <SectionLabel label="🎬 Video Shots (Pro Layout)" />
+
+      <TimelineModePanel data={data} onCopy={onCopy} />
 
       {videoWorkspace === "hybrid" && (
         <div className="space-y-4">

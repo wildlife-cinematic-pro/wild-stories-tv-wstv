@@ -10,6 +10,7 @@ import { PublishingWorkspace } from "@/components/output-cards/workspaces/Publis
 import { EvidenceWorkspace } from "@/components/output-cards/workspaces/EvidenceWorkspace";
 import { AdvancedWorkspace } from "@/components/output-cards/workspaces/AdvancedWorkspace";
 import { FastPublishPanel } from "@/components/output-cards/fast-publish-panel";
+import { PromptGuidancePanel } from "@/components/output-cards/prompt-guidance-panel";
 import type {
   DirectWorkspaceTab,
   OutputWorkspaceTab,
@@ -306,6 +307,8 @@ export default function OutputCards({
       </div>
 
       <FastPublishPanel data={data} onCopy={onCopy} />
+
+      <PromptGuidancePanel data={data} onCopy={onCopy} />
 
       <div className="sticky top-3 z-20 rounded-2xl border border-[color:var(--border)] bg-[color:var(--surface-elevated)] p-2 shadow-[var(--surface-shadow)] backdrop-blur">
         <div

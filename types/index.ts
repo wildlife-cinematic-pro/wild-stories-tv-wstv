@@ -769,6 +769,8 @@ export type GeneratedPackage = {
   predatorName?: string;
   preyName?: string;
   arcName?: Arc;
+  environmentName?: string;
+  weatherName?: Weather;
   cameraAnglePreset?: CameraAnglePreset;
   generationId?: string;
   generatedAt?: string;

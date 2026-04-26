@@ -396,6 +396,8 @@ export function buildGeneratedPackageDraft(
     predatorName: input.predator,
     preyName: input.prey,
     arcName: input.finalArc,
+    environmentName: input.finalEnvironment,
+    weatherName: input.weather,
     cameraAnglePreset: input.cameraAnglePreset,
     generationId,
     generatedAt,
