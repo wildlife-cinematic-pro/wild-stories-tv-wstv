@@ -117,7 +117,7 @@ export type PlatformTarget =
 export type RealismMode = "Balanced" | "High Naturalism" | "Reference Locked";
 export type FiveShotStyle = "cinematic" | "viral";
 
-export type DurationLane = "short" | "long";
+export type DurationLane = "short" | "medium" | "long";
 export type PipelineStyle = "4-shot" | "long-hybrid-4-shot";
 
 export type HookFamily = "danger" | "curiosity" | "reversal";
@@ -152,6 +152,26 @@ export type PerformanceSnapshot = {
   completionRate: number;
   shareRate: number;
   summary: string;
+};
+
+export type PerformanceTrackerEntry = {
+  postedAtJST: string;
+  postedAtEST: string;
+  animalPair: string;
+  predator: string;
+  prey: string;
+  habitat: string;
+  arc: Arc | "";
+  durationLane: DurationLane;
+  hookFamily: HookFamily | "";
+  contentLane: ContentLane | "";
+  firstHourViews: number | "";
+  threeSecondHoldRate: number | "";
+  averageWatchTimeSeconds: number | "";
+  completionRate: number | "";
+  usaFollowerPercent: number | "";
+  earningsUsd: number | "";
+  notes: string;
 };
 
 export type USViewsModeReport = {
@@ -457,6 +477,8 @@ export type ShotPlan = {
   motionStrength: number;
   why: string;
   durationLabel?: string;
+  generationDurationLabel?: string;
+  editTimelineLabel?: string;
 };
 
 export type ShotImagePlan = {
@@ -471,7 +493,7 @@ export type StructuredPromptMetadata = {
   title?: string;
   motionIntensity?: number;
   durationSeconds?: number;
-  variant?: "single-shot" | "multi-shot" | "hybrid" | "native-15s" | "six-shot";
+  variant?: "single-shot" | "multi-shot" | "hybrid" | "native-10s" | "six-shot";
   workflowRole?: string;
 };
 

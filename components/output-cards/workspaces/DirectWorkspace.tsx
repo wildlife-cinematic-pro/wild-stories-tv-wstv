@@ -1,6 +1,6 @@
 "use client";
 
-import { getKlingNative15sCard, getKlingSixShotCard, getSeedanceMultiShotCard } from "@/components/output-cards/prompt-utils";
+import { getKlingNative15sCard, getSeedanceMultiShotCard } from "@/components/output-cards/prompt-utils";
 
 import type { GeneratedPackage } from "@/types";
 import type { DirectWorkspaceTab } from "@/components/output-cards/workspaces/types";
@@ -16,30 +16,16 @@ export function DirectWorkspace({
   onDirectWorkspaceChange: (value: DirectWorkspaceTab) => void;
   onCopy: (text: string) => void | Promise<unknown>;
 }) {
-  const hasSeedanceDirect =
-    data.seedanceMultiShotPrompt !== undefined &&
-    data.seedanceMultiShotPrompt !== null;
   const hasKling15Direct =
     data.klingNative15s !== undefined && data.klingNative15s !== null;
-  const hasKling6Direct =
-    data.klingSixShot !== undefined && data.klingSixShot !== null;
 
   const resolvedDirectWorkspace: DirectWorkspaceTab =
-    directWorkspace === "seedance" && hasSeedanceDirect
-      ? "seedance"
-      : directWorkspace === "kling15" && hasKling15Direct
-        ? "kling15"
-        : directWorkspace === "kling6" && hasKling6Direct
-          ? "kling6"
-          : hasSeedanceDirect
-            ? "seedance"
-            : hasKling15Direct
-              ? "kling15"
-              : "kling6";
+    directWorkspace === "kling15" && hasKling15Direct
+      ? "kling15"
+      : "seedance";
 
   const seedanceMultiShotCard = getSeedanceMultiShotCard(data);
   const klingNative15sCard = getKlingNative15sCard(data);
-  const klingSixShotCard = getKlingSixShotCard(data);
 
   return (
     <div className="space-y-6">
@@ -80,22 +66,10 @@ export function DirectWorkspace({
                     : "border-blue-200 bg-[color:var(--surface-elevated)] text-blue-800 hover:bg-blue-500/12 dark:text-blue-100"
                 }`}
               >
-                Kling 15s Optional
+                Kling 10s Optional
               </button>
             )}
-            {data.klingSixShot && (
-              <button
-                type="button"
-                onClick={() => onDirectWorkspaceChange("kling6")}
-                className={`rounded-xl border px-3 py-2 text-xs font-extrabold ${
-                  resolvedDirectWorkspace === "kling6"
-                    ? "border-indigo-700 bg-indigo-700 text-white"
-                    : "border-indigo-200 bg-[color:var(--surface-elevated)] text-indigo-800 hover:bg-indigo-500/12 dark:text-indigo-100"
-                }`}
-              >
-                Kling 6-Shot Optional
-              </button>
-            )}
+
           </div>
         </div>
       </div>
@@ -163,7 +137,7 @@ export function DirectWorkspace({
             <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
               <div className="flex flex-wrap items-center gap-2">
                 <div className="text-sm font-extrabold text-blue-900 dark:text-blue-100">
-                  Kling 15-Second Native Multi-Shot
+                  Kling 10-Second Native Multi-Shot
                 </div>
 
                 <span className="rounded-full bg-[color:var(--surface-elevated)] px-2 py-0.5 text-[11px] font-bold text-blue-700 ring-1 ring-blue-200 dark:text-blue-200">
@@ -181,8 +155,8 @@ export function DirectWorkspace({
             </div>
 
             <p className="mb-3 text-xs leading-relaxed text-blue-800 dark:text-blue-100/90">
-              यो एउटै prompt Kling 3.0 Pro/Standard मा paste गर्दा 15 seconds
-              को continuous video आउँछ। 3 अलग shots generate हुन्छन्, Bind
+              यो एउटै prompt Kling 3.0 Pro/Standard मा paste गर्दा 10 seconds
+              को continuous video आउँछ। 3 linked beats generate हुन्छन्, Bind
               Subject / element references use गर्दा subject continuity
               reinforce गर्न सकिन्छ।
             </p>
@@ -197,67 +171,12 @@ export function DirectWorkspace({
                 onClick={() => onCopy(klingNative15sCard.fullText)}
                 className="rounded-xl bg-blue-700 px-4 py-2 text-sm font-extrabold text-white hover:bg-blue-800 active:scale-[0.98]"
               >
-                📋 Copy Full 15s Prompt
+                📋 Copy Full 10s Prompt
               </button>
               <button
                 type="button"
                 onClick={() => onCopy(klingNative15sCard.pasteReady)}
                 className="rounded-xl border border-blue-300 bg-[color:var(--surface-elevated)] px-4 py-2 text-sm font-extrabold text-blue-700 hover:bg-blue-500/12 active:scale-[0.98] dark:text-blue-100"
-              >
-                📋 Copy BODY Only
-              </button>
-            </div>
-          </div>
-        )}
-
-      {resolvedDirectWorkspace === "kling6" &&
-        data.klingSixShot !== undefined &&
-        data.klingSixShot !== null && (
-          <div className="rounded-2xl border border-indigo-500/30 bg-indigo-500/12 p-4 shadow-sm">
-            <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
-              <div className="flex flex-wrap items-center gap-2">
-                <div className="text-sm font-extrabold text-indigo-900 dark:text-indigo-100">
-                  Kling 6-Shot Multi-Scene
-                </div>
-
-                <span className="rounded-full bg-[color:var(--surface-elevated)] px-2 py-0.5 text-[11px] font-bold text-indigo-700 ring-1 ring-indigo-200 dark:text-indigo-200">
-                  Kling 3.0 Pro / Standard
-                </span>
-
-                <span className="rounded-full bg-green-100 px-2 py-0.5 text-[11px] font-extrabold text-green-700 ring-1 ring-green-200 dark:bg-green-500/15 dark:text-green-100">
-                  ✓ 6 shots — 1 prompt
-                </span>
-
-                <span className="rounded-full bg-amber-100 px-2 py-0.5 text-[11px] font-extrabold text-amber-800 ring-1 ring-amber-200 dark:bg-amber-500/15 dark:text-amber-100">
-                  Current WSTV workflow
-                </span>
-              </div>
-            </div>
-            <p className="mb-3 text-xs leading-relaxed text-indigo-800 dark:text-indigo-100/90">
-              <span className="font-extrabold">WSTV multi-shot flow:</span>{" "}
-              Opening tension → Pressure hold → Profile pressure → Tension
-              reaction cut → Action pressure wide → Resolved tension wide. एकै
-              prompt ले 6 cinematic shots generate गर्छ — subject identity सबै
-              shots मा locked हुन्छ, and the opening starts with clearer
-              full-subject readability.
-            </p>
-
-            <pre className="max-h-[520px] overflow-auto whitespace-pre-wrap rounded-xl border border-indigo-200 bg-[color:var(--surface-elevated)] p-3 text-xs leading-relaxed text-[color:var(--text)]">
-              {klingSixShotCard.fullText}
-            </pre>
-
-            <div className="mt-3 flex flex-wrap gap-2">
-              <button
-                type="button"
-                onClick={() => onCopy(klingSixShotCard.fullText)}
-                className="rounded-xl bg-indigo-700 px-4 py-2 text-sm font-extrabold text-white hover:bg-indigo-800 active:scale-[0.98]"
-              >
-                📋 Copy Full 6-Shot Prompt
-              </button>
-              <button
-                type="button"
-                onClick={() => onCopy(klingSixShotCard.pasteReady)}
-                className="rounded-xl border border-indigo-300 bg-[color:var(--surface-elevated)] px-4 py-2 text-sm font-extrabold text-indigo-700 hover:bg-indigo-500/12 active:scale-[0.98] dark:text-indigo-100"
               >
                 📋 Copy BODY Only
               </button>

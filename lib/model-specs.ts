@@ -126,7 +126,7 @@ export const RUNWAY_MODEL_NOTES: Record<RunwayModel, ModelNote> = {
 export const KLING_MODEL_NOTES: Record<KlingModel, ModelNote> = {
   "Kling 3.0 Pro": {
     official: "Current Kling 3.0 Pro model option.",
-    house:    "🆕 Best for readable action openings, 15s multi-shot, and strongest body-mechanics control.",
+    house:    "🆕 Best for readable action openings, 10s multi-shot tests, and strongest body-mechanics control.",
   },
   "Kling 3.0 Standard": {
     official: "Current Kling 3.0 Standard model option.",

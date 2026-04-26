@@ -61,6 +61,41 @@ function finalizeWorkflowKlingPasteReady(text: string): string {
   return sanitizeForEngine(sanitizeVideoBeatText(text), "kling");
 }
 
+function replaceWorkflowPromptText(
+  text: string,
+  replacements: ReadonlyArray<[RegExp, string]>
+): string {
+  return replacements.reduce(
+    (result, [pattern, replacement]) => result.replace(pattern, replacement),
+    text
+  );
+}
+
+function relabelWorkflowPrompt(
+  prompt: StructuredPrompt,
+  replacements: ReadonlyArray<[RegExp, string]>
+): StructuredPrompt {
+  return {
+    ...prompt,
+    fullText: replaceWorkflowPromptText(prompt.fullText, replacements),
+    pasteReady: replaceWorkflowPromptText(prompt.pasteReady, replacements),
+    audio: prompt.audio
+      ? replaceWorkflowPromptText(prompt.audio, replacements)
+      : prompt.audio,
+    settings: prompt.settings?.map((setting) =>
+      replaceWorkflowPromptText(setting, replacements)
+    ),
+    metadata: prompt.metadata
+      ? {
+          ...prompt.metadata,
+          title: prompt.metadata.title
+            ? replaceWorkflowPromptText(prompt.metadata.title, replacements)
+            : prompt.metadata.title,
+        }
+      : prompt.metadata,
+  };
+}
+
 export function buildHybridPromptPack(
   predator: string,
   prey: string,
@@ -280,18 +315,18 @@ export function buildHybridLongPromptPack(
 
   const longShot2PasteReady = finalizeWorkflowKlingPasteReady(
     isAquatic
-      ? `Locked wide pressure-build shot with a very slow forward creep across 15 seconds.${klingCameraTail} ${pressurePredator}. ${pressurePrey}. Let the spacing tighten gradually, keep the body language readable, and hold the threat line long enough for pressure to build. The first impact waits for the payoff beat. ${locationCore}. Surface turbulence and water displacement stay controlled. Then both subjects settle into a tense pre-action hold.`
+      ? `Locked wide pressure-build shot with a very slow forward creep across 10 seconds.${klingCameraTail} ${pressurePredator}. ${pressurePrey}. Let the spacing tighten gradually, keep the body language readable, and hold the threat line long enough for pressure to build. The first impact waits for the payoff beat. ${locationCore}. Surface turbulence and water displacement stay controlled. Then both subjects settle into a tense pre-action hold.`
       : isShoreline
-        ? `Locked wide pressure-build shot with a very slow forward creep across 15 seconds.${klingCameraTail} ${pressurePredator}. ${pressurePrey}. Let the spacing tighten gradually, keep the body language readable, and hold the threat line long enough for pressure to build. The first impact waits for the payoff beat. ${locationCore}. Splash and bank disturbance stay controlled. Then both subjects settle into a tense pre-action hold.`
-        : `Locked wide pressure-build shot with a very slow forward creep across 15 seconds.${klingCameraTail} ${pressurePredator}. ${pressurePrey}. Let the spacing tighten gradually, keep the body language readable, and hold the threat line long enough for pressure to build. The first impact waits for the payoff beat. ${locationCore}. Grounded weight transfer stays controlled. Then both subjects settle into a tense pre-action hold.`
+        ? `Locked wide pressure-build shot with a very slow forward creep across 10 seconds.${klingCameraTail} ${pressurePredator}. ${pressurePrey}. Let the spacing tighten gradually, keep the body language readable, and hold the threat line long enough for pressure to build. The first impact waits for the payoff beat. ${locationCore}. Splash and bank disturbance stay controlled. Then both subjects settle into a tense pre-action hold.`
+        : `Locked wide pressure-build shot with a very slow forward creep across 10 seconds.${klingCameraTail} ${pressurePredator}. ${pressurePrey}. Let the spacing tighten gradually, keep the body language readable, and hold the threat line long enough for pressure to build. The first impact waits for the payoff beat. ${locationCore}. Grounded weight transfer stays controlled. Then both subjects settle into a tense pre-action hold.`
   );
 
   const longShot3PasteReady = finalizeWorkflowKlingPasteReady(
     isAquatic
-      ? `Wide main-action payoff across 15 seconds with restrained handheld energy.${klingCameraTail} ${formatActionSubject(predator, s3.predatorBeat)}. ${prey} ${s3.preyBeat}. Peak pressure lands once, stays readable, then eases into a clean chained end-state. Spacing stays readable, and overlap stays controlled. ${locationCore}. Water displacement and turbulence stay forceful but controlled.`
+      ? `Wide main-action payoff across 10 seconds with restrained handheld energy.${klingCameraTail} ${formatActionSubject(predator, s3.predatorBeat)}. ${prey} ${s3.preyBeat}. Peak pressure lands once, stays readable, then eases into a clean chained end-state. Spacing stays readable, and overlap stays controlled. ${locationCore}. Water displacement and turbulence stay forceful but controlled.`
       : isShoreline
-        ? `Wide main-action payoff across 15 seconds with restrained handheld energy.${klingCameraTail} ${formatActionSubject(predator, s3.predatorBeat)}. ${prey} ${s3.preyBeat}. Peak pressure lands once, stays readable, then eases into a clean chained end-state. Spacing stays readable, and overlap stays controlled. ${locationCore}. Splash and bank response stay forceful but controlled.`
-        : `Wide main-action payoff across 15 seconds with restrained handheld energy.${klingCameraTail} ${formatActionSubject(predator, s3.predatorBeat)}. ${prey} ${s3.preyBeat}. Peak pressure lands once, stays readable, then eases into a clean chained end-state. Spacing stays readable, and overlap stays controlled. ${locationCore}. Grounded weight transfer and surface response stay forceful but controlled.`
+        ? `Wide main-action payoff across 10 seconds with restrained handheld energy.${klingCameraTail} ${formatActionSubject(predator, s3.predatorBeat)}. ${prey} ${s3.preyBeat}. Peak pressure lands once, stays readable, then eases into a clean chained end-state. Spacing stays readable, and overlap stays controlled. ${locationCore}. Splash and bank response stay forceful but controlled.`
+        : `Wide main-action payoff across 10 seconds with restrained handheld energy.${klingCameraTail} ${formatActionSubject(predator, s3.predatorBeat)}. ${prey} ${s3.preyBeat}. Peak pressure lands once, stays readable, then eases into a clean chained end-state. Spacing stays readable, and overlap stays controlled. ${locationCore}. Grounded weight transfer and surface response stay forceful but controlled.`
   );
 
   const longShot4PasteReady = finalizeWorkflowRunwayPasteReady(
@@ -340,7 +375,7 @@ After generation: use the last frame for Shot 2 only if it remains a clean full-
       },
     }),
     shot2: buildStructuredPrompt({
-      fullText: `KLING SHOT 2 — PRESSURE BUILD (LONG LANE 15s) [${klingModel}]
+      fullText: `KLING SHOT 2 — PRESSURE BUILD (LONG LANE 10s) [${klingModel}]
 ${klingNote}
 ${klingLead}
 ${klingRefLine}
@@ -380,15 +415,15 @@ Kling settings: Motion intensity ${buildIntensity.toFixed(2)} | WIDE framing enf
       metadata: {
         engine: "kling",
         shotKey: "shot2",
-        title: `Kling Shot 2 — Pressure Build (Long Lane 15s) [${klingModel}]`,
+        title: `Kling Shot 2 — Pressure Build (Long Lane 10s) [${klingModel}]`,
         motionIntensity: buildIntensity,
-        durationSeconds: 15,
+        durationSeconds: 10,
         variant: "hybrid",
         workflowRole: "pressure-build",
       },
     }),
     shot3: buildStructuredPrompt({
-      fullText: `KLING SHOT 3 — MAIN ACTION / PAYOFF (LONG LANE 15s) [${klingModel}]
+      fullText: `KLING SHOT 3 — MAIN ACTION / PAYOFF (LONG LANE 10s) [${klingModel}]
 ${klingNote}
 ${klingLead}
 ${klingRefLine}
@@ -428,9 +463,9 @@ Kling settings: Motion intensity ${payoffIntensity.toFixed(2)} | WIDE framing en
       metadata: {
         engine: "kling",
         shotKey: "shot3",
-        title: `Kling Shot 3 — Main Action / Payoff (Long Lane 15s) [${klingModel}]`,
+        title: `Kling Shot 3 — Main Action / Payoff (Long Lane 10s) [${klingModel}]`,
         motionIntensity: payoffIntensity,
-        durationSeconds: 15,
+        durationSeconds: 10,
         variant: "hybrid",
         workflowRole: "main-action",
       },
@@ -469,6 +504,68 @@ Duration: 10 seconds for the long-lane hybrid workflow.
         workflowRole: "aftermath-resolve",
       },
     }),
+  };
+}
+
+function buildHybridMediumPromptPack(
+  predator: string,
+  prey: string,
+  env: string,
+  arc: Arc,
+  weather: Weather,
+  runwayModel: RunwayModel,
+  klingModel: KlingModel,
+  emotionalTone: EmotionalTone,
+  animalVibe: AnimalVibe,
+  sceneDesc?: string,
+  quality?: QualityOptions,
+  cameraAnglePreset: CameraAnglePreset = "Auto"
+): WorkflowPromptPack {
+  const longPack = buildHybridLongPromptPack(
+    predator,
+    prey,
+    env,
+    arc,
+    weather,
+    runwayModel,
+    klingModel,
+    emotionalTone,
+    animalVibe,
+    sceneDesc,
+    quality,
+    cameraAnglePreset
+  );
+  const shortPack = buildHybridPromptPack(
+    predator,
+    prey,
+    env,
+    arc,
+    weather,
+    runwayModel,
+    klingModel,
+    emotionalTone,
+    animalVibe,
+    sceneDesc,
+    quality,
+    cameraAnglePreset
+  );
+
+  const mediumLaneReplacements: Array<[RegExp, string]> = [
+    [/LONG LANE 10s/g, "MEDIUM LANE 10s"],
+    [/Long Lane 10s/g, "Medium Lane 10s"],
+    [/long hybrid lane/g, "medium hybrid lane"],
+    [/long-lane/g, "medium-lane"],
+  ];
+  const mediumShot4Replacements: Array<[RegExp, string]> = [
+    [/RUNWAY SHOT 4 — RESOLVED TENSION \[/g, "RUNWAY SHOT 4 — AFTERMATH / RESOLVE (MEDIUM LANE 5s) ["],
+    [/Runway Shot 4 — Resolved Tension \[/g, "Runway Shot 4 — Aftermath / Resolve (Medium Lane 5s) ["],
+  ];
+
+  return {
+    shot1: relabelWorkflowPrompt(longPack.shot1, mediumLaneReplacements),
+    shot2: relabelWorkflowPrompt(longPack.shot2, mediumLaneReplacements),
+    shot3: relabelWorkflowPrompt(longPack.shot3, mediumLaneReplacements),
+    shot4: relabelWorkflowPrompt(shortPack.shot4, mediumShot4Replacements),
   };
 }
 
@@ -554,20 +651,35 @@ export function buildFourShotWorkflowPromptPack(opts: {
             quality,
             cameraAnglePreset
           )
-        : buildHybridPromptPack(
-            predator,
-            prey,
-            env,
-            arc,
-            weather,
-            runwayModel,
-            klingModel,
-            emotionalTone,
-            animalVibe,
-            sceneDesc,
-            quality,
-            cameraAnglePreset
-          );
+        : durationLane === "medium"
+          ? buildHybridMediumPromptPack(
+              predator,
+              prey,
+              env,
+              arc,
+              weather,
+              runwayModel,
+              klingModel,
+              emotionalTone,
+              animalVibe,
+              sceneDesc,
+              quality,
+              cameraAnglePreset
+            )
+          : buildHybridPromptPack(
+              predator,
+              prey,
+              env,
+              arc,
+              weather,
+              runwayModel,
+              klingModel,
+              emotionalTone,
+              animalVibe,
+              sceneDesc,
+              quality,
+              cameraAnglePreset
+            );
     case "runway-only":
       return buildRunwayPromptPack(
         predator,

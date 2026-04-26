@@ -1360,7 +1360,7 @@ export function buildWatchTimeReport(
   dailyReels = 2
 ): WatchTimeReport {
   const isLongHybrid = pipelineStyle === "long-hybrid-4-shot";
-  const secs = isLongHybrid ? 50 : 20;
+  const secs = isLongHybrid ? 40 : 20;
   const watchMinsPerView = secs / 60;
   const goalMinutes = 600_000;
   const avgViewsPerReel = 5_000;
@@ -1368,9 +1368,9 @@ export function buildWatchTimeReport(
   const daysToGoal = Math.ceil(goalMinutes / Math.max(dailyMins, 1));
 
   return {
-    currentDuration: isLongHybrid ? "50 seconds" : `~${secs} seconds`,
+    currentDuration: isLongHybrid ? "40 seconds safe generation" : `~${secs} seconds`,
     targetDuration:
-      "Aim for 18–24s on 4-shot primary runs and 50 seconds on the long hybrid 4-shot route when the build stays readable.",
+      "Aim for a 20-second short lane, 35-second medium lane, or 40-second long-lane generated base. Optional final edit pacing can stretch the long lane to 45–50 seconds when the build stays readable.",
     watchTimePerView: `${watchMinsPerView.toFixed(2)} min/view`,
     viewsNeededFor600k: Math.ceil(goalMinutes / watchMinsPerView),
     daysToGoal,

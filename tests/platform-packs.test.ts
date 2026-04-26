@@ -427,13 +427,40 @@ describe("platform pack hook engine v2", () => {
 
     expect(report.isPass).toBe(false);
     expect(report.warnings.join(" ").toLowerCase()).toMatch(
-      /clickbait|discussion-safe|documentary/
+      /clickbait|natural wildlife question|species-clear/
     );
     expect(report.fixes?.join(" ").toLowerCase()).toMatch(
-      /species-clear|behavior-led|documentary/
+      /natural wildlife question|lead with species|behavior/
     );
   });
 
+  it("flags static, loop, text-heavy, originality, engagement-bait, and graphic packaging risks with fixes", () => {
+    const report = runFacebookPublishGuard({
+      hookText: "Static slideshow opener with no visible subject motion.",
+      ctaText: "Like and share this now.",
+      caption:
+        "Still frame only, seamless loop, text-heavy montage, watermark from another source, brutal death, bloodbath, and comment YES.",
+      hashtags: ["#wildlife", "#usa", "#mountainlion", "#deer", "#wstv"],
+      originalityConfirmed: false,
+      predator: "Mountain Lion",
+      prey: "White-tailed Deer",
+    });
+
+    const joinedWarnings = report.warnings.join(" ");
+    const joinedFixes = report.fixes.join(" ");
+
+    expect(report.isPass).toBe(false);
+    expect(joinedWarnings).toMatch(/static still|looped or recycled|text-heavy montage/i);
+    expect(joinedWarnings).toMatch(/reposted, compiled, or borrowed footage/i);
+    expect(joinedWarnings).toMatch(/engagement bait/i);
+    expect(joinedWarnings).toMatch(/graphic wildlife wording/i);
+    expect(joinedFixes).toMatch(/visible wildlife motion/i);
+    expect(joinedFixes).toMatch(/beginning, escalation, and aftermath/i);
+    expect(joinedFixes).toMatch(/upper safe zone/i);
+    expect(joinedFixes).toMatch(/original WSTV-generated image/i);
+    expect(joinedFixes).toMatch(/natural wildlife question/i);
+    expect(joinedFixes).toMatch(/documentary-safe tension language/i);
+  });
   it("passes documentary hook and CTA language through the publish guard", () => {
     const report = runFacebookPublishGuard({
       hookText: "The mountain lion closed the space before the deer changed direction.",

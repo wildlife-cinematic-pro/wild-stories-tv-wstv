@@ -443,14 +443,14 @@ export function buildKlingNative15sCard(
 
   if (!isNative) {
     return buildStructuredPrompt({
-      fullText: `⚠️ KLING NATIVE 15S: Requires Kling 3.0 Pro or Kling 3.0 Standard.
+      fullText: `⚠️ KLING NATIVE 10S: Requires Kling 3.0 Pro or Kling 3.0 Standard.
 Selected: ${model}. Switch model to activate.`,
-      pasteReady: `⚠️ KLING NATIVE 15S: Requires Kling 3.0 Pro or Kling 3.0 Standard.
+      pasteReady: `⚠️ KLING NATIVE 10S: Requires Kling 3.0 Pro or Kling 3.0 Standard.
 Selected: ${model}. Switch model to activate.`,
       metadata: {
         engine: "kling",
-        title: `Kling Native 15s [${model}]`,
-        variant: "native-15s",
+        title: `Kling Native 10s [${model}]`,
+        variant: "native-10s",
       },
     });
   }
@@ -516,13 +516,13 @@ Selected: ${model}. Switch model to activate.`,
       ? `Keep the same ${predator} and ${prey} identities from the input image with matching terrain and light continuity, ${cleanWeather}. Photorealistic wildlife documentary in 9:16 vertical.`
       : `${predator} and ${prey} remain consistent across all three beats in ${cleanEnv}, ${cleanWeather}. Photorealistic wildlife documentary in 9:16 vertical.`,
     ``,
-    `0–5s: Wide opening hold with a subtle push-in. ${formatActionSubject(predator, s1.predatorBeat)}. ${prey} ${s1.preyBeat}. Both subjects fully readable from frame one, locked eye-line, clear spacing, immediate visible tension. ${micro}.`,
+    `0–3s: Wide opening hold with a subtle push-in. ${formatActionSubject(predator, s1.predatorBeat)}. ${prey} ${s1.preyBeat}. Both subjects fully readable from frame one, locked eye-line, clear spacing, immediate visible tension. ${micro}.`,
     audio1Short,
     ``,
-    `5–10s: Fixed wide action read. ${formatActionSubject(predator, s2.predatorBeat)}. ${prey} ${s2.preyBeat}. Both subjects fully visible, clear predator-to-prey line, readable spacing, and no overlap. ${micro}.`,
+    `3–7s: Fixed wide action read. ${formatActionSubject(predator, s2.predatorBeat)}. ${prey} ${s2.preyBeat}. Both subjects fully visible, clear predator-to-prey line, readable spacing, and no overlap. ${micro}.`,
     audio2Short,
     ``,
-    `10–15s: Locked wide aftermath hold. ${formatActionSubject(predator, s3.predatorBeat)}. ${prey} ${s3.preyBeat}. Both subjects stay fully readable, spacing remains clear, and tension holds to the final frame. ${micro}.`,
+    `7–10s: Locked wide aftermath hold. ${formatActionSubject(predator, s3.predatorBeat)}. ${prey} ${s3.preyBeat}. Both subjects stay fully readable, spacing remains clear, and tension holds to the final frame. ${micro}.`,
     audio3Short,
   ]
     .join("\n")
@@ -541,14 +541,14 @@ Style: ${vibe.style}. ${tone.image}. Photorealistic wildlife documentary. 9:16 v
 Arc: ${getSafeArcPrint(arc)}.
 ${wideRule}
 
-Shot 1 — OPENING TENSION (0–5 seconds) | Motion: ${mi1.toFixed(2)}:
+Shot 1 — OPENING TENSION (0–3 seconds) | Motion: ${mi1.toFixed(2)}:
 ${maybeGuard(s1.guardLine)}${predator} ${s1.predatorBeat}. ${prey} ${s1.preyBeat}.
 Opening priority: both subjects fully readable from frame one, locked eye-line, clear spacing, immediate visible tension.
 Camera: WIDE opening hold or subtle push-in, full bodies visible from frame one.
 Environment motion: ${micro}.
 ${audio1}
 
-Shot 2 — ACTION PRESSURE (5–10 seconds) — WIDE | Motion: ${mi2.toFixed(2)}:
+Shot 2 — ACTION PRESSURE (3–7 seconds) — WIDE | Motion: ${mi2.toFixed(2)}:
 ${maybeGuard(s2.guardLine)}${predator} ${s2.predatorBeat}. ${prey} ${s2.preyBeat}.
 Action priority: both subjects fully visible, clear predator-to-prey line, readable spacing, no overlap.
 Camera: FIXED WIDE — full bodies visible; no crop; no close-ups.
@@ -562,7 +562,7 @@ Environment motion: ${
 Physics priority: grounded weight transfer, coherent limb mechanics, readable impact.
 ${audio2}
 
-Shot 3 — RESOLVED TENSION (10–15 seconds) — WIDE | Motion: ${mi3.toFixed(2)}:
+Shot 3 — RESOLVED TENSION (7–10 seconds) — WIDE | Motion: ${mi3.toFixed(2)}:
 ${maybeGuard(s3.guardLine)}${predator} ${s3.predatorBeat}. ${prey} ${s3.preyBeat}.
 End-state priority: both subjects fully readable, spacing still clear, tension remains visible to the final frame.
 Camera: LOCKED FIXED WIDE — full bodies visible; no crop; no close-ups.
@@ -570,7 +570,7 @@ Environment motion: residual atmosphere — ${micro}.
 ${audio3}`;
 
   return buildStructuredPrompt({
-    fullText: `KLING NATIVE 15-SECOND MULTI-SHOT [${model}]
+    fullText: `KLING NATIVE 10-SECOND MULTI-SHOT [${model}]
 ─────────────────────────────────────────────────────────
 ${note}
 ${qLead}
@@ -605,8 +605,8 @@ HOW TO USE (Kling 3.0 WSTV Workflow):
     ],
     metadata: {
       engine: "kling",
-      title: `Kling Native 15-second multi-shot [${model}]`,
-      variant: "native-15s",
+      title: `Kling Native 10-second multi-shot [${model}]`,
+      variant: "native-10s",
     },
   });
 }

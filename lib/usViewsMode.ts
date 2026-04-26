@@ -9,6 +9,7 @@ import type {
   USViewsModeReport,
 } from "@/types";
 import { getPreferredHookFamilyForContentLane } from "@/lib/content-lanes";
+import { getDurationLanePerformanceTargets } from "@/lib/duration-lanes";
 import { runFacebookPublishGuard } from "@/lib/facebookPublishGuard";
 import { scoreOpeningFrame, type OpeningFrameInput } from "@/lib/openingFrameScore";
 import {
@@ -60,12 +61,11 @@ export function buildUSViewsModeReport(input: USViewsModeInput): USViewsModeRepo
     "danger";
   const performanceSnapshot =
     input.performanceSnapshot ?? getPerformanceSnapshot(input.durationLane, hookFamily);
+  const performanceTargets = getDurationLanePerformanceTargets(input.durationLane);
   const performanceReady = performanceSnapshot
-    ? input.durationLane === "long"
-      ? performanceSnapshot.averageWatchTimeSeconds >= 45 &&
-        performanceSnapshot.completionRate >= 0.62
-      : performanceSnapshot.averageWatchTimeSeconds >= 18 &&
-        performanceSnapshot.completionRate >= 0.7
+    ? performanceSnapshot.averageWatchTimeSeconds >=
+        performanceTargets.averageWatchTimeSeconds &&
+      performanceSnapshot.completionRate >= performanceTargets.completionRate
     : true;
   const shouldPublish =
     audience.total >= 70 &&
@@ -86,8 +86,10 @@ export function buildUSViewsModeReport(input: USViewsModeInput): USViewsModeRepo
     !performanceReady
       ? "Performance memory is soft for this setup. Start with the safer lane or a cleaner first-frame hook before scaling."
       : "",
-    performanceSnapshot && input.durationLane === "long" && performanceSnapshot.completionRate < 0.62
-      ? "Long-lane retention is still soft. Use the short lane until the opener and caption pack carry better."
+    performanceSnapshot &&
+    input.durationLane !== "short" &&
+    performanceSnapshot.completionRate < performanceTargets.completionRate
+      ? `${input.durationLane === "long" ? "Long" : "Medium"}-lane retention is still soft. Use the short lane until the opener and caption pack carry better.`
       : "",
   ].filter(Boolean);
 

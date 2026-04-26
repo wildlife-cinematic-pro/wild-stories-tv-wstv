@@ -12,6 +12,8 @@ import type {
   WorkflowPresetLibraryRole,
 } from "@/types";
 
+import { formatDurationLaneLabel } from "@/lib/duration-lanes";
+
 type WorkflowPresetsPanelProps = {
   presets: SavedWorkflowPreset[];
   presetPacks: SavedWorkflowPresetPack[];
@@ -85,7 +87,7 @@ function formatPresetMeta(preset: SavedWorkflowPreset): string {
   return [
     snapshot.contentLane,
     snapshot.arc,
-    snapshot.durationLane === "long" ? "Long" : "Short",
+    formatDurationLaneLabel(snapshot.durationLane),
     snapshot.fastPublishMode ? "Fast publish" : "Cinematic",
   ]
     .filter(Boolean)

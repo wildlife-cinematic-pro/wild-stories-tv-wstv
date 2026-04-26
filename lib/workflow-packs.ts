@@ -126,7 +126,7 @@ export type WorkflowPipelinePack = {
 };
 
 export type ShotMode = "3shot" | "4shot" | "5shot";
-export type WorkflowDurationLane = "short" | "long";
+export type WorkflowDurationLane = "short" | "medium" | "long";
 
 export type WorkflowDurationLanePack = {
   lane: WorkflowDurationLane;
@@ -609,7 +609,7 @@ export function buildCapCutScript(
     },
     {
       timeIn: "0:10",
-      timeOut: "0:25",
+      timeOut: "0:20",
       shotRef: "Shot 2 — Kling Pressure Build",
       onScreenText: `${predator} vs ${prey}...`,
       transition: "Match cut on spacing compression",
@@ -619,8 +619,8 @@ export function buildCapCutScript(
       musicNote: "Music builds slowly with pressure but still avoids the full impact peak",
     },
     {
-      timeIn: "0:25",
-      timeOut: "0:40",
+      timeIn: "0:20",
+      timeOut: "0:30",
       shotRef: "Shot 3 — Kling Main Action",
       onScreenText: "WAIT FOR IT... 🔥",
       transition: "Punch cut on the first readable payoff beat",
@@ -628,8 +628,8 @@ export function buildCapCutScript(
       musicNote: "Music peak lands once on the clearest payoff frame, then starts easing off",
     },
     {
-      timeIn: "0:40",
-      timeOut: "0:50",
+      timeIn: "0:30",
+      timeOut: "0:40",
       shotRef: "Shot 4 — Runway Aftermath / Resolve",
       onScreenText: "Who won? Comment below 👇",
       transition: "Hold the chained end-state and resolve naturally",
@@ -639,7 +639,7 @@ export function buildCapCutScript(
 ];
 
   return {
-    totalDuration: isLongHybrid ? "0:50" : "0:20",
+    totalDuration: isLongHybrid ? "0:40" : "0:20",
     aspectRatio: "9:16 (1080×1920)",
     fps: 24,
     beats: isLongHybrid ? beatsLongHybrid : beats4,
@@ -1184,15 +1184,21 @@ Best fit: ${arc} in ${cleanEnv} during ${weather}. Recommended final model: ${fi
 export const workflowDurationLanePacks: WorkflowDurationLanePack[] = [
   {
     lane: "short",
-    totalDuration: "0:18–0:30",
+    totalDuration: "0:20",
     defaultMode: "4shot",
-    summary: "Current hybrid 4-shot default. Best for fast readable reels with a clean opening, fast build, and tight payoff.",
+    summary: "Fast hybrid 4-shot default. Runway 5s → Kling 5s → Kling 5s → Runway 5s for a clean 20-second daily edit.",
+  },
+  {
+    lane: "medium",
+    totalDuration: "0:35",
+    defaultMode: "4shot",
+    summary: "Balanced hybrid 4-shot lane. Runway 10s → Kling 10s → Kling 10s → Runway 5s for a clearer setup and payoff without slowing the publish path too much.",
   },
   {
     lane: "long",
-    totalDuration: "0:50",
+    totalDuration: "0:40",
     defaultMode: "5shot",
-    summary: "True 50-second hybrid 4-shot workflow. Runway 10s → Kling 15s → Kling 15s → Runway 10s with longer hold, build, payoff, and aftermath.",
+    summary: "Extended hybrid 4-shot lane. Runway 10s → Kling 10s → Kling 10s → Runway 10s with optional editor pacing out to 45–50 seconds.",
   },
 ];
 
@@ -1208,7 +1214,7 @@ export const workflowPipelinePacks: WorkflowPipelinePack[] = [
         id: 1,
         title: "Opening Tension",
         engine: "RUNWAY",
-        durationLabel: "0–4s",
+        durationLabel: "0–5s",
         description: "Immediate readable tension. Both subjects clear from frame one, subtle camera push.",
         copyText:
           "SHOT 1 — OPENING TENSION: both subjects readable from frame one, immediate eye-line lock, subtle controlled micro-motion, restrained slow push-in, clear wildlife documentary realism.",
@@ -1236,8 +1242,8 @@ export const workflowPipelinePacks: WorkflowPipelinePack[] = [
   {
     id: "4shot",
     name: "4-Shot Pipeline — Cinematic Story",
-    badge: "18–30 seconds",
-    totalDuration: "0:18–0:30",
+    badge: "20 seconds",
+    totalDuration: "0:20",
     durationLane: "short",
     summary: "Opening tension → pressure build → action pressure → resolved tension. Current hybrid 4-shot default for the short lane.",
     shots: [
@@ -1245,7 +1251,7 @@ export const workflowPipelinePacks: WorkflowPipelinePack[] = [
         id: 1,
         title: "Opening Tension",
         engine: "RUNWAY",
-        durationLabel: "0–4s",
+        durationLabel: "0–5s",
         description: "Clear first-frame readability, direct subject tension, subtle camera push.",
         copyText:
           "SHOT 1 — OPENING TENSION: both animals clearly readable from frame one, strong eye-line lock, subtle fur-edge micro-motion, restrained slow push-in, dramatic but controlled wildlife documentary realism.",
@@ -1254,7 +1260,7 @@ export const workflowPipelinePacks: WorkflowPipelinePack[] = [
         id: 2,
         title: "Pressure Build",
         engine: "KLING",
-        durationLabel: "4–9s",
+        durationLabel: "5–10s",
         description: "Two animals visible, spacing pressure rises, body language stays readable, and Kling carries the heavier interaction build.",
         copyText:
           "SHOT 2 — PRESSURE BUILD: both animals framed clearly, tension building through spacing and posture, heavier interaction mechanics, readable body language, subtle atmosphere, and stable subject continuity.",
@@ -1263,7 +1269,7 @@ export const workflowPipelinePacks: WorkflowPipelinePack[] = [
         id: 3,
         title: "Action Pressure",
         engine: "KLING",
-        durationLabel: "9–15s",
+        durationLabel: "10–15s",
         description: "Main impact or action beat with full-body physics and terrain reaction.",
         copyText:
           "SHOT 3 — ACTION PRESSURE: full-body impact or pressure beat, maximum readable collision, grounded force transfer, terrain reaction, dust or snow scatter, realistic body mechanics.",
@@ -1281,11 +1287,11 @@ export const workflowPipelinePacks: WorkflowPipelinePack[] = [
   },
   {
     id: "5shot",
-    name: "Long Hybrid 4-Shot Pipeline — 50 Seconds",
-    badge: "50 seconds",
-    totalDuration: "0:50",
+    name: "Long Hybrid 4-Shot Pipeline — 40 Seconds",
+    badge: "40 seconds",
+    totalDuration: "0:40",
     durationLane: "long",
-    summary: "Opening tension → pressure build → main action payoff → aftermath resolve. True long-lane hybrid pacing with Runway 10 / Kling 15 / Kling 15 / Runway 10.",
+    summary: "Opening tension → pressure build → main action payoff → aftermath resolve. Extended hybrid pacing with Runway 10 / Kling 10 / Kling 10 / Runway 10.",
     shots: [
       {
         id: 1,
@@ -1300,16 +1306,16 @@ export const workflowPipelinePacks: WorkflowPipelinePack[] = [
         id: 2,
         title: "Pressure Build",
         engine: "KLING",
-        durationLabel: "10–25s",
+        durationLabel: "10–20s",
         description: "Spacing collapse and body-language escalation with Kling carrying the slower suspense build in wide readable framing.",
         copyText:
-          "SHOT 2 — PRESSURE BUILD: keep both animals wide and readable, let distance compress gradually, build pressure through posture and spacing, and avoid the full collision until Shot 3.",
+          "SHOT 2 — PRESSURE BUILD: keep both animals wide and readable, let distance compress gradually, build pressure through posture and spacing, and hold the first major contact until Shot 3.",
       },
       {
         id: 3,
         title: "Main Action Payoff",
         engine: "KLING",
-        durationLabel: "25–40s",
+        durationLabel: "20–30s",
         description: "Main action beat with the strongest readable payoff, grounded physics, and a clean chained end-state.",
         copyText:
           "SHOT 3 — MAIN ACTION PAYOFF: land one dominant action beat only, keep full-body mechanics readable, let the payoff peak once, and finish on a clean frame that can chain safely into Shot 4.",
@@ -1318,7 +1324,7 @@ export const workflowPipelinePacks: WorkflowPipelinePack[] = [
         id: 4,
         engine: "RUNWAY",
         title: "Aftermath Resolve",
-        durationLabel: "40–50s",
+        durationLabel: "30–40s",
         description: "Winner hold, retreat, stare-down, or resolve with extra room for the aftermath to land cleanly.",
         copyText:
           "SHOT 4 — AFTERMATH RESOLVE: return to Runway for the clean settle, hold the final spacing long enough to read the outcome, and end on a stable cinematic frame.",

@@ -227,8 +227,9 @@ export default function Step2EngineQuality({
                 onChange={(event) => onDurationLaneChange(event.target.value as DurationLane)}
                 className="w-full rounded-xl border border-gray-200 bg-gray-50 px-3 py-2.5 text-sm font-medium text-gray-900"
               >
-                <option value="short">Short — 18–30 sec</option>
-                <option value="long">Long — 50 sec hybrid</option>
+                <option value="short">Short — 20s final edit</option>
+                <option value="medium">Medium — 35s final edit</option>
+                <option value="long">Long — 40s safe generation</option>
               </select>
             </div>
             <div>

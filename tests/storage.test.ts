@@ -152,7 +152,7 @@ describe("settings storage", () => {
       microMotion: true,
       heroVeo: false,
       autoApplyHighDrift: true,
-      durationLane: "long",
+      durationLane: "medium",
       hookMode: "curiosity",
       fastPublishMode: false,
       strictOriginalityGuard: false,
@@ -164,7 +164,7 @@ describe("settings storage", () => {
 
     expect(readSettings()).toMatchObject({
       activeProvider: "none",
-      durationLane: "long",
+      durationLane: "medium",
       hookMode: "curiosity",
       fastPublishMode: false,
       strictOriginalityGuard: false,
