@@ -155,6 +155,11 @@ export type PerformanceSnapshot = {
 };
 
 export type PerformanceTrackerEntry = {
+  generationId?: string;
+  postUrl?: string;
+  title?: string;
+  conceptLabel?: string;
+  publishedAt?: string;
   postedAtJST: string;
   postedAtEST: string;
   animalPair: string;
@@ -165,13 +170,75 @@ export type PerformanceTrackerEntry = {
   durationLane: DurationLane;
   hookFamily: HookFamily | "";
   contentLane: ContentLane | "";
+  reach?: number | "";
   firstHourViews: number | "";
+  threeSecondViews?: number | "";
   threeSecondHoldRate: number | "";
+  oneMinuteViews?: number | "";
   averageWatchTimeSeconds: number | "";
+  watchPercentage?: number | "";
   completionRate: number | "";
+  shares?: number | "";
+  comments?: number | "";
+  reactions?: number | "";
+  followsGained?: number | "";
+  profileVisits?: number | "";
+  linkClicks?: number | "";
   usaFollowerPercent: number | "";
   earningsUsd: number | "";
+  estimatedEarnings?: number | "";
+  rpm?: number | "";
+  monetizedPlays?: number | "";
   notes: string;
+};
+
+export type MonetizedFacebookScores = {
+  revenuePotentialScore: number;
+  adSafeConflictScore: number;
+  sponsorFitScore: number;
+  repeatViewerScore: number;
+  followerConversionScore: number;
+  boostWorthyScore: number;
+};
+
+export type MonetizedFacebookVerdict =
+  | "Monetized Winner"
+  | "Viral But Risky"
+  | "Safe Growth Candidate"
+  | "Needs Packaging Fix"
+  | "Do Not Boost";
+
+export type MonetizedFacebookBoostRecommendation = {
+  shouldBoost: boolean;
+  label: "Boost this post" | "Do not boost yet";
+  reason: string;
+};
+
+export type MonetizedFacebookPromptRecommendation = {
+  label: string;
+  packageText: string;
+  reason: string;
+};
+
+export type MonetizedFacebookPerformanceTier =
+  | "No live data yet"
+  | "Weak"
+  | "Developing"
+  | "Strong"
+  | "Breakout";
+
+export type MonetizedFacebookReport = {
+  scores: MonetizedFacebookScores;
+  verdict: MonetizedFacebookVerdict;
+  summary: string;
+  boostRecommendation: MonetizedFacebookBoostRecommendation;
+  actualPerformanceTier: MonetizedFacebookPerformanceTier;
+  promptRecommendations: {
+    bestViralVersion: MonetizedFacebookPromptRecommendation;
+    bestMonetizedSafeVersion: MonetizedFacebookPromptRecommendation;
+    bestSponsorSafeVersion: MonetizedFacebookPromptRecommendation;
+  };
+  improvementNotes: string[];
 };
 
 export type USViewsModeReport = {

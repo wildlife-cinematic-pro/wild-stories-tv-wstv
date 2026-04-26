@@ -2,7 +2,9 @@
 
 import { Card, SectionLabel } from "@/components/output-cards/shared-panels";
 import { buildUsagePayload, trackUsage } from "@/lib/usage-tracker";
+import { getRealGenerationEvidenceGenerationId } from "@/lib/real-generation-evidence";
 import { FacebookPublishReadinessPanel } from "@/components/output-cards/facebook-publish-readiness-panel";
+import { MonetizedPagePerformancePanel } from "@/components/output-cards/monetized-page-performance-panel";
 import {
   Caption2026Panel,
   Hook2026Panel,
@@ -24,6 +26,7 @@ export function PublishingWorkspace({
 
     trackUsage("publish_action", buildUsagePayload(data));
   };
+  const monetizedPanelKey = getRealGenerationEvidenceGenerationId(data);
 
   return (
     <div className="space-y-6">
@@ -33,6 +36,7 @@ export function PublishingWorkspace({
       </div>
 
       <FacebookPublishReadinessPanel data={data} />
+      <MonetizedPagePerformancePanel key={monetizedPanelKey} data={data} onCopy={handleCopy} />
 
       <SectionLabel label="Hooks & Copy" />
 

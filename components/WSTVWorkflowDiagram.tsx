@@ -1515,9 +1515,3 @@ export default function WSTVWorkflowDiagram({
     </div>
   );
 }
-ENDOFFILE
-echo "done"
-Output
-
-done
-Done
