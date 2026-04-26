@@ -26,6 +26,7 @@ import {
   buildExportTxtFull as buildExportTxtFullFromPackage,
 } from "@/lib/export-text";
 import { downloadText } from "@/lib/storage";
+import { buildUsagePayload, getUsageRisk, trackUsage } from "@/lib/usage-tracker";
 
 import type { GeneratedPackage, PromptVersion } from "@/types";
 
@@ -82,6 +83,7 @@ export default function OutputCards({
 
   async function copyAllPacks() {
     await onCopy(buildCopyAllPacksText());
+    trackUsage("copy_all_packs", buildUsagePayload(data));
   }
 
   function exportTxt() {
@@ -90,6 +92,7 @@ export default function OutputCards({
     const prey = safeStr(data.preyName || "prey");
     const arc = safeStr(data.arcName || "arc").replace(/\s+/g, "_");
     downloadText(`wstv-export-${predator}-vs-${prey}-${arc}.txt`, text);
+    trackUsage("export_txt", buildUsagePayload(data));
   }
 
   const runwayShotCount = data.runwayShots?.length ?? 0;
@@ -153,6 +156,21 @@ export default function OutputCards({
 
   const getWorkspaceTabId = (tab: OutputWorkspaceTab) => `output-workspace-tab-${tab}`;
   const getWorkspacePanelId = (tab: OutputWorkspaceTab) => `output-workspace-panel-${tab}`;
+
+  const score = data.usAudienceScore?.total ?? 0;
+  const hook = data.hookFamily ?? "unknown";
+  const risk = getUsageRisk(data);
+  const hasBlockers = (data.publishGuardReport?.blockers?.length ?? 0) > 0;
+  const isPass = data.publishGuardReport?.isPass === true;
+  const canPublish = score > 70 && !hasBlockers && isPass;
+
+  const decision = {
+    score,
+    hook,
+    risk,
+    label: canPublish ? "PUBLISH" : "DO NOT PUBLISH",
+    color: canPublish ? "text-green-400" : "text-red-400",
+  };
 
   const workspaceOverviewCards = [
     {
@@ -219,6 +237,20 @@ export default function OutputCards({
 
   return (
     <div className="space-y-5 sm:space-y-6">
+      {decision && (
+        <div className="mb-4 rounded-xl border border-[color:var(--border)] bg-black/80 p-4">
+          <div className={`text-lg font-black ${decision.color}`}>
+            {decision.label}
+          </div>
+
+          <div className="mt-2 grid grid-cols-2 gap-2 text-xs text-gray-300">
+            <div>US Score: {decision.score}</div>
+            <div>Hook: {decision.hook}</div>
+            <div>Risk: {decision.risk}</div>
+          </div>
+        </div>
+      )}
+
       <div className="rounded-3xl border border-[color:var(--border)] bg-[color:var(--surface-elevated)] p-4 shadow-[var(--surface-shadow)] sm:p-5">
         <div className="flex flex-wrap items-start justify-between gap-4">
           <div className="max-w-3xl">

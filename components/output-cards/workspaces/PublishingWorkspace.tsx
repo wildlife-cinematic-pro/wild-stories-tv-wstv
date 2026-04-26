@@ -1,6 +1,7 @@
 "use client";
 
 import { Card, SectionLabel } from "@/components/output-cards/shared-panels";
+import { buildUsagePayload, trackUsage } from "@/lib/usage-tracker";
 import { FacebookPublishReadinessPanel } from "@/components/output-cards/facebook-publish-readiness-panel";
 import {
   Caption2026Panel,
@@ -18,6 +19,12 @@ export function PublishingWorkspace({
   data: GeneratedPackage;
   onCopy: (text: string) => void | Promise<unknown>;
 }) {
+  const handleCopy = async (text: string) => {
+    await onCopy(text);
+
+    trackUsage("publish_action", buildUsagePayload(data));
+  };
+
   return (
     <div className="space-y-6">
       <div className="rounded-2xl border border-emerald-500/30 bg-emerald-500/12 p-4 text-sm text-emerald-900 shadow-sm dark:text-emerald-100">
@@ -33,14 +40,14 @@ export function PublishingWorkspace({
         <Hook2026Panel
           hooks={data.hook2026}
           oldHook={data.hook}
-          onCopy={onCopy}
+          onCopy={handleCopy}
           recommendedIndex={data.recommendedHookIndex}
         />
       ) : data.hook ? (
         <Card
           title="🔥 Hook"
           value={data.hook}
-          onCopy={onCopy}
+          onCopy={handleCopy}
           accent="border-l-orange-500"
         />
       ) : null}
@@ -49,13 +56,13 @@ export function PublishingWorkspace({
         <Caption2026Panel
           caption2026={data.caption2026}
           captionOld={data.caption}
-          onCopy={onCopy}
+          onCopy={handleCopy}
         />
       ) : data.caption ? (
         <Card
           title="📝 Caption"
           value={data.caption}
-          onCopy={onCopy}
+          onCopy={handleCopy}
           accent="border-l-emerald-500"
         />
       ) : null}
@@ -64,24 +71,24 @@ export function PublishingWorkspace({
         <Card
           title="🎙️ Voiceover"
           value={data.voiceoverLine}
-          onCopy={onCopy}
+          onCopy={handleCopy}
           accent="border-l-indigo-500"
           aiEnhanced={data.aiEnhanced}
         />
       )}
 
-      {data.cta && <Card title="📢 CTA" value={data.cta} onCopy={onCopy} />}
+      {data.cta && <Card title="📢 CTA" value={data.cta} onCopy={handleCopy} />}
 
       {data.hashtags && (
-        <Card title="# Hashtags" value={data.hashtags} onCopy={onCopy} />
+        <Card title="# Hashtags" value={data.hashtags} onCopy={handleCopy} />
       )}
 
-      {data.tags && <Card title="Tags" value={data.tags} onCopy={onCopy} />}
+      {data.tags && <Card title="Tags" value={data.tags} onCopy={handleCopy} />}
 
       {data.platformPack && (
         <>
           <SectionLabel label="Platform Packs" />
-          <PlatformPackPanel pack={data.platformPack} onCopy={onCopy} />
+          <PlatformPackPanel pack={data.platformPack} onCopy={handleCopy} />
         </>
       )}
 
