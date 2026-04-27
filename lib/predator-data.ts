@@ -47,6 +47,11 @@ import {
 } from "@/lib/model-specs";
 
 import { buildQualityLead } from "@/lib/quality-lead";
+import {
+  filterPredatorOptionsByWildlifeScope as filterPredatorOptionsByFocus,
+  isWildlifeScopeMode as isWildlifeFocusMode,
+  wildlifeScopeOptions,
+} from "@/lib/wildlife-focus";
 
 // ─────────────────────────────────────────────────────────────
 // PREDATOR DATABASE
@@ -686,83 +691,302 @@ export const predatorData: Record<string, PredatorInfo> = {
     defaultArc: "Territory dominance battle",
     driftRisk: "MEDIUM",
   },
+  "Brown Bear": {
+    prey: ["Moose", "Bull Elk", "Wild Boar", "Red Deer", "Roe Deer", "Fish"],
+    environment: "boreal forest and misty highland lake edge",
+    lighting:
+      "cool northern daylight, soft overcast contrast, light ground mist, and clean woodland readability",
+    cameraGear:
+      "Sony A1, 300mm wildlife lens, long-lens forest-edge documentary framing",
+    texture:
+      "dense brown coat, wet guard hairs, scarred muzzle detail, heavy shoulder build, and damp soil on claws",
+    defaultArc: "Territory dominance battle",
+    driftRisk: "LOW",
+  },
+  Lynx: {
+    prey: ["Roe Deer", "Hare", "Rabbit", "Red Fox"],
+    environment: "snowy woodland edge and dense boreal understory",
+    lighting:
+      "cold woodland light, soft snow bounce, and narrow shafts of pale winter sun through pines",
+    cameraGear:
+      "Canon EOS R5, 400mm wildlife lens, quiet forest-edge stalking framing",
+    texture:
+      "tufted ears, thick winter coat, spotted flank detail, padded paws, and snow pressed into fur",
+    defaultArc: "Ambush attack",
+    driftRisk: "MEDIUM",
+  },
+  "Wild Horse": {
+    prey: ["Wolf Pack", "Mountain Lion", "Brown Bear"],
+    environment: "open mountain valley and wind-swept grassland",
+    lighting:
+      "clear dawn light, wind through mane, open-country contrast, and clean full-body separation",
+    cameraGear:
+      "Sony A1, 300mm wildlife lens, wide open-valley tracking framing",
+    texture:
+      "muscular shoulders, dust in mane, hoof-scuffed ground, alert eye detail, and stretched neck posture",
+    defaultArc: "Escape from danger",
+    driftRisk: "MEDIUM",
+  },
+  "Red Deer": {
+    prey: ["Wolf", "Brown Bear", "Lynx"],
+    environment: "misty forest clearing and highland meadow",
+    lighting:
+      "soft dawn fog, amber edge light on coat, and cool woodland fill beneath cloud cover",
+    cameraGear:
+      "Canon EOS R3, 300mm wildlife lens, forest-clearing documentary framing",
+    texture:
+      "red-brown coat, breath haze in cold air, damp grass along legs, and alert ear detail",
+    defaultArc: "Escape from danger",
+    driftRisk: "MEDIUM",
+  },
+  Stag: {
+    prey: ["Stag", "Wolf", "Brown Bear"],
+    environment: "autumn forest clearing with churned leaf litter",
+    lighting:
+      "golden autumn backlight, cold shadow fill, and strong antler readability through drifting mist",
+    cameraGear:
+      "Sony A1, 300mm wildlife lens, meadow-edge dominance framing",
+    texture:
+      "heavy neck muscle, polished antlers, damp muzzle, torn grass, and frost on coat",
+    defaultArc: "Giant vs giant clash",
+    driftRisk: "MEDIUM",
+  },
+  "Roe Deer": {
+    prey: ["Lynx", "Wolf", "Red Fox"],
+    environment: "forest edge, hedgerow, and snowy woodland pocket",
+    lighting:
+      "soft overcast woodland light, pale winter fill, and clean eye-line readability through brush",
+    cameraGear:
+      "Canon EOS R5, 400mm wildlife lens, low brush-edge escape framing",
+    texture:
+      "small agile frame, reddish coat, white rump flash, thin legs in wet grass, and alert ears",
+    defaultArc: "Escape from danger",
+    driftRisk: "MEDIUM",
+  },
+  Hare: {
+    prey: ["Golden Eagle", "Owl", "Red Fox", "Lynx"],
+    environment: "highland meadow and snowy scrub edge",
+    lighting:
+      "cold clear light, long grass highlights, and soft wind-blown seed heads around the subject",
+    cameraGear:
+      "Sony A1, 400mm wildlife lens, fast low-ground pursuit framing",
+    texture:
+      "dense seasonal fur, bright dark eyes, clean whiskers, snow dust on paws, and stretched sprint posture",
+    defaultArc: "Escape from danger",
+    driftRisk: "MEDIUM",
+  },
+  Owl: {
+    prey: ["Hare", "Mouse", "Rabbit", "Bird"],
+    environment: "misty woodland edge and moonlit meadow",
+    lighting:
+      "blue dusk light, faint moonlit rim, soft fog layers, and clean silhouette separation over grass",
+    cameraGear:
+      "Canon EOS R5, 500mm wildlife lens, silent glide tracking from treeline",
+    texture:
+      "layered brown feathering, round facial disc, sharp talons, and soft wing-edge motion blur",
+    defaultArc: "Ambush attack",
+    driftRisk: "MEDIUM",
+  },
+  Reindeer: {
+    prey: ["Wolf Pack", "Brown Bear", "Wolverine", "Arctic Fox"],
+    environment: "snowy tundra and boreal forest edge",
+    lighting:
+      "pale winter light, snow-bounce fill, low Arctic sun, and clean movement lanes across open ground",
+    cameraGear:
+      "Nikon Z9, 400mm wildlife lens, wide tundra tracking framing",
+    texture:
+      "thick pale coat, branched antlers, snow packed between hooves, and frost along muzzle hair",
+    defaultArc: "Escape from danger",
+    driftRisk: "MEDIUM",
+  },
+  "Arctic Fox": {
+    prey: ["Hare", "Bird Egg", "Seal Pup", "Mouse"],
+    environment: "tundra slope and snow-covered fjord edge",
+    lighting:
+      "flat Arctic daylight, pale blue shadows, and cold wind haze over packed snow",
+    cameraGear:
+      "Canon EOS R3, 400mm wildlife lens, low-angle tundra pursuit framing",
+    texture:
+      "dense white winter coat, sharp black nose, clean paw detail, and wind-swept tail plume",
+    defaultArc: "Escape from danger",
+    driftRisk: "MEDIUM",
+  },
+  "White-tailed Eagle": {
+    prey: ["Fish", "Duck", "Seal Pup"],
+    environment: "fjord shoreline and cold coastal lake edge",
+    lighting:
+      "silver northern daylight, reflective water shimmer, and cool overcast edge light on wings",
+    cameraGear:
+      "Sony A1, 500mm wildlife lens, shoreline glide and strike framing",
+    texture:
+      "broad dark wings, pale wedge tail, hooked yellow beak, layered feather detail, and wet talon highlights",
+    defaultArc: "Chase and takedown",
+    driftRisk: "MEDIUM",
+  },
+  Seal: {
+    prey: ["Orca", "Great White Shark", "Polar Bear"],
+    environment: "cold coastal water and icy fjord edge",
+    lighting:
+      "steel-grey overcast light, white spray highlights, and soft reflections off dark water",
+    cameraGear:
+      "Canon EOS R5, 300mm wildlife lens, low surf-line documentary framing",
+    texture:
+      "slick wet skin, bead-like whiskers, water-shedding body sheen, and spray around flippers",
+    defaultArc: "Escape from danger",
+    driftRisk: "LOW",
+  },
+  Kangaroo: {
+    prey: ["Dingo", "Saltwater Crocodile", "Wedge-tailed Eagle"],
+    environment: "dusty outback grassland and eucalyptus woodland edge",
+    lighting:
+      "harsh sun softened by dust haze, warm late-day rim light, and long open-country shadows",
+    cameraGear:
+      "Sony A1, 300mm wildlife lens, open-ground tracking with clear leg extension",
+    texture:
+      "short tawny fur, powerful hind legs, dust around feet, alert ears, and taut tail balance",
+    defaultArc: "Escape from danger",
+    driftRisk: "MEDIUM",
+  },
+  Dingo: {
+    prey: ["Kangaroo", "Wombat", "Emu", "Rabbit"],
+    environment: "dry outback scrubland and open red-dirt plain",
+    lighting:
+      "hot dusty light, low golden sun, heat shimmer, and clean silhouette separation over scrub",
+    cameraGear:
+      "Canon EOS R3, 300mm wildlife lens, low chase framing across open ground",
+    texture:
+      "short sand-coloured coat, lean athletic body, dust on paws, and sharp alert eye detail",
+    defaultArc: "Chase and takedown",
+    driftRisk: "MEDIUM",
+  },
+  "Freshwater Crocodile": {
+    prey: ["Fish", "Bird", "Kangaroo"],
+    environment: "quiet riverbank and muddy inland waterline",
+    lighting:
+      "humid dawn haze, warm reflections on still water, and soft wet highlights on scales",
+    cameraGear:
+      "Canon EOS R5, 200mm wildlife lens, low riverbank ambush framing",
+    texture:
+      "olive-brown scales, shallow-water ripples, muddy jawline, and bright eye reflections",
+    defaultArc: "Ambush attack",
+    driftRisk: "LOW",
+  },
+  Koala: {
+    prey: ["Dingo", "Snake", "Monitor Lizard"],
+    environment: "eucalyptus woodland canopy and dry creek edge",
+    lighting:
+      "soft Australian daylight through gum leaves, dry warm air, and gentle branch-shadow contrast",
+    cameraGear:
+      "Sony A1, 200mm wildlife lens, mid-tele canopy documentary framing",
+    texture:
+      "woolly grey fur, black nose detail, bark dust on paws, and curled claws gripping eucalyptus limbs",
+    defaultArc: "Escape from danger",
+    driftRisk: "MEDIUM",
+  },
+  Wombat: {
+    prey: ["Dingo", "Tasmanian Devil", "Snake"],
+    environment: "dry grassland burrow edge and scrubland path",
+    lighting:
+      "golden late-afternoon light, dust-haze fill, and low warm contrast over trampled grass",
+    cameraGear:
+      "Canon EOS R5, 200mm wildlife lens, ground-level burrow-path framing",
+    texture:
+      "dense coarse fur, heavy low body, dust on claws, blunt muzzle, and compact shoulder build",
+    defaultArc: "Defender stands ground",
+    driftRisk: "MEDIUM",
+  },
+  Emu: {
+    prey: ["Dingo", "Wedge-tailed Eagle", "Snake"],
+    environment: "open scrub plain and dry grassland ridge",
+    lighting:
+      "bright sun, dusty horizon haze, and clear long-leg readability over open ground",
+    cameraGear:
+      "Sony A1, 300mm wildlife lens, long-lens lateral run framing",
+    texture:
+      "shaggy brown-black feathers, blue neck skin, strong leg tendons, dust around feet, and wind-blown plumage",
+    defaultArc: "Escape from danger",
+    driftRisk: "MEDIUM",
+  },
+  Cassowary: {
+    prey: ["Dingo", "Monitor Lizard", "Snake"],
+    environment: "tropical rainforest edge and wet jungle trail",
+    lighting:
+      "humid low forest light, leaf-filtered green ambience, and wet sheen on dark plumage",
+    cameraGear:
+      "Canon EOS R3, 250mm wildlife lens, narrow jungle-path confrontation framing",
+    texture:
+      "black hair-like feathers, bright blue neck, hard casque detail, wet leaf litter on feet, and muscular legs",
+    defaultArc: "Defender stands ground",
+    driftRisk: "MEDIUM",
+  },
+  "Wedge-tailed Eagle": {
+    prey: ["Snake", "Rabbit", "Kangaroo Joey"],
+    environment: "dry ridge and open scrubland with thermal lift",
+    lighting:
+      "hard Australian daylight, warm ridge light, and crisp feather edge separation against pale sky",
+    cameraGear:
+      "Sony A1, 500mm wildlife lens, dive-tracking aerial framing",
+    texture:
+      "dark broad wings, wedge-shaped tail, sharp talon detail, and sunlit feather layering",
+    defaultArc: "Chase and takedown",
+    driftRisk: "MEDIUM",
+  },
+  "Monitor Lizard": {
+    prey: ["Snake", "Bird Egg", "Wombat Joey"],
+    environment: "rocky dry scrubland and sun-baked creek bank",
+    lighting:
+      "harsh warm sun, high-contrast rock shadows, heat shimmer, and bright scale highlights",
+    cameraGear:
+      "Canon EOS R5, 200mm wildlife lens, low reptile-level documentary framing",
+    texture:
+      "armoured scales, forked tongue, long clawed feet, dust on hide, and sinewy tail tension",
+    defaultArc: "Ambush attack",
+    driftRisk: "LOW",
+  },
+  "Great White Shark": {
+    prey: ["Seal", "Fish", "Dolphin"],
+    environment: "cold coastal water and surf line with whitewash",
+    lighting:
+      "silver overcast marine light, surface caustics, and strong contrast between foam and dark water",
+    cameraGear:
+      "Sony A1, underwater housing, wide coastal breach framing",
+    texture:
+      "steel-grey skin, scar detail along flank, wake turbulence, and realistic spray off dorsal fin",
+    defaultArc: "Ambush attack",
+    driftRisk: "LOW",
+  },
+  Snake: {
+    prey: ["Mouse", "Rabbit", "Bird Egg", "Lizard"],
+    environment: "dry scrubland, rocky ridge, and warm grass edge",
+    lighting:
+      "hard side light, ground heat shimmer, and sharp scale contrast against dusty earth",
+    cameraGear:
+      "Canon EOS R5, 150mm macro-telephoto, low-angle strike framing",
+    texture:
+      "fine scale pattern, forked tongue detail, coiled muscle tension, and dust on belly scales",
+    defaultArc: "Ambush attack",
+    driftRisk: "MEDIUM",
+  },
 };
 
 
-export const wildlifeScopeOptions: WildlifeScopeMode[] = [
-  "USA Wildlife",
-  "World Wildlife",
-];
+const USA_CANADA_WILDLIFE_MODE: WildlifeScopeMode = "USA / Canada Wildlife";
 
-const USA_WILDLIFE_PRIORITY = [
-  "Mountain Lion",
-  "Wolf Pack",
-  "Grizzly Bear",
-  "Alligator",
-  "Bison",
-  "Coyote",
-  "Bald Eagle",
-  "Moose",
-  "Bull Elk",
-  "Black Bear",
-  "Cougar",
-  "Wolf",
-  "Bobcat",
-  "White-tailed Deer",
-  "Mule Deer",
-  "Elk",
-  "Wild Boar",
-  "Great Horned Owl",
-  "Red Fox",
-  "River Otter",
-  "Beaver",
-  "Badger",
-  "Raccoon",
-  "Wolverine",
-  "Salmon",
-  "Shark",
-  "Orca",
-  "Dolphin",
-] as const;
-
-const USA_WILDLIFE_SET = new Set<string>(USA_WILDLIFE_PRIORITY);
+export { wildlifeScopeOptions };
 
 export function isWildlifeScopeMode(value: unknown): value is WildlifeScopeMode {
-  return (
-    typeof value === "string" &&
-    (wildlifeScopeOptions as readonly string[]).includes(value)
-  );
+  return isWildlifeFocusMode(value);
 }
 
 export function isUSAWildlifeAnimal(name: string): boolean {
-  return USA_WILDLIFE_SET.has(name);
-}
-
-function sortPredatorOptionsByUSAPriority(options: string[]): string[] {
-  return [...options].sort((a, b) => {
-    const ai = USA_WILDLIFE_PRIORITY.indexOf(a as (typeof USA_WILDLIFE_PRIORITY)[number]);
-    const bi = USA_WILDLIFE_PRIORITY.indexOf(b as (typeof USA_WILDLIFE_PRIORITY)[number]);
-    const aPinned = ai !== -1;
-    const bPinned = bi !== -1;
-
-    if (aPinned && bPinned) return ai - bi;
-    if (aPinned) return -1;
-    if (bPinned) return 1;
-    return a.localeCompare(b);
-  });
+  return filterPredatorOptionsByFocus([name], USA_CANADA_WILDLIFE_MODE).length > 0;
 }
 
 export function filterPredatorOptionsByWildlifeScope(
   options: string[],
   wildlifeScopeMode: WildlifeScopeMode
 ): string[] {
-  const unique = Array.from(new Set(options));
-  const filtered =
-    wildlifeScopeMode === "USA Wildlife"
-      ? unique.filter((option) => isUSAWildlifeAnimal(option))
-      : unique;
-
-  return sortPredatorOptionsByUSAPriority(filtered);
+  return filterPredatorOptionsByFocus(options, wildlifeScopeMode);
 }
 
 // ─────────────────────────────────────────────────────────────
@@ -924,7 +1148,6 @@ export function coerceArc(x: string): Arc {
 export function suggestArc(predator: string, prey: string, fallback: string): string {
   const normalize = (value: string) => {
     if (value === "American Alligator") return "Alligator";
-    if (value === "Brown Bear") return "Grizzly Bear";
     if (value === "Coyote Pack") return "Coyote";
     if (value === "Lion Pack") return "Lion";
     if (value === "Hyena Pack") return "Hyena";
@@ -1018,7 +1241,7 @@ export function suggestArc(predator: string, prey: string, fallback: string): st
   const preyDefends = largeDefenders.has(prey) || largeDefenders.has(r);
   const preyEscapes = escapePrey.has(prey) || escapePrey.has(r);
 
-  if (predatorIs("Grizzly Bear") && preyIs("Bison", "Moose", "Bull Elk", "Elk")) {
+  if (predatorIs("Grizzly Bear", "Brown Bear") && preyIs("Bison", "Moose", "Bull Elk", "Elk")) {
     return "Giant vs giant clash";
   }
 
@@ -1039,7 +1262,7 @@ export function suggestArc(predator: string, prey: string, fallback: string): st
 
   if (!naturalMatch) return fallback;
 
-  if (preyDefends && predatorIs("Grizzly Bear")) return "Giant vs giant clash";
+  if (preyDefends && predatorIs("Grizzly Bear", "Brown Bear")) return "Giant vs giant clash";
   if (isPackHunter) return "Pack hunting strategy";
   if (preyDefends && (isAmbushHunter || isChaseHunter)) return "Defender stands ground";
   if (preyEscapes && predatorIs("Coyote")) return "Escape from danger";
@@ -1048,7 +1271,7 @@ export function suggestArc(predator: string, prey: string, fallback: string): st
   if (isAmbushHunter) return "Ambush attack";
   if (preyDefends) return "Defender stands ground";
 
-  if (predatorIs("Grizzly Bear")) {
+  if (predatorIs("Grizzly Bear", "Brown Bear")) {
     if (preyIs("Salmon", "Elk Calf")) return "Chase and takedown";
     return "Territory dominance battle";
   }
@@ -1084,7 +1307,6 @@ export function suggestArc(predator: string, prey: string, fallback: string): st
 export function suggestHabitat(predator: string, prey: string, fallback: string): string {
   const normalize = (value: string) => {
     if (value === "American Alligator") return "Alligator";
-    if (value === "Brown Bear") return "Grizzly Bear";
     if (value === "Coyote Pack") return "Coyote";
     if (value === "Lion Pack") return "Lion";
     if (value === "Hyena Pack") return "Hyena";

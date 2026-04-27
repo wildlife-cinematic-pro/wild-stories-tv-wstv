@@ -59,7 +59,15 @@ export type CameraAnglePreset =
   | "Waterline"
   | "Ground-level tension";
 
-export type WildlifeScopeMode = "USA Wildlife" | "World Wildlife";
+export type WildlifeScopeMode =
+  | "USA Wildlife"
+  | "USA / Canada Wildlife"
+  | "Europe Wildlife"
+  | "Norway / Scandinavia Wildlife"
+  | "Australia Wildlife"
+  | "Global Viral Wildlife"
+  | "Low Drift First Test"
+  | "World Wildlife";
 
 export type EmotionalTone =
   | "Raw Tension"

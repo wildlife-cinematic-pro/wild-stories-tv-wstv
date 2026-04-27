@@ -12,6 +12,7 @@ import {
 import { KLING_MODELS, RUNWAY_MODELS } from "@/lib/model-specs";
 import { isContentLane } from "@/lib/content-lanes";
 import { isWildlifeScopeMode } from "@/lib/predator-data";
+import { normalizeWildlifeScopeMode } from "@/lib/wildlife-focus";
 import { isCameraAnglePreset } from "@/lib/camera-angle-presets";
 import { isDurationLane } from "@/lib/duration-lanes";
 
@@ -187,7 +188,7 @@ export function useBuildPersistence({
     }
     if (saved?.habitat) setHabitat(saved.habitat);
     if (saved?.wildlifeScopeMode && isWildlifeScopeMode(saved.wildlifeScopeMode)) {
-      setWildlifeScopeMode(saved.wildlifeScopeMode);
+      setWildlifeScopeMode(normalizeWildlifeScopeMode(saved.wildlifeScopeMode));
     }
     if (saved?.contentLane && isContentLane(saved.contentLane)) {
       setContentLane(saved.contentLane);

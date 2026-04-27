@@ -16,7 +16,7 @@ test("main build flow generates output, keeps workspace tabs reachable, and show
   await expect(
     page.locator("button[aria-current=\"step\"]").filter({ hasText: "Wildlife Setup" })
   ).toBeVisible();
-  await expect(page.getByText("Wildlife Focus")).toBeVisible();
+  await expect(page.getByText("Wildlife Focus", { exact: true })).toBeVisible();
   await expect(
     page
       .getByText(/Sign in to keep My Library synced across devices/i)

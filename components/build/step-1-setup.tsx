@@ -27,6 +27,11 @@ import {
   getToneMicroGuidance,
   getWeatherMicroGuidance,
 } from "@/lib/step-1-guidance";
+import {
+  getRegionalWildlifeStep1Hint,
+  getWildlifeHabitatCompatibilityGuidance,
+  getWildlifeScopeHelperText,
+} from "@/lib/wildlife-focus";
 
 import type {
   AnimalVibe,
@@ -256,6 +261,18 @@ export default function Step1Setup({
     prey,
     driftRisk
   );
+  const wildlifeScopeHelperText = getWildlifeScopeHelperText(wildlifeScopeMode);
+  const regionalStep1Hint = getRegionalWildlifeStep1Hint(
+    wildlifeScopeMode,
+    predator,
+    prey
+  );
+  const habitatCompatibility = getWildlifeHabitatCompatibilityGuidance({
+    mode: wildlifeScopeMode,
+    predator,
+    prey,
+    habitat,
+  });
 
   return (
     <div className="grid gap-6 xl:grid-cols-[minmax(0,1fr)_340px]">
@@ -363,7 +380,10 @@ export default function Step1Setup({
                 ))}
               </select>
               <p className="mt-1 text-[11px] text-gray-400">
-                USA Wildlife keeps Step 1 centered on strong U.S.-recognizable species for WSTV. World Wildlife restores the full built-in animal list. Custom animals stay available in either mode.
+                Choose a wildlife focus to bias Step 1 toward animals and environments viewers recognize fastest in that region. World Wildlife restores the full list. Low Drift First Test prioritizes recognizable, AI-stable pairings. Custom animals stay available in every mode.
+              </p>
+              <p className="mt-1 text-[11px] text-gray-400">
+                {wildlifeScopeHelperText}
               </p>
             </div>
             <div>
@@ -412,8 +432,20 @@ export default function Step1Setup({
             </div>
             <div className="rounded-2xl border border-emerald-100 bg-emerald-50/70 p-3 text-[11px] leading-relaxed text-emerald-800 sm:col-span-2">
               <span className="font-semibold">Facebook setup hint:</span>{" "}
-              {animalPairGuidance}
+              {regionalStep1Hint} {animalPairGuidance}
             </div>
+            {habitatCompatibility && (
+              <div
+                className={`rounded-2xl border p-3 text-[11px] leading-relaxed sm:col-span-2 ${
+                  habitatCompatibility.isWarning
+                    ? "border-amber-200 bg-amber-50/80 text-amber-900"
+                    : "border-sky-100 bg-sky-50/80 text-sky-900"
+                }`}
+              >
+                <span className="font-semibold">{habitatCompatibility.label}:</span>{" "}
+                {habitatCompatibility.message}
+              </div>
+            )}
           </div>
         </section>
 

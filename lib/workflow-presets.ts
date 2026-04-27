@@ -36,8 +36,8 @@ import {
   animalVibes,
   emotionalTones,
   isUSAWildlifeAnimal,
-  wildlifeScopeOptions,
 } from "@/lib/predator-data";
+import { normalizeWildlifeScopeMode } from "@/lib/wildlife-focus";
 
 export const MAX_WORKFLOW_PRESETS = 40;
 export const MAX_WORKFLOW_PRESET_PACKS = 24;
@@ -210,7 +210,7 @@ export function normalizeWorkflowPresetSnapshot(
 
   const sceneDescription = cleanString(value.sceneDescription);
   const defaultWildlifeScopeMode: WildlifeScopeMode = isUSAWildlifeAnimal(predator)
-    ? "USA Wildlife"
+    ? "USA / Canada Wildlife"
     : "World Wildlife";
   const sceneDescriptionMode = pickOption(
     value.sceneDescriptionMode,
@@ -221,9 +221,8 @@ export function normalizeWorkflowPresetSnapshot(
   return {
     predator,
     prey,
-    wildlifeScopeMode: pickOption<WildlifeScopeMode>(
+    wildlifeScopeMode: normalizeWildlifeScopeMode(
       value.wildlifeScopeMode,
-      wildlifeScopeOptions,
       defaultWildlifeScopeMode
     ),
     contentLane: pickOption<ContentLane>(
