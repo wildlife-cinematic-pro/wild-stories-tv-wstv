@@ -155,7 +155,10 @@ export type PerformanceSnapshot = {
 };
 
 export type PerformanceTrackerEntry = {
+  recordId?: string;
+  source?: "manual" | "facebook_csv";
   generationId?: string;
+  contentId?: string;
   postUrl?: string;
   title?: string;
   conceptLabel?: string;
@@ -171,6 +174,7 @@ export type PerformanceTrackerEntry = {
   hookFamily: HookFamily | "";
   contentLane: ContentLane | "";
   reach?: number | "";
+  views?: number | "";
   firstHourViews: number | "";
   threeSecondViews?: number | "";
   threeSecondHoldRate: number | "";
@@ -220,24 +224,71 @@ export type MonetizedFacebookPromptRecommendation = {
   reason: string;
 };
 
-export type MonetizedFacebookPerformanceTier =
-  | "No live data yet"
+export type ActualFacebookPerformanceBand =
+  | "Breakout"
+  | "Strong"
+  | "Average"
   | "Weak"
-  | "Developing"
+  | "Insufficient data";
+
+export type ActualFacebookPerformanceScores = {
+  actualPerformanceScore: number;
+  actualRevenueScore: number;
+  actualEngagementScore: number;
+  actualRetentionScore: number;
+  actualFollowerConversionScore: number;
+  band: ActualFacebookPerformanceBand;
+};
+
+export type MonetizedFacebookPerformanceTier =
+  | "Insufficient data"
+  | "Weak"
+  | "Average"
   | "Strong"
   | "Breakout";
 
+export type PredictedVsActualStatus =
+  | "overperformed"
+  | "matched"
+  | "underperformed"
+  | "insufficient-data";
+
+export type PredictedVsActualMetricComparison = {
+  label: string;
+  predictedScore: number;
+  actualScore: number;
+  status: PredictedVsActualStatus;
+  likelyReason: string;
+  nextRecommendation: string;
+};
+
+export type WinnerRemixRecommendation = {
+  label: string;
+  reason: string;
+};
+
 export type MonetizedFacebookReport = {
   scores: MonetizedFacebookScores;
+  actualScores: ActualFacebookPerformanceScores;
   verdict: MonetizedFacebookVerdict;
   summary: string;
   boostRecommendation: MonetizedFacebookBoostRecommendation;
   actualPerformanceTier: MonetizedFacebookPerformanceTier;
+  predictedVsActual: {
+    overall: PredictedVsActualMetricComparison;
+    shareIntent: PredictedVsActualMetricComparison;
+    commentDepthIntent: PredictedVsActualMetricComparison;
+    monetisationSafety: PredictedVsActualMetricComparison;
+    ownedFunnelConversionIntent: PredictedVsActualMetricComparison;
+    revenuePotential: PredictedVsActualMetricComparison;
+    boostWorthy: PredictedVsActualMetricComparison;
+  };
   promptRecommendations: {
     bestViralVersion: MonetizedFacebookPromptRecommendation;
     bestMonetizedSafeVersion: MonetizedFacebookPromptRecommendation;
     bestSponsorSafeVersion: MonetizedFacebookPromptRecommendation;
   };
+  winnerRemixRecommendations: WinnerRemixRecommendation[];
   improvementNotes: string[];
 };
 
