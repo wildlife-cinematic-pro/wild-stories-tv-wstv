@@ -82,7 +82,7 @@ function makeLastGeneratedOutputRecord(): LastGeneratedOutputRecord {
     snapshot: {
       predator: "Mountain Lion",
       prey: "White-tailed Deer",
-      wildlifeScopeMode: "USA Wildlife",
+      wildlifeScopeMode: "USA / Canada Wildlife",
       contentLane: "Escape",
       cameraAnglePreset: "Ground-level tension",
       arc: "Escape from danger",
