@@ -176,6 +176,58 @@ describe("build-package refactor seam", () => {
     expect(prompts?.klingSixShot?.pasteReady.length).toBeGreaterThan(0);
   });
 
+  it("anchors runway prompts with explicit subject identity while preserving left/right positioning", () => {
+    const draft = buildGeneratedPackageDraft(
+      makeDraftInput({
+        predator: "Lion",
+        prey: "Wildebeest",
+        presetForIdeas: {
+          prey: ["Wildebeest"],
+          environment: "savanna golden hour grassland",
+          lighting: "golden-hour rim light over dry grass",
+          cameraGear: "Canon EOS R5, 400mm wildlife lens",
+          texture: "dust lift, taut muscle detail, sharp hoof contact",
+          defaultArc: "Escape from danger",
+          driftRisk: "LOW",
+        },
+        presetLighting: "golden-hour rim light over dry grass",
+        presetCameraGear: "Canon EOS R5, 400mm wildlife lens",
+        presetTexture: "dust lift, taut muscle detail, sharp hoof contact",
+        presetDriftRisk: "LOW",
+        finalEnvironment: "savanna golden hour grassland",
+        finalArc: "Escape from danger",
+        contentLane: "Escape",
+        weather: "Golden Hour",
+        durationLane: "medium",
+        selectedPipelineStyle: "4-shot",
+        sceneInject:
+          "Keep the chase lateral and readable with clear lead-chase spacing and no crowding.",
+        finalHook2026: [
+          "The lion closes one stride before the wildebeest finds its turn lane.",
+          "The chase line tightens before the cut opens.",
+          "One stride decides the escape window.",
+        ],
+        finalHook: "The lion closes one stride before the wildebeest finds its turn lane.",
+        shortCaption: "A golden-hour chase turns on one stride and one late cut.",
+        longCaption:
+          "The lion closes one stride before the wildebeest finds its escape line across open savanna grass at golden hour.",
+        hashtags: "#Lion #Wildebeest #WildlifeReel #Savanna #WSTV",
+      })
+    );
+
+    const runwayPromptText = [
+      draft.basePkg.structuredPrompts?.runwayShots?.[0]?.fullText ?? "",
+      draft.basePkg.structuredPrompts?.runwayShots?.[3]?.fullText ?? "",
+      draft.basePkg.structuredPrompts?.workflowShots?.[0]?.fullText ?? "",
+      draft.basePkg.structuredPrompts?.workflowShots?.[3]?.fullText ?? "",
+    ].join("\n\n");
+
+    expect(runwayPromptText).not.toMatch(/\bleft subject\b/i);
+    expect(runwayPromptText).not.toMatch(/\bright subject\b/i);
+    expect(runwayPromptText).toContain("Lion (left)");
+    expect(runwayPromptText).toContain("Wildebeest (right)");
+  });
+
   it("adds the Meta AI disclosure reminder to the Facebook publish reminders without duplicates", () => {
     const draft = buildGeneratedPackageDraft(makeDraftInput());
     const reminders = draft.basePkg.platformPack?.facebook.publishReminders ?? [];
