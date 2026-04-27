@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useMemo, useState, type ChangeEvent } from "react";
 
 import type {
   GeneratedPackage,
@@ -8,7 +8,13 @@ import type {
   PredictedVsActualMetricComparison,
 } from "@/types";
 
-import { importFacebookInsightsCsv, matchFacebookInsightsRecord } from "@/lib/facebook-insights";
+import {
+  buildCsvGrowthDoctorSummary,
+  formatCsvGrowthDoctorSummary,
+  importFacebookInsightsCsv,
+  isFacebookInsightsCsvFile,
+  matchFacebookInsightsRecord,
+} from "@/lib/facebook-insights";
 import { buildMonetizedFacebookReport } from "@/lib/facebook-monetization-engine";
 import {
   buildBlankPerformanceTrackerEntry,
@@ -263,6 +269,19 @@ function formatMatchLabel(matchType: ReturnType<typeof matchFacebookInsightsReco
   }
 }
 
+/** Returns the clearest label for a Growth Doctor finding card. */
+function formatGrowthDoctorRecordHeading(record: PerformanceTrackerEntry | null): string {
+  if (!record) return "Insufficient data";
+
+  return (
+    record.title?.trim() ||
+    record.conceptLabel?.trim() ||
+    record.postUrl?.trim() ||
+    record.generationId?.trim() ||
+    "Imported Facebook post"
+  );
+}
+
 export function MonetizedPagePerformancePanel({
   data,
   onCopy,
@@ -314,6 +333,14 @@ export function MonetizedPagePerformancePanel({
   const importedCsvValue = useMemo(
     () => serializePerformanceTrackerEntriesAsCsv(importedRecords),
     [importedRecords]
+  );
+  const growthDoctorSummary = useMemo(
+    () => buildCsvGrowthDoctorSummary(importedRecords),
+    [importedRecords]
+  );
+  const growthDoctorSummaryText = useMemo(
+    () => formatCsvGrowthDoctorSummary(growthDoctorSummary),
+    [growthDoctorSummary]
   );
 
   const setTextField = (key: TextFieldKey, value: string) => {
@@ -368,13 +395,17 @@ export function MonetizedPagePerformancePanel({
     setImportWarnings([]);
   };
 
-  const importCsvRecords = () => {
-    const result = importFacebookInsightsCsv(csvImportValue);
+  /** Imports raw CSV text into local-only history and refreshes the current package match. */
+  const applyCsvImport = (
+    csvText: string,
+    getSuccessNotice: (recordCount: number) => string
+  ) => {
+    const result = importFacebookInsightsCsv(csvText);
     setImportWarnings(result.warnings);
     setLastImportCount(result.records.length);
 
     if (result.records.length === 0) {
-      setNotice("No importable Facebook Insights rows were found in the pasted CSV.");
+      setNotice("No importable Facebook Insights rows were found in the CSV.");
       return;
     }
 
@@ -387,9 +418,42 @@ export function MonetizedPagePerformancePanel({
       setEntry(nextMatch.record);
     }
 
-    setNotice(
-      `Imported ${result.records.length} Facebook Insights record${result.records.length === 1 ? "" : "s"} locally.`
+    setNotice(getSuccessNotice(result.records.length));
+  };
+
+  /** Imports the CSV text currently pasted into the textarea. */
+  const importCsvRecords = () => {
+    applyCsvImport(
+      csvImportValue,
+      (recordCount) =>
+        `Imported ${recordCount} Facebook Insights record${recordCount === 1 ? "" : "s"} locally.`
     );
+  };
+
+  /** Handles local CSV file uploads and routes the text through the existing parser. */
+  const handleCsvFileUpload = async (event: ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+
+    if (!file) return;
+
+    try {
+      if (!isFacebookInsightsCsvFile(file)) {
+        setNotice("Please upload a valid Facebook Insights CSV file.");
+        return;
+      }
+
+      const text = await file.text();
+      setCsvImportValue(text);
+      applyCsvImport(
+        text,
+        (recordCount) =>
+          `Uploaded and analyzed ${recordCount} Facebook Insights record${recordCount === 1 ? "" : "s"}.`
+      );
+    } catch {
+      setNotice("CSV upload failed. Please check the file and try again.");
+    } finally {
+      event.target.value = "";
+    }
   };
 
   const copyImported = (value: string, emptyNotice: string) => {
@@ -400,6 +464,17 @@ export function MonetizedPagePerformancePanel({
 
     void onCopy(value);
     setNotice(`Copied ${importedRecords.length} imported record${importedRecords.length === 1 ? "" : "s"}.`);
+  };
+
+  /** Copies the local-only Growth Doctor summary for quick review or sharing. */
+  const copyGrowthDoctorSummary = () => {
+    if (growthDoctorSummary.importedRecordCount === 0) {
+      setNotice("Import Facebook Insights CSV rows first to build a Growth Doctor summary.");
+      return;
+    }
+
+    void onCopy(growthDoctorSummaryText);
+    setNotice("Copied CSV Growth Doctor summary.");
   };
 
   const clearImportedRecords = () => {
@@ -630,6 +705,23 @@ export function MonetizedPagePerformancePanel({
             </div>
 
             <label className="mt-3 block space-y-1 text-xs text-[color:var(--muted)]">
+              <span className="font-bold text-[color:var(--text)]">
+                Upload Facebook Insights CSV file
+              </span>
+              <input
+                type="file"
+                accept=".csv,text/csv"
+                onChange={handleCsvFileUpload}
+                className="w-full rounded-xl border border-[color:var(--border)] bg-[color:var(--surface-elevated)] px-3 py-2 text-sm text-[color:var(--text)] outline-none file:mr-3 file:rounded-lg file:border-0 file:bg-cyan-50 file:px-3 file:py-1.5 file:text-xs file:font-bold file:text-cyan-900 hover:file:bg-cyan-100"
+              />
+              <p className="text-[11px] leading-relaxed text-[color:var(--muted)]">
+                Upload the CSV exported from Facebook Insights. The system will import rows,
+                match the current post by generation ID, URL, title, or concept label, then
+                update the actual-performance analysis automatically.
+              </p>
+            </label>
+
+            <label className="mt-3 block space-y-1 text-xs text-[color:var(--muted)]">
               <span className="font-bold text-[color:var(--text)]">Paste CSV text</span>
               <textarea
                 value={csvImportValue}
@@ -651,6 +743,115 @@ export function MonetizedPagePerformancePanel({
         </div>
 
         <div className="space-y-4">
+          <div
+            data-testid="csv-growth-doctor-panel"
+            className="rounded-2xl border border-[color:var(--border)] bg-[color:var(--surface-elevated)] p-4"
+          >
+            <div className="flex flex-wrap items-start justify-between gap-3">
+              <div>
+                <div className="text-sm font-extrabold text-[color:var(--text)]">
+                  CSV Growth Doctor
+                </div>
+                <p className="mt-1 text-xs leading-relaxed text-[color:var(--muted)]">
+                  Local-only analysis across every imported Facebook Insights row. Use it to spot
+                  winning packages, weak monetization patterns, and the cleanest rewrite or boost
+                  opportunities.
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={copyGrowthDoctorSummary}
+                className="rounded-lg border border-[color:var(--border)] bg-[color:var(--surface-muted)] px-3 py-1.5 text-xs font-bold text-[color:var(--muted)] hover:bg-[color:var(--surface-elevated)] active:scale-95"
+              >
+                Copy Growth Doctor Summary
+              </button>
+            </div>
+
+            <div className="mt-3 grid gap-3 md:grid-cols-3">
+              <div className="rounded-xl border border-[color:var(--border)] bg-[color:var(--surface-muted)] px-3 py-2 text-xs text-[color:var(--muted)]">
+                <div className="font-bold text-[color:var(--text)]">Imported rows analyzed</div>
+                <div className="mt-1 text-lg font-black text-[color:var(--text)]">
+                  {growthDoctorSummary.importedRecordCount}
+                </div>
+              </div>
+              <div className="rounded-xl border border-[color:var(--border)] bg-[color:var(--surface-muted)] px-3 py-2 text-xs text-[color:var(--muted)]">
+                <div className="font-bold text-[color:var(--text)]">Biggest issue</div>
+                <div className="mt-1 font-semibold text-[color:var(--text)]">
+                  {growthDoctorSummary.biggestIssue?.label ?? "No issue detected yet"}
+                </div>
+              </div>
+              <div className="rounded-xl border border-[color:var(--border)] bg-[color:var(--surface-muted)] px-3 py-2 text-xs text-[color:var(--muted)]">
+                <div className="font-bold text-[color:var(--text)]">Boost candidates</div>
+                <div className="mt-1 text-lg font-black text-[color:var(--text)]">
+                  {growthDoctorSummary.boostCandidates.length}
+                </div>
+              </div>
+            </div>
+
+            {growthDoctorSummary.importedRecordCount === 0 ? (
+              <div className="mt-3 rounded-xl border border-[color:var(--border)] bg-[color:var(--surface-muted)] px-3 py-3 text-xs leading-relaxed text-[color:var(--muted)]">
+                Import Facebook Insights CSV rows to unlock the Growth Doctor dashboard.
+              </div>
+            ) : (
+              <div className="mt-3 space-y-3">
+                {growthDoctorSummary.findings.map((finding) => (
+                  <div
+                    key={finding.id}
+                    className="rounded-xl border border-[color:var(--border)] bg-[color:var(--surface-muted)] p-3"
+                  >
+                    <div className="flex flex-wrap items-start justify-between gap-2">
+                      <div>
+                        <div className="text-xs font-bold uppercase tracking-wide text-[color:var(--text)]">
+                          {finding.label}
+                        </div>
+                        <div className="mt-1 text-sm font-semibold text-[color:var(--text)]">
+                          {formatGrowthDoctorRecordHeading(finding.record)}
+                        </div>
+                        {finding.record?.conceptLabel && (
+                          <p className="mt-1 text-[11px] leading-relaxed text-[color:var(--muted)]">
+                            {finding.record.conceptLabel}
+                          </p>
+                        )}
+                      </div>
+                      {finding.record?.postUrl ? (
+                        <a
+                          href={finding.record.postUrl}
+                          target="_blank"
+                          rel="noreferrer"
+                          className="text-[11px] font-bold text-cyan-700 hover:text-cyan-900"
+                        >
+                          Open post
+                        </a>
+                      ) : null}
+                    </div>
+                    <div className="mt-2 text-xs font-semibold text-[color:var(--text)]">
+                      {finding.keyMetric}
+                    </div>
+                    <p className="mt-2 text-xs leading-relaxed text-[color:var(--muted)]">
+                      {finding.diagnosis}
+                    </p>
+                    <p className="mt-1 text-xs font-semibold leading-relaxed text-[color:var(--text)]">
+                      Action: {finding.recommendedAction}
+                    </p>
+                  </div>
+                ))}
+
+                {growthDoctorSummary.rewriteRecommendations.length > 0 && (
+                  <div className="rounded-xl border border-[color:var(--border)] bg-[color:var(--surface-muted)] p-3">
+                    <div className="text-xs font-bold uppercase tracking-wide text-[color:var(--text)]">
+                      Rewrite recommendations
+                    </div>
+                    <div className="mt-2 space-y-1 text-xs leading-relaxed text-[color:var(--muted)]">
+                      {growthDoctorSummary.rewriteRecommendations.map((recommendation) => (
+                        <div key={recommendation}>• {recommendation}</div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
+
           <div className="rounded-2xl border border-[color:var(--border)] bg-[color:var(--surface-elevated)] p-4">
             <div className="text-sm font-extrabold text-[color:var(--text)]">Predicted vs actual</div>
             <div className="mt-3 space-y-3">

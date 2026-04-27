@@ -502,7 +502,7 @@ function getActualPerformanceBand(score: number, hasData: boolean): ActualFacebo
 }
 
 /** Builds the live actual Facebook performance scorecard from imported metrics. */
-function buildActualPerformanceScores(
+export function buildActualFacebookPerformanceScores(
   performance: PerformanceTrackerEntry | undefined
 ): ActualFacebookPerformanceScores {
   const hasData = hasLivePerformanceData(performance);
@@ -885,7 +885,7 @@ export function buildMonetizedFacebookReport(
     boostWorthyScore,
   };
 
-  const actualScores = buildActualPerformanceScores(performance);
+  const actualScores = buildActualFacebookPerformanceScores(performance);
   const performanceTier: MonetizedFacebookPerformanceTier = actualScores.band;
   const hasRevenueData =
     readMetric(performance?.estimatedEarnings) !== null ||

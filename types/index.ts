@@ -248,6 +248,45 @@ export type ActualFacebookPerformanceScores = {
   band: ActualFacebookPerformanceBand;
 };
 
+export type CsvGrowthDoctorFindingId =
+  | "best-performing"
+  | "worst-retention"
+  | "highest-rpm"
+  | "most-shareable"
+  | "best-follower-conversion"
+  | "low-reach-high-rpm"
+  | "high-reach-low-earnings"
+  | "high-retention-low-follows"
+  | "high-comments-low-shares"
+  | "weak-first-three-seconds";
+
+export type CsvGrowthDoctorFinding = {
+  id: CsvGrowthDoctorFindingId;
+  label: string;
+  record: PerformanceTrackerEntry | null;
+  keyMetric: string;
+  diagnosis: string;
+  recommendedAction: string;
+};
+
+export type CsvGrowthDoctorSummary = {
+  importedRecordCount: number;
+  findings: CsvGrowthDoctorFinding[];
+  bestPerformingPost: CsvGrowthDoctorFinding | null;
+  worstRetentionPost: CsvGrowthDoctorFinding | null;
+  highestRpmPost: CsvGrowthDoctorFinding | null;
+  mostShareablePost: CsvGrowthDoctorFinding | null;
+  bestFollowerConversionPost: CsvGrowthDoctorFinding | null;
+  lowReachHighRpmCandidate: CsvGrowthDoctorFinding | null;
+  highReachLowEarningsIssue: CsvGrowthDoctorFinding | null;
+  highRetentionLowFollowersIssue: CsvGrowthDoctorFinding | null;
+  highCommentsLowSharesIssue: CsvGrowthDoctorFinding | null;
+  weakFirstThreeSecondsIssue: CsvGrowthDoctorFinding | null;
+  biggestIssue: CsvGrowthDoctorFinding | null;
+  boostCandidates: CsvGrowthDoctorFinding[];
+  rewriteRecommendations: string[];
+};
+
 export type MonetizedFacebookPerformanceTier =
   | "Insufficient data"
   | "Weak"
