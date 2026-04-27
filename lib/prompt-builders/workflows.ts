@@ -20,6 +20,7 @@ import {
   buildMicroMotionLine,
 } from "@/lib/prompt-builders/habitat";
 import {
+  buildAnchoredSideSubject,
   buildQualityLead,
   buildKlingLocationLine,
   buildKlingCharacterLine,
@@ -304,13 +305,17 @@ export function buildHybridLongPromptPack(
     : isShoreline
       ? `${prey} lowers into one readable footing adjustment near the bank and keeps body-language tension visible`
       : `${prey} lowers into one readable defensive adjustment and keeps body-language tension visible`;
+  const longShot1LeftSubject = buildAnchoredSideSubject(predator, "left", openingPredator);
+  const longShot1RightSubject = buildAnchoredSideSubject(prey, "right", openingPrey);
+  const longShot4LeftSubject = buildAnchoredSideSubject(predator, "left", s4.predatorBeat);
+  const longShot4RightSubject = buildAnchoredSideSubject(prey, "right", s4.preyBeat);
 
   const longShot1PasteReady = finalizeWorkflowRunwayPasteReady(
     isAquatic
-      ? `Wide opening hold for first-frame clarity, then a restrained slow push-in over the full 10-second beat. Both subjects stay fully readable from frame one. The left subject ${openingPredator}. The right subject ${openingPrey}. Let the setup breathe before the tension tightens. Clear spacing, one clean threat line, and a restrained first action beat.${runwayCameraTail} ${micro}${quality?.seamlessShot ? " Continuous, seamless shot." : ""}`.trim()
+      ? `Wide opening hold for first-frame clarity, then a restrained slow push-in over the full 10-second beat. Both subjects stay fully readable from frame one. ${longShot1LeftSubject}. ${longShot1RightSubject}. Let the setup breathe before the tension tightens. Clear spacing, one clean threat line, and a restrained first action beat.${runwayCameraTail} ${micro}${quality?.seamlessShot ? " Continuous, seamless shot." : ""}`.trim()
       : isShoreline
-        ? `Wide opening hold for first-frame clarity, then a restrained slow push-in over the full 10-second beat. Both subjects stay fully readable from frame one. The left subject ${openingPredator}. The right subject ${openingPrey}. Let the readable shoreline setup breathe before the tension tightens. Clear spacing, one clean threat line, and a restrained first action beat.${runwayCameraTail} ${micro}${quality?.seamlessShot ? " Continuous, seamless shot." : ""}`.trim()
-        : `Wide opening hold for first-frame clarity, then a restrained slow push-in over the full 10-second beat. Both subjects stay fully readable from frame one. The left subject ${openingPredator}. The right subject ${openingPrey}. Let the readable setup breathe before the tension tightens. Clear spacing, one clean threat line, and a restrained first action beat.${runwayCameraTail} ${micro}${quality?.seamlessShot ? " Continuous, seamless shot." : ""}`.trim()
+        ? `Wide opening hold for first-frame clarity, then a restrained slow push-in over the full 10-second beat. Both subjects stay fully readable from frame one. ${longShot1LeftSubject}. ${longShot1RightSubject}. Let the readable shoreline setup breathe before the tension tightens. Clear spacing, one clean threat line, and a restrained first action beat.${runwayCameraTail} ${micro}${quality?.seamlessShot ? " Continuous, seamless shot." : ""}`.trim()
+        : `Wide opening hold for first-frame clarity, then a restrained slow push-in over the full 10-second beat. Both subjects stay fully readable from frame one. ${longShot1LeftSubject}. ${longShot1RightSubject}. Let the readable setup breathe before the tension tightens. Clear spacing, one clean threat line, and a restrained first action beat.${runwayCameraTail} ${micro}${quality?.seamlessShot ? " Continuous, seamless shot." : ""}`.trim()
   );
 
   const longShot2PasteReady = finalizeWorkflowKlingPasteReady(
@@ -331,10 +336,10 @@ export function buildHybridLongPromptPack(
 
   const longShot4PasteReady = finalizeWorkflowRunwayPasteReady(
     isAquatic
-      ? `Wide aftermath hold with a slow pull-back over the full 10-second resolve. Both subjects remain fully readable. The left subject ${s4.predatorBeat}. The right subject ${s4.preyBeat}. Let the winner hold, retreat, or stare-down settle as the resolve closes cleanly. Residual turbulence fades while final spacing stays clean for the last frame.${runwayCameraTail} ${micro}${quality?.seamlessShot ? " Continuous, seamless shot." : ""}`.trim()
+      ? `Wide aftermath hold with a slow pull-back over the full 10-second resolve. Both subjects remain fully readable. ${longShot4LeftSubject}. ${longShot4RightSubject}. Let the winner hold, retreat, or stare-down settle as the resolve closes cleanly. Residual turbulence fades while final spacing stays clean for the last frame.${runwayCameraTail} ${micro}${quality?.seamlessShot ? " Continuous, seamless shot." : ""}`.trim()
       : isShoreline
-        ? `Wide aftermath hold with a slow pull-back over the full 10-second resolve. Both subjects remain fully readable. The left subject ${s4.predatorBeat}. The right subject ${s4.preyBeat}. Let the winner hold, retreat, or stare-down settle as the resolve closes cleanly. Residual splash and shoreline disturbance fade while final spacing stays clean for the last frame.${runwayCameraTail} ${micro}${quality?.seamlessShot ? " Continuous, seamless shot." : ""}`.trim()
-        : `Wide aftermath hold with a slow pull-back over the full 10-second resolve. Both subjects remain fully readable. The left subject ${s4.predatorBeat}. The right subject ${s4.preyBeat}. Let the winner hold, retreat, or stare-down settle as the resolve closes cleanly. Residual atmosphere fades while final spacing stays clean for the last frame.${runwayCameraTail} ${micro}${quality?.seamlessShot ? " Continuous, seamless shot." : ""}`.trim()
+        ? `Wide aftermath hold with a slow pull-back over the full 10-second resolve. Both subjects remain fully readable. ${longShot4LeftSubject}. ${longShot4RightSubject}. Let the winner hold, retreat, or stare-down settle as the resolve closes cleanly. Residual splash and shoreline disturbance fade while final spacing stays clean for the last frame.${runwayCameraTail} ${micro}${quality?.seamlessShot ? " Continuous, seamless shot." : ""}`.trim()
+        : `Wide aftermath hold with a slow pull-back over the full 10-second resolve. Both subjects remain fully readable. ${longShot4LeftSubject}. ${longShot4RightSubject}. Let the winner hold, retreat, or stare-down settle as the resolve closes cleanly. Residual atmosphere fades while final spacing stays clean for the last frame.${runwayCameraTail} ${micro}${quality?.seamlessShot ? " Continuous, seamless shot." : ""}`.trim()
   );
 
   return {
@@ -354,8 +359,8 @@ ${longShot1PasteReady}
 Role: opening tension, readable setup, and first-frame clarity for the long hybrid lane.
 Camera motion: wide opening hold first, then restrained slow push-in only.
 Timing: 0-4s clear setup, 4-8s pressure hold, 8-10s subtle tightening.
-Subject action: left subject ${openingPredator}.
-Right-side reaction: right subject ${openingPrey}.
+Subject action: ${longShot1LeftSubject}.
+Right-side reaction: ${longShot1RightSubject}.
 Environment motion: ${micro}.${runwayCameraBreakdown}
 Tone: ${tone.video}.
 Framing: wide opening read, full-body visibility, clean silhouette separation.${runwayCameraBreakdown}
@@ -486,8 +491,8 @@ ${longShot4PasteReady}
 Role: aftermath, winner hold, retreat or stare-down, and cinematic long-form resolve.
 Camera motion: wide aftermath hold with a slow pull-back only.
 Timing: 0-4s immediate readable outcome, 4-8s settle and hold, 8-10s clean final frame.
-Subject action: left subject ${s4.predatorBeat}.
-Right-side reaction: right subject ${s4.preyBeat}.
+Subject action: ${longShot4LeftSubject}.
+Right-side reaction: ${longShot4RightSubject}.
 Environment motion: residual atmosphere — ${micro}.
 Mood: ${tone.image}.
 Framing: wide aftermath readability, full-body visibility, clean separation.${runwayCameraBreakdown}
