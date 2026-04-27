@@ -39,6 +39,7 @@ import {
   KLING_MODELS,
 } from "@/lib/model-specs";
 import { DEFAULT_CAMERA_ANGLE_PRESET } from "@/lib/camera-angle-presets";
+import { getWildlifeScopeDefaultSelection } from "@/lib/wildlife-focus";
 import {
   useBuildPreview,
   type DurationLaneMode,
@@ -84,7 +85,7 @@ type ActivePromotedPublishCopyOverride = PromotedVariantPublishCopyOverride & {
 
 const DEFAULT_PREDATOR = "Mountain Lion";
 const DEFAULT_PREY = "White-tailed Deer";
-const DEFAULT_WILDLIFE_SCOPE_MODE: WildlifeScopeMode = "USA Wildlife";
+const DEFAULT_WILDLIFE_SCOPE_MODE: WildlifeScopeMode = "USA / Canada Wildlife";
 const DEFAULT_CONTENT_LANE: ContentLane = "Auto";
 const DEFAULT_CAMERA_PRESET: CameraAnglePreset = DEFAULT_CAMERA_ANGLE_PRESET;
 const DEFAULT_ARC: Arc = "Ambush attack";
@@ -305,14 +306,20 @@ export default function Page() {
   useEffect(() => {
     if (!predatorOptions.length || predatorOptions.includes(predator)) return;
 
-    const fallbackPredator = predatorOptions.includes(DEFAULT_PREDATOR)
-      ? DEFAULT_PREDATOR
-      : predatorOptions[0];
+    const scopeDefault = getWildlifeScopeDefaultSelection(wildlifeScopeMode);
+    const fallbackPredator = predatorOptions.includes(scopeDefault.predator)
+      ? scopeDefault.predator
+      : predatorOptions.includes(DEFAULT_PREDATOR)
+        ? DEFAULT_PREDATOR
+        : predatorOptions[0];
 
     if (fallbackPredator && predator !== fallbackPredator) {
       setPredator(fallbackPredator);
+      if (fallbackPredator === scopeDefault.predator && prey !== scopeDefault.prey) {
+        setPrey(scopeDefault.prey);
+      }
     }
-  }, [predator, predatorOptions]);
+  }, [predator, predatorOptions, prey, wildlifeScopeMode]);
 
   const {
     preset,
@@ -347,6 +354,7 @@ export default function Page() {
     weather,
     depthMode,
     customPredators,
+    wildlifeScopeMode,
     mediaAnalysis,
     sceneDescriptionMode,
     sceneDescriptionTouched,

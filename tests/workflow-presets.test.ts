@@ -28,7 +28,7 @@ function makeSnapshot(
   return {
     predator: "Wolf Pack",
     prey: "Bull Elk",
-    wildlifeScopeMode: "USA Wildlife",
+    wildlifeScopeMode: "USA / Canada Wildlife",
     contentLane: "Pack Hunt",
     cameraAnglePreset: "Auto",
     arc: "Pack hunting strategy",
@@ -96,7 +96,7 @@ describe("workflow presets", () => {
 
     expect(preset.snapshot.predator).toBe("Bald Eagle");
     expect(preset.snapshot.prey).toBe("Salmon");
-    expect(preset.snapshot.wildlifeScopeMode).toBe("USA Wildlife");
+    expect(preset.snapshot.wildlifeScopeMode).toBe("USA / Canada Wildlife");
     expect(preset.snapshot.contentLane).toBe("Fishing Strike");
     expect(preset.snapshot.arc).toBe("Ambush attack");
     expect(preset.snapshot.durationLane).toBe("long");
@@ -189,7 +189,7 @@ describe("workflow presets", () => {
     expect(normalized).toMatchObject({
       predator: "Mountain Lion",
       prey: "White-tailed Deer",
-      wildlifeScopeMode: "USA Wildlife",
+      wildlifeScopeMode: "USA / Canada Wildlife",
       contentLane: "Auto",
       arc: "Ambush attack",
       habitat: "Auto",

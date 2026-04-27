@@ -11,7 +11,7 @@ describe("wildlife scope filtering", () => {
   it("keeps USA mode centered on U.S.-recognizable lead animals", () => {
     const filtered = filterPredatorOptionsByWildlifeScope(
       ["Lion", "Mountain Lion", "Wolf Pack", "Bald Eagle", "Jaguar", "Bull Elk"],
-      "USA Wildlife"
+      "USA / Canada Wildlife"
     );
 
     expect(filtered).toEqual(
