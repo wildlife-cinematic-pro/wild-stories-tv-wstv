@@ -90,6 +90,47 @@ describe("MonetizedPagePerformancePanel", () => {
     });
   });
 
+
+  it("renders Growth Doctor Actions when imported records exist and supports copy-all", async () => {
+    const onCopy = vi.fn();
+
+    render(
+      <MonetizedPagePerformancePanel data={makePackage()} onCopy={onCopy} />
+    );
+
+    const csv = [
+      "generation_id,permalink,description,people_reached,views,3-second video views,1-minute video views,average watch time,average percentage watched,shares,comments,new_followers,estimated earnings,rpm,monetized plays",
+      'generation_1,https://facebook.com/post/1,"Mountain lion pressure closes fast",120000,150000,62000,14000,18,58,260,170,95,31,5.8,21000',
+    ].join("\n");
+
+    const input = screen.getByLabelText(/Upload Facebook Insights CSV file/i);
+    const file = new File([csv], "facebook-insights.csv", { type: "text/csv" });
+
+    fireEvent.change(input, { target: { files: [file] } });
+
+    await waitFor(() =>
+      expect(screen.getByText(/Winner short-cut remix/i)).toBeInTheDocument()
+    );
+
+    expect(screen.getByText(/Growth Doctor Actions/i)).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /Copy all action plan/i })).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole("button", { name: /Copy all action plan/i }));
+
+    expect(onCopy).toHaveBeenCalled();
+    expect(String(onCopy.mock.calls.at(-1)?.[0] ?? "")).toMatch(/Growth Doctor Actions/i);
+  });
+
+  it("shows an empty Growth Doctor Actions state before imported records exist", () => {
+    render(
+      <MonetizedPagePerformancePanel data={makePackage()} onCopy={vi.fn()} />
+    );
+
+    expect(
+      screen.getByText(/Import Facebook Insights CSV rows to generate action-ready remix and rewrite plans\./i)
+    ).toBeInTheDocument();
+  });
+
   it("rejects non-csv uploads with a clear notice", async () => {
     render(
       <MonetizedPagePerformancePanel data={makePackage()} onCopy={vi.fn()} />

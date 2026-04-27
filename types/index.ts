@@ -287,6 +287,42 @@ export type CsvGrowthDoctorSummary = {
   rewriteRecommendations: string[];
 };
 
+export type GrowthDoctorActionPriority = "high" | "medium" | "low";
+
+export type GrowthDoctorActionEngineTarget =
+  | "Runway"
+  | "Kling"
+  | "Seedance"
+  | "Facebook copy"
+  | "Publishing";
+
+export type GrowthDoctorRewriteVariant = {
+  label: string;
+  engineTarget: GrowthDoctorActionEngineTarget;
+  promptRewrite: string;
+  captionRewrite?: string;
+};
+
+export type GrowthDoctorRemixAction = {
+  id: string;
+  sourceFindingId: CsvGrowthDoctorFindingId;
+  sourceFindingLabel: string;
+  title: string;
+  diagnosis: string;
+  whyItMatters: string;
+  recommendedAction: string;
+  priority: GrowthDoctorActionPriority;
+  nextStep: string;
+  variant: GrowthDoctorRewriteVariant;
+};
+
+export type GrowthDoctorActionPlan = {
+  importedRecordCount: number;
+  actionCount: number;
+  generatedLocally: boolean;
+  actions: GrowthDoctorRemixAction[];
+};
+
 export type MonetizedFacebookPerformanceTier =
   | "Insufficient data"
   | "Weak"
