@@ -1,0 +1,150 @@
+{
+  "project": "wildlife_standoff",
+  "valid": true,
+  "summary": {
+    "sceneCount": 4,
+    "promptCount": 16,
+    "validScenes": 4,
+    "validPrompts": 16
+  },
+  "sceneChecks": [
+    {
+      "sceneId": 1,
+      "sceneName": "establishing",
+      "valid": true,
+      "errors": []
+    },
+    {
+      "sceneId": 2,
+      "sceneName": "predator_entry",
+      "valid": true,
+      "errors": []
+    },
+    {
+      "sceneId": 3,
+      "sceneName": "standoff_hold",
+      "valid": true,
+      "errors": []
+    },
+    {
+      "sceneId": 4,
+      "sceneName": "aftermath_exit",
+      "valid": true,
+      "errors": []
+    }
+  ],
+  "promptChecks": [
+    {
+      "sceneId": 1,
+      "sceneName": "establishing",
+      "promptType": "image",
+      "valid": true,
+      "failedChecks": []
+    },
+    {
+      "sceneId": 1,
+      "sceneName": "establishing",
+      "promptType": "video",
+      "valid": true,
+      "failedChecks": []
+    },
+    {
+      "sceneId": 1,
+      "sceneName": "establishing",
+      "promptType": "runway",
+      "valid": true,
+      "failedChecks": []
+    },
+    {
+      "sceneId": 1,
+      "sceneName": "establishing",
+      "promptType": "kling",
+      "valid": true,
+      "failedChecks": []
+    },
+    {
+      "sceneId": 2,
+      "sceneName": "predator_entry",
+      "promptType": "image",
+      "valid": true,
+      "failedChecks": []
+    },
+    {
+      "sceneId": 2,
+      "sceneName": "predator_entry",
+      "promptType": "video",
+      "valid": true,
+      "failedChecks": []
+    },
+    {
+      "sceneId": 2,
+      "sceneName": "predator_entry",
+      "promptType": "runway",
+      "valid": true,
+      "failedChecks": []
+    },
+    {
+      "sceneId": 2,
+      "sceneName": "predator_entry",
+      "promptType": "kling",
+      "valid": true,
+      "failedChecks": []
+    },
+    {
+      "sceneId": 3,
+      "sceneName": "standoff_hold",
+      "promptType": "image",
+      "valid": true,
+      "failedChecks": []
+    },
+    {
+      "sceneId": 3,
+      "sceneName": "standoff_hold",
+      "promptType": "video",
+      "valid": true,
+      "failedChecks": []
+    },
+    {
+      "sceneId": 3,
+      "sceneName": "standoff_hold",
+      "promptType": "runway",
+      "valid": true,
+      "failedChecks": []
+    },
+    {
+      "sceneId": 3,
+      "sceneName": "standoff_hold",
+      "promptType": "kling",
+      "valid": true,
+      "failedChecks": []
+    },
+    {
+      "sceneId": 4,
+      "sceneName": "aftermath_exit",
+      "promptType": "image",
+      "valid": true,
+      "failedChecks": []
+    },
+    {
+      "sceneId": 4,
+      "sceneName": "aftermath_exit",
+      "promptType": "video",
+      "valid": true,
+      "failedChecks": []
+    },
+    {
+      "sceneId": 4,
+      "sceneName": "aftermath_exit",
+      "promptType": "runway",
+      "valid": true,
+      "failedChecks": []
+    },
+    {
+      "sceneId": 4,
+      "sceneName": "aftermath_exit",
+      "promptType": "kling",
+      "valid": true,
+      "failedChecks": []
+    }
+  ]
+}

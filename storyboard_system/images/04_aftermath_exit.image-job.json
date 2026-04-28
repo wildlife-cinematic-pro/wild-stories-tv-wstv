@@ -1,0 +1,18 @@
+{
+  "sceneId": 4,
+  "sceneName": "aftermath_exit",
+  "engine": "runway-image",
+  "type": "storyboard-image",
+  "output": "images/04_aftermath_exit.png",
+  "prompt": "long lens wide shot, slow pull-back. resolution beat after the threat line breaks in stable rocky ground with sparse grass beside cold water. the elk widening distance while the wolf slows and holds the bank, settling into a calm but alert separation. soft late-morning winter light, photorealistic. 9:16 vertical framing. Continuity rules: preserve subject identity from source image, maintain left-right blocking unless the scene explicitly changes it, keep anatomy stable across scene transitions, preserve grounded contact and environmental continuity. Prioritize camera movement readability, source-image continuity, strong foreground-background separation, edit-friendly composition, and image-to-video stability.",
+  "negativePrompt": "no final-shot rendering, no text overlays, no dust clouds, no debris spray, no unstable anatomy, no overlapping subjects",
+  "negativePromptPath": "prompts/04_aftermath_exit.negative.txt",
+  "continuityRules": [
+    "preserve subject identity from source image",
+    "maintain left-right blocking unless the scene explicitly changes it",
+    "keep anatomy stable across scene transitions",
+    "preserve grounded contact and environmental continuity"
+  ],
+  "promptPath": "prompts/04_aftermath_exit.runway.txt",
+  "finalShotReference": null
+}

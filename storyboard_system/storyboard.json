@@ -1,0 +1,81 @@
+{
+  "project": "wildlife_standoff",
+  "duration": 40,
+  "imageEngine": "runway-image",
+  "videoEngine": "runway-gen-2",
+  "styleGuide": "photorealistic wildlife documentary",
+  "negativePrompt": "no final-shot rendering, no text overlays, no dust clouds, no debris spray, no unstable anatomy, no overlapping subjects",
+  "continuityRules": [
+    "preserve subject identity from source image",
+    "maintain left-right blocking unless the scene explicitly changes it",
+    "keep anatomy stable across scene transitions",
+    "preserve grounded contact and environmental continuity"
+  ],
+  "aspectRatio": "9:16",
+  "scenes": [
+    {
+      "id": 1,
+      "name": "establishing",
+      "description": "wide environment shot of a cold river basin before contact",
+      "camera": "wide cinematic shot",
+      "motion": "slow pan",
+      "subject": "a lone elk near a cold riverbank",
+      "action": "standing alert and scanning the open valley",
+      "lighting": "blue-hour dawn light",
+      "style": "photorealistic",
+      "environment": "rocky river basin with frost grass and thin morning mist",
+      "duration": 5,
+      "generateVideo": true,
+      "videoEngine": "runway-gen-2",
+      "finalShotReference": null
+    },
+    {
+      "id": 2,
+      "name": "predator_entry",
+      "description": "predator appears at distance without breaking the scene axis",
+      "camera": "medium-wide documentary shot",
+      "motion": "subtle tracking move",
+      "subject": "a grey wolf entering frame from the left while the elk holds right",
+      "action": "closing distance with controlled caution",
+      "lighting": "cold morning sidelight",
+      "style": "photorealistic",
+      "environment": "firm grass-covered river edge with low frost",
+      "duration": 6,
+      "generateVideo": true,
+      "videoEngine": "kling",
+      "finalShotReference": null
+    },
+    {
+      "id": 3,
+      "name": "standoff_hold",
+      "description": "clean confrontation beat with readable spacing and body language",
+      "camera": "locked wide shot",
+      "motion": "no camera movement",
+      "subject": "the wolf on the left and the elk on the right",
+      "action": "holding a tense standoff with clear eye-line and grounded weight shift",
+      "lighting": "overcast winter light",
+      "style": "photorealistic",
+      "environment": "firm wet ground with reeds at the river edge",
+      "duration": 7,
+      "generateVideo": true,
+      "videoEngine": "runway-gen-2",
+      "finalShotReference": null
+    },
+    {
+      "id": 4,
+      "name": "aftermath_exit",
+      "description": "resolution beat after the threat line breaks",
+      "camera": "long lens wide shot",
+      "motion": "slow pull-back",
+      "subject": "the elk widening distance while the wolf slows and holds the bank",
+      "action": "settling into a calm but alert separation",
+      "lighting": "soft late-morning winter light",
+      "style": "photorealistic",
+      "environment": "stable rocky ground with sparse grass beside cold water",
+      "duration": 6,
+      "generateVideo": false,
+      "videoEngine": "runway-gen-2",
+      "finalShotReference": null
+    }
+  ]
+}
