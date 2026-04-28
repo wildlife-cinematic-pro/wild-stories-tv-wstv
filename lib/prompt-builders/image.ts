@@ -50,6 +50,11 @@ type SceneLockState = {
   lightingFamily: string;
   atmosphereFamily: string;
 };
+const DUST_FREE_NEGATIVE_TERMS =
+  "dust cloud, kicked-up dust, dirt spray, flying soil, debris particles, ground powder, sand burst, muddy splash, excessive particles, smoke-like dust, dusty blur, dust trail behind animals";
+const CLEAN_GROUND_CONTACT_LINE =
+  "Clean paw and hoof contact on firm vegetation-covered ground, no visible dust, no dirt spray, no debris particles, no kicked-up soil, no ground powder, no dust clouds.";
+
 
 function normalizeSceneText(value: string): string {
   return String(value ?? "")
@@ -142,7 +147,7 @@ function buildSceneLockGround(
   }
 
   if (/snow|frozen|frost|winter/.test(normalized) || weather === "Frozen Dusk") {
-    return "patchy early snow over dirt and grass";
+    return "patchy early snow over firm grass";
   }
 
   if (/forest|pine|aspen|woodland|leaf litter/.test(normalized)) {
@@ -150,14 +155,14 @@ function buildSceneLockGround(
   }
 
   if (/rock|cliff|scree/.test(normalized)) {
-    return "rocky dirt with sparse grass";
+    return "stable rocky ground with sparse grass";
   }
 
   if (/marsh|swamp|wetland|mud/.test(normalized)) {
-    return "muddy wet ground with reeds";
+    return "firm wet ground with reeds";
   }
 
-  return "dry grass and packed earth";
+  return "firm grass-covered ground with no loose soil";
 }
 
 function buildSceneLockLighting(cleanLighting: string, weather: Weather, cleanEnv: string): string {
@@ -396,14 +401,14 @@ function buildNanoBananaImagePrompt(
 
   const anatomyLine =
     quality?.realismMode === "High Naturalism"
-      ? "Keep anatomy exact, coat markings stable, grounded paw or hoof contact visible, and natural wear intact."
+      ? "Keep anatomy exact, coat markings stable, clean grounded paw or hoof contact visible, and natural wear intact."
       : quality?.realismMode === "Reference Locked"
-        ? "Keep anatomy exact, coat markings stable, and grounded paw or hoof contact visible."
+        ? "Keep anatomy exact, coat markings stable, and clean grounded paw or hoof contact visible."
         : "Keep anatomy exact, coat markings stable, and body mechanics natural.";
 
   const detailLine = vibe.texture
-    ? `Photoreal wildlife documentary detail with ${cleanTexture} and ${vibe.texture.toLowerCase()}. ${anatomyLine}`
-    : `Photoreal wildlife documentary detail with ${cleanTexture}. ${anatomyLine}`;
+  ? `Photoreal wildlife documentary detail with ${cleanTexture} and ${vibe.texture.toLowerCase()}. ${anatomyLine} ${CLEAN_GROUND_CONTACT_LINE} Avoid: ${DUST_FREE_NEGATIVE_TERMS}.`
+  : `Photoreal wildlife documentary detail with ${cleanTexture}. ${anatomyLine} ${CLEAN_GROUND_CONTACT_LINE} Avoid: ${DUST_FREE_NEGATIVE_TERMS}.`;
 
   return `${subjectLine} ${blockingLine} ${compositionLine} ${atmosphereLine} ${detailLine}`;
 }
@@ -585,8 +590,8 @@ export function buildShotImagePlan(
       ? " Let the bank-edge water reaction settle while shoreline spacing stays clean."
       : "";
 
-  const continuityLock = `Keep ${predator} and ${prey} identical in anatomy, markings, scale, lighting family, and habitat continuity in ${cleanEnv}, ${cleanWeather}. Preserve the same 9:16 documentary image family, grounded contact, realistic spacing, and clean silhouette separation.`;
-  const atmosphereLock = `Environment stays continuity-safe with ${micro}.`;
+  const continuityLock = `Keep ${predator} and ${prey} identical in anatomy, markings, scale, lighting family, and habitat continuity in ${cleanEnv}, ${cleanWeather}. Preserve the same 9:16 documentary image family, grounded contact, realistic spacing, clean silhouette separation, and dust-free ground contact.`;
+  const atmosphereLock = `Environment stays continuity-safe with ${micro}. ${CLEAN_GROUND_CONTACT_LINE}`;
   const shotWorldContinuityLock = buildShotWorldContinuityLock("image");
   const masterBase =
     "Base image: use the Nano Banana 2 / Gemini master still as the Shot 1 visual-world anchor.";
@@ -630,7 +635,7 @@ export function buildNegativePrompt(
   engine: "KLING" | "RUNWAY" | "SEEDANCE" = "KLING"
 ): string {
   if (engine !== "KLING") {
-    return "";
+    return DUST_FREE_NEGATIVE_TERMS;
   }
 
   const base =
@@ -640,7 +645,8 @@ export function buildNegativePrompt(
     "partial body crop, cut-off paws, cut-off hooves, cut-off tails, hidden subjects, overlapping bodies, " +
     "close-up crop, off-frame subject, face distortion, warping, melting anatomy, inconsistent physics, " +
     "background shifting, changing markings, deformed anatomy, plastic fur, oversharpened HDR, synthetic glow, " +
-    "fire, flame, fantasy breath, glowing mouth, energy effect, light beam, smoke plume, steam, mist, haze, fog wall, dusty blur, bright unnatural colors";
+    "fire, flame, fantasy breath, glowing mouth, energy effect, light beam, smoke plume, steam, mist, haze, fog wall, " +
+    `${DUST_FREE_NEGATIVE_TERMS}, bright unnatural colors`;
 
   const specific: Record<string, string> = {
     Lion: "wrong mane colour, extra mane, mane drift between shots",
@@ -682,7 +688,7 @@ export function buildThumbnailPrompt(
   const cleanEnv = sanitizeImageEnv(env);
   const cleanWeather = sanitizeWeatherPhrase(weatherVariants[weather]);
   const cleanAir =
-    "clear clean air, no visible steam, no smoke plumes, no mist, no airborne haze";
+    "clear clean air, no visible steam, no smoke plumes, no mist, no airborne haze, no dust clouds, no kicked-up soil";
 
   const envLower = env.toLowerCase();
   const isArcticLike =
