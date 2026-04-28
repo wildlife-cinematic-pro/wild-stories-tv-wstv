@@ -183,7 +183,7 @@ describe("buildImagePrompt – Nano Banana image path", () => {
       "The left bull stays planted while the right bull advances one step."
     ).toLowerCase();
 
-    expect(prompt).toContain("patchy early snow over dirt and grass");
+    expect(prompt).toContain('patchy early snow over firm grass')
     expect(prompt).toContain("winter dusk with a purple-orange sky");
     expect(prompt).toContain("clear cold air");
     expect(prompt).not.toMatch(/snow-covered clearing|dry leaf litter and patchy grass/);
