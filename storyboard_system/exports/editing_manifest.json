@@ -1,0 +1,49 @@
+{
+  "project": "wildlife_standoff",
+  "delivery": {
+    "aspectRatio": "9:16",
+    "duration": 40,
+    "styleGuide": "photorealistic wildlife documentary",
+    "negativePrompt": "no final-shot rendering, no text overlays, no dust clouds, no debris spray, no unstable anatomy, no overlapping subjects",
+    "continuityRules": [
+      "preserve subject identity from source image",
+      "maintain left-right blocking unless the scene explicitly changes it",
+      "keep anatomy stable across scene transitions",
+      "preserve grounded contact and environmental continuity"
+    ]
+  },
+  "timeline": [
+    {
+      "sceneId": 1,
+      "sceneName": "establishing",
+      "imageReference": "images/01_establishing.png",
+      "videoReference": "videos/01_establishing.mp4",
+      "editableReference": null,
+      "duration": 5
+    },
+    {
+      "sceneId": 2,
+      "sceneName": "predator_entry",
+      "imageReference": "images/02_predator_entry.png",
+      "videoReference": "videos/02_predator_entry.mp4",
+      "editableReference": null,
+      "duration": 6
+    },
+    {
+      "sceneId": 3,
+      "sceneName": "standoff_hold",
+      "imageReference": "images/03_standoff_hold.png",
+      "videoReference": "videos/03_standoff_hold.mp4",
+      "editableReference": null,
+      "duration": 7
+    },
+    {
+      "sceneId": 4,
+      "sceneName": "aftermath_exit",
+      "imageReference": "images/04_aftermath_exit.png",
+      "videoReference": null,
+      "editableReference": null,
+      "duration": 6
+    }
+  ]
+}
