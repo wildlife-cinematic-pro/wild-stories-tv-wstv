@@ -4,12 +4,14 @@ import type { GeneratedPackage } from "@/types";
 
 import {
   buildCsvGrowthDoctorSummary,
+  buildGrowthDoctorActionPlan,
   findBestFollowerConversionRecord,
   findBestPerformingRecord,
   findHighestRpmRecord,
   findMostShareableRecord,
   findWorstRetentionRecord,
   formatCsvGrowthDoctorSummary,
+  formatGrowthDoctorActionPlan,
   importFacebookInsightsCsv,
   isFacebookInsightsCsvFile,
   matchFacebookInsightsRecord,
@@ -336,5 +338,237 @@ describe("facebook insights growth doctor", () => {
     expect(exportText).toMatch(/Biggest issue:/i);
     expect(exportText).toMatch(/Boost candidates:/i);
     expect(exportText).toMatch(/Rewrite recommendations:/i);
+  });
+});
+
+describe("facebook insights growth doctor actions", () => {
+  it("returns no actions when the growth doctor summary is empty", () => {
+    const plan = buildGrowthDoctorActionPlan(buildCsvGrowthDoctorSummary([]));
+
+    expect(plan.actionCount).toBe(0);
+    expect(plan.actions).toEqual([]);
+    expect(formatGrowthDoctorActionPlan(plan)).toMatch(/Action count: 0/i);
+  });
+
+  it("builds weak-first-three-seconds actions with explicit animal identity and a short Kling variant", () => {
+    const summary = buildCsvGrowthDoctorSummary([
+      makePerformanceRecord({
+        title: "Weak opener bear",
+        predator: "Brown Bear",
+        prey: "Bison",
+        animalPair: "Brown Bear vs Bison",
+        habitat: "Snowy mountain valley",
+        arc: "Giant vs giant clash",
+        reach: 64000,
+        views: 70000,
+        threeSecondViews: 22000,
+        oneMinuteViews: 3800,
+        averageWatchTimeSeconds: 9,
+        watchPercentage: 26,
+        shares: 24,
+        comments: 51,
+        followsGained: 5,
+        estimatedEarnings: 3,
+        rpm: 1.1,
+        monetizedPlays: 1900,
+      }),
+    ]);
+
+    const plan = buildGrowthDoctorActionPlan(summary, {
+      pkg: makePackage({
+        predatorName: "Brown Bear",
+        preyName: "Bison",
+        environmentName: "Snowy mountain valley",
+        arcName: "Giant vs giant clash",
+      }),
+    });
+
+    const runwayAction = plan.actions.find(
+      (action) => action.id === "weak-first-three-seconds-first-frame-rewrite"
+    );
+    const klingAction = plan.actions.find(
+      (action) => action.id === "weak-first-three-seconds-two-second-hook"
+    );
+
+    expect(runwayAction?.variant.promptRewrite).toContain("Brown Bear (left)");
+    expect(runwayAction?.variant.promptRewrite).toContain("Bison (right)");
+    expect(runwayAction?.variant.promptRewrite.toLowerCase()).not.toContain("left subject");
+    expect(runwayAction?.variant.promptRewrite.toLowerCase()).not.toContain("right subject");
+    expect(klingAction?.variant.engineTarget).toBe("Kling");
+    expect((klingAction?.variant.promptRewrite.length ?? 999)).toBeLessThan(220);
+  });
+
+  it("creates monetized-safe rewrite actions for high reach but low earnings", () => {
+    const summary = buildCsvGrowthDoctorSummary([
+      makePerformanceRecord({
+        title: "Reach Heavy Deer",
+        reach: 155000,
+        views: 160000,
+        threeSecondViews: 50000,
+        oneMinuteViews: 4500,
+        averageWatchTimeSeconds: 8,
+        watchPercentage: 24,
+        shares: 26,
+        comments: 55,
+        followsGained: 6,
+        estimatedEarnings: 2,
+        rpm: 0.7,
+        monetizedPlays: 1300,
+      }),
+    ]);
+
+    const plan = buildGrowthDoctorActionPlan(summary, { pkg: makePackage() });
+    const docAction = plan.actions.find(
+      (action) => action.id === "high-reach-low-earnings-documentary-rewrite"
+    );
+    const captionAction = plan.actions.find(
+      (action) => action.id === "high-reach-low-earnings-sponsor-caption"
+    );
+
+    expect(docAction?.recommendedAction).toMatch(/documentary-safe/i);
+    expect(captionAction?.variant.captionRewrite).toBeTruthy();
+    expect(captionAction?.variant.captionRewrite ?? "").not.toMatch(/like if|share if|comment yes|tag a friend/i);
+  });
+
+  it("creates share-trigger and series actions when shares or follows lag behind audience quality", () => {
+    const summary = buildCsvGrowthDoctorSummary([
+      makePerformanceRecord({
+        title: "Debate Fox",
+        predator: "Wolf",
+        prey: "Elk",
+        animalPair: "Wolf vs Elk",
+        habitat: "Winter forest edge",
+        arc: "Pack hunting strategy",
+        reach: 42000,
+        views: 47000,
+        threeSecondViews: 32000,
+        oneMinuteViews: 9800,
+        averageWatchTimeSeconds: 18,
+        watchPercentage: 57,
+        shares: 14,
+        comments: 220,
+        followsGained: 2,
+        estimatedEarnings: 13,
+        rpm: 3.4,
+        monetizedPlays: 9800,
+      }),
+    ]);
+
+    const plan = buildGrowthDoctorActionPlan(summary, { pkg: makePackage() });
+    const shareAction = plan.actions.find(
+      (action) => action.id === "high-comments-low-shares-share-trigger"
+    );
+    const followAction = plan.actions.find(
+      (action) => action.id === "high-retention-low-follows-series-cta"
+    );
+
+    expect(shareAction?.variant.captionRewrite).toMatch(/\?$/m);
+    expect(shareAction?.variant.captionRewrite ?? "").not.toMatch(/like if|share if|comment yes|tag a friend/i);
+    expect(followAction?.variant.captionRewrite).toMatch(/series/i);
+  });
+
+  it("creates controlled boost guidance for low reach and high rpm", () => {
+    const summary = buildCsvGrowthDoctorSummary([
+      makePerformanceRecord({
+        title: "Breakout Bear",
+        predator: "Brown Bear",
+        prey: "Bison",
+        animalPair: "Brown Bear vs Bison",
+        habitat: "Snowy mountain valley",
+        arc: "Giant vs giant clash",
+        reach: 8000,
+        views: 12000,
+        threeSecondViews: 9800,
+        oneMinuteViews: 3100,
+        averageWatchTimeSeconds: 21,
+        watchPercentage: 64,
+        shares: 220,
+        comments: 90,
+        followsGained: 28,
+        estimatedEarnings: 44,
+        rpm: 6.8,
+        monetizedPlays: 6200,
+      }),
+    ]);
+
+    const plan = buildGrowthDoctorActionPlan(summary, {
+      pkg: makePackage(),
+      adSafeConflictScore: 88,
+      boostWorthyScore: 84,
+    });
+    const boostAction = plan.actions.find(
+      (action) => action.id === "low-reach-high-rpm-boost-plan"
+    );
+
+    expect(boostAction?.recommendedAction).toMatch(/controlled boost/i);
+    expect(boostAction?.variant.promptRewrite).toMatch(/AI-generated disclosure reminder/i);
+  });
+
+  it("creates winner remix pack actions and formats them for copy/export", () => {
+    const summary = buildCsvGrowthDoctorSummary([
+      makePerformanceRecord({
+        title: "Winner Orca",
+        predator: "Orca",
+        prey: "Seal",
+        animalPair: "Orca vs Seal",
+        habitat: "Cold coastal water",
+        arc: "Escape from danger",
+        reach: 18000,
+        views: 26000,
+        threeSecondViews: 21000,
+        oneMinuteViews: 7200,
+        averageWatchTimeSeconds: 22,
+        watchPercentage: 68,
+        shares: 260,
+        comments: 120,
+        followsGained: 45,
+        estimatedEarnings: 49,
+        rpm: 7.4,
+        monetizedPlays: 8800,
+      }),
+    ]);
+
+    const plan = buildGrowthDoctorActionPlan(summary, {
+      pkg: makePackage({ predatorName: "Orca", preyName: "Seal", environmentName: "Cold coastal water" }),
+      adSafeConflictScore: 90,
+      boostWorthyScore: 86,
+    });
+    const exportText = formatGrowthDoctorActionPlan(plan);
+
+    expect(plan.actions.some((action) => action.title === "Winner short-cut remix")).toBe(true);
+    expect(plan.actions.some((action) => action.title === "Winner 20–30s story cut")).toBe(true);
+    expect(plan.actions.some((action) => action.title === "Winner series continuation")).toBe(true);
+    expect(exportText).toMatch(/Action count:/i);
+    expect(exportText).toMatch(/Prompt rewrite:/i);
+    expect(exportText).toMatch(/Caption \/ CTA rewrite:/i);
+  });
+
+  it("falls back gracefully when package context is missing", () => {
+    const summary = buildCsvGrowthDoctorSummary([
+      makePerformanceRecord({
+        title: "Generic imported post",
+        predator: "",
+        prey: "",
+        animalPair: "",
+        habitat: "",
+        reach: 8000,
+        views: 12000,
+        threeSecondViews: 3200,
+        oneMinuteViews: 800,
+        averageWatchTimeSeconds: 6,
+        watchPercentage: 18,
+        shares: 8,
+        comments: 12,
+        followsGained: 1,
+        estimatedEarnings: 1,
+        rpm: 1.2,
+        monetizedPlays: 1400,
+      }),
+    ]);
+
+    const plan = buildGrowthDoctorActionPlan(summary);
+
+    expect(plan.actionCount).toBeGreaterThan(0);
+    expect(plan.actions[0]?.variant.promptRewrite.length).toBeGreaterThan(0);
   });
 });

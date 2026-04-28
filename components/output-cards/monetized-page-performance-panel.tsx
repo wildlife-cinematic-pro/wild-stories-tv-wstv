@@ -10,7 +10,9 @@ import type {
 
 import {
   buildCsvGrowthDoctorSummary,
+  buildGrowthDoctorActionPlan,
   formatCsvGrowthDoctorSummary,
+  formatGrowthDoctorActionPlan,
   importFacebookInsightsCsv,
   isFacebookInsightsCsvFile,
   matchFacebookInsightsRecord,
@@ -282,6 +284,19 @@ function formatGrowthDoctorRecordHeading(record: PerformanceTrackerEntry | null)
   );
 }
 
+
+/** Returns the visual accent class for Growth Doctor action priorities. */
+function getActionPriorityAccent(priority: "high" | "medium" | "low"): string {
+  switch (priority) {
+    case "high":
+      return "border-rose-200 bg-rose-50 text-rose-900";
+    case "medium":
+      return "border-amber-200 bg-amber-50 text-amber-900";
+    default:
+      return "border-sky-200 bg-sky-50 text-sky-900";
+  }
+}
+
 export function MonetizedPagePerformancePanel({
   data,
   onCopy,
@@ -341,6 +356,24 @@ export function MonetizedPagePerformancePanel({
   const growthDoctorSummaryText = useMemo(
     () => formatCsvGrowthDoctorSummary(growthDoctorSummary),
     [growthDoctorSummary]
+  );
+  const growthDoctorActionPlan = useMemo(
+    () =>
+      buildGrowthDoctorActionPlan(growthDoctorSummary, {
+        pkg: data,
+        adSafeConflictScore: report.scores.adSafeConflictScore,
+        boostWorthyScore: report.scores.boostWorthyScore,
+      }),
+    [
+      data,
+      growthDoctorSummary,
+      report.scores.adSafeConflictScore,
+      report.scores.boostWorthyScore,
+    ]
+  );
+  const growthDoctorActionPlanText = useMemo(
+    () => formatGrowthDoctorActionPlan(growthDoctorActionPlan),
+    [growthDoctorActionPlan]
   );
 
   const setTextField = (key: TextFieldKey, value: string) => {
@@ -475,6 +508,29 @@ export function MonetizedPagePerformancePanel({
 
     void onCopy(growthDoctorSummaryText);
     setNotice("Copied CSV Growth Doctor summary.");
+  };
+
+
+  /** Copies the local-only Growth Doctor action plan for remix and rewrite work. */
+  const copyGrowthDoctorActionPlan = () => {
+    if (growthDoctorActionPlan.actionCount === 0) {
+      setNotice("Import Facebook Insights CSV rows first to generate Growth Doctor actions.");
+      return;
+    }
+
+    void onCopy(growthDoctorActionPlanText);
+    setNotice("Copied Growth Doctor action plan.");
+  };
+
+  /** Copies one Growth Doctor action output and confirms what was copied. */
+  const copyGrowthDoctorActionOutput = (label: string, value: string | undefined) => {
+    if (!value?.trim()) {
+      setNotice(`${label} is not available for this action yet.`);
+      return;
+    }
+
+    void onCopy(value);
+    setNotice(`Copied ${label}.`);
   };
 
   const clearImportedRecords = () => {
@@ -848,8 +904,114 @@ export function MonetizedPagePerformancePanel({
                     </div>
                   </div>
                 )}
+
               </div>
             )}
+
+            <div
+              data-testid="growth-doctor-actions-panel"
+              className="mt-3 rounded-xl border border-[color:var(--border)] bg-[color:var(--surface-muted)] p-3"
+            >
+              <div className="flex flex-wrap items-start justify-between gap-3">
+                <div>
+                  <div className="text-xs font-bold uppercase tracking-wide text-[color:var(--text)]">
+                    Growth Doctor Actions
+                  </div>
+                  <p className="mt-1 text-[11px] leading-relaxed text-[color:var(--muted)]">
+                    Generated locally from imported CSV findings plus the current package context. No CSV data or action plans leave this browser.
+                  </p>
+                </div>
+                <button
+                  type="button"
+                  onClick={copyGrowthDoctorActionPlan}
+                  className="rounded-lg border border-[color:var(--border)] bg-[color:var(--surface-elevated)] px-3 py-1.5 text-xs font-bold text-[color:var(--muted)] hover:bg-[color:var(--surface-muted)] active:scale-95"
+                >
+                  Copy all action plan
+                </button>
+              </div>
+
+              {growthDoctorActionPlan.actionCount === 0 ? (
+                <div className="mt-3 rounded-xl border border-[color:var(--border)] bg-[color:var(--surface-elevated)] px-3 py-3 text-xs leading-relaxed text-[color:var(--muted)]">
+                  Import Facebook Insights CSV rows to generate action-ready remix and rewrite plans.
+                </div>
+              ) : (
+                <div className="mt-3 space-y-3">
+                  {growthDoctorActionPlan.actions.map((action) => (
+                    <div
+                      key={action.id}
+                      className="rounded-xl border border-[color:var(--border)] bg-[color:var(--surface-elevated)] p-3"
+                    >
+                      <div className="flex flex-wrap items-start justify-between gap-2">
+                        <div>
+                          <div className="flex flex-wrap items-center gap-2">
+                            <span className={`rounded-full border px-2 py-1 text-[11px] font-bold uppercase tracking-wide ${getActionPriorityAccent(action.priority)}`}>
+                              {action.priority}
+                            </span>
+                            <span className="rounded-full border border-[color:var(--border)] bg-[color:var(--surface-muted)] px-2 py-1 text-[11px] font-bold uppercase tracking-wide text-[color:var(--muted)]">
+                              {action.variant.engineTarget}
+                            </span>
+                          </div>
+                          <div className="mt-2 text-sm font-semibold text-[color:var(--text)]">
+                            {action.title}
+                          </div>
+                          <div className="mt-1 text-[11px] font-bold uppercase tracking-wide text-[color:var(--muted)]">
+                            {action.sourceFindingLabel}
+                          </div>
+                        </div>
+                        <div className="flex flex-wrap gap-2">
+                          <button
+                            type="button"
+                            onClick={() => copyGrowthDoctorActionOutput(`${action.title} prompt rewrite`, action.variant.promptRewrite)}
+                            className="rounded-lg border border-[color:var(--border)] bg-[color:var(--surface-muted)] px-3 py-1.5 text-xs font-bold text-[color:var(--muted)] hover:bg-[color:var(--surface-elevated)] active:scale-95"
+                          >
+                            Copy prompt
+                          </button>
+                          {action.variant.captionRewrite ? (
+                            <button
+                              type="button"
+                              onClick={() => copyGrowthDoctorActionOutput(`${action.title} caption rewrite`, action.variant.captionRewrite)}
+                              className="rounded-lg border border-[color:var(--border)] bg-[color:var(--surface-muted)] px-3 py-1.5 text-xs font-bold text-[color:var(--muted)] hover:bg-[color:var(--surface-elevated)] active:scale-95"
+                            >
+                              Copy caption
+                            </button>
+                          ) : null}
+                        </div>
+                      </div>
+
+                      <p className="mt-2 text-xs leading-relaxed text-[color:var(--muted)]">
+                        {action.diagnosis}
+                      </p>
+                      <p className="mt-1 text-xs leading-relaxed text-[color:var(--muted)]">
+                        Why it matters: {action.whyItMatters}
+                      </p>
+                      <p className="mt-1 text-xs font-semibold leading-relaxed text-[color:var(--text)]">
+                        Next: {action.recommendedAction}
+                      </p>
+
+                      <div className="mt-3 rounded-xl border border-[color:var(--border)] bg-[color:var(--surface-muted)] p-3">
+                        <div className="text-[11px] font-bold uppercase tracking-wide text-[color:var(--text)]">
+                          Prompt rewrite
+                        </div>
+                        <pre className="mt-2 whitespace-pre-wrap text-xs leading-relaxed text-[color:var(--text)]">
+                          {action.variant.promptRewrite}
+                        </pre>
+                      </div>
+
+                      {action.variant.captionRewrite ? (
+                        <div className="mt-3 rounded-xl border border-[color:var(--border)] bg-[color:var(--surface-muted)] p-3">
+                          <div className="text-[11px] font-bold uppercase tracking-wide text-[color:var(--text)]">
+                            Caption / CTA rewrite
+                          </div>
+                          <pre className="mt-2 whitespace-pre-wrap text-xs leading-relaxed text-[color:var(--text)]">
+                            {action.variant.captionRewrite}
+                          </pre>
+                        </div>
+                      ) : null}
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
           </div>
 
           <div className="rounded-2xl border border-[color:var(--border)] bg-[color:var(--surface-elevated)] p-4">
