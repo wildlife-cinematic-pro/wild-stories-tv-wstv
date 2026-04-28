@@ -694,7 +694,7 @@ export type StructuredPromptMetadata = {
   title?: string;
   motionIntensity?: number;
   durationSeconds?: number;
-  variant?: "single-shot" | "multi-shot" | "hybrid" | "native-10s" | "six-shot";
+  variant?: "single-shot" | "multi-shot" | "hybrid" | "native-10s" | "direct-15s-multishot" | "six-shot";
   workflowRole?: string;
 };
 

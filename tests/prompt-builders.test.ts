@@ -14,6 +14,7 @@ import {
   buildSeedancePromptPack,
   buildSeedanceShots,
   buildKlingNative15s,
+  buildKlingNative15sCard,
   buildKlingSixShot,
   buildCapCutPlan,
   buildClipChaining,
@@ -485,7 +486,7 @@ describe("Step 7 — Opening readability and tension clarity", () => {
     expect(shots.shot1).toContain("immediate visible tension");
   });
 
-  it("KlingNative15s includes opening-tension wording and first-frame readability", () => {
+  it("KlingNative15s exposes the direct 15-second multishot structure", () => {
     const out = buildKlingNative15s(
       base.predator,
       base.prey,
@@ -498,8 +499,14 @@ describe("Step 7 — Opening readability and tension clarity", () => {
       base.sceneDesc,
       quality
     );
-    expect(out).toContain("OPENING TENSION");
+    expect(out).toContain("KLING DIRECT 15S MULTISHOT");
+    expect(out).toContain("0–3s");
+    expect(out).toContain("3–7s");
+    expect(out).toContain("7–11s");
+    expect(out).toContain("11–15s");
     expect(out).toContain("fully readable from frame one");
+    expect(out).toContain("no visible dust");
+    expect(out).not.toContain("KLING NATIVE 10S");
   });
 });
 describe("Step 7B — Kling 6-shot opening readability", () => {
@@ -707,9 +714,15 @@ describe("Step 7C — supporting prompt helpers keep readability language", () =
     expect(pasteBlock.length).toBeGreaterThan(0);
     expect(pasteBlock).not.toContain("Shot:");
     expect(pasteBlock).not.toContain("Characters:");
-    expect(pasteBlock).not.toContain("Action:");
     expect(pasteBlock).not.toContain("Lighting & Location:");
+    expect(pasteBlock).toContain("KLING DIRECT 15S MULTISHOT");
+    expect(pasteBlock).toContain("0–3s Hook / Opening Tension");
+    expect(pasteBlock).toContain("3–7s Pressure Build");
+    expect(pasteBlock).toContain("7–11s Peak Action");
+    expect(pasteBlock).toContain("11–15s Resolved Tension / Final Hold");
     expect(pasteBlock).toContain("Wide opening hold with a subtle push-in");
+    expect(pasteBlock).toContain("no visible dust, no dirt spray, no debris particles, no kicked-up soil, no dust clouds");
+    expect(pasteBlock).not.toContain("KLING NATIVE 10S");
   });
 
   it("Kling native paste-ready block stays within the 2500-char limit", () => {
@@ -747,6 +760,25 @@ describe("Step 7C — supporting prompt helpers keep readability language", () =
     const pasteBlock = extractKlingPasteBlock(out);
     expect(pasteBlock).not.toContain("Prompt length OK:");
     expect(pasteBlock).not.toContain("PROMPT TOO LONG:");
+  });
+
+  it("Kling direct 15s card metadata is labeled for the direct multishot variant", () => {
+    const card = buildKlingNative15sCard(
+      klingBase.predator,
+      klingBase.prey,
+      klingBase.env,
+      klingBase.arc,
+      klingBase.weather,
+      "Kling 3.0 Pro",
+      klingBase.emotionalTone,
+      klingBase.animalVibe,
+      klingBase.sceneDesc,
+      quality
+    );
+
+    expect(card.metadata?.engine).toBe("kling");
+    expect(card.metadata?.title).toBe("Kling Direct 15s Multishot");
+    expect(card.metadata?.variant).toBe("direct-15s-multishot");
   });
 
   it("Kling 6-shot paste-ready block excludes validator metadata", () => {
@@ -1192,8 +1224,7 @@ describe("Step 12 — export cleanup guards", () => {
       expect(pasteBlock).toContain("Wide opening hold with a subtle push-in.");
       expect(pasteBlock).toContain("Both subjects are fully readable from frame one");
       expect(pasteBlock).not.toContain("Characters:");
-      expect(pasteBlock).not.toContain("Action:");
-      expect(pasteBlock).not.toContain("Lighting & Location:");
+        expect(pasteBlock).not.toContain("Lighting & Location:");
       expect(pasteBlock).not.toContain("Extra:");
     });
 
@@ -1328,8 +1359,7 @@ describe("Step 9 — Kling single-shot paste-ready narrative format", () => {
       expect(pasteBlock.length).toBeGreaterThan(0);
       expect(pasteBlock).not.toContain("Shot:");
       expect(pasteBlock).not.toContain("Characters:");
-      expect(pasteBlock).not.toContain("Action:");
-      expect(pasteBlock).not.toContain("Lighting & Location:");
+        expect(pasteBlock).not.toContain("Lighting & Location:");
       expect(pasteBlock).not.toContain("Extra:");
     }
   });
