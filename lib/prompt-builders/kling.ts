@@ -10,7 +10,7 @@ import type {
 } from "@/types";
 
 import { animalVibePrompt, emotionalTonePrompt, weatherVariants } from "@/lib/predator-data";
-import { KLING_STYLE_NOTE, arcCfgScale, getKlingCfgScales } from "@/lib/model-specs";
+import { KLING_STYLE_NOTE, arcCfgScale } from "@/lib/model-specs";
 
 import {
   getHabitatMode,
@@ -434,96 +434,126 @@ export function buildKlingNative15sCard(
   const note = KLING_STYLE_NOTE[model];
   const tone = emotionalTonePrompt[emotionalTone];
   const vibe = animalVibePrompt[animalVibe];
-  const micro = buildMicroMotionLine(weather, env);
   const cleanEnv = sanitizeImageEnv(env);
   const cleanWeather = sanitizeWeatherPhrase(weatherVariants[weather]);
   const qLead = buildQualityLead(quality, "kling");
-  const context = sceneDesc?.trim() ? `\nScene context: ${clipPromptContext(sceneDesc.trim())}` : "";
+  const context = sceneDesc?.trim() ? `
+Scene context: ${clipPromptContext(sceneDesc.trim())}` : "";
   const isNative = model === "Kling 3.0 Pro" || model === "Kling 3.0 Standard";
 
   if (!isNative) {
     return buildStructuredPrompt({
-      fullText: `⚠️ KLING NATIVE 10S: Requires Kling 3.0 Pro or Kling 3.0 Standard.
+      fullText: `⚠️ KLING DIRECT 15S MULTISHOT: Requires Kling 3.0 Pro or Kling 3.0 Standard.
 Selected: ${model}. Switch model to activate.`,
-      pasteReady: `⚠️ KLING NATIVE 10S: Requires Kling 3.0 Pro or Kling 3.0 Standard.
+      pasteReady: `⚠️ KLING DIRECT 15S MULTISHOT: Requires Kling 3.0 Pro or Kling 3.0 Standard.
 Selected: ${model}. Switch model to activate.`,
       metadata: {
         engine: "kling",
-        title: `Kling Native 10s [${model}]`,
-        variant: "native-10s",
+        title: "Kling Direct 15s Multishot",
+        variant: "direct-15s-multishot",
       },
     });
   }
 
   const refLine = quality?.referenceLock
-    ? "Reference lock active — enable Bind Subject (Elements 3.0) to preserve exact subject identity across all 3 beats."
-    : "Maintain consistent subject appearance, scale, and environment across all 3 beats.";
+    ? "Reference lock active - preserve continuity from the source/master image and enable Bind Subject (Elements 3.0) so anatomy, markings, and scale stay stable across the full 15-second sequence."
+    : "Preserve continuity from the source/master image so anatomy, markings, scale, terrain, and light direction stay stable across the full 15-second sequence.";
 
   const motionRule = quality?.motionOnlyI2V
-    ? "Motion-only mode — do not re-describe subject appearance. Keep the prompt focused on movement, timing, and continuity from the input image."
-    : "Keep visual restatement minimal across all beats.";
+    ? "Motion-only mode - keep Kling focused on movement, timing, and continuity from the source/master image without re-describing appearance."
+    : "Keep visual restatement minimal and let the continuity anchor come from the source/master image.";
 
   const wideRule = klingWidePhysicsRule();
-  const cfgScales = getKlingCfgScales(arc);
-  const cfgLine = `Guidance Scale: Shot 1 → ${cfgScales.shot1} | Shot 2 → ${cfgScales.shot2} | Shot 3 → ${cfgScales.shot3} (set in Kling settings, 0.0–1.0)`;
-  const gateOn = !!quality?.singleActionRule;
-  const habitatMode = getHabitatMode(predator, prey, env);
-  const isAquatic = habitatMode === "aquatic";
-  const isShoreline = habitatMode === "shoreline";
-  const b1 = oneActionArcBeat(arc, "establish", gateOn, habitatMode);
-  const b2 = oneActionArcBeat(arc, "action", gateOn, habitatMode);
-  const b3 = oneActionArcBeat(arc, "aftermath", gateOn, habitatMode);
+  const scenario = buildPromptScenarioContext({
+    predator,
+    prey,
+    env,
+    arc,
+    weather,
+    quality,
+    engine: "kling",
+  });
+  const {
+    isAquatic,
+    isShoreline,
+    isWaterForwardStrike,
+    isRutMirrorMatch,
+    micro,
+    rutCue,
+    cameraPromptTail,
+    cameraBreakdownLine,
+    beat1: s1,
+    beat3: s3,
+    beat4: s4,
+  } = scenario;
 
-  const s1 = {
-    ...b1,
-    predatorBeat: sanitizeVideoBeatText(b1.predatorBeat),
-    preyBeat: sanitizeVideoBeatText(b1.preyBeat),
-  };
-  const s2 = {
-    ...b2,
-    predatorBeat: sanitizeVideoBeatText(b2.predatorBeat),
-    preyBeat: sanitizeVideoBeatText(b2.preyBeat),
-  };
-  const s3 = {
-    ...b3,
-    predatorBeat: sanitizeVideoBeatText(b3.predatorBeat),
-    preyBeat: sanitizeVideoBeatText(b3.preyBeat),
-  };
-
-  const mi1 = getKlingMotionIntensity(arc, "establish");
-  const mi2 = getKlingMotionIntensity(arc, "action");
-  const mi3 = getKlingMotionIntensity(arc, "aftermath");
-
-  const audio1 = buildKlingAudioPrompt(predator, prey, env, weather, arc, "establish");
-  const audio2 = buildKlingAudioPrompt(predator, prey, env, weather, arc, "action");
-  const audio3 = buildKlingAudioPrompt(predator, prey, env, weather, arc, "aftermath");
-  const audio1Short = buildKlingAudioShort(predator, prey, env, weather, "establish");
-  const audio2Short = buildKlingAudioShort(predator, prey, env, weather, "action");
-  const audio3Short = buildKlingAudioShort(predator, prey, env, weather, "aftermath");
-
-  const nativeSceneLine = quality?.motionOnlyI2V
-    ? `Scene: preserve the input-frame terrain and light continuity, ${cleanWeather}.`
+  const pressurePredator = isAquatic
+    ? "holds controlled forward pressure through the water while staying fully readable"
     : isShoreline
-      ? `Scene: shoreline ambush zone, water edge, disturbed shallows, muddy bank, ${cleanWeather}.`
-      : `Scene: ${cleanEnv}, ${cleanWeather}.`;
+      ? isWaterForwardStrike
+        ? "leans farther forward from the bank as the strike lane tightens without collapsing the spacing"
+        : "leans farther forward from the shoreline with stronger visible ambush pressure while staying readable"
+      : isRutMirrorMatch
+        ? `edges forward with heavier shoulder-line pressure while keeping ${rutCue.room}`
+        : "leans farther forward with stronger visible pressure while staying fully readable";
 
-  const nativeCharacterLine = quality?.motionOnlyI2V
-    ? `Characters: same ${predator} identity from input frame. Same ${prey} identity from input frame.`
-    : `Characters: ${predator} (predator — drives scene pressure). ${prey} (prey — fully reactive throughout).`;
+  const pressurePrey = isAquatic
+    ? "tightens posture and makes one readable defensive adjustment in the current"
+    : isShoreline
+      ? isWaterForwardStrike
+        ? "shows one tense near-surface adjustment while keeping a clean bank-edge reaction lane"
+        : "lowers into one readable defensive footing adjustment near the bank"
+      : isRutMirrorMatch
+        ? "braces into one grounded footing reset without giving away the claim line"
+        : "lowers into one readable defensive adjustment without losing the reaction lane";
+
+  const dustFreeGroundLine =
+    "Ground behavior: grounded paw or hoof contact only, no visible dust, no dirt spray, no debris particles, no kicked-up soil, no dust clouds.";
+  const continuityLine =
+    `Continuity: keep the same ${predator} (left) and ${prey} (right) identities from the source/master image with stable anatomy, stable markings, and no drift in scale or coat pattern.`;
+  const frameLine =
+    "Framing: full-body 9:16 vertical throughout, clean reaction lane between subjects, no overlap, and left-right readability must stay obvious in every beat.";
+  const sceneLine = quality?.motionOnlyI2V
+    ? `Scene: preserve the source/master image terrain and light continuity in ${cleanEnv}, ${cleanWeather}.`
+    : `Scene: ${cleanEnv}, ${cleanWeather}. Preserve continuity from the source/master image.`;
+
+  const openingLine = isAquatic
+    ? `${predator} (left) ${s1.predatorBeat}. ${prey} (right) ${s1.preyBeat}. Both subjects are fully readable from frame one with immediate visible tension.`
+    : isShoreline
+      ? isWaterForwardStrike
+        ? `${predator} (left) holds low at the bank with the shallow strike window readable. ${prey} (right) stays just off the bank with one tense near-surface hold. Both subjects are fully readable from frame one with immediate visible tension.`
+        : `${predator} (left) ${s1.predatorBeat}. ${prey} (right) ${s1.preyBeat}. Both subjects are fully readable from frame one with immediate visible tension.`
+      : isRutMirrorMatch
+        ? `${predator} (left) holds the ${rutCue.line} with ${rutCue.room}. ${prey} (right) answers with matching shoulder tension and planted footing. Both subjects are fully readable from frame one with immediate visible dominance.`
+        : `${predator} (left) ${s1.predatorBeat}. ${prey} (right) ${s1.preyBeat}. Both subjects are fully readable from frame one with immediate visible tension.`;
+
+  const pressureLine = `${predator} (left) ${pressurePredator}. ${prey} (right) ${pressurePrey}. Full bodies stay readable, spacing stays clean, and the reaction lane stays open.`;
+
+  const peakLine = isRutMirrorMatch
+    ? `${predator} (left) loads weight and commits one heavy clash beat while keeping ${rutCue.room}. ${prey} (right) answers with one grounded shove or recoil without losing planted footing. Force reads clearly with no overlap.`
+    : `${predator} (left) ${s3.predatorBeat}. ${prey} (right) ${s3.preyBeat}. Peak force stays readable with no overlap and one dominant action only.`;
+
+  const resolvedLine = isRutMirrorMatch
+    ? `${predator} (left) settles weight while keeping the ${rutCue.line} clean. ${prey} (right) rebalances once and holds the claim line. Tension remains readable to the final frame.`
+    : isWaterForwardStrike
+      ? `${predator} (left) ${s4.predatorBeat}. ${prey} (right) holds a tense near-surface line as the bank-edge splash settles. Tension remains readable to the final frame.`
+      : `${predator} (left) ${s4.predatorBeat}. ${prey} (right) ${s4.preyBeat}. Tension remains readable to the final frame.`;
 
   const pasteReadyCore = [
-    quality?.motionOnlyI2V
-      ? `Keep the same ${predator} and ${prey} identities from the input image with matching terrain and light continuity, ${cleanWeather}. Photorealistic wildlife documentary in 9:16 vertical.`
-      : `${predator} and ${prey} remain consistent across all three beats in ${cleanEnv}, ${cleanWeather}. Photorealistic wildlife documentary in 9:16 vertical.`,
-    ``,
-    `0–3s: Wide opening hold with a subtle push-in. ${formatActionSubject(predator, s1.predatorBeat)}. ${prey} ${s1.preyBeat}. Both subjects fully readable from frame one, locked eye-line, clear spacing, immediate visible tension. ${micro}.`,
-    audio1Short,
-    ``,
-    `3–7s: Fixed wide action read. ${formatActionSubject(predator, s2.predatorBeat)}. ${prey} ${s2.preyBeat}. Both subjects fully visible, clear predator-to-prey line, readable spacing, and no overlap. ${micro}.`,
-    audio2Short,
-    ``,
-    `7–10s: Locked wide aftermath hold. ${formatActionSubject(predator, s3.predatorBeat)}. ${prey} ${s3.preyBeat}. Both subjects stay fully readable, spacing remains clear, and tension holds to the final frame. ${micro}.`,
-    audio3Short,
+    "KLING DIRECT 15S MULTISHOT",
+    `Keep the same ${predator} (left) and ${prey} (right) from the source/master image with stable anatomy, stable markings, and stable scale.`,
+    `Scene: ${cleanEnv}, ${cleanWeather}. Full-body 9:16 vertical. Clean reaction lane. No overlap.`,
+    dustFreeGroundLine,
+    `Preserve source/master-image continuity for terrain, light direction, spacing, and grounded contact. ${micro}.`,
+    "",
+    `0–3s Hook / Opening Tension: Wide opening hold with a subtle push-in.${cameraPromptTail} ${openingLine}`,
+    "",
+    `3–7s Pressure Build: Steady wide pressure build with a subtle forward creep.${cameraPromptTail} ${pressureLine}`,
+    "",
+    `7–11s Peak Action: Wide peak-action read with restrained handheld energy.${cameraPromptTail} ${peakLine}`,
+    "",
+    `11–15s Resolved Tension / Final Hold: Locked wide final hold with a subtle pull-back.${cameraPromptTail} ${resolvedLine}`,
+    `Style: ${vibe.style}. ${tone.video}. Photorealistic wildlife documentary realism.`,
   ]
     .join("\n")
     .trim();
@@ -533,80 +563,70 @@ Selected: ${model}. Switch model to activate.`,
     ? `PROMPT TOO LONG for WSTV house budget: ${klingValidation.length} / ~${KLING_CHAR_LIMIT}`
     : `Prompt length within WSTV house budget: ${klingValidation.length} / ~${KLING_CHAR_LIMIT} chars`;
 
-  const body = `═══ KLING 3.0 MULTI-SHOT PROMPT (SCALE format) ═══
+  const body = `═══ KLING DIRECT 15S MULTISHOT — REFERENCE BREAKDOWN ═══
 
-${nativeSceneLine}
-${nativeCharacterLine}
-Style: ${vibe.style}. ${tone.image}. Photorealistic wildlife documentary. 9:16 vertical frame.
-Arc: ${getSafeArcPrint(arc)}.
+${sceneLine}
+${continuityLine}
+${frameLine}
+${dustFreeGroundLine}
 ${wideRule}
+${context}
 
-Shot 1 — OPENING TENSION (0–3 seconds) | Motion: ${mi1.toFixed(2)}:
-${maybeGuard(s1.guardLine)}${predator} ${s1.predatorBeat}. ${prey} ${s1.preyBeat}.
-Opening priority: both subjects fully readable from frame one, locked eye-line, clear spacing, immediate visible tension.
-Camera: WIDE opening hold or subtle push-in, full bodies visible from frame one.
+Beat 1 — Hook / Opening Tension (0–3s):
+${openingLine}
+Camera: Wide opening hold with a subtle push-in.${cameraBreakdownLine}
 Environment motion: ${micro}.
-${audio1}
 
-Shot 2 — ACTION PRESSURE (3–7 seconds) — WIDE | Motion: ${mi2.toFixed(2)}:
-${maybeGuard(s2.guardLine)}${predator} ${s2.predatorBeat}. ${prey} ${s2.preyBeat}.
-Action priority: both subjects fully visible, clear predator-to-prey line, readable spacing, no overlap.
-Camera: FIXED WIDE — full bodies visible; no crop; no close-ups.
-Environment motion: ${
-  isAquatic
-    ? `surface response, grounded contact, ${micro}`
-    : isShoreline
-      ? `splash, muddy bank scatter, disturbed shallows, ${micro}`
-      : `surface response, grounded contact, ${micro}`
-}.
-Physics priority: grounded weight transfer, coherent limb mechanics, readable impact.
-${audio2}
+Beat 2 — Pressure Build (3–7s):
+${pressureLine}
+Camera: Steady wide pressure build with a subtle forward creep.${cameraBreakdownLine}
+Environment motion: ${micro}.
 
-Shot 3 — RESOLVED TENSION (7–10 seconds) — WIDE | Motion: ${mi3.toFixed(2)}:
-${maybeGuard(s3.guardLine)}${predator} ${s3.predatorBeat}. ${prey} ${s3.preyBeat}.
-End-state priority: both subjects fully readable, spacing still clear, tension remains visible to the final frame.
-Camera: LOCKED FIXED WIDE — full bodies visible; no crop; no close-ups.
-Environment motion: residual atmosphere — ${micro}.
-${audio3}`;
+Beat 3 — Peak Action (7–11s):
+${peakLine}
+Camera: Wide peak-action read with restrained handheld energy.${cameraBreakdownLine}
+Environment motion: ${micro}.
+
+Beat 4 — Resolved Tension / Final Hold (11–15s):
+${resolvedLine}
+Camera: Locked wide final hold with a subtle pull-back.${cameraBreakdownLine}
+Environment motion: ${micro}.`;
 
   return buildStructuredPrompt({
-    fullText: `KLING NATIVE 10-SECOND MULTI-SHOT [${model}]
+    fullText: `KLING DIRECT 15S MULTISHOT [${model}]
 ─────────────────────────────────────────────────────────
 ${note}
 ${qLead}
 ${refLine}
 ${motionRule}
-${cfgLine}
-Motion intensities: Shot 1 → ${mi1.toFixed(2)} | Shot 2 → ${mi2.toFixed(2)} | Shot 3 → ${mi3.toFixed(2)}${context}
+${context}
 
 ${klingLengthLine}
-═══ PASTE INTO KLING — kept near WSTV house prompt budget (~${KLING_CHAR_LIMIT} chars) (copy this block only) ═══
+═══ PASTE INTO KLING — direct 15s multishot (copy this block only) ═══
 ${pasteReadyCore}
 
 ─── FULL BREAKDOWN — reference only, do NOT paste into Kling ───
 ${body}
 
 ─────────────────────────────────────────────────────────
-HOW TO USE (Kling 3.0 WSTV Workflow):
+HOW TO USE (Kling direct 15s):
 1. Generate the master image first with the Nano Banana / Gemini image prompt.
-2. Upload master image as reference in Kling 3.0 Pro/Standard.
-3. Enable "Bind Subject" (Elements 3.0) for identity lock.
+2. Upload the master image as the continuity anchor in Kling 3.0 Pro or Kling 3.0 Standard.
+3. Enable Bind Subject (Elements 3.0) so subject identity stays stable across the full 15-second sequence.
 4. Paste ONLY the block above the FULL BREAKDOWN line into Kling.
-5. If Custom Multi-Shot exposes per-shot guidance, use Shot 1 → ${cfgScales.shot1}, Shot 2 → ${cfgScales.shot2}, Shot 3 → ${cfgScales.shot3}. If only one guidance field is available, start with ${cfgScales.shot2}.
-6. Enable native audio for documentary-quality sound.
-7. Use Kling 3.0's available output settings for the final delivery target you need.
-8. Optional: Set End Frame image for final-pose control.
-✅ Native single-prompt workflow — identity preserved across all 3 beats.`,
+5. Keep full-body 9:16 framing, left-right readability, and the clean reaction lane intact from opening through final hold.
+6. Keep grounded paw or hoof contact visible with dust-free ground behavior all the way through the final frame.
+✅ Direct one-paste 15-second multishot workflow - continuity preserved from the source/master image.`,
     pasteReady: sanitizeForEngine(pasteReadyCore, "kling"),
     settings: [
-      cfgLine,
-      `Motion intensities: ${mi1.toFixed(2)} / ${mi2.toFixed(2)} / ${mi3.toFixed(2)}`,
       klingLengthLine,
+      "Direct 15-second one-paste Kling workflow",
+      "Use the source/master image as the continuity anchor",
     ],
     metadata: {
       engine: "kling",
-      title: `Kling Native 10-second multi-shot [${model}]`,
-      variant: "native-10s",
+      title: "Kling Direct 15s Multishot",
+      variant: "direct-15s-multishot",
     },
   });
 }
