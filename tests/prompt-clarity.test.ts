@@ -101,7 +101,7 @@ describe("prompt clarity report", () => {
     expect(report.simplePrompt.prompt).toContain("golden-hour rim light");
 
     expect(report.primaryPrompt.label).toBe("PRIMARY PROMPT (Paste this first)");
-    expect(report.primaryPrompt.engine).toContain("Image master still");
+    expect(report.primaryPrompt.engine).toContain("Nano Banana 2 / Gemini master still");
     expect(report.primaryPrompt.reason).toContain("Selected automatically");
     expect(report.primaryPrompt.prompt.length).toBeGreaterThan(0);
 

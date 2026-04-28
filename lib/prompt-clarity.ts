@@ -791,6 +791,11 @@ function selectPrimaryCandidate(
   );
   const pool = primaryEligible.length ? primaryEligible : candidates;
 
+  const imageMaster = pool.find((candidate) => candidate.key === "image-master");
+  if (imageMaster && imageMaster.confidenceLevel !== "Risky") {
+    return imageMaster;
+  }
+
   return [...pool].sort((a, b) => {
     if (b.combinedDecisionScore !== a.combinedDecisionScore) {
       return b.combinedDecisionScore - a.combinedDecisionScore;
@@ -851,7 +856,7 @@ function buildFailureRecovery(
     why: "If the selected video prompt drifts or fails, reset identity and scene spacing with the master still before spending more motion credits.",
     fallbackPrompt: {
       label: "FALLBACK PROMPT (Recovery)",
-      engine: "Image master still (NB2)",
+      engine: "Nano Banana 2 / Gemini master still",
       reason: "Use this to rebuild subject identity, spacing, and light continuity before retrying motion.",
       prompt: imagePromptText,
     },
@@ -868,7 +873,7 @@ function buildCandidateDefinitions(
       key: "image-master",
       source: "image",
       label: "PRIMARY PROMPT (Paste this first)",
-      engine: "Image master still (NB2)",
+      engine: "Nano Banana 2 / Gemini master still",
       reason:
         "Best first-paste candidate when you want to lock subject identity, spacing, and lighting before motion generation.",
       prompt: imagePrompt.pasteReady,
