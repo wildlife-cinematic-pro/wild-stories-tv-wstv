@@ -695,6 +695,38 @@ export default function Page() {
     setHeroVeo,
   };
 
+  const storyboardHref = useMemo(() => {
+    const params = new URLSearchParams({
+      source: "build",
+      predator,
+      prey,
+      wildlifeScopeMode,
+      contentLane,
+      cameraAnglePreset,
+      arc: previewArc,
+      habitat,
+      weather,
+      durationLane,
+      sceneDescription,
+      sceneDescriptionMode,
+      sceneDescriptionTouched: String(sceneDescriptionTouched),
+    });
+
+    return "/storyboard?" + params.toString();
+  }, [
+    predator,
+    prey,
+    wildlifeScopeMode,
+    contentLane,
+    cameraAnglePreset,
+    previewArc,
+    habitat,
+    weather,
+    durationLane,
+    sceneDescription,
+    sceneDescriptionMode,
+    sceneDescriptionTouched,
+  ]);
   // ─── RENDER ───────────────────────────────────────────────────────────────
 
   return (
@@ -818,6 +850,22 @@ export default function Page() {
                     </div>
                   ))}
                 </nav>
+                <div className="border-t border-[color:var(--border)] px-3 py-3">
+                  <div className="flex flex-wrap items-center justify-between gap-3">
+                    <p className="text-xs leading-5 text-[color:var(--muted)]">
+                      Open a read-only storyboard preview generated from the current Build setup.
+                    </p>
+                    <Link
+                      href={storyboardHref}
+                      className="inline-flex items-center gap-2 rounded-xl border border-cyan-400/30 bg-cyan-500/10 px-3.5 py-2 text-xs font-semibold text-cyan-200 transition hover:border-cyan-300 hover:bg-cyan-500/15"
+                    >
+                      <span className="grid h-5 w-5 place-items-center rounded-full bg-cyan-400/15 text-[11px] text-cyan-200">
+                        ▣
+                      </span>
+                      Open Storyboard for Current Setup
+                    </Link>
+                  </div>
+                </div>
               </div>
             </div>
           )}

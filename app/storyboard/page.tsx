@@ -1,9 +1,32 @@
 import Link from "next/link";
 
+import {
+  buildStoryboardDownloadFilename,
+  buildStoryboardPreviewFromBuild,
+} from "@/lib/storyboard-from-build";
 import { loadStoryboardPreviewData } from "@/lib/storyboard-preview";
+import { normalizeWorkflowPresetSnapshot } from "@/lib/workflow-presets";
+
+type SearchParamValue = string | string[] | undefined;
+
+type StoryboardPageProps = {
+  searchParams?: Promise<Record<string, SearchParamValue>>;
+};
 
 function formatDuration(seconds: number): string {
   return String(seconds) + "s";
+}
+
+function flattenSearchParams(
+  searchParams: Record<string, SearchParamValue>
+): Record<string, string> {
+  return Object.fromEntries(
+    Object.entries(searchParams).flatMap(([key, value]) => {
+      if (typeof value === "string") return [[key, value]];
+      if (Array.isArray(value) && value[0]) return [[key, value[0]]];
+      return [];
+    })
+  );
 }
 
 function StatCard({ label, value }: { label: string; value: string }) {
@@ -30,8 +53,26 @@ function PromptBlock({ label, value }: { label: string; value: string }) {
   );
 }
 
-export default async function StoryboardPage() {
-  const storyboard = await loadStoryboardPreviewData();
+export default async function StoryboardPage({ searchParams }: StoryboardPageProps) {
+  const resolvedSearchParams = await (searchParams ?? Promise.resolve({}));
+  const flattenedSearchParams = flattenSearchParams(resolvedSearchParams);
+  const snapshot = normalizeWorkflowPresetSnapshot(flattenedSearchParams);
+  const useBuildMode =
+    flattenedSearchParams.source === "build" && snapshot !== null;
+
+  const storyboard = useBuildMode
+    ? buildStoryboardPreviewFromBuild({
+        predator: snapshot.predator,
+        prey: snapshot.prey,
+        habitat: snapshot.habitat,
+        weather: snapshot.weather,
+        arc: snapshot.arc,
+        contentLane: snapshot.contentLane,
+        cameraAnglePreset: snapshot.cameraAnglePreset,
+        durationLane: snapshot.durationLane,
+        sceneDescription: snapshot.sceneDescription,
+      })
+    : await loadStoryboardPreviewData();
 
   if (!storyboard) {
     return (
@@ -48,7 +89,8 @@ export default async function StoryboardPage() {
               <p className="mt-3 max-w-2xl text-sm leading-6 text-[color:var(--muted)]">
                 This page is a read-only preview of the isolated storyboard system. Run
                 <code className="mx-1 rounded bg-black/20 px-1.5 py-0.5 text-xs">npm run storyboard</code>
-                to refresh the export JSON files, then reload this page.
+                to refresh the export JSON files, then reload this page. You can also open this
+                page from Build using the current setup adapter.
               </p>
             </div>
             <Link
@@ -63,6 +105,15 @@ export default async function StoryboardPage() {
     );
   }
 
+  const downloadHref =
+    storyboard.mode === "build" && storyboard.exportData
+      ? `data:application/json;charset=utf-8,${encodeURIComponent(
+          JSON.stringify(storyboard.exportData, null, 2)
+        )}`
+      : null;
+  const downloadFileName =
+    storyboard.mode === "build" ? buildStoryboardDownloadFilename(storyboard) : null;
+
   return (
     <main className="min-h-screen bg-[color:var(--bg)] px-4 py-10 text-[color:var(--text)] sm:px-6 lg:px-8">
       <div className="mx-auto max-w-7xl space-y-8">
@@ -76,12 +127,15 @@ export default async function StoryboardPage() {
                 {storyboard.project}
               </h1>
               <p className="mt-3 max-w-3xl text-sm leading-6 text-[color:var(--muted)]">
-                Read-only creator preview sourced from storyboard_system exports. This page
-                displays storyboard planning prompts only and never generates final shots or
-                writes production outputs.
+                {storyboard.mode === "build"
+                  ? "Read-only storyboard preview generated from the current Build setup. This mode never writes repo files and is safe for quick creator planning."
+                  : "Read-only creator preview sourced from storyboard_system exports. This page displays storyboard planning prompts only and never generates final shots or writes production outputs."}
               </p>
             </div>
             <div className="flex flex-wrap gap-3">
+              <span className="inline-flex items-center rounded-full border border-cyan-400/30 bg-cyan-500/10 px-3 py-1 text-xs font-semibold text-cyan-200">
+                {storyboard.sourceLabel}
+              </span>
               <span
                 className={"inline-flex items-center rounded-full border px-3 py-1 text-xs font-semibold " +
                   (storyboard.valid
@@ -90,6 +144,15 @@ export default async function StoryboardPage() {
               >
                 {storyboard.valid ? "Validation passed" : "Needs attention"}
               </span>
+              {downloadHref && downloadFileName ? (
+                <a
+                  href={downloadHref}
+                  download={downloadFileName}
+                  className="rounded-xl border border-cyan-400/40 bg-cyan-500/10 px-4 py-2 text-sm font-semibold text-cyan-200 transition hover:border-cyan-300 hover:bg-cyan-500/15"
+                >
+                  Download storyboard.json
+                </a>
+              ) : null}
               <Link
                 href="/"
                 className="rounded-xl border border-[color:var(--border)] bg-[color:var(--surface)] px-4 py-2 text-sm font-semibold text-[color:var(--text)] transition hover:border-cyan-400/60 hover:text-cyan-300"
