@@ -1,5 +1,6 @@
 import Link from "next/link";
 
+import StoryboardSceneList from "@/components/storyboard/storyboard-scene-list";
 import {
   buildStoryboardDownloadFilename,
   buildStoryboardPreviewFromBuild,
@@ -36,19 +37,6 @@ function StatCard({ label, value }: { label: string; value: string }) {
         {label}
       </div>
       <div className="mt-2 text-lg font-semibold text-[color:var(--text)]">{value}</div>
-    </div>
-  );
-}
-
-function PromptBlock({ label, value }: { label: string; value: string }) {
-  return (
-    <div className="rounded-2xl border border-[color:var(--border)] bg-[color:var(--surface)] p-4">
-      <div className="text-[11px] font-semibold uppercase tracking-[0.18em] text-[color:var(--muted)]">
-        {label}
-      </div>
-      <p className="mt-3 whitespace-pre-wrap break-words text-sm leading-6 text-[color:var(--text)]">
-        {value}
-      </p>
     </div>
   );
 }
@@ -144,15 +132,6 @@ export default async function StoryboardPage({ searchParams }: StoryboardPagePro
               >
                 {storyboard.valid ? "Validation passed" : "Needs attention"}
               </span>
-              {downloadHref && downloadFileName ? (
-                <a
-                  href={downloadHref}
-                  download={downloadFileName}
-                  className="rounded-xl border border-cyan-400/40 bg-cyan-500/10 px-4 py-2 text-sm font-semibold text-cyan-200 transition hover:border-cyan-300 hover:bg-cyan-500/15"
-                >
-                  Download storyboard.json
-                </a>
-              ) : null}
               <Link
                 href="/"
                 className="rounded-xl border border-[color:var(--border)] bg-[color:var(--surface)] px-4 py-2 text-sm font-semibold text-[color:var(--text)] transition hover:border-cyan-400/60 hover:text-cyan-300"
@@ -176,56 +155,11 @@ export default async function StoryboardPage({ searchParams }: StoryboardPagePro
           </div>
         </section>
 
-        <section className="space-y-6">
-          {storyboard.sequence.map((scene) => (
-            <article
-              key={scene.id}
-              className="rounded-[28px] border border-[color:var(--border)] bg-[color:var(--surface-elevated)] p-6 shadow-[var(--surface-shadow)]"
-            >
-              <div className="flex flex-wrap items-start justify-between gap-4">
-                <div>
-                  <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-cyan-400/80">
-                    Scene {String(scene.id).padStart(2, "0")}
-                  </p>
-                  <h2 className="mt-2 text-2xl font-semibold tracking-tight text-[color:var(--text)]">
-                    {scene.displayName}
-                  </h2>
-                </div>
-                <div className="space-y-2 text-right text-xs text-[color:var(--muted)]">
-                  <div>Duration: {formatDuration(scene.duration)}</div>
-                  <div>
-                    Final shot reference: {scene.finalShotReference ? scene.finalShotReference : "None"}
-                  </div>
-                </div>
-              </div>
-
-              <div className="mt-6 grid gap-4 md:grid-cols-3">
-                <StatCard label="Camera" value={scene.camera} />
-                <StatCard label="Motion" value={scene.motion} />
-                <StatCard label="Start Time" value={formatDuration(scene.startTime)} />
-              </div>
-
-              <div className="mt-6 grid gap-4 xl:grid-cols-2">
-                <PromptBlock label="Image Prompt" value={scene.imagePrompt} />
-                <PromptBlock label="Video Prompt" value={scene.videoPrompt} />
-                <PromptBlock label="Runway Prompt" value={scene.runwayPrompt} />
-                <PromptBlock label="Kling Prompt" value={scene.klingPrompt} />
-                <PromptBlock
-                  label="Negative Prompt"
-                  value={scene.negativePrompt || "No negative prompt provided."}
-                />
-                <PromptBlock
-                  label="Continuity Rules"
-                  value={
-                    scene.continuityRules.length > 0
-                      ? scene.continuityRules.join("\n")
-                      : "No continuity rules provided."
-                  }
-                />
-              </div>
-            </article>
-          ))}
-        </section>
+        <StoryboardSceneList
+          storyboard={storyboard}
+          downloadStoryboardJsonHref={downloadHref}
+          downloadStoryboardJsonFilename={downloadFileName}
+        />
       </div>
     </main>
   );
