@@ -6,6 +6,7 @@ import type { Arc, GeneratedPackage, QualityOptions, Weather } from "@/types";
 import { buildExportTxtFull } from "@/lib/export-text";
 import {
   buildImagePrompt,
+  buildGptImage2Prompt,
   buildShotImagePlan,
   buildRunwayShots,
   buildKlingShots,
@@ -78,6 +79,22 @@ function makePackage(input: {
     "NANO_BANANA_2"
   );
 
+  const gptImage2Prompt = buildGptImage2Prompt(
+    predator,
+    prey,
+    env,
+    arc,
+    "golden hour sunlight with realistic shadow direction",
+    "Canon EOS R5, 400mm wildlife lens",
+    "detailed fur texture, grounded contact, natural terrain detail",
+    "Balanced Depth",
+    weather,
+    "Raw Tension",
+    "National Geographic Wild",
+    sceneDesc,
+    quality
+  );
+
   const runway = buildRunwayShots(
     predator,
     prey,
@@ -121,6 +138,7 @@ function makePackage(input: {
     preyName: prey,
     arcName: arc,
     imagePrompt,
+    gptImage2Prompt,
     negativePrompt: "",
     thumbnailPrompt: buildThumbnailPrompt(
       predator,
@@ -177,6 +195,7 @@ describe("live export TXT path", () => {
     expect(text).not.toMatch(/\bClear U\.(?=\s|$)/);
     expect(text).toContain("Clear U.S. wildlife setup.");
     expect(text).toContain("FRAME HEURISTICS");
+    expect(text).toContain("GPT IMAGE 2 BACKUP PROMPT");
     expect(text).not.toMatch(/balanced first-frame clarity|balanced facebook cover readability|context fit/i);
     expect(text).not.toContain("same environment continuity");
     expect(text).not.toContain("stable clean air");

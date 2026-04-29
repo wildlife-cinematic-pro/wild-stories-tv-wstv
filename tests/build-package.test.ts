@@ -164,6 +164,11 @@ describe("build-package refactor seam", () => {
     expect(prompts?.imagePrompt?.fullText).toBe(draft.basePkg.imagePrompt);
     expect(prompts?.imagePrompt?.pasteReady).toBe(draft.basePkg.imagePrompt);
     expect(prompts?.imagePrompt?.metadata?.engine).toBe("image");
+    expect(prompts?.gptImage2Prompt?.fullText).toBe(draft.basePkg.gptImage2Prompt);
+    expect(prompts?.gptImage2Prompt?.pasteReady).toBe(draft.basePkg.gptImage2Prompt);
+    expect(prompts?.gptImage2Prompt?.metadata?.engine).toBe("image");
+    expect(prompts?.gptImage2Prompt?.fullText).toContain("No text unless explicitly requested.");
+    expect(prompts?.gptImage2Prompt?.fullText).toContain("Leave slight negative space for cover-safe framing and social preview overlays.");
     expect(prompts?.imagePrompt?.fullText).not.toMatch(/--ar\s+9:16/i);
     expect(prompts?.imagePrompt?.fullText).not.toMatch(/--style\s+raw/i);
 

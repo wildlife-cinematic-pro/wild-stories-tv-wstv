@@ -179,6 +179,13 @@ export function getImagePromptCard(data: GeneratedPackage): StructuredPrompt {
   );
 }
 
+export function getGptImage2PromptCard(data: GeneratedPackage): StructuredPrompt {
+  return (
+    data.structuredPrompts?.gptImage2Prompt ??
+    buildLegacyPromptCard("image", String(data.gptImage2Prompt ?? ""))
+  );
+}
+
 export function getSeedanceMultiShotCard(
   data: GeneratedPackage
 ): StructuredPrompt {
