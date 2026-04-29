@@ -2,32 +2,21 @@ import Link from "next/link";
 
 import StoryboardSceneList from "@/components/storyboard/storyboard-scene-list";
 import {
-  buildStoryboardDownloadFilename,
+  buildStoryboardJsonFromBuild,
   buildStoryboardPreviewFromBuild,
+  type BuildStoryboardInput,
+  type StoryboardPreviewData,
 } from "@/lib/storyboard-from-build";
 import { loadStoryboardPreviewData } from "@/lib/storyboard-preview";
-import { normalizeWorkflowPresetSnapshot } from "@/lib/workflow-presets";
 
-type SearchParamValue = string | string[] | undefined;
+type SearchParams = Record<string, string | string[] | undefined>;
 
 type StoryboardPageProps = {
-  searchParams?: Promise<Record<string, SearchParamValue>>;
+  searchParams?: Promise<SearchParams>;
 };
 
 function formatDuration(seconds: number): string {
   return String(seconds) + "s";
-}
-
-function flattenSearchParams(
-  searchParams: Record<string, SearchParamValue>
-): Record<string, string> {
-  return Object.fromEntries(
-    Object.entries(searchParams).flatMap(([key, value]) => {
-      if (typeof value === "string") return [[key, value]];
-      if (Array.isArray(value) && value[0]) return [[key, value[0]]];
-      return [];
-    })
-  );
 }
 
 function StatCard({ label, value }: { label: string; value: string }) {
@@ -41,26 +30,60 @@ function StatCard({ label, value }: { label: string; value: string }) {
   );
 }
 
-export default async function StoryboardPage({ searchParams }: StoryboardPageProps) {
-  const resolvedSearchParams = await (searchParams ?? Promise.resolve({}));
-  const flattenedSearchParams = flattenSearchParams(resolvedSearchParams);
-  const snapshot = normalizeWorkflowPresetSnapshot(flattenedSearchParams);
-  const useBuildMode =
-    flattenedSearchParams.source === "build" && snapshot !== null;
+function getFirst(value: string | string[] | undefined): string {
+  return Array.isArray(value) ? value[0] ?? "" : value ?? "";
+}
 
-  const storyboard = useBuildMode
-    ? buildStoryboardPreviewFromBuild({
-        predator: snapshot.predator,
-        prey: snapshot.prey,
-        habitat: snapshot.habitat,
-        weather: snapshot.weather,
-        arc: snapshot.arc,
-        contentLane: snapshot.contentLane,
-        cameraAnglePreset: snapshot.cameraAnglePreset,
-        durationLane: snapshot.durationLane,
-        sceneDescription: snapshot.sceneDescription,
-      })
-    : await loadStoryboardPreviewData();
+function readBuildStoryboardInput(params: SearchParams): BuildStoryboardInput | null {
+  if (getFirst(params.source) !== "build") return null;
+
+  const predator = getFirst(params.predator).trim();
+  const prey = getFirst(params.prey).trim();
+
+  if (!predator || !prey) return null;
+
+  return {
+    predator,
+    prey,
+    habitat: (getFirst(params.habitat) || "Auto") as BuildStoryboardInput["habitat"],
+    weather: (getFirst(params.weather) || "Golden Hour") as BuildStoryboardInput["weather"],
+    arc: (getFirst(params.arc) || "Ambush attack") as BuildStoryboardInput["arc"],
+    contentLane: (getFirst(params.contentLane) || "Auto") as BuildStoryboardInput["contentLane"],
+    cameraAnglePreset: (getFirst(params.cameraAnglePreset) || "Auto") as BuildStoryboardInput["cameraAnglePreset"],
+    durationLane: (getFirst(params.durationLane) || "short") as BuildStoryboardInput["durationLane"],
+    sceneDescription: getFirst(params.sceneDescription),
+    finalEnvironment: getFirst(params.finalEnvironment) || null,
+  };
+}
+
+function buildStoryboardJsonDownload(storyboardInput: BuildStoryboardInput): {
+  href: string;
+  filename: string;
+} {
+  const exportPayload = buildStoryboardJsonFromBuild(storyboardInput);
+
+  return {
+    href: `data:application/json;charset=utf-8,${encodeURIComponent(JSON.stringify(exportPayload, null, 2))}`,
+    filename: `${exportPayload.project}.storyboard.json`,
+  };
+}
+
+export default async function StoryboardPage({ searchParams }: StoryboardPageProps) {
+  const resolvedSearchParams = (await searchParams) ?? {};
+  const buildStoryboardInput = readBuildStoryboardInput(resolvedSearchParams);
+
+  let storyboard: StoryboardPreviewData | null = null;
+  let downloadStoryboardJsonHref: string | null = null;
+  let downloadStoryboardJsonFilename: string | null = null;
+
+  if (buildStoryboardInput) {
+    storyboard = buildStoryboardPreviewFromBuild(buildStoryboardInput);
+    const downloadBundle = buildStoryboardJsonDownload(buildStoryboardInput);
+    downloadStoryboardJsonHref = downloadBundle.href;
+    downloadStoryboardJsonFilename = downloadBundle.filename;
+  } else {
+    storyboard = await loadStoryboardPreviewData();
+  }
 
   if (!storyboard) {
     return (
@@ -77,8 +100,7 @@ export default async function StoryboardPage({ searchParams }: StoryboardPagePro
               <p className="mt-3 max-w-2xl text-sm leading-6 text-[color:var(--muted)]">
                 This page is a read-only preview of the isolated storyboard system. Run
                 <code className="mx-1 rounded bg-black/20 px-1.5 py-0.5 text-xs">npm run storyboard</code>
-                to refresh the export JSON files, then reload this page. You can also open this
-                page from Build using the current setup adapter.
+                to refresh the export JSON files, then reload this page.
               </p>
             </div>
             <Link
@@ -93,15 +115,6 @@ export default async function StoryboardPage({ searchParams }: StoryboardPagePro
     );
   }
 
-  const downloadHref =
-    storyboard.mode === "build" && storyboard.exportData
-      ? `data:application/json;charset=utf-8,${encodeURIComponent(
-          JSON.stringify(storyboard.exportData, null, 2)
-        )}`
-      : null;
-  const downloadFileName =
-    storyboard.mode === "build" ? buildStoryboardDownloadFilename(storyboard) : null;
-
   return (
     <main className="min-h-screen bg-[color:var(--bg)] px-4 py-10 text-[color:var(--text)] sm:px-6 lg:px-8">
       <div className="mx-auto max-w-7xl space-y-8">
@@ -115,15 +128,10 @@ export default async function StoryboardPage({ searchParams }: StoryboardPagePro
                 {storyboard.project}
               </h1>
               <p className="mt-3 max-w-3xl text-sm leading-6 text-[color:var(--muted)]">
-                {storyboard.mode === "build"
-                  ? "Read-only storyboard preview generated from the current Build setup. This mode never writes repo files and is safe for quick creator planning."
-                  : "Read-only creator preview sourced from storyboard_system exports. This page displays storyboard planning prompts only and never generates final shots or writes production outputs."}
+                Read-only creator preview for storyboard planning prompts. This page never generates final shots and never writes production outputs.
               </p>
             </div>
             <div className="flex flex-wrap gap-3">
-              <span className="inline-flex items-center rounded-full border border-cyan-400/30 bg-cyan-500/10 px-3 py-1 text-xs font-semibold text-cyan-200">
-                {storyboard.sourceLabel}
-              </span>
               <span
                 className={"inline-flex items-center rounded-full border px-3 py-1 text-xs font-semibold " +
                   (storyboard.valid
@@ -131,6 +139,9 @@ export default async function StoryboardPage({ searchParams }: StoryboardPagePro
                     : "border-amber-400/40 bg-amber-500/10 text-amber-200")}
               >
                 {storyboard.valid ? "Validation passed" : "Needs attention"}
+              </span>
+              <span className="inline-flex items-center rounded-full border border-cyan-400/40 bg-cyan-500/10 px-3 py-1 text-xs font-semibold text-cyan-200">
+                {storyboard.sourceLabel}
               </span>
               <Link
                 href="/"
@@ -141,24 +152,32 @@ export default async function StoryboardPage({ searchParams }: StoryboardPagePro
             </div>
           </div>
 
+          <div className="mt-6 rounded-2xl border border-cyan-400/30 bg-cyan-500/10 p-4">
+            <div className="text-[11px] font-semibold uppercase tracking-[0.18em] text-cyan-200">
+              Master Image Strategy
+            </div>
+            <p className="mt-2 text-sm leading-6 text-cyan-50/90">
+              Nano Banana 2 is recommended for wildlife documentary master stills. GPT Image 2 is recommended as backup for thumbnail, cover, alternate clean frame, or strict layout refinement. Use the master image first, then send it to Runway/Kling for video motion.
+            </p>
+          </div>
+
           <div className="mt-8 grid gap-4 md:grid-cols-4">
             <StatCard label="Total Duration" value={formatDuration(storyboard.duration)} />
             <StatCard label="Scene Count" value={String(storyboard.sceneCount)} />
-            <StatCard
-              label="Valid Scenes"
-              value={String(storyboard.summary.validScenes) + "/" + String(storyboard.summary.sceneCount)}
-            />
-            <StatCard
-              label="Valid Prompts"
-              value={String(storyboard.summary.validPrompts) + "/" + String(storyboard.summary.promptCount)}
-            />
+            <StatCard label="Valid Scenes" value={String(storyboard.summary.validScenes) + "/" + String(storyboard.summary.sceneCount)} />
+            <StatCard label="Valid Prompts" value={String(storyboard.summary.validPrompts) + "/" + String(storyboard.summary.promptCount)} />
+          </div>
+
+          <div className="mt-4 grid gap-4 md:grid-cols-2">
+            <StatCard label="Primary Master Engine" value={storyboard.masterImagePrimaryEngine ?? "nano-banana-2"} />
+            <StatCard label="Backup Image Engine" value={storyboard.masterImageBackupEngine ?? "gpt-image-2"} />
           </div>
         </section>
 
         <StoryboardSceneList
           storyboard={storyboard}
-          downloadStoryboardJsonHref={downloadHref}
-          downloadStoryboardJsonFilename={downloadFileName}
+          downloadStoryboardJsonHref={downloadStoryboardJsonHref}
+          downloadStoryboardJsonFilename={downloadStoryboardJsonFilename}
         />
       </div>
     </main>
