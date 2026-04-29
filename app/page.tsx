@@ -447,6 +447,35 @@ export default function Page() {
     ]
   );
 
+  const currentStoryboardHref = useMemo(() => {
+    const params = new URLSearchParams({
+      source: "build",
+      predator,
+      prey,
+      habitat,
+      weather,
+      arc: previewArc,
+      contentLane,
+      cameraAnglePreset,
+      durationLane,
+      sceneDescription,
+      finalEnvironment,
+    });
+
+    return `/storyboard?${params.toString()}`;
+  }, [
+    cameraAnglePreset,
+    contentLane,
+    durationLane,
+    finalEnvironment,
+    habitat,
+    predator,
+    prey,
+    previewArc,
+    sceneDescription,
+    weather,
+  ]);
+
   const activePromotedPublishCopyOverride = useMemo<ActivePromotedPublishCopyOverride | null>(
     () => {
       if (!promotedPublishCopyOverride) return null;
@@ -879,6 +908,27 @@ export default function Page() {
         <>
           {/* Page content */}
           <div className="mx-auto w-full max-w-[var(--main-max-width)] px-4 py-5 sm:px-6 sm:py-8 lg:px-8">
+            <div className="mb-5 rounded-[24px] border border-[color:var(--border)] bg-[color:var(--surface-elevated)] p-4 shadow-[var(--surface-shadow)]">
+              <div className="flex flex-wrap items-start justify-between gap-4">
+                <div>
+                  <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-cyan-400/80">
+                    Storyboard preview
+                  </p>
+                  <h2 className="mt-2 text-lg font-semibold text-[color:var(--text)]">
+                    Open Storyboard for Current Setup
+                  </h2>
+                  <p className="mt-2 max-w-3xl text-sm leading-6 text-[color:var(--muted)]">
+                    Storyboard will generate Nano Banana 2 master image prompts and GPT Image 2 backup prompts for the current animal setup.
+                  </p>
+                </div>
+                <Link
+                  href={currentStoryboardHref}
+                  className="rounded-xl border border-[color:var(--border)] bg-[color:var(--surface)] px-4 py-2 text-sm font-semibold text-[color:var(--text)] transition hover:border-cyan-400/60 hover:text-cyan-200"
+                >
+                  Open Storyboard for Current Setup
+                </Link>
+              </div>
+            </div>
 
             {step === 1 && (
               <Step1Setup

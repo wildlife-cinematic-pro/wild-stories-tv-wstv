@@ -15,7 +15,8 @@ export default function CopyScenePromptsButton({
     <CopyButton
       text={text}
       label={`Scene ${String(sceneId).padStart(2, "0")} Prompts`}
-      size="md"
+      idleText="Copy Scene Prompts"
+      size="sm"
     />
   );
 }
