@@ -105,6 +105,94 @@ function TextBox({ value }: { value: string }) {
   );
 }
 
+function slugifyReference(value: string, fallback: string) {
+  const slug = String(value || fallback)
+    .trim()
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "_")
+    .replace(/^_+|_+$/g, "");
+
+  return slug || fallback;
+}
+
+function buildAnimalMasterReferencePrompt({
+  subjectName,
+  roleLabel,
+  environmentName,
+  imagePrompt,
+}: {
+  subjectName: string;
+  roleLabel: string;
+  environmentName: string;
+  imagePrompt: string;
+}) {
+  return [
+    `Gemini-enhanced prompt for Runway Gen-4 Image production reference.`,
+    `Create a reusable ${roleLabel} master reference image for ${subjectName}.`,
+    `Single animal only, full body readable, neutral grounded stance, stable anatomy, clear identity markers, realistic scale, grounded hoof/paw/foot contact, simple uncluttered background.`,
+    `Use Gemini/Nano Banana 2 for prompt enhancement or optional concept drafting only; production reference is built in Runway Gen-4 Image.`,
+    `Environment context for lighting/style only: ${environmentName}.`,
+    imagePrompt ? `Prompt-quality source: ${imagePrompt}` : null,
+  ]
+    .filter(Boolean)
+    .join("\n");
+}
+
+function buildEnvironmentMasterReferencePrompt(environmentName: string) {
+  return [
+    `Gemini-enhanced prompt for Runway Gen-4 Image production reference.`,
+    `Create a reusable environment/background master reference for ${environmentName}.`,
+    `Environment only, no animals, no people, no buildings, no roads. Keep clean open central space for future wildlife subjects, readable habitat texture, natural ground plane, realistic atmosphere, and production-friendly lighting.`,
+    `Use Gemini/Nano Banana 2 for prompt enhancement or optional concept drafting only; production reference is built in Runway Gen-4 Image.`,
+  ].join("\n");
+}
+
+function buildFinalMergeMasterPrompt({
+  leadAnimalName,
+  oppositeAnimalName,
+  environmentName,
+  leadTag,
+  oppositeTag,
+  environmentTag,
+}: {
+  leadAnimalName: string;
+  oppositeAnimalName: string;
+  environmentName: string;
+  leadTag: string;
+  oppositeTag: string;
+  environmentTag: string;
+}) {
+  return [
+    `Runway Gen-4 References final merge master image using exactly 3 active references: ${leadTag}, ${oppositeTag}, ${environmentTag}.`,
+    `Use ${leadTag} only for ${leadAnimalName} lead animal / predator identity.`,
+    `Use ${oppositeTag} only for ${oppositeAnimalName} opposite animal / prey-defender identity.`,
+    `Use ${environmentTag} only for ${environmentName} background, lighting, ground texture, and atmosphere.`,
+    `Create one final scene master image with both animals fully visible, clean readable spacing, clear open reaction lane, stable anatomy, grounded contact, and photorealistic wildlife documentary composition.`,
+    `This final scene master image becomes the source image for Runway image-to-video and Kling continuity handoff.`,
+  ].join("\n");
+}
+
+function buildHybridRoutingGuide() {
+  return [
+    "PRIMARY HYBRID 4-SHOT ROUTING",
+    "Gemini/Nano Banana 2 improves prompt quality and can draft optional concepts; it is not the whole production path.",
+    "1. Build the lead animal / predator master reference in Runway Gen-4 Image.",
+    "2. Build the opposite animal / prey-defender master reference in Runway Gen-4 Image.",
+    "3. Build the environment/background master reference in Runway Gen-4 Image.",
+    "4. Build the final scene master image in Runway Gen-4 References using exactly 3 active references.",
+    "5. Use the final scene master image as the source image for video generation.",
+    "6. Shot 1 uses Runway Gen-4/Gen-4.5 image-to-video for clean opening tension.",
+    "7. Shot 2 uses Kling for pressure/action physics.",
+    "8. Shot 3 uses Kling for peak action physics.",
+    "9. Shot 4 returns to Runway Gen-4/Gen-4.5 for resolved tension and final settle.",
+    "10. Add ElevenLabs 20s action music under the 4-shot edit.",
+  ].join("\n");
+}
+
+function buildElevenLabs20sPrompt() {
+  return "20-second cinematic wildlife action trailer music for a 4-shot survival sequence. Low suspense drone, rising deep drums, cinematic hits at 5s, 10s, and 15s, environment ambience, tense pulses, no vocals, no narration. End with a final bass hit and natural ambience tail.";
+}
+
 export function WorkflowPromptMap({
   data,
   onCopy,
@@ -131,6 +219,8 @@ export function WorkflowPromptMap({
     pipeline: string;
     bannerTitle: string;
     bannerBody: string;
+    workflowLabel?: string;
+    topNote?: string;
     steps: WorkflowItem[];
   };
 
@@ -153,6 +243,12 @@ export function WorkflowPromptMap({
   );
   const seedanceWorkflowGuide = safeText(data.seedanceWorkflowGuide ?? "");
   const routingNote = safeText(data.routingNote ?? "");
+  const leadAnimalName = safeText(data.predatorName) || "lead animal";
+  const oppositeAnimalName = safeText(data.preyName) || "opposite animal";
+  const environmentName = safeText(data.environmentName) || "natural wildlife environment";
+  const leadReferenceTag = `@${slugifyReference(leadAnimalName, "lead_animal")}`;
+  const oppositeReferenceTag = `@${slugifyReference(oppositeAnimalName, "opposite_animal")}`;
+  const environmentReferenceTag = `@${slugifyReference(environmentName, "environment_reference")}`;
 
   const drift = deriveDriftLabel(data.clipChaining);
 
@@ -163,6 +259,10 @@ export function WorkflowPromptMap({
     4: false,
     5: false,
     6: false,
+    7: false,
+    8: false,
+    9: false,
+    10: false,
   };
 
   const [mode, setMode] = useState<WorkflowMode>("hybrid");
@@ -190,14 +290,13 @@ export function WorkflowPromptMap({
     4: null,
     5: null,
     6: null,
+    7: null,
+    8: null,
+    9: null,
+    10: null,
   });
 
   const done = doneByMode[mode];
-
-  const copiedCount = useMemo(
-    () => Object.values(done).filter(Boolean).length,
-    [done]
-  );
 
   const workflows = useMemo<Record<WorkflowMode, WorkflowConfig>>(() => {
     const imageCardColor = {
@@ -229,6 +328,11 @@ export function WorkflowPromptMap({
       border: "border-indigo-400",
       bg: "bg-indigo-50",
       badge: "bg-indigo-100 text-indigo-700",
+    };
+    const musicColor = {
+      border: "border-rose-400",
+      bg: "bg-rose-50",
+      badge: "bg-rose-100 text-rose-700",
     };
 
     const imageStep: WorkflowItem = {
@@ -273,16 +377,31 @@ export function WorkflowPromptMap({
     ].join("\n");
 
     const hybridGuide = [
-      "PRIMARY HYBRID 4-SHOT ROUTING",
-      "This is the main WSTV production path.",
-      "1. Generate the master still first.",
-      "2. Shot 1 uses Runway for the clean readable opening tension.",
-      "3. Shot 2 uses Kling for pressure build.",
-      "4. Shot 3 uses Kling for peak action.",
-      "5. Shot 4 returns to Runway for the clean readable resolved tension.",
-      "6. Keep continuity-safe edited images between every shot handoff.",
-      routingNote || "Routing note: Runway 1 → Kling 2-3 → Runway 4.",
-    ].join("\n");
+      buildHybridRoutingGuide(),
+      routingNote ? `Routing note from package: ${routingNote}` : "Routing note: Runway Shot 1 → Kling Shot 2–3 → Runway Shot 4, all sourced from the final scene master image.",
+    ].join("\n\n");
+    const leadMasterPrompt = buildAnimalMasterReferencePrompt({
+      subjectName: leadAnimalName,
+      roleLabel: "lead animal / predator",
+      environmentName,
+      imagePrompt,
+    });
+    const oppositeMasterPrompt = buildAnimalMasterReferencePrompt({
+      subjectName: oppositeAnimalName,
+      roleLabel: "opposite animal / prey-defender",
+      environmentName,
+      imagePrompt,
+    });
+    const environmentMasterPrompt = buildEnvironmentMasterReferencePrompt(environmentName);
+    const finalMergeMasterPrompt = buildFinalMergeMasterPrompt({
+      leadAnimalName,
+      oppositeAnimalName,
+      environmentName,
+      leadTag: leadReferenceTag,
+      oppositeTag: oppositeReferenceTag,
+      environmentTag: environmentReferenceTag,
+    });
+    const elevenLabs20sPrompt = buildElevenLabs20sPrompt();
 
     return {
       seedance: {
@@ -517,18 +636,56 @@ export function WorkflowPromptMap({
       },
       hybrid: {
         pipeline:
-          "Image Prompt → Master Still → Runway Shot 1 Opening Tension → Kling Shot 2 Pressure Build → Kling Shot 3 Peak Action → Runway Shot 4 Resolved Tension → CapCut",
+          "Gemini prompt enhancement → Runway Gen-4 lead animal reference → Runway Gen-4 opposite animal reference → Runway Gen-4 environment reference → Runway Gen-4 final merge master image → Runway Shot 1 → Kling Shot 2 → Kling Shot 3 → Runway Shot 4 → Music: ElevenLabs 20s action music",
         bannerTitle: "Primary hybrid 4-shot route",
         bannerBody:
-          "This is the main WSTV production path. Use Runway for the clean opening and final settle, and Kling for Shot 2-3 pressure/action physics.",
+          "First build 3 Runway references and one final merge master image, then use Runway for the clean opening/final settle, Kling for Shot 2–3 pressure/action physics, and ElevenLabs for 20s action music.",
+        workflowLabel: "Gemini enhances prompts. Runway Gen-4 builds production references.",
+        topNote:
+          "Do not try to do the entire workflow inside Nano Banana 2 only. Nano Banana/Gemini improves prompt quality, but Runway Gen-4 References is the production step for reusable references, final scene master image, and Runway image-to-video continuity.",
         steps: [
-          imageStep,
+          {
+            step: 1,
+            title: "Lead Animal Master Image",
+            badge: "Gemini-enhanced prompt → Runway Gen-4 Image",
+            color: imageCardColor,
+            help: `Build the reusable production reference for ${leadAnimalName}. Gemini can improve wording; Runway Gen-4 Image creates the actual reference.`,
+            value: leadMasterPrompt,
+            actions: [{ label: "Copy Lead Animal Master Prompt", value: leadMasterPrompt }],
+          },
           {
             step: 2,
-            title: "Hybrid Shot 1 — Runway Opening Tension",
-            badge: "Runway",
+            title: "Opposite Animal Master Image",
+            badge: "Gemini-enhanced prompt → Runway Gen-4 Image",
+            color: imageCardColor,
+            help: `Build the reusable production reference for ${oppositeAnimalName}. Keep identity, anatomy, and contact readable.`,
+            value: oppositeMasterPrompt,
+            actions: [{ label: "Copy Opposite Animal Master Prompt", value: oppositeMasterPrompt }],
+          },
+          {
+            step: 3,
+            title: "Environment Master Image",
+            badge: "Gemini-enhanced prompt → Runway Gen-4 Image",
+            color: guideColor,
+            help: `Build the reusable background reference for ${environmentName}; environment only, open central space, no animals.`,
+            value: environmentMasterPrompt,
+            actions: [{ label: "Copy Environment Master Prompt", value: environmentMasterPrompt }],
+          },
+          {
+            step: 4,
+            title: "Final Merge Master Image",
+            badge: "Runway Gen-4 References · exactly 3 active references",
             color: runwayColor,
-            help: "Start with Runway for the cleanest first-frame readability and opening tension.",
+            help: `Merge ${leadReferenceTag}, ${oppositeReferenceTag}, and ${environmentReferenceTag} into one final scene master image for video source continuity.`,
+            value: finalMergeMasterPrompt,
+            actions: [{ label: "Copy Final Merge Master Prompt", value: finalMergeMasterPrompt }],
+          },
+          {
+            step: 5,
+            title: "Hybrid Shot 1 — Runway Opening Tension",
+            badge: "Runway Gen-4/Gen-4.5 Image-to-Video · 5s",
+            color: runwayColor,
+            help: "Use the final scene master image as source. Start with Runway for clean first-frame readability and opening tension.",
             value: runwayShots[0] ?? "",
             actions: [
               {
@@ -541,11 +698,11 @@ export function WorkflowPromptMap({
             ],
           },
           {
-            step: 3,
+            step: 6,
             title: "Hybrid Shot 2 — Kling Pressure Build",
-            badge: "Kling",
+            badge: "Kling pressure/action physics · 5s",
             color: klingColor,
-            help: "Switch to Kling here for pressure build with stronger physics and readable body mechanics.",
+            help: "Use Kling here for pressure build with stronger physics and readable body mechanics from the continuity source.",
             value: klingShots[1] ?? "",
             actions: [
               {
@@ -558,9 +715,9 @@ export function WorkflowPromptMap({
             ],
           },
           {
-            step: 4,
+            step: 7,
             title: "Hybrid Shot 3 — Kling Peak Action",
-            badge: "Kling",
+            badge: "Kling peak action physics · 5s",
             color: klingColor,
             help: "Keep Kling for the strongest action beat before handing the final settle back to Runway.",
             value: klingShots[2] ?? "",
@@ -575,11 +732,11 @@ export function WorkflowPromptMap({
             ],
           },
           {
-            step: 5,
+            step: 8,
             title: "Hybrid Shot 4 — Runway Resolved Tension",
-            badge: "Runway",
+            badge: "Runway Gen-4/Gen-4.5 resolved tension · 5s",
             color: runwayColor,
-            help: "Return to Runway for the clean readable final resolve and stable continuity-safe ending.",
+            help: "Return to Runway for clean resolved tension, stable continuity, and a readable final settle.",
             value: runwayShots[3] ?? "",
             actions: [
               {
@@ -592,13 +749,22 @@ export function WorkflowPromptMap({
             ],
           },
           {
-            step: 6,
+            step: 9,
             title: "Hybrid Routing Rules",
             badge: "Hybrid guide",
             color: hybridColor,
-            help: "This pane shows the recommended engine handoff for the current WSTV hybrid workflow.",
+            help: "Recommended engine handoff for the WSTV hybrid route, with Runway references as the production-critical reference layer.",
             value: hybridGuide,
             actions: [{ label: "Copy Hybrid Rules", value: hybridGuide }],
+          },
+          {
+            step: 10,
+            title: "ElevenLabs 20s Action Music",
+            badge: "ElevenLabs 20s action music",
+            color: musicColor,
+            help: "Music: ElevenLabs 20s action music. Keep the Sound Effects prompt under 450 characters.",
+            value: elevenLabs20sPrompt,
+            actions: [{ label: "Copy ElevenLabs 20s Music Prompt", value: elevenLabs20sPrompt }],
           },
         ],
       },
@@ -606,8 +772,14 @@ export function WorkflowPromptMap({
   }, [
     imagePrompt,
     imagePromptCard,
+    environmentName,
+    environmentReferenceTag,
     klingPromptCards,
     klingShots,
+    leadAnimalName,
+    leadReferenceTag,
+    oppositeAnimalName,
+    oppositeReferenceTag,
     routingNote,
     runwayPromptCards,
     runwayShots,
@@ -618,6 +790,8 @@ export function WorkflowPromptMap({
   ]);
 
   const currentWorkflow = workflows[mode];
+  const copiedCount = currentWorkflow.steps.filter((item) => done[item.step]).length;
+  const totalStepCount = currentWorkflow.steps.length;
   const pipeline = currentWorkflow.pipeline;
 
   function scrollToStep(step: number) {
@@ -627,7 +801,8 @@ export function WorkflowPromptMap({
   }
 
   function nextStepOf(step: number) {
-    if (step >= 6) return 6;
+    const maxStep = currentWorkflow.steps.at(-1)?.step ?? step;
+    if (step >= maxStep) return maxStep;
     return step + 1;
   }
 
@@ -658,7 +833,7 @@ export function WorkflowPromptMap({
             WSTV Prompt Workflow Tracker
           </h2>
           <span className="rounded bg-gray-100 px-2 py-0.5 text-xs font-semibold text-[color:var(--muted)]">
-            {copiedCount}/6 done
+            {copiedCount}/{totalStepCount} done
           </span>
           <span
             className={`inline-flex items-center gap-2 rounded px-2 py-0.5 text-xs font-bold ${drift.pill}`}
@@ -685,6 +860,18 @@ export function WorkflowPromptMap({
         <strong>{currentWorkflow.bannerTitle}:</strong>{" "}
         {currentWorkflow.bannerBody}
       </div>
+
+      {currentWorkflow.workflowLabel && (
+        <div className="mb-3 rounded-xl border border-green-200 bg-green-50 p-3 text-xs font-extrabold text-green-800">
+          {currentWorkflow.workflowLabel}
+        </div>
+      )}
+
+      {currentWorkflow.topNote && (
+        <div className="mb-4 rounded-xl border border-amber-200 bg-amber-50 p-3 text-xs leading-relaxed text-amber-900">
+          {currentWorkflow.topNote}
+        </div>
+      )}
 
       <div className="grid gap-4 md:grid-cols-3">
         {currentWorkflow.steps.map((item) => (
