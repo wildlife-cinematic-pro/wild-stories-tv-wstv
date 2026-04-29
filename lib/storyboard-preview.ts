@@ -1,7 +1,7 @@
 import { readFile } from "node:fs/promises";
 import path from "node:path";
 
-type StoryboardSequenceScene = {
+export type StoryboardSequenceScene = {
   id: number;
   name: string;
   startTime: number;
@@ -27,19 +27,25 @@ type StoryboardSequenceExport = {
   sequence: StoryboardSequenceScene[];
 };
 
-type StoryboardValidationSummary = {
+export type StoryboardValidationSummary = {
   sceneCount: number;
   promptCount: number;
   validScenes: number;
   validPrompts: number;
 };
 
-type StoryboardValidationCheck = {
+export type StoryboardSceneCheck = {
   sceneId: number;
   sceneName: string;
   valid: boolean;
   errors?: string[];
+};
+
+export type StoryboardPromptCheck = {
+  sceneId: number;
+  sceneName: string;
   promptType?: string;
+  valid: boolean;
   failedChecks?: string[];
 };
 
@@ -47,8 +53,8 @@ type StoryboardValidationExport = {
   project: string;
   valid: boolean;
   summary: StoryboardValidationSummary;
-  sceneChecks: StoryboardValidationCheck[];
-  promptChecks: StoryboardValidationCheck[];
+  sceneChecks: StoryboardSceneCheck[];
+  promptChecks: StoryboardPromptCheck[];
 };
 
 type StoryboardSource = {
@@ -63,14 +69,17 @@ export type StoryboardPreviewScene = StoryboardSequenceScene & {
 };
 
 export type StoryboardPreviewData = {
+  mode: "static" | "build";
+  sourceLabel: "Static storyboard" | "Generated from current Build setup";
   project: string;
   duration: number;
   sceneCount: number;
   valid: boolean;
   summary: StoryboardValidationSummary;
-  sceneChecks: StoryboardValidationCheck[];
-  promptChecks: StoryboardValidationCheck[];
+  sceneChecks: StoryboardSceneCheck[];
+  promptChecks: StoryboardPromptCheck[];
   sequence: StoryboardPreviewScene[];
+  exportData?: unknown;
 };
 
 const STORYBOARD_ROOT = path.join(process.cwd(), "storyboard_system");
@@ -84,7 +93,7 @@ async function readJsonFile<T>(filePath: string): Promise<T> {
   return JSON.parse(contents) as T;
 }
 
-function formatSceneName(name: string): string {
+export function formatStoryboardSceneName(name: string): string {
   return name
     .split(/[_-]+/)
     .filter(Boolean)
@@ -104,6 +113,8 @@ export async function loadStoryboardPreviewData(): Promise<StoryboardPreviewData
     const continuityRules = source.continuityRules ?? [];
 
     return {
+      mode: "static",
+      sourceLabel: "Static storyboard",
       project: sequenceExport.project,
       duration: sequenceExport.duration,
       sceneCount: sequenceExport.sceneCount,
@@ -113,7 +124,7 @@ export async function loadStoryboardPreviewData(): Promise<StoryboardPreviewData
       promptChecks: validationExport.promptChecks,
       sequence: sequenceExport.sequence.map((scene) => ({
         ...scene,
-        displayName: formatSceneName(scene.name),
+        displayName: formatStoryboardSceneName(scene.name),
         negativePrompt,
         continuityRules,
       })),
