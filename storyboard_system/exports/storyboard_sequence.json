@@ -1,79 +1,121 @@
 {
-  "project": "wildlife_standoff",
-  "duration": 40,
-  "sceneCount": 4,
+  "project": "generic_wildlife_standoff",
+  "mode": "runway_3_reference_final_scene",
+  "duration": 15,
+  "animalPair": {
+    "prey": "massive bison",
+    "predator": "grizzly bear"
+  },
+  "environment": "heavy snow winter meadow",
+  "activeRunwayReferences": [
+    "@massive_bison",
+    "@grizzly_bear",
+    "@heavy_snow_winter_meadow"
+  ],
+  "referenceRoles": {
+    "@massive_bison": "prey/defender identity only",
+    "@grizzly_bear": "predator identity only",
+    "@heavy_snow_winter_meadow": "environment/background only"
+  },
+  "masterImages": [
+    {
+      "type": "prey-master-image",
+      "runwayTag": "@massive_bison",
+      "promptPath": "prompts/prey_master.txt",
+      "output": "master_images/prey_master/generic_wildlife_standoff.massive_bison.png"
+    },
+    {
+      "type": "predator-master-image",
+      "runwayTag": "@grizzly_bear",
+      "promptPath": "prompts/predator_master.txt",
+      "output": "master_images/predator_master/generic_wildlife_standoff.grizzly_bear.png"
+    },
+    {
+      "type": "environment-master-image",
+      "runwayTag": "@heavy_snow_winter_meadow",
+      "promptPath": "prompts/environment_master.txt",
+      "output": "master_images/environment_master/generic_wildlife_standoff.heavy_snow_winter_meadow.png"
+    }
+  ],
+  "finalSceneMaster": {
+    "promptPath": "prompts/final_scene_master.txt",
+    "output": "master_images/final_scene_master/generic_wildlife_standoff.final.png"
+  },
+  "finalSceneVideoPrompts": {
+    "runway": "prompts/final_scene_video_runway.txt",
+    "kling": "prompts/final_scene_video_kling.txt",
+    "elevenLabsMusic": "prompts/elevenlabs_action_music.txt"
+  },
+  "productionOrder": [
+    "Generate prey-only master image",
+    "Save/tag in Runway as @massive_bison",
+    "Generate predator-only master image",
+    "Save/tag in Runway as @grizzly_bear",
+    "Generate environment-only master image",
+    "Save/tag in Runway as @heavy_snow_winter_meadow",
+    "Use all 3 references to generate final scene master image",
+    "Use final scene master image as source for Runway/Kling video"
+  ],
   "sequence": [
     {
       "id": 1,
-      "name": "establishing",
-      "startTime": 0,
-      "duration": 5,
-      "camera": "wide cinematic shot",
-      "motion": "slow pan",
-      "finalShotReference": null,
-      "previewImage": "images/01_establishing.png",
-      "previewVideo": "videos/01_establishing.mp4",
-      "promptReference": "prompts/01_establishing.prompts.json",
-      "runwayPromptReference": "prompts/01_establishing.runway.txt",
-      "klingPromptReference": "prompts/01_establishing.kling.txt",
-      "imagePrompt": "wide cinematic shot, slow pan. wide environment shot of a cold river basin before contact in rocky river basin with frost grass and thin morning mist. a lone elk near a cold riverbank, standing alert and scanning the open valley. blue-hour dawn light, photorealistic. 9:16 vertical framing. Continuity rules: preserve subject identity from source image, maintain left-right blocking unless the scene explicitly changes it, keep anatomy stable across scene transitions, preserve grounded contact and environmental continuity. Single storyboard frame, clean composition for edit planning, clear silhouette readability.",
-      "videoPrompt": "wide cinematic shot, slow pan. wide environment shot of a cold river basin before contact in rocky river basin with frost grass and thin morning mist. a lone elk near a cold riverbank, standing alert and scanning the open valley. blue-hour dawn light, photorealistic. 9:16 vertical framing. Continuity rules: preserve subject identity from source image, maintain left-right blocking unless the scene explicitly changes it, keep anatomy stable across scene transitions, preserve grounded contact and environmental continuity. Stable anatomy, continuity-safe blocking, no overlap between subjects, grounded contact preserved.",
-      "runwayPrompt": "wide cinematic shot, slow pan. wide environment shot of a cold river basin before contact in rocky river basin with frost grass and thin morning mist. a lone elk near a cold riverbank, standing alert and scanning the open valley. blue-hour dawn light, photorealistic. 9:16 vertical framing. Continuity rules: preserve subject identity from source image, maintain left-right blocking unless the scene explicitly changes it, keep anatomy stable across scene transitions, preserve grounded contact and environmental continuity. Prioritize camera movement readability, source-image continuity, strong foreground-background separation, edit-friendly composition, and image-to-video stability.",
-      "klingPrompt": "wide cinematic shot, slow pan. wide environment shot of a cold river basin before contact in rocky river basin with frost grass and thin morning mist. a lone elk near a cold riverbank, standing alert and scanning the open valley. blue-hour dawn light, photorealistic. 9:16 vertical framing. Continuity rules: preserve subject identity from source image, maintain left-right blocking unless the scene explicitly changes it, keep anatomy stable across scene transitions, preserve grounded contact and environmental continuity. Prioritize motion clarity, readable left-right subject blocking, clean action timing, realistic physics, and stable contact with the ground."
+      "name": "establishing_tension",
+      "duration": 3,
+      "promptReference": "prompts/01_establishing_tension.prompts.json",
+      "runwayPromptReference": "prompts/01_establishing_tension.runway.txt",
+      "klingPromptReference": "prompts/01_establishing_tension.kling.txt",
+      "imagePrompt": "cinematic telephoto documentary framing, slow controlled push-in. establishing tension in the habitat before the pressure move in heavy deep snow winter meadow, 3 to 5 foot snowbanks, pine forest, distant mountain ridge, cold clean air. massive bison on the left and grizzly bear on the right with a clear open reaction lane, both animals remain fully visible, separated, grounded, and alert. soft overcast winter light with slight golden rim glow, photorealistic wildlife documentary. 9:16 vertical framing. Continuity rules: preserve subject identity from master references, maintain role-aware left-right blocking unless the prompt explicitly changes it, keep anatomy stable and grounded through all image and video outputs, preserve environment lighting, ground texture, and open reaction lane. Single storyboard frame, clean composition for edit planning, clear silhouette readability.",
+      "finalImagePrompt": "cinematic telephoto documentary framing, slow controlled push-in. establishing tension in the habitat before the pressure move in heavy deep snow winter meadow, 3 to 5 foot snowbanks, pine forest, distant mountain ridge, cold clean air. massive bison on the left and grizzly bear on the right with a clear open reaction lane, both animals remain fully visible, separated, grounded, and alert. soft overcast winter light with slight golden rim glow, photorealistic wildlife documentary. 9:16 vertical framing. Continuity rules: preserve subject identity from master references, maintain role-aware left-right blocking unless the prompt explicitly changes it, keep anatomy stable and grounded through all image and video outputs, preserve environment lighting, ground texture, and open reaction lane. Scene keyframe uses the generated final scene master image as continuity source, with stable anatomy, clean readable spacing, grounded contact, and full-body subject readability.",
+      "videoPrompt": "cinematic telephoto documentary framing, slow controlled push-in. establishing tension in the habitat before the pressure move in heavy deep snow winter meadow, 3 to 5 foot snowbanks, pine forest, distant mountain ridge, cold clean air. massive bison on the left and grizzly bear on the right with a clear open reaction lane, both animals remain fully visible, separated, grounded, and alert. soft overcast winter light with slight golden rim glow, photorealistic wildlife documentary. 9:16 vertical framing. Continuity rules: preserve subject identity from master references, maintain role-aware left-right blocking unless the prompt explicitly changes it, keep anatomy stable and grounded through all image and video outputs, preserve environment lighting, ground texture, and open reaction lane. Use the final scene master image as the source frame. Maintain separated subjects, an open reaction lane, grounded movement, realistic physics, and stable identity."
     },
     {
       "id": 2,
-      "name": "predator_entry",
-      "startTime": 5,
-      "duration": 6,
-      "camera": "medium-wide documentary shot",
-      "motion": "subtle tracking move",
-      "finalShotReference": null,
-      "previewImage": "images/02_predator_entry.png",
-      "previewVideo": "videos/02_predator_entry.mp4",
-      "promptReference": "prompts/02_predator_entry.prompts.json",
-      "runwayPromptReference": "prompts/02_predator_entry.runway.txt",
-      "klingPromptReference": "prompts/02_predator_entry.kling.txt",
-      "imagePrompt": "medium-wide documentary shot, subtle tracking move. predator appears at distance without breaking the scene axis in firm grass-covered river edge with low frost. a grey wolf entering frame from the left while the elk holds right, closing distance with controlled caution. cold morning sidelight, photorealistic. 9:16 vertical framing. Continuity rules: preserve subject identity from source image, maintain left-right blocking unless the scene explicitly changes it, keep anatomy stable across scene transitions, preserve grounded contact and environmental continuity. Single storyboard frame, clean composition for edit planning, clear silhouette readability.",
-      "videoPrompt": "medium-wide documentary shot, subtle tracking move. predator appears at distance without breaking the scene axis in firm grass-covered river edge with low frost. a grey wolf entering frame from the left while the elk holds right, closing distance with controlled caution. cold morning sidelight, photorealistic. 9:16 vertical framing. Continuity rules: preserve subject identity from source image, maintain left-right blocking unless the scene explicitly changes it, keep anatomy stable across scene transitions, preserve grounded contact and environmental continuity. Stable anatomy, continuity-safe blocking, no overlap between subjects, grounded contact preserved.",
-      "runwayPrompt": "medium-wide documentary shot, subtle tracking move. predator appears at distance without breaking the scene axis in firm grass-covered river edge with low frost. a grey wolf entering frame from the left while the elk holds right, closing distance with controlled caution. cold morning sidelight, photorealistic. 9:16 vertical framing. Continuity rules: preserve subject identity from source image, maintain left-right blocking unless the scene explicitly changes it, keep anatomy stable across scene transitions, preserve grounded contact and environmental continuity. Prioritize camera movement readability, source-image continuity, strong foreground-background separation, edit-friendly composition, and image-to-video stability.",
-      "klingPrompt": "medium-wide documentary shot, subtle tracking move. predator appears at distance without breaking the scene axis in firm grass-covered river edge with low frost. a grey wolf entering frame from the left while the elk holds right, closing distance with controlled caution. cold morning sidelight, photorealistic. 9:16 vertical framing. Continuity rules: preserve subject identity from source image, maintain left-right blocking unless the scene explicitly changes it, keep anatomy stable across scene transitions, preserve grounded contact and environmental continuity. Prioritize motion clarity, readable left-right subject blocking, clean action timing, realistic physics, and stable contact with the ground."
+      "name": "defender_pressure_move",
+      "duration": 3,
+      "promptReference": "prompts/02_defender_pressure_move.prompts.json",
+      "runwayPromptReference": "prompts/02_defender_pressure_move.runway.txt",
+      "klingPromptReference": "prompts/02_defender_pressure_move.kling.txt",
+      "imagePrompt": "front full-body wildlife documentary framing, controlled lateral tracking move. prey or defender pressure move with readable body language in heavy deep snow winter meadow, 3 to 5 foot snowbanks, pine forest, distant mountain ridge, cold clean air. massive bison holds the left side with dominant grounded posture, massive bison advances or braces with role-appropriate defensive pressure while keeping clean readable spacing. soft overcast winter light with slight golden rim glow, photorealistic wildlife documentary. 9:16 vertical framing. Continuity rules: preserve subject identity from master references, maintain role-aware left-right blocking unless the prompt explicitly changes it, keep anatomy stable and grounded through all image and video outputs, preserve environment lighting, ground texture, and open reaction lane. Single storyboard frame, clean composition for edit planning, clear silhouette readability.",
+      "finalImagePrompt": "front full-body wildlife documentary framing, controlled lateral tracking move. prey or defender pressure move with readable body language in heavy deep snow winter meadow, 3 to 5 foot snowbanks, pine forest, distant mountain ridge, cold clean air. massive bison holds the left side with dominant grounded posture, massive bison advances or braces with role-appropriate defensive pressure while keeping clean readable spacing. soft overcast winter light with slight golden rim glow, photorealistic wildlife documentary. 9:16 vertical framing. Continuity rules: preserve subject identity from master references, maintain role-aware left-right blocking unless the prompt explicitly changes it, keep anatomy stable and grounded through all image and video outputs, preserve environment lighting, ground texture, and open reaction lane. Scene keyframe uses the generated final scene master image as continuity source, with stable anatomy, clean readable spacing, grounded contact, and full-body subject readability.",
+      "videoPrompt": "front full-body wildlife documentary framing, controlled lateral tracking move. prey or defender pressure move with readable body language in heavy deep snow winter meadow, 3 to 5 foot snowbanks, pine forest, distant mountain ridge, cold clean air. massive bison holds the left side with dominant grounded posture, massive bison advances or braces with role-appropriate defensive pressure while keeping clean readable spacing. soft overcast winter light with slight golden rim glow, photorealistic wildlife documentary. 9:16 vertical framing. Continuity rules: preserve subject identity from master references, maintain role-aware left-right blocking unless the prompt explicitly changes it, keep anatomy stable and grounded through all image and video outputs, preserve environment lighting, ground texture, and open reaction lane. Use the final scene master image as the source frame. Maintain separated subjects, an open reaction lane, grounded movement, realistic physics, and stable identity."
     },
     {
       "id": 3,
-      "name": "standoff_hold",
-      "startTime": 11,
-      "duration": 7,
-      "camera": "locked wide shot",
-      "motion": "no camera movement",
-      "finalShotReference": null,
-      "previewImage": "images/03_standoff_hold.png",
-      "previewVideo": "videos/03_standoff_hold.mp4",
-      "promptReference": "prompts/03_standoff_hold.prompts.json",
-      "runwayPromptReference": "prompts/03_standoff_hold.runway.txt",
-      "klingPromptReference": "prompts/03_standoff_hold.kling.txt",
-      "imagePrompt": "locked wide shot, no camera movement. clean confrontation beat with readable spacing and body language in firm wet ground with reeds at the river edge. the wolf on the left and the elk on the right, holding a tense standoff with clear eye-line and grounded weight shift. overcast winter light, photorealistic. 9:16 vertical framing. Continuity rules: preserve subject identity from source image, maintain left-right blocking unless the scene explicitly changes it, keep anatomy stable across scene transitions, preserve grounded contact and environmental continuity. Single storyboard frame, clean composition for edit planning, clear silhouette readability.",
-      "videoPrompt": "locked wide shot, no camera movement. clean confrontation beat with readable spacing and body language in firm wet ground with reeds at the river edge. the wolf on the left and the elk on the right, holding a tense standoff with clear eye-line and grounded weight shift. overcast winter light, photorealistic. 9:16 vertical framing. Continuity rules: preserve subject identity from source image, maintain left-right blocking unless the scene explicitly changes it, keep anatomy stable across scene transitions, preserve grounded contact and environmental continuity. Stable anatomy, continuity-safe blocking, no overlap between subjects, grounded contact preserved.",
-      "runwayPrompt": "locked wide shot, no camera movement. clean confrontation beat with readable spacing and body language in firm wet ground with reeds at the river edge. the wolf on the left and the elk on the right, holding a tense standoff with clear eye-line and grounded weight shift. overcast winter light, photorealistic. 9:16 vertical framing. Continuity rules: preserve subject identity from source image, maintain left-right blocking unless the scene explicitly changes it, keep anatomy stable across scene transitions, preserve grounded contact and environmental continuity. Prioritize camera movement readability, source-image continuity, strong foreground-background separation, edit-friendly composition, and image-to-video stability.",
-      "klingPrompt": "locked wide shot, no camera movement. clean confrontation beat with readable spacing and body language in firm wet ground with reeds at the river edge. the wolf on the left and the elk on the right, holding a tense standoff with clear eye-line and grounded weight shift. overcast winter light, photorealistic. 9:16 vertical framing. Continuity rules: preserve subject identity from source image, maintain left-right blocking unless the scene explicitly changes it, keep anatomy stable across scene transitions, preserve grounded contact and environmental continuity. Prioritize motion clarity, readable left-right subject blocking, clean action timing, realistic physics, and stable contact with the ground."
+      "name": "predator_reaction",
+      "duration": 3,
+      "promptReference": "prompts/03_predator_reaction.prompts.json",
+      "runwayPromptReference": "prompts/03_predator_reaction.runway.txt",
+      "klingPromptReference": "prompts/03_predator_reaction.kling.txt",
+      "imagePrompt": "medium-long telephoto reaction framing, subtle handheld tension hold. predator reaction beat under pressure in heavy deep snow winter meadow, 3 to 5 foot snowbanks, pine forest, distant mountain ridge, cold clean air. grizzly bear on the right in full-body readable profile, grizzly bear reacts defensively with grounded motion, stable anatomy, and clear survival tension. soft overcast winter light with slight golden rim glow, photorealistic wildlife documentary. 9:16 vertical framing. Continuity rules: preserve subject identity from master references, maintain role-aware left-right blocking unless the prompt explicitly changes it, keep anatomy stable and grounded through all image and video outputs, preserve environment lighting, ground texture, and open reaction lane. Single storyboard frame, clean composition for edit planning, clear silhouette readability.",
+      "finalImagePrompt": "medium-long telephoto reaction framing, subtle handheld tension hold. predator reaction beat under pressure in heavy deep snow winter meadow, 3 to 5 foot snowbanks, pine forest, distant mountain ridge, cold clean air. grizzly bear on the right in full-body readable profile, grizzly bear reacts defensively with grounded motion, stable anatomy, and clear survival tension. soft overcast winter light with slight golden rim glow, photorealistic wildlife documentary. 9:16 vertical framing. Continuity rules: preserve subject identity from master references, maintain role-aware left-right blocking unless the prompt explicitly changes it, keep anatomy stable and grounded through all image and video outputs, preserve environment lighting, ground texture, and open reaction lane. Scene keyframe uses the generated final scene master image as continuity source, with stable anatomy, clean readable spacing, grounded contact, and full-body subject readability.",
+      "videoPrompt": "medium-long telephoto reaction framing, subtle handheld tension hold. predator reaction beat under pressure in heavy deep snow winter meadow, 3 to 5 foot snowbanks, pine forest, distant mountain ridge, cold clean air. grizzly bear on the right in full-body readable profile, grizzly bear reacts defensively with grounded motion, stable anatomy, and clear survival tension. soft overcast winter light with slight golden rim glow, photorealistic wildlife documentary. 9:16 vertical framing. Continuity rules: preserve subject identity from master references, maintain role-aware left-right blocking unless the prompt explicitly changes it, keep anatomy stable and grounded through all image and video outputs, preserve environment lighting, ground texture, and open reaction lane. Use the final scene master image as the source frame. Maintain separated subjects, an open reaction lane, grounded movement, realistic physics, and stable identity."
     },
     {
       "id": 4,
-      "name": "aftermath_exit",
-      "startTime": 18,
-      "duration": 6,
-      "camera": "long lens wide shot",
-      "motion": "slow pull-back",
-      "finalShotReference": null,
-      "previewImage": "images/04_aftermath_exit.png",
-      "previewVideo": null,
-      "promptReference": "prompts/04_aftermath_exit.prompts.json",
-      "runwayPromptReference": "prompts/04_aftermath_exit.runway.txt",
-      "klingPromptReference": "prompts/04_aftermath_exit.kling.txt",
-      "imagePrompt": "long lens wide shot, slow pull-back. resolution beat after the threat line breaks in stable rocky ground with sparse grass beside cold water. the elk widening distance while the wolf slows and holds the bank, settling into a calm but alert separation. soft late-morning winter light, photorealistic. 9:16 vertical framing. Continuity rules: preserve subject identity from source image, maintain left-right blocking unless the scene explicitly changes it, keep anatomy stable across scene transitions, preserve grounded contact and environmental continuity. Single storyboard frame, clean composition for edit planning, clear silhouette readability.",
-      "videoPrompt": "long lens wide shot, slow pull-back. resolution beat after the threat line breaks in stable rocky ground with sparse grass beside cold water. the elk widening distance while the wolf slows and holds the bank, settling into a calm but alert separation. soft late-morning winter light, photorealistic. 9:16 vertical framing. Continuity rules: preserve subject identity from source image, maintain left-right blocking unless the scene explicitly changes it, keep anatomy stable across scene transitions, preserve grounded contact and environmental continuity. Stable anatomy, continuity-safe blocking, no overlap between subjects, grounded contact preserved.",
-      "runwayPrompt": "long lens wide shot, slow pull-back. resolution beat after the threat line breaks in stable rocky ground with sparse grass beside cold water. the elk widening distance while the wolf slows and holds the bank, settling into a calm but alert separation. soft late-morning winter light, photorealistic. 9:16 vertical framing. Continuity rules: preserve subject identity from source image, maintain left-right blocking unless the scene explicitly changes it, keep anatomy stable across scene transitions, preserve grounded contact and environmental continuity. Prioritize camera movement readability, source-image continuity, strong foreground-background separation, edit-friendly composition, and image-to-video stability.",
-      "klingPrompt": "long lens wide shot, slow pull-back. resolution beat after the threat line breaks in stable rocky ground with sparse grass beside cold water. the elk widening distance while the wolf slows and holds the bank, settling into a calm but alert separation. soft late-morning winter light, photorealistic. 9:16 vertical framing. Continuity rules: preserve subject identity from source image, maintain left-right blocking unless the scene explicitly changes it, keep anatomy stable across scene transitions, preserve grounded contact and environmental continuity. Prioritize motion clarity, readable left-right subject blocking, clean action timing, realistic physics, and stable contact with the ground."
+      "name": "wide_reaction_lane",
+      "duration": 3,
+      "promptReference": "prompts/04_wide_reaction_lane.prompts.json",
+      "runwayPromptReference": "prompts/04_wide_reaction_lane.runway.txt",
+      "klingPromptReference": "prompts/04_wide_reaction_lane.kling.txt",
+      "imagePrompt": "locked wide documentary shot, slow pull-back. wide separation beat showing the open reaction lane in heavy deep snow winter meadow, 3 to 5 foot snowbanks, pine forest, distant mountain ridge, cold clean air. massive bison and grizzly bear remain separated in heavy snow winter meadow, the open central reaction lane stays visible while both animals remain fully readable. soft overcast winter light with slight golden rim glow, photorealistic wildlife documentary. 9:16 vertical framing. Continuity rules: preserve subject identity from master references, maintain role-aware left-right blocking unless the prompt explicitly changes it, keep anatomy stable and grounded through all image and video outputs, preserve environment lighting, ground texture, and open reaction lane. Single storyboard frame, clean composition for edit planning, clear silhouette readability.",
+      "finalImagePrompt": "locked wide documentary shot, slow pull-back. wide separation beat showing the open reaction lane in heavy deep snow winter meadow, 3 to 5 foot snowbanks, pine forest, distant mountain ridge, cold clean air. massive bison and grizzly bear remain separated in heavy snow winter meadow, the open central reaction lane stays visible while both animals remain fully readable. soft overcast winter light with slight golden rim glow, photorealistic wildlife documentary. 9:16 vertical framing. Continuity rules: preserve subject identity from master references, maintain role-aware left-right blocking unless the prompt explicitly changes it, keep anatomy stable and grounded through all image and video outputs, preserve environment lighting, ground texture, and open reaction lane. Scene keyframe uses the generated final scene master image as continuity source, with stable anatomy, clean readable spacing, grounded contact, and full-body subject readability.",
+      "videoPrompt": "locked wide documentary shot, slow pull-back. wide separation beat showing the open reaction lane in heavy deep snow winter meadow, 3 to 5 foot snowbanks, pine forest, distant mountain ridge, cold clean air. massive bison and grizzly bear remain separated in heavy snow winter meadow, the open central reaction lane stays visible while both animals remain fully readable. soft overcast winter light with slight golden rim glow, photorealistic wildlife documentary. 9:16 vertical framing. Continuity rules: preserve subject identity from master references, maintain role-aware left-right blocking unless the prompt explicitly changes it, keep anatomy stable and grounded through all image and video outputs, preserve environment lighting, ground texture, and open reaction lane. Use the final scene master image as the source frame. Maintain separated subjects, an open reaction lane, grounded movement, realistic physics, and stable identity."
+    },
+    {
+      "id": 5,
+      "name": "final_dramatic_hold",
+      "duration": 3,
+      "promptReference": "prompts/05_final_dramatic_hold.prompts.json",
+      "runwayPromptReference": "prompts/05_final_dramatic_hold.runway.txt",
+      "klingPromptReference": "prompts/05_final_dramatic_hold.kling.txt",
+      "imagePrompt": "long-lens final hold, slow cinematic settle. final dramatic hold after the pressure peaks in heavy deep snow winter meadow, 3 to 5 foot snowbanks, pine forest, distant mountain ridge, cold clean air. massive bison on the left, grizzly bear on the right, environment continuity intact, defender holds dominant pressure while predator reacts defensively. soft overcast winter light with slight golden rim glow, photorealistic wildlife documentary. 9:16 vertical framing. Continuity rules: preserve subject identity from master references, maintain role-aware left-right blocking unless the prompt explicitly changes it, keep anatomy stable and grounded through all image and video outputs, preserve environment lighting, ground texture, and open reaction lane. Single storyboard frame, clean composition for edit planning, clear silhouette readability.",
+      "finalImagePrompt": "long-lens final hold, slow cinematic settle. final dramatic hold after the pressure peaks in heavy deep snow winter meadow, 3 to 5 foot snowbanks, pine forest, distant mountain ridge, cold clean air. massive bison on the left, grizzly bear on the right, environment continuity intact, defender holds dominant pressure while predator reacts defensively. soft overcast winter light with slight golden rim glow, photorealistic wildlife documentary. 9:16 vertical framing. Continuity rules: preserve subject identity from master references, maintain role-aware left-right blocking unless the prompt explicitly changes it, keep anatomy stable and grounded through all image and video outputs, preserve environment lighting, ground texture, and open reaction lane. Scene keyframe uses the generated final scene master image as continuity source, with stable anatomy, clean readable spacing, grounded contact, and full-body subject readability.",
+      "videoPrompt": "long-lens final hold, slow cinematic settle. final dramatic hold after the pressure peaks in heavy deep snow winter meadow, 3 to 5 foot snowbanks, pine forest, distant mountain ridge, cold clean air. massive bison on the left, grizzly bear on the right, environment continuity intact, defender holds dominant pressure while predator reacts defensively. soft overcast winter light with slight golden rim glow, photorealistic wildlife documentary. 9:16 vertical framing. Continuity rules: preserve subject identity from master references, maintain role-aware left-right blocking unless the prompt explicitly changes it, keep anatomy stable and grounded through all image and video outputs, preserve environment lighting, ground texture, and open reaction lane. Use the final scene master image as the source frame. Maintain separated subjects, an open reaction lane, grounded movement, realistic physics, and stable identity."
     }
-  ]
+  ],
+  "finalVideoPrompts": {
+    "runwayPrompt": "Use master_images/final_scene_master/generic_wildlife_standoff.final.png as the Runway image-to-video source frame. 15-second photorealistic wildlife documentary wildlife documentary motion in heavy snow winter meadow. massive bison remains on the left as the prey/defender, grizzly bear remains on the right as the predator, with the clear open reaction lane preserved. Motion: defender holds dominant pressure while predator reacts defensively. Stable anatomy, grounded movement, full-body readability, clean readable spacing, source-image identity continuity, realistic camera drift, cinematic tension rise.",
+    "klingPrompt": "Kling image-to-video prompt using master_images/final_scene_master/generic_wildlife_standoff.final.png as the source image. 15-second multi-shot sequence, 5 shots, photorealistic wildlife documentary, cinematic telephoto documentary framing. Shot 1 establishing tension: heavy snow winter meadow, massive bison on the left, grizzly bear on the right, clear open reaction lane, slow push-in. Shot 2 prey/defender pressure move: massive bison uses role-appropriate grounded pressure, full body readable, stable contact with the terrain. Shot 3 predator reaction: grizzly bear reacts defensively with realistic weight shift, stable anatomy, and clean silhouette readability. Shot 4 wide separation: both animals remain separated with the reaction lane visible, environment texture and lighting consistent. Shot 5 final dramatic hold: defender holds dominant pressure while predator reacts defensively, final bass-hit visual hold, cinematic wildlife documentary tension. Maintain source-frame identity, separated animals, clear open reaction lane, grounded hoof/paw/foot contact, stable anatomy, realistic wildlife motion, and clean readable spacing.",
+    "musicPrompt": "15-second cinematic wildlife action trailer music for heavy snow winter meadow. Environment-matched ambience, low suspense drone, rising drums, restrained pulses, cinematic hits at shot cuts, no vocals, no narration, no spoken words. Build tension across 5 shots with a final bass hit and natural ambience tail."
+  }
 }

@@ -1,0 +1,39 @@
+{
+  "project": "generic_wildlife_standoff",
+  "workflow": "generic_runway_3_reference_final_scene_master",
+  "maxActiveReferences": 3,
+  "predator": {
+    "tag": "@grizzly_bear",
+    "slug": "grizzly_bear",
+    "name": "grizzly bear",
+    "role": "predator",
+    "referenceRole": "predator identity only",
+    "source": "master_images/predator_master/generic_wildlife_standoff.grizzly_bear.png"
+  },
+  "prey": {
+    "tag": "@massive_bison",
+    "slug": "massive_bison",
+    "name": "massive bison",
+    "role": "defender",
+    "referenceRole": "prey/defender identity only",
+    "source": "master_images/prey_master/generic_wildlife_standoff.massive_bison.png"
+  },
+  "environment": {
+    "tag": "@heavy_snow_winter_meadow",
+    "slug": "heavy_snow_winter_meadow",
+    "name": "heavy snow winter meadow",
+    "referenceRole": "environment/background only",
+    "source": "master_images/environment_master/generic_wildlife_standoff.heavy_snow_winter_meadow.png"
+  },
+  "finalSceneMasterOutput": "master_images/final_scene_master/generic_wildlife_standoff.final.png",
+  "productionOrder": [
+    "Generate prey-only master image",
+    "Save/tag in Runway as @massive_bison",
+    "Generate predator-only master image",
+    "Save/tag in Runway as @grizzly_bear",
+    "Generate environment-only master image",
+    "Save/tag in Runway as @heavy_snow_winter_meadow",
+    "Use all 3 references to generate final scene master image",
+    "Use final scene master image as source for Runway/Kling video"
+  ]
+}

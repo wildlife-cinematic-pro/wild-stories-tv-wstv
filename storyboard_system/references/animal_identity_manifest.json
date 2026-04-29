@@ -1,0 +1,36 @@
+{
+  "project": "generic_wildlife_standoff",
+  "purpose": "Animal identity lock for generic three-reference final scene workflow",
+  "subjects": [
+    {
+      "tag": "@massive_bison",
+      "slug": "massive_bison",
+      "name": "massive bison",
+      "role": "defender",
+      "referenceRole": "prey/defender identity only",
+      "source": "master_images/prey_master/generic_wildlife_standoff.massive_bison.png"
+    },
+    {
+      "tag": "@grizzly_bear",
+      "slug": "grizzly_bear",
+      "name": "grizzly bear",
+      "role": "predator",
+      "referenceRole": "predator identity only",
+      "source": "master_images/predator_master/generic_wildlife_standoff.grizzly_bear.png"
+    }
+  ],
+  "environment": {
+    "tag": "@heavy_snow_winter_meadow",
+    "slug": "heavy_snow_winter_meadow",
+    "name": "heavy snow winter meadow",
+    "referenceRole": "environment/background only",
+    "source": "master_images/environment_master/generic_wildlife_standoff.heavy_snow_winter_meadow.png"
+  },
+  "finalSceneMasterOutput": "master_images/final_scene_master/generic_wildlife_standoff.final.png",
+  "continuityRules": [
+    "preserve subject identity from master references",
+    "maintain role-aware left-right blocking unless the prompt explicitly changes it",
+    "keep anatomy stable and grounded through all image and video outputs",
+    "preserve environment lighting, ground texture, and open reaction lane"
+  ]
+}

@@ -1,6 +1,7 @@
 import { readFile, writeFile } from "node:fs/promises";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
+import { enhanceInputWithGemini } from "./ai_enhance.mjs";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -19,187 +20,293 @@ function hasText(value) {
   return typeof value === "string" && value.trim().length > 0;
 }
 
-function normalizeAnimal(value, fallback) {
-  return hasText(value) ? value.trim() : fallback;
+function isObject(value) {
+  return value !== null && typeof value === "object" && !Array.isArray(value);
 }
 
-function titleCase(value) {
-  return String(value)
-    .split(/\s+/)
-    .filter(Boolean)
-    .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
-    .join(" ");
-}
+function mergeDefined(base, patch) {
+  if (!isObject(patch)) return base;
+  const next = { ...base };
 
-function getDurations(durationLane) {
-  switch (durationLane) {
-    case "medium":
-      return [4, 5, 5, 6, 4];
-    case "long":
-      return [5, 5, 6, 7, 5];
-    case "short":
-    default:
-      return [4, 5, 5, 5];
+  for (const [key, value] of Object.entries(patch)) {
+    if (value === undefined || value === null) continue;
+    if (isObject(value) && isObject(next[key])) {
+      next[key] = mergeDefined(next[key], value);
+    } else if (typeof value === "string") {
+      next[key] = value.trim().length > 0 ? value.trim() : next[key];
+    } else {
+      next[key] = value;
+    }
   }
+
+  return next;
 }
 
-function buildMasterSubjects(input) {
-  const predator = normalizeAnimal(input.predator, "predator");
-  const prey = normalizeAnimal(input.prey, "prey");
-  const predatorSide = input.predatorSide ?? "right";
-  const preySide = input.preySide ?? "left";
+function normalizeAnimalObject(value, fallback) {
+  if (isObject(value)) {
+    const name = hasText(value.name) ? value.name.trim() : fallback.name;
+    return {
+      name,
+      slug: hasText(value.slug) ? slugify(value.slug) : slugify(name),
+      role: hasText(value.role) ? value.role.trim() : fallback.role,
+      side: hasText(value.side) ? value.side.trim() : fallback.side,
+      description: hasText(value.description)
+        ? value.description.trim()
+        : `${name} with realistic wildlife anatomy, stable natural body mass, clear identity markers, and full body readable`,
+      identityNotes: hasText(value.identityNotes)
+        ? value.identityNotes.trim()
+        : `Preserve ${name} identity, body scale, head shape, coat or skin markers, and grounded foot contact.`,
+      referenceImage: value.referenceImage ?? null
+    };
+  }
 
+  const name = hasText(value) ? value.trim() : fallback.name;
+  return {
+    name,
+    slug: slugify(name),
+    role: fallback.role,
+    side: fallback.side,
+    description: `${name} with realistic wildlife anatomy, stable natural body mass, clear identity markers, and full body readable`,
+    identityNotes: `Preserve ${name} identity, body scale, head shape, coat or skin markers, and grounded foot contact.`,
+    referenceImage: null
+  };
+}
+
+function normalizeEnvironmentObject(value, input = {}) {
+  if (isObject(value)) {
+    const name = hasText(value.name) ? value.name.trim() : "natural wildlife environment";
+    return {
+      name,
+      slug: hasText(value.slug) ? slugify(value.slug) : slugify(name),
+      description: hasText(value.description)
+        ? value.description.trim()
+        : "natural wildlife habitat with clear open central space and habitat texture",
+      lighting: hasText(value.lighting) ? value.lighting.trim() : "natural wildlife documentary light",
+      rules: hasText(value.rules)
+        ? value.rules.trim()
+        : "environment reference only, open central space for future wildlife subjects, no animals, no people, no buildings, no roads"
+    };
+  }
+
+  const name = hasText(value) ? value.trim() : "natural wildlife environment";
+  return {
+    name,
+    slug: slugify(name),
+    description: name,
+    lighting: hasText(input.lighting) ? input.lighting.trim() : "natural wildlife documentary light",
+    rules: "environment reference only, open central space for future wildlife subjects, no animals, no people, no buildings, no roads"
+  };
+}
+
+function normalizeFinalScene(value, input, predator, prey, environment) {
+  const source = isObject(value) ? value : {};
+  const sceneDescription = hasText(input.sceneDescription) ? input.sceneDescription.trim() : "";
+
+  return {
+    composition:
+      source.composition ??
+      `prey/defender on the ${prey.side}, predator on the ${predator.side}, clear open reaction lane between them`,
+    camera: source.camera ?? "cinematic telephoto documentary framing",
+    style: source.style ?? input.styleGuide ?? "photorealistic wildlife documentary",
+    aspectRatio: source.aspectRatio ?? input.aspectRatio ?? "9:16",
+    tension: source.tension ?? "high survival tension with clean readable spacing",
+    action:
+      source.action ??
+      (sceneDescription ||
+        `${prey.name} holds grounded defensive pressure while ${predator.name} reacts with alert survival body language`),
+    environmentNotes: source.environmentNotes ?? environment.description
+  };
+}
+
+function normalizeVideo(value, input) {
+  const source = isObject(value) ? value : {};
+  const durationLane = input.durationLane;
+  const duration = Number(source.duration ?? input.duration ?? (durationLane === "long" ? 20 : 15));
+
+  return {
+    duration: Number.isFinite(duration) && duration > 0 ? duration : 15,
+    platform: source.platform ?? input.videoEngine ?? "kling",
+    format: source.format ?? "multi-shot",
+    shotCount: Number(source.shotCount ?? 5),
+    musicMood: source.musicMood ?? "tense cinematic wildlife action trailer music",
+    regionTarget: source.regionTarget ?? "viral wildlife shorts audience",
+    videoEngines: Array.isArray(input.videoEngines) ? input.videoEngines : []
+  };
+}
+
+function normalizeAiEnhancement(value) {
+  const source = isObject(value) ? value : {};
+  return {
+    enabled: source.enabled !== false,
+    provider: source.provider ?? "gemini",
+    style: source.style ?? "viral wildlife documentary",
+    strictness: source.strictness ?? "preserve identity, stable anatomy, grounded motion, positive prompt wording"
+  };
+}
+
+function normalizeInput(input) {
+  const predator = normalizeAnimalObject(input.predator, {
+    name: "predator",
+    role: "predator",
+    side: input.predatorSide ?? "right"
+  });
+  const prey = normalizeAnimalObject(input.prey, {
+    name: "prey",
+    role: "defender",
+    side: input.preySide ?? "left"
+  });
+
+  const predatorWithLegacy = mergeDefined(predator, {
+    description: input.predatorDescription,
+    identityNotes: input.predatorIdentityNotes
+  });
+  const preyWithLegacy = mergeDefined(prey, {
+    description: input.preyDescription,
+    identityNotes: input.preyIdentityNotes
+  });
+  const environment = normalizeEnvironmentObject(input.environment, input);
+  const finalScene = normalizeFinalScene(input.finalScene, input, predatorWithLegacy, preyWithLegacy, environment);
+  const video = normalizeVideo(input.video, input);
+
+  return {
+    project: input.project ?? `${preyWithLegacy.slug}_vs_${predatorWithLegacy.slug}`,
+    mode: input.mode ?? "runway_3_reference_final_scene",
+    imageEngine: input.imageEngine ?? "runway-image",
+    finalImageEngine: input.finalImageEngine ?? "runway-gen4-image",
+    videoEngine: input.videoEngine ?? "runway-gen-3",
+    masterImagePrimaryEngine: input.masterImagePrimaryEngine ?? "runway-gen4-image",
+    styleGuide: input.styleGuide ?? finalScene.style,
+    negativePrompt:
+      input.negativePrompt ??
+      "metadata only: avoid text overlays, malformed anatomy, duplicated limbs, unstable scale, cropped bodies, subject merge",
+    continuityRules: input.continuityRules ?? [
+      "preserve subject identity from master references",
+      "maintain role-aware left-right blocking unless the prompt explicitly changes it",
+      "keep anatomy stable and grounded through all image and video outputs",
+      "preserve environment lighting, ground texture, and open reaction lane"
+    ],
+    aspectRatio: finalScene.aspectRatio,
+    predator: predatorWithLegacy,
+    prey: preyWithLegacy,
+    environment,
+    finalScene,
+    video,
+    aiEnhancement: normalizeAiEnhancement(input.aiEnhancement),
+    schemaSource: isObject(input.predator) && isObject(input.prey) && isObject(input.environment) ? "object" : "legacy"
+  };
+}
+
+function buildMasterSubjects(storyboard) {
   return [
     {
-      name: prey,
-      slug: slugify(prey),
-      role: "defender",
-      side: preySide,
-      description:
-        input.preyDescription ??
-        `${prey} with realistic wildlife anatomy, stable markings, natural body mass, and full body readable`,
-      identityNotes:
-        input.preyIdentityNotes ??
-        `Keep the same ${prey} identity, body scale, markings, head shape, and grounded contact across all scenes.`,
-      referenceImage: input.preyReferenceImage ?? null
+      ...storyboard.prey,
+      referenceRole: "prey/defender identity only",
+      runwayTag: `@${storyboard.prey.slug}`
     },
     {
-      name: predator,
-      slug: slugify(predator),
-      role: "predator",
-      side: predatorSide,
-      description:
-        input.predatorDescription ??
-        `${predator} with realistic wildlife anatomy, stable markings, natural body mass, and full body readable`,
-      identityNotes:
-        input.predatorIdentityNotes ??
-        `Keep the same ${predator} identity, body scale, markings, head shape, and grounded contact across all scenes.`,
-      referenceImage: input.predatorReferenceImage ?? null
+      ...storyboard.predator,
+      referenceRole: "predator identity only",
+      runwayTag: `@${storyboard.predator.slug}`
     }
   ];
 }
 
-function buildScenes(input) {
-  const predator = normalizeAnimal(input.predator, "predator");
-  const prey = normalizeAnimal(input.prey, "prey");
-  const predatorSide = input.predatorSide ?? "right";
-  const preySide = input.preySide ?? "left";
-  const environment = input.environment ?? "natural wildlife habitat with clean readable spacing";
-  const lighting = input.lighting ?? "natural wildlife documentary light";
-  const sceneDescription = input.sceneDescription ?? `${prey} and ${predator} hold a high-tension wildlife beat with readable spacing.`;
-  const durations = getDurations(input.durationLane);
-  const videoEngines = Array.isArray(input.videoEngines) ? input.videoEngines : [];
-  const leftAnimal = preySide === "left" ? prey : predator;
-  const rightAnimal = predatorSide === "right" ? predator : prey;
-
-  const baseScenes = [
+function buildScenes(storyboard) {
+  const { predator, prey, environment, finalScene, video } = storyboard;
+  const shotCount = Number.isFinite(video.shotCount) && video.shotCount > 0 ? Math.floor(video.shotCount) : 5;
+  const baseDuration = Math.max(1, Math.floor(video.duration / shotCount));
+  const durations = Array.from({ length: shotCount }, (_, index) =>
+    index === shotCount - 1 ? Math.max(1, video.duration - baseDuration * (shotCount - 1)) : baseDuration
+  );
+  const shotTemplates = [
     {
-      name: "establishing",
-      description: "wide habitat setup before the pressure breaks",
-      camera: "wide cinematic documentary shot",
-      motion: "slow push-in",
-      subject: `the ${leftAnimal} on the left and the ${rightAnimal} on the right with one open reaction lane between them`,
-      action: "both animals hold tense readable spacing without contact",
-      duration: durations[0]
+      name: "establishing_tension",
+      description: "establishing tension in the habitat before the pressure move",
+      camera: finalScene.camera,
+      motion: "slow controlled push-in",
+      subject: `${prey.name} on the ${prey.side} and ${predator.name} on the ${predator.side} with a clear open reaction lane`,
+      action: "both animals remain fully visible, separated, grounded, and alert"
     },
     {
-      name: "pressure_commit",
-      description: sceneDescription,
-      camera: "front full-body wildlife framing",
-      motion: "controlled tracking move",
-      subject: `the ${prey} holds the ${preySide} side while the ${predator} holds the ${predatorSide} reaction lane`,
-      action: `${prey} makes one readable power move while ${predator} reacts under pressure without contact`,
-      duration: durations[1]
+      name: "defender_pressure_move",
+      description: "prey or defender pressure move with readable body language",
+      camera: "front full-body wildlife documentary framing",
+      motion: "controlled lateral tracking move",
+      subject: `${prey.name} holds the ${prey.side} side with dominant grounded posture`,
+      action: `${prey.name} advances or braces with role-appropriate defensive pressure while keeping clean readable spacing`
     },
     {
-      name: "reaction_hold",
-      description: "the reaction beat stays clean with no subject overlap",
-      camera: "locked wide reaction shot",
+      name: "predator_reaction",
+      description: "predator reaction beat under pressure",
+      camera: "medium-long telephoto reaction framing",
       motion: "subtle handheld tension hold",
-      subject: `the ${prey} remains ${preySide} and the ${predator} remains ${predatorSide} with full bodies visible`,
-      action: `${predator} shifts defensively while ${prey} keeps dominant grounded pressure`,
-      duration: durations[2]
+      subject: `${predator.name} on the ${predator.side} in full-body readable profile`,
+      action: `${predator.name} reacts defensively with grounded motion, stable anatomy, and clear survival tension`
     },
     {
-      name: "escape_pressure",
-      description: "the tension peaks as the open lane decides the escape direction",
-      camera: "long-lens wide documentary shot",
+      name: "wide_reaction_lane",
+      description: "wide separation beat showing the open reaction lane",
+      camera: "locked wide documentary shot",
       motion: "slow pull-back",
-      subject: `the ${prey} owns the ${preySide} side while the ${predator} moves toward the ${predatorSide}-side escape lane`,
-      action: "both animals separate with high tension, no contact, full bodies visible",
-      duration: durations[3]
+      subject: `${prey.name} and ${predator.name} remain separated in ${environment.name}`,
+      action: "the open central reaction lane stays visible while both animals remain fully readable"
+    },
+    {
+      name: "final_dramatic_hold",
+      description: "final dramatic hold after the pressure peaks",
+      camera: "long-lens final hold",
+      motion: "slow cinematic settle",
+      subject: `${prey.name} on the ${prey.side}, ${predator.name} on the ${predator.side}, environment continuity intact`,
+      action: finalScene.action
     }
   ];
 
-  if (input.durationLane === "medium" || input.durationLane === "long") {
-    baseScenes.push({
-      name: "final_hold",
-      description: "the scene resolves into a clean aftermath hold",
-      camera: "long-lens final hold",
-      motion: "slow pull-back",
-      subject: `the ${prey} and the ${predator} keep readable separation after the pressure breaks`,
-      action: "motion settles while identity, anatomy, scale, and spacing remain stable",
-      duration: durations[4] ?? 4
-    });
-  }
-
-  return baseScenes.map((scene, index) => ({
-    id: index + 1,
-    ...scene,
-    lighting,
-    style: "photorealistic",
-    environment,
-    generateVideo: index === baseScenes.length - 1 && baseScenes.length > 4 ? false : true,
-    videoEngine: videoEngines[index] ?? (index % 2 === 0 ? "runway-gen-2" : "kling"),
-    finalShotReference: null
-  }));
+  return Array.from({ length: shotCount }, (_, index) => {
+    const template = shotTemplates[index] ?? shotTemplates[shotTemplates.length - 1];
+    return {
+      id: index + 1,
+      ...template,
+      lighting: environment.lighting,
+      style: finalScene.style,
+      environment: environment.description,
+      duration: durations[index] || baseDuration,
+      generateVideo: true,
+      videoEngine: video.videoEngines[index] ?? (index % 2 === 0 ? "runway-gen-3" : "kling"),
+      finalShotReference: `master_images/final_scene_master/${storyboard.project}.final.png`
+    };
+  });
 }
 
 function buildStoryboard(input) {
-  const project = input.project ?? `${slugify(input.prey ?? "prey")}_vs_${slugify(input.predator ?? "predator")}`;
-  const scenes = buildScenes(input);
-  const duration = scenes.reduce((total, scene) => total + scene.duration, 0);
+  const storyboard = normalizeInput(input);
+  const scenes = buildScenes(storyboard);
 
   return {
-    project,
-    duration,
-    imageEngine: input.imageEngine ?? "runway-image",
-    finalImageEngine: input.finalImageEngine ?? "runway-image",
-    videoEngine: input.videoEngine ?? "runway-gen-2",
-    masterImagePrimaryEngine: input.masterImagePrimaryEngine ?? "nano-banana-2",
-    masterImageBackupEngine: input.masterImageBackupEngine ?? "gpt-image-2",
-    masterImageUseCase: input.masterImageUseCase ?? "wildlife documentary identity lock",
-    backupImageUseCase: input.backupImageUseCase ?? "thumbnail, cover, alternate clean frame, strict layout backup",
-    masterReferenceMode:
-      input.masterReferenceMode ??
-      "Create master animal images first, then use them as source references for final scene keyframes before image-to-video.",
-    styleGuide: input.styleGuide ?? "photorealistic wildlife documentary",
-    negativePrompt:
-      input.negativePrompt ??
-      "no final-shot rendering, no text overlays, no dust clouds, no debris spray, no unstable anatomy, no overlapping subjects, no contact unless explicitly requested",
-    continuityRules: input.continuityRules ?? [
-      "preserve subject identity from the master image",
-      "maintain left-right blocking unless the scene explicitly changes it",
-      "keep anatomy stable across scene transitions",
-      "preserve grounded contact and environmental continuity",
-      "keep coat, fur, antler, horn, and marking continuity stable"
-    ],
-    aspectRatio: input.aspectRatio ?? "9:16",
-    masterSubjects: buildMasterSubjects(input),
-    scenes
+    ...storyboard,
+    duration: storyboard.video.duration,
+    masterSubjects: buildMasterSubjects(storyboard),
+    scenes,
+    runwayReferences: {
+      maxActiveReferences: 3,
+      prey: `@${storyboard.prey.slug}`,
+      predator: `@${storyboard.predator.slug}`,
+      environment: `@${storyboard.environment.slug}`
+    }
   };
 }
 
 async function main() {
   const input = JSON.parse(await readFile(INPUT_FILE, "utf8"));
-  const storyboard = buildStoryboard(input);
+  const storyboard = await enhanceInputWithGemini(buildStoryboard(input));
+
   await writeFile(STORYBOARD_FILE, `${JSON.stringify(storyboard, null, 2)}\n`);
   process.stdout.write(
     `${JSON.stringify(
       {
         project: storyboard.project,
-        duration: storyboard.duration,
-        masterSubjects: storyboard.masterSubjects.map((subject) => subject.name),
+        mode: storyboard.mode,
+        aiEnhancement: storyboard.aiEnhancement?.used ? "gemini" : "local templates",
+        references: storyboard.runwayReferences,
         scenes: storyboard.scenes.map((scene) => scene.name),
         output: "storyboard_system/storyboard.json"
       },

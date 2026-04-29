@@ -1,0 +1,18 @@
+{
+  "sceneId": 4,
+  "sceneName": "wide_reaction_lane",
+  "engine": "runway-image",
+  "type": "storyboard-image",
+  "output": "images/04_wide_reaction_lane.storyboard.png",
+  "prompt": "locked wide documentary shot, slow pull-back. wide separation beat showing the open reaction lane in heavy deep snow winter meadow, 3 to 5 foot snowbanks, pine forest, distant mountain ridge, cold clean air. massive bison and grizzly bear remain separated in heavy snow winter meadow, the open central reaction lane stays visible while both animals remain fully readable. soft overcast winter light with slight golden rim glow, photorealistic wildlife documentary. 9:16 vertical framing. Continuity rules: preserve subject identity from master references, maintain role-aware left-right blocking unless the prompt explicitly changes it, keep anatomy stable and grounded through all image and video outputs, preserve environment lighting, ground texture, and open reaction lane. Single storyboard frame, clean composition for edit planning, clear silhouette readability.",
+  "negativePrompt": "metadata only: avoid text overlays, malformed anatomy, duplicated limbs, unstable scale, cropped bodies, subject merge",
+  "negativePromptPath": "prompts/04_wide_reaction_lane.negative.txt",
+  "continuityRules": [
+    "preserve subject identity from master references",
+    "maintain role-aware left-right blocking unless the prompt explicitly changes it",
+    "keep anatomy stable and grounded through all image and video outputs",
+    "preserve environment lighting, ground texture, and open reaction lane"
+  ],
+  "promptPath": "prompts/04_wide_reaction_lane.image.txt",
+  "finalShotReference": "master_images/final_scene_master/generic_wildlife_standoff.final.png"
+}
