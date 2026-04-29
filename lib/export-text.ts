@@ -345,6 +345,10 @@ export function buildExportTxtFull(data: GeneratedPackage) {
     `=== CORE PROMPTS ===`,
     `NANO BANANA 2 / GEMINI MASTER IMAGE PROMPT\n${safeStr(data.imagePrompt)}`,
     "",
+    `GPT IMAGE 2 BACKUP PROMPT\n${safeStr(
+      (data as Record<string, unknown>).gptImage2Prompt
+    )}`,
+    "",
     `NEGATIVE PROMPT\n${safeStr(
       (data as Record<string, unknown>).negativePrompt
     )}`,

@@ -708,6 +708,7 @@ export type StructuredPrompt = {
 
 export type StructuredPromptBundle = {
   imagePrompt?: StructuredPrompt;
+  gptImage2Prompt?: StructuredPrompt;
   runwayShots?: StructuredPrompt[];
   klingShots?: StructuredPrompt[];
   seedanceShots?: StructuredPrompt[];
@@ -952,6 +953,7 @@ export type RealGenerationEvidenceRecord = {
 export type GeneratedPackage = {
   // ── Core prompts ──
   imagePrompt: string;
+  gptImage2Prompt?: string;
   negativePrompt: string;
   thumbnailPrompt: string;
   voiceoverLine: string;

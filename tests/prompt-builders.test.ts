@@ -1,6 +1,7 @@
 import { describe, it, expect } from "vitest";
 import {
   buildImagePromptCard,
+  buildGptImage2PromptCard,
   buildImagePrompt,
   buildShotImagePlan,
   buildFourShotWorkflowPromptPack,
@@ -214,6 +215,30 @@ describe("buildImagePrompt – Nano Banana image path", () => {
     expect(prompt).not.toMatch(/dry grass and packed earth|pine-aspen forest clearing/);
   });
 });
+
+it("builds a GPT Image 2 backup prompt with cover-safe layout and inline artifact constraints", () => {
+    const prompt = buildGptImage2PromptCard(
+      "Grey Wolf",
+      "Bull Elk",
+      "Rocky Mountain river basin with frost grass",
+      "Ambush attack",
+      "blue-hour dawn light",
+      "Canon EOS R5, 400mm wildlife lens",
+      "clean fur detail and grounded hoof contact",
+      "Balanced Depth",
+      "Dawn",
+      "Raw Tension",
+      "BBC Earth Documentary",
+      "The elk holds right near the river edge while the wolf approaches from the left with readable spacing."
+    ).fullText;
+
+    expect(prompt).toContain("Photorealistic wildlife documentary cover-safe still image, 9:16 vertical.");
+    expect(prompt).toContain("Keep Grey Wolf on the left and Bull Elk on the right");
+    expect(prompt).toContain("No text unless explicitly requested.");
+    expect(prompt).toContain("Avoid text, watermark, logo, extra limbs, distorted anatomy, duplicate animals, overlapping subjects");
+    expect(prompt).toContain("Leave slight negative space for cover-safe framing and social preview overlays.");
+    expect(prompt).toContain("no visible dust, no dirt spray, no debris particles, no kicked-up soil");
+  });
 
 describe("Step 6 — prompt sanitization split", () => {
   it("generation cleanup keeps realistic behavioral wording intact", () => {

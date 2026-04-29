@@ -62,6 +62,8 @@ export {
 
 export {
   buildImagePromptCard,
+  buildGptImage2PromptCard,
+  buildGptImage2Prompt,
   buildImagePrompt,
   buildShotImagePlan,
   buildNegativePrompt,

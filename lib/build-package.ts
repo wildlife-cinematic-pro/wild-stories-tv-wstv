@@ -26,6 +26,7 @@ import type { OpeningFrameInput } from "@/lib/openingFrameScore";
 
 import {
   buildImagePromptCard,
+  buildGptImage2PromptCard,
   buildFourShotWorkflowPromptPack,
   buildSeedancePromptPack,
   buildShotImagePlan,
@@ -216,6 +217,22 @@ export function buildGeneratedPackageDraft(
     input.sceneInject,
     input.quality,
     "NANO_BANANA_2",
+    input.cameraAnglePreset
+  );
+  const gptImage2PromptCard = buildGptImage2PromptCard(
+    input.predator,
+    input.prey,
+    input.finalEnvironment,
+    input.finalArc,
+    input.presetLighting,
+    input.presetCameraGear,
+    input.presetTexture,
+    input.depthMode,
+    input.weather,
+    input.emotionalTone,
+    input.animalVibe,
+    input.sceneInject,
+    input.quality,
     input.cameraAnglePreset
   );
   const shotImagePlan = buildShotImagePlan(
@@ -411,12 +428,14 @@ export function buildGeneratedPackageDraft(
     generationId,
     generatedAt,
     imagePrompt: imagePromptCard.fullText,
+    gptImage2Prompt: gptImage2PromptCard.fullText,
     negativePrompt: negativePromptForKling,
     thumbnailPrompt,
     voiceoverLine,
     shotImagePlan,
     structuredPrompts: {
       imagePrompt: imagePromptCard,
+      gptImage2Prompt: gptImage2PromptCard,
       runwayShots: [runwayPack.shot1, runwayPack.shot2, runwayPack.shot3, runwayPack.shot4],
       klingShots: [klingPack.shot1, klingPack.shot2, klingPack.shot3, klingPack.shot4],
       seedanceShots: [

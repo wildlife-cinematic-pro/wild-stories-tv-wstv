@@ -28,6 +28,10 @@ describe("output workspace accessibility source guards", () => {
       path.join(repoRoot, "components/output-cards/fast-publish-panel.tsx"),
       "utf8"
     );
+    const promptsWorkspace = readFileSync(
+      path.join(repoRoot, "components/output-cards/workspaces/PromptsWorkspace.tsx"),
+      "utf8"
+    );
 
     expect(appPage).toContain('aria-current={step === s.step ? "step" : undefined}');
     expect(appPage).toContain('aria-label="Build steps"');
@@ -35,5 +39,6 @@ describe("output workspace accessibility source guards", () => {
     expect(fastPublishPanel).toContain('1. Master Image Prompt');
     expect(fastPublishPanel).toContain('5. Shot 4 Runway');
     expect(fastPublishPanel).toContain('7. 5 Hashtags');
+    expect(promptsWorkspace).toContain('GPT Image 2 Backup Prompt');
   });
 });

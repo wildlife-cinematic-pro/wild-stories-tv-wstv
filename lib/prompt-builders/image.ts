@@ -413,6 +413,194 @@ function buildNanoBananaImagePrompt(
   return `${subjectLine} ${blockingLine} ${compositionLine} ${atmosphereLine} ${detailLine}`;
 }
 
+function buildGptImage2ImagePrompt(
+  predator: string,
+  prey: string,
+  cleanEnv: string,
+  arc: string,
+  cleanLighting: string,
+  cleanTexture: string,
+  depth: ReturnType<typeof getDepthPrompt>,
+  animalVibe: AnimalVibe,
+  habitatMode: ReturnType<typeof getHabitatMode>,
+  sanitizedSceneDesc: string,
+  weather: Weather,
+  quality?: QualityOptions,
+  cameraAnglePreset: CameraAnglePreset = "Auto"
+): string {
+  const vibe = animalVibePrompt[animalVibe];
+  const isWaterForwardStrike = isWaterForwardPreyScenario(predator, prey, cleanEnv);
+  const isRutMirrorMatch = isRutMirrorMatchScenario(predator, prey, arc, cleanEnv);
+  const rutCue = getRutMirrorMatchCue(predator);
+  const sceneLock = buildSceneLockState(
+    cleanEnv,
+    cleanLighting,
+    weather,
+    habitatMode,
+    isWaterForwardStrike
+  );
+
+  const subjectLine = isRutMirrorMatch
+    ? `Photorealistic wildlife documentary cover-safe still image, 9:16 vertical. Two ${predator} rivals share one frame ${sceneLock.habitatLocation} during a rut standoff on ${sceneLock.groundState}.`
+    : `Photorealistic wildlife documentary cover-safe still image, 9:16 vertical. ${predator} and ${prey} share one frame ${sceneLock.habitatLocation} during a high-tension ${getSafeArcLabel(arc)} beat on ${sceneLock.groundState}.`;
+
+  const baseBlockingLine = isRutMirrorMatch
+    ? `Keep one ${predator} on the left and the other on the right with ${rutCue.room}, a clean frontal antler line, and no overlap.`
+    : habitatMode === "aquatic"
+      ? `Keep ${predator} on the left and ${prey} on the right with one clean water lane between them and both bodies fully readable.`
+      : habitatMode === "shoreline"
+        ? isWaterForwardStrike
+          ? `Keep ${predator} low on the left at the bank and ${prey} on the right inside the shallow strike window with one open reaction lane between them.`
+          : `Keep ${predator} low on the left at the waterline and ${prey} on the right with one open shoreline lane between them.`
+        : `Keep ${predator} on the left and ${prey} on the right with one open reaction lane between them and both bodies fully readable.`;
+
+  const sceneNoteCue = buildSceneNoteBlockingCue(
+    sanitizedSceneDesc,
+    predator,
+    prey,
+    habitatMode,
+    isWaterForwardStrike,
+    isRutMirrorMatch,
+    rutCue
+  );
+  const blockingLine = sceneNoteCue ? `${baseBlockingLine} ${sceneNoteCue}` : baseBlockingLine;
+
+  const compositionBase = isRutMirrorMatch
+    ? `Thumbnail-safe 9:16 framing keeps both rivals fully visible, clash geometry clean, and ${rutCue.room} preserved.`
+    : `Thumbnail-safe 9:16 framing keeps both animals fully visible with clean first-frame spacing.`;
+  const depthLine =
+    depth.lensNote === "cinematic telephoto depth separation"
+      ? "Telephoto compression keeps the subjects separated with strong silhouettes."
+      : depth.lensNote === "balanced documentary depth"
+        ? "Natural wildlife field depth keeps both animals readable without clutter."
+        : "Habitat depth stays clean behind the subjects with readable spacing.";
+  const cameraPresetLine = buildImageCameraPresetLine(
+    cameraAnglePreset,
+    habitatMode,
+    cleanEnv
+  );
+  const compositionLine = `${compositionBase}${cameraPresetLine ? ` ${cameraPresetLine}` : ""} ${depthLine} Leave slight negative space for cover-safe framing and social preview overlays.`;
+
+  const lightingAccentLine = buildSceneLockLightingAccent(cleanLighting);
+  const cameraLightingLine = buildCameraLightingContinuityLine(
+    cameraAnglePreset,
+    habitatMode,
+    cleanEnv
+  );
+  const atmosphereLine = `${sceneLock.lightingFamily} in ${sceneLock.atmosphereFamily}.${lightingAccentLine ? ` ${lightingAccentLine}` : ""}${cameraLightingLine ? ` ${cameraLightingLine}` : ""}`;
+
+  const actionLine = sanitizedSceneDesc
+    ? `Show ${clipPromptContext(sanitizedSceneDesc, 150)} Keep the tension readable without contact unless the scene description explicitly requests it.`
+    : isRutMirrorMatch
+      ? "Hold the confrontation at readable peak tension without horn or antler contact."
+      : `Show a readable ${getSafeArcLabel(arc)} moment without contact unless explicitly requested.`;
+
+  const anatomyLine =
+    quality?.realismMode === "High Naturalism"
+      ? "Exact animal anatomy, stable fur or feather markings, grounded paw, hoof, or claw contact, natural scale, and realistic terrain interaction."
+      : quality?.referenceLock
+        ? "Exact animal anatomy, stable markings, grounded contact, and continuity-safe identity across alternate stills."
+        : "Exact animal anatomy, stable markings, grounded contact, and natural scale.";
+
+  const detailLine = vibe.texture
+    ? `Clean composition for a backup still, thumbnail, cover frame, or strict layout alternate with ${cleanTexture} and ${vibe.texture.toLowerCase()}. ${anatomyLine}`
+    : `Clean composition for a backup still, thumbnail, cover frame, or strict layout alternate with ${cleanTexture}. ${anatomyLine}`;
+
+  const constraintLine =
+    "No text unless explicitly requested. Avoid text, watermark, logo, extra limbs, distorted anatomy, duplicate animals, overlapping subjects, dust clouds, debris spray, smoke-like particles, muddy blur, low-detail faces, cropped bodies.";
+
+  return `${subjectLine} ${blockingLine} ${actionLine} ${atmosphereLine} ${compositionLine} ${detailLine} ${CLEAN_GROUND_CONTACT_LINE} ${constraintLine}`;
+}
+
+export function buildGptImage2PromptCard(
+  predator: string,
+  prey: string,
+  env: string,
+  arc: string,
+  lighting: string,
+  cameraGear: string,
+  texture: string,
+  depthMode: DepthMode,
+  weather: Weather,
+  emotionalTone: EmotionalTone,
+  animalVibe: AnimalVibe,
+  sceneDesc?: string,
+  quality?: QualityOptions,
+  cameraAnglePreset: CameraAnglePreset = "Auto"
+): StructuredPrompt {
+  void emotionalTone;
+  void cameraGear;
+
+  const depth = getDepthPrompt(depthMode);
+  const cleanEnv = sanitizeImageEnv(env);
+  const cleanTexture = sanitizeImageTexture(texture, env);
+  const cleanLighting = sanitizeLightingPhrase(lighting, weather);
+  const sanitizedSceneDesc = stripLegacyImageFlags(sceneDesc?.trim() ?? "");
+  const habitatMode = getHabitatMode(predator, prey, env);
+
+  const prompt = finalizePrompt(
+    buildGptImage2ImagePrompt(
+      predator,
+      prey,
+      cleanEnv,
+      arc,
+      cleanLighting,
+      cleanTexture,
+      depth,
+      animalVibe,
+      habitatMode,
+      sanitizedSceneDesc,
+      weather,
+      quality,
+      cameraAnglePreset
+    )
+  );
+
+  return buildStructuredPrompt({
+    fullText: prompt,
+    pasteReady: prompt,
+    metadata: {
+      engine: "image",
+      title: "GPT Image 2 backup still",
+      variant: "single-shot",
+    },
+  });
+}
+
+export function buildGptImage2Prompt(
+  predator: string,
+  prey: string,
+  env: string,
+  arc: string,
+  lighting: string,
+  cameraGear: string,
+  texture: string,
+  depthMode: DepthMode,
+  weather: Weather,
+  emotionalTone: EmotionalTone,
+  animalVibe: AnimalVibe,
+  sceneDesc?: string,
+  quality?: QualityOptions,
+  cameraAnglePreset: CameraAnglePreset = "Auto"
+): string {
+  return buildGptImage2PromptCard(
+    predator,
+    prey,
+    env,
+    arc,
+    lighting,
+    cameraGear,
+    texture,
+    depthMode,
+    weather,
+    emotionalTone,
+    animalVibe,
+    sceneDesc,
+    quality,
+    cameraAnglePreset
+  ).fullText;
+}
+
 export function buildImagePromptCard(
   predator: string,
   prey: string,
