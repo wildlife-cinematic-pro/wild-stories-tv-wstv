@@ -116,6 +116,37 @@ export default function ImagePage() {
     [aspectRatio, customNote, mood, selectedPreset, wildlifeOverride]
   );
 
+  const facebookCaption = useMemo(
+    () => `${pkg.caption} — ${selectedPreset.parkName}, ${selectedPreset.stateOrProvince}.`,
+    [pkg.caption, selectedPreset.parkName, selectedPreset.stateOrProvince]
+  );
+
+  const facebookCaptionWithHashtags = useMemo(
+    () => `${facebookCaption}\n\n${pkg.hashtags}`,
+    [facebookCaption, pkg.hashtags]
+  );
+
+  const copyAll = useMemo(
+    () =>
+      [
+        "IMAGE PROMPT:",
+        pkg.prompt,
+        "",
+        "NEGATIVE PROMPT:",
+        pkg.negativePrompt,
+        "",
+        "FACEBOOK CAPTION:",
+        facebookCaption,
+        "",
+        "HASHTAGS:",
+        pkg.hashtags,
+        "",
+        "ALT TEXT:",
+        pkg.altText,
+      ].join("\n"),
+    [facebookCaption, pkg.altText, pkg.hashtags, pkg.negativePrompt, pkg.prompt]
+  );
+
   function choosePreset(id: string) {
     setSelectedPresetId(id);
     setCopiedKey(null);
@@ -185,7 +216,7 @@ export default function ImagePage() {
           <p className="text-xs font-black uppercase tracking-[0.2em] text-cyan-300">Photo-only generator</p>
           <h1 className="mt-2 text-2xl font-black tracking-tight text-white sm:text-3xl">USA / Canada Scenic Wildlife Image Studio</h1>
           <p className="mt-2 max-w-3xl text-sm leading-6 text-white/60">
-            Generate post-ready photoreal image prompts for national-park inspired scenic wildlife photos. This section stays separate from video, Runway, and storyboard workflows.
+            Generate post-ready photoreal image prompts for national-park inspired scenic wildlife photos. Facebook captions always include the real park/location name.
           </p>
         </section>
 
@@ -314,8 +345,8 @@ export default function ImagePage() {
                 <p className="mt-1 text-sm font-black text-white">{pkg.title}</p>
               </div>
               <div className="rounded-3xl border border-white/[0.08] bg-white/[0.035] p-4">
-                <p className="text-[10px] font-black uppercase tracking-[0.16em] text-white/35">Caption</p>
-                <p className="mt-1 text-sm font-black text-white">{pkg.caption}</p>
+                <p className="text-[10px] font-black uppercase tracking-[0.16em] text-white/35">Facebook caption</p>
+                <p className="mt-1 text-sm font-black text-white">{facebookCaption}</p>
               </div>
               <div className="rounded-3xl border border-white/[0.08] bg-white/[0.035] p-4">
                 <p className="text-[10px] font-black uppercase tracking-[0.16em] text-white/35">Hashtags</p>
@@ -324,12 +355,12 @@ export default function ImagePage() {
             </div>
 
             <div className="flex justify-end">
-              <CopyButton value={pkg.copyAll} copyKey="all" copiedKey={copiedKey} onCopied={setCopiedKey} />
+              <CopyButton value={copyAll} copyKey="all" copiedKey={copiedKey} onCopied={setCopiedKey} />
             </div>
 
             <OutputBox label="Image prompt" value={pkg.prompt} copyKey="prompt" copiedKey={copiedKey} onCopied={setCopiedKey} />
             <OutputBox label="Negative prompt" value={pkg.negativePrompt} copyKey="negative" copiedKey={copiedKey} onCopied={setCopiedKey} />
-            <OutputBox label="Facebook caption + 5 viral hashtags" value={`${pkg.caption}\n\n${pkg.hashtags}`} copyKey="caption" copiedKey={copiedKey} onCopied={setCopiedKey} />
+            <OutputBox label="Facebook caption + 5 viral hashtags" value={facebookCaptionWithHashtags} copyKey="caption" copiedKey={copiedKey} onCopied={setCopiedKey} />
             <OutputBox label="Alt text" value={pkg.altText} copyKey="alt" copiedKey={copiedKey} onCopied={setCopiedKey} />
           </section>
         </div>
