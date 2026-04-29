@@ -2,16 +2,43 @@
   "project": "wildlife_standoff",
   "duration": 40,
   "imageEngine": "runway-image",
+  "finalImageEngine": "runway-image",
   "videoEngine": "runway-gen-2",
+  "masterImagePrimaryEngine": "nano-banana-2",
+  "masterImageBackupEngine": "gpt-image-2",
+  "masterImageUseCase": "wildlife documentary identity lock",
+  "backupImageUseCase": "thumbnail, cover, alternate clean frame, strict layout backup",
+  "masterReferenceMode": "Create master animal images first, then use them as source references for final scene keyframes before image-to-video.",
   "styleGuide": "photorealistic wildlife documentary",
   "negativePrompt": "no final-shot rendering, no text overlays, no dust clouds, no debris spray, no unstable anatomy, no overlapping subjects",
   "continuityRules": [
-    "preserve subject identity from source image",
+    "preserve subject identity from the master image",
     "maintain left-right blocking unless the scene explicitly changes it",
     "keep anatomy stable across scene transitions",
-    "preserve grounded contact and environmental continuity"
+    "preserve grounded contact and environmental continuity",
+    "keep coat, fur, antler, horn, and marking continuity stable"
   ],
   "aspectRatio": "9:16",
+  "masterSubjects": [
+    {
+      "name": "grey wolf",
+      "slug": "grey_wolf",
+      "role": "predator",
+      "side": "left",
+      "description": "lean defined grey wolf with layered guard hairs, sharp muzzle detail, alert ears, natural grey-brown coat pattern, full body readable",
+      "identityNotes": "Keep the same mature wolf identity, coat markings, muzzle shape, ear shape, body scale, and grounded paw contact across all scenes.",
+      "referenceImage": null
+    },
+    {
+      "name": "elk",
+      "slug": "elk",
+      "role": "prey",
+      "side": "right",
+      "description": "large alert elk with natural winter coat, readable body mass, clear head and leg anatomy, full body visible",
+      "identityNotes": "Keep the same elk identity, coat color, body scale, leg anatomy, head shape, and grounded hoof contact across all scenes.",
+      "referenceImage": null
+    }
+  ],
   "scenes": [
     {
       "id": 1,
