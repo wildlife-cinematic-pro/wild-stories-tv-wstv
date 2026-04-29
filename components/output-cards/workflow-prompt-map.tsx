@@ -304,6 +304,7 @@ export function WorkflowPromptMap({
     help: string;
     value: string;
     actions: WorkflowAction[];
+    checklist?: string;
   };
   type WorkflowConfig = {
     pipeline: string;
@@ -311,6 +312,7 @@ export function WorkflowPromptMap({
     bannerBody: string;
     workflowLabel?: string;
     topNote?: string;
+    referenceBuildPrompts?: string;
     steps: WorkflowItem[];
   };
 
@@ -492,6 +494,27 @@ export function WorkflowPromptMap({
       environmentTag: environmentReferenceTag,
     });
     const elevenLabs20sPrompt = buildElevenLabs20sPrompt();
+    const referenceBuildPrompts = [
+      "Lead Animal Master Image",
+      leadMasterPrompt,
+      "",
+      "Opposite Animal Master Image",
+      oppositeMasterPrompt,
+      "",
+      "Environment Master Image",
+      environmentMasterPrompt,
+      "",
+      "Final Merge Master Image",
+      finalMergeMasterPrompt,
+    ].join("\n");
+    const runwayReferenceChecklist = [
+      "[ ] Lead animal reference saved",
+      "[ ] Opposite animal reference saved",
+      "[ ] Environment reference saved",
+      "[ ] Exactly 3 active references selected",
+      "[ ] Final merge image generated",
+      "[ ] Final merge image used as video source",
+    ].join("\n");
 
     return {
       seedance: {
@@ -733,6 +756,7 @@ export function WorkflowPromptMap({
         workflowLabel: "Gemini enhances prompts. Runway Gen-4 builds production references.",
         topNote:
           "Do not try to do the entire workflow inside Nano Banana 2 only. Nano Banana/Gemini improves prompt quality, but Runway Gen-4 References is the production step for reusable references, final scene master image, and Runway image-to-video continuity.",
+        referenceBuildPrompts,
         steps: [
           {
             step: 1,
@@ -769,6 +793,7 @@ export function WorkflowPromptMap({
             help: `Merge ${leadReferenceTag}, ${oppositeReferenceTag}, and ${environmentReferenceTag} into one final scene master image for video source continuity.`,
             value: finalMergeMasterPrompt,
             actions: [{ label: "Copy Final Merge Master Prompt", value: finalMergeMasterPrompt }],
+            checklist: runwayReferenceChecklist,
           },
           {
             step: 5,
@@ -963,6 +988,18 @@ export function WorkflowPromptMap({
         </div>
       )}
 
+      {currentWorkflow.referenceBuildPrompts && (
+        <div className="mb-4">
+          <button
+            type="button"
+            onClick={() => onCopy(currentWorkflow.referenceBuildPrompts ?? "")}
+            className="rounded-lg bg-gray-900 px-4 py-2 text-xs font-bold text-white hover:bg-black active:scale-[0.99]"
+          >
+            📋 Copy All Reference Build Prompts
+          </button>
+        </div>
+      )}
+
       <div className="grid gap-4 md:grid-cols-3">
         {currentWorkflow.steps.map((item) => (
           <div
@@ -981,6 +1018,16 @@ export function WorkflowPromptMap({
               onToggle={() => toggle(item.step)}
             >
               <TextBox value={item.value} />
+              {item.checklist && (
+                <div className="mt-3 rounded-xl border border-green-200 bg-green-50 p-3">
+                  <div className="mb-2 text-[11px] font-extrabold uppercase tracking-wide text-green-800">
+                    Runway Reference Checklist
+                  </div>
+                  <pre className="whitespace-pre-wrap text-xs leading-relaxed text-green-900">
+                    {item.checklist}
+                  </pre>
+                </div>
+              )}
               <div className="mt-3 flex flex-wrap gap-2">
                 {item.actions.map((action) => (
                   <button
