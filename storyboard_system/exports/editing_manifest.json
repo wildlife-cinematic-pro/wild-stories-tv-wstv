@@ -1,49 +1,65 @@
 {
-  "project": "wildlife_standoff",
+  "project": "generic_wildlife_standoff",
   "delivery": {
     "aspectRatio": "9:16",
-    "duration": 40,
+    "duration": 15,
     "styleGuide": "photorealistic wildlife documentary",
-    "negativePrompt": "no final-shot rendering, no text overlays, no dust clouds, no debris spray, no unstable anatomy, no overlapping subjects",
-    "continuityRules": [
-      "preserve subject identity from source image",
-      "maintain left-right blocking unless the scene explicitly changes it",
-      "keep anatomy stable across scene transitions",
-      "preserve grounded contact and environmental continuity"
+    "workflowOrder": [
+      "Generate prey-only master image",
+      "Save/tag in Runway as @massive_bison",
+      "Generate predator-only master image",
+      "Save/tag in Runway as @grizzly_bear",
+      "Generate environment-only master image",
+      "Save/tag in Runway as @heavy_snow_winter_meadow",
+      "Use all 3 references to generate final scene master image",
+      "Use final scene master image as source for Runway/Kling video"
     ]
   },
+  "references": {
+    "runway3ReferenceManifest": "references/runway_3_reference_manifest.json",
+    "animalIdentityManifest": "references/animal_identity_manifest.json"
+  },
+  "finalSceneMaster": "master_images/final_scene_master/generic_wildlife_standoff.final.png",
   "timeline": [
     {
       "sceneId": 1,
-      "sceneName": "establishing",
-      "imageReference": "images/01_establishing.png",
-      "videoReference": "videos/01_establishing.mp4",
-      "editableReference": null,
-      "duration": 5
+      "sceneName": "establishing_tension",
+      "storyboardImageReference": "images/01_establishing_tension.storyboard.png",
+      "finalImageReference": "images/01_establishing_tension.final.png",
+      "videoReference": "videos/01_establishing_tension.mp4",
+      "duration": 3
     },
     {
       "sceneId": 2,
-      "sceneName": "predator_entry",
-      "imageReference": "images/02_predator_entry.png",
-      "videoReference": "videos/02_predator_entry.mp4",
-      "editableReference": null,
-      "duration": 6
+      "sceneName": "defender_pressure_move",
+      "storyboardImageReference": "images/02_defender_pressure_move.storyboard.png",
+      "finalImageReference": "images/02_defender_pressure_move.final.png",
+      "videoReference": "videos/02_defender_pressure_move.mp4",
+      "duration": 3
     },
     {
       "sceneId": 3,
-      "sceneName": "standoff_hold",
-      "imageReference": "images/03_standoff_hold.png",
-      "videoReference": "videos/03_standoff_hold.mp4",
-      "editableReference": null,
-      "duration": 7
+      "sceneName": "predator_reaction",
+      "storyboardImageReference": "images/03_predator_reaction.storyboard.png",
+      "finalImageReference": "images/03_predator_reaction.final.png",
+      "videoReference": "videos/03_predator_reaction.mp4",
+      "duration": 3
     },
     {
       "sceneId": 4,
-      "sceneName": "aftermath_exit",
-      "imageReference": "images/04_aftermath_exit.png",
-      "videoReference": null,
-      "editableReference": null,
-      "duration": 6
+      "sceneName": "wide_reaction_lane",
+      "storyboardImageReference": "images/04_wide_reaction_lane.storyboard.png",
+      "finalImageReference": "images/04_wide_reaction_lane.final.png",
+      "videoReference": "videos/04_wide_reaction_lane.mp4",
+      "duration": 3
+    },
+    {
+      "sceneId": 5,
+      "sceneName": "final_dramatic_hold",
+      "storyboardImageReference": "images/05_final_dramatic_hold.storyboard.png",
+      "finalImageReference": "images/05_final_dramatic_hold.final.png",
+      "videoReference": "videos/05_final_dramatic_hold.mp4",
+      "duration": 3
     }
   ]
 }

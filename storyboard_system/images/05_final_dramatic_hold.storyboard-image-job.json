@@ -1,0 +1,18 @@
+{
+  "sceneId": 5,
+  "sceneName": "final_dramatic_hold",
+  "engine": "runway-image",
+  "type": "storyboard-image",
+  "output": "images/05_final_dramatic_hold.storyboard.png",
+  "prompt": "long-lens final hold, slow cinematic settle. final dramatic hold after the pressure peaks in heavy deep snow winter meadow, 3 to 5 foot snowbanks, pine forest, distant mountain ridge, cold clean air. massive bison on the left, grizzly bear on the right, environment continuity intact, defender holds dominant pressure while predator reacts defensively. soft overcast winter light with slight golden rim glow, photorealistic wildlife documentary. 9:16 vertical framing. Continuity rules: preserve subject identity from master references, maintain role-aware left-right blocking unless the prompt explicitly changes it, keep anatomy stable and grounded through all image and video outputs, preserve environment lighting, ground texture, and open reaction lane. Single storyboard frame, clean composition for edit planning, clear silhouette readability.",
+  "negativePrompt": "metadata only: avoid text overlays, malformed anatomy, duplicated limbs, unstable scale, cropped bodies, subject merge",
+  "negativePromptPath": "prompts/05_final_dramatic_hold.negative.txt",
+  "continuityRules": [
+    "preserve subject identity from master references",
+    "maintain role-aware left-right blocking unless the prompt explicitly changes it",
+    "keep anatomy stable and grounded through all image and video outputs",
+    "preserve environment lighting, ground texture, and open reaction lane"
+  ],
+  "promptPath": "prompts/05_final_dramatic_hold.image.txt",
+  "finalShotReference": "master_images/final_scene_master/generic_wildlife_standoff.final.png"
+}
