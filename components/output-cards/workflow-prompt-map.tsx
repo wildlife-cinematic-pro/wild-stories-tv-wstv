@@ -105,46 +105,135 @@ function TextBox({ value }: { value: string }) {
   );
 }
 
-function slugifyReference(value: string, fallback: string) {
-  const slug = String(value || fallback)
+type SlugifyReferenceOptions = {
+  maxWords?: number;
+  maxLength?: number;
+  suffix?: string;
+};
+
+const ENVIRONMENT_SLUG_STOP_WORDS = new Set([
+  "a",
+  "an",
+  "and",
+  "the",
+  "of",
+  "with",
+  "in",
+  "on",
+  "at",
+  "near",
+  "heavy",
+  "deep",
+  "dense",
+  "clean",
+  "clear",
+  "natural",
+  "realistic",
+  "north",
+  "american",
+]);
+
+const ENVIRONMENT_HABITAT_WORDS = new Set([
+  "forest",
+  "clearing",
+  "meadow",
+  "snow",
+  "winter",
+  "pine",
+  "hardwood",
+  "grassland",
+  "prairie",
+  "river",
+  "riverbank",
+  "marsh",
+  "wetland",
+  "tundra",
+  "mountain",
+  "valley",
+  "savanna",
+  "desert",
+  "coastal",
+  "coast",
+  "jungle",
+  "swamp",
+  "woodland",
+  "plain",
+  "field",
+  "ridge",
+  "yellowstone",
+]);
+
+function slugifyReference(
+  value: string,
+  fallback: string,
+  options: SlugifyReferenceOptions = {}
+) {
+  const rawWords = String(value || fallback)
     .trim()
     .toLowerCase()
-    .replace(/[^a-z0-9]+/g, "_")
-    .replace(/^_+|_+$/g, "");
+    .replace(/[^a-z0-9]+/g, " ")
+    .split(/\s+/)
+    .filter(Boolean);
+  const suffix = options.suffix?.trim().toLowerCase();
+  let wordsForSlug = rawWords;
+
+  if (suffix === "env") {
+    if (rawWords.includes("forest") && rawWords.includes("clearing")) {
+      wordsForSlug = ["forest", "clearing"];
+    } else if (rawWords.includes("winter") && rawWords.includes("meadow")) {
+      wordsForSlug = ["winter", "meadow"];
+    } else if (rawWords.includes("yellowstone") && rawWords.includes("snow")) {
+      wordsForSlug = ["yellowstone", "snow"];
+    } else {
+      wordsForSlug = rawWords.filter((word) =>
+        ENVIRONMENT_HABITAT_WORDS.has(word) || !ENVIRONMENT_SLUG_STOP_WORDS.has(word)
+      );
+    }
+  }
+  const maxWords = options.maxWords && options.maxWords > 0 ? options.maxWords : wordsForSlug.length;
+  const trimmedWords = wordsForSlug.slice(0, maxWords);
+  const fallbackWords = String(fallback)
+    .trim()
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, " ")
+    .split(/\s+/)
+    .filter(Boolean);
+  let slug = (trimmedWords.length ? trimmedWords : fallbackWords).join("_");
+
+  if (options.maxLength && options.maxLength > 0 && slug.length > options.maxLength) {
+    slug = slug.slice(0, options.maxLength).replace(/_+$/g, "");
+  }
+
+  if (suffix && slug && !slug.endsWith(`_${suffix}`) && slug !== suffix) {
+    slug = `${slug}_${suffix}`;
+  }
 
   return slug || fallback;
 }
 
 function buildAnimalMasterReferencePrompt({
   subjectName,
-  roleLabel,
-  environmentName,
-  imagePrompt,
+  stanceLabel,
+  identityMarkers,
+  contactLabel,
 }: {
   subjectName: string;
-  roleLabel: string;
-  environmentName: string;
-  imagePrompt: string;
+  stanceLabel: string;
+  identityMarkers: string;
+  contactLabel: string;
 }) {
   return [
-    `Gemini-enhanced prompt for Runway Gen-4 Image production reference.`,
-    `Create a reusable ${roleLabel} master reference image for ${subjectName}.`,
-    `Single animal only, full body readable, neutral grounded stance, stable anatomy, clear identity markers, realistic scale, grounded hoof/paw/foot contact, simple uncluttered background.`,
-    `Use Gemini/Nano Banana 2 for prompt enhancement or optional concept drafting only; production reference is built in Runway Gen-4 Image.`,
-    `Environment context for lighting/style only: ${environmentName}.`,
-    imagePrompt ? `Prompt-quality source: ${imagePrompt}` : null,
-  ]
-    .filter(Boolean)
-    .join("\n");
+    `Photorealistic wildlife documentary master reference image, 9:16 vertical.`,
+    `${subjectName} only.`,
+    `Full body readable, ${stanceLabel}, stable anatomy, ${identityMarkers}, realistic scale, ${contactLabel}, simple uncluttered natural background, clean subject separation, production-ready Runway Gen-4 Image reference.`,
+  ].join(" ");
 }
 
 function buildEnvironmentMasterReferencePrompt(environmentName: string) {
   return [
-    `Gemini-enhanced prompt for Runway Gen-4 Image production reference.`,
-    `Create a reusable environment/background master reference for ${environmentName}.`,
-    `Environment only, no animals, no people, no buildings, no roads. Keep clean open central space for future wildlife subjects, readable habitat texture, natural ground plane, realistic atmosphere, and production-friendly lighting.`,
-    `Use Gemini/Nano Banana 2 for prompt enhancement or optional concept drafting only; production reference is built in Runway Gen-4 Image.`,
-  ].join("\n");
+    `Photorealistic ${environmentName} environment/background reference prompt, 9:16 vertical.`,
+    `Environment-only composition, open central wildlife corridor, clean subject-ready space, readable habitat texture, lighting and atmosphere, natural ground plane, documentary realism, production-ready environment reference image.`,
+  ].join(" ");
 }
 
 function buildFinalMergeMasterPrompt({
@@ -163,12 +252,13 @@ function buildFinalMergeMasterPrompt({
   environmentTag: string;
 }) {
   return [
-    `Runway Gen-4 References final merge master image using exactly 3 active references: ${leadTag}, ${oppositeTag}, ${environmentTag}.`,
-    `Use ${leadTag} only for ${leadAnimalName} lead animal / predator identity.`,
-    `Use ${oppositeTag} only for ${oppositeAnimalName} opposite animal / prey-defender identity.`,
-    `Use ${environmentTag} only for ${environmentName} background, lighting, ground texture, and atmosphere.`,
-    `Create one final scene master image with both animals fully visible, clean readable spacing, clear open reaction lane, stable anatomy, grounded contact, and photorealistic wildlife documentary composition.`,
-    `This final scene master image becomes the source image for Runway image-to-video and Kling continuity handoff.`,
+    `Use exactly 3 active Runway references: ${leadTag}, ${oppositeTag}, ${environmentTag}.`,
+    ``,
+    `Use ${leadTag} only for ${leadAnimalName} identity: coat, head profile, body scale, and grounded paw/hoof/foot contact.`,
+    `Use ${oppositeTag} only for ${oppositeAnimalName} identity: coat, body scale, legs, and grounded paw/hoof/foot contact.`,
+    `Use ${environmentTag} only for background, lighting, ground texture, and atmosphere.`,
+    ``,
+    `Photorealistic wildlife documentary final scene master image, 9:16 vertical. ${leadAnimalName} on the left, ${oppositeAnimalName} on the right, both fully visible with clean readable spacing and one clear open reaction lane between them. ${environmentName} with habitat texture, crisp clean air, stable anatomy, grounded contact, cinematic telephoto documentary framing, video-ready source frame.`,
   ].join("\n");
 }
 
@@ -248,7 +338,7 @@ export function WorkflowPromptMap({
   const environmentName = safeText(data.environmentName) || "natural wildlife environment";
   const leadReferenceTag = `@${slugifyReference(leadAnimalName, "lead_animal")}`;
   const oppositeReferenceTag = `@${slugifyReference(oppositeAnimalName, "opposite_animal")}`;
-  const environmentReferenceTag = `@${slugifyReference(environmentName, "environment_reference")}`;
+  const environmentReferenceTag = `@${slugifyReference(environmentName, "environment", { maxWords: 4, maxLength: 40, suffix: "env" })}`;
 
   const drift = deriveDriftLabel(data.clipChaining);
 
@@ -382,15 +472,15 @@ export function WorkflowPromptMap({
     ].join("\n\n");
     const leadMasterPrompt = buildAnimalMasterReferencePrompt({
       subjectName: leadAnimalName,
-      roleLabel: "lead animal / predator",
-      environmentName,
-      imagePrompt,
+      stanceLabel: "neutral grounded stance",
+      identityMarkers: "clear identity markers",
+      contactLabel: "grounded paw/hoof/foot contact",
     });
     const oppositeMasterPrompt = buildAnimalMasterReferencePrompt({
       subjectName: oppositeAnimalName,
-      roleLabel: "opposite animal / prey-defender",
-      environmentName,
-      imagePrompt,
+      stanceLabel: "alert grounded stance",
+      identityMarkers: "clear identity markers",
+      contactLabel: "grounded paw/hoof/foot contact",
     });
     const environmentMasterPrompt = buildEnvironmentMasterReferencePrompt(environmentName);
     const finalMergeMasterPrompt = buildFinalMergeMasterPrompt({
@@ -667,7 +757,7 @@ export function WorkflowPromptMap({
             title: "Environment Master Image",
             badge: "Gemini-enhanced prompt → Runway Gen-4 Image",
             color: guideColor,
-            help: `Build the reusable background reference for ${environmentName}; environment only, open central space, no animals.`,
+            help: `Build the reusable background reference for ${environmentName}; environment-only composition with open central subject-ready space.`,
             value: environmentMasterPrompt,
             actions: [{ label: "Copy Environment Master Prompt", value: environmentMasterPrompt }],
           },
