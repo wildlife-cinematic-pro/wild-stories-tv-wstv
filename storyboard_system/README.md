@@ -4,10 +4,43 @@ This module is a clean, isolated storyboard workflow that sits beside the produc
 
 It is built for creator planning, identity continuity, and Runway/Kling-ready source manifests. It does not generate final media by itself.
 
+## Fast automatic workflow
+
+For a new animal video, edit only:
+
+```text
+storyboard_system/storyboard_input.json
+```
+
+Then run:
+
+```bash
+npm run storyboard
+```
+
+The command automatically converts `storyboard_input.json` into `storyboard.json`, then generates all storyboard prompts, master-image jobs, final-image jobs, video jobs, reference manifests, validation, and preview exports.
+
+You usually only change these fields:
+
+- `project`
+- `predator`
+- `prey`
+- `predatorSide`
+- `preySide`
+- `environment`
+- `lighting`
+- `sceneDescription`
+- `predatorDescription`
+- `preyDescription`
+- `predatorIdentityNotes`
+- `preyIdentityNotes`
+
 ## Workflow order
 
 ```text
-storyboard.json
+storyboard_input.json
+↓
+auto-generated storyboard.json
 ↓
 storyboard image jobs for layout planning
 ↓
@@ -31,8 +64,9 @@ Use this separation consistently:
 
 ## What the module creates
 
-The storyboard system turns a structured `storyboard.json` plan into:
+The storyboard system turns a structured `storyboard_input.json` plan into:
 
+- auto-generated `storyboard.json`
 - ordered scene manifests
 - generic image and video prompts
 - platform-specific Runway and Kling prompt exports
@@ -54,6 +88,10 @@ Everything stays inside `storyboard_system/`.
 
 ```text
 storyboard_system/
+  storyboard_input.json
+  generate_from_input.mjs
+  storyboard.json
+  pipeline.mjs
   scenes/
   prompts/
   master_images/
@@ -61,79 +99,45 @@ storyboard_system/
   images/
   videos/
   exports/
-  storyboard.json
-  pipeline.mjs
 ```
 
-## How to edit `storyboard.json`
+## Input fields
 
-Define the project at the top level:
+Edit `storyboard_input.json`:
 
 - `project`: project slug or name
-- `duration`: total project duration target
-- `imageEngine`: default storyboard image engine, such as `runway-image`
-- `finalImageEngine`: final scene keyframe engine
-- `videoEngine`: default video engine, such as `runway-gen-2` or `kling`
-- `masterImagePrimaryEngine`: primary master-image engine, normally `nano-banana-2`
-- `masterImageBackupEngine`: backup master-image engine, normally `gpt-image-2`
-- `masterImageUseCase`: why the master image exists
-- `backupImageUseCase`: why the backup image exists
-- `masterReferenceMode`: how master images are used before final scene images
-- `styleGuide`: shared style language for every scene
-- `negativePrompt`: shared negative prompt exported separately and included in job manifests
-- `continuityRules`: shared continuity constraints applied to every prompt
-- `aspectRatio`: framing target, such as `9:16`
-- `masterSubjects`: explicit subject identity definitions used to create master-image jobs
+- `predator`: predator or pressure animal
+- `prey`: defender, target, or escape animal
+- `predatorSide`: usually `right`
+- `preySide`: usually `left`
+- `environment`: habitat/background
+- `lighting`: lighting direction and mood
+- `storyArc`: optional planning label
+- `durationLane`: `short`, `medium`, or `long`
+- `videoEngines`: optional per-scene engines
+- `sceneDescription`: main action beat
+- `predatorDescription`: identity description for predator master image
+- `preyDescription`: identity description for prey/defender master image
+- `predatorIdentityNotes`: continuity rules for predator identity
+- `preyIdentityNotes`: continuity rules for prey/defender identity
+- `negativePrompt`: shared negative prompt
 
-Define each `masterSubjects` item with:
+## Advanced manual editing
 
-- `name`
-- `slug`
-- `role`
-- `side`
-- `description`
-- `identityNotes`
-- `referenceImage` metadata, or `null` if no source image is attached yet
+`storyboard.json` is now generated from `storyboard_input.json`. Manual edits to `storyboard.json` are still possible, but they will be overwritten the next time `npm run storyboard` runs.
 
-Define each scene with:
-
-- `id`
-- `name`
-- `description`
-- `camera`
-- `motion`
-- `subject`
-- `action`
-- `lighting`
-- `style`
-- `environment`
-- `duration`
-- `generateVideo`
-- `videoEngine`
-- `finalShotReference` metadata only
-
-## How to run the pipeline
-
-Run either command from the repo root:
+If you need full manual control, edit `storyboard.json` and run only:
 
 ```bash
 node storyboard_system/pipeline.mjs
 ```
 
-or:
-
-```bash
-npm run storyboard
-```
-
-The pipeline refreshes only generated files inside `storyboard_system/`. It does not write into production output directories.
-
 ## Generated prompt files
 
 Generated prompt files land in `storyboard_system/prompts/`:
 
-- `master_grey_wolf.nano-banana-2.txt`
-- `master_grey_wolf.gpt-image-2.txt`
+- `master_massive_bison.nano-banana-2.txt`
+- `master_massive_bison.gpt-image-2.txt`
 - `01_scene.image.txt`
 - `01_scene.final-image.txt`
 - `01_scene.video.txt`
@@ -193,12 +197,10 @@ If a prompt, scene, or master image job fails validation, check `exports/validat
 
 Common causes:
 
-- empty camera or motion field
-- missing subject or action
-- missing lighting or style
-- missing aspect ratio
-- duration set to `0` or a negative number
-- missing `masterSubjects` identity details
+- empty animal name in `storyboard_input.json`
+- missing environment or scene description
+- missing lighting or identity description
+- duration set to an unsupported lane
 - using a storyboard image where a final scene keyframe should be used
 
-If you change the storyboard structure, rerun the pipeline so the HTML preview, prompt exports, reference manifests, and job manifests stay in sync.
+If you change the input, rerun the pipeline so the HTML preview, prompt exports, reference manifests, and job manifests stay in sync.

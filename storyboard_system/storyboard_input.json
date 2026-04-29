@@ -1,0 +1,18 @@
+{
+  "project": "bison_vs_grizzly_escape",
+  "predator": "grizzly bear",
+  "prey": "massive bison",
+  "predatorSide": "right",
+  "preySide": "left",
+  "environment": "pine-aspen forest clearing with dry leaf litter, patchy grass, and clean open ground",
+  "lighting": "warm late-day golden rim light with clean frontal readability",
+  "storyArc": "escape_pressure",
+  "durationLane": "short",
+  "videoEngines": ["runway-gen-2", "runway-gen-2", "kling", "runway-gen-2"],
+  "sceneDescription": "The bison commits instantly while the grizzly bear is already under pressure. Keep one open reaction lane between them, no contact, full bodies visible.",
+  "predatorDescription": "large grizzly bear with muscular shoulders, brown fur, broad head, visible claws, realistic body mass, full body readable",
+  "preyDescription": "massive shaggy dark brown bison with heavy shoulder hump, thick mane, short curved horns, powerful body mass, full body readable",
+  "predatorIdentityNotes": "Keep the same grizzly bear identity, brown fur tone, shoulder shape, head profile, claw detail, body scale, and grounded paw contact across all scenes.",
+  "preyIdentityNotes": "Keep the same massive bison identity, dark shaggy coat, shoulder hump, horn shape, head shape, body scale, and grounded hoof contact across all scenes.",
+  "negativePrompt": "no final-shot rendering, no text overlays, no dust clouds, no debris spray, no unstable anatomy, no overlapping subjects, no contact unless explicitly requested"
+}
