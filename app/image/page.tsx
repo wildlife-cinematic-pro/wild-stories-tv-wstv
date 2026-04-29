@@ -4,16 +4,20 @@ import { useMemo, useState } from "react";
 import Link from "next/link";
 
 import {
-  SCENIC_IMAGE_PRESETS,
   buildScenicImagePromptPackage,
-  getRandomScenicPreset,
-  getScenicPresetById,
-  getViralScenicPreset,
   type ScenicImageAspectRatio,
   type ScenicImageMood,
   type ScenicImageRegion,
   type ScenicWildlifeOverride,
 } from "@/lib/scenic-image-prompts";
+import {
+  ALL_SCENIC_IMAGE_PRESETS,
+  SCENIC_COLLECTIONS,
+  getEnhancedScenicPresetById,
+  getEnhancedViralScenicPreset,
+  getRandomEnhancedScenicPreset,
+  type ScenicCollection,
+} from "@/lib/scenic-expanded-presets";
 
 const ASPECT_RATIOS: ScenicImageAspectRatio[] = ["9:16", "4:5", "1:1"];
 const MOODS: ScenicImageMood[] = [
@@ -45,6 +49,7 @@ const WILDLIFE_OPTIONS: ScenicWildlifeOverride[] = [
 ];
 
 type CopyKey = "prompt" | "negative" | "caption" | "alt" | "all" | null;
+type CollectionFilter = ScenicCollection | "All";
 
 function CopyButton({ value, copyKey, copiedKey, onCopied }: { value: string; copyKey: CopyKey; copiedKey: CopyKey; onCopied: (key: CopyKey) => void }) {
   async function copy() {
@@ -83,7 +88,8 @@ function OutputBox({ label, value, copyKey, copiedKey, onCopied }: { label: stri
 }
 
 export default function ImagePage() {
-  const [selectedPresetId, setSelectedPresetId] = useState(SCENIC_IMAGE_PRESETS[0].id);
+  const [selectedPresetId, setSelectedPresetId] = useState(ALL_SCENIC_IMAGE_PRESETS[0].id);
+  const [collectionFilter, setCollectionFilter] = useState<CollectionFilter>("USA Featured");
   const [regionFilter, setRegionFilter] = useState<ScenicImageRegion | "All">("All");
   const [aspectRatio, setAspectRatio] = useState<ScenicImageAspectRatio>("9:16");
   const [mood, setMood] = useState<ScenicImageMood>("Facebook Viral Nature Post");
@@ -92,17 +98,22 @@ export default function ImagePage() {
   const [copiedKey, setCopiedKey] = useState<CopyKey>(null);
 
   const filteredPresets = useMemo(() => {
-    if (regionFilter === "All") return SCENIC_IMAGE_PRESETS;
-    return SCENIC_IMAGE_PRESETS.filter((preset) => preset.region === regionFilter);
-  }, [regionFilter]);
+    return ALL_SCENIC_IMAGE_PRESETS.filter((preset) => {
+      if (collectionFilter !== "All" && preset.collection !== collectionFilter) return false;
+      if (regionFilter !== "All" && preset.region !== regionFilter) return false;
+      return true;
+    });
+  }, [collectionFilter, regionFilter]);
 
   const selectedPreset = useMemo(() => {
-    const candidate = getScenicPresetById(selectedPresetId);
-    if (regionFilter !== "All" && candidate.region !== regionFilter) {
-      return filteredPresets[0] ?? SCENIC_IMAGE_PRESETS[0];
+    const candidate = getEnhancedScenicPresetById(selectedPresetId);
+    const inCollection = collectionFilter === "All" || candidate.collection === collectionFilter;
+    const inRegion = regionFilter === "All" || candidate.region === regionFilter;
+    if (!inCollection || !inRegion) {
+      return filteredPresets[0] ?? ALL_SCENIC_IMAGE_PRESETS[0];
     }
     return candidate;
-  }, [filteredPresets, regionFilter, selectedPresetId]);
+  }, [collectionFilter, filteredPresets, regionFilter, selectedPresetId]);
 
   const pkg = useMemo(
     () =>
@@ -152,33 +163,81 @@ export default function ImagePage() {
     setCopiedKey(null);
   }
 
+  function chooseCollection(collection: CollectionFilter) {
+    setCollectionFilter(collection);
+    if (collection === "Canada") setRegionFilter("Canada");
+    if (collection === "USA Featured" || collection === "USA More Parks") setRegionFilter("USA");
+    if (collection === "Japan" || collection === "Europe — Switzerland / Norway / Iceland / Alps" || collection === "World Scenic Wildlife") setRegionFilter("USA / Canada");
+
+    const next = ALL_SCENIC_IMAGE_PRESETS.find((preset) => collection === "All" || preset.collection === collection);
+    if (next) setSelectedPresetId(next.id);
+    setCopiedKey(null);
+  }
+
   function chooseRegion(region: ScenicImageRegion | "All") {
     setRegionFilter(region);
-    if (region === "All") return;
-    const first = SCENIC_IMAGE_PRESETS.find((preset) => preset.region === region);
-    if (first && getScenicPresetById(selectedPresetId).region !== region) {
-      setSelectedPresetId(first.id);
-    }
+    const first = ALL_SCENIC_IMAGE_PRESETS.find((preset) => {
+      const collectionMatch = collectionFilter === "All" || preset.collection === collectionFilter;
+      const regionMatch = region === "All" || preset.region === region;
+      return collectionMatch && regionMatch;
+    });
+    if (first) setSelectedPresetId(first.id);
+    setCopiedKey(null);
   }
 
   function randomUSA() {
-    const preset = getRandomScenicPreset("USA");
+    const preset = getRandomEnhancedScenicPreset({ collection: "USA Featured" });
+    setCollectionFilter("USA Featured");
+    setRegionFilter("USA");
+    setSelectedPresetId(preset.id);
+    setCopiedKey(null);
+  }
+
+  function randomUSAMore() {
+    const preset = getRandomEnhancedScenicPreset({ collection: "USA More Parks" });
+    setCollectionFilter("USA More Parks");
     setRegionFilter("USA");
     setSelectedPresetId(preset.id);
     setCopiedKey(null);
   }
 
   function randomCanada() {
-    const preset = getRandomScenicPreset("Canada");
+    const preset = getRandomEnhancedScenicPreset({ collection: "Canada" });
+    setCollectionFilter("Canada");
     setRegionFilter("Canada");
     setSelectedPresetId(preset.id);
     setCopiedKey(null);
   }
 
+  function randomJapan() {
+    const preset = getRandomEnhancedScenicPreset({ collection: "Japan" });
+    setCollectionFilter("Japan");
+    setRegionFilter("USA / Canada");
+    setSelectedPresetId(preset.id);
+    setCopiedKey(null);
+  }
+
+  function randomEurope() {
+    const preset = getRandomEnhancedScenicPreset({ collection: "Europe — Switzerland / Norway / Iceland / Alps" });
+    setCollectionFilter("Europe — Switzerland / Norway / Iceland / Alps");
+    setRegionFilter("USA / Canada");
+    setSelectedPresetId(preset.id);
+    setCopiedKey(null);
+  }
+
+  function randomWorld() {
+    const preset = getRandomEnhancedScenicPreset({ collection: "World Scenic Wildlife" });
+    setCollectionFilter("World Scenic Wildlife");
+    setRegionFilter("USA / Canada");
+    setSelectedPresetId(preset.id);
+    setCopiedKey(null);
+  }
+
   function randomViral() {
-    const next = getViralScenicPreset();
-    setRegionFilter(next.preset.region);
+    const next = getEnhancedViralScenicPreset(collectionFilter === "All" ? undefined : collectionFilter);
     setSelectedPresetId(next.preset.id);
+    setCollectionFilter(next.preset.collection);
+    setRegionFilter(next.preset.region);
     setMood(next.mood);
     setAspectRatio(next.aspectRatio);
     setCopiedKey(null);
@@ -214,14 +273,34 @@ export default function ImagePage() {
       <div className="mx-auto w-full max-w-[var(--main-max-width)] px-4 py-6 sm:px-6 lg:px-8">
         <section className="mb-5 overflow-hidden rounded-[32px] border border-white/[0.08] bg-gradient-to-br from-gray-950 via-slate-950 to-emerald-950/50 p-5 shadow-[var(--surface-shadow)]">
           <p className="text-xs font-black uppercase tracking-[0.2em] text-cyan-300">Photo-only generator</p>
-          <h1 className="mt-2 text-2xl font-black tracking-tight text-white sm:text-3xl">USA / Canada Scenic Wildlife Image Studio</h1>
+          <h1 className="mt-2 text-2xl font-black tracking-tight text-white sm:text-3xl">World Scenic Wildlife Image Studio</h1>
           <p className="mt-2 max-w-3xl text-sm leading-6 text-white/60">
-            Generate post-ready photoreal image prompts for national-park inspired scenic wildlife photos. Facebook captions always include the real park/location name.
+            USA Featured, USA More Parks, Canada, Japan, Europe, and world scenic wildlife prompts. Facebook captions always include the real park/location name.
           </p>
         </section>
 
         <div className="grid gap-5 lg:grid-cols-[390px_1fr]">
           <aside className="space-y-4">
+            <section className="rounded-3xl border border-white/[0.08] bg-white/[0.035] p-4">
+              <label className="mb-3 block text-xs font-black uppercase tracking-[0.16em] text-white/45">Collection</label>
+              <div className="grid gap-2">
+                {SCENIC_COLLECTIONS.map((collection) => (
+                  <button
+                    key={collection}
+                    type="button"
+                    onClick={() => chooseCollection(collection)}
+                    className={`rounded-2xl border px-3 py-2 text-left text-xs font-bold transition ${
+                      collectionFilter === collection
+                        ? "border-white bg-white text-gray-950"
+                        : "border-white/[0.08] bg-white/[0.04] text-white/60 hover:bg-white/[0.08] hover:text-white"
+                    }`}
+                  >
+                    {collection}
+                  </button>
+                ))}
+              </div>
+            </section>
+
             <section className="rounded-3xl border border-white/[0.08] bg-white/[0.035] p-4">
               <label className="mb-3 block text-xs font-black uppercase tracking-[0.16em] text-white/45">Region</label>
               <div className="grid grid-cols-2 gap-2">
@@ -251,7 +330,7 @@ export default function ImagePage() {
               >
                 {filteredPresets.map((preset) => (
                   <option key={preset.id} value={preset.id}>
-                    {preset.country === "Canada" ? "Canada" : "USA"} — {preset.stateOrProvince} — {preset.title}
+                    {preset.collection} — {preset.stateOrProvince} — {preset.title}
                   </option>
                 ))}
               </select>
@@ -324,16 +403,14 @@ export default function ImagePage() {
 
             <section className="rounded-3xl border border-white/[0.08] bg-white/[0.035] p-4">
               <label className="mb-3 block text-xs font-black uppercase tracking-[0.16em] text-white/45">Quick random</label>
-              <div className="grid gap-2 sm:grid-cols-3 lg:grid-cols-1">
-                <button type="button" onClick={randomUSA} className="rounded-2xl border border-cyan-300/20 bg-cyan-300/[0.06] px-3 py-2 text-xs font-black text-cyan-100 hover:bg-cyan-300/[0.1]">
-                  Random USA location
-                </button>
-                <button type="button" onClick={randomCanada} className="rounded-2xl border border-emerald-300/20 bg-emerald-300/[0.06] px-3 py-2 text-xs font-black text-emerald-100 hover:bg-emerald-300/[0.1]">
-                  Random Canada location
-                </button>
-                <button type="button" onClick={randomViral} className="rounded-2xl border border-amber-300/20 bg-amber-300/[0.08] px-3 py-2 text-xs font-black text-amber-100 hover:bg-amber-300/[0.12]">
-                  Random best viral preset
-                </button>
+              <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-1">
+                <button type="button" onClick={randomUSA} className="rounded-2xl border border-cyan-300/20 bg-cyan-300/[0.06] px-3 py-2 text-xs font-black text-cyan-100 hover:bg-cyan-300/[0.1]">Random USA Featured</button>
+                <button type="button" onClick={randomUSAMore} className="rounded-2xl border border-cyan-300/20 bg-cyan-300/[0.06] px-3 py-2 text-xs font-black text-cyan-100 hover:bg-cyan-300/[0.1]">Random USA More Parks</button>
+                <button type="button" onClick={randomCanada} className="rounded-2xl border border-emerald-300/20 bg-emerald-300/[0.06] px-3 py-2 text-xs font-black text-emerald-100 hover:bg-emerald-300/[0.1]">Random Canada</button>
+                <button type="button" onClick={randomJapan} className="rounded-2xl border border-rose-300/20 bg-rose-300/[0.06] px-3 py-2 text-xs font-black text-rose-100 hover:bg-rose-300/[0.1]">Random Japan</button>
+                <button type="button" onClick={randomEurope} className="rounded-2xl border border-violet-300/20 bg-violet-300/[0.06] px-3 py-2 text-xs font-black text-violet-100 hover:bg-violet-300/[0.1]">Random Europe</button>
+                <button type="button" onClick={randomWorld} className="rounded-2xl border border-lime-300/20 bg-lime-300/[0.06] px-3 py-2 text-xs font-black text-lime-100 hover:bg-lime-300/[0.1]">Random World</button>
+                <button type="button" onClick={randomViral} className="rounded-2xl border border-amber-300/20 bg-amber-300/[0.08] px-3 py-2 text-xs font-black text-amber-100 hover:bg-amber-300/[0.12]">Random best viral preset</button>
               </div>
             </section>
           </aside>
@@ -341,8 +418,8 @@ export default function ImagePage() {
           <section className="space-y-4">
             <div className="grid gap-4 md:grid-cols-3">
               <div className="rounded-3xl border border-white/[0.08] bg-white/[0.035] p-4">
-                <p className="text-[10px] font-black uppercase tracking-[0.16em] text-white/35">Preset</p>
-                <p className="mt-1 text-sm font-black text-white">{pkg.title}</p>
+                <p className="text-[10px] font-black uppercase tracking-[0.16em] text-white/35">Collection</p>
+                <p className="mt-1 text-sm font-black text-white">{selectedPreset.collection}</p>
               </div>
               <div className="rounded-3xl border border-white/[0.08] bg-white/[0.035] p-4">
                 <p className="text-[10px] font-black uppercase tracking-[0.16em] text-white/35">Facebook caption</p>
