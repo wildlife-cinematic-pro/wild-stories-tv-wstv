@@ -1,12 +1,13 @@
 /* Compact scrollable output panels for the photo-only Image Studio.
-   Cards stay short on mobile, but the prompt text can be scrolled inside each box.
+   Scoped to /image outputs only through the nano-output card id.
+   Cards stay short on mobile, but prompt text can be scrolled inside each box.
    Copy buttons still copy the full underlying prompt text. */
 
-.ui-theme-scope section:has(pre) {
+.ui-theme-scope:has(#nano-output) section:has(pre) {
   position: relative;
 }
 
-.ui-theme-scope pre {
+.ui-theme-scope:has(#nano-output) pre {
   max-height: 12.5rem !important;
   min-height: 7.5rem;
   overflow-y: auto !important;
@@ -18,21 +19,21 @@
   scrollbar-color: rgba(103, 232, 249, 0.45) rgba(255, 255, 255, 0.05);
 }
 
-.ui-theme-scope pre::-webkit-scrollbar {
+.ui-theme-scope:has(#nano-output) pre::-webkit-scrollbar {
   width: 0.45rem;
 }
 
-.ui-theme-scope pre::-webkit-scrollbar-track {
+.ui-theme-scope:has(#nano-output) pre::-webkit-scrollbar-track {
   background: rgba(255, 255, 255, 0.04);
   border-radius: 999px;
 }
 
-.ui-theme-scope pre::-webkit-scrollbar-thumb {
+.ui-theme-scope:has(#nano-output) pre::-webkit-scrollbar-thumb {
   background: rgba(103, 232, 249, 0.42);
   border-radius: 999px;
 }
 
-.ui-theme-scope section:has(pre)::after {
+.ui-theme-scope:has(#nano-output) section:has(pre)::after {
   content: "Scroll inside box • Copy gets full text";
   position: absolute;
   left: 1rem;
@@ -53,12 +54,12 @@
   text-align: center;
 }
 
-.ui-theme-scope section:has(pre) > div:first-child button::after {
+.ui-theme-scope:has(#nano-output) section:has(pre) > div:first-child button::after {
   content: " Full";
 }
 
 @media (min-width: 768px) {
-  .ui-theme-scope pre {
+  .ui-theme-scope:has(#nano-output) pre {
     max-height: 16rem !important;
   }
 }
