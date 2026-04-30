@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import type { ReactNode } from "react";
 import ImageNavInjector from "@/components/ImageNavInjector";
 import "./globals.css";
+import "./image-compact.css";
 
 export const metadata: Metadata = {
   title: "AI Wildlife Cinematic Director",
