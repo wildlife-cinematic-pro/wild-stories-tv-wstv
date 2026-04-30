@@ -36,14 +36,14 @@ function SidebarButton({
       aria-controls={`workspace-panel-${item.id}`}
       aria-label={`${item.label} workspace`}
       data-workspace-tab={item.id}
-      className={`group flex w-full items-start gap-3 rounded-2xl border px-3 py-3 text-left transition ${
+      className={`group flex w-full items-start gap-2.5 rounded-2xl border px-2.5 py-2 text-left transition ${
         active
           ? "border-cyan-400/40 bg-cyan-500/10 text-cyan-100 shadow-[inset_0_1px_0_rgba(255,255,255,0.05)]"
           : "border-transparent bg-transparent text-[color:var(--muted)] hover:border-white/[0.08] hover:bg-white/[0.04] hover:text-[color:var(--text)]"
       }`}
     >
       <span
-        className={`grid h-9 w-9 shrink-0 place-items-center rounded-2xl border text-sm font-semibold transition ${
+        className={`grid h-8 w-8 shrink-0 place-items-center rounded-xl border text-xs font-semibold transition ${
           active
             ? "border-cyan-300/30 bg-cyan-400/15 text-cyan-100"
             : "border-white/[0.08] bg-white/[0.04] text-white/70 group-hover:border-white/[0.12] group-hover:text-white"
@@ -52,7 +52,7 @@ function SidebarButton({
         {item.icon ?? "•"}
       </span>
       <span className="min-w-0 flex-1">
-        <span className="flex items-center gap-2">
+        <span className="flex items-center gap-1.5">
           <span className="truncate text-sm font-semibold">{item.label}</span>
           {item.badge ? (
             <span
@@ -67,7 +67,7 @@ function SidebarButton({
           ) : null}
         </span>
         {item.detail ? (
-          <span className="mt-1 block text-xs leading-5 text-current/80">{item.detail}</span>
+          <span className="mt-0.5 hidden text-[11px] leading-4 text-current/75 2xl:block">{item.detail}</span>
         ) : null}
       </span>
     </button>
@@ -121,21 +121,21 @@ export default function WorkspaceSidebar({
       </section>
 
       <aside className={`hidden lg:block lg:h-full ${className}`.trim()}>
-        <div className="sticky top-0 rounded-[28px] border border-[color:var(--border)] bg-[color:var(--surface-elevated)] p-4 shadow-[var(--surface-shadow)] lg:h-full lg:overflow-y-auto lg:overscroll-contain">
+        <div className="sticky top-0 rounded-[28px] border border-[color:var(--border)] bg-[color:var(--surface-elevated)] p-3 shadow-[var(--surface-shadow)] lg:h-full lg:overflow-y-auto lg:overscroll-contain">
           {(title || subtitle) && (
-            <div className="border-b border-[color:var(--border)] pb-4">
+            <div className="border-b border-[color:var(--border)] pb-3">
               {title ? (
-                <div className="text-[11px] font-semibold uppercase tracking-[0.2em] text-cyan-300/80">
+                <div className="text-[11px] font-semibold uppercase tracking-[0.18em] text-cyan-300/80">
                   {title}
                 </div>
               ) : null}
               {subtitle ? (
-                <p className="mt-2 text-sm leading-6 text-[color:var(--muted)]">{subtitle}</p>
+                <p className="mt-1 hidden text-xs leading-5 text-[color:var(--muted)] 2xl:block">{subtitle}</p>
               ) : null}
             </div>
           )}
 
-          <nav className="mt-4 space-y-1.5" aria-label={title ? `${title} navigation` : "Workspace navigation"} role="tablist">
+          <nav className="mt-3 space-y-1" aria-label={title ? `${title} navigation` : "Workspace navigation"} role="tablist">
             {items.map((item) => (
               <SidebarButton
                 key={item.id}

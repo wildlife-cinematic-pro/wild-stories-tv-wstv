@@ -301,7 +301,7 @@ export default function OutputCards({
               title="Workspace map"
               description="Overview stays as the orientation hub. Switch straight into prompts, video, direct paste blocks, publishing, or QA without the old long horizontal desktop rail."
             >
-              <div className="grid gap-3 md:grid-cols-2 2xl:grid-cols-3">
+              <div className="grid gap-3 lg:grid-cols-2 2xl:grid-cols-3">
                 {workspaceOverviewCards.map((item) => (
                   <WorkspaceJumpCard
                     key={item.key}
