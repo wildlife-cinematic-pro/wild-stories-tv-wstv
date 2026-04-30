@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 
 import { OverviewWorkspace } from "@/components/output-cards/workspaces/OverviewWorkspace";
 import { PromptsWorkspace } from "@/components/output-cards/workspaces/PromptsWorkspace";
@@ -16,11 +16,10 @@ import type {
   OutputWorkspaceTab,
   VideoWorkspaceTab,
 } from "@/components/output-cards/workspaces/types";
-import {
-  WorkspaceJumpCard,
-  WorkspaceTabButton,
-} from "@/components/output-cards/shared-panels";
+import { WorkspaceJumpCard } from "@/components/output-cards/shared-panels";
 import { useOutputCopy } from "@/components/output-cards/use-output-copy";
+import WorkspaceShell from "@/components/workspace/WorkspaceShell";
+import WorkspaceSection from "@/components/workspace/WorkspaceSection";
 
 import {
   buildCopyAllPacksText as buildCopyAllPacksTextFromPackage,
@@ -46,20 +45,7 @@ export default function OutputCards({
     useState<VideoWorkspaceTab>("hybrid");
   const [directWorkspace, setDirectWorkspace] =
     useState<DirectWorkspaceTab>("seedance");
-  const workspaceTabRailRef = useRef<HTMLDivElement | null>(null);
   const onCopy = useOutputCopy();
-
-  useEffect(() => {
-    const activeTab = workspaceTabRailRef.current?.querySelector<HTMLButtonElement>(
-      `[data-workspace-tab="${activeWorkspace}"]`
-    );
-
-    activeTab?.scrollIntoView({
-      behavior: "smooth",
-      block: "nearest",
-      inline: "nearest",
-    });
-  }, [activeWorkspace]);
 
   useEffect(() => {
     trackUsage("view_output", buildUsagePayload(data));
@@ -121,18 +107,21 @@ export default function OutputCards({
     label: string;
     detail: string;
     badge: string;
+    icon: string;
   }[] = [
     {
       key: "overview",
       label: "Overview",
       detail: "Diagram, routing, prompt map, versions",
       badge: "Start",
+      icon: "⌘",
     },
     {
       key: "prompts",
       label: "Prompts",
       detail: "Image, thumbnail, negative, image plan",
       badge: "Core",
+      icon: "✦",
     },
     {
       key: "video",
@@ -140,35 +129,37 @@ export default function OutputCards({
       detail:
         "Primary hybrid route, plus optional Seedance, Runway, and Kling bundles",
       badge: "4 shots",
+      icon: "▶",
     },
     {
       key: "direct",
       label: "Direct",
       detail: "Single-paste multi-shot prompt blocks",
       badge: "Fast",
+      icon: "⇥",
     },
     {
       key: "publishing",
       label: "Publishing",
       detail: "Hooks, caption, packs, posting",
       badge: "Post",
+      icon: "↑",
     },
     {
       key: "evidence",
       label: "Evidence",
       detail: "Score real generations, drift notes, keep/retry",
       badge: "QA",
+      icon: "✓",
     },
     {
       key: "advanced",
       label: "Advanced",
       detail: "CapCut, sound, behavior, analytics",
       badge: "Pro",
+      icon: "⋯",
     },
   ];
-
-  const getWorkspaceTabId = (tab: OutputWorkspaceTab) => `output-workspace-tab-${tab}`;
-  const getWorkspacePanelId = (tab: OutputWorkspaceTab) => `output-workspace-panel-${tab}`;
 
   const decision = useMemo(() => getDecision(data), [data]);
 
@@ -177,7 +168,8 @@ export default function OutputCards({
       key: "overview" as const,
       eyebrow: "Story",
       title: `${safeStr(data.predatorName || "Predator")} vs ${safeStr(
-        data.preyName || "Prey")}`,
+        data.preyName || "Prey"
+      )}`,
       detail:
         safeStr(data.arcName || "") ||
         "Core story arc appears here once a package is generated.",
@@ -235,44 +227,56 @@ export default function OutputCards({
     },
   ];
 
+  const activeWorkspaceItem =
+    workspaceTabs.find((item) => item.key === activeWorkspace) ?? workspaceTabs[0];
+
+  const headerMeta = (
+    <div className="flex flex-wrap gap-2">
+      {decision ? (
+        <span
+          className={`inline-flex items-center rounded-full border px-3 py-1 text-xs font-semibold ${
+            decision.label === "PUBLISH"
+              ? "border-emerald-400/40 bg-emerald-500/10 text-emerald-200"
+              : decision.label === "REWORK"
+                ? "border-amber-400/40 bg-amber-500/10 text-amber-200"
+                : "border-rose-400/40 bg-rose-500/10 text-rose-200"
+          }`}
+        >
+          {decision.label} · US Score {decision.score}
+        </span>
+      ) : null}
+      {data.routingNote ? (
+        <span className="inline-flex rounded-full border border-amber-400/30 bg-amber-500/10 px-3 py-1 text-xs font-semibold text-amber-200">
+          Routing: {safeStr(data.routingNote)}
+        </span>
+      ) : null}
+      <span className="inline-flex rounded-full border border-cyan-400/30 bg-cyan-500/10 px-3 py-1 text-xs font-semibold text-cyan-200">
+        {seedanceShotCount}/{runwayShotCount}/{klingShotCount} engine packs
+      </span>
+      <span className="inline-flex rounded-full border border-white/[0.08] bg-white/[0.04] px-3 py-1 text-xs font-semibold text-[color:var(--muted)]">
+        {directPromptCount} direct prompts
+      </span>
+    </div>
+  );
+
   return (
     <div className="space-y-5 sm:space-y-6">
-      {decision && (
-        <div className="mb-4 rounded-xl border border-[color:var(--border)] bg-black/80 p-4">
-          <div className={`text-lg font-black ${decision.color}`}>
-            {decision.label}
-          </div>
-
-          <div className="mt-2 grid grid-cols-2 gap-2 text-xs text-gray-300">
-            <div>US Score: {decision.score}</div>
-            <div>Hook: {decision.hook}</div>
-            <div>Risk: {decision.risk}</div>
-          </div>
-        </div>
-      )}
-
-      <div className="rounded-3xl border border-[color:var(--border)] bg-[color:var(--surface-elevated)] p-4 shadow-[var(--surface-shadow)] sm:p-5">
-        <div className="flex flex-wrap items-start justify-between gap-4">
-          <div className="max-w-3xl">
-            <div className="text-[11px] font-black uppercase tracking-[0.24em] text-slate-500">
-              WSTV Output Workspace
-            </div>
-            <h2 className="mt-1 text-2xl font-black text-slate-900 dark:text-[color:var(--text)]">
-              Compact dashboard view
-            </h2>
-            <p className="mt-2 text-sm leading-relaxed text-slate-600 dark:text-[color:var(--muted)]">
-              Long-scroll कम गर्न outputs लाई focused workspaces मा छुट्याइएको छ.
-              Daily काम गर्दा main prompt, video engine, direct prompt,
-              publishing, र advanced tools अब छुट्टै switch गरेर खोल्न मिल्छ.
-            </p>
-            {data.routingNote && (
-              <div className="mt-3 inline-flex rounded-full border border-amber-200 bg-amber-50 px-3 py-1 text-xs font-bold text-amber-800 dark:bg-amber-500/12 dark:text-amber-100">
-                Current routing: {safeStr(data.routingNote)}
-              </div>
-            )}
-          </div>
-
-          <div className="flex flex-wrap gap-2">
+      <WorkspaceShell
+        sidebarTitle="Output workspace"
+        sidebarSubtitle="Mac-style focused navigation for WSTV build outputs. The left sidebar stays visible on desktop while the right panel shows one workspace at a time."
+        title={activeWorkspaceItem.label}
+        subtitle={activeWorkspaceItem.detail}
+        sidebarItems={workspaceTabs.map((item) => ({
+          id: item.key,
+          label: item.label,
+          detail: item.detail,
+          badge: item.badge,
+          icon: item.icon,
+        }))}
+        activeItem={activeWorkspace}
+        onActiveItemChange={(id) => setActiveWorkspace(id as OutputWorkspaceTab)}
+        topActions={
+          <>
             <button
               type="button"
               onClick={copyAllPacks}
@@ -280,149 +284,85 @@ export default function OutputCards({
             >
               📋 Copy All Packs
             </button>
-
             <button
               type="button"
               onClick={exportTxt}
-              className="rounded-xl border border-[color:var(--border)] bg-[color:var(--surface-elevated)] px-4 py-2 text-xs font-extrabold text-[color:var(--text)] hover:bg-[color:var(--surface-muted)] active:scale-95"
+              className="rounded-xl border border-[color:var(--border)] bg-[color:var(--surface)] px-4 py-2 text-xs font-extrabold text-[color:var(--text)] hover:border-cyan-400/60 hover:text-cyan-200 active:scale-95"
             >
               ⬇ Export TXT
             </button>
+          </>
+        }
+        headerMeta={headerMeta}
+      >
+        {activeWorkspace === "overview" && (
+          <div className="space-y-5">
+            <WorkspaceSection
+              title="Workspace map"
+              description="Overview stays as the orientation hub. Switch straight into prompts, video, direct paste blocks, publishing, or QA without the old long horizontal desktop rail."
+            >
+              <div className="grid gap-3 md:grid-cols-2 2xl:grid-cols-3">
+                {workspaceOverviewCards.map((item) => (
+                  <WorkspaceJumpCard
+                    key={item.key}
+                    eyebrow={item.eyebrow}
+                    title={item.title}
+                    detail={item.detail}
+                    footer={item.footer}
+                    active={activeWorkspace === item.key}
+                    onClick={() => setActiveWorkspace(item.key)}
+                  />
+                ))}
+              </div>
+            </WorkspaceSection>
+
+            <FastPublishPanel data={data} onCopy={onCopy} />
+            <PromptGuidancePanel data={data} onCopy={onCopy} />
+            <OverviewWorkspace
+              data={data}
+              versionKey={versionKey}
+              onRestoreVersion={onRestoreVersion}
+              showWorkflowDiagram={showWSTVWorkflowDiagram}
+              onToggleWorkflowDiagram={() =>
+                setShowWSTVWorkflowDiagram((previous) => !previous)
+              }
+              onCopy={onCopy}
+            />
           </div>
-        </div>
+        )}
 
-        <div className="mt-5 grid gap-3 md:grid-cols-2 xl:grid-cols-3">
-          {workspaceOverviewCards.map((item) => (
-            <WorkspaceJumpCard
-              key={item.key}
-              eyebrow={item.eyebrow}
-              title={item.title}
-              detail={item.detail}
-              footer={item.footer}
-              active={activeWorkspace === item.key}
-              onClick={() => setActiveWorkspace(item.key)}
-            />
-          ))}
-        </div>
-      </div>
+        {activeWorkspace === "prompts" && <PromptsWorkspace data={data} onCopy={onCopy} />}
 
-      <FastPublishPanel data={data} onCopy={onCopy} />
-
-      <PromptGuidancePanel data={data} onCopy={onCopy} />
-
-      <div className="sticky top-3 z-20 rounded-2xl border border-[color:var(--border)] bg-[color:var(--surface-elevated)] p-2 shadow-[var(--surface-shadow)] backdrop-blur">
-        <div
-          ref={workspaceTabRailRef}
-          role="tablist"
-          className="flex gap-2 overflow-x-auto pb-1 scroll-smooth overscroll-x-contain [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
-          aria-label="Output workspace navigation"
-        >
-          {workspaceTabs.map((item) => (
-            <WorkspaceTabButton
-              key={item.key}
-              tabKey={item.key}
-              tabId={getWorkspaceTabId(item.key)}
-              panelId={getWorkspacePanelId(item.key)}
-              label={item.label}
-              detail={item.detail}
-              badge={item.badge}
-              active={activeWorkspace === item.key}
-              onClick={() => setActiveWorkspace(item.key)}
-            />
-          ))}
-        </div>
-      </div>
-
-      {activeWorkspace === "overview" && (
-        <div
-          id={getWorkspacePanelId("overview")}
-          role="tabpanel"
-          aria-labelledby={getWorkspaceTabId("overview")}
-        >
-          <OverviewWorkspace
-          data={data}
-          versionKey={versionKey}
-          onRestoreVersion={onRestoreVersion}
-          showWorkflowDiagram={showWSTVWorkflowDiagram}
-          onToggleWorkflowDiagram={() =>
-            setShowWSTVWorkflowDiagram((previous) => !previous)
-          }
-          onCopy={onCopy}
-        />
-        </div>
-      )}
-
-      {activeWorkspace === "prompts" && (
-        <div
-          id={getWorkspacePanelId("prompts")}
-          role="tabpanel"
-          aria-labelledby={getWorkspaceTabId("prompts")}
-        >
-          <PromptsWorkspace data={data} onCopy={onCopy} />
-        </div>
-      )}
-
-      {activeWorkspace === "video" && (
-        <div
-          id={getWorkspacePanelId("video")}
-          role="tabpanel"
-          aria-labelledby={getWorkspaceTabId("video")}
-        >
+        {activeWorkspace === "video" && (
           <VideoWorkspace
-          data={data}
-          videoWorkspace={videoWorkspace}
-          onVideoWorkspaceChange={setVideoWorkspace}
-          onOpenDirectWorkspace={setDirectWorkspace}
-          onOpenWorkspace={setActiveWorkspace}
-          onCopy={onCopy}
-        />
-        </div>
-      )}
+            data={data}
+            videoWorkspace={videoWorkspace}
+            onVideoWorkspaceChange={setVideoWorkspace}
+            onOpenDirectWorkspace={setDirectWorkspace}
+            onOpenWorkspace={setActiveWorkspace}
+            onCopy={onCopy}
+          />
+        )}
 
-      {activeWorkspace === "direct" && (
-        <div
-          id={getWorkspacePanelId("direct")}
-          role="tabpanel"
-          aria-labelledby={getWorkspaceTabId("direct")}
-        >
+        {activeWorkspace === "direct" && (
           <DirectWorkspace
-          data={data}
-          directWorkspace={directWorkspace}
-          onDirectWorkspaceChange={setDirectWorkspace}
-          onCopy={onCopy}
-        />
-        </div>
-      )}
+            data={data}
+            directWorkspace={directWorkspace}
+            onDirectWorkspaceChange={setDirectWorkspace}
+            onCopy={onCopy}
+          />
+        )}
 
-      {activeWorkspace === "publishing" && (
-        <div
-          id={getWorkspacePanelId("publishing")}
-          role="tabpanel"
-          aria-labelledby={getWorkspaceTabId("publishing")}
-        >
+        {activeWorkspace === "publishing" && (
           <PublishingWorkspace data={data} onCopy={onCopy} />
-        </div>
-      )}
+        )}
 
-      {activeWorkspace === "evidence" && (
-        <div
-          id={getWorkspacePanelId("evidence")}
-          role="tabpanel"
-          aria-labelledby={getWorkspaceTabId("evidence")}
-        >
-          <EvidenceWorkspace data={data} />
-        </div>
-      )}
+        {activeWorkspace === "evidence" && <EvidenceWorkspace data={data} />}
 
-      {activeWorkspace === "advanced" && (
-        <div
-          id={getWorkspacePanelId("advanced")}
-          role="tabpanel"
-          aria-labelledby={getWorkspaceTabId("advanced")}
-        >
+        {activeWorkspace === "advanced" && (
           <AdvancedWorkspace data={data} onCopy={onCopy} />
-        </div>
-      )}
+        )}
+      </WorkspaceShell>
     </div>
   );
 }

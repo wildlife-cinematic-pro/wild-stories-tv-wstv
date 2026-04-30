@@ -1,7 +1,8 @@
 "use client";
 
 import OutputCard from "@/components/image-studio/OutputCard";
-import type { CopyKey } from "@/lib/image-studio/types";
+import WorkspaceCard from "@/components/workspace/WorkspaceCard";
+import type { CopyKey, ImageStudioWorkspaceSection } from "@/lib/image-studio/types";
 
 function CopyAllButton({
   value,
@@ -45,6 +46,7 @@ function StatCard({ label, value }: { label: string; value: string }) {
 }
 
 export default function ImageStudioOutputs({
+  activeSection,
   selectedCollection,
   usaHashtags,
   copyAll,
@@ -59,6 +61,7 @@ export default function ImageStudioOutputs({
   qualityChecklist,
   altText,
 }: {
+  activeSection: ImageStudioWorkspaceSection;
   selectedCollection: string;
   usaHashtags: string;
   copyAll: string;
@@ -73,27 +76,59 @@ export default function ImageStudioOutputs({
   qualityChecklist: string;
   altText: string;
 }) {
+  const showStats = activeSection === "outputs" || activeSection === "caption";
+
   return (
     <section className="space-y-4">
-      <div className="grid gap-4 md:grid-cols-4">
-        <StatCard label="Collection" value={selectedCollection} />
-        <StatCard label="Model outputs" value="Nano Banana 2 + GPT Image 2" />
-        <StatCard label="Caption" value="American English" />
-        <StatCard label="Hashtags" value={usaHashtags} />
-      </div>
+      {showStats ? (
+        <div className="grid gap-4 md:grid-cols-4">
+          <StatCard label="Collection" value={selectedCollection} />
+          <StatCard label="Model outputs" value="Nano Banana 2 + GPT Image 2" />
+          <StatCard label="Caption" value="American English" />
+          <StatCard label="Hashtags" value={usaHashtags} />
+        </div>
+      ) : null}
 
       <div className="flex justify-end">
         <CopyAllButton value={copyAll} copiedKey={copiedKey} onCopied={setCopiedKey} />
       </div>
 
-      <OutputCard label="Nano Banana 2 prompt" value={nanoPrompt} copyKey="nano" copiedKey={copiedKey} onCopied={setCopiedKey} />
-      <OutputCard label="GPT Image 2 prompt" value={gptPrompt} copyKey="gpt" copiedKey={copiedKey} onCopied={setCopiedKey} />
-      <OutputCard label="Negative prompt" value={negativePrompt} copyKey="negative" copiedKey={copiedKey} onCopied={setCopiedKey} />
-      <OutputCard label="Facebook caption + USA viral hashtags" value={facebookCaptionWithHashtags} copyKey="caption" copiedKey={copiedKey} onCopied={setCopiedKey} />
-      <OutputCard label="3 prompt variations" value={variationPrompts} copyKey="variations" copiedKey={copiedKey} onCopied={setCopiedKey} />
-      <OutputCard label="5-post Facebook pack" value={fivePostPack} copyKey="batch" copiedKey={copiedKey} onCopied={setCopiedKey} />
-      <OutputCard label="Prompt quality checklist" value={qualityChecklist} copyKey="quality" copiedKey={copiedKey} onCopied={setCopiedKey} />
-      <OutputCard label="Alt text" value={altText} copyKey="alt" copiedKey={copiedKey} onCopied={setCopiedKey} />
+      {activeSection === "outputs" ? (
+        <div className="space-y-4">
+          <OutputCard label="Nano Banana 2 prompt" value={nanoPrompt} copyKey="nano" copiedKey={copiedKey} onCopied={setCopiedKey} />
+          <OutputCard label="GPT Image 2 prompt" value={gptPrompt} copyKey="gpt" copiedKey={copiedKey} onCopied={setCopiedKey} />
+          <OutputCard label="Negative prompt" value={negativePrompt} copyKey="negative" copiedKey={copiedKey} onCopied={setCopiedKey} />
+        </div>
+      ) : null}
+
+      {activeSection === "caption" ? (
+        <div className="space-y-4">
+          <OutputCard label="Facebook caption + USA viral hashtags" value={facebookCaptionWithHashtags} copyKey="caption" copiedKey={copiedKey} onCopied={setCopiedKey} />
+          <WorkspaceCard
+            title="Caption notes"
+            description="This lane stays American English only and keeps the USA viral output at exactly five hashtags."
+            className="bg-[color:var(--surface-elevated)]"
+          >
+            <p className="text-sm leading-6 text-[color:var(--text)]">Use this section when you want caption editing and copy tools without the rest of the prompt stack in the way.</p>
+          </WorkspaceCard>
+        </div>
+      ) : null}
+
+      {activeSection === "variations" ? (
+        <OutputCard label="3 prompt variations" value={variationPrompts} copyKey="variations" copiedKey={copiedKey} onCopied={setCopiedKey} />
+      ) : null}
+
+      {activeSection === "five-post-pack" ? (
+        <OutputCard label="5-post Facebook pack" value={fivePostPack} copyKey="batch" copiedKey={copiedKey} onCopied={setCopiedKey} />
+      ) : null}
+
+      {activeSection === "quality" ? (
+        <OutputCard label="Prompt quality checklist" value={qualityChecklist} copyKey="quality" copiedKey={copiedKey} onCopied={setCopiedKey} />
+      ) : null}
+
+      {activeSection === "alt-text" ? (
+        <OutputCard label="Alt text" value={altText} copyKey="alt" copiedKey={copiedKey} onCopied={setCopiedKey} />
+      ) : null}
     </section>
   );
 }

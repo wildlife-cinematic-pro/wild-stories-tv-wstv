@@ -13,6 +13,7 @@ import type {
   CAPTION_STYLES,
   COUNTRY_FILTERS,
   HASHTAG_MODES,
+  IMAGE_STUDIO_WORKSPACE_ITEMS,
   LIGHT_OPTIONS,
   NEGATIVE_MODES,
   PROMPT_STRENGTHS,
@@ -44,6 +45,7 @@ export type PromptStrength = (typeof PROMPT_STRENGTHS)[number];
 export type CameraLook = (typeof CAMERA_LOOKS)[number];
 export type NegativeMode = (typeof NEGATIVE_MODES)[number];
 export type HashtagMode = (typeof HASHTAG_MODES)[number];
+export type ImageStudioWorkspaceSection = (typeof IMAGE_STUDIO_WORKSPACE_ITEMS)[number]["id"];
 
 export type ImageStudioControlsValue = {
   selectedPresetId: string;
