@@ -22,7 +22,7 @@ describe("output workspace accessibility source guards", () => {
     expect(sharedPanels).toContain('aria-controls={panelId}');
   });
 
-  it("keeps active step semantics and fast-publish essentials in source", () => {
+  it("keeps active step semantics, fast-publish essentials, and header image nav source", () => {
     const appPage = readFileSync(path.join(repoRoot, "app/page.tsx"), "utf8");
     const fastPublishPanel = readFileSync(
       path.join(repoRoot, "components/output-cards/fast-publish-panel.tsx"),
@@ -35,6 +35,11 @@ describe("output workspace accessibility source guards", () => {
 
     expect(appPage).toContain('aria-current={step === s.step ? "step" : undefined}');
     expect(appPage).toContain('aria-label="Build steps"');
+    expect(appPage).toContain('href="/image"');
+    expect(appPage).toContain('href="/storyboard"');
+    expect(appPage.indexOf('href="/image"')).toBeLessThan(
+      appPage.indexOf('href="/storyboard"')
+    );
     expect(fastPublishPanel).toContain('Daily copy-ready essentials');
     expect(fastPublishPanel).toContain('1. Master Image Prompt');
     expect(fastPublishPanel).toContain('5. Shot 4 Runway');
