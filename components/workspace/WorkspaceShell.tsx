@@ -30,7 +30,7 @@ export default function WorkspaceShell({
   children,
 }: WorkspaceShellProps) {
   return (
-    <div className="grid gap-5 xl:grid-cols-[320px_minmax(0,1fr)] xl:items-start">
+    <div className="grid gap-5 xl:h-[calc(100vh-7rem)] xl:grid-cols-[320px_minmax(0,1fr)] xl:items-start xl:overflow-hidden">
       <WorkspaceSidebar
         title={sidebarTitle}
         subtitle={sidebarSubtitle}
@@ -39,7 +39,7 @@ export default function WorkspaceShell({
         onActiveItemChange={onActiveItemChange}
       />
 
-      <div className="min-w-0 space-y-5">
+      <div className="min-w-0 space-y-5 xl:h-full xl:overflow-y-auto xl:overscroll-contain xl:pr-2">
         <section className="rounded-[28px] border border-[color:var(--border)] bg-[color:var(--surface-elevated)] p-6 shadow-[var(--surface-shadow)]">
           <div className="flex flex-wrap items-start justify-between gap-4">
             <div className="min-w-0 flex-1">
@@ -64,7 +64,7 @@ export default function WorkspaceShell({
           id={`workspace-panel-${activeItem}`}
           role="tabpanel"
           aria-labelledby={`workspace-tab-${activeItem}`}
-          className="min-w-0"
+          className="min-w-0 pb-6"
         >
           {children}
         </div>
