@@ -1,0 +1,42 @@
+/* Compact output previews for the photo-only Image Studio.
+   Copy buttons still copy the full underlying prompt text. */
+
+.ui-theme-scope pre {
+  max-height: 9rem !important;
+  overflow: hidden !important;
+  position: relative;
+}
+
+.ui-theme-scope section:has(pre) {
+  position: relative;
+}
+
+.ui-theme-scope section:has(pre)::after {
+  content: "Preview only — Copy gets full text";
+  position: absolute;
+  left: 1rem;
+  right: 1rem;
+  bottom: 0.7rem;
+  display: block;
+  padding: 0.65rem 0.85rem;
+  border-radius: 999px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: linear-gradient(180deg, rgba(2, 6, 23, 0.15), rgba(2, 6, 23, 0.96) 34%, rgba(2, 6, 23, 0.98));
+  color: rgba(255, 255, 255, 0.52);
+  font-size: 0.68rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  pointer-events: none;
+  text-align: center;
+}
+
+.ui-theme-scope section:has(pre) > div:first-child button::after {
+  content: " Full";
+}
+
+@media (min-width: 768px) {
+  .ui-theme-scope pre {
+    max-height: 11rem !important;
+  }
+}
