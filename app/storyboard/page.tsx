@@ -1,6 +1,6 @@
 import Link from "next/link";
 
-import StoryboardSceneList from "@/components/storyboard/storyboard-scene-list";
+import StoryboardWorkspace from "@/components/storyboard/StoryboardWorkspace";
 import {
   buildStoryboardJsonFromBuild,
   buildStoryboardPreviewFromBuild,
@@ -128,7 +128,7 @@ export default async function StoryboardPage({ searchParams }: StoryboardPagePro
                 {storyboard.project}
               </h1>
               <p className="mt-3 max-w-3xl text-sm leading-6 text-[color:var(--muted)]">
-                Read-only creator preview for storyboard planning prompts. This page never generates final shots and never writes production outputs.
+                Read-only creator preview for storyboard planning prompts. The Mac-style workspace keeps scene review, prompt families, and export actions visible without forcing one long scroll wall.
               </p>
             </div>
             <div className="flex flex-wrap gap-3">
@@ -167,14 +167,9 @@ export default async function StoryboardPage({ searchParams }: StoryboardPagePro
             <StatCard label="Valid Scenes" value={String(storyboard.summary.validScenes) + "/" + String(storyboard.summary.sceneCount)} />
             <StatCard label="Valid Prompts" value={String(storyboard.summary.validPrompts) + "/" + String(storyboard.summary.promptCount)} />
           </div>
-
-          <div className="mt-4 grid gap-4 md:grid-cols-2">
-            <StatCard label="Primary Master Engine" value={storyboard.masterImagePrimaryEngine ?? "nano-banana-2"} />
-            <StatCard label="Backup Image Engine" value={storyboard.masterImageBackupEngine ?? "gpt-image-2"} />
-          </div>
         </section>
 
-        <StoryboardSceneList
+        <StoryboardWorkspace
           storyboard={storyboard}
           downloadStoryboardJsonHref={downloadStoryboardJsonHref}
           downloadStoryboardJsonFilename={downloadStoryboardJsonFilename}

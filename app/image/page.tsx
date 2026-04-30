@@ -5,7 +5,10 @@ import Link from "next/link";
 
 import ImageStudioControls from "@/components/image-studio/ImageStudioControls";
 import ImageStudioOutputs from "@/components/image-studio/ImageStudioOutputs";
-import { IMAGE_STUDIO_FEATURE_BADGES } from "@/lib/image-studio/constants";
+import {
+  IMAGE_STUDIO_FEATURE_BADGES,
+  IMAGE_STUDIO_WORKSPACE_ITEMS,
+} from "@/lib/image-studio/constants";
 import {
   buildImageStudioDerivedPackage,
   collectionForCountry,
@@ -16,6 +19,7 @@ import type {
   CopyKey,
   CountryFilter,
   ExtendedWildlifeOverride,
+  ImageStudioWorkspaceSection,
   LightOverride,
   SeasonOverride,
   CaptionStyle,
@@ -31,8 +35,23 @@ import {
   getRandomEnhancedScenicPreset,
 } from "@/lib/scenic-expanded-presets";
 import type { ScenicImageAspectRatio, ScenicImageMood } from "@/lib/scenic-image-prompts";
+import WorkspaceShell from "@/components/workspace/WorkspaceShell";
+
+function isControlSection(section: ImageStudioWorkspaceSection): boolean {
+  return [
+    "location",
+    "style",
+    "wildlife",
+    "camera",
+    "season-light",
+    "caption",
+    "random",
+  ].includes(section);
+}
 
 export default function ImagePage() {
+  const [activeSection, setActiveSection] =
+    useState<ImageStudioWorkspaceSection>("outputs");
   const [selectedPresetId, setSelectedPresetId] = useState(
     ALL_SCENIC_IMAGE_PRESETS[0].id
   );
@@ -223,6 +242,27 @@ export default function ImagePage() {
     setCopiedKey(null);
   }
 
+  const activeWorkspaceItem =
+    IMAGE_STUDIO_WORKSPACE_ITEMS.find((item) => item.id === activeSection) ??
+    IMAGE_STUDIO_WORKSPACE_ITEMS[0];
+
+  const headerMeta = (
+    <div className="flex flex-wrap gap-2">
+      <span className="inline-flex rounded-full border border-cyan-400/30 bg-cyan-500/10 px-3 py-1 text-xs font-semibold text-cyan-200">
+        {selectedPreset.collection}
+      </span>
+      <span className="inline-flex rounded-full border border-white/[0.08] bg-white/[0.04] px-3 py-1 text-xs font-semibold text-[color:var(--muted)]">
+        Nano Banana 2 + GPT Image 2
+      </span>
+      <span className="inline-flex rounded-full border border-white/[0.08] bg-white/[0.04] px-3 py-1 text-xs font-semibold text-[color:var(--muted)]">
+        American English only
+      </span>
+      <span className="inline-flex rounded-full border border-white/[0.08] bg-white/[0.04] px-3 py-1 text-xs font-semibold text-[color:var(--muted)]">
+        Exactly 5 hashtags
+      </span>
+    </div>
+  );
+
   return (
     <main className="ui-theme-scope min-h-screen w-full bg-[radial-gradient(circle_at_top_left,rgba(20,184,166,0.16),transparent_32%),radial-gradient(circle_at_top_right,rgba(59,130,246,0.12),transparent_34%),#020617] text-[color:var(--text)]">
       <header className="sticky top-0 z-40 border-b border-white/[0.07] bg-gray-950/90 backdrop-blur-xl">
@@ -275,63 +315,97 @@ export default function ImagePage() {
           </div>
         </section>
 
-        <div className="grid gap-5 lg:grid-cols-[405px_1fr]">
-          <ImageStudioControls
-            selectedPreset={selectedPreset}
-            filteredPresets={filteredPresets}
-            selectedPresetId={selectedPresetId}
-            choosePreset={choosePreset}
-            collectionFilter={collectionFilter}
-            chooseCollection={chooseCollection}
-            countryFilter={countryFilter}
-            chooseCountry={chooseCountry}
-            aspectRatio={aspectRatio}
-            setAspectRatio={setAspectRatio}
-            mood={mood}
-            setMood={setMood}
-            wildlifeOverride={wildlifeOverride}
-            setWildlifeOverride={setWildlifeOverride}
-            cameraLook={cameraLook}
-            setCameraLook={setCameraLook}
-            seasonOverride={seasonOverride}
-            setSeasonOverride={setSeasonOverride}
-            lightOverride={lightOverride}
-            setLightOverride={setLightOverride}
-            captionStyle={captionStyle}
-            setCaptionStyle={setCaptionStyle}
-            negativeMode={negativeMode}
-            setNegativeMode={setNegativeMode}
-            hashtagMode={hashtagMode}
-            setHashtagMode={setHashtagMode}
-            promptStrength={promptStrength}
-            setPromptStrength={setPromptStrength}
-            customNote={customNote}
-            setCustomNote={setCustomNote}
-            randomUSA={randomUSA}
-            randomUSAMore={randomUSAMore}
-            randomCanada={randomCanada}
-            randomJapan={randomJapan}
-            randomEurope={randomEurope}
-            randomWorld={randomWorld}
-            randomViral={randomViral}
-          />
+        <WorkspaceShell
+          sidebarTitle="Image workspace"
+          sidebarSubtitle="A Mac-style studio layout for location setup, prompt crafting, and output handling without stacking every card at once."
+          title={activeWorkspaceItem.label}
+          subtitle={activeWorkspaceItem.detail}
+          sidebarItems={IMAGE_STUDIO_WORKSPACE_ITEMS.map((item) => ({ ...item }))}
+          activeItem={activeSection}
+          onActiveItemChange={(id) => setActiveSection(id as ImageStudioWorkspaceSection)}
+          headerMeta={headerMeta}
+        >
+          {isControlSection(activeSection) ? (
+            <div className="space-y-5">
+              <ImageStudioControls
+                activeSection={activeSection}
+                selectedPreset={selectedPreset}
+                filteredPresets={filteredPresets}
+                selectedPresetId={selectedPresetId}
+                choosePreset={choosePreset}
+                collectionFilter={collectionFilter}
+                chooseCollection={chooseCollection}
+                countryFilter={countryFilter}
+                chooseCountry={chooseCountry}
+                aspectRatio={aspectRatio}
+                setAspectRatio={setAspectRatio}
+                mood={mood}
+                setMood={setMood}
+                wildlifeOverride={wildlifeOverride}
+                setWildlifeOverride={setWildlifeOverride}
+                cameraLook={cameraLook}
+                setCameraLook={setCameraLook}
+                seasonOverride={seasonOverride}
+                setSeasonOverride={setSeasonOverride}
+                lightOverride={lightOverride}
+                setLightOverride={setLightOverride}
+                captionStyle={captionStyle}
+                setCaptionStyle={setCaptionStyle}
+                negativeMode={negativeMode}
+                setNegativeMode={setNegativeMode}
+                hashtagMode={hashtagMode}
+                setHashtagMode={setHashtagMode}
+                promptStrength={promptStrength}
+                setPromptStrength={setPromptStrength}
+                customNote={customNote}
+                setCustomNote={setCustomNote}
+                randomUSA={randomUSA}
+                randomUSAMore={randomUSAMore}
+                randomCanada={randomCanada}
+                randomJapan={randomJapan}
+                randomEurope={randomEurope}
+                randomWorld={randomWorld}
+                randomViral={randomViral}
+              />
 
-          <ImageStudioOutputs
-            selectedCollection={selectedPreset.collection}
-            usaHashtags={derived.usaHashtags}
-            copyAll={derived.copyAll}
-            copiedKey={copiedKey}
-            setCopiedKey={setCopiedKey}
-            nanoPrompt={derived.nanoPrompt}
-            gptPrompt={derived.gptPrompt}
-            negativePrompt={derived.negativePrompt}
-            facebookCaptionWithHashtags={derived.facebookCaptionWithHashtags}
-            variationPrompts={derived.variationPrompts}
-            fivePostPack={derived.fivePostPack}
-            qualityChecklist={derived.qualityChecklist}
-            altText={derived.altText}
-          />
-        </div>
+              {activeSection === "caption" ? (
+                <ImageStudioOutputs
+                  activeSection="caption"
+                  selectedCollection={selectedPreset.collection}
+                  usaHashtags={derived.usaHashtags}
+                  copyAll={derived.copyAll}
+                  copiedKey={copiedKey}
+                  setCopiedKey={setCopiedKey}
+                  nanoPrompt={derived.nanoPrompt}
+                  gptPrompt={derived.gptPrompt}
+                  negativePrompt={derived.negativePrompt}
+                  facebookCaptionWithHashtags={derived.facebookCaptionWithHashtags}
+                  variationPrompts={derived.variationPrompts}
+                  fivePostPack={derived.fivePostPack}
+                  qualityChecklist={derived.qualityChecklist}
+                  altText={derived.altText}
+                />
+              ) : null}
+            </div>
+          ) : (
+            <ImageStudioOutputs
+              activeSection={activeSection}
+              selectedCollection={selectedPreset.collection}
+              usaHashtags={derived.usaHashtags}
+              copyAll={derived.copyAll}
+              copiedKey={copiedKey}
+              setCopiedKey={setCopiedKey}
+              nanoPrompt={derived.nanoPrompt}
+              gptPrompt={derived.gptPrompt}
+              negativePrompt={derived.negativePrompt}
+              facebookCaptionWithHashtags={derived.facebookCaptionWithHashtags}
+              variationPrompts={derived.variationPrompts}
+              fivePostPack={derived.fivePostPack}
+              qualityChecklist={derived.qualityChecklist}
+              altText={derived.altText}
+            />
+          )}
+        </WorkspaceShell>
       </div>
     </main>
   );
