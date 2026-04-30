@@ -17,8 +17,8 @@ test("main header keeps Build / Workflows / Image / Storyboard and routes load",
 
   await page.goto("/image");
   await expect(page.getByText("World Scenic Wildlife Image Studio")).toBeVisible();
-  await expect(page.getByText("Nano Banana 2 prompt")).toBeVisible();
-  await expect(page.getByText("GPT Image 2 prompt")).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Nano Banana 2 prompt" })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "GPT Image 2 prompt" })).toBeVisible();
 
   await page.goto("/storyboard");
   await expect(page.getByText("Storyboard").first()).toBeVisible();
