@@ -24,12 +24,17 @@ type PromptKind =
   | "kling"
   | "support";
 
-function countWords(text: string): number {
-  return text.trim().split(/\s+/).filter(Boolean).length;
+function normalizePromptText(text: string | null | undefined, fallback = "Not available."): string {
+  return typeof text === "string" && text.trim().length > 0 ? text : fallback;
 }
 
-function buildPromptMeta(text: string): string {
-  return `${text.length} chars · ${countWords(text)} words`;
+function countWords(text: string | null | undefined): number {
+  return normalizePromptText(text, "").trim().split(/\s+/).filter(Boolean).length;
+}
+
+function buildPromptMeta(text: string | null | undefined): string {
+  const normalized = normalizePromptText(text, "");
+  return `${normalized.length} chars · ${countWords(normalized)} words`;
 }
 
 function formatDuration(seconds: number): string {
@@ -41,25 +46,25 @@ function buildScenePromptText(scene: StoryboardPreviewScene): string {
     `Scene ${String(scene.id).padStart(2, "0")} — ${scene.displayName}`,
     "",
     "Image Prompt:",
-    scene.imagePrompt,
+    normalizePromptText(scene.imagePrompt),
     "",
     "Nano Banana 2 Master Prompt:",
-    scene.nanoBananaPrompt || "Not available.",
+    normalizePromptText(scene.nanoBananaPrompt),
     "",
     "GPT Image 2 Backup Prompt:",
-    scene.gptImagePrompt || "Not available.",
+    normalizePromptText(scene.gptImagePrompt),
     "",
     "Video Prompt:",
-    scene.videoPrompt,
+    normalizePromptText(scene.videoPrompt),
     "",
     "Runway Prompt:",
-    scene.runwayPrompt,
+    normalizePromptText(scene.runwayPrompt),
     "",
     "Kling Prompt:",
-    scene.klingPrompt,
+    normalizePromptText(scene.klingPrompt),
     "",
     "Negative Prompt:",
-    scene.negativePrompt || "No negative prompt provided.",
+    normalizePromptText(scene.negativePrompt, "No negative prompt provided."),
     "",
     "Continuity Rules:",
     scene.continuityRules.length > 0
@@ -103,14 +108,15 @@ function PromptBlock({
   filter,
 }: {
   label: string;
-  value: string;
+  value: string | null | undefined;
   promptKind: PromptKind;
   filter: PromptFilter;
 }) {
   const [expanded, setExpanded] = useState(false);
-  const wordCount = countWords(value);
-  const isLong = value.length > 340 || wordCount > 55;
-  const visibleText = !isLong || expanded ? value : `${value.slice(0, 340).trimEnd()}…`;
+  const safeValue = normalizePromptText(value);
+  const wordCount = countWords(safeValue);
+  const isLong = safeValue.length > 340 || wordCount > 55;
+  const visibleText = !isLong || expanded ? safeValue : `${safeValue.slice(0, 340).trimEnd()}…`;
 
   if (!matchesFilter(filter, promptKind)) {
     return null;
@@ -123,9 +129,9 @@ function PromptBlock({
           <div className="text-[11px] font-semibold uppercase tracking-[0.18em] text-[color:var(--muted)]">
             {label}
           </div>
-          <div className="mt-1 text-[11px] text-[color:var(--muted)]">{buildPromptMeta(value)}</div>
+          <div className="mt-1 text-[11px] text-[color:var(--muted)]">{buildPromptMeta(safeValue)}</div>
         </div>
-        <CopyButton text={value} label={label} size="sm" />
+        <CopyButton text={safeValue} label={label} size="sm" />
       </div>
       <p className="mt-3 whitespace-pre-wrap break-words text-sm leading-6 text-[color:var(--text)]">
         {visibleText}
@@ -255,13 +261,13 @@ export default function StoryboardSceneList({
             <PromptBlock label="Image Prompt" value={scene.imagePrompt} promptKind="image" filter={filter} />
             <PromptBlock
               label="Nano Banana 2 Master Prompt"
-              value={scene.nanoBananaPrompt || "Not available."}
+              value={scene.nanoBananaPrompt}
               promptKind="nano-banana"
               filter={filter}
             />
             <PromptBlock
               label="GPT Image 2 Backup Prompt"
-              value={scene.gptImagePrompt || "Not available."}
+              value={scene.gptImagePrompt}
               promptKind="gpt-image"
               filter={filter}
             />
