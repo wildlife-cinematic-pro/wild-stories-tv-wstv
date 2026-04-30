@@ -84,7 +84,7 @@ export default function WorkspaceSidebar({
 }: WorkspaceSidebarProps) {
   return (
     <>
-      <section className="xl:hidden">
+      <section className="lg:hidden">
         <div className="overflow-hidden rounded-[24px] border border-[color:var(--border)] bg-[color:var(--surface-elevated)] p-2 shadow-[var(--surface-shadow)]">
           <div
             className="flex gap-2 overflow-x-auto pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
@@ -120,8 +120,8 @@ export default function WorkspaceSidebar({
         </div>
       </section>
 
-      <aside className={`hidden xl:block ${className}`.trim()}>
-        <div className="sticky top-24 rounded-[28px] border border-[color:var(--border)] bg-[color:var(--surface-elevated)] p-4 shadow-[var(--surface-shadow)]">
+      <aside className={`hidden lg:block lg:h-full ${className}`.trim()}>
+        <div className="sticky top-0 rounded-[28px] border border-[color:var(--border)] bg-[color:var(--surface-elevated)] p-4 shadow-[var(--surface-shadow)] lg:h-full lg:overflow-y-auto lg:overscroll-contain">
           {(title || subtitle) && (
             <div className="border-b border-[color:var(--border)] pb-4">
               {title ? (

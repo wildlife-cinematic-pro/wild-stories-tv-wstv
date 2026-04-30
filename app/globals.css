@@ -1,6 +1,8 @@
 @import "tailwindcss";
 
 :root {
+  --app-header-height: 3.5rem;
+
   /* Theme tokens (default: dark) */
   --bg: #0a0a0f;
   --panel: rgba(17, 24, 39, 0.72);
