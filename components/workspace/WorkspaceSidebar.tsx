@@ -120,8 +120,8 @@ export default function WorkspaceSidebar({
         </div>
       </section>
 
-      <aside className={`hidden lg:block lg:h-full ${className}`.trim()}>
-        <div className="sticky top-0 rounded-[28px] border border-[color:var(--border)] bg-[color:var(--surface-elevated)] p-3 shadow-[var(--surface-shadow)] lg:h-full lg:overflow-y-auto lg:overscroll-contain">
+      <aside className={`hidden lg:block lg:self-start ${className}`.trim()}>
+        <div className="sticky top-[calc(var(--app-header-height)+1rem)] max-h-[calc(100vh-var(--app-header-height)-2rem)] rounded-[28px] border border-[color:var(--border)] bg-[color:var(--surface-elevated)] p-3 shadow-[var(--surface-shadow)] lg:overflow-y-auto lg:overscroll-contain">
           {(title || subtitle) && (
             <div className="border-b border-[color:var(--border)] pb-3">
               {title ? (
