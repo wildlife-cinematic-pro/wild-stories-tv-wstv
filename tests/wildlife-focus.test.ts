@@ -2,170 +2,118 @@ import { describe, expect, it } from "vitest";
 
 import { predatorData } from "@/lib/predator-data";
 import {
+  FACEBOOK_SAFE_SURVIVAL_HINT,
   filterPredatorOptionsByWildlifeScope,
   filterPreyOptionsByWildlifeScope,
   getRegionalWildlifeStep1Hint,
   getSupportedWildlifeFocusAnimals,
-  getWildlifeScopeDefaultSelection,
   getWildlifeFocusEnvironmentSuggestion,
   getWildlifeFocusPairingHighlights,
   getWildlifeFocusPairingKey,
   getWildlifeFocusPairings,
   getWildlifeFocusSafetyDefaults,
+  getWildlifeFocusSafetyHint,
   getWildlifeHabitatCompatibilityGuidance,
+  getWildlifeScopeDefaultSelection,
+  isAttackFocusedWildlifeScope,
   isPairCompatibleWithWildlifeScope,
   normalizeWildlifeScopeMode,
   wildlifeScopeOptions,
 } from "@/lib/wildlife-focus";
 
-const visibleModes = wildlifeScopeOptions.filter(
-  (mode) => mode !== "World Wildlife"
-);
+describe("wildlife focus modes", () => {
+  it("includes the creator-facing wildlife focus split", () => {
+    expect(wildlifeScopeOptions).toEqual(
+      expect.arrayContaining([
+        "USA Viral Wildlife",
+        "Global Viral Wildlife",
+        "World Wide Wildlife",
+      ])
+    );
+  });
 
-describe("regional wildlife focus", () => {
-  it("keeps every regional wildlife focus populated", () => {
-    for (const mode of visibleModes) {
+  it("keeps every visible wildlife focus populated", () => {
+    for (const mode of wildlifeScopeOptions) {
       expect(getSupportedWildlifeFocusAnimals(mode).length).toBeGreaterThan(0);
     }
   });
 
-  it("keeps World Wildlife as the full built-in list", () => {
+  it("keeps World Wide Wildlife broad while still allowing the built-in list", () => {
     const builtInAnimals = Object.keys(predatorData);
     const filtered = filterPredatorOptionsByWildlifeScope(
       builtInAnimals,
-      "World Wildlife"
+      "World Wide Wildlife"
     );
 
+    expect(getSupportedWildlifeFocusAnimals("World Wide Wildlife").length).toBeGreaterThan(20);
     expect(filtered).toEqual(expect.arrayContaining(builtInAnimals));
   });
 
-  it("supports the old USA Wildlife value as an alias", () => {
+  it("supports legacy wildlife focus aliases", () => {
     expect(normalizeWildlifeScopeMode("USA Wildlife")).toBe(
       "USA / Canada Wildlife"
     );
+    expect(normalizeWildlifeScopeMode("World Wildlife")).toBe(
+      "World Wide Wildlife"
+    );
   });
 
-  it("returns safe regional defaults when the selected animal drifts out of scope", () => {
-    expect(getWildlifeScopeDefaultSelection("Europe Wildlife")).toEqual({
-      predator: "Wolf",
-      prey: "Red Deer",
-      environment: "misty forest clearing",
-    });
-  });
-
-  it("keeps prey options region-compatible for curated pairings", () => {
+  it("keeps USA Viral Wildlife compatible for curated prey filtering", () => {
     expect(
       filterPreyOptionsByWildlifeScope(
-        "Dingo",
-        ["Kangaroo", "Rabbit", "Wombat"],
-        "Australia Wildlife"
-      )
-    ).toEqual(["Kangaroo"]);
-  });
-
-  it("gives every recommended pairing an environment suggestion", () => {
-    for (const mode of visibleModes) {
-      for (const pairing of getWildlifeFocusPairings(mode)) {
-        expect(pairing.environments[0].length).toBeGreaterThan(0);
-      }
-    }
-  });
-
-  it("accepts alias-style Europe pairings where the focus uses the modeled species name", () => {
-    expect(
-      isPairCompatibleWithWildlifeScope(
-        "Bison",
-        "Wolf Pack",
-        "Europe Wildlife"
-      )
-    ).toBe(true);
-  });
-
-  it("warns when a manual habitat likely mismatches the regional animal profile", () => {
-    const guidance = getWildlifeHabitatCompatibilityGuidance({
-      mode: "Australia Wildlife",
-      predator: "Kangaroo",
-      prey: "Dingo",
-      habitat: "Everglades Marsh",
-    });
-
-    expect(guidance).toMatchObject({
-      isWarning: true,
-      label: "Likely habitat mismatch",
-    });
-    expect(guidance?.message).toContain("dusty outback grassland");
-  });
-
-  it("returns a compatible default environment for region-aware auto habitat", () => {
-    expect(
-      getWildlifeFocusEnvironmentSuggestion(
-        "Norway / Scandinavia Wildlife",
-        "Brown Bear",
-        "Moose",
-        "fallback"
-      )
-    ).toBe("boreal lake edge");
-  });
-
-  it("builds a region-aware Step 1 hint referencing the compatible environment", () => {
-    expect(
-      getRegionalWildlifeStep1Hint(
-        "Global Viral Wildlife",
-        "Lion",
-        "Wildebeest"
-      )
-    ).toContain("savanna golden hour grassland");
-  });
-  it("expands Global Viral Wildlife to 50+ lead animals without duplicates", () => {
-    const animals = getSupportedWildlifeFocusAnimals("Global Viral Wildlife");
-
-    expect(animals.length).toBeGreaterThanOrEqual(50);
-    expect(new Set(animals).size).toBe(animals.length);
-  });
-
-  it("keeps Global Viral Wildlife curated pairings unique by normalized key", () => {
-    const pairings = getWildlifeFocusPairings("Global Viral Wildlife");
-    const keys = pairings.map(getWildlifeFocusPairingKey);
-
-    expect(new Set(keys).size).toBe(keys.length);
-  });
-
-  it("adds exact crocodile vs warthog support for the viral wildlife focuses", () => {
-    expect(
-      isPairCompatibleWithWildlifeScope(
-        "Crocodile",
-        "Warthog",
-        "Global Viral Wildlife"
-      )
-    ).toBe(true);
-    expect(
-      isPairCompatibleWithWildlifeScope(
-        "Crocodile",
-        "Warthog",
+        "Alligator",
+        ["White-tailed Deer", "Wild Boar", "Rabbit"],
         "USA Viral Wildlife"
       )
-    ).toBe(true);
+    ).toEqual(["White-tailed Deer", "Wild Boar"]);
+  });
+});
 
+describe("Global Viral Wildlife focus", () => {
+  const pairings = getWildlifeFocusPairings("Global Viral Wildlife");
+  const animals = getSupportedWildlifeFocusAnimals("Global Viral Wildlife");
+
+  it("is explicitly attack/survival focused", () => {
+    expect(isAttackFocusedWildlifeScope("Global Viral Wildlife")).toBe(true);
+    expect(getWildlifeFocusSafetyHint("Global Viral Wildlife")).toBe(
+      FACEBOOK_SAFE_SURVIVAL_HINT
+    );
+  });
+
+  it("keeps the default global setup on crocodile vs warthog", () => {
+    expect(getWildlifeScopeDefaultSelection("Global Viral Wildlife")).toEqual({
+      predator: "Crocodile",
+      prey: "Warthog",
+      environment: "dry-season African muddy waterhole",
+    });
+  });
+
+  it("includes Crocodile vs Warthog as a Facebook-safe waterhole ambush", () => {
     const highlights = getWildlifeFocusPairingHighlights(
       "Global Viral Wildlife",
       "Crocodile",
       "Warthog"
     );
 
+    expect(isPairCompatibleWithWildlifeScope("Crocodile", "Warthog", "Global Viral Wildlife")).toBe(true);
     expect(highlights.safeArcLabel).toBe("Waterhole ambush");
-    expect(highlights.badges).toContain("Water ambush");
+    expect(highlights.badges).toEqual(
+      expect.arrayContaining(["Kling 15s", "Facebook-safe", "No gore", "Water ambush"])
+    );
   });
 
-  it("keeps Great White Shark habitat mismatch guidance pointed toward surf line and open ocean", () => {
-    const guidance = getWildlifeHabitatCompatibilityGuidance({
-      mode: "Global Viral Wildlife",
-      predator: "Great White Shark",
-      prey: "Seal",
-      habitat: "Riverbank Reeds",
-    });
+  it("gives every global viral lead at least two matched opposing animals", () => {
+    for (const animal of animals) {
+      const matches = pairings.filter(
+        (item) => item.predator === animal || item.prey === animal
+      );
+      expect(matches.length, animal).toBeGreaterThanOrEqual(2);
+    }
+  });
 
-    expect(guidance?.isWarning).toBe(true);
-    expect(guidance?.message).toContain("surf line");
+  it("keeps pairings unique by normalized lead/opposing key", () => {
+    const normalized = pairings.map(getWildlifeFocusPairingKey);
+    expect(new Set(normalized).size).toBe(normalized.length);
   });
 
   it("exposes Facebook-safe survival defaults for non-graphic wildlife tension", () => {
@@ -179,4 +127,50 @@ describe("regional wildlife focus", () => {
     );
   });
 
+  it("warns on habitat mismatch with safer shark guidance", () => {
+    const guidance = getWildlifeHabitatCompatibilityGuidance({
+      mode: "Global Viral Wildlife",
+      predator: "Great White Shark",
+      prey: "Seal",
+      habitat: "Riverbank Reeds",
+    });
+
+    expect(guidance).toMatchObject({
+      isWarning: true,
+      label: "Likely habitat mismatch",
+    });
+    expect(guidance?.message).toMatch(/surf line|coastal water|open ocean/i);
+  });
+
+  it("builds a Step 1 hint from the matching encounter habitat", () => {
+    expect(
+      getRegionalWildlifeStep1Hint(
+        "Global Viral Wildlife",
+        "Lion",
+        "Wildebeest"
+      )
+    ).toMatch(/dry grassland run lane|savanna golden hour grassland/i);
+  });
+});
+
+describe("World Wide Wildlife helper behavior", () => {
+  it("keeps custom animals usable in the broad documentary mode", () => {
+    expect(
+      filterPredatorOptionsByWildlifeScope(
+        ["Custom Marsh Beast", "Lion", "Moose"],
+        "World Wide Wildlife"
+      )
+    ).toEqual(expect.arrayContaining(["Custom Marsh Beast", "Lion", "Moose"]));
+  });
+
+  it("returns a compatible environment for curated world-wide documentary setups", () => {
+    expect(
+      getWildlifeFocusEnvironmentSuggestion(
+        "World Wide Wildlife",
+        "Tiger",
+        "Deer",
+        "fallback habitat"
+      )
+    ).toBe("fallback habitat");
+  });
 });

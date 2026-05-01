@@ -32,8 +32,10 @@ import {
   getRegionalWildlifeStep1Hint,
   getWildlifeFocusPairingHighlights,
   getWildlifeFocusSafetyDefaults,
+  getWildlifeFocusSafetyHint,
   getWildlifeHabitatCompatibilityGuidance,
   getWildlifeScopeHelperText,
+  isAttackFocusedWildlifeScope,
 } from "@/lib/wildlife-focus";
 
 import type {
@@ -265,6 +267,10 @@ export default function Step1Setup({
     driftRisk
   );
   const wildlifeScopeHelperText = getWildlifeScopeHelperText(wildlifeScopeMode);
+  const wildlifeSafetyHint = getWildlifeFocusSafetyHint(wildlifeScopeMode);
+  const wildlifeScopeIsAttackFocused = isAttackFocusedWildlifeScope(
+    wildlifeScopeMode
+  );
   const regionalStep1Hint = getRegionalWildlifeStep1Hint(
     wildlifeScopeMode,
     predator,
@@ -389,7 +395,7 @@ export default function Step1Setup({
                 ))}
               </select>
               <p className="mt-1 text-[11px] text-gray-400">
-                Choose a wildlife focus to bias Step 1 toward animals and environments viewers recognize fastest in that region. USA Viral Wildlife prioritizes Facebook-safe, U.S.-friendly pairings, while Global Viral Wildlife expands to globally recognizable animals without dropping the originality-first documentary framing. World Wildlife restores the full list. Custom animals stay available in every mode.
+                Choose a wildlife focus to bias Step 1 toward animals and environments viewers recognize fastest. World Wide Wildlife restores broad documentary browsing. USA Viral Wildlife keeps North American survival hooks readable. Global Viral Wildlife prioritizes fast Kling Direct 15s encounter setups. Custom animals stay available in every mode.
               </p>
               <p className="mt-1 text-[11px] text-gray-400">
                 {wildlifeScopeHelperText}
@@ -443,6 +449,17 @@ export default function Step1Setup({
               <span className="font-semibold">Facebook setup hint:</span>{" "}
               {regionalStep1Hint} {animalPairGuidance}
             </div>
+            {wildlifeSafetyHint && (
+              <div className="rounded-2xl border border-rose-100 bg-rose-50/80 p-3 text-[11px] leading-relaxed text-rose-900 sm:col-span-2">
+                <span className="font-semibold">Facebook-safe survival framing:</span>{" "}
+                {wildlifeSafetyHint}
+                {wildlifeScopeIsAttackFocused ? (
+                  <span>
+                    {" "}Global and USA viral modes keep the main action lane tuned for original, documentary-style survival tension.
+                  </span>
+                ) : null}
+              </div>
+            )}
             {habitatCompatibility && (
               <div
                 className={`rounded-2xl border p-3 text-[11px] leading-relaxed sm:col-span-2 ${

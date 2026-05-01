@@ -68,7 +68,8 @@ export type WildlifeScopeMode =
   | "Australia Wildlife"
   | "Global Viral Wildlife"
   | "Low Drift First Test"
-  | "World Wildlife";
+  | "World Wildlife"
+  | "World Wide Wildlife";
 
 export type EmotionalTone =
   | "Raw Tension"
@@ -974,6 +975,7 @@ export type GeneratedPackage = {
   predatorName?: string;
   preyName?: string;
   arcName?: Arc;
+  wildlifeScopeMode?: WildlifeScopeMode;
   environmentName?: string;
   weatherName?: Weather;
   cameraAnglePreset?: CameraAnglePreset;

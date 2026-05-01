@@ -4,7 +4,7 @@ import type { HabitatPreset, WildlifeScopeMode } from "@/types";
 
 export type CanonicalWildlifeScopeMode = Exclude<
   WildlifeScopeMode,
-  "USA Wildlife"
+  "USA Wildlife" | "World Wildlife"
 >;
 
 type HabitatTag =
@@ -24,13 +24,17 @@ type HabitatTag =
   | "wetland"
   | "woodland";
 
-type WildlifeFocusBadge =
+export type WildlifeFocusBadge =
+  | "Kling 15s"
   | "Facebook-safe"
-  | "Low drift"
-  | "USA viral"
+  | "No gore"
+  | "Fast hook"
   | "Water ambush"
+  | "Pack pressure"
   | "Defender"
-  | "Pack pressure";
+  | "Chase pressure"
+  | "Near-clash"
+  | "Low drift";
 
 type WildlifeFocusPairing = {
   predator: string;
@@ -39,20 +43,10 @@ type WildlifeFocusPairing = {
   habitatTags: HabitatTag[];
   safeArcLabel?: string;
   badges?: WildlifeFocusBadge[];
+  safetyDefaults?: string[];
+  kling15Primary?: boolean;
+  promptTemplateHint?: string;
 };
-
-export const FACEBOOK_SAFE_SURVIVAL_DEFAULTS = [
-  "No blood",
-  "No gore",
-  "No visible wounds",
-  "Documentary survival tension",
-  "Natural wildlife behavior",
-  "Realistic animal physics",
-  "Clean anatomy",
-] as const;
-
-export const FACEBOOK_SAFE_SURVIVAL_HINT =
-  "No blood, no gore, no visible wounds. Documentary survival tension only.";
 
 type WildlifeEnvironmentProfile = {
   primaryHabitats: string[];
@@ -71,8 +65,25 @@ type WildlifeFocusDefinition = {
   pairings: WildlifeFocusPairing[];
 };
 
+export const FACEBOOK_SAFE_SURVIVAL_DEFAULTS = [
+  "No blood",
+  "No gore",
+  "No visible wounds",
+  "No torn flesh",
+  "No graphic injury",
+  "No death close-up",
+  "Documentary survival tension",
+  "Natural wildlife behavior",
+  "Realistic animal physics",
+  "Clean anatomy",
+] as const;
+
+export const FACEBOOK_SAFE_SURVIVAL_HINT =
+  "No blood, no gore, no visible wounds. Documentary survival tension only.";
+
 const LEGACY_SCOPE_ALIASES: Record<string, CanonicalWildlifeScopeMode> = {
   "USA Wildlife": "USA / Canada Wildlife",
+  "World Wildlife": "World Wide Wildlife",
 };
 
 const ANIMAL_ALIASES: Record<string, string> = {
@@ -97,6 +108,58 @@ const HABITAT_PRESET_TAGS: Record<Exclude<HabitatPreset, "Auto">, HabitatTag[]> 
   "Coastal Cliffline": ["coast", "mountain"],
 };
 
+function uniqueBadges(badges: WildlifeFocusBadge[]): WildlifeFocusBadge[] {
+  return Array.from(new Set(badges));
+}
+
+function buildViralPairing(input: {
+  predator: string;
+  prey: string;
+  environments: [string, ...string[]];
+  habitatTags: HabitatTag[];
+  safeArcLabel: string;
+  badges?: WildlifeFocusBadge[];
+  promptTemplateHint?: string;
+}): WildlifeFocusPairing {
+  return {
+    predator: input.predator,
+    prey: input.prey,
+    environments: input.environments,
+    habitatTags: input.habitatTags,
+    safeArcLabel: input.safeArcLabel,
+    badges: uniqueBadges([
+      "Kling 15s",
+      "Facebook-safe",
+      "No gore",
+      "Fast hook",
+      ...(input.badges ?? []),
+    ]),
+    safetyDefaults: [...FACEBOOK_SAFE_SURVIVAL_DEFAULTS],
+    kling15Primary: true,
+    promptTemplateHint: input.promptTemplateHint,
+  };
+}
+
+function buildDocumentaryPairing(input: {
+  predator: string;
+  prey: string;
+  environments: [string, ...string[]];
+  habitatTags: HabitatTag[];
+  safeArcLabel?: string;
+  badges?: WildlifeFocusBadge[];
+  promptTemplateHint?: string;
+}): WildlifeFocusPairing {
+  return {
+    predator: input.predator,
+    prey: input.prey,
+    environments: input.environments,
+    habitatTags: input.habitatTags,
+    safeArcLabel: input.safeArcLabel,
+    badges: input.badges ? uniqueBadges(input.badges) : undefined,
+    promptTemplateHint: input.promptTemplateHint,
+  };
+}
+
 export const wildlifeScopeOptions: CanonicalWildlifeScopeMode[] = [
   "USA / Canada Wildlife",
   "USA Viral Wildlife",
@@ -105,7 +168,7 @@ export const wildlifeScopeOptions: CanonicalWildlifeScopeMode[] = [
   "Australia Wildlife",
   "Global Viral Wildlife",
   "Low Drift First Test",
-  "World Wildlife",
+  "World Wide Wildlife",
 ];
 
 const WILDLIFE_FOCUS_DEFINITIONS: Record<
@@ -189,232 +252,234 @@ const WILDLIFE_FOCUS_DEFINITIONS: Record<
   },
   "USA Viral Wildlife": {
     helperText:
-      "Recognizable U.S.-first wildlife pairings that stay documentary-safe, readable on Facebook, and compatible with monetization-friendly survival framing.",
+      "USA audience first. Yellowstone, Alaska, Everglades, Rockies, and North American survival encounters with Facebook-safe documentary tension.",
     animals: [
       "Grizzly Bear",
-      "Brown Bear",
       "Black Bear",
-      "Polar Bear",
-      "Wolf",
       "Wolf Pack",
-      "Coyote",
       "Mountain Lion",
-      "Cougar",
+      "Coyote",
       "Bobcat",
-      "Lynx",
-      "Bison",
-      "Moose",
-      "Bull Elk",
-      "White-tailed Deer",
-      "Mule Deer",
-      "Bighorn Sheep",
-      "Mountain Goat",
       "Bald Eagle",
       "Golden Eagle",
       "Alligator",
-      "Crocodile",
-      "Rattlesnake",
-      "Great Horned Owl",
-      "Red Fox",
+      "Bison",
+      "Moose",
+      "Bull Elk",
+      "Polar Bear",
       "Wolverine",
-      "Beaver",
-      "River Otter",
-      "Raccoon",
-      "Wild Boar",
-      "Musk Ox",
-      "Caribou",
-      "Reindeer",
-      "Orca",
-      "Great White Shark",
     ],
-    defaultPairing: {
+    defaultPairing: buildViralPairing({
       predator: "Grizzly Bear",
       prey: "Bison",
-      environments: ["Yellowstone meadow clash zone", "open mountain prairie"],
-      habitatTags: ["mountain", "meadow", "open"],
-      safeArcLabel: "Near-clash",
-      badges: ["Facebook-safe", "USA viral", "Low drift", "Defender"],
-    },
+      environments: ["Yellowstone open prairie grassland", "snowy mountain valley"],
+      habitatTags: ["meadow", "open", "mountain"],
+      safeArcLabel: "Defender stands ground",
+      badges: ["Defender", "Low drift"],
+      promptTemplateHint: "Hold a wide confrontation lane, heavy body mass, and a cliffhanger push-pull finish.",
+    }),
     pairings: [
-      {
+      buildViralPairing({
         predator: "Grizzly Bear",
         prey: "Bison",
-        environments: ["Yellowstone meadow clash zone", "open mountain prairie"],
-        habitatTags: ["mountain", "meadow", "open"],
-        safeArcLabel: "Near-clash",
-        badges: ["Facebook-safe", "USA viral", "Low drift", "Defender"],
-      },
-      {
-        predator: "Grizzly Bear",
-        prey: "Bull Elk",
-        environments: ["mountain meadow at dawn", "timberline clearing"],
-        habitatTags: ["mountain", "meadow", "forest"],
+        environments: ["Yellowstone open prairie grassland", "snowy mountain valley"],
+        habitatTags: ["meadow", "open", "mountain"],
         safeArcLabel: "Defender stands ground",
-        badges: ["Facebook-safe", "USA viral", "Defender"],
-      },
-      {
+        badges: ["Defender", "Low drift"],
+        promptTemplateHint: "Hold a wide confrontation lane, heavy body mass, and a cliffhanger push-pull finish.",
+      }),
+      buildViralPairing({
         predator: "Grizzly Bear",
         prey: "Moose",
-        environments: ["willow marsh edge", "boreal lake shallows"],
+        environments: ["willow marsh edge", "boreal lake edge"],
         habitatTags: ["river", "wetland", "forest"],
-        safeArcLabel: "Survival encounter",
-        badges: ["Facebook-safe", "USA viral", "Defender"],
-      },
-      {
-        predator: "Wolf Pack",
+        safeArcLabel: "Near-clash",
+        badges: ["Defender"],
+      }),
+      buildViralPairing({
+        predator: "Grizzly Bear",
         prey: "Bull Elk",
-        environments: ["Rocky Mountain meadow", "snowy timber edge"],
-        habitatTags: ["forest", "meadow", "snow"],
-        safeArcLabel: "Pack pressure",
-        badges: ["Facebook-safe", "USA viral", "Low drift", "Pack pressure"],
-      },
-      {
+        environments: ["Rocky Mountain autumn meadow", "high meadow treeline"],
+        habitatTags: ["mountain", "meadow", "forest"],
+        safeArcLabel: "Near-clash",
+        badges: ["Defender"],
+      }),
+      buildViralPairing({
         predator: "Wolf Pack",
         prey: "Moose",
-        environments: ["boreal willow flat", "snowy forest lane"],
-        habitatTags: ["forest", "snow", "wetland"],
+        environments: ["boreal lake edge", "snowy valley corridor"],
+        habitatTags: ["forest", "river", "snow"],
         safeArcLabel: "Pack pressure",
-        badges: ["Facebook-safe", "USA viral", "Pack pressure"],
-      },
-      {
+        badges: ["Pack pressure", "Low drift"],
+      }),
+      buildViralPairing({
+        predator: "Wolf Pack",
+        prey: "Bull Elk",
+        environments: ["Rocky Mountain forest edge", "open snowfield"],
+        habitatTags: ["forest", "snow", "open"],
+        safeArcLabel: "Pack pressure",
+        badges: ["Pack pressure", "Low drift"],
+      }),
+      buildViralPairing({
         predator: "Wolf Pack",
         prey: "Bison",
-        environments: ["open prairie edge", "snow-dusted grassland"],
+        environments: ["windy prairie opening", "Yellowstone valley floor"],
         habitatTags: ["open", "meadow", "snow"],
         safeArcLabel: "Defender stands ground",
-        badges: ["Facebook-safe", "USA viral", "Defender", "Pack pressure"],
-      },
-      {
+        badges: ["Pack pressure", "Defender"],
+      }),
+      buildViralPairing({
         predator: "Mountain Lion",
         prey: "Mule Deer",
-        environments: ["brushy ridge opening", "pine shadow crossing"],
-        habitatTags: ["mountain", "forest", "woodland"],
+        environments: ["Rocky Mountain forest edge", "brushy ridge shelf"],
+        habitatTags: ["forest", "mountain", "woodland"],
         safeArcLabel: "Ambush tension",
-        badges: ["Facebook-safe", "USA viral"],
-      },
-      {
+        badges: ["Low drift"],
+      }),
+      buildViralPairing({
         predator: "Mountain Lion",
         prey: "Bighorn Sheep",
-        environments: ["rocky ledge traverse", "alpine slope"],
+        environments: ["rocky cliff shelf", "alpine ridge ledge"],
         habitatTags: ["mountain", "open"],
-        safeArcLabel: "Last-second escape",
-        badges: ["Facebook-safe", "USA viral"],
-      },
-      {
+        safeArcLabel: "Cliffhanger survival tension",
+        badges: ["Near-clash"],
+      }),
+      buildViralPairing({
         predator: "Coyote",
         prey: "Jackrabbit",
-        environments: ["sagebrush flat", "dusty prairie lane"],
-        habitatTags: ["open", "desert"],
+        environments: ["sagebrush flat", "dry prairie scrub edge"],
+        habitatTags: ["open", "desert", "woodland"],
         safeArcLabel: "Chase pressure",
-        badges: ["Facebook-safe", "USA viral"],
-      },
-      {
+        badges: ["Chase pressure"],
+      }),
+      buildViralPairing({
+        predator: "Coyote",
+        prey: "Rabbit",
+        environments: ["brushline opening", "cold field edge"],
+        habitatTags: ["open", "woodland", "meadow"],
+        safeArcLabel: "Last-second escape",
+        badges: ["Chase pressure"],
+      }),
+      buildViralPairing({
         predator: "Bobcat",
         prey: "Rabbit",
-        environments: ["brushy wash", "rocky scrub pocket"],
-        habitatTags: ["woodland", "desert", "open"],
+        environments: ["rocky brush pocket", "desert scrub edge"],
+        habitatTags: ["desert", "open", "woodland"],
         safeArcLabel: "Ambush tension",
-        badges: ["Facebook-safe", "USA viral"],
-      },
-      {
+        badges: ["Low drift"],
+      }),
+      buildViralPairing({
+        predator: "Bobcat",
+        prey: "Quail",
+        environments: ["scrub grass opening", "low brush wash"],
+        habitatTags: ["desert", "open", "woodland"],
+        safeArcLabel: "Sudden lunge",
+        badges: ["Fast hook"],
+      }),
+      buildViralPairing({
         predator: "Bald Eagle",
         prey: "Salmon",
-        environments: ["cold river shallows", "Alaskan river mouth"],
-        habitatTags: ["river", "coast"],
+        environments: ["Alaskan river mouth", "cold shallows"],
+        habitatTags: ["river", "coast", "forest"],
+        safeArcLabel: "Fishing strike",
+        badges: ["Fast hook", "Low drift"],
+      }),
+      buildViralPairing({
+        predator: "Bald Eagle",
+        prey: "Trout",
+        environments: ["mountain river bend", "lakeshore shallows"],
+        habitatTags: ["river", "coast", "mountain"],
         safeArcLabel: "Sudden lunge",
-        badges: ["Facebook-safe", "USA viral", "Low drift"],
-      },
-      {
+        badges: ["Fast hook", "Low drift"],
+      }),
+      buildViralPairing({
         predator: "Golden Eagle",
         prey: "Rabbit",
-        environments: ["high desert hillside", "open grass ridge"],
-        habitatTags: ["open", "mountain", "meadow"],
+        environments: ["highland meadow", "open ridge shelf"],
+        habitatTags: ["meadow", "mountain", "open"],
         safeArcLabel: "Sudden lunge",
-        badges: ["Facebook-safe", "USA viral"],
-      },
-      {
+        badges: ["Fast hook"],
+      }),
+      buildViralPairing({
+        predator: "Golden Eagle",
+        prey: "Fox",
+        environments: ["windy alpine slope", "rocky highland edge"],
+        habitatTags: ["mountain", "open", "meadow"],
+        safeArcLabel: "Near-clash",
+        badges: ["Fast hook"],
+      }),
+      buildViralPairing({
         predator: "Alligator",
         prey: "Wild Boar",
-        environments: ["Everglades swamp margin", "muddy cypress waterline"],
+        environments: ["muddy Everglades waterline", "cypress swamp edge"],
         habitatTags: ["swamp", "wetland", "river"],
-        safeArcLabel: "Water ambush",
-        badges: ["Facebook-safe", "USA viral", "Water ambush", "Low drift"],
-      },
-      {
+        safeArcLabel: "Waterhole ambush",
+        badges: ["Water ambush", "Low drift"],
+      }),
+      buildViralPairing({
         predator: "Alligator",
         prey: "White-tailed Deer",
-        environments: ["marsh crossing edge", "dark tannin shoreline"],
+        environments: ["dark marsh edge", "tannin-water shoreline"],
         habitatTags: ["swamp", "wetland", "river"],
-        safeArcLabel: "Water ambush",
-        badges: ["Facebook-safe", "USA viral", "Water ambush", "Low drift"],
-      },
-      {
-        predator: "Crocodile",
-        prey: "Warthog",
-        environments: [
-          "dry-season African muddy waterhole, shallow brown water, cracked mud, sparse reeds, dry yellow grassland",
-          "muddy African river edge with sparse reeds"
-        ],
-        habitatTags: ["river", "wetland", "savanna"],
-        safeArcLabel: "Waterhole ambush",
-        badges: ["Facebook-safe", "Water ambush", "Low drift"],
-      },
-      {
-        predator: "Bison",
-        prey: "Wolf Pack",
-        environments: ["windy prairie stand-off", "open snowy plain"],
-        habitatTags: ["open", "meadow", "snow"],
-        safeArcLabel: "Defender stands ground",
-        badges: ["Facebook-safe", "USA viral", "Defender"],
-      },
-      {
-        predator: "Moose",
-        prey: "Wolf Pack",
-        environments: ["lake-edge willow corridor", "snowy marsh lane"],
-        habitatTags: ["forest", "river", "wetland", "snow"],
-        safeArcLabel: "Defender stands ground",
-        badges: ["Facebook-safe", "USA viral", "Defender"],
-      },
-      {
-        predator: "Wolverine",
-        prey: "Reindeer",
-        environments: ["windswept tundra pass", "snowy ridge crossing"],
-        habitatTags: ["tundra", "snow", "mountain"],
-        safeArcLabel: "Survival encounter",
-        badges: ["Facebook-safe", "USA viral"],
-      },
-      {
+        safeArcLabel: "Sudden lunge",
+        badges: ["Water ambush", "Low drift"],
+      }),
+      buildViralPairing({
         predator: "Black Bear",
         prey: "Salmon",
-        environments: ["forest creek run", "rocky salmon shallows"],
-        habitatTags: ["river", "forest"],
-        safeArcLabel: "Sudden lunge",
-        badges: ["Facebook-safe", "USA viral", "Low drift"],
-      },
-      {
+        environments: ["Smoky Mountain creek crossing", "cold river pocket"],
+        habitatTags: ["river", "forest", "mountain"],
+        safeArcLabel: "Fishing strike",
+        badges: ["Fast hook"],
+      }),
+      buildViralPairing({
         predator: "Polar Bear",
         prey: "Seal",
-        environments: ["Arctic ice edge", "broken sea ice lead"],
+        environments: ["Arctic ice edge", "open sea lead"],
         habitatTags: ["snow", "coast", "open"],
         safeArcLabel: "Ambush tension",
-        badges: ["Facebook-safe", "Low drift", "Defender"],
-      },
-      {
-        predator: "Orca",
-        prey: "Seal",
-        environments: ["cold Pacific coastal water", "kelp-fringed seal colony"],
-        habitatTags: ["coast", "open"],
-        safeArcLabel: "Sudden lunge",
-        badges: ["Facebook-safe", "USA viral", "Low drift"],
-      },
-      {
-        predator: "Great White Shark",
-        prey: "Seal",
-        environments: ["surf line", "seal-colony open ocean edge"],
-        habitatTags: ["coast", "open"],
-        safeArcLabel: "Sudden lunge",
-        badges: ["Facebook-safe", "USA viral", "Low drift"],
-      },
+        badges: ["Low drift"],
+      }),
+      buildViralPairing({
+        predator: "Polar Bear",
+        prey: "Arctic Fox",
+        environments: ["wind-scoured ice shelf", "snow ridge"],
+        habitatTags: ["snow", "tundra", "open"],
+        safeArcLabel: "Chase pressure",
+        badges: ["Chase pressure"],
+      }),
+      buildViralPairing({
+        predator: "Wolverine",
+        prey: "Reindeer",
+        environments: ["snowy tundra cut", "boreal treeline opening"],
+        habitatTags: ["snow", "tundra", "forest"],
+        safeArcLabel: "Defender stands ground",
+        badges: ["Defender"],
+      }),
+      buildViralPairing({
+        predator: "Wolverine",
+        prey: "Rabbit",
+        environments: ["wind-packed snowfield", "subarctic brush lane"],
+        habitatTags: ["snow", "open", "woodland"],
+        safeArcLabel: "Last-second escape",
+        badges: ["Chase pressure"],
+      }),
+      buildViralPairing({
+        predator: "Bison",
+        prey: "Wolf Pack",
+        environments: ["Yellowstone open range", "snowy valley floor"],
+        habitatTags: ["open", "meadow", "snow"],
+        safeArcLabel: "Defender stands ground",
+        badges: ["Defender", "Pack pressure"],
+      }),
+      buildViralPairing({
+        predator: "Moose",
+        prey: "Wolf Pack",
+        environments: ["willow marsh edge", "snowy boreal trail"],
+        habitatTags: ["forest", "river", "snow"],
+        safeArcLabel: "Defender stands ground",
+        badges: ["Defender", "Pack pressure"],
+      }),
     ],
   },
   "Europe Wildlife": {
@@ -623,423 +688,628 @@ const WILDLIFE_FOCUS_DEFINITIONS: Record<
   },
   "Global Viral Wildlife": {
     helperText:
-      "USA-first, globally recognizable wildlife pairings tuned for original documentary-style Facebook tests, readable animal spacing, and monetization-safe survival tension.",
+      "Fast viral attack, ambush, chase, and survival encounters for Kling Direct 15s. No blood, no gore, no visible wounds.",
     animals: [
-      "Grizzly Bear",
-      "Brown Bear",
-      "Black Bear",
-      "Polar Bear",
-      "Wolf",
-      "Wolf Pack",
-      "Coyote",
-      "Mountain Lion",
-      "Cougar",
-      "Bobcat",
-      "Lynx",
-      "Bison",
-      "Moose",
-      "Bull Elk",
-      "White-tailed Deer",
-      "Mule Deer",
-      "Bighorn Sheep",
-      "Mountain Goat",
-      "Bald Eagle",
-      "Golden Eagle",
-      "Alligator",
       "Crocodile",
-      "Rattlesnake",
-      "Great Horned Owl",
-      "Red Fox",
-      "Wolverine",
-      "Beaver",
-      "River Otter",
-      "Raccoon",
-      "Wild Boar",
-      "Musk Ox",
-      "Caribou",
-      "Reindeer",
+      "Nile Crocodile",
+      "Saltwater Crocodile",
+      "Alligator",
       "Lion",
-      "Lion Pack",
       "Tiger",
-      "Siberian Tiger",
       "Leopard",
-      "Snow Leopard",
-      "Jaguar",
       "Cheetah",
       "Hyena",
       "African Wild Dog",
-      "Nile Crocodile",
-      "Saltwater Crocodile",
-      "Hippopotamus",
-      "Rhinoceros",
-      "Elephant",
-      "Cape Buffalo",
-      "Zebra",
-      "Wildebeest",
-      "Giraffe",
-      "Gorilla",
-      "Chimpanzee",
-      "Komodo Dragon",
-      "Anaconda",
-      "Python",
-      "King Cobra",
+      "Grizzly Bear",
+      "Wolf Pack",
+      "Mountain Lion",
+      "Coyote",
+      "Bobcat",
+      "Bald Eagle",
+      "Golden Eagle",
       "Great White Shark",
-      "Tiger Shark",
-      "Bull Shark",
       "Orca",
       "Leopard Seal",
+      "Snow Leopard",
+      "Komodo Dragon",
+      "Jaguar",
       "Harpy Eagle",
-      "Peregrine Falcon",
-      "Warthog",
     ],
-    defaultPairing: {
-      predator: "Grizzly Bear",
-      prey: "Bison",
-      environments: ["Yellowstone meadow clash zone", "open mountain prairie"],
-      habitatTags: ["mountain", "meadow", "open"],
-      safeArcLabel: "Near-clash",
-      badges: ["Facebook-safe", "USA viral", "Low drift", "Defender"],
-    },
+    defaultPairing: buildViralPairing({
+      predator: "Crocodile",
+      prey: "Warthog",
+      environments: [
+        "dry-season African muddy waterhole",
+        "shallow brown water with cracked mud",
+      ],
+      habitatTags: ["river", "wetland", "savanna"],
+      safeArcLabel: "Waterhole ambush",
+      badges: ["Water ambush", "Low drift"],
+      promptTemplateHint:
+        "Start from the provided master image and stage a 5-shot muddy waterline ambush that ends in unresolved escape pressure.",
+    }),
     pairings: [
-      {
-        predator: "Grizzly Bear",
-        prey: "Bison",
-        environments: ["Yellowstone meadow clash zone", "open mountain prairie"],
-        habitatTags: ["mountain", "meadow", "open"],
-        safeArcLabel: "Near-clash",
-        badges: ["Facebook-safe", "USA viral", "Low drift", "Defender"],
-      },
-      {
-        predator: "Grizzly Bear",
-        prey: "Bull Elk",
-        environments: ["mountain meadow at dawn", "timberline clearing"],
-        habitatTags: ["mountain", "meadow", "forest"],
-        safeArcLabel: "Defender stands ground",
-        badges: ["Facebook-safe", "USA viral", "Defender"],
-      },
-      {
-        predator: "Grizzly Bear",
-        prey: "Moose",
-        environments: ["willow marsh edge", "boreal lake shallows"],
-        habitatTags: ["river", "wetland", "forest"],
-        safeArcLabel: "Survival encounter",
-        badges: ["Facebook-safe", "USA viral", "Defender"],
-      },
-      {
-        predator: "Wolf Pack",
-        prey: "Bull Elk",
-        environments: ["Rocky Mountain meadow", "snowy timber edge"],
-        habitatTags: ["forest", "meadow", "snow"],
-        safeArcLabel: "Pack pressure",
-        badges: ["Facebook-safe", "USA viral", "Low drift", "Pack pressure"],
-      },
-      {
-        predator: "Wolf Pack",
-        prey: "Moose",
-        environments: ["boreal willow flat", "snowy forest lane"],
-        habitatTags: ["forest", "snow", "wetland"],
-        safeArcLabel: "Pack pressure",
-        badges: ["Facebook-safe", "USA viral", "Pack pressure"],
-      },
-      {
-        predator: "Wolf Pack",
-        prey: "Bison",
-        environments: ["open prairie edge", "snow-dusted grassland"],
-        habitatTags: ["open", "meadow", "snow"],
-        safeArcLabel: "Defender stands ground",
-        badges: ["Facebook-safe", "USA viral", "Defender", "Pack pressure"],
-      },
-      {
-        predator: "Mountain Lion",
-        prey: "Mule Deer",
-        environments: ["brushy ridge opening", "pine shadow crossing"],
-        habitatTags: ["mountain", "forest", "woodland"],
-        safeArcLabel: "Ambush tension",
-        badges: ["Facebook-safe", "USA viral"],
-      },
-      {
-        predator: "Mountain Lion",
-        prey: "Bighorn Sheep",
-        environments: ["rocky ledge traverse", "alpine slope"],
-        habitatTags: ["mountain", "open"],
-        safeArcLabel: "Last-second escape",
-        badges: ["Facebook-safe", "USA viral"],
-      },
-      {
-        predator: "Coyote",
-        prey: "Jackrabbit",
-        environments: ["sagebrush flat", "dusty prairie lane"],
-        habitatTags: ["open", "desert"],
-        safeArcLabel: "Chase pressure",
-        badges: ["Facebook-safe", "USA viral"],
-      },
-      {
-        predator: "Bobcat",
-        prey: "Rabbit",
-        environments: ["brushy wash", "rocky scrub pocket"],
-        habitatTags: ["woodland", "desert", "open"],
-        safeArcLabel: "Ambush tension",
-        badges: ["Facebook-safe", "USA viral"],
-      },
-      {
-        predator: "Bald Eagle",
-        prey: "Salmon",
-        environments: ["cold river shallows", "Alaskan river mouth"],
-        habitatTags: ["river", "coast"],
-        safeArcLabel: "Sudden lunge",
-        badges: ["Facebook-safe", "USA viral", "Low drift"],
-      },
-      {
-        predator: "Golden Eagle",
-        prey: "Rabbit",
-        environments: ["high desert hillside", "open grass ridge"],
-        habitatTags: ["open", "mountain", "meadow"],
-        safeArcLabel: "Sudden lunge",
-        badges: ["Facebook-safe", "USA viral"],
-      },
-      {
-        predator: "Golden Eagle",
-        prey: "Red Fox",
-        environments: ["windy ridge line", "highland scrub edge"],
-        habitatTags: ["open", "mountain", "woodland"],
-        safeArcLabel: "Survival encounter",
-        badges: ["Facebook-safe"],
-      },
-      {
-        predator: "Alligator",
-        prey: "Wild Boar",
-        environments: ["Everglades swamp margin", "muddy cypress waterline"],
-        habitatTags: ["swamp", "wetland", "river"],
-        safeArcLabel: "Water ambush",
-        badges: ["Facebook-safe", "USA viral", "Water ambush", "Low drift"],
-      },
-      {
-        predator: "Alligator",
-        prey: "White-tailed Deer",
-        environments: ["marsh crossing edge", "dark tannin shoreline"],
-        habitatTags: ["swamp", "wetland", "river"],
-        safeArcLabel: "Water ambush",
-        badges: ["Facebook-safe", "USA viral", "Water ambush", "Low drift"],
-      },
-      {
+      buildViralPairing({
         predator: "Crocodile",
         prey: "Warthog",
         environments: [
-          "dry-season African muddy waterhole, shallow brown water, cracked mud, sparse reeds, dry yellow grassland",
-          "muddy African river edge with sparse reeds"
+          "dry-season African muddy waterhole",
+          "shallow brown water with cracked mud",
         ],
         habitatTags: ["river", "wetland", "savanna"],
         safeArcLabel: "Waterhole ambush",
-        badges: ["Facebook-safe", "Water ambush", "Low drift"],
-      },
-      {
-        predator: "Bison",
-        prey: "Wolf Pack",
-        environments: ["windy prairie stand-off", "open snowy plain"],
-        habitatTags: ["open", "meadow", "snow"],
-        safeArcLabel: "Defender stands ground",
-        badges: ["Facebook-safe", "USA viral", "Defender"],
-      },
-      {
-        predator: "Moose",
-        prey: "Wolf Pack",
-        environments: ["lake-edge willow corridor", "snowy marsh lane"],
-        habitatTags: ["forest", "river", "wetland", "snow"],
-        safeArcLabel: "Defender stands ground",
-        badges: ["Facebook-safe", "USA viral", "Defender"],
-      },
-      {
-        predator: "Wolverine",
-        prey: "Reindeer",
-        environments: ["windswept tundra pass", "snowy ridge crossing"],
-        habitatTags: ["tundra", "snow", "mountain"],
-        safeArcLabel: "Survival encounter",
-        badges: ["Facebook-safe", "USA viral"],
-      },
-      {
-        predator: "Black Bear",
-        prey: "Salmon",
-        environments: ["forest creek run", "rocky salmon shallows"],
-        habitatTags: ["river", "forest"],
+        badges: ["Water ambush", "Low drift"],
+        promptTemplateHint:
+          "Warthog drinks at muddy edge, crocodile barely visible, explosive lunge, unresolved escape pressure.",
+      }),
+      buildViralPairing({
+        predator: "Crocodile",
+        prey: "Zebra",
+        environments: ["muddy river crossing", "reed-lined bank"],
+        habitatTags: ["river", "wetland", "savanna"],
+        safeArcLabel: "River crossing danger",
+        badges: ["Water ambush"],
+      }),
+      buildViralPairing({
+        predator: "Crocodile",
+        prey: "Wildebeest",
+        environments: ["muddy crossing lane", "shallow floodplain channel"],
+        habitatTags: ["river", "wetland", "savanna"],
         safeArcLabel: "Sudden lunge",
-        badges: ["Facebook-safe", "USA viral", "Low drift"],
-      },
-      {
-        predator: "Polar Bear",
-        prey: "Seal",
-        environments: ["Arctic ice edge", "broken sea ice lead"],
-        habitatTags: ["snow", "coast", "open"],
+        badges: ["Water ambush"],
+      }),
+      buildViralPairing({
+        predator: "Nile Crocodile",
+        prey: "Warthog",
+        environments: ["dry-season waterhole edge", "muddy African bank"],
+        habitatTags: ["river", "wetland", "savanna"],
+        safeArcLabel: "Waterhole ambush",
+        badges: ["Water ambush", "Low drift"],
+      }),
+      buildViralPairing({
+        predator: "Nile Crocodile",
+        prey: "Zebra",
+        environments: ["wide African river crossing", "murky bank channel"],
+        habitatTags: ["river", "wetland", "savanna"],
+        safeArcLabel: "River crossing danger",
+        badges: ["Water ambush", "Low drift"],
+      }),
+      buildViralPairing({
+        predator: "Nile Crocodile",
+        prey: "Wildebeest",
+        environments: ["murky crossing current", "reed-framed flood channel"],
+        habitatTags: ["river", "wetland", "savanna"],
+        safeArcLabel: "Sudden lunge",
+        badges: ["Water ambush", "Low drift"],
+      }),
+      buildViralPairing({
+        predator: "Nile Crocodile",
+        prey: "Cape Buffalo",
+        environments: ["muddy river crossing", "deep brown channel edge"],
+        habitatTags: ["river", "wetland", "savanna"],
+        safeArcLabel: "Defender stands ground",
+        badges: ["Water ambush", "Defender"],
+      }),
+      buildViralPairing({
+        predator: "Saltwater Crocodile",
+        prey: "Water Buffalo",
+        environments: ["mangrove river mouth", "tropical estuary edge"],
+        habitatTags: ["river", "swamp", "wetland"],
+        safeArcLabel: "Waterhole ambush",
+        badges: ["Water ambush", "Low drift"],
+      }),
+      buildViralPairing({
+        predator: "Saltwater Crocodile",
+        prey: "Wild Boar",
+        environments: ["mangrove shallows", "muddy tidal bank"],
+        habitatTags: ["river", "swamp", "wetland"],
+        safeArcLabel: "Sudden lunge",
+        badges: ["Water ambush", "Low drift"],
+      }),
+      buildViralPairing({
+        predator: "Saltwater Crocodile",
+        prey: "Deer",
+        environments: ["tropical creek mouth", "shallow estuary channel"],
+        habitatTags: ["river", "wetland", "swamp"],
+        safeArcLabel: "River crossing danger",
+        badges: ["Water ambush"],
+      }),
+      buildViralPairing({
+        predator: "Alligator",
+        prey: "Wild Boar",
+        environments: ["muddy Everglades waterline", "cypress swamp edge"],
+        habitatTags: ["swamp", "wetland", "river"],
+        safeArcLabel: "Waterhole ambush",
+        badges: ["Water ambush", "Low drift"],
+      }),
+      buildViralPairing({
+        predator: "Alligator",
+        prey: "White-tailed Deer",
+        environments: ["marsh shoreline", "dark tannin-water edge"],
+        habitatTags: ["swamp", "wetland", "river"],
+        safeArcLabel: "Sudden lunge",
+        badges: ["Water ambush", "Low drift"],
+      }),
+      buildViralPairing({
+        predator: "Alligator",
+        prey: "Raccoon",
+        environments: ["night marsh edge", "shallow cypress channel"],
+        habitatTags: ["swamp", "wetland", "river"],
         safeArcLabel: "Ambush tension",
-        badges: ["Facebook-safe", "Low drift", "Defender"],
-      },
-      {
-        predator: "Orca",
-        prey: "Seal",
-        environments: ["cold Pacific coastal water", "kelp-fringed seal colony"],
-        habitatTags: ["coast", "open"],
+        badges: ["Water ambush"],
+      }),
+      buildViralPairing({
+        predator: "Jaguar",
+        prey: "Caiman",
+        environments: ["Amazon muddy bank", "tropical river margin"],
+        habitatTags: ["river", "jungle", "rainforest"],
+        safeArcLabel: "Near-clash",
+        badges: ["Water ambush", "Low drift"],
+      }),
+      buildViralPairing({
+        predator: "Jaguar",
+        prey: "Wild Boar",
+        environments: ["tropical forest floor", "riverbank game trail"],
+        habitatTags: ["jungle", "forest", "river"],
         safeArcLabel: "Sudden lunge",
-        badges: ["Facebook-safe", "USA viral", "Low drift"],
-      },
-      {
+        badges: ["Chase pressure"],
+      }),
+      buildViralPairing({
+        predator: "Jaguar",
+        prey: "Deer",
+        environments: ["dense river forest", "shadowed jungle opening"],
+        habitatTags: ["jungle", "forest", "river"],
+        safeArcLabel: "Ambush tension",
+        badges: ["Low drift"],
+      }),
+      buildViralPairing({
         predator: "Great White Shark",
         prey: "Seal",
-        environments: ["surf line", "seal-colony open ocean edge"],
+        environments: ["surf line", "cold open ocean break"],
         habitatTags: ["coast", "open"],
         safeArcLabel: "Sudden lunge",
-        badges: ["Facebook-safe", "USA viral", "Low drift"],
-      },
-      {
+        badges: ["Fast hook", "Low drift"],
+      }),
+      buildViralPairing({
+        predator: "Great White Shark",
+        prey: "Sea Lion",
+        environments: ["seal colony surf zone", "whitewash channel"],
+        habitatTags: ["coast", "open"],
+        safeArcLabel: "Near-clash",
+        badges: ["Fast hook"],
+      }),
+      buildViralPairing({
+        predator: "Orca",
+        prey: "Seal",
+        environments: ["cold coastal water", "ice-edge channel"],
+        habitatTags: ["coast", "open", "snow"],
+        safeArcLabel: "Sudden lunge",
+        badges: ["Fast hook", "Low drift"],
+      }),
+      buildViralPairing({
+        predator: "Orca",
+        prey: "Sea Lion",
+        environments: ["rocky coastal break", "cold Pacific surface lane"],
+        habitatTags: ["coast", "open"],
+        safeArcLabel: "Chase pressure",
+        badges: ["Fast hook"],
+      }),
+      buildViralPairing({
+        predator: "Orca",
+        prey: "Dolphin",
+        environments: ["open coastal corridor", "storm-dark surface water"],
+        habitatTags: ["coast", "open"],
+        safeArcLabel: "Near-clash",
+        badges: ["Fast hook"],
+      }),
+      buildViralPairing({
+        predator: "Leopard Seal",
+        prey: "Penguin",
+        environments: ["Antarctic ice edge", "freezing open-water lane"],
+        habitatTags: ["coast", "snow", "open"],
+        safeArcLabel: "Sudden lunge",
+        badges: ["Fast hook", "Low drift"],
+      }),
+      buildViralPairing({
+        predator: "Leopard Seal",
+        prey: "Seal Pup",
+        environments: ["ice floe edge", "polar shallows"],
+        habitatTags: ["coast", "snow", "open"],
+        safeArcLabel: "Ambush tension",
+        badges: ["Fast hook"],
+      }),
+      buildViralPairing({
+        predator: "Leopard Seal",
+        prey: "Squid",
+        environments: ["under-ice channel", "dark polar water"],
+        habitatTags: ["coast", "open", "snow"],
+        safeArcLabel: "Chase pressure",
+        badges: ["Fast hook"],
+      }),
+      buildViralPairing({
         predator: "Lion",
         prey: "Zebra",
-        environments: ["savanna grass lane", "dusty open plain"],
-        habitatTags: ["savanna", "open"],
-        safeArcLabel: "Chase pressure",
-        badges: ["Facebook-safe", "Low drift"],
-      },
-      {
-        predator: "Lion Pack",
-        prey: "Cape Buffalo",
-        environments: ["dry-season waterhole", "open savanna pressure lane"],
-        habitatTags: ["savanna", "open", "river"],
-        safeArcLabel: "Defender stands ground",
-        badges: ["Facebook-safe", "Defender", "Pack pressure"],
-      },
-      {
-        predator: "Lion",
-        prey: "Wildebeest",
         environments: ["savanna golden hour grassland", "dust plain"],
         habitatTags: ["savanna", "open"],
         safeArcLabel: "Chase pressure",
-        badges: ["Facebook-safe", "Low drift"],
-      },
-      {
-        predator: "Tiger",
-        prey: "Wild Boar",
-        environments: ["dense jungle river edge", "river forest"],
-        habitatTags: ["jungle", "river", "forest"],
-        safeArcLabel: "Ambush tension",
-        badges: ["Facebook-safe", "Low drift"],
-      },
-      {
-        predator: "Tiger",
-        prey: "White-tailed Deer",
-        environments: ["forest edge game trail", "humid bamboo thicket"],
-        habitatTags: ["jungle", "forest", "woodland"],
-        safeArcLabel: "Ambush tension",
-        badges: ["Facebook-safe"],
-      },
-      {
-        predator: "Leopard",
+        badges: ["Chase pressure"],
+      }),
+      buildViralPairing({
+        predator: "Lion",
+        prey: "Wildebeest",
+        environments: ["dry grassland run lane", "river crossing approach"],
+        habitatTags: ["savanna", "open", "river"],
+        safeArcLabel: "Cliffhanger survival tension",
+        badges: ["Chase pressure"],
+      }),
+      buildViralPairing({
+        predator: "Lion",
         prey: "Antelope",
-        environments: ["rocky savanna", "woodland edge"],
+        environments: ["short-grass savanna", "acacia shadow edge"],
         habitatTags: ["savanna", "open", "woodland"],
-        safeArcLabel: "Ambush tension",
-        badges: ["Facebook-safe", "Low drift"],
-      },
-      {
-        predator: "Jaguar",
-        prey: "Caiman",
-        environments: ["tropical riverbank", "humid jungle shallows"],
-        habitatTags: ["river", "jungle", "forest"],
         safeArcLabel: "Sudden lunge",
-        badges: ["Facebook-safe", "Water ambush"],
-      },
-      {
+        badges: ["Chase pressure"],
+      }),
+      buildViralPairing({
         predator: "Cheetah",
         prey: "Gazelle",
-        environments: ["open savanna", "dry grassland"],
+        environments: ["open savanna sprint lane", "dry grass track"],
         habitatTags: ["savanna", "open"],
         safeArcLabel: "Chase pressure",
-        badges: ["Facebook-safe", "Low drift"],
-      },
-      {
+        badges: ["Chase pressure"],
+      }),
+      buildViralPairing({
+        predator: "Cheetah",
+        prey: "Antelope",
+        environments: ["short-grass plain", "sun-baked chase corridor"],
+        habitatTags: ["savanna", "open"],
+        safeArcLabel: "Last-second escape",
+        badges: ["Chase pressure"],
+      }),
+      buildViralPairing({
+        predator: "Cheetah",
+        prey: "Deer",
+        environments: ["open scrub plain", "dust-light field lane"],
+        habitatTags: ["open", "savanna", "woodland"],
+        safeArcLabel: "Last-second escape",
+        badges: ["Chase pressure"],
+      }),
+      buildViralPairing({
         predator: "Hyena",
         prey: "Wildebeest",
-        environments: ["dusty savanna", "river crossing"],
+        environments: ["dusty savanna lane", "river crossing aftermath"],
         habitatTags: ["savanna", "open", "river"],
         safeArcLabel: "Pack pressure",
-        badges: ["Facebook-safe", "Pack pressure"],
-      },
-      {
+        badges: ["Pack pressure"],
+      }),
+      buildViralPairing({
+        predator: "Hyena",
+        prey: "Antelope",
+        environments: ["dry bushveld run lane", "scrub opening"],
+        habitatTags: ["savanna", "open", "woodland"],
+        safeArcLabel: "Chase pressure",
+        badges: ["Pack pressure"],
+      }),
+      buildViralPairing({
+        predator: "Hyena",
+        prey: "Zebra",
+        environments: ["low grass run corridor", "dusty waterhole edge"],
+        habitatTags: ["savanna", "open", "river"],
+        safeArcLabel: "Near-clash",
+        badges: ["Pack pressure"],
+      }),
+      buildViralPairing({
         predator: "African Wild Dog",
         prey: "Antelope",
-        environments: ["bushveld chase lane", "dry grass corridor"],
+        environments: ["open bushveld lane", "red-dirt grass track"],
         habitatTags: ["savanna", "open", "woodland"],
         safeArcLabel: "Pack pressure",
-        badges: ["Facebook-safe", "Pack pressure"],
-      },
-      {
-        predator: "Nile Crocodile",
-        prey: "Wildebeest",
-        environments: ["African river crossing", "muddy bank channel"],
-        habitatTags: ["river", "wetland", "savanna"],
-        safeArcLabel: "River crossing danger",
-        badges: ["Facebook-safe", "Water ambush", "Low drift"],
-      },
-      {
-        predator: "Nile Crocodile",
-        prey: "Zebra",
-        environments: ["African river crossing", "muddy bank channel"],
-        habitatTags: ["river", "wetland", "savanna"],
-        safeArcLabel: "River crossing danger",
-        badges: ["Facebook-safe", "Water ambush", "Low drift"],
-      },
-      {
-        predator: "Saltwater Crocodile",
-        prey: "Water Buffalo",
-        environments: ["mangrove estuary waterline", "tropical river mouth"],
-        habitatTags: ["river", "coast", "swamp"],
-        safeArcLabel: "Water ambush",
-        badges: ["Facebook-safe", "Water ambush", "Low drift"],
-      },
-      {
-        predator: "Komodo Dragon",
+        badges: ["Pack pressure"],
+      }),
+      buildViralPairing({
+        predator: "African Wild Dog",
+        prey: "Gazelle",
+        environments: ["dry savanna chase lane", "low scrub opening"],
+        habitatTags: ["savanna", "open"],
+        safeArcLabel: "Chase pressure",
+        badges: ["Pack pressure"],
+      }),
+      buildViralPairing({
+        predator: "African Wild Dog",
         prey: "Deer",
-        environments: ["dry island scrub track", "volcanic grass slope"],
-        habitatTags: ["open", "desert", "woodland"],
-        safeArcLabel: "Survival encounter",
-        badges: ["Facebook-safe", "Low drift"],
-      },
-      {
-        predator: "Anaconda",
-        prey: "Caiman",
-        environments: ["murky rainforest shallows", "floating reed margin"],
-        habitatTags: ["river", "rainforest", "wetland"],
-        safeArcLabel: "Water ambush",
-        badges: ["Facebook-safe", "Water ambush"],
-      },
-      {
-        predator: "Leopard Seal",
-        prey: "Penguin",
-        environments: ["ice-fringe surf lane", "Antarctic shoreline chop"],
-        habitatTags: ["coast", "snow", "open"],
+        environments: ["bushveld edge", "wide field opening"],
+        habitatTags: ["savanna", "woodland", "open"],
+        safeArcLabel: "Last-second escape",
+        badges: ["Pack pressure"],
+      }),
+      buildViralPairing({
+        predator: "Leopard",
+        prey: "Antelope",
+        environments: ["rocky savanna shelf", "woodland edge"],
+        habitatTags: ["savanna", "open", "woodland"],
+        safeArcLabel: "Ambush tension",
+        badges: ["Low drift"],
+      }),
+      buildViralPairing({
+        predator: "Leopard",
+        prey: "Deer",
+        environments: ["shadowed treeline corridor", "rocky brush opening"],
+        habitatTags: ["woodland", "forest", "open"],
         safeArcLabel: "Sudden lunge",
-        badges: ["Facebook-safe", "Low drift"],
-      },
-      {
-        predator: "Harpy Eagle",
-        prey: "Monkey",
-        environments: ["rainforest canopy gap", "humid forest crown"],
-        habitatTags: ["rainforest", "forest"],
+        badges: ["Low drift"],
+      }),
+      buildViralPairing({
+        predator: "Leopard",
+        prey: "Wild Boar",
+        environments: ["thorn scrub edge", "rocky streambank"],
+        habitatTags: ["woodland", "open", "river"],
+        safeArcLabel: "Near-clash",
+        badges: ["Low drift"],
+      }),
+      buildViralPairing({
+        predator: "Tiger",
+        prey: "Wild Boar",
+        environments: ["dense jungle river edge", "monsoon forest floor"],
+        habitatTags: ["jungle", "river", "forest"],
+        safeArcLabel: "Ambush tension",
+        badges: ["Low drift"],
+      }),
+      buildViralPairing({
+        predator: "Tiger",
+        prey: "Deer",
+        environments: ["humid jungle opening", "bamboo forest edge"],
+        habitatTags: ["jungle", "forest", "rainforest"],
         safeArcLabel: "Sudden lunge",
-        badges: ["Facebook-safe"],
-      },
-      {
+        badges: ["Low drift"],
+      }),
+      buildViralPairing({
+        predator: "Tiger",
+        prey: "Goat",
+        environments: ["forest riverbank trail", "wet jungle shelf"],
+        habitatTags: ["jungle", "forest", "river"],
+        safeArcLabel: "Chase pressure",
+        badges: ["Low drift"],
+      }),
+      buildViralPairing({
         predator: "Snow Leopard",
         prey: "Mountain Goat",
-        environments: ["high alpine cliff path", "snowy granite ledge"],
+        environments: ["snowy cliff shelf", "high alpine ledge"],
         habitatTags: ["mountain", "snow", "open"],
-        safeArcLabel: "Last-second escape",
-        badges: ["Facebook-safe", "Low drift"],
-      },
-      {
+        safeArcLabel: "Cliffhanger survival tension",
+        badges: ["Near-clash", "Low drift"],
+      }),
+      buildViralPairing({
         predator: "Snow Leopard",
         prey: "Ibex",
-        environments: ["high alpine cliff path", "snowy granite ledge"],
+        environments: ["windy high ridge", "rocky snow face"],
         habitatTags: ["mountain", "snow", "open"],
+        safeArcLabel: "Near-clash",
+        badges: ["Near-clash", "Low drift"],
+      }),
+      buildViralPairing({
+        predator: "Snow Leopard",
+        prey: "Marmot",
+        environments: ["rocky alpine meadow", "snow-patch slope"],
+        habitatTags: ["mountain", "meadow", "snow"],
+        safeArcLabel: "Sudden lunge",
+        badges: ["Fast hook", "Low drift"],
+      }),
+      buildViralPairing({
+        predator: "Komodo Dragon",
+        prey: "Deer",
+        environments: ["dry island scrubland", "sun-baked trail cut"],
+        habitatTags: ["desert", "open", "woodland"],
+        safeArcLabel: "Sudden lunge",
+        badges: ["Fast hook", "Low drift"],
+      }),
+      buildViralPairing({
+        predator: "Komodo Dragon",
+        prey: "Wild Boar",
+        environments: ["dusty island clearing", "thorny game trail"],
+        habitatTags: ["desert", "open", "woodland"],
+        safeArcLabel: "Near-clash",
+        badges: ["Defender", "Low drift"],
+      }),
+      buildViralPairing({
+        predator: "Komodo Dragon",
+        prey: "Water Buffalo",
+        environments: ["dry waterhole edge", "open volcanic flat"],
+        habitatTags: ["open", "desert", "woodland"],
+        safeArcLabel: "Defender stands ground",
+        badges: ["Defender", "Low drift"],
+      }),
+      buildViralPairing({
+        predator: "Grizzly Bear",
+        prey: "Bison",
+        environments: ["Yellowstone valley floor", "open snowy plain"],
+        habitatTags: ["open", "meadow", "mountain"],
+        safeArcLabel: "Defender stands ground",
+        badges: ["Defender", "Low drift"],
+      }),
+      buildViralPairing({
+        predator: "Grizzly Bear",
+        prey: "Moose",
+        environments: ["willow marsh edge", "mountain lake margin"],
+        habitatTags: ["river", "wetland", "forest"],
+        safeArcLabel: "Near-clash",
+        badges: ["Defender"],
+      }),
+      buildViralPairing({
+        predator: "Grizzly Bear",
+        prey: "Bull Elk",
+        environments: ["Rocky Mountain meadow", "treeline clearing"],
+        habitatTags: ["mountain", "meadow", "forest"],
+        safeArcLabel: "Near-clash",
+        badges: ["Defender"],
+      }),
+      buildViralPairing({
+        predator: "Wolf Pack",
+        prey: "Moose",
+        environments: ["boreal lake edge", "snowy valley corridor"],
+        habitatTags: ["forest", "river", "snow"],
+        safeArcLabel: "Pack pressure",
+        badges: ["Pack pressure", "Low drift"],
+      }),
+      buildViralPairing({
+        predator: "Wolf Pack",
+        prey: "Bull Elk",
+        environments: ["Rocky Mountain forest edge", "open snowfield"],
+        habitatTags: ["forest", "snow", "open"],
+        safeArcLabel: "Pack pressure",
+        badges: ["Pack pressure", "Low drift"],
+      }),
+      buildViralPairing({
+        predator: "Wolf Pack",
+        prey: "Bison",
+        environments: ["windy prairie opening", "Yellowstone valley floor"],
+        habitatTags: ["open", "meadow", "snow"],
+        safeArcLabel: "Defender stands ground",
+        badges: ["Pack pressure", "Defender"],
+      }),
+      buildViralPairing({
+        predator: "Mountain Lion",
+        prey: "Mule Deer",
+        environments: ["Rocky Mountain forest edge", "brushy ridge shelf"],
+        habitatTags: ["forest", "mountain", "woodland"],
+        safeArcLabel: "Ambush tension",
+        badges: ["Low drift"],
+      }),
+      buildViralPairing({
+        predator: "Mountain Lion",
+        prey: "Bighorn Sheep",
+        environments: ["rocky cliff shelf", "alpine ridge ledge"],
+        habitatTags: ["mountain", "open"],
+        safeArcLabel: "Cliffhanger survival tension",
+        badges: ["Near-clash"],
+      }),
+      buildViralPairing({
+        predator: "Mountain Lion",
+        prey: "White-tailed Deer",
+        environments: ["forest edge", "pine ridge"],
+        habitatTags: ["forest", "woodland", "mountain"],
         safeArcLabel: "Last-second escape",
-        badges: ["Facebook-safe", "Low drift"],
-      },
+        badges: ["Low drift"],
+      }),
+      buildViralPairing({
+        predator: "Coyote",
+        prey: "Jackrabbit",
+        environments: ["sagebrush flat", "dry prairie scrub edge"],
+        habitatTags: ["open", "desert", "woodland"],
+        safeArcLabel: "Chase pressure",
+        badges: ["Chase pressure"],
+      }),
+      buildViralPairing({
+        predator: "Coyote",
+        prey: "Rabbit",
+        environments: ["brushline opening", "cold field edge"],
+        habitatTags: ["open", "woodland", "meadow"],
+        safeArcLabel: "Last-second escape",
+        badges: ["Chase pressure"],
+      }),
+      buildViralPairing({
+        predator: "Coyote",
+        prey: "Quail",
+        environments: ["dry grass pocket", "desert scrub lane"],
+        habitatTags: ["open", "desert", "woodland"],
+        safeArcLabel: "Sudden lunge",
+        badges: ["Fast hook"],
+      }),
+      buildViralPairing({
+        predator: "Bobcat",
+        prey: "Rabbit",
+        environments: ["rocky brush pocket", "desert scrub edge"],
+        habitatTags: ["desert", "open", "woodland"],
+        safeArcLabel: "Ambush tension",
+        badges: ["Low drift"],
+      }),
+      buildViralPairing({
+        predator: "Bobcat",
+        prey: "Quail",
+        environments: ["scrub grass opening", "low brush wash"],
+        habitatTags: ["desert", "open", "woodland"],
+        safeArcLabel: "Sudden lunge",
+        badges: ["Fast hook"],
+      }),
+      buildViralPairing({
+        predator: "Bobcat",
+        prey: "Squirrel",
+        environments: ["brushy woodland edge", "rock pocket trail"],
+        habitatTags: ["woodland", "forest", "open"],
+        safeArcLabel: "Fast hook",
+        badges: ["Fast hook"],
+      }),
+      buildViralPairing({
+        predator: "Bald Eagle",
+        prey: "Salmon",
+        environments: ["Alaskan river mouth", "cold shallows"],
+        habitatTags: ["river", "coast", "forest"],
+        safeArcLabel: "Fishing strike",
+        badges: ["Fast hook", "Low drift"],
+      }),
+      buildViralPairing({
+        predator: "Bald Eagle",
+        prey: "Trout",
+        environments: ["mountain river bend", "lakeshore shallows"],
+        habitatTags: ["river", "coast", "mountain"],
+        safeArcLabel: "Sudden lunge",
+        badges: ["Fast hook", "Low drift"],
+      }),
+      buildViralPairing({
+        predator: "Bald Eagle",
+        prey: "Rabbit",
+        environments: ["open river meadow", "brushy shoreline edge"],
+        habitatTags: ["river", "meadow", "woodland"],
+        safeArcLabel: "Last-second escape",
+        badges: ["Fast hook"],
+      }),
+      buildViralPairing({
+        predator: "Golden Eagle",
+        prey: "Rabbit",
+        environments: ["highland meadow", "open ridge shelf"],
+        habitatTags: ["meadow", "mountain", "open"],
+        safeArcLabel: "Sudden lunge",
+        badges: ["Fast hook"],
+      }),
+      buildViralPairing({
+        predator: "Golden Eagle",
+        prey: "Fox",
+        environments: ["windy alpine slope", "rocky highland edge"],
+        habitatTags: ["mountain", "open", "meadow"],
+        safeArcLabel: "Near-clash",
+        badges: ["Fast hook"],
+      }),
+      buildViralPairing({
+        predator: "Golden Eagle",
+        prey: "Marmot",
+        environments: ["rocky meadow shelf", "high ridge grass patch"],
+        habitatTags: ["mountain", "meadow", "open"],
+        safeArcLabel: "Sudden lunge",
+        badges: ["Fast hook"],
+      }),
+      buildViralPairing({
+        predator: "Harpy Eagle",
+        prey: "Monkey",
+        environments: ["Amazon canopy break", "dense rainforest interior"],
+        habitatTags: ["rainforest", "jungle", "forest"],
+        safeArcLabel: "Sudden lunge",
+        badges: ["Fast hook"],
+      }),
+      buildViralPairing({
+        predator: "Harpy Eagle",
+        prey: "Sloth",
+        environments: ["canopy branch line", "humid green canopy"],
+        habitatTags: ["rainforest", "jungle", "forest"],
+        safeArcLabel: "Ambush tension",
+        badges: ["Fast hook"],
+      }),
+      buildViralPairing({
+        predator: "Harpy Eagle",
+        prey: "Iguana",
+        environments: ["rainforest opening", "low canopy branch network"],
+        habitatTags: ["rainforest", "forest", "jungle"],
+        safeArcLabel: "Sudden lunge",
+        badges: ["Fast hook"],
+      }),
     ],
   },
   "Low Drift First Test": {
@@ -1122,17 +1392,144 @@ const WILDLIFE_FOCUS_DEFINITIONS: Record<
       },
     ],
   },
-  "World Wildlife": {
+  "World Wide Wildlife": {
     helperText:
-      "Restores the full built-in list while keeping custom animals available and manual habitat choice unchanged.",
-    animals: [],
-    defaultPairing: {
+      "Broad worldwide wildlife library for scenic, documentary, and flexible animal pairings.",
+    animals: [
+      "Grizzly Bear",
+      "Brown Bear",
+      "Black Bear",
+      "Wolf",
+      "Wolf Pack",
+      "Bison",
+      "Moose",
+      "Bull Elk",
+      "White-tailed Deer",
+      "Mountain Lion",
+      "Coyote",
+      "Bobcat",
+      "Bald Eagle",
+      "Golden Eagle",
+      "Alligator",
+      "Crocodile",
+      "Nile Crocodile",
+      "Saltwater Crocodile",
+      "Lion",
+      "Tiger",
+      "Leopard",
+      "Cheetah",
+      "Hyena",
+      "African Wild Dog",
+      "Jaguar",
+      "Snow Leopard",
+      "Komodo Dragon",
+      "Orca",
+      "Great White Shark",
+      "Leopard Seal",
+      "Seal",
+      "Kangaroo",
+      "Dingo",
+      "Red Fox",
+      "Wolverine",
+      "River Otter",
+      "Beaver",
+    ],
+    defaultPairing: buildDocumentaryPairing({
       predator: "Mountain Lion",
       prey: "White-tailed Deer",
-      environments: ["forest edge"],
-      habitatTags: ["forest", "woodland"],
-    },
-    pairings: [],
+      environments: ["forest edge", "pine ridge"],
+      habitatTags: ["forest", "woodland", "mountain"],
+      safeArcLabel: "Documentary encounter",
+    }),
+    pairings: [
+      buildDocumentaryPairing({
+        predator: "Grizzly Bear",
+        prey: "Bull Elk",
+        environments: ["Rocky Mountain meadow", "mountain valley"],
+        habitatTags: ["mountain", "meadow", "forest"],
+        safeArcLabel: "Documentary encounter",
+        badges: ["Low drift"],
+      }),
+      buildDocumentaryPairing({
+        predator: "Wolf Pack",
+        prey: "Bull Elk",
+        environments: ["forest edge", "snowfield"],
+        habitatTags: ["forest", "snow", "open"],
+        safeArcLabel: "Documentary encounter",
+        badges: ["Low drift"],
+      }),
+      buildDocumentaryPairing({
+        predator: "Bald Eagle",
+        prey: "Salmon",
+        environments: ["cold river edge", "Alaskan shallows"],
+        habitatTags: ["river", "coast", "forest"],
+        safeArcLabel: "Scenic action beat",
+        badges: ["Low drift"],
+      }),
+      buildDocumentaryPairing({
+        predator: "Alligator",
+        prey: "White-tailed Deer",
+        environments: ["marsh edge", "Everglades shoreline"],
+        habitatTags: ["swamp", "wetland", "river"],
+        safeArcLabel: "Waterline tension",
+      }),
+      buildDocumentaryPairing({
+        predator: "Lion",
+        prey: "Zebra",
+        environments: ["savanna golden hour grassland", "dry grass plain"],
+        habitatTags: ["savanna", "open"],
+        safeArcLabel: "Savanna encounter",
+      }),
+      buildDocumentaryPairing({
+        predator: "Tiger",
+        prey: "Deer",
+        environments: ["dense jungle river edge", "humid forest path"],
+        habitatTags: ["jungle", "forest", "river"],
+        safeArcLabel: "Jungle encounter",
+      }),
+      buildDocumentaryPairing({
+        predator: "Leopard",
+        prey: "Antelope",
+        environments: ["rocky savanna", "woodland edge"],
+        habitatTags: ["savanna", "open", "woodland"],
+        safeArcLabel: "Savanna encounter",
+      }),
+      buildDocumentaryPairing({
+        predator: "Jaguar",
+        prey: "Caiman",
+        environments: ["tropical jungle riverbank", "muddy Amazon edge"],
+        habitatTags: ["river", "jungle", "rainforest"],
+        safeArcLabel: "River encounter",
+      }),
+      buildDocumentaryPairing({
+        predator: "Orca",
+        prey: "Seal",
+        environments: ["cold coastal water", "icy fjord"],
+        habitatTags: ["coast", "open", "snow"],
+        safeArcLabel: "Cold-water encounter",
+      }),
+      buildDocumentaryPairing({
+        predator: "Great White Shark",
+        prey: "Seal",
+        environments: ["surf line", "cold open ocean"],
+        habitatTags: ["coast", "open"],
+        safeArcLabel: "Coastal encounter",
+      }),
+      buildDocumentaryPairing({
+        predator: "Snow Leopard",
+        prey: "Mountain Goat",
+        environments: ["snowy ridge", "high alpine ledge"],
+        habitatTags: ["mountain", "snow", "open"],
+        safeArcLabel: "Mountain encounter",
+      }),
+      buildDocumentaryPairing({
+        predator: "Kangaroo",
+        prey: "Dingo",
+        environments: ["dusty outback grassland", "dry scrubland"],
+        habitatTags: ["open", "desert", "woodland"],
+        safeArcLabel: "Outback tension",
+      }),
+    ],
   },
 };
 
@@ -1142,7 +1539,7 @@ const ENVIRONMENT_PROFILES: Record<string, WildlifeEnvironmentProfile> = {
     secondaryHabitats: ["snowy mountain valley", "open meadow"],
     regionTags: ["North America", "Yellowstone", "Canada"],
     weatherAtmosphereSuggestions: ["cold morning", "mist", "snowfall", "overcast"],
-    shortEnvironmentString: "Yellowstone meadow clash zone",
+    shortEnvironmentString: "snowy mountain valley",
     goodSceneContexts: ["standoff", "territory clash", "river crossing"],
     likelyHabitatTags: ["mountain", "forest", "meadow", "snow", "river", "open"],
   },
@@ -1178,7 +1575,7 @@ const ENVIRONMENT_PROFILES: Record<string, WildlifeEnvironmentProfile> = {
     secondaryHabitats: ["open snowfield", "pine forest"],
     regionTags: ["North America", "Europe", "Scandinavia"],
     weatherAtmosphereSuggestions: ["snow", "fog", "dusk"],
-    shortEnvironmentString: "Rocky Mountain meadow edge",
+    shortEnvironmentString: "winter forest edge",
     goodSceneContexts: ["pack pressure", "narrowing chase lanes"],
     likelyHabitatTags: ["forest", "snow", "tundra", "open", "mountain"],
   },
@@ -1241,7 +1638,7 @@ const ENVIRONMENT_PROFILES: Record<string, WildlifeEnvironmentProfile> = {
     secondaryHabitats: ["marsh edge"],
     regionTags: ["North America"],
     weatherAtmosphereSuggestions: ["humid haze", "dawn mist"],
-    shortEnvironmentString: "Everglades marsh edge",
+    shortEnvironmentString: "muddy riverbank",
     goodSceneContexts: ["waterline ambush", "marsh crossing"],
     likelyHabitatTags: ["river", "swamp", "wetland"],
   },
@@ -1295,7 +1692,7 @@ const ENVIRONMENT_PROFILES: Record<string, WildlifeEnvironmentProfile> = {
     secondaryHabitats: ["cold coastal water"],
     regionTags: ["Australia", "Global"],
     weatherAtmosphereSuggestions: ["overcast swell", "cold mist", "storm wash"],
-    shortEnvironmentString: "surf line and open ocean seal-colony edge",
+    shortEnvironmentString: "surf line",
     goodSceneContexts: ["surface breach", "shoreline strike"],
     likelyHabitatTags: ["coast", "open"],
   },
@@ -1309,9 +1706,7 @@ export function getWildlifeFocusPairingKey(pairing: {
   predator: string;
   prey: string;
 }): string {
-  return `${normalizeAnimalName(pairing.predator)}::${normalizeAnimalName(
-    pairing.prey
-  )}`;
+  return `${normalizeAnimalName(pairing.predator)}::${normalizeAnimalName(pairing.prey)}`;
 }
 
 function pairingMatches(
@@ -1362,6 +1757,29 @@ export function getWildlifeScopeHelperText(
   return WILDLIFE_FOCUS_DEFINITIONS[normalizeWildlifeScopeMode(mode)].helperText;
 }
 
+export function getWildlifeFocusSafetyHint(
+  mode: WildlifeScopeMode
+): string | null {
+  const canonicalMode = normalizeWildlifeScopeMode(mode);
+  if (
+    canonicalMode === "Global Viral Wildlife" ||
+    canonicalMode === "USA Viral Wildlife"
+  ) {
+    return FACEBOOK_SAFE_SURVIVAL_HINT;
+  }
+  return null;
+}
+
+export function isAttackFocusedWildlifeScope(
+  mode: WildlifeScopeMode
+): boolean {
+  const canonicalMode = normalizeWildlifeScopeMode(mode);
+  return (
+    canonicalMode === "Global Viral Wildlife" ||
+    canonicalMode === "USA Viral Wildlife"
+  );
+}
+
 export function getWildlifeScopeDefaultSelection(
   mode: WildlifeScopeMode
 ): { predator: string; prey: string; environment: string } {
@@ -1378,7 +1796,7 @@ export function isPredatorCompatibleWithWildlifeScope(
   mode: WildlifeScopeMode
 ): boolean {
   const canonicalMode = normalizeWildlifeScopeMode(mode);
-  if (canonicalMode === "World Wildlife") return true;
+  if (canonicalMode === "World Wide Wildlife") return true;
   return WILDLIFE_FOCUS_DEFINITIONS[canonicalMode].animals.some(
     (animal) => normalizeAnimalName(animal) === normalizeAnimalName(predator)
   );
@@ -1390,7 +1808,7 @@ export function isPairCompatibleWithWildlifeScope(
   mode: WildlifeScopeMode
 ): boolean {
   const canonicalMode = normalizeWildlifeScopeMode(mode);
-  if (canonicalMode === "World Wildlife") return true;
+  if (canonicalMode === "World Wide Wildlife") return true;
   return WILDLIFE_FOCUS_DEFINITIONS[canonicalMode].pairings.some((pairing) =>
     pairingMatches(pairing, predator, prey)
   );
@@ -1402,7 +1820,7 @@ export function filterPredatorOptionsByWildlifeScope(
 ): string[] {
   const canonicalMode = normalizeWildlifeScopeMode(mode);
   const unique = Array.from(new Set(options));
-  if (canonicalMode === "World Wildlife") return unique;
+  if (canonicalMode === "World Wide Wildlife") return unique;
 
   const rank = new Map(
     WILDLIFE_FOCUS_DEFINITIONS[canonicalMode].animals.map((animal, index) => [
@@ -1427,7 +1845,7 @@ export function filterPreyOptionsByWildlifeScope(
 ): string[] {
   const canonicalMode = normalizeWildlifeScopeMode(mode);
   const unique = Array.from(new Set(preyOptions));
-  if (canonicalMode === "World Wildlife") return unique;
+  if (canonicalMode === "World Wide Wildlife") return unique;
 
   const allowed = getPairingsForPredator(canonicalMode, predator).map(
     (pairing) =>
@@ -1452,7 +1870,7 @@ export function getWildlifeFocusEnvironmentSuggestion(
   fallback: string
 ): string {
   const canonicalMode = normalizeWildlifeScopeMode(mode);
-  if (canonicalMode === "World Wildlife") return fallback;
+  if (canonicalMode === "World Wide Wildlife") return fallback;
 
   {
     const pairing = WILDLIFE_FOCUS_DEFINITIONS[canonicalMode].pairings.find(
@@ -1476,8 +1894,8 @@ export function getRegionalWildlifeStep1Hint(
   prey: string
 ): string {
   const canonicalMode = normalizeWildlifeScopeMode(mode);
-  if (canonicalMode === "World Wildlife") {
-    return "World Wildlife keeps the full built-in list and lets the current animal pair drive the environment read.";
+  if (canonicalMode === "World Wide Wildlife") {
+    return "World Wide Wildlife keeps the broad built-in wildlife library available while letting the current animal pair drive the environment read.";
   }
 
   const suggestedEnvironment = getWildlifeFocusEnvironmentSuggestion(
@@ -1497,7 +1915,7 @@ export function getWildlifeHabitatCompatibilityGuidance(input: {
   habitat: HabitatPreset;
 }): { label: string; message: string; isWarning: boolean } | null {
   const canonicalMode = normalizeWildlifeScopeMode(input.mode);
-  if (canonicalMode === "World Wildlife") return null;
+  if (canonicalMode === "World Wide Wildlife") return null;
 
   const suggestedEnvironment = getWildlifeFocusEnvironmentSuggestion(
     canonicalMode,
@@ -1571,7 +1989,6 @@ export function getSupportedWildlifeFocusAnimals(
   mode: WildlifeScopeMode
 ): string[] {
   const canonicalMode = normalizeWildlifeScopeMode(mode);
-  if (canonicalMode === "World Wildlife") return [];
   return [...WILDLIFE_FOCUS_DEFINITIONS[canonicalMode].animals];
 }
 

@@ -211,7 +211,7 @@ export function normalizeWorkflowPresetSnapshot(
   const sceneDescription = cleanString(value.sceneDescription);
   const defaultWildlifeScopeMode: WildlifeScopeMode = isUSAWildlifeAnimal(predator)
     ? "USA / Canada Wildlife"
-    : "World Wildlife";
+    : "World Wide Wildlife";
   const sceneDescriptionMode = pickOption(
     value.sceneDescriptionMode,
     ["auto", "manual"] as const,

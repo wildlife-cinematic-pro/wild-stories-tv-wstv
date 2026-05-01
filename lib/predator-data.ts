@@ -175,7 +175,7 @@ export const predatorData: Record<string, PredatorInfo> = {
     driftRisk: "LOW",
   },
   "Nile Crocodile": {
-    prey: ["Wildebeest", "Zebra", "Cape Buffalo", "Antelope", "Warthog"],
+    prey: ["Wildebeest", "Zebra", "Cape Buffalo", "Warthog", "Antelope"],
     environment: "wide African river crossing with murky water",
     lighting:
       "harsh midday African sun, mirror water surface reflections, dramatic spray backlight",
