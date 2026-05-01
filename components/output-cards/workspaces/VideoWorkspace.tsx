@@ -360,7 +360,7 @@ export function VideoWorkspace({
                 }}
                 className="rounded-lg border border-blue-300 bg-[color:var(--surface-elevated)] px-3 py-1.5 text-xs font-extrabold text-blue-800 hover:bg-blue-500/12 active:scale-95 dark:text-blue-100"
               >
-                Open Kling 10s Direct Prompt
+                Open Kling Frames + Multishot
               </button>
             )}
           </div>

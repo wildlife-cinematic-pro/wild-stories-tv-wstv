@@ -18,8 +18,6 @@ const ENGINE_REPLACEMENTS: Record<PromptEngine, Array<[RegExp, string]>> = {
     [/\bbite\b/gi, "grip"],
     [/\bmaul\b/gi, "overpower"],
     [/\bkill\b/gi, "defeat"],
-    [/\bblood\b/gi, ""],
-    [/\bgore\b/gi, ""],
     [/\bambush\b/gi, "pursuit moment"],
     [/\bstrike\b/gi, "contact beat"],
     [/\bno overlap\b/gi, "spacing stays readable"],

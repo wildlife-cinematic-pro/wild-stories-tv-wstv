@@ -299,6 +299,12 @@ function mergeStructuredPromptLocks(
   if (locks.klingPrompts && lockedPrompts?.klingNative15s) {
     merged.klingNative15s = lockedPrompts.klingNative15s;
   }
+  if (locks.klingPrompts && lockedPrompts?.klingFramesPrompt) {
+    merged.klingFramesPrompt = lockedPrompts.klingFramesPrompt;
+  }
+  if (locks.klingPrompts && lockedPrompts?.klingMultishotShots) {
+    merged.klingMultishotShots = lockedPrompts.klingMultishotShots;
+  }
   if (locks.klingPrompts && lockedPrompts?.klingSixShot) {
     merged.klingSixShot = lockedPrompts.klingSixShot;
   }
@@ -373,6 +379,8 @@ export function applyPackageSectionLocks(
     preserveIfDefined(merged, lockedPackage, "klingShots");
     preserveIfDefined(merged, lockedPackage, "klingBundle");
     preserveIfDefined(merged, lockedPackage, "klingNative15s");
+    preserveIfDefined(merged, lockedPackage, "klingFramesPrompt");
+    preserveIfDefined(merged, lockedPackage, "klingMultishotShots");
     preserveIfDefined(merged, lockedPackage, "klingSixShot");
   }
 
