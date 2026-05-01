@@ -58,7 +58,7 @@ import {
 // ─────────────────────────────────────────────────────────────
 export const predatorData: Record<string, PredatorInfo> = {
   Lion: {
-    prey: ["Buffalo", "Zebra", "Antelope", "Deer", "Wild Boar"],
+    prey: ["Cape Buffalo", "Zebra", "Wildebeest", "Antelope", "Warthog", "Deer", "Wild Boar"],
     environment: "African savanna",
     lighting:
       "natural golden hour sunlight, realistic shadow direction, warm rim light on the mane, soft atmospheric haze",
@@ -163,7 +163,7 @@ export const predatorData: Record<string, PredatorInfo> = {
     driftRisk: "HIGH",
   },
   Crocodile: {
-    prey: ["Zebra", "Buffalo", "Antelope", "Fish", "Goat"],
+    prey: ["Zebra", "Cape Buffalo", "Warthog", "Antelope", "Fish", "Goat"],
     environment: "muddy riverbank in tropical swamp",
     lighting:
       "humid swamp light, natural reflections on wet skin, realistic water highlights",
@@ -175,7 +175,7 @@ export const predatorData: Record<string, PredatorInfo> = {
     driftRisk: "LOW",
   },
   "Nile Crocodile": {
-    prey: ["Wildebeest", "Zebra", "Buffalo", "Antelope"],
+    prey: ["Wildebeest", "Zebra", "Cape Buffalo", "Antelope", "Warthog"],
     environment: "wide African river crossing with murky water",
     lighting:
       "harsh midday African sun, mirror water surface reflections, dramatic spray backlight",
@@ -224,7 +224,7 @@ export const predatorData: Record<string, PredatorInfo> = {
     driftRisk: "LOW",
   },
   Hyena: {
-    prey: ["Antelope", "Zebra", "Deer", "Wild Boar"],
+    prey: ["Wildebeest", "Zebra", "Antelope", "Impala", "Warthog", "Deer", "Wild Boar"],
     environment: "dry grassland",
     lighting:
       "natural dusk light, dusty atmosphere, realistic edge light, warm low sun direction",
@@ -234,7 +234,7 @@ export const predatorData: Record<string, PredatorInfo> = {
     driftRisk: "MEDIUM",
   },
   "African Wild Dog": {
-    prey: ["Antelope", "Gazelle", "Deer", "Rabbit"],
+    prey: ["Antelope", "Impala", "Gazelle", "Wildebeest", "Deer", "Rabbit"],
     environment: "open bushveld savanna at dawn",
     lighting:
       "cool pre-dawn blue light transitioning to warm first sun, long golden shadows",
@@ -943,8 +943,249 @@ export const predatorData: Record<string, PredatorInfo> = {
     defaultArc: "Ambush attack",
     driftRisk: "LOW",
   },
+  Warthog: {
+    prey: ["Crocodile", "Nile Crocodile", "Lion", "Leopard", "Hyena"],
+    environment:
+      "dry-season African muddy waterhole edge and cracked yellow grassland",
+    lighting:
+      "hard late-afternoon savanna light, dusty haze, low shadow separation, and readable water-edge spacing",
+    cameraGear:
+      "Canon EOS R5, 300mm wildlife lens, ground-level documentary framing",
+    texture:
+      "coarse dark bristles, curved tusk detail, mud on knees and snout, and dry dust clinging to hide",
+    defaultArc: "Defender stands ground",
+    driftRisk: "LOW",
+  },
+  "Mule Deer": {
+    prey: ["Mountain Lion", "Cougar", "Wolf", "Coyote"],
+    environment: "Rocky Mountain brush meadow and pine edge",
+    lighting:
+      "cool dawn mountain light, dry grass shimmer, and long readable escape shadows",
+    cameraGear:
+      "Sony A1, 300mm wildlife lens, open-slope wildlife framing",
+    texture:
+      "tan-grey coat, alert ears, black muzzle detail, and dust on agile hooves",
+    defaultArc: "Escape from danger",
+    driftRisk: "LOW",
+  },
+  "Bighorn Sheep": {
+    prey: ["Mountain Lion", "Cougar", "Wolf", "Golden Eagle"],
+    environment: "steep Rocky Mountain ledges and alpine grass shelf",
+    lighting:
+      "clean high-altitude daylight, granite bounce light, and crisp horn readability",
+    cameraGear:
+      "Canon EOS R3, 400mm wildlife lens, cliffside documentary framing",
+    texture:
+      "dense brown coat, curled horn ridges, chipped stone dust on hooves, and taut shoulder muscle",
+    defaultArc: "Defender stands ground",
+    driftRisk: "LOW",
+  },
+  "Mountain Goat": {
+    prey: ["Mountain Lion", "Wolf", "Golden Eagle", "Snow Leopard"],
+    environment: "high alpine cliffline and wind-cut ridgeline",
+    lighting:
+      "cold alpine sun, blue snow shadows, and sharp white-coat contrast against rock",
+    cameraGear:
+      "Nikon Z9, 500mm wildlife lens, long-lens cliff traversal framing",
+    texture:
+      "thick white coat, black horn silhouette, snow grit on hooves, and wind-tossed chin hair",
+    defaultArc: "Escape from danger",
+    driftRisk: "LOW",
+  },
+  Caribou: {
+    prey: ["Wolf Pack", "Wolverine", "Brown Bear", "Grizzly Bear"],
+    environment: "open tundra migration plain and boreal edge",
+    lighting:
+      "pale Arctic daylight, low sun sheen across frost, and clean open-country movement lanes",
+    cameraGear:
+      "Sony A1, 400mm wildlife lens, migration-line documentary framing",
+    texture:
+      "thick pale-brown coat, broad antlers, frost on muzzle, and packed snow around split hooves",
+    defaultArc: "Escape from danger",
+    driftRisk: "LOW",
+  },
+  Rattlesnake: {
+    prey: ["Mouse", "Rabbit", "Quail", "Lizard"],
+    environment: "sun-baked desert scrub and rocky wash",
+    lighting:
+      "hard desert side light, heat shimmer, and sharp shadow contrast across scales",
+    cameraGear:
+      "Canon EOS R5, 200mm macro-telephoto, low strike-level framing",
+    texture:
+      "diamond scale pattern, lifted rattle detail, coiled muscle tension, and dust on belly scales",
+    defaultArc: "Ambush attack",
+    driftRisk: "LOW",
+  },
+  "Lion Pack": {
+    prey: ["Cape Buffalo", "Wildebeest", "Zebra", "Warthog", "Antelope"],
+    environment: "African savanna pressure lane near dry-season waterhole",
+    lighting:
+      "warm savanna dusk light, dry dust haze, and strong side light on multiple lion bodies",
+    cameraGear:
+      "Canon EOS R3, 400mm wildlife lens, wide pack-pressure framing",
+    texture:
+      "mixed tawny coats, muscular pack spacing, dusty paws, and readable mane contrast on dominant adults",
+    defaultArc: "Pack hunting strategy",
+    driftRisk: "MEDIUM",
+  },
+  Hippopotamus: {
+    prey: ["Nile Crocodile", "Lion", "Lion Pack", "Hyena", "Cape Buffalo"],
+    environment: "African river channel and muddy waterhole margin",
+    lighting:
+      "harsh dry-season sun, reflective brown water, and clear heavy-body silhouettes at the shoreline",
+    cameraGear:
+      "Sony A1, 300mm wildlife lens, low riverbank confrontation framing",
+    texture:
+      "wet slate-grey skin, cracked mud on flanks, heavy jaw folds, and reflective water beads across the hide",
+    defaultArc: "Defender stands ground",
+    driftRisk: "LOW",
+  },
+  Rhinoceros: {
+    prey: ["Lion", "Hyena", "African Wild Dog", "Cape Buffalo"],
+    environment: "dry savanna plain and dusty waterhole track",
+    lighting:
+      "hot late-day sun, airborne dust, and hard side light carving the horn silhouette",
+    cameraGear:
+      "Canon EOS R5, 400mm wildlife lens, telephoto pressure framing",
+    texture:
+      "armored grey hide folds, horn wear detail, dried mud plates, and powerful shoulder mass",
+    defaultArc: "Defender stands ground",
+    driftRisk: "LOW",
+  },
+  Elephant: {
+    prey: ["Lion", "Hyena", "Nile Crocodile", "Cape Buffalo"],
+    environment: "African savanna corridor and river crossing plain",
+    lighting:
+      "broad golden side light, warm dust haze, and long leg shadows across dry ground",
+    cameraGear:
+      "Sony A1, 300mm wildlife lens, wide herd-edge documentary framing",
+    texture:
+      "wrinkled grey skin, red-dust patches, tusk texture, swinging trunk detail, and cracked dry earth around feet",
+    defaultArc: "Defender stands ground",
+    driftRisk: "LOW",
+  },
+  Zebra: {
+    prey: ["Lion", "Lion Pack", "Hyena", "Nile Crocodile", "Leopard"],
+    environment: "savanna grassland and dusty migration lane",
+    lighting:
+      "clean African daylight, black-and-white stripe contrast, and heat haze over short grass",
+    cameraGear:
+      "Canon EOS R3, 300mm wildlife lens, open-lane wildlife framing",
+    texture:
+      "high-contrast stripe pattern, dust on lower legs, tense neck line, and churned grass under hooves",
+    defaultArc: "Escape from danger",
+    driftRisk: "LOW",
+  },
+  Wildebeest: {
+    prey: ["Lion", "Lion Pack", "Hyena", "Nile Crocodile", "African Wild Dog"],
+    environment: "savanna migration corridor and river crossing plain",
+    lighting:
+      "dry golden-hour light, suspended dust, and long readable herd shadows",
+    cameraGear:
+      "Nikon Z9, 400mm wildlife lens, open-plains migration framing",
+    texture:
+      "dark shoulder mane, dust-streaked hide, horn silhouette, and taut stride tension through the frame",
+    defaultArc: "Escape from danger",
+    driftRisk: "LOW",
+  },
+  Giraffe: {
+    prey: ["Lion", "Lion Pack", "Nile Crocodile", "Hyena"],
+    environment: "acacia savanna edge and dry grassland opening",
+    lighting:
+      "warm late-day side light, long shadow bands across legs, and clear coat-pattern readability",
+    cameraGear:
+      "Sony A1, 300mm wildlife lens, tall-subject full-body framing",
+    texture:
+      "clean patch pattern, wind through tail tuft, dust on lower legs, and visible tendon tension in the stride",
+    defaultArc: "Defender stands ground",
+    driftRisk: "LOW",
+  },
+  Gorilla: {
+    prey: ["Leopard", "Python", "King Cobra"],
+    environment: "misty montane rainforest edge and jungle clearing",
+    lighting:
+      "soft canopy-filtered light, cool fog diffusion, and dark silverback contrast against wet foliage",
+    cameraGear:
+      "Canon EOS R5, 250mm wildlife lens, eye-level forest documentary framing",
+    texture:
+      "dense dark fur, silverback sheen, wet leaf debris on forearms, and grounded knuckle contact on mud",
+    defaultArc: "Defender stands ground",
+    driftRisk: "MEDIUM",
+  },
+  Anaconda: {
+    prey: ["Caiman", "Deer", "Wild Boar", "Large Fish"],
+    environment: "murky rainforest backwater and flooded reed margin",
+    lighting:
+      "humid low jungle light, brown-green water reflections, and soft highlights on wet scales",
+    cameraGear:
+      "Canon EOS R3, 200mm wildlife lens, low waterline framing",
+    texture:
+      "olive patterned scales, thick body coils under water, wet mud streaks, and surface ripples around the body",
+    defaultArc: "Ambush attack",
+    driftRisk: "LOW",
+  },
+  Python: {
+    prey: ["Monkey", "Deer", "Bird", "Lizard"],
+    environment: "humid forest floor and riverbank thicket",
+    lighting:
+      "diffuse tropical shade, filtered leaf light, and humid highlights across patterned scales",
+    cameraGear:
+      "Sony A1, 200mm wildlife lens, low stalking-framing through understory",
+    texture:
+      "mottled scale pattern, heavy body coils, tongue flick detail, and damp leaf litter stuck to the belly",
+    defaultArc: "Ambush attack",
+    driftRisk: "LOW",
+  },
+  "King Cobra": {
+    prey: ["Snake", "Monitor Lizard", "Bird", "Rat"],
+    environment: "humid jungle edge and bamboo thicket",
+    lighting:
+      "humid green low light, sharp hood-edge highlights, and dappled shadow bands across the trail",
+    cameraGear:
+      "Canon EOS R5, 150mm macro-telephoto, raised-hood documentary framing",
+    texture:
+      "olive hood pattern, lifted neck tension, bead-like eye detail, and fine dust over smooth scales",
+    defaultArc: "Ambush attack",
+    driftRisk: "LOW",
+  },
+  "Tiger Shark": {
+    prey: ["Seal", "Sea Lion", "Fish", "Sea Turtle"],
+    environment: "warm coastal blue water and reef drop-off",
+    lighting:
+      "bright marine caustics, turquoise depth fade, and strong stripe contrast beneath the surface",
+    cameraGear:
+      "Sony A1, underwater housing, wide reef-edge pursuit framing",
+    texture:
+      "broad striped flanks, rolling tail power, realistic surface chop, and suspended ocean particles",
+    defaultArc: "Ambush attack",
+    driftRisk: "LOW",
+  },
+  "Bull Shark": {
+    prey: ["Fish", "Dolphin", "Sea Turtle", "Waterbird"],
+    environment: "murky coastal inlet and river mouth channel",
+    lighting:
+      "silvery estuary light, muddy-green underwater haze, and sharp surface glints over current lines",
+    cameraGear:
+      "Canon EOS R5, underwater housing, split-level estuary framing",
+    texture:
+      "thick grey body, blunt snout detail, wake turbulence, and suspended sediment around the fins",
+    defaultArc: "Ambush attack",
+    driftRisk: "LOW",
+  },
+  "Peregrine Falcon": {
+    prey: ["Duck", "Pigeon", "Pheasant", "Quail"],
+    environment: "urban cliffline and open coastal headland",
+    lighting:
+      "clean high-contrast daylight, wind-driven cloud breaks, and sharp feather separation in the dive",
+    cameraGear:
+      "Nikon Z9, 600mm super-telephoto, high-speed aerial strike framing",
+    texture:
+      "blue-grey feather pattern, dark hood detail, tight body streamline, and locked talon focus during descent",
+    defaultArc: "Chase and takedown",
+    driftRisk: "LOW",
+  },
   "Great White Shark": {
-    prey: ["Seal", "Fish", "Dolphin"],
+    prey: ["Seal", "Sea Lion", "Fish", "Dolphin"],
     environment: "cold coastal water and surf line with whitewash",
     lighting:
       "silver overcast marine light, surface caustics, and strong contrast between foam and dark water",
@@ -1149,7 +1390,6 @@ export function suggestArc(predator: string, prey: string, fallback: string): st
   const normalize = (value: string) => {
     if (value === "American Alligator") return "Alligator";
     if (value === "Coyote Pack") return "Coyote";
-    if (value === "Lion Pack") return "Lion";
     if (value === "Hyena Pack") return "Hyena";
     if (value === "Arctic Wolf") return "Wolf";
     return value;
@@ -1184,6 +1424,7 @@ export function suggestArc(predator: string, prey: string, fallback: string): st
   const packHunters = new Set([
     "Wolf Pack",
     "Coyote Pack",
+    "Lion Pack",
     "African Wild Dog",
     "Orca",
     "Dolphin",
@@ -1308,7 +1549,6 @@ export function suggestHabitat(predator: string, prey: string, fallback: string)
   const normalize = (value: string) => {
     if (value === "American Alligator") return "Alligator";
     if (value === "Coyote Pack") return "Coyote";
-    if (value === "Lion Pack") return "Lion";
     if (value === "Hyena Pack") return "Hyena";
     if (value === "Arctic Wolf") return "Wolf";
     return value;
@@ -1342,6 +1582,14 @@ export function suggestHabitat(predator: string, prey: string, fallback: string)
 
   if (predatorIs("Alligator") && preyIs("White-tailed Deer", "Deer", "Wild Boar")) {
     return "Florida Everglades marsh and cypress swamp edge with dark tannin water and readable shoreline ambush spacing";
+  }
+
+  if (predatorIs("Crocodile", "Nile Crocodile") && preyIs("Warthog")) {
+    return "dry-season African muddy waterhole, shallow brown water, cracked mud, sparse reeds, dry yellow grassland";
+  }
+
+  if (predatorIs("Great White Shark") && preyIs("Seal", "Sea Lion")) {
+    return "surf line and open ocean seal-colony edge with cold swell and clear strike lanes";
   }
 
   return fallback;

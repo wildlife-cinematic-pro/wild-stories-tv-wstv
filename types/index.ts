@@ -62,6 +62,7 @@ export type CameraAnglePreset =
 export type WildlifeScopeMode =
   | "USA Wildlife"
   | "USA / Canada Wildlife"
+  | "USA Viral Wildlife"
   | "Europe Wildlife"
   | "Norway / Scandinavia Wildlife"
   | "Australia Wildlife"

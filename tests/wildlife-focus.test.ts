@@ -8,7 +8,10 @@ import {
   getSupportedWildlifeFocusAnimals,
   getWildlifeScopeDefaultSelection,
   getWildlifeFocusEnvironmentSuggestion,
+  getWildlifeFocusPairingHighlights,
+  getWildlifeFocusPairingKey,
   getWildlifeFocusPairings,
+  getWildlifeFocusSafetyDefaults,
   getWildlifeHabitatCompatibilityGuidance,
   isPairCompatibleWithWildlifeScope,
   normalizeWildlifeScopeMode,
@@ -113,4 +116,67 @@ describe("regional wildlife focus", () => {
       )
     ).toContain("savanna golden hour grassland");
   });
+  it("expands Global Viral Wildlife to 50+ lead animals without duplicates", () => {
+    const animals = getSupportedWildlifeFocusAnimals("Global Viral Wildlife");
+
+    expect(animals.length).toBeGreaterThanOrEqual(50);
+    expect(new Set(animals).size).toBe(animals.length);
+  });
+
+  it("keeps Global Viral Wildlife curated pairings unique by normalized key", () => {
+    const pairings = getWildlifeFocusPairings("Global Viral Wildlife");
+    const keys = pairings.map(getWildlifeFocusPairingKey);
+
+    expect(new Set(keys).size).toBe(keys.length);
+  });
+
+  it("adds exact crocodile vs warthog support for the viral wildlife focuses", () => {
+    expect(
+      isPairCompatibleWithWildlifeScope(
+        "Crocodile",
+        "Warthog",
+        "Global Viral Wildlife"
+      )
+    ).toBe(true);
+    expect(
+      isPairCompatibleWithWildlifeScope(
+        "Crocodile",
+        "Warthog",
+        "USA Viral Wildlife"
+      )
+    ).toBe(true);
+
+    const highlights = getWildlifeFocusPairingHighlights(
+      "Global Viral Wildlife",
+      "Crocodile",
+      "Warthog"
+    );
+
+    expect(highlights.safeArcLabel).toBe("Waterhole ambush");
+    expect(highlights.badges).toContain("Water ambush");
+  });
+
+  it("keeps Great White Shark habitat mismatch guidance pointed toward surf line and open ocean", () => {
+    const guidance = getWildlifeHabitatCompatibilityGuidance({
+      mode: "Global Viral Wildlife",
+      predator: "Great White Shark",
+      prey: "Seal",
+      habitat: "Riverbank Reeds",
+    });
+
+    expect(guidance?.isWarning).toBe(true);
+    expect(guidance?.message).toContain("surf line");
+  });
+
+  it("exposes Facebook-safe survival defaults for non-graphic wildlife tension", () => {
+    expect(getWildlifeFocusSafetyDefaults()).toEqual(
+      expect.arrayContaining([
+        "No blood",
+        "No gore",
+        "No visible wounds",
+        "Documentary survival tension",
+      ])
+    );
+  });
+
 });
