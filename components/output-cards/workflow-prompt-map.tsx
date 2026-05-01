@@ -12,6 +12,11 @@ import {
   getWorkflowPromptCard,
   safeText,
 } from "@/components/output-cards/prompt-utils";
+import {
+  buildAnimalMasterReferencePrompt,
+  buildEnvironmentMasterReferencePrompt,
+  buildFinalMergeMasterPrompt,
+} from "@/components/output-cards/reference-image-prompts";
 
 function deriveDriftLabel(
   clipChaining?: string
@@ -211,57 +216,6 @@ function slugifyReference(
   }
 
   return slug || fallback;
-}
-
-function buildAnimalMasterReferencePrompt({
-  subjectName,
-  stanceLabel,
-  identityMarkers,
-  contactLabel,
-}: {
-  subjectName: string;
-  stanceLabel: string;
-  identityMarkers: string;
-  contactLabel: string;
-}) {
-  return [
-    `Photorealistic wildlife documentary master reference image, 9:16 vertical.`,
-    `${subjectName} only.`,
-    `Full body readable, ${stanceLabel}, stable anatomy, ${identityMarkers}, realistic scale, ${contactLabel}, simple uncluttered natural background, clean subject separation, production-ready Runway Gen-4 Image reference.`,
-  ].join(" ");
-}
-
-function buildEnvironmentMasterReferencePrompt(environmentName: string) {
-  return [
-    `Photorealistic ${environmentName} environment/background reference prompt, 9:16 vertical.`,
-    `Environment-only composition, open central wildlife corridor, clean subject-ready space, readable habitat texture, lighting and atmosphere, natural ground plane, documentary realism, production-ready environment reference image.`,
-  ].join(" ");
-}
-
-function buildFinalMergeMasterPrompt({
-  leadAnimalName,
-  oppositeAnimalName,
-  environmentName,
-  leadTag,
-  oppositeTag,
-  environmentTag,
-}: {
-  leadAnimalName: string;
-  oppositeAnimalName: string;
-  environmentName: string;
-  leadTag: string;
-  oppositeTag: string;
-  environmentTag: string;
-}) {
-  return [
-    `Use exactly 3 active Runway references: ${leadTag}, ${oppositeTag}, ${environmentTag}.`,
-    ``,
-    `Use ${leadTag} only for ${leadAnimalName} identity: coat, head profile, body scale, and grounded paw/hoof/foot contact.`,
-    `Use ${oppositeTag} only for ${oppositeAnimalName} identity: coat, body scale, legs, and grounded paw/hoof/foot contact.`,
-    `Use ${environmentTag} only for background, lighting, ground texture, and atmosphere.`,
-    ``,
-    `Photorealistic wildlife documentary final scene master image, 9:16 vertical. ${leadAnimalName} on the left, ${oppositeAnimalName} on the right, both fully visible with clean readable spacing and one clear open reaction lane between them. ${environmentName} with habitat texture, crisp clean air, stable anatomy, grounded contact, cinematic telephoto documentary framing, video-ready source frame.`,
-  ].join("\n");
 }
 
 function buildHybridRoutingGuide() {
@@ -487,15 +441,17 @@ export function WorkflowPromptMap({
     ].join("\n\n");
     const leadMasterPrompt = buildAnimalMasterReferencePrompt({
       subjectName: leadAnimalName,
-      stanceLabel: "neutral grounded stance",
-      identityMarkers: "clear identity markers",
-      contactLabel: "grounded paw/hoof/foot contact",
+      stanceLabel: "alert pre-attack posture",
+      identityMarkers: "species-specific identity, readable head profile, coat/skin/marking detail, and clear body-scale cues",
+      contactLabel: "grounded paw/hoof/foot contact or natural perch contact for bird species",
+      role: "lead",
     });
     const oppositeMasterPrompt = buildAnimalMasterReferencePrompt({
       subjectName: oppositeAnimalName,
-      stanceLabel: "alert grounded stance",
-      identityMarkers: "clear identity markers",
-      contactLabel: "grounded paw/hoof/foot contact",
+      stanceLabel: "alert survival-reaction posture",
+      identityMarkers: "species-specific identity, readable side profile, coat/skin/marking detail, and clear scale cues",
+      contactLabel: "grounded paw/hoof/foot contact or natural perch contact for bird species",
+      role: "opposite",
     });
     const environmentMasterPrompt = buildEnvironmentMasterReferencePrompt(environmentName);
     const finalMergeMasterPrompt = buildFinalMergeMasterPrompt({
