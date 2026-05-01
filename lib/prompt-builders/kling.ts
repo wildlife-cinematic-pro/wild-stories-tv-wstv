@@ -593,6 +593,223 @@ function getKlingStyleCues(style: KlingPairAttackStyle) {
   }
 }
 
+function getCompactKlingToneCue(emotionalTone: EmotionalTone): string {
+  switch (emotionalTone) {
+    case "Raw Tension":
+      return "raw documentary tension";
+    case "Silent Dread":
+      return "quiet dread before the break";
+    case "Explosive Energy":
+      return "fast viral hook and explosive acceleration";
+    case "Calm Dominance":
+      return "dangerous but controlled dominance";
+    case "Desperate Survival":
+      return "desperate survival pressure";
+    case "Haunting Stillness":
+      return "held stillness before impact";
+    case "Primal Instinct":
+      return "instinct-first reaction";
+    default:
+      return "dangerous but realistic";
+  }
+}
+
+function getCompactKlingToneTag(emotionalTone: EmotionalTone): string {
+  switch (emotionalTone) {
+    case "Raw Tension":
+      return "raw tension";
+    case "Silent Dread":
+      return "quiet dread";
+    case "Explosive Energy":
+      return "explosive viral energy";
+    case "Calm Dominance":
+      return "controlled dominance";
+    case "Desperate Survival":
+      return "survival pressure";
+    case "Haunting Stillness":
+      return "held stillness";
+    case "Primal Instinct":
+      return "instinct-first";
+    default:
+      return "dangerous but realistic";
+  }
+}
+
+function getCompactKlingVibeTag(animalVibe: AnimalVibe): string {
+  switch (animalVibe) {
+    case "BBC Earth Documentary":
+      return "BBC Earth";
+    case "National Geographic Wild":
+      return "Nat Geo Wild";
+    case "Raw Nature Unfiltered":
+      return "raw nature";
+    case "David Attenborough Style":
+      return "Attenborough gravity";
+    case "Slow Motion Nature":
+      return "slow-motion clarity";
+    default:
+      return "documentary realism";
+  }
+}
+
+function getCompactKlingVibeCue(animalVibe: AnimalVibe): string {
+  switch (animalVibe) {
+    case "BBC Earth Documentary":
+      return "BBC Earth realism";
+    case "National Geographic Wild":
+      return "Nat Geo wild urgency";
+    case "Raw Nature Unfiltered":
+      return "raw nature unfiltered";
+    case "David Attenborough Style":
+      return "Attenborough-style gravity";
+    case "Slow Motion Nature":
+      return "natural slow-motion clarity";
+    default:
+      return "wildlife documentary realism";
+  }
+}
+
+function buildCompactKlingQualityCue(quality?: QualityOptions): string {
+  const bits = [
+    "stable anatomy",
+    "grounded contact",
+    "readable action",
+  ];
+
+  if (quality?.referenceLock || quality?.realismMode === "Reference Locked") {
+    bits.push("identity lock");
+  }
+  if (quality?.motionOnlyI2V) {
+    bits.push("motion-first continuity");
+  }
+  if (quality?.microMotion) {
+    bits.push("natural camera shake");
+  }
+  if (quality?.seamlessShot) {
+    bits.push("continuous flow");
+  }
+
+  return bits.join(", ");
+}
+
+function buildCompactKlingSceneCue(sceneDesc?: string, maxChars = 80): string {
+  const snippet = sceneDesc?.trim() ? clipPromptContext(sceneDesc.trim(), maxChars) : "";
+  return snippet ? "Scene cue: " + snippet : "";
+}
+
+function getKlingIntensityCue(
+  intensity: number,
+  phase: "setup" | "trigger" | "pressure" | "cliff"
+): string {
+  if (phase === "setup") {
+    if (intensity >= 0.55) return "Immediate danger is already readable from frame one.";
+    if (intensity >= 0.4) return "Danger is already visible in the first frame.";
+    return "Hold the danger line before the move breaks.";
+  }
+
+  if (phase === "trigger") {
+    if (intensity >= 0.85) return "Hit with explosive acceleration and one hard readable burst.";
+    if (intensity >= 0.7) return "Hit with sharp acceleration and one clean burst.";
+    return "Trigger one clear acceleration beat.";
+  }
+
+  if (phase === "pressure") {
+    if (intensity >= 0.85) return "Peak pressure stays fast, tight, and near-clash.";
+    if (intensity >= 0.7) return "Pressure tightens with readable traction and no chaos.";
+    return "Keep the pressure readable and grounded.";
+  }
+
+  if (intensity >= 0.45) return "End on hard unresolved escape pressure.";
+  return "End on unresolved danger with the outcome still open.";
+}
+
+function getKlingArcCues(arc: Arc) {
+  switch (arc) {
+    case "Ambush attack":
+      return {
+        scene:
+          "Hidden attack lane, sudden surge, unresolved escape pressure.",
+        setup: "Hold a hidden attack lane while the opposing animal notices too late.",
+        trigger: "Snap into a sudden lunge or burst from cover.",
+        pressure:
+          "Keep pressure low, fast, and near-clash with readable traction or waterline grip.",
+        cliff: "End on unresolved escape pressure after the burst.",
+      };
+    case "Chase and takedown":
+      return {
+        scene:
+          "Immediate pursuit line, hard acceleration, unresolved escape lane.",
+        setup: "Show the pursuit line already forming before the sprint breaks.",
+        trigger: "Burst into pursuit with a hard forward acceleration line.",
+        pressure: "Keep closing speed, traction, and near-clash geometry readable.",
+        cliff: "End with the escape route nearly gone and pressure still closing.",
+      };
+    case "Escape from danger":
+      return {
+        scene:
+          "Danger closes early, survival instinct takes over, breakaway still uncertain.",
+        setup: "Establish one narrow escape lane with danger already closing.",
+        trigger: "Break into a desperate escape burst immediately.",
+        pressure: "Keep pursuit pressure high with grounded traction and one clean route.",
+        cliff: "End on a last-second breakaway or an escape lane almost gone.",
+      };
+    case "Pack hunting strategy":
+      return {
+        scene:
+          "Coordinated lanes close, spacing stays readable, danger unresolved.",
+        setup: "Show the corridor already tightening before the break.",
+        trigger: "Hit with a coordinated acceleration burst.",
+        pressure: "Tighten multiple lanes with pack pressure and one narrowing route.",
+        cliff: "End with one narrow route still open as pressure surrounds it.",
+      };
+    case "Defender stands ground":
+      return {
+        scene:
+          "Planted body mass, shove pressure, unresolved stand-and-hold clash.",
+        setup: "Establish planted defense and one clear approach lane.",
+        trigger: "Drive forward with heavy planted body pressure.",
+        pressure: "Keep hoof, paw, or shoulder traction readable in the clash line.",
+        cliff: "End on an unresolved standoff or a last-second sidestep.",
+      };
+    case "Giant vs giant clash":
+      return {
+        scene:
+          "Heavy mass collision line, planted footing, unresolved dominance.",
+        setup: "Establish planted mass and one readable clash lane.",
+        trigger: "Launch one heavy acceleration beat into the clash line.",
+        pressure: "Keep body mass, traction, and shoulder pressure readable.",
+        cliff: "End on unresolved dominance pressure after the clash.",
+      };
+    case "Predator vs predator fight":
+      return {
+        scene:
+          "Dominance pressure, snap reaction, outcome unresolved.",
+        setup: "Establish rival pressure and one clean challenge lane.",
+        trigger: "Snap into a sharp forward challenge burst.",
+        pressure: "Keep rival spacing, traction, and counter-pressure readable.",
+        cliff: "End on an unresolved control line with neither animal fully yielding.",
+      };
+    case "Territory dominance battle":
+      return {
+        scene:
+          "Control of space, heavy forward pressure, retreat unresolved.",
+        setup: "Establish territory pressure before the move breaks.",
+        trigger: "Press forward with one committed dominance beat.",
+        pressure: "Keep planted control, body mass, and clean spacing readable.",
+        cliff: "End with the territory line still contested.",
+      };
+    default:
+      return {
+        scene:
+          "Visible danger, one hard pressure line, unresolved escape tension.",
+        setup: "Establish the danger line before the move breaks.",
+        trigger: "Trigger one clear acceleration beat.",
+        pressure: "Keep the pressure readable, grounded, and unresolved.",
+        cliff: "End with escape pressure still open.",
+      };
+  }
+}
+
 function buildKlingSafetyLine(includeDeath = false): string {
   return includeDeath
     ? "no death close-up, no blood, no gore, no visible wounds."
@@ -615,41 +832,102 @@ export function buildKlingMultishotPromptCards(
   sceneDesc?: string,
   quality?: QualityOptions
 ): StructuredPrompt[] {
-  void arc;
-  void emotionalTone;
-  void animalVibe;
-  void sceneDesc;
-  void quality;
-
   const isNative = model === "Kling 3.0 Pro" || model === "Kling 3.0 Standard";
   if (!isNative) {
-    const fallback = `Kling Multishot requires Kling 3.0 Pro or Kling 3.0 Standard. Selected: ${model}.`;
+    const fallback =
+      `Kling Multishot requires Kling 3.0 Pro or Kling 3.0 Standard. Selected: ${model}.`;
     return [1, 2, 3, 4].map((shot) =>
       buildStructuredPrompt({
         fullText: fallback,
         pasteReady: fallback,
-        metadata: { engine: "kling", title: `Kling Multishot Shot ${shot}`, shotKey: `shot${shot}`, variant: "kling-multishot" },
+        metadata: {
+          engine: "kling",
+          title: `Kling Multishot Shot ${shot}`,
+          shotKey: `shot${shot}`,
+          variant: "kling-multishot",
+        },
       })
     );
   }
 
   const profile = getCatalogKlingPairProfile(predator, prey, env);
   const cues = getKlingStyleCues(profile.style);
+  const arcCues = getKlingArcCues(arc);
   const shotEnv = compactEnvironmentPhrase(env, 8, 16);
-  const cleanWeather = sanitizeWeatherPhrase(weatherVariants[weather]);
-  const weatherTail = cleanWeather ? ` ${cleanWeather}.` : "";
+  const toneCue = getCompactKlingToneTag(emotionalTone);
+  const vibeCue = getCompactKlingVibeTag(animalVibe);
+  const qualityCue = buildCompactKlingQualityCue(quality);
+  const sceneCue = buildCompactKlingSceneCue(sceneDesc, 44);
+  const setupIntensity = getKlingMotionIntensity(arc, "establish");
+  const triggerIntensity = Number(
+    (
+      (getKlingMotionIntensity(arc, "establish") +
+        getKlingMotionIntensity(arc, "action")) /
+      2
+    ).toFixed(2)
+  );
+  const pressureIntensity = getKlingMotionIntensity(arc, "action");
+  const cliffIntensity = Math.min(
+    1,
+    Number((getKlingMotionIntensity(arc, "aftermath") + 0.08).toFixed(2))
+  );
 
   const shots = [
-    `Same ${predator} and ${prey} in ${shotEnv}.${weatherTail} Preserve first-frame identity, lighting, scale, spacing, and grounded contact. Immediate danger setup: ${cues.setup}. Camera: low push-in or locked documentary wide. ${buildKlingSafetyLine()}`,
-    `Trigger beat. ${predator} ${cues.trigger}; ${prey} ${cues.reaction}. Keep anatomy stable, action readable, and physics believable. Use ${cues.motion}; both bodies remain visible with clean spacing.`,
-    `Near-clash pressure. Escalate survival tension without injury: ${cues.pressure}. Show resistance, defensive turn, corridor tightening, or grounded traction. Keep both animals visible, same movement direction, no overlap-heavy chaos.`,
-    `Cliffhanger finish. End with unresolved survival danger: ${cues.cliff}. Keep ${predator} and ${prey} readable in ${shotEnv}; preserve identity and grounded contact. ${buildKlingSafetyLine(true)}`,
-  ].map(clampKlingShotPrompt);
+    [
+      `Same ${predator} and ${prey} in ${shotEnv}.`,
+      sceneCue,
+      `${toneCue}; ${vibeCue}.`,
+      `${qualityCue}.`,
+      `${getKlingIntensityCue(setupIntensity, "setup")} ${arcCues.setup}`,
+      `${cues.setup}.`,
+      buildKlingSafetyLine(),
+      `Both animals stay readable from frame one.`,
+    ]
+      .filter(Boolean)
+      .join(" "),
+    [
+      "Trigger beat.",
+      `${toneCue}; ${vibeCue}.`,
+      `${getKlingIntensityCue(triggerIntensity, "trigger")} ${arcCues.trigger}`,
+      `${predator} ${cues.trigger}; ${prey} ${cues.reaction}.`,
+      `Use ${cues.motion}; keep both bodies visible.`,
+      `stable anatomy, grounded contact.`,
+      buildKlingSafetyLine(),
+    ]
+      .filter(Boolean)
+      .join(" "),
+    [
+      "Near-clash pressure.",
+      `${toneCue}; ${vibeCue}.`,
+      `${getKlingIntensityCue(pressureIntensity, "pressure")} ${arcCues.pressure}`,
+      `${cues.pressure}.`,
+      `Show resistance, corridor tightening, or grounded traction with both animals readable.`,
+      `stable anatomy, grounded contact.`,
+      buildKlingSafetyLine(),
+    ]
+      .filter(Boolean)
+      .join(" "),
+    [
+      "Cliffhanger finish.",
+      `${toneCue}.`,
+      `${getKlingIntensityCue(cliffIntensity, "cliff")} ${arcCues.cliff}`,
+      `${cues.cliff}.`,
+      `Keep ${predator} and ${prey} readable in ${shotEnv}.`,
+      buildKlingSafetyLine(true),
+    ]
+      .filter(Boolean)
+      .join(" "),
+  ].map((shot) => clampKlingShotPrompt(sanitizeVideoBeatText(shot)));
 
   return shots.map((shot, index) => {
     const shotNumber = index + 1;
     const timings = ["0-4s", "4-8s", "8-12s", "12-15s"];
-    const titles = ["setup / tension", "trigger / burst", "near-clash pressure", "cliffhanger finish"];
+    const titles = [
+      "setup / tension",
+      "trigger / burst",
+      "near-clash pressure",
+      "cliffhanger finish",
+    ];
     const countLine = `Shot ${shotNumber}: ${shot.length}/${KLING_MULTISHOT_SHOT_CHAR_LIMIT}`;
 
     return buildStructuredPrompt({
@@ -700,12 +978,17 @@ export function buildKlingFramesPromptCard(
 
   const profile = getCatalogKlingPairProfile(predator, prey, env);
   const cues = getKlingStyleCues(profile.style);
+  const arcCues = getKlingArcCues(arc);
   const framesEnv = compactEnvironmentPhrase(env, 18, 28);
   const cleanWeather = sanitizeWeatherPhrase(weatherVariants[weather]);
   const contextSnippet = sceneDesc?.trim() ? clipPromptContext(sceneDesc.trim(), 120) : "";
+  const toneCue = getCompactKlingToneCue(emotionalTone);
+  const vibeCue = getCompactKlingVibeCue(animalVibe);
+  const qualityCue = buildCompactKlingQualityCue(quality);
+  const sceneCue = buildCompactKlingSceneCue(sceneDesc);
   const sceneIdea = contextSnippet
-    ? `${contextSnippet} The opposing animal notices too late as the attack lane tightens into survival reaction and unresolved escape pressure.`
-    : `${predator} and ${prey} collide in a ${profile.safeArcLabel.toLowerCase()} setup where the opposing animal notices too late, the attack lane tightens, and survival reaction stays unresolved.`;
+    ? `${contextSnippet} ${arcCues.scene} ${toneCue}. ${vibeCue}.`
+    : `${predator} and ${prey} collide in a ${profile.safeArcLabel.toLowerCase()} setup. ${arcCues.scene} ${toneCue}. ${vibeCue}.`;
   const negativeLine = compactNegativePrompt([
     "blood",
     "gore",
@@ -736,15 +1019,15 @@ export function buildKlingFramesPromptCard(
         : "Audio: sudden movement, grounded traction, breath, habitat texture, tense natural ambience.";
 
   const promptParts = [
-    `Image-to-video from master image. Preserve same ${predator}, ${prey}, ${framesEnv}, lighting, scale, spacing, and first-frame composition.${weatherLine} Photorealistic raw wildlife documentary. Stable anatomy, grounded contact, realistic body mass, readable action. no blood, no gore, no visible wounds.`,
+    `Image-to-video from master image. Preserve same ${predator}, ${prey}, ${framesEnv}, lighting, scale, spacing, and first-frame composition.${weatherLine} Photorealistic raw wildlife documentary, realistic body mass, ${qualityCue}. ${buildKlingSafetyLine()}`,
     `Scene idea: ${sceneIdea}`,
-    `Continuity: keep exact lead and opposing animal identity, coat or skin markings, body scale, grounded contact, habitat geography, horizon line, lighting direction, and readable spacing from the master frame. Motion direction stays clear and physically believable.` ,
-    `Camera and motion rule: describe tight survival motion, not long habitat paragraphs; each beat uses one strong readable action and keeps both animals visible.` ,
-    `Shot 1, 0-3s: Establish tension. ${cues.setup}; camera slowly pushes or holds wide so both bodies read immediately.`,
-    `Shot 2, 3-6s: Trigger burst. ${predator} ${cues.trigger}; ${prey} ${cues.reaction}.`,
-    `Shot 3, 6-10s: Near-clash pressure. ${cues.pressure}; keep contact or near-contact non-graphic and physically grounded.`,
-    `Shot 4, 10-13s: Survival reaction continues. The lane tightens as one body pivots, braces, recoils, or breaks away; no overlap-heavy chaos.`,
-    `Shot 5, 13-15s: Cliffhanger finish. ${cues.cliff}; both animals remain visible, outcome unknown.`,
+    `Continuity: keep exact animal identity, habitat geography, lighting direction, grounded contact, and readable spacing from the master frame. ${sceneCue}`,
+    `Camera and motion rule: ${toneCue}. ${vibeCue}. Tight survival motion only; keep both animals visible.`,
+    `Shot 1, 0-3s: Establish tension. ${arcCues.setup} ${cues.setup}; camera holds wide so both bodies read immediately.`,
+    `Shot 2, 3-6s: Trigger burst. ${arcCues.trigger} ${predator} ${cues.trigger}; ${prey} ${cues.reaction}.`,
+    `Shot 3, 6-10s: Near-clash pressure. ${arcCues.pressure} ${cues.pressure}; keep it non-graphic and physically grounded.`,
+    `Shot 4, 10-13s: Survival reaction continues. The lane tightens as one body pivots, braces, recoils, or breaks away; ${toneCue}.`,
+    `Shot 5, 13-15s: Cliffhanger finish. ${arcCues.cliff} ${cues.cliff}; both animals remain visible, outcome unknown.`,
     audioLine,
     negativeLine,
   ];
@@ -754,9 +1037,31 @@ export function buildKlingFramesPromptCard(
     pasteReadyCore = cleanupPromptArtifacts([
       promptParts[0],
       `Scene idea: ${clampPromptToCharLimit(sceneIdea, 190)}`,
-      ...promptParts.slice(2, 7).map((line) => line.replace(/; camera slowly pushes or holds wide so /i, "; camera holds wide; ")),
+      ...promptParts
+        .slice(2, 10)
+        .map((line) =>
+          line
+            .replace(/; camera slowly pushes or holds wide so /i, "; camera holds wide; ")
+            .replace(/Describe tight survival motion, not long habitat paragraphs; /i, "")
+        ),
       audioLine,
-      compactNegativePrompt(["blood", "gore", "visible wounds", "death close-up", "torn flesh", "duplicate animals", "extra limbs", "fused bodies", "humans", "text", "watermark", "wrong habitat"], 12),
+      compactNegativePrompt(
+        [
+          "blood",
+          "gore",
+          "visible wounds",
+          "death close-up",
+          "torn flesh",
+          "duplicate animals",
+          "extra limbs",
+          "fused bodies",
+          "humans",
+          "text",
+          "watermark",
+          "wrong habitat",
+        ],
+        12
+      ),
     ].join("\n\n"));
   }
   pasteReadyCore = clampPromptToCharLimit(pasteReadyCore, KLING_FRAMES_CHAR_LIMIT);
@@ -784,6 +1089,7 @@ export function buildKlingFramesPromptCard(
 }
 
 export function buildKlingNative15sCard(
+
   predator: string,
   prey: string,
   env: string,

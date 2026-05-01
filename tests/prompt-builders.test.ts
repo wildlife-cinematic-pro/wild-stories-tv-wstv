@@ -16,6 +16,7 @@ import {
   buildSeedanceShots,
   buildKlingNative15s,
   buildKlingNative15sCard,
+  buildKlingFramesPromptCard,
   buildKlingMultishotPromptCards,
   buildKlingSixShot,
   buildCapCutPlan,
@@ -844,6 +845,112 @@ describe("Step 7C — supporting prompt helpers keep readability language", () =
     });
     expect(shots[0].pasteReady.length).toBeLessThan(512);
     expect(shots[1].pasteReady).toMatch(/Trigger beat|surges|bursts|launches|dives|closes/i);
+  });
+
+  it("Kling Multishot changes Shot 2 and Shot 3 when arc changes", () => {
+    const packArcShots = buildKlingMultishotPromptCards(
+      "Wolf Pack",
+      "Bison",
+      "Rocky Mountain meadow with sagebrush",
+      "Pack hunting strategy",
+      "Golden Hour",
+      "Kling 3.0 Pro",
+      "Raw Tension",
+      "BBC Earth Documentary",
+      "The bison turns into the tightening lane too late.",
+      quality
+    );
+    const defenderArcShots = buildKlingMultishotPromptCards(
+      "Wolf Pack",
+      "Bison",
+      "Rocky Mountain meadow with sagebrush",
+      "Defender stands ground",
+      "Golden Hour",
+      "Kling 3.0 Pro",
+      "Raw Tension",
+      "BBC Earth Documentary",
+      "The bison turns into the tightening lane too late.",
+      quality
+    );
+
+    expect(packArcShots[1].pasteReady).not.toBe(defenderArcShots[1].pasteReady);
+    expect(packArcShots[2].pasteReady).not.toBe(defenderArcShots[2].pasteReady);
+    expect(packArcShots[1].pasteReady).toMatch(/coordinated acceleration burst/i);
+    expect(defenderArcShots[1].pasteReady).toMatch(/heavy planted body pressure/i);
+  });
+
+  it("Kling Multishot carries tone and vibe cues into the paste-ready shots", () => {
+    const shots = buildKlingMultishotPromptCards(
+      "Great White Shark",
+      "Seal",
+      "surf line with open ocean foam",
+      "Ambush attack",
+      "Storm",
+      "Kling 3.0 Pro",
+      "Explosive Energy",
+      "Raw Nature Unfiltered",
+      "The seal notices the surge too late near the foam line.",
+      quality
+    );
+
+    expect(shots.some((shot) => /explosive viral energy/i.test(shot.pasteReady))).toBe(true);
+    expect(shots.some((shot) => /raw nature/i.test(shot.pasteReady))).toBe(true);
+  });
+
+  it("Kling Frames paste-ready block carries arc, tone, vibe, quality, and scene cues", () => {
+    const card = buildKlingFramesPromptCard(
+      "Crocodile",
+      "Warthog",
+      "dry-season African muddy waterhole with reeds and muddy bank",
+      "Ambush attack",
+      "Golden Hour",
+      "Kling 3.0 Pro",
+      "Raw Tension",
+      "BBC Earth Documentary",
+      "The warthog notices too late at the muddy waterline.",
+      quality
+    );
+
+    expect(card.pasteReady).toContain("Image-to-video from master image");
+    expect(card.pasteReady).toContain("Hidden attack lane, sudden surge, unresolved escape pressure.");
+    expect(card.pasteReady).toContain("raw documentary tension");
+    expect(card.pasteReady).toContain("BBC Earth realism");
+    expect(card.pasteReady).toContain("Scene cue: The warthog notices too late at the muddy waterline.");
+    expect(card.pasteReady).toContain("Photorealistic raw wildlife documentary");
+    expect(card.pasteReady.length).toBeLessThanOrEqual(2500);
+  });
+
+  it("Kling Frames and Multishot preserve non-graphic safety language", () => {
+    const frameCard = buildKlingFramesPromptCard(
+      "Tortoise",
+      "Monitor Lizard",
+      "sun-baked desert scrub",
+      "Escape from danger",
+      "Golden Hour",
+      "Kling 3.0 Pro",
+      "Desperate Survival",
+      "BBC Earth Documentary",
+      "The tortoise turns shell-first and inches toward cover.",
+      quality
+    );
+    const shots = buildKlingMultishotPromptCards(
+      "Tortoise",
+      "Monitor Lizard",
+      "sun-baked desert scrub",
+      "Escape from danger",
+      "Golden Hour",
+      "Kling 3.0 Pro",
+      "Desperate Survival",
+      "BBC Earth Documentary",
+      "The tortoise turns shell-first and inches toward cover.",
+      quality
+    );
+
+    expect(frameCard.pasteReady).toContain("no blood, no gore, no visible wounds");
+    expect(frameCard.pasteReady).not.toMatch(/no\s*,\s*no/i);
+    expect(shots.every((shot) => !/no\s*,\s*no/i.test(shot.pasteReady))).toBe(true);
+    expect(shots[0].pasteReady).toMatch(/no blood, no gore, no visible wounds/i);
+    expect(shots[3].pasteReady).toMatch(/no death close-up, no blood, no gore, no visible wounds/i);
   });
 
   it("Kling Multishot adapts attack language across catalog pair types", () => {
