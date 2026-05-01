@@ -6,6 +6,8 @@ import type { GeneratedPackage } from "@/types";
 
 import {
   getImagePromptCard,
+  getKlingFramesPromptCard,
+  getKlingMultishotPromptCards,
   getPromptCardForEngine,
   getWorkflowPromptCard,
   safeText,
@@ -321,6 +323,17 @@ export function WorkflowPromptMap({
   const klingShots = (data.klingShots ?? []).map(safeText);
   const imagePrompt = safeText(data.imagePrompt);
   const imagePromptCard = getImagePromptCard(data);
+  const klingFramesPromptCard = getKlingFramesPromptCard(data);
+  const klingMultishotPromptCards = getKlingMultishotPromptCards(data);
+  const promptLimitRows = [
+    { label: "Kling Frames Prompt", count: klingFramesPromptCard.pasteReady.length, limit: 2500 },
+    ...klingMultishotPromptCards.map((card, index) => ({
+      label: `Kling Multishot Shot ${index + 1}`,
+      count: card.pasteReady.length,
+      limit: 512,
+    })),
+    { label: "Nano Banana 2 Image Prompt", count: imagePromptCard.pasteReady.length, limit: 5000 },
+  ];
   const seedancePromptCards = seedanceShots.map((_, index) =>
     getPromptCardForEngine(data, "seedance", index)
   );
@@ -969,6 +982,29 @@ export function WorkflowPromptMap({
 
       <div className="mb-3 rounded-xl border border-indigo-200 bg-indigo-50 p-3 text-xs text-indigo-800">
         <strong>Pipeline:</strong> {pipeline}
+      </div>
+
+      <div className="mb-3 rounded-xl border border-slate-200 bg-slate-50 p-3 dark:border-[color:var(--border)] dark:bg-[color:var(--surface-muted)]">
+        <div className="mb-2 text-[11px] font-extrabold uppercase tracking-wide text-slate-600 dark:text-[color:var(--muted)]">
+          Prompt limits
+        </div>
+        <div className="flex flex-wrap gap-2">
+          {promptLimitRows.map((row) => {
+            const pass = row.count <= row.limit;
+            return (
+              <span
+                key={row.label}
+                className={`rounded-full px-2 py-0.5 text-[11px] font-extrabold ring-1 ${
+                  pass
+                    ? "bg-green-100 text-green-700 ring-green-200 dark:bg-green-500/15 dark:text-green-100"
+                    : "bg-rose-100 text-rose-700 ring-rose-200 dark:bg-rose-500/15 dark:text-rose-100"
+                }`}
+              >
+                {row.label}: {row.count}/{row.limit} {pass ? "pass" : "over"}
+              </span>
+            );
+          })}
+        </div>
       </div>
 
       <div className="mb-4 rounded-xl border border-orange-200 bg-orange-50 p-3 text-xs text-orange-800">

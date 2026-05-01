@@ -16,6 +16,7 @@ import {
   buildSeedanceShots,
   buildKlingNative15s,
   buildKlingNative15sCard,
+  buildKlingMultishotPromptCards,
   buildKlingSixShot,
   buildCapCutPlan,
   buildClipChaining,
@@ -511,7 +512,7 @@ describe("Step 7 — Opening readability and tension clarity", () => {
     expect(shots.shot1).toContain("immediate visible tension");
   });
 
-  it("KlingNative15s exposes the direct 15-second multishot structure", () => {
+  it("KlingNative15s exposes the Kling Frames 15-second structure", () => {
     const out = buildKlingNative15s(
       base.predator,
       base.prey,
@@ -524,12 +525,12 @@ describe("Step 7 — Opening readability and tension clarity", () => {
       base.sceneDesc,
       quality
     );
-    expect(out).toContain("KLING DIRECT 15S MULTISHOT");
-    expect(out).toContain("Shot 1, 0–3s");
-    expect(out).toContain("Shot 2, 3–6s");
-    expect(out).toContain("Shot 3, 6–10s");
-    expect(out).toContain("Shot 4, 10–13s");
-    expect(out).toContain("Shot 5, 13–15s");
+    expect(out).toContain("KLING FRAMES PROMPT");
+    expect(out).toContain("Shot 1, 0-3s");
+    expect(out).toContain("Shot 2, 3-6s");
+    expect(out).toContain("Shot 3, 6-10s");
+    expect(out).toContain("Shot 4, 10-13s");
+    expect(out).toContain("Shot 5, 13-15s");
     expect(out).toContain("Audio:");
     expect(out).toContain("Negative prompt:");
     expect(out).toContain("no blood, no gore, no visible wounds");
@@ -622,7 +623,7 @@ describe("Step 7C — supporting prompt helpers keep readability language", () =
   function extractKlingPasteBlock(out: string): string {
     return (
       out
-        .split("═══ PASTE INTO KLING — stays under 2500 chars (copy this block only) ═══")[1]
+        .split("═══ PASTE INTO KLING FRAMES — max 2500 chars (copy this block only) ═══")[1]
         ?.split("─── OPTIONAL NOTES — reference only, do NOT paste into Kling ───")[0]
         ?.trim() ?? ""
     );
@@ -741,17 +742,17 @@ describe("Step 7C — supporting prompt helpers keep readability language", () =
 
     const pasteBlock = extractKlingPasteBlock(out);
     expect(pasteBlock.length).toBeGreaterThan(0);
-    expect(pasteBlock.startsWith("Image-to-video from the provided master image.")).toBe(true);
+    expect(pasteBlock.startsWith("Image-to-video from master image.")).toBe(true);
     expect(pasteBlock).not.toContain("KLING 3.0 PRO DIRECT 15S MULTISHOT");
     expect(pasteBlock).not.toContain("KLING DIRECT 15S MULTISHOT");
     expect(pasteBlock).not.toContain("Shot:");
     expect(pasteBlock).not.toContain("Characters:");
     expect(pasteBlock).not.toContain("Lighting & Location:");
-    expect(pasteBlock).toContain("Shot 1, 0–3s");
-    expect(pasteBlock).toContain("Shot 2, 3–6s");
-    expect(pasteBlock).toContain("Shot 3, 6–10s");
-    expect(pasteBlock).toContain("Shot 4, 10–13s");
-    expect(pasteBlock).toContain("Shot 5, 13–15s");
+    expect(pasteBlock).toContain("Shot 1, 0-3s");
+    expect(pasteBlock).toContain("Shot 2, 3-6s");
+    expect(pasteBlock).toContain("Shot 3, 6-10s");
+    expect(pasteBlock).toContain("Shot 4, 10-13s");
+    expect(pasteBlock).toContain("Shot 5, 13-15s");
     expect(pasteBlock).toContain("Audio:");
     expect(pasteBlock).toContain("Negative prompt:");
     expect(pasteBlock).toContain("no blood");
@@ -813,8 +814,92 @@ describe("Step 7C — supporting prompt helpers keep readability language", () =
     );
 
     expect(card.metadata?.engine).toBe("kling");
-    expect(card.metadata?.title).toBe("Kling Direct 15s Multishot");
-    expect(card.metadata?.variant).toBe("direct-15s-multishot");
+    expect(card.metadata?.title).toBe("Kling Frames Prompt");
+    expect(card.metadata?.variant).toBe("kling-frames");
+  });
+
+
+  it("Kling Multishot returns exactly four 15s shot prompts under 512 chars", () => {
+    const shots = buildKlingMultishotPromptCards(
+      "Crocodile",
+      "Warthog",
+      "dry-season African muddy waterhole with reeds and muddy bank",
+      "Ambush attack",
+      "Golden Hour",
+      "Kling 3.0 Pro",
+      "Raw Tension",
+      "BBC Earth Documentary",
+      "The warthog notices too late at the waterline.",
+      quality
+    );
+
+    expect(shots).toHaveLength(4);
+    expect(shots.map((shot) => shot.metadata?.durationSeconds).reduce((sum, value) => sum + (value ?? 0), 0)).toBe(15);
+    shots.forEach((shot, index) => {
+      expect(shot.pasteReady.length).toBeLessThanOrEqual(512);
+      expect(shot.fullText).toContain(`Shot ${index + 1}:`);
+      expect(shot.pasteReady).not.toContain("Image-to-video from master image");
+      expect(shot.pasteReady).not.toContain("Shot 5");
+      expect(shot.pasteReady).not.toMatch(/no\s*,\s*no/i);
+    });
+    expect(shots[0].pasteReady.length).toBeLessThan(512);
+    expect(shots[1].pasteReady).toMatch(/Trigger beat|surges|bursts|launches|dives|closes/i);
+  });
+
+  it("Kling Multishot adapts attack language across catalog pair types", () => {
+    const pairs = [
+      ["Crocodile", "Warthog", "dry-season African muddy waterhole", /waterline|muddy|splash/i],
+      ["Wolf Pack", "Bison", "Rocky Mountain meadow with sagebrush", /pack|corridor|lane/i],
+      ["Bald Eagle", "Salmon", "Alaskan river mouth", /wing|dives|water strike|splash/i],
+      ["Great White Shark", "Seal", "surf line", /surf|foam|ocean/i],
+      ["Tortoise", "Monitor Lizard", "sun-baked desert scrub", /shell|tortoise|slow/i],
+    ] as const;
+
+    for (const [predator, prey, env, expected] of pairs) {
+      const shots = buildKlingMultishotPromptCards(
+        predator,
+        prey,
+        env,
+        "Ambush attack",
+        "Golden Hour",
+        "Kling 3.0 Pro",
+        "Raw Tension",
+        "BBC Earth Documentary",
+        "A fast non-graphic survival pressure beat.",
+        quality
+      );
+      expect(shots).toHaveLength(4);
+      expect(shots.every((shot) => shot.pasteReady.length <= 512)).toBe(true);
+      expect(shots.map((shot) => shot.pasteReady).join(" ")).toMatch(expected);
+    }
+  });
+
+  it("Nano Banana 2 image prompt is sectioned, attack-ready, and under 5000 chars", () => {
+    const card = buildImagePromptCard(
+      "Great White Shark",
+      "Seal",
+      "surf line with cold open ocean break and whitewash channel",
+      "Ambush attack",
+      "natural coastal light",
+      "Canon wildlife lens",
+      "wet skin texture and foam detail",
+      "Balanced Depth",
+      "Golden Hour",
+      "Raw Tension",
+      "BBC Earth Documentary",
+      "Seal notices danger too late with one escape angle."
+    );
+
+    expect(card.pasteReady.length).toBeLessThanOrEqual(5000);
+    expect(card.pasteReady).toContain("Lead Animal Prompt");
+    expect(card.pasteReady).toContain("Opposing Animal Prompt");
+    expect(card.pasteReady).toContain("Environment Prompt");
+    expect(card.pasteReady).toContain("Composition / Framing Prompt");
+    expect(card.pasteReady).toContain("Style / Lighting Prompt");
+    expect(card.pasteReady).toContain("Safety / Continuity Prompt");
+    expect(card.pasteReady).toMatch(/9:16 vertical/i);
+    expect(card.pasteReady).toMatch(/full-body visibility/i);
+    expect(card.pasteReady).toMatch(/notices danger too late|escape lane/i);
   });
 
   it("Kling 6-shot paste-ready block excludes validator metadata", () => {

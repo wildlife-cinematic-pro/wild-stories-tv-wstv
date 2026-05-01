@@ -696,7 +696,15 @@ export type StructuredPromptMetadata = {
   title?: string;
   motionIntensity?: number;
   durationSeconds?: number;
-  variant?: "single-shot" | "multi-shot" | "hybrid" | "native-10s" | "direct-15s-multishot" | "six-shot";
+  variant?:
+    | "single-shot"
+    | "multi-shot"
+    | "hybrid"
+    | "native-10s"
+    | "direct-15s-multishot"
+    | "kling-frames"
+    | "kling-multishot"
+    | "six-shot";
   workflowRole?: string;
 };
 
@@ -717,6 +725,8 @@ export type StructuredPromptBundle = {
   seedanceMultiShot?: StructuredPrompt;
   workflowShots?: StructuredPrompt[];
   klingNative15s?: StructuredPrompt;
+  klingFramesPrompt?: StructuredPrompt;
+  klingMultishotShots?: StructuredPrompt[];
   klingSixShot?: StructuredPrompt;
 };
 
@@ -984,6 +994,8 @@ export type GeneratedPackage = {
 
   // ── Kling multi-shot (old pro) ──
   klingNative15s?: string;
+  klingFramesPrompt?: string;
+  klingMultishotShots?: string[];
   klingSixShot?: string;
 
   // ── Hooks & copy ──

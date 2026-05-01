@@ -741,7 +741,7 @@ const WILDLIFE_FOCUS_DEFINITIONS: Record<
       safeArcLabel: "Waterhole ambush",
       badges: ["Water ambush", "Low drift"],
       promptTemplateHint:
-        "Start from the provided master image and stage a 5-shot muddy waterline ambush that ends in unresolved escape pressure.",
+        "Start from the provided master image and stage a 4-shot muddy waterline ambush that ends in unresolved escape pressure.",
     }),
     pairings: [
       buildViralPairing({

@@ -203,6 +203,28 @@ export function getKlingNative15sCard(
   );
 }
 
+
+export function getKlingFramesPromptCard(
+  data: GeneratedPackage
+): StructuredPrompt {
+  return (
+    data.structuredPrompts?.klingFramesPrompt ??
+    data.structuredPrompts?.klingNative15s ??
+    buildLegacyPromptCard("kling", String(data.klingFramesPrompt ?? data.klingNative15s ?? ""))
+  );
+}
+
+export function getKlingMultishotPromptCards(
+  data: GeneratedPackage
+): StructuredPrompt[] {
+  const structured = data.structuredPrompts?.klingMultishotShots;
+  if (structured?.length) return structured;
+
+  return (data.klingMultishotShots ?? []).map((shot) =>
+    buildLegacyPromptCard("kling", String(shot ?? ""))
+  );
+}
+
 export function getKlingSixShotCard(
   data: GeneratedPackage
 ): StructuredPrompt {

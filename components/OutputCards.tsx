@@ -99,7 +99,8 @@ export default function OutputCards({
   const seedanceShotCount = data.seedanceShots?.length ?? 0;
   const directPromptCount = [
     Boolean(data.seedanceMultiShotPrompt),
-    Boolean(data.klingNative15s),
+    Boolean(data.klingFramesPrompt ?? data.klingNative15s),
+    Boolean(data.klingMultishotShots?.length),
   ].filter(Boolean).length;
 
   const workspaceTabs: {
