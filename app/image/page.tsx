@@ -344,6 +344,7 @@ export default function ImagePage() {
                 mood={mood}
                 setMood={setMood}
                 wildlifeOverride={wildlifeOverride}
+                effectiveWildlife={derived.effectiveWildlife}
                 setWildlifeOverride={setWildlifeOverride}
                 cameraLook={cameraLook}
                 setCameraLook={setCameraLook}

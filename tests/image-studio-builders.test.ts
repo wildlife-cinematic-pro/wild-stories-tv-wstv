@@ -8,6 +8,7 @@ import {
   buildFacebookCaption,
   buildImageStudioDerivedPackage,
   buildUsViralHashtags,
+  resolveEffectiveWildlife,
 } from "@/lib/image-studio/builders";
 
 const preset = getEnhancedScenicPresetById(ALL_SCENIC_IMAGE_PRESETS[0].id);
@@ -54,4 +55,36 @@ describe("image studio builders", () => {
     expect(derived.copyAll).toContain("USA VIRAL HASHTAGS:");
     expect(derived.copyAll).toContain(derived.fivePostPack);
   });
+
+  it("resolves default wildlife from the current preset and preserves manual overrides", () => {
+    const alternatePreset = ALL_SCENIC_IMAGE_PRESETS.find((item) => item.defaultWildlife !== preset.defaultWildlife);
+
+    expect(alternatePreset).toBeTruthy();
+
+    const nextPreset = getEnhancedScenicPresetById(alternatePreset!.id);
+
+    expect(resolveEffectiveWildlife(preset, "Default preset wildlife")).toBe(preset.defaultWildlife);
+    expect(resolveEffectiveWildlife(nextPreset, "Default preset wildlife")).toBe(nextPreset.defaultWildlife);
+    expect(resolveEffectiveWildlife(nextPreset, "Moose")).toBe("Moose");
+
+    const derived = buildImageStudioDerivedPackage({
+      allPresets: ALL_SCENIC_IMAGE_PRESETS,
+      selectedPreset: nextPreset,
+      aspectRatio: "9:16",
+      mood: "Facebook Viral Nature Post",
+      wildlifeOverride: "Default preset wildlife",
+      seasonOverride: "Default",
+      lightOverride: "Default",
+      captionStyle: "Short Viral",
+      promptStrength: "Balanced",
+      cameraLook: "35mm documentary",
+      negativeMode: "Clean Short",
+      hashtagMode: "USA Viral",
+      customNote: "",
+    });
+
+    expect(derived.effectiveWildlife).toBe(nextPreset.defaultWildlife);
+    expect(derived.nanoPrompt).toContain(`Subject: ${nextPreset.defaultWildlife}`);
+  });
+
 });
