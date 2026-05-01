@@ -82,6 +82,7 @@ export type ImageStudioOutputsValue = {
 export type ImageStudioDerivedPackage = {
   filteredPresets: ExpandedScenicImagePreset[];
   selectedPreset: ExpandedScenicImagePreset;
+  effectiveWildlife: string;
   structuredPrompt: string;
   nanoPrompt: string;
   gptPrompt: string;

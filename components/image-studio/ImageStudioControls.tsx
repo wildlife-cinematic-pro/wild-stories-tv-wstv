@@ -54,6 +54,7 @@ export default function ImageStudioControls({
   mood,
   setMood,
   wildlifeOverride,
+  effectiveWildlife,
   setWildlifeOverride,
   cameraLook,
   setCameraLook,
@@ -93,6 +94,7 @@ export default function ImageStudioControls({
   mood: ScenicImageMood;
   setMood: (value: ScenicImageMood) => void;
   wildlifeOverride: ExtendedWildlifeOverride;
+  effectiveWildlife: string;
   setWildlifeOverride: (value: ExtendedWildlifeOverride) => void;
   cameraLook: CameraLook;
   setCameraLook: (value: CameraLook) => void;
@@ -205,14 +207,19 @@ export default function ImageStudioControls({
 
   if (activeSection === "wildlife") {
     return (
-      <WorkspaceCard title="Wildlife override" description="Swap the default animal safely while keeping the current location and mood intact.">
+      <WorkspaceCard title="Wildlife override" description="Swap the default animal safely while keeping the current location and mood intact. The default option always follows the selected preset.">
         <select
           value={wildlifeOverride}
           onChange={(event) => setWildlifeOverride(event.target.value as ExtendedWildlifeOverride)}
           className="w-full rounded-2xl border border-white/[0.08] bg-gray-950 px-3 py-2 text-sm font-semibold text-white outline-none"
         >
+          <optgroup label="Preset default">
+            <option value="Default preset wildlife">
+              Default preset wildlife — {selectedPreset.defaultWildlife}
+            </option>
+          </optgroup>
           <optgroup label="North America">
-            {BASE_WILDLIFE_OPTIONS.map((wildlife) => (
+            {BASE_WILDLIFE_OPTIONS.filter((wildlife) => wildlife !== "Default preset wildlife").map((wildlife) => (
               <option key={wildlife} value={wildlife}>
                 {wildlife}
               </option>
@@ -226,6 +233,14 @@ export default function ImageStudioControls({
             ))}
           </optgroup>
         </select>
+        <div className="mt-3 rounded-2xl border border-cyan-300/10 bg-cyan-300/[0.04] p-3 text-xs leading-5 text-white/60">
+          <strong className="text-cyan-200">Current active wildlife:</strong> {effectiveWildlife}
+          <div className="mt-1">
+            {wildlifeOverride === "Default preset wildlife"
+              ? `Following the preset default for ${selectedPreset.parkName}.`
+              : `Manual override active. Preset default is ${selectedPreset.defaultWildlife}.`}
+          </div>
+        </div>
       </WorkspaceCard>
     );
   }
