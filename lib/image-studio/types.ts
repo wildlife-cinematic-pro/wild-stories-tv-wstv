@@ -31,6 +31,7 @@ export type CopyKey =
   | "variations"
   | "batch"
   | "quality"
+  | "hashtags"
   | null;
 
 export type CollectionFilter = ScenicCollection | "All";
@@ -68,6 +69,7 @@ export type ImageStudioOutputsValue = {
   nanoPrompt: string;
   gptPrompt: string;
   negativePrompt: string;
+  facebookCaption: string;
   facebookCaptionWithHashtags: string;
   variationPrompts: string;
   fivePostPack: string;
