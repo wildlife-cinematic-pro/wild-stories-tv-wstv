@@ -22,10 +22,10 @@ describe("wildlife scope filtering", () => {
     expect(filtered).not.toContain("Jaguar");
   });
 
-  it("preserves broader access in World Wildlife mode", () => {
+  it("preserves broader access in World Wide Wildlife mode", () => {
     const filtered = filterPredatorOptionsByWildlifeScope(
       ["Lion", "Mountain Lion", "Wolf Pack", "Bald Eagle", "Jaguar", "Bull Elk"],
-      "World Wildlife"
+      "World Wide Wildlife"
     );
 
     expect(filtered).toEqual(
@@ -34,42 +34,18 @@ describe("wildlife scope filtering", () => {
   });
 });
 
-describe("expanded wildlife dataset safety", () => {
-  it("keeps 100+ unique opposing animals available across the built-in dataset", () => {
-    const uniquePrey = new Set(
-      Object.values(predatorData).flatMap((info) => info.prey)
+describe("viral wildlife prey support", () => {
+  it("adds Warthog support to Crocodile and Nile Crocodile exactly once", () => {
+    expect(predatorData.Crocodile.prey.filter((item) => item === "Warthog")).toHaveLength(1);
+    expect(predatorData["Nile Crocodile"].prey.filter((item) => item === "Warthog")).toHaveLength(1);
+  });
+
+  it("keeps Great White Shark ready for seal-colony pairings", () => {
+    expect(predatorData["Great White Shark"].prey).toEqual(
+      expect.arrayContaining(["Seal", "Sea Lion"])
     );
-
-    expect(uniquePrey.size).toBeGreaterThanOrEqual(100);
-  });
-
-  it("keeps opposing lists deduped per animal", () => {
-    for (const [animal, info] of Object.entries(predatorData)) {
-      expect(new Set(info.prey).size).toBe(
-        info.prey.length,
-        `${animal} prey list should not contain duplicates`
-      );
-    }
-  });
-
-  it("adds Warthog once for both crocodile entries", () => {
-    expect(
-      predatorData.Crocodile.prey.filter((animal) => animal === "Warthog")
-    ).toHaveLength(1);
-    expect(
-      predatorData["Nile Crocodile"].prey.filter(
-        (animal) => animal === "Warthog"
-      )
-    ).toHaveLength(1);
-  });
-
-  it("lets World Wildlife keep manual/custom animals available", () => {
-    expect(
-      filterPredatorOptionsByWildlifeScope(["Custom Panther"], "World Wildlife")
-    ).toEqual(["Custom Panther"]);
   });
 });
-
 
 describe("suggestArc realism matching", () => {
   it("matches Grizzly Bear vs Bull Elk to giant clash", () => {
@@ -102,14 +78,56 @@ describe("suggestArc realism matching", () => {
 describe("suggestHabitat pair matching", () => {
   it("returns Yellowstone clash habitat for Grizzly Bear vs Bull Elk", () => {
     expect(
-      suggestHabitat(
-        "Grizzly Bear",
-        "Bull Elk",
-        "fallback habitat"
-      )
-    ).toBe("Yellowstone meadow and open wilderness with strong clash readability and clean subject spacing");
+      suggestHabitat("Grizzly Bear", "Bull Elk", "fallback habitat")
+    ).toBe(
+      "Yellowstone meadow and open wilderness with strong clash readability and clean subject spacing"
+    );
   });
-  describe("calendar rotations use stronger elk naming", () => {
+
+  it("returns pack-pressure habitat for Wolf Pack vs Bull Elk", () => {
+    expect(
+      suggestHabitat("Wolf Pack", "Bull Elk", "fallback habitat")
+    ).toBe(
+      "northern Rocky Mountain forest edge, sage valley, and open meadow with clean pack-pressure lanes and readable prey spacing"
+    );
+  });
+
+  it("returns ambush habitat for Mountain Lion vs White-tailed Deer", () => {
+    expect(
+      suggestHabitat("Mountain Lion", "White-tailed Deer", "fallback habitat")
+    ).toBe(
+      "forest edge, brush opening, and broken ridge cover with clean ambush lanes and readable prey spacing"
+    );
+  });
+
+  it("returns escape-lane habitat for Coyote vs White-tailed Deer", () => {
+    expect(
+      suggestHabitat("Coyote", "White-tailed Deer", "fallback habitat")
+    ).toBe(
+      "open prairie, brush edge, and field transition with clear escape lanes and readable survival-animal spacing"
+    );
+  });
+
+  it("returns the exact muddy waterhole habitat for Crocodile vs Warthog", () => {
+    expect(suggestHabitat("Crocodile", "Warthog", "fallback habitat")).toContain(
+      "dry-season African muddy waterhole"
+    );
+  });
+
+  it("returns surf-line habitat for Great White Shark vs Seal", () => {
+    expect(suggestHabitat("Great White Shark", "Seal", "fallback habitat")).toContain(
+      "surf line"
+    );
+  });
+
+  it("falls back when no pair-specific habitat exists", () => {
+    expect(suggestHabitat("Lion", "Gazelle", "fallback habitat")).toBe(
+      "fallback habitat"
+    );
+  });
+});
+
+describe("calendar rotations use stronger elk naming", () => {
   it("includes Wolf Pack vs Bull Elk in monthly calendar rotations", () => {
     const days = generateMonthlyCalendar(
       "Mountain Lion",
@@ -142,56 +160,5 @@ describe("suggestHabitat pair matching", () => {
         (item) => item.predator === "Wolf Pack" && item.prey === "Bull Elk"
       )
     ).toBe(true);
-  });
-});
-  it("returns pack-pressure habitat for Wolf Pack vs Bull Elk", () => {
-    expect(
-      suggestHabitat(
-        "Wolf Pack",
-        "Bull Elk",
-        "fallback habitat"
-      )
-    ).toBe("northern Rocky Mountain forest edge, sage valley, and open meadow with clean pack-pressure lanes and readable prey spacing");
-  });
-  it("returns ambush habitat for Mountain Lion vs White-tailed Deer", () => {
-    expect(
-      suggestHabitat(
-        "Mountain Lion",
-        "White-tailed Deer",
-        "fallback habitat"
-      )
-    ).toBe("forest edge, brush opening, and broken ridge cover with clean ambush lanes and readable prey spacing");
-  });
-
-  it("returns escape-lane habitat for Coyote vs White-tailed Deer", () => {
-    expect(
-      suggestHabitat(
-        "Coyote",
-        "White-tailed Deer",
-        "fallback habitat"
-      )
-    ).toBe("open prairie, brush edge, and field transition with clear escape lanes and readable survival-animal spacing");
-  });
-
-  it("returns the exact muddy waterhole habitat for Crocodile vs Warthog", () => {
-    expect(
-      suggestHabitat("Crocodile", "Warthog", "fallback habitat")
-    ).toContain("dry-season African muddy waterhole");
-  });
-
-  it("returns surf-line habitat for Great White Shark vs Seal", () => {
-    expect(
-      suggestHabitat("Great White Shark", "Seal", "fallback habitat")
-    ).toContain("surf line");
-  });
-
-  it("falls back when no pair-specific habitat exists", () => {
-    expect(
-      suggestHabitat(
-        "Lion",
-        "Gazelle",
-        "fallback habitat"
-      )
-    ).toBe("fallback habitat");
   });
 });

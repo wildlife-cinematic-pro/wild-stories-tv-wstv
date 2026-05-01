@@ -205,14 +205,14 @@ describe("workflow presets", () => {
     });
   });
 
-  it("keeps legacy world-animal presets loadable by defaulting them to World Wildlife", () => {
+  it("keeps legacy world-animal presets loadable by defaulting them to World Wide Wildlife", () => {
     const normalized = normalizeWorkflowPresetSnapshot({
       predator: "Lion",
       prey: "Zebra",
       arc: "Chase and takedown",
     });
 
-    expect(normalized?.wildlifeScopeMode).toBe("World Wildlife");
+    expect(normalized?.wildlifeScopeMode).toBe("World Wide Wildlife");
   });
 
   it("exports a single preset with versioned portable JSON metadata", () => {
