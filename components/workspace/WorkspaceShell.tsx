@@ -30,7 +30,7 @@ export default function WorkspaceShell({
   children,
 }: WorkspaceShellProps) {
   return (
-    <div className="grid gap-5 lg:h-[calc(100vh-var(--app-header-height))] lg:grid-cols-[280px_minmax(0,1fr)] lg:items-start lg:gap-4 lg:overflow-hidden xl:grid-cols-[300px_minmax(0,1fr)]">
+    <div className="grid gap-5 lg:grid-cols-[280px_minmax(0,1fr)] lg:items-start lg:gap-4 xl:grid-cols-[300px_minmax(0,1fr)]">
       <WorkspaceSidebar
         title={sidebarTitle}
         subtitle={sidebarSubtitle}
@@ -39,8 +39,8 @@ export default function WorkspaceShell({
         onActiveItemChange={onActiveItemChange}
       />
 
-      <div className="min-w-0 space-y-5 lg:h-full lg:space-y-4 lg:overflow-y-auto lg:overscroll-contain lg:pr-1 xl:pr-2">
-        <section className="rounded-[28px] border border-[color:var(--border)] bg-[color:var(--surface-elevated)] p-6 shadow-[var(--surface-shadow)] lg:sticky lg:top-0 lg:z-10 lg:bg-[color:var(--surface-elevated)] lg:p-4 lg:shadow-[var(--surface-shadow)] lg:backdrop-blur xl:p-5">
+      <div className="min-w-0 space-y-5 lg:space-y-4 lg:pr-1 xl:pr-2">
+        <section className="rounded-[28px] border border-[color:var(--border)] bg-[color:var(--surface-elevated)] p-6 shadow-[var(--surface-shadow)] lg:p-4 xl:p-5">
           <div className="flex flex-wrap items-start justify-between gap-3 xl:gap-4">
             <div className="min-w-0 flex-1">
               <div className="text-[11px] font-semibold uppercase tracking-[0.2em] text-cyan-300/80">

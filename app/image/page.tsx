@@ -293,7 +293,7 @@ export default function ImagePage() {
       </header>
 
       <div className="mx-auto w-full max-w-[var(--main-max-width)] px-4 py-6 sm:px-6 lg:px-8">
-        <section className="mb-5 overflow-hidden rounded-[34px] border border-white/[0.09] bg-gradient-to-br from-gray-950/95 via-slate-950/95 to-cyan-950/50 p-5 shadow-[var(--surface-shadow)]">
+        <section className="mb-4 overflow-hidden rounded-[34px] border border-white/[0.09] bg-gradient-to-br from-gray-950/95 via-slate-950/95 to-cyan-950/50 p-4 sm:p-5 shadow-[var(--surface-shadow)]">
           <p className="text-xs font-black uppercase tracking-[0.2em] text-cyan-300">
             Photo-only content studio
           </p>
@@ -303,11 +303,11 @@ export default function ImagePage() {
           <p className="mt-2 max-w-4xl text-sm leading-6 text-white/60">
             Nano Banana 2 + GPT Image 2 prompts, American English Facebook captions, USA-viral hashtags, 3 variations, 5-post packs, and prompt quality checks.
           </p>
-          <div className="mt-4 grid gap-3 sm:grid-cols-4">
+          <div className="mt-4 flex flex-wrap gap-2.5">
             {IMAGE_STUDIO_FEATURE_BADGES.map((item) => (
               <div
                 key={item}
-                className="rounded-2xl border border-white/[0.08] bg-white/[0.04] px-3 py-2 text-xs font-black text-white/75"
+                className="rounded-full border border-white/[0.08] bg-white/[0.04] px-3 py-1.5 text-xs font-black text-white/75"
               >
                 {item}
               </div>
@@ -379,7 +379,8 @@ export default function ImagePage() {
                   nanoPrompt={derived.nanoPrompt}
                   gptPrompt={derived.gptPrompt}
                   negativePrompt={derived.negativePrompt}
-                  facebookCaptionWithHashtags={derived.facebookCaptionWithHashtags}
+                  facebookCaption={derived.facebookCaption}
+              facebookCaptionWithHashtags={derived.facebookCaptionWithHashtags}
                   variationPrompts={derived.variationPrompts}
                   fivePostPack={derived.fivePostPack}
                   qualityChecklist={derived.qualityChecklist}
@@ -398,7 +399,8 @@ export default function ImagePage() {
               nanoPrompt={derived.nanoPrompt}
               gptPrompt={derived.gptPrompt}
               negativePrompt={derived.negativePrompt}
-              facebookCaptionWithHashtags={derived.facebookCaptionWithHashtags}
+              facebookCaption={derived.facebookCaption}
+                  facebookCaptionWithHashtags={derived.facebookCaptionWithHashtags}
               variationPrompts={derived.variationPrompts}
               fivePostPack={derived.fivePostPack}
               qualityChecklist={derived.qualityChecklist}
