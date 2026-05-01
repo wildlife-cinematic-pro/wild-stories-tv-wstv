@@ -85,7 +85,7 @@ export default function WorkspaceSidebar({
   return (
     <>
       <section className="lg:hidden">
-        <div className="overflow-hidden rounded-[24px] border border-[color:var(--border)] bg-[color:var(--surface-elevated)] p-2 shadow-[var(--surface-shadow)]">
+        <div className="overflow-hidden rounded-[24px] border border-[color:var(--border)] bg-[color:var(--surface-elevated)] p-1.5 shadow-[var(--surface-shadow)] sm:p-2">
           <div
             className="flex gap-2 overflow-x-auto pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
             role="tablist"
@@ -103,7 +103,7 @@ export default function WorkspaceSidebar({
                   aria-controls={`workspace-panel-${item.id}`}
                   aria-label={`${item.label} workspace`}
                   id={`workspace-tab-${item.id}`}
-                  className={`shrink-0 rounded-2xl border px-3 py-2 text-sm font-semibold transition ${
+                  className={`shrink-0 rounded-2xl border px-3 py-1.5 text-[13px] font-semibold transition ${
                     active
                       ? "border-cyan-400/40 bg-cyan-500/10 text-cyan-100"
                       : "border-[color:var(--border)] bg-[color:var(--surface)] text-[color:var(--muted)] hover:border-cyan-400/50 hover:text-cyan-200"

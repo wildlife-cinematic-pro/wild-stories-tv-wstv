@@ -17,11 +17,11 @@ export default function WorkspaceSection({
 }: WorkspaceSectionProps) {
   return (
     <section
-      className={`rounded-[28px] border border-[color:var(--border)] bg-[color:var(--surface-elevated)] p-6 shadow-[var(--surface-shadow)] ${className}`.trim()}
+      className={`rounded-[28px] border border-[color:var(--border)] bg-[color:var(--surface-elevated)] p-4 shadow-[var(--surface-shadow)] sm:p-5 lg:p-6 ${className}`.trim()}
     >
       <div className="flex flex-wrap items-start justify-between gap-4">
         <div className="min-w-0 flex-1">
-          <h2 className="text-xl font-semibold tracking-tight text-[color:var(--text)] sm:text-2xl">
+          <h2 className="text-lg font-semibold tracking-tight text-[color:var(--text)] sm:text-2xl">
             {title}
           </h2>
           {description ? (
@@ -32,7 +32,7 @@ export default function WorkspaceSection({
         </div>
         {actions ? <div className="flex flex-wrap gap-2">{actions}</div> : null}
       </div>
-      <div className="mt-5">{children}</div>
+      <div className="mt-4 sm:mt-5">{children}</div>
     </section>
   );
 }

@@ -79,7 +79,7 @@ export default function ImageStudioOutputs({
   const showStats = activeSection === "outputs" || activeSection === "caption";
 
   return (
-    <div className="space-y-5">
+    <div className="space-y-4 sm:space-y-5">
       {showStats ? (
         <WorkspaceSection
           title="Studio at a glance"
@@ -90,7 +90,7 @@ export default function ImageStudioOutputs({
           }
           actions={<CopyAllButton value={copyAll} copiedKey={copiedKey} onCopied={setCopiedKey} />}
         >
-          <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+          <div className="grid gap-3 sm:gap-4 md:grid-cols-2 xl:grid-cols-4">
             <StatCard label="Collection" value={selectedCollection} />
             <StatCard label="Model outputs" value="Nano Banana 2 + GPT Image 2" />
             <StatCard label="Caption" value="American English" />
@@ -100,12 +100,12 @@ export default function ImageStudioOutputs({
       ) : null}
 
       {activeSection === "outputs" ? (
-        <div className="space-y-5">
+        <div className="space-y-4 sm:space-y-5">
           <WorkspaceSection
             title="Master still prompts"
             description="Keep Nano Banana 2 prominent as the primary wildlife still lane, with GPT Image 2 ready as the backup cover and layout-safe alternate."
           >
-            <div className="space-y-4">
+            <div className="space-y-3 sm:space-y-4">
               <OutputCard label="Nano Banana 2 prompt" value={nanoPrompt} copyKey="nano" copiedKey={copiedKey} onCopied={setCopiedKey} />
               <OutputCard label="GPT Image 2 prompt" value={gptPrompt} copyKey="gpt" copiedKey={copiedKey} onCopied={setCopiedKey} />
             </div>
@@ -121,12 +121,12 @@ export default function ImageStudioOutputs({
       ) : null}
 
       {activeSection === "caption" ? (
-        <div className="space-y-5">
+        <div className="space-y-4 sm:space-y-5">
           <WorkspaceSection
             title="Caption lane"
             description="American English only, with the Facebook caption and exact five-tag output separated so posting prep feels cleaner."
           >
-            <div className="space-y-4">
+            <div className="space-y-3 sm:space-y-4">
               <OutputCard label="Facebook caption" value={facebookCaption} copyKey="caption" copiedKey={copiedKey} onCopied={setCopiedKey} />
               <OutputCard label="USA viral hashtags" value={usaHashtags} copyKey="hashtags" copiedKey={copiedKey} onCopied={setCopiedKey} />
             </div>
@@ -136,7 +136,7 @@ export default function ImageStudioOutputs({
             title="Combined posting copy"
             description="Use the combined block when you want the ready-to-paste Facebook caption and hashtag output together."
           >
-            <div className="space-y-4">
+            <div className="space-y-3 sm:space-y-4">
               <OutputCard label="Facebook caption + USA viral hashtags" value={facebookCaptionWithHashtags} copyKey="caption" copiedKey={copiedKey} onCopied={setCopiedKey} />
               <WorkspaceCard
                 title="Caption notes"
