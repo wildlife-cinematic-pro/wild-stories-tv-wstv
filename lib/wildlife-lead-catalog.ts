@@ -80,7 +80,8 @@ const ANIMAL_ALIASES: Record<string, string> = {
   "Snake": "Rattlesnake",
   "African Lion Male": "Lion",
   "Arctic Wolf": "Wolf",
-  "American Alligator": "Alligator"
+  "American Alligator": "Alligator",
+  "Turtle": "Tortoise"
 };
 
 export function normalizeCatalogAnimalName(name: string): string {
@@ -187,6 +188,7 @@ export const WORLD_WIDE_WILDLIFE_LEADS = [
   "Giraffe",
   "Opossum",
   "Rattlesnake",
+  "Tortoise",
   "Skunk"
 ] as const;
 export const USA_VIRAL_WILDLIFE_LEADS = [
@@ -263,7 +265,8 @@ export const GLOBAL_VIRAL_WILDLIFE_LEADS = [
   "King Cobra",
   "Caiman",
   "Tiger Shark",
-  "Bull Shark"
+  "Bull Shark",
+  "Tortoise"
 ] as const;
 export const USA_CANADA_WILDLIFE_LEADS = [
   "Grizzly Bear",
@@ -10988,6 +10991,161 @@ export const WILDLIFE_LEAD_CATALOG: WildlifeLeadCatalogEntry[] = [
         "safeArcLabel": "Survival encounter",
         "badges": [],
         "promptTemplateHint": "Keep Rattlesnake and Mouse readable in the same habitat with strong documentary tension and realistic spacing."
+      }
+    ]
+  },
+  {
+    "leadAnimal": "Tortoise",
+    "normalizedName": "tortoise",
+    "aliases": [
+      "Turtle"
+    ],
+    "viralRank": 101,
+    "usaPriority": 999,
+    "category": "documentary",
+    "defaultOpposingAnimal": "Monitor Lizard",
+    "opposingAnimals": [
+      "Monitor Lizard",
+      "Golden Eagle",
+      "Coyote",
+      "Alligator",
+      "Jaguar"
+    ],
+    "primaryEnvironments": [
+      "sun-baked desert scrub",
+      "dry savanna track",
+      "Galápagos lava plain"
+    ],
+    "secondaryEnvironments": [
+      "marsh-edge sandbar",
+      "thornbush grassland edge"
+    ],
+    "badges": [
+      "Facebook-safe",
+      "No gore",
+      "Low drift",
+      "Near-clash"
+    ],
+    "safeArcLabels": [
+      "Shell defense standoff",
+      "Slow escape pressure",
+      "Near-clash",
+      "Survival encounter"
+    ],
+    "habitatTags": [
+      "desert",
+      "open",
+      "savanna",
+      "wetland",
+      "rainforest"
+    ],
+    "promptTemplateHints": [
+      "Use Tortoise with patient low-to-ground motion, clean shell silhouette, and believable survival pressure without graphic contact."
+    ],
+    "safetyDefaults": [
+      "No blood",
+      "No gore",
+      "No visible wounds",
+      "Documentary survival tension",
+      "Natural wildlife behavior",
+      "Realistic animal physics",
+      "Clean anatomy"
+    ],
+    "opposingProfiles": [
+      {
+        "animal": "Monitor Lizard",
+        "environments": [
+          "sun-baked desert scrub",
+          "rocky dry wash"
+        ],
+        "habitatTags": [
+          "desert",
+          "open"
+        ],
+        "safeArcLabel": "Shell defense standoff",
+        "badges": [
+          "Facebook-safe",
+          "No gore",
+          "Low drift",
+          "Near-clash"
+        ],
+        "promptTemplateHint": "Keep Tortoise and Monitor Lizard readable on the same sun-baked ground with a clean shell-defense silhouette and believable spacing."
+      },
+      {
+        "animal": "Golden Eagle",
+        "environments": [
+          "open desert slope",
+          "highland scrub ridge"
+        ],
+        "habitatTags": [
+          "desert",
+          "mountain",
+          "open"
+        ],
+        "safeArcLabel": "Near-clash",
+        "badges": [
+          "Facebook-safe",
+          "No gore",
+          "Near-clash"
+        ],
+        "promptTemplateHint": "Stage Tortoise and Golden Eagle with wide overhead clearance, strong shell readability, and grounded documentary tension."
+      },
+      {
+        "animal": "Coyote",
+        "environments": [
+          "desert scrub track",
+          "dry grassland wash"
+        ],
+        "habitatTags": [
+          "desert",
+          "open",
+          "woodland"
+        ],
+        "safeArcLabel": "Slow escape pressure",
+        "badges": [
+          "Facebook-safe",
+          "No gore",
+          "Low drift"
+        ],
+        "promptTemplateHint": "Keep Tortoise and Coyote readable with low camera height, slow pressure, and clean dust-track geography."
+      },
+      {
+        "animal": "Alligator",
+        "environments": [
+          "marsh-edge sandbar",
+          "cypress swamp mudbank"
+        ],
+        "habitatTags": [
+          "swamp",
+          "wetland",
+          "river"
+        ],
+        "safeArcLabel": "Survival encounter",
+        "badges": [
+          "Facebook-safe",
+          "No gore",
+          "Near-clash"
+        ],
+        "promptTemplateHint": "Keep Tortoise and Alligator readable at the waterline with clear shell contrast, low-angle threat, and no graphic impact."
+      },
+      {
+        "animal": "Jaguar",
+        "environments": [
+          "tropical forest trail",
+          "riverbank jungle edge"
+        ],
+        "habitatTags": [
+          "jungle",
+          "rainforest",
+          "river"
+        ],
+        "safeArcLabel": "Survival encounter",
+        "badges": [
+          "Facebook-safe",
+          "No gore",
+          "Near-clash"
+        ],
+        "promptTemplateHint": "Keep Tortoise and Jaguar readable with damp ground detail, deliberate stalking distance, and strong shell silhouette separation."
       }
     ]
   },
