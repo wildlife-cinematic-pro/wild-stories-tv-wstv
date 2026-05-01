@@ -66,7 +66,7 @@ export function DirectWorkspace({
                     : "border-blue-200 bg-[color:var(--surface-elevated)] text-blue-800 hover:bg-blue-500/12 dark:text-blue-100"
                 }`}
               >
-                Kling 10s Optional
+                Kling Direct 15s
               </button>
             )}
 
@@ -124,7 +124,7 @@ export function DirectWorkspace({
                 onClick={() => onCopy(seedanceMultiShotCard.pasteReady)}
                 className="rounded-xl border border-orange-300 bg-[color:var(--surface-elevated)] px-4 py-2 text-sm font-extrabold text-orange-700 hover:bg-orange-500/12 active:scale-[0.98] dark:text-orange-100"
               >
-                📋 Copy BODY Only
+                📋 Copy Card + Notes
               </button>
             </div>
           </div>
@@ -137,7 +137,7 @@ export function DirectWorkspace({
             <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
               <div className="flex flex-wrap items-center gap-2">
                 <div className="text-sm font-extrabold text-blue-900 dark:text-blue-100">
-                  Kling 10-Second Native Multi-Shot
+                  Kling Direct 15s Multishot
                 </div>
 
                 <span className="rounded-full bg-[color:var(--surface-elevated)] px-2 py-0.5 text-[11px] font-bold text-blue-700 ring-1 ring-blue-200 dark:text-blue-200">
@@ -145,20 +145,17 @@ export function DirectWorkspace({
                 </span>
 
                 <span className="rounded-full bg-green-100 px-2 py-0.5 text-[11px] font-extrabold text-green-700 ring-1 ring-green-200 dark:bg-green-500/15 dark:text-green-100">
-                  ✓ Zero inter-clip drift
+                  ✓ 5 shots — 1 prompt
                 </span>
 
                 <span className="rounded-full bg-amber-100 px-2 py-0.5 text-[11px] font-extrabold text-amber-800 ring-1 ring-amber-200 dark:bg-amber-500/15 dark:text-amber-100">
-                  Action-ready | Audio-capable
+                  Negative prompt embedded
                 </span>
               </div>
             </div>
 
             <p className="mb-3 text-xs leading-relaxed text-blue-800 dark:text-blue-100/90">
-              यो एउटै prompt Kling 3.0 Pro/Standard मा paste गर्दा 10 seconds
-              को continuous video आउँछ। 3 linked beats generate हुन्छन्, Bind
-              Subject / element references use गर्दा subject continuity
-              reinforce गर्न सकिन्छ।
+              Paste one prompt block into Kling 3.0 Pro or Standard for a full 15-second survival sequence. The copied block preserves the provided master image, keeps all five beats in one place, and ends with the embedded Negative prompt line for faster testing.
             </p>
 
             <pre className="max-h-[420px] overflow-auto whitespace-pre-wrap rounded-xl border border-blue-200 bg-[color:var(--surface-elevated)] p-3 text-xs leading-relaxed text-[color:var(--text)]">
@@ -168,17 +165,17 @@ export function DirectWorkspace({
             <div className="mt-3 flex flex-wrap gap-2">
               <button
                 type="button"
-                onClick={() => onCopy(klingNative15sCard.fullText)}
+                onClick={() => onCopy(klingNative15sCard.pasteReady)}
                 className="rounded-xl bg-blue-700 px-4 py-2 text-sm font-extrabold text-white hover:bg-blue-800 active:scale-[0.98]"
               >
-                📋 Copy Full 10s Prompt
+                📋 Copy Kling 15s Prompt
               </button>
               <button
                 type="button"
-                onClick={() => onCopy(klingNative15sCard.pasteReady)}
+                onClick={() => onCopy(klingNative15sCard.fullText)}
                 className="rounded-xl border border-blue-300 bg-[color:var(--surface-elevated)] px-4 py-2 text-sm font-extrabold text-blue-700 hover:bg-blue-500/12 active:scale-[0.98] dark:text-blue-100"
               >
-                📋 Copy BODY Only
+                📋 Copy Card + Notes
               </button>
             </div>
           </div>
