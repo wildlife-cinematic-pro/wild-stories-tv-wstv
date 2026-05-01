@@ -22,15 +22,20 @@ describe("wildlife scope filtering", () => {
     expect(filtered).not.toContain("Jaguar");
   });
 
-  it("preserves broader access in World Wide Wildlife mode", () => {
+  it("keeps World Wide Wildlife broad while still using curated USA-first ordering", () => {
     const filtered = filterPredatorOptionsByWildlifeScope(
       ["Lion", "Mountain Lion", "Wolf Pack", "Bald Eagle", "Jaguar", "Bull Elk"],
       "World Wide Wildlife"
     );
 
-    expect(filtered).toEqual(
-      expect.arrayContaining(["Lion", "Mountain Lion", "Wolf Pack", "Bald Eagle", "Jaguar", "Bull Elk"])
-    );
+    expect(filtered).toEqual([
+      "Wolf Pack",
+      "Mountain Lion",
+      "Bald Eagle",
+      "Bull Elk",
+      "Jaguar",
+      "Lion",
+    ]);
   });
 });
 

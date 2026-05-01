@@ -41,6 +41,7 @@ import {
   KLING_MODELS,
 } from "@/lib/model-specs";
 import { DEFAULT_CAMERA_ANGLE_PRESET } from "@/lib/camera-angle-presets";
+import { buildStoryboardPreviewLinkMetadata } from "@/lib/storyboard-link-metadata";
 import { getWildlifeScopeDefaultSelection } from "@/lib/wildlife-focus";
 import {
   useBuildPreview,
@@ -756,6 +757,25 @@ export default function Page() {
     sceneDescriptionMode,
     sceneDescriptionTouched,
   ]);
+
+  const compactStoryboardLinkMetadata = useMemo(
+    () =>
+      buildStoryboardPreviewLinkMetadata({
+        predator,
+        prey,
+      }),
+    [predator, prey]
+  );
+
+  const detailedStoryboardLinkMetadata = useMemo(
+    () =>
+      buildStoryboardPreviewLinkMetadata({
+        predator,
+        prey,
+        finalEnvironment,
+      }),
+    [finalEnvironment, predator, prey]
+  );
   // ─── RENDER ───────────────────────────────────────────────────────────────
 
   return (
@@ -894,7 +914,10 @@ export default function Page() {
                       Open a read-only storyboard preview generated from the current Build setup.
                     </p>
                     <Link
+                      key={compactStoryboardLinkMetadata.key}
                       href={storyboardHref}
+                      aria-label={compactStoryboardLinkMetadata.ariaLabel}
+                      title={compactStoryboardLinkMetadata.title}
                       className="inline-flex items-center gap-2 rounded-xl border border-cyan-400/30 bg-cyan-500/10 px-3.5 py-2 text-xs font-semibold text-cyan-200 transition hover:border-cyan-300 hover:bg-cyan-500/15"
                     >
                       <span className="grid h-5 w-5 place-items-center rounded-full bg-cyan-400/15 text-[11px] text-cyan-200">
@@ -931,7 +954,10 @@ export default function Page() {
                   </p>
                 </div>
                 <Link
+                  key={detailedStoryboardLinkMetadata.key}
                   href={currentStoryboardHref}
+                  aria-label={detailedStoryboardLinkMetadata.ariaLabel}
+                  title={detailedStoryboardLinkMetadata.title}
                   className="rounded-xl border border-[color:var(--border)] bg-[color:var(--surface)] px-4 py-2 text-sm font-semibold text-[color:var(--text)] transition hover:border-cyan-400/60 hover:text-cyan-200"
                 >
                   Open Storyboard for Current Setup

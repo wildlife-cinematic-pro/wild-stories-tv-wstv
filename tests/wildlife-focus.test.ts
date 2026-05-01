@@ -38,17 +38,6 @@ describe("wildlife focus modes", () => {
     }
   });
 
-  it("keeps World Wide Wildlife broad while still allowing the built-in list", () => {
-    const builtInAnimals = Object.keys(predatorData);
-    const filtered = filterPredatorOptionsByWildlifeScope(
-      builtInAnimals,
-      "World Wide Wildlife"
-    );
-
-    expect(getSupportedWildlifeFocusAnimals("World Wide Wildlife").length).toBeGreaterThan(20);
-    expect(filtered).toEqual(expect.arrayContaining(builtInAnimals));
-  });
-
   it("supports legacy wildlife focus aliases", () => {
     expect(normalizeWildlifeScopeMode("USA Wildlife")).toBe(
       "USA / Canada Wildlife"
@@ -66,6 +55,161 @@ describe("wildlife focus modes", () => {
         "USA Viral Wildlife"
       )
     ).toEqual(["White-tailed Deer", "Wild Boar"]);
+  });
+});
+
+describe("World Wide Wildlife catalog behavior", () => {
+  const animals = getSupportedWildlifeFocusAnimals("World Wide Wildlife");
+
+  it("expands to a broad worldwide lead catalog with USA-first ranking", () => {
+    expect(animals).toHaveLength(100);
+    expect(animals.slice(0, 12)).toEqual([
+      "Grizzly Bear",
+      "Black Bear",
+      "Wolf Pack",
+      "Mountain Lion",
+      "Bald Eagle",
+      "Alligator",
+      "Great White Shark",
+      "Orca",
+      "Bison",
+      "Moose",
+      "Bull Elk",
+      "Polar Bear",
+    ]);
+  });
+
+
+  it("keeps the first 30 focused on stronger USA-facing viral wildlife", () => {
+    const top30 = animals.slice(0, 30);
+    expect(top30).toEqual(expect.arrayContaining([
+      "Grizzly Bear",
+      "Black Bear",
+      "Wolf Pack",
+      "Mountain Lion",
+      "Bald Eagle",
+      "Alligator",
+      "Great White Shark",
+      "Orca",
+      "Bison",
+      "Moose",
+      "Bull Elk",
+      "Polar Bear",
+    ]));
+    expect(top30).not.toEqual(expect.arrayContaining([
+      "Salmon",
+      "Rabbit",
+      "Jackrabbit",
+      "Quail",
+      "Black Mamba",
+    ]));
+  });
+
+  it("removes duplicate-concept filler like Stag and replaces it with Pronghorn", () => {
+    expect(animals).toContain("Pronghorn");
+    expect(animals).not.toContain("Stag");
+  });
+
+  it("keeps USA Viral Wildlife free of non-USA filler like Black Mamba", () => {
+    expect(getSupportedWildlifeFocusAnimals("USA Viral Wildlife")).not.toContain(
+      "Black Mamba"
+    );
+  });
+
+  it("keeps canonical leads unique without surfacing alias duplicates", () => {
+    expect(new Set(animals).size).toBe(animals.length);
+    const filtered = filterPredatorOptionsByWildlifeScope(
+      [
+        "Bear",
+        "Brown Bear",
+        "Cougar",
+        "Mountain Lion",
+        "Shark",
+        "Great White Shark",
+      ],
+      "World Wide Wildlife"
+    );
+
+    expect(filtered).toEqual([
+      "Mountain Lion",
+      "Great White Shark",
+      "Brown Bear",
+    ]);
+  });
+
+  it("keeps custom/manual animals possible outside the built-in ordering filter", () => {
+    const builtInAnimals = filterPredatorOptionsByWildlifeScope(
+      Object.keys(predatorData),
+      "World Wide Wildlife"
+    );
+
+    expect(builtInAnimals).not.toContain("Bear");
+    expect(builtInAnimals).not.toContain("Cougar");
+    expect(builtInAnimals).toContain("Mountain Lion");
+  });
+
+  it("gives every world-wide lead between one and five matched opposing animals", () => {
+    for (const animal of animals) {
+      const matches = getWildlifeFocusPairings("World Wide Wildlife").filter(
+        (item) => item.predator === animal
+      );
+      expect(matches.length, animal).toBeGreaterThanOrEqual(1);
+      expect(matches.length, animal).toBeLessThanOrEqual(5);
+    }
+  });
+
+  it("returns pair-specific documentary environments instead of the fallback", () => {
+    expect(
+      getWildlifeFocusEnvironmentSuggestion(
+        "World Wide Wildlife",
+        "Tiger",
+        "Wild Boar",
+        "fallback habitat"
+      )
+    ).toMatch(/jungle|mangrove|forest/i);
+  });
+
+
+  it("removes implausible Australian rattlesnake pairings and fixes Salmon realism", () => {
+    expect(
+      filterPreyOptionsByWildlifeScope(
+        "Koala",
+        ["Python", "Rattlesnake", "Dingo", "Monitor Lizard"],
+        "World Wide Wildlife"
+      )
+    ).toEqual(["Python", "Dingo", "Monitor Lizard"]);
+
+    expect(
+      getWildlifeFocusEnvironmentSuggestion(
+        "World Wide Wildlife",
+        "Salmon",
+        "Bald Eagle",
+        "fallback habitat"
+      )
+    ).toMatch(/salmon ladder|riffle|river mouth/i);
+
+    expect(
+      isPairCompatibleWithWildlifeScope(
+        "Salmon",
+        "Orca",
+        "World Wide Wildlife"
+      )
+    ).toBe(false);
+  });
+
+  it("provides compatibility guidance for world-wide habitat overrides", () => {
+    const guidance = getWildlifeHabitatCompatibilityGuidance({
+      mode: "World Wide Wildlife",
+      predator: "Great White Shark",
+      prey: "Seal",
+      habitat: "Riverbank Reeds",
+    });
+
+    expect(guidance).toMatchObject({
+      isWarning: true,
+      label: "Likely habitat mismatch",
+    });
+    expect(guidance?.message).toMatch(/surf line|coastal water|open ocean/i);
   });
 });
 
@@ -95,10 +239,21 @@ describe("Global Viral Wildlife focus", () => {
       "Warthog"
     );
 
-    expect(isPairCompatibleWithWildlifeScope("Crocodile", "Warthog", "Global Viral Wildlife")).toBe(true);
+    expect(
+      isPairCompatibleWithWildlifeScope(
+        "Crocodile",
+        "Warthog",
+        "Global Viral Wildlife"
+      )
+    ).toBe(true);
     expect(highlights.safeArcLabel).toBe("Waterhole ambush");
     expect(highlights.badges).toEqual(
-      expect.arrayContaining(["Kling 15s", "Facebook-safe", "No gore", "Water ambush"])
+      expect.arrayContaining([
+        "Kling 15s",
+        "Facebook-safe",
+        "No gore",
+        "Water ambush",
+      ])
     );
   });
 
@@ -149,28 +304,6 @@ describe("Global Viral Wildlife focus", () => {
         "Lion",
         "Wildebeest"
       )
-    ).toMatch(/dry grassland run lane|savanna golden hour grassland/i);
-  });
-});
-
-describe("World Wide Wildlife helper behavior", () => {
-  it("keeps custom animals usable in the broad documentary mode", () => {
-    expect(
-      filterPredatorOptionsByWildlifeScope(
-        ["Custom Marsh Beast", "Lion", "Moose"],
-        "World Wide Wildlife"
-      )
-    ).toEqual(expect.arrayContaining(["Custom Marsh Beast", "Lion", "Moose"]));
-  });
-
-  it("returns a compatible environment for curated world-wide documentary setups", () => {
-    expect(
-      getWildlifeFocusEnvironmentSuggestion(
-        "World Wide Wildlife",
-        "Tiger",
-        "Deer",
-        "fallback habitat"
-      )
-    ).toBe("fallback habitat");
+    ).toMatch(/dry grassland|savanna/i);
   });
 });
