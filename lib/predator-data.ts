@@ -1196,6 +1196,150 @@ export const predatorData: Record<string, PredatorInfo> = {
     defaultArc: "Ambush attack",
     driftRisk: "LOW",
   },
+  "Sea Lion": {
+    prey: ["Orca", "Great White Shark", "Leopard Seal"],
+    environment: "Pacific surf line, rocky haul-out coast, and kelp-wash coastal shallows",
+    lighting:
+      "cold marine daylight, silver overcast reflections, whitewash highlights, and strong wet-hide contrast against dark water",
+    cameraGear:
+      "Sony A1, 300mm wildlife lens, long-lens coastal action framing from the shoreline",
+    texture:
+      "wet brown hide, whisker detail, scarred shoulder texture, white spray on skin, and grounded haul-out body weight",
+    defaultArc: "Escape from danger",
+    driftRisk: "LOW",
+  },
+  "Water Buffalo": {
+    prey: ["Saltwater Crocodile", "Crocodile", "Tiger", "Komodo Dragon"],
+    environment: "muddy tropical waterhole, reed-framed river edge, and humid floodplain crossing",
+    lighting:
+      "humid tropical overcast light, muddy water reflections, warm late-day edge light, and strong horn silhouette readability",
+    cameraGear:
+      "Canon EOS R3, 400mm wildlife lens, waterhole-level documentary framing",
+    texture:
+      "dark wet hide, mud-caked legs, broad horn spread, skin folds, and heavy grounded shoulder mass",
+    defaultArc: "Defender stands ground",
+    driftRisk: "LOW",
+  },
+  Gazelle: {
+    prey: ["Cheetah", "Lion", "African Wild Dog", "Leopard"],
+    environment: "open savanna sprint lane, short-grass plain, and dust-light escape corridor",
+    lighting:
+      "bright African daylight, warm golden-hour side light, dust haze, and long readable sprint shadows",
+    cameraGear:
+      "Sony A1, 400mm wildlife lens, high-speed pursuit framing across open ground",
+    texture:
+      "sleek tan coat, alert ears, taut leg definition, hoof-kicked dust, and strong eye-line readability",
+    defaultArc: "Escape from danger",
+    driftRisk: "MEDIUM",
+  },
+  Impala: {
+    prey: ["Lion", "Leopard", "Hyena", "African Wild Dog", "Cheetah"],
+    environment: "acacia savanna edge, low scrub run lane, and dry grass escape corridor",
+    lighting:
+      "warm savanna side light, long grass shadows, soft dust haze, and clean antelope silhouette separation",
+    cameraGear:
+      "Canon EOS R5, 300mm wildlife lens, low-angle open-country chase framing",
+    texture:
+      "glossy tan-red coat, white underbelly contrast, fine leg definition, and dust on hooves",
+    defaultArc: "Escape from danger",
+    driftRisk: "MEDIUM",
+  },
+  Antelope: {
+    prey: ["Lion", "Leopard", "African Wild Dog", "Cheetah", "Hyena"],
+    environment: "dry savanna grassland, open bushveld lane, and scrub-edge flight corridor",
+    lighting:
+      "sunlit savanna contrast, warm grass bounce, shallow dust haze, and clear full-body readability",
+    cameraGear:
+      "Sony A1, 300mm wildlife lens, long-lens plains documentary framing",
+    texture:
+      "lean tan coat, fine horn detail, tense shoulder line, dust on lower legs, and alert ear posture",
+    defaultArc: "Escape from danger",
+    driftRisk: "MEDIUM",
+  },
+  Rabbit: {
+    prey: ["Coyote", "Bobcat", "Red Fox", "Golden Eagle", "Great Horned Owl"],
+    environment: "brushline opening, meadow edge, and low scrub escape pocket",
+    lighting:
+      "soft dawn light, cool shadow fill, warm rim on fur, and clean grass-level visibility",
+    cameraGear:
+      "Canon EOS R5, 300mm wildlife lens, low ground-level pursuit framing",
+    texture:
+      "fine brown-grey fur, long ears, dirt on hind feet, whisker detail, and compressed spring-loaded body posture",
+    defaultArc: "Escape from danger",
+    driftRisk: "MEDIUM",
+  },
+  Jackrabbit: {
+    prey: ["Coyote", "Golden Eagle", "Bobcat"],
+    environment: "sagebrush flat, dry prairie scrub edge, and open desert chase lane",
+    lighting:
+      "hard side light, heat-baked ground bounce, long sparse shadows, and strong ear silhouette readability",
+    cameraGear:
+      "Sony A1, 400mm wildlife lens, fast open-ground tracking framing",
+    texture:
+      "coarse tan-grey fur, oversized ears, long hind-leg stretch, dust spray off feet, and taut escape posture",
+    defaultArc: "Escape from danger",
+    driftRisk: "MEDIUM",
+  },
+  Quail: {
+    prey: ["Bobcat", "Coyote", "Golden Eagle", "Great Horned Owl"],
+    environment: "scrub grass opening, brushy wash edge, and low cover field lane",
+    lighting:
+      "warm early light, dry grass shimmer, soft low-angle shadows, and clean small-subject readability",
+    cameraGear:
+      "Canon EOS R5, 500mm wildlife lens, low brushline documentary framing",
+    texture:
+      "striped feather detail, crest plume, dust on feet, and sharp eye contrast against dry brush",
+    defaultArc: "Escape from danger",
+    driftRisk: "LOW",
+  },
+  Goat: {
+    prey: ["Tiger", "Leopard", "Wolf", "Mountain Lion", "Komodo Dragon"],
+    environment: "rocky scrub slope, dry mountain shelf, and broken cliffside trail",
+    lighting:
+      "hard mountain side light, stone bounce highlights, dry haze, and strong horn silhouette separation",
+    cameraGear:
+      "Sony A1, 300mm wildlife lens, telephoto cliff-edge wildlife framing",
+    texture:
+      "coarse coat, horn ridges, chipped hoof detail, dust on lower legs, and taut neck posture",
+    defaultArc: "Escape from danger",
+    driftRisk: "MEDIUM",
+  },
+  Ibex: {
+    prey: ["Snow Leopard", "Wolf", "Brown Bear"],
+    environment: "high alpine ledge, rocky snow face, and narrow mountain escape shelf",
+    lighting:
+      "crisp alpine daylight, cold blue snow fill, stone-edge contrast, and strong horn readability",
+    cameraGear:
+      "Canon EOS R3, 400mm wildlife lens, long-lens cliffside framing",
+    texture:
+      "thick mountain coat, ridged horns, chipped hooves, snow on lower legs, and tense shoulder line",
+    defaultArc: "Escape from danger",
+    driftRisk: "LOW",
+  },
+  Salmon: {
+    prey: ["Bald Eagle", "Black Bear", "Grizzly Bear", "River Otter", "Orca"],
+    environment: "cold river current, gravel-bar shallows, and spray-lit upstream channel",
+    lighting:
+      "silver river reflections, cool overcast daylight, bright spray highlights, and strong surface-readability through current",
+    cameraGear:
+      "Sony A1, 300mm wildlife lens, river-surface strike framing with high shutter speed",
+    texture:
+      "silver-red scales, water beads, current distortion, tail-thrash splash detail, and strong dorsal contrast",
+    defaultArc: "Escape from danger",
+    driftRisk: "LOW",
+  },
+  Caiman: {
+    prey: ["Jaguar", "Anaconda", "Crocodile"],
+    environment: "Amazon muddy bank, still backwater channel, and flooded rainforest margin",
+    lighting:
+      "humid rainforest light, dark green water reflections, filtered canopy glow, and strong eye-line readability at the waterline",
+    cameraGear:
+      "Canon EOS R5, 200mm wildlife lens, low riverbank ambush framing",
+    texture:
+      "wet dark scales, mud-coated armor plates, surface ripples around body, and sharp eye reflection detail",
+    defaultArc: "Defender stands ground",
+    driftRisk: "LOW",
+  },
   Snake: {
     prey: ["Mouse", "Rabbit", "Bird Egg", "Lizard"],
     environment: "dry scrubland, rocky ridge, and warm grass edge",

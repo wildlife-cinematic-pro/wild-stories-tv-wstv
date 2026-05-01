@@ -1,4 +1,10 @@
 import { habitatPromptMap } from "@/lib/habitat-presets";
+import {
+  getWildlifeLeadCatalogEntry,
+  getWildlifeLeadCatalogForScope,
+  normalizeCatalogAnimalName,
+  type WildlifeLeadCatalogEntry,
+} from "@/lib/wildlife-lead-catalog";
 
 import type { HabitatPreset, WildlifeScopeMode } from "@/types";
 
@@ -93,6 +99,14 @@ const ANIMAL_ALIASES: Record<string, string> = {
   "European Bison": "Bison",
   Wisent: "Bison",
   Goanna: "Monitor Lizard",
+  Cougar: "Mountain Lion",
+  Puma: "Mountain Lion",
+  Bear: "Brown Bear",
+  Eagle: "Golden Eagle",
+  Shark: "Great White Shark",
+  Snake: "Rattlesnake",
+  "African Lion Male": "Lion",
+  "Arctic Wolf": "Wolf",
 };
 
 const HABITAT_PRESET_TAGS: Record<Exclude<HabitatPreset, "Auto">, HabitatTag[]> = {
@@ -1533,6 +1547,100 @@ const WILDLIFE_FOCUS_DEFINITIONS: Record<
   },
 };
 
+type CatalogBackedWildlifeScopeMode =
+  | "USA / Canada Wildlife"
+  | "USA Viral Wildlife"
+  | "Global Viral Wildlife"
+  | "World Wide Wildlife";
+
+function isCatalogBackedWildlifeScopeMode(
+  mode: CanonicalWildlifeScopeMode
+): mode is CatalogBackedWildlifeScopeMode {
+  return (
+    mode === "USA / Canada Wildlife" ||
+    mode === "USA Viral Wildlife" ||
+    mode === "Global Viral Wildlife" ||
+    mode === "World Wide Wildlife"
+  );
+}
+
+function buildCatalogPairing(
+  lead: WildlifeLeadCatalogEntry,
+  opposing: WildlifeLeadCatalogEntry["opposingProfiles"][number],
+  mode: CatalogBackedWildlifeScopeMode
+): WildlifeFocusPairing {
+  const input = {
+    predator: lead.leadAnimal,
+    prey: opposing.animal,
+    environments: opposing.environments as [string, ...string[]],
+    habitatTags: opposing.habitatTags as HabitatTag[],
+    safeArcLabel: opposing.safeArcLabel,
+    badges: opposing.badges as WildlifeFocusBadge[],
+    promptTemplateHint: opposing.promptTemplateHint,
+  };
+
+  if (mode === "Global Viral Wildlife" || mode === "USA Viral Wildlife") {
+    return buildViralPairing(input);
+  }
+
+  return buildDocumentaryPairing(input);
+}
+
+function dedupeWildlifeFocusPairings(
+  pairings: WildlifeFocusPairing[]
+): WildlifeFocusPairing[] {
+  const seen = new Set<string>();
+  const next: WildlifeFocusPairing[] = [];
+
+  for (const pairing of pairings) {
+    const key = getWildlifeFocusPairingKey(pairing);
+    if (seen.has(key)) continue;
+    seen.add(key);
+    next.push(pairing);
+  }
+
+  return next;
+}
+
+function buildCatalogFocusDefinition(
+  mode: CatalogBackedWildlifeScopeMode
+): WildlifeFocusDefinition {
+  const helperText = WILDLIFE_FOCUS_DEFINITIONS[mode].helperText;
+  const catalog = getWildlifeLeadCatalogForScope(mode);
+  const animals = catalog.map((entry) => entry.leadAnimal);
+  const pairings = dedupeWildlifeFocusPairings(
+    catalog.flatMap((entry) =>
+      entry.opposingProfiles.map((opposing) =>
+        buildCatalogPairing(entry, opposing, mode)
+      )
+    )
+  );
+
+  const defaultLead = catalog[0];
+  const defaultOpposing = defaultLead?.opposingProfiles[0];
+  const defaultPairing =
+    defaultLead && defaultOpposing
+      ? buildCatalogPairing(defaultLead, defaultOpposing, mode)
+      : WILDLIFE_FOCUS_DEFINITIONS[mode].defaultPairing;
+
+  return {
+    helperText,
+    animals,
+    defaultPairing,
+    pairings,
+  };
+}
+
+function getWildlifeFocusDefinition(
+  mode: CanonicalWildlifeScopeMode
+): WildlifeFocusDefinition {
+  if (isCatalogBackedWildlifeScopeMode(mode)) {
+    return buildCatalogFocusDefinition(mode);
+  }
+
+  return WILDLIFE_FOCUS_DEFINITIONS[mode];
+}
+
 const ENVIRONMENT_PROFILES: Record<string, WildlifeEnvironmentProfile> = {
   "Grizzly Bear": {
     primaryHabitats: ["mountain forest", "alpine meadow", "river valley"],
@@ -1699,7 +1807,33 @@ const ENVIRONMENT_PROFILES: Record<string, WildlifeEnvironmentProfile> = {
 };
 
 function normalizeAnimalName(name: string): string {
-  return ANIMAL_ALIASES[name] ?? name;
+  return normalizeCatalogAnimalName(ANIMAL_ALIASES[name] ?? name);
+}
+
+function getCatalogEnvironmentProfile(
+  animal: string
+): WildlifeEnvironmentProfile | null {
+  const entry = getWildlifeLeadCatalogEntry(animal);
+  if (!entry) return null;
+
+  return {
+    primaryHabitats: [...entry.primaryEnvironments],
+    secondaryHabitats: [...entry.secondaryEnvironments],
+    regionTags: [],
+    weatherAtmosphereSuggestions: [],
+    shortEnvironmentString: entry.primaryEnvironments[0],
+    goodSceneContexts: [...entry.safeArcLabels],
+    likelyHabitatTags: [...(entry.habitatTags as HabitatTag[])],
+  };
+}
+
+function getWildlifeEnvironmentProfile(
+  animal: string
+): WildlifeEnvironmentProfile | null {
+  return (
+    ENVIRONMENT_PROFILES[normalizeAnimalName(animal)] ??
+    getCatalogEnvironmentProfile(animal)
+  );
 }
 
 export function getWildlifeFocusPairingKey(pairing: {
@@ -1725,7 +1859,7 @@ function getPairingsForPredator(
   predator: string
 ): WildlifeFocusPairing[] {
   const normalizedPredator = normalizeAnimalName(predator);
-  return WILDLIFE_FOCUS_DEFINITIONS[mode].pairings.filter(
+  return getWildlifeFocusDefinition(mode).pairings.filter(
     (pairing) =>
       normalizeAnimalName(pairing.predator) === normalizedPredator ||
       normalizeAnimalName(pairing.prey) === normalizedPredator
@@ -1754,7 +1888,7 @@ export function normalizeWildlifeScopeMode(
 export function getWildlifeScopeHelperText(
   mode: WildlifeScopeMode
 ): string {
-  return WILDLIFE_FOCUS_DEFINITIONS[normalizeWildlifeScopeMode(mode)].helperText;
+  return getWildlifeFocusDefinition(normalizeWildlifeScopeMode(mode)).helperText;
 }
 
 export function getWildlifeFocusSafetyHint(
@@ -1783,7 +1917,7 @@ export function isAttackFocusedWildlifeScope(
 export function getWildlifeScopeDefaultSelection(
   mode: WildlifeScopeMode
 ): { predator: string; prey: string; environment: string } {
-  const definition = WILDLIFE_FOCUS_DEFINITIONS[normalizeWildlifeScopeMode(mode)];
+  const definition = getWildlifeFocusDefinition(normalizeWildlifeScopeMode(mode));
   return {
     predator: definition.defaultPairing.predator,
     prey: definition.defaultPairing.prey,
@@ -1796,8 +1930,7 @@ export function isPredatorCompatibleWithWildlifeScope(
   mode: WildlifeScopeMode
 ): boolean {
   const canonicalMode = normalizeWildlifeScopeMode(mode);
-  if (canonicalMode === "World Wide Wildlife") return true;
-  return WILDLIFE_FOCUS_DEFINITIONS[canonicalMode].animals.some(
+  return getWildlifeFocusDefinition(canonicalMode).animals.some(
     (animal) => normalizeAnimalName(animal) === normalizeAnimalName(predator)
   );
 }
@@ -1808,8 +1941,7 @@ export function isPairCompatibleWithWildlifeScope(
   mode: WildlifeScopeMode
 ): boolean {
   const canonicalMode = normalizeWildlifeScopeMode(mode);
-  if (canonicalMode === "World Wide Wildlife") return true;
-  return WILDLIFE_FOCUS_DEFINITIONS[canonicalMode].pairings.some((pairing) =>
+  return getWildlifeFocusDefinition(canonicalMode).pairings.some((pairing) =>
     pairingMatches(pairing, predator, prey)
   );
 }
@@ -1819,23 +1951,16 @@ export function filterPredatorOptionsByWildlifeScope(
   mode: WildlifeScopeMode
 ): string[] {
   const canonicalMode = normalizeWildlifeScopeMode(mode);
-  const unique = Array.from(new Set(options));
-  if (canonicalMode === "World Wide Wildlife") return unique;
+  const available = new Set(options.map((option) => normalizeAnimalName(option)));
+  const definition = getWildlifeFocusDefinition(canonicalMode);
 
-  const rank = new Map(
-    WILDLIFE_FOCUS_DEFINITIONS[canonicalMode].animals.map((animal, index) => [
-      normalizeAnimalName(animal),
-      index,
-    ])
+  if (!definition.animals.length) {
+    return Array.from(new Set(options));
+  }
+
+  return definition.animals.filter((animal) =>
+    available.has(normalizeAnimalName(animal))
   );
-
-  return unique
-    .filter((option) => rank.has(normalizeAnimalName(option)))
-    .sort((a, b) => {
-      const ai = rank.get(normalizeAnimalName(a)) ?? Number.MAX_SAFE_INTEGER;
-      const bi = rank.get(normalizeAnimalName(b)) ?? Number.MAX_SAFE_INTEGER;
-      return ai - bi || a.localeCompare(b);
-    });
 }
 
 export function filterPreyOptionsByWildlifeScope(
@@ -1845,7 +1970,6 @@ export function filterPreyOptionsByWildlifeScope(
 ): string[] {
   const canonicalMode = normalizeWildlifeScopeMode(mode);
   const unique = Array.from(new Set(preyOptions));
-  if (canonicalMode === "World Wide Wildlife") return unique;
 
   const allowed = getPairingsForPredator(canonicalMode, predator).map(
     (pairing) =>
@@ -1870,19 +1994,15 @@ export function getWildlifeFocusEnvironmentSuggestion(
   fallback: string
 ): string {
   const canonicalMode = normalizeWildlifeScopeMode(mode);
-  if (canonicalMode === "World Wide Wildlife") return fallback;
+  const pairing = getWildlifeFocusDefinition(canonicalMode).pairings.find(
+    (item) => pairingMatches(item, predator, prey)
+  );
+  if (pairing) return pairing.environments[0];
 
-  {
-    const pairing = WILDLIFE_FOCUS_DEFINITIONS[canonicalMode].pairings.find(
-      (item) => pairingMatches(item, predator, prey)
-    );
-    if (pairing) return pairing.environments[0];
-  }
-
-  const predatorProfile = ENVIRONMENT_PROFILES[normalizeAnimalName(predator)];
+  const predatorProfile = getWildlifeEnvironmentProfile(predator);
   if (predatorProfile) return predatorProfile.shortEnvironmentString;
 
-  const preyProfile = ENVIRONMENT_PROFILES[normalizeAnimalName(prey)];
+  const preyProfile = getWildlifeEnvironmentProfile(prey);
   if (preyProfile) return preyProfile.shortEnvironmentString;
 
   return fallback;
@@ -1894,16 +2014,16 @@ export function getRegionalWildlifeStep1Hint(
   prey: string
 ): string {
   const canonicalMode = normalizeWildlifeScopeMode(mode);
-  if (canonicalMode === "World Wide Wildlife") {
-    return "World Wide Wildlife keeps the broad built-in wildlife library available while letting the current animal pair drive the environment read.";
-  }
-
   const suggestedEnvironment = getWildlifeFocusEnvironmentSuggestion(
     canonicalMode,
     predator,
     prey,
     "animal-compatible terrain"
   );
+
+  if (canonicalMode === "World Wide Wildlife") {
+    return `World Wide Wildlife keeps the broader documentary library, but it still steers ${predator} and ${prey} toward ${suggestedEnvironment} so the terrain reads as believable at a glance.`;
+  }
 
   return `${canonicalMode} biases this setup toward ${suggestedEnvironment} so viewers read the animals and the terrain faster.`;
 }
@@ -1915,8 +2035,6 @@ export function getWildlifeHabitatCompatibilityGuidance(input: {
   habitat: HabitatPreset;
 }): { label: string; message: string; isWarning: boolean } | null {
   const canonicalMode = normalizeWildlifeScopeMode(input.mode);
-  if (canonicalMode === "World Wide Wildlife") return null;
-
   const suggestedEnvironment = getWildlifeFocusEnvironmentSuggestion(
     canonicalMode,
     input.predator,
@@ -1933,7 +2051,7 @@ export function getWildlifeHabitatCompatibilityGuidance(input: {
   }
 
   const selectedTags = HABITAT_PRESET_TAGS[input.habitat];
-  const profile = ENVIRONMENT_PROFILES[normalizeAnimalName(input.predator)];
+  const profile = getWildlifeEnvironmentProfile(input.predator);
   if (!profile) {
     return {
       label: "Manual habitat override active",
@@ -1963,7 +2081,7 @@ export function getWildlifeHabitatCompatibilityGuidance(input: {
 export function getWildlifeFocusPairings(
   mode: WildlifeScopeMode
 ): WildlifeFocusPairing[] {
-  return WILDLIFE_FOCUS_DEFINITIONS[normalizeWildlifeScopeMode(mode)].pairings;
+  return getWildlifeFocusDefinition(normalizeWildlifeScopeMode(mode)).pairings;
 }
 
 export function getWildlifeFocusPairingHighlights(
@@ -1989,7 +2107,7 @@ export function getSupportedWildlifeFocusAnimals(
   mode: WildlifeScopeMode
 ): string[] {
   const canonicalMode = normalizeWildlifeScopeMode(mode);
-  return [...WILDLIFE_FOCUS_DEFINITIONS[canonicalMode].animals];
+  return [...getWildlifeFocusDefinition(canonicalMode).animals];
 }
 
 export function getWildlifeFocusEnvironmentProfiles() {
