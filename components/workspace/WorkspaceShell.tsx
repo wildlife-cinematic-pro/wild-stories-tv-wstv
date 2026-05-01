@@ -57,7 +57,7 @@ export default function WorkspaceShell({
             </div>
             {topActions ? <div className="flex shrink-0 flex-wrap gap-2">{topActions}</div> : null}
           </div>
-          {headerMeta ? <div className="mt-3">{headerMeta}</div> : null}
+          {headerMeta ? <div className="mt-3 min-w-0 max-w-full">{headerMeta}</div> : null}
         </section>
 
         <div

@@ -1,5 +1,7 @@
 "use client";
 
+import { useEffect, useRef } from "react";
+
 export type WorkspaceSidebarItem = {
   id: string;
   label: string;
@@ -82,40 +84,57 @@ export default function WorkspaceSidebar({
   onActiveItemChange,
   className = "",
 }: WorkspaceSidebarProps) {
+  const mobileTabRefs = useRef<Record<string, HTMLButtonElement | null>>({});
+
+  useEffect(() => {
+    if (typeof window === "undefined" || window.innerWidth >= 1024) return;
+
+    mobileTabRefs.current[activeItem]?.scrollIntoView({
+      behavior: "smooth",
+      block: "nearest",
+      inline: "nearest",
+    });
+  }, [activeItem]);
+
   return (
     <>
       <section className="lg:hidden">
-        <div className="overflow-hidden rounded-[24px] border border-[color:var(--border)] bg-[color:var(--surface-elevated)] p-1.5 shadow-[var(--surface-shadow)] sm:p-2">
+        <div className="rounded-[24px] border border-[color:var(--border)] bg-[color:var(--surface-elevated)] p-1.5 shadow-[var(--surface-shadow)] sm:p-2">
           <div
-            className="flex gap-2 overflow-x-auto pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+            className="max-w-full min-w-0 overflow-x-auto scroll-px-4 pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
             role="tablist"
             aria-label={title ? `${title} navigation` : "Workspace navigation"}
           >
-            {items.map((item) => {
-              const active = item.id === activeItem;
-              return (
-                <button
-                  key={item.id}
-                  type="button"
-                  onClick={() => onActiveItemChange(item.id)}
-                  role="tab"
-                  aria-selected={active}
-                  aria-controls={`workspace-panel-${item.id}`}
-                  aria-label={`${item.label} workspace`}
-                  id={`workspace-tab-${item.id}`}
-                  className={`shrink-0 rounded-2xl border px-3 py-1.5 text-[13px] font-semibold transition ${
-                    active
-                      ? "border-cyan-400/40 bg-cyan-500/10 text-cyan-100"
-                      : "border-[color:var(--border)] bg-[color:var(--surface)] text-[color:var(--muted)] hover:border-cyan-400/50 hover:text-cyan-200"
-                  }`}
-                >
-                  <span className="inline-flex items-center gap-2">
-                    <span className="text-xs">{item.icon ?? "•"}</span>
-                    {item.label}
-                  </span>
-                </button>
-              );
-            })}
+            <div className="flex w-max min-w-full flex-nowrap gap-2 pr-3">
+              {items.map((item) => {
+                const active = item.id === activeItem;
+                return (
+                  <button
+                    key={item.id}
+                    ref={(node) => {
+                      mobileTabRefs.current[item.id] = node;
+                    }}
+                    type="button"
+                    onClick={() => onActiveItemChange(item.id)}
+                    role="tab"
+                    aria-selected={active}
+                    aria-controls={`workspace-panel-${item.id}`}
+                    aria-label={`${item.label} workspace`}
+                    id={`workspace-tab-${item.id}`}
+                    className={`shrink-0 whitespace-nowrap rounded-2xl border px-3 py-1.5 text-[13px] font-semibold transition ${
+                      active
+                        ? "border-cyan-400/40 bg-cyan-500/10 text-cyan-100"
+                        : "border-[color:var(--border)] bg-[color:var(--surface)] text-[color:var(--muted)] hover:border-cyan-400/50 hover:text-cyan-200"
+                    }`}
+                  >
+                    <span className="inline-flex items-center gap-2 whitespace-nowrap">
+                      <span className="text-xs">{item.icon ?? "•"}</span>
+                      {item.label}
+                    </span>
+                  </button>
+                );
+              })}
+            </div>
           </div>
         </div>
       </section>

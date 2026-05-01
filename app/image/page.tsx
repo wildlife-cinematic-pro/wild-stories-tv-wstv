@@ -247,19 +247,21 @@ export default function ImagePage() {
     IMAGE_STUDIO_WORKSPACE_ITEMS[0];
 
   const headerMeta = (
-    <div className="flex flex-wrap gap-2">
-      <span className="inline-flex rounded-full border border-cyan-400/30 bg-cyan-500/10 px-3 py-1 text-xs font-semibold text-cyan-200">
-        {selectedPreset.collection}
-      </span>
-      <span className="inline-flex rounded-full border border-white/[0.08] bg-white/[0.04] px-3 py-1 text-xs font-semibold text-[color:var(--muted)]">
-        Nano Banana 2 + GPT Image 2
-      </span>
-      <span className="inline-flex rounded-full border border-white/[0.08] bg-white/[0.04] px-3 py-1 text-xs font-semibold text-[color:var(--muted)]">
-        American English only
-      </span>
-      <span className="inline-flex rounded-full border border-white/[0.08] bg-white/[0.04] px-3 py-1 text-xs font-semibold text-[color:var(--muted)]">
-        Exactly 5 hashtags
-      </span>
+    <div className="max-w-full min-w-0 overflow-x-auto scroll-px-4 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden sm:overflow-visible">
+      <div className="flex w-max min-w-full flex-nowrap gap-2 pr-3 sm:w-auto sm:min-w-0 sm:flex-wrap sm:pr-0">
+        <span className="inline-flex shrink-0 whitespace-nowrap rounded-full border border-cyan-400/30 bg-cyan-500/10 px-3 py-1 text-xs font-semibold text-cyan-200">
+          {selectedPreset.collection}
+        </span>
+        <span className="inline-flex shrink-0 whitespace-nowrap rounded-full border border-white/[0.08] bg-white/[0.04] px-3 py-1 text-xs font-semibold text-[color:var(--muted)]">
+          Nano Banana 2 + GPT Image 2
+        </span>
+        <span className="inline-flex shrink-0 whitespace-nowrap rounded-full border border-white/[0.08] bg-white/[0.04] px-3 py-1 text-xs font-semibold text-[color:var(--muted)]">
+          American English only
+        </span>
+        <span className="inline-flex shrink-0 whitespace-nowrap rounded-full border border-white/[0.08] bg-white/[0.04] px-3 py-1 text-xs font-semibold text-[color:var(--muted)]">
+          Exactly 5 hashtags
+        </span>
+      </div>
     </div>
   );
 
