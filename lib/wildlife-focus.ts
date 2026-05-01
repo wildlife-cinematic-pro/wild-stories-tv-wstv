@@ -107,6 +107,7 @@ const ANIMAL_ALIASES: Record<string, string> = {
   Snake: "Rattlesnake",
   "African Lion Male": "Lion",
   "Arctic Wolf": "Wolf",
+  Turtle: "Tortoise",
 };
 
 const HABITAT_PRESET_TAGS: Record<Exclude<HabitatPreset, "Auto">, HabitatTag[]> = {

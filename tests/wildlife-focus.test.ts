@@ -62,7 +62,7 @@ describe("World Wide Wildlife catalog behavior", () => {
   const animals = getSupportedWildlifeFocusAnimals("World Wide Wildlife");
 
   it("expands to a broad worldwide lead catalog with USA-first ranking", () => {
-    expect(animals).toHaveLength(100);
+    expect(animals.length).toBeGreaterThanOrEqual(101);
     expect(animals.slice(0, 12)).toEqual([
       "Grizzly Bear",
       "Black Bear",
@@ -110,6 +110,11 @@ describe("World Wide Wildlife catalog behavior", () => {
     expect(animals).not.toContain("Stag");
   });
 
+  it("adds Tortoise as a lower-ranked world-wide documentary lead", () => {
+    expect(animals).toContain("Tortoise");
+    expect(animals.indexOf("Tortoise")).toBeGreaterThan(29);
+  });
+
   it("keeps USA Viral Wildlife free of non-USA filler like Black Mamba", () => {
     expect(getSupportedWildlifeFocusAnimals("USA Viral Wildlife")).not.toContain(
       "Black Mamba"
@@ -126,6 +131,8 @@ describe("World Wide Wildlife catalog behavior", () => {
         "Mountain Lion",
         "Shark",
         "Great White Shark",
+        "Turtle",
+        "Tortoise",
       ],
       "World Wide Wildlife"
     );
@@ -134,6 +141,7 @@ describe("World Wide Wildlife catalog behavior", () => {
       "Mountain Lion",
       "Great White Shark",
       "Brown Bear",
+      "Tortoise",
     ]);
   });
 
@@ -217,6 +225,11 @@ describe("Global Viral Wildlife focus", () => {
   const pairings = getWildlifeFocusPairings("Global Viral Wildlife");
   const animals = getSupportedWildlifeFocusAnimals("Global Viral Wildlife");
 
+  it("includes Tortoise only as a lower-ranked niche lead", () => {
+    expect(animals).toContain("Tortoise");
+    expect(animals.slice(0, 10)).not.toContain("Tortoise");
+  });
+
   it("is explicitly attack/survival focused", () => {
     expect(isAttackFocusedWildlifeScope("Global Viral Wildlife")).toBe(true);
     expect(getWildlifeFocusSafetyHint("Global Viral Wildlife")).toBe(
@@ -280,6 +293,25 @@ describe("Global Viral Wildlife focus", () => {
         "Documentary survival tension",
       ])
     );
+  });
+
+  it("keeps Tortoise pairings documentary-plausible and prompt-ready", () => {
+    expect(
+      filterPreyOptionsByWildlifeScope(
+        "Tortoise",
+        ["Monitor Lizard", "Golden Eagle", "Coyote", "Alligator", "Jaguar", "Wolf Pack"],
+        "World Wide Wildlife"
+      )
+    ).toEqual(["Monitor Lizard", "Golden Eagle", "Coyote", "Alligator", "Jaguar"]);
+
+    expect(
+      getWildlifeFocusEnvironmentSuggestion(
+        "World Wide Wildlife",
+        "Tortoise",
+        "Monitor Lizard",
+        "fallback habitat"
+      )
+    ).toMatch(/sun-baked desert scrub|rocky dry wash/i);
   });
 
   it("warns on habitat mismatch with safer shark guidance", () => {

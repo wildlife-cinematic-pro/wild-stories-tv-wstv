@@ -45,6 +45,18 @@ describe("viral wildlife prey support", () => {
     expect(predatorData["Nile Crocodile"].prey.filter((item) => item === "Warthog")).toHaveLength(1);
   });
 
+  it("adds Tortoise with the same opposing set for the Turtle alias", () => {
+    expect(predatorData.Tortoise.prey).toEqual([
+      "Monitor Lizard",
+      "Golden Eagle",
+      "Coyote",
+      "Alligator",
+      "Jaguar",
+    ]);
+    expect(predatorData.Turtle.prey).toEqual(predatorData.Tortoise.prey);
+    expect(predatorData.Tortoise.environment).toMatch(/desert scrub|sandbar/i);
+  });
+
   it("keeps Great White Shark ready for seal-colony pairings", () => {
     expect(predatorData["Great White Shark"].prey).toEqual(
       expect.arrayContaining(["Seal", "Sea Lion"])

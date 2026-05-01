@@ -1004,6 +1004,30 @@ export const predatorData: Record<string, PredatorInfo> = {
     defaultArc: "Escape from danger",
     driftRisk: "LOW",
   },
+  Tortoise: {
+    prey: ["Monitor Lizard", "Golden Eagle", "Coyote", "Alligator", "Jaguar"],
+    environment: "sun-baked desert scrub, dry savanna track, and marsh-edge sandbar with clean shell readability",
+    lighting:
+      "hard late-afternoon side light, warm dust glow, and crisp shell highlights with readable ground texture",
+    cameraGear:
+      "Sony A1, 300mm wildlife lens, low documentary profile framing with gentle push-in",
+    texture:
+      "weathered shell plates, dusty limb texture, slow grounded foot placement, and clean natural contact with sand, scrub, or mudbank",
+    defaultArc: "Defender stands ground",
+    driftRisk: "LOW",
+  },
+  Turtle: {
+    prey: ["Monitor Lizard", "Golden Eagle", "Coyote", "Alligator", "Jaguar"],
+    environment: "sun-baked desert scrub, dry savanna track, and marsh-edge sandbar with clean shell readability",
+    lighting:
+      "hard late-afternoon side light, warm dust glow, and crisp shell highlights with readable ground texture",
+    cameraGear:
+      "Sony A1, 300mm wildlife lens, low documentary profile framing with gentle push-in",
+    texture:
+      "weathered shell plates, dusty limb texture, slow grounded foot placement, and clean natural contact with sand, scrub, or mudbank",
+    defaultArc: "Defender stands ground",
+    driftRisk: "LOW",
+  },
   Rattlesnake: {
     prey: ["Mouse", "Rabbit", "Quail", "Lizard"],
     environment: "sun-baked desert scrub and rocky wash",
