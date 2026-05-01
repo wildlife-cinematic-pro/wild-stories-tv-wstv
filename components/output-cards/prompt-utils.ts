@@ -39,12 +39,11 @@ export function extractKlingPromptBody(shotText: string): string {
       const endCandidates = [
         afterMarker.indexOf("\n─── FULL BREAKDOWN"),
         afterMarker.indexOf("\n\n─── FULL BREAKDOWN"),
-        afterMarker.indexOf("\nAudio:"),
-        afterMarker.indexOf("\n\nAudio:"),
         afterMarker.indexOf("\nKling settings:"),
         afterMarker.indexOf("\n\nKling settings:"),
         afterMarker.indexOf("\n────────────────────────────────"),
         afterMarker.indexOf("\n─── FULL BREAKDOWN (reference only)"),
+        afterMarker.indexOf("\n─── OPTIONAL NOTES"),
       ].filter((n) => n >= 0);
 
       const end = endCandidates.length ? Math.min(...endCandidates) : -1;

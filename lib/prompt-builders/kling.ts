@@ -437,16 +437,16 @@ export function buildKlingNative15sCard(
   const cleanEnv = sanitizeImageEnv(env);
   const cleanWeather = sanitizeWeatherPhrase(weatherVariants[weather]);
   const qLead = buildQualityLead(quality, "kling");
-  const context = sceneDesc?.trim() ? `
-Scene context: ${clipPromptContext(sceneDesc.trim())}` : "";
+  const safeArc = getSafeArcPrint(arc);
+  const contextSnippet = sceneDesc?.trim()
+    ? clipPromptContext(sceneDesc.trim())
+    : "";
   const isNative = model === "Kling 3.0 Pro" || model === "Kling 3.0 Standard";
 
   if (!isNative) {
     return buildStructuredPrompt({
-      fullText: `⚠️ KLING DIRECT 15S MULTISHOT: Requires Kling 3.0 Pro or Kling 3.0 Standard.
-Selected: ${model}. Switch model to activate.`,
-      pasteReady: `⚠️ KLING DIRECT 15S MULTISHOT: Requires Kling 3.0 Pro or Kling 3.0 Standard.
-Selected: ${model}. Switch model to activate.`,
+      fullText: `KLING DIRECT 15S MULTISHOT requires Kling 3.0 Pro or Kling 3.0 Standard.\nSelected: ${model}. Switch model to activate.`,
+      pasteReady: `KLING DIRECT 15S MULTISHOT requires Kling 3.0 Pro or Kling 3.0 Standard.\nSelected: ${model}. Switch model to activate.`,
       metadata: {
         engine: "kling",
         title: "Kling Direct 15s Multishot",
@@ -455,173 +455,230 @@ Selected: ${model}. Switch model to activate.`,
     });
   }
 
-  const refLine = quality?.referenceLock
-    ? "Reference lock active - preserve continuity from the source/master image and enable Bind Subject (Elements 3.0) so anatomy, markings, and scale stay stable across the full 15-second sequence."
-    : "Preserve continuity from the source/master image so anatomy, markings, scale, terrain, and light direction stay stable across the full 15-second sequence.";
+  const lowerContext = `${predator} ${prey} ${cleanEnv} ${safeArc} ${contextSnippet}`.toLowerCase();
+  const isWaterAmbush = /(crocodile|alligator|shark|orca|seal|waterhole|waterline|river|surf|coast|fjord|estuary|marsh|swamp)/.test(
+    lowerContext
+  );
+  const isPackPressure = /(wolf pack|pack|hyena|african wild dog)/.test(
+    lowerContext
+  );
+  const isAerialStrike = /(eagle)/.test(lowerContext);
+  const isDefender = /(bison|buffalo|moose|elk|ibex|goat|reindeer|wolverine|defender|territory|giant)/.test(
+    lowerContext
+  );
 
-  const motionRule = quality?.motionOnlyI2V
-    ? "Motion-only mode - keep Kling focused on movement, timing, and continuity from the source/master image without re-describing appearance."
-    : "Keep visual restatement minimal and let the continuity anchor come from the source/master image.";
+  const openingLine = `Image-to-video from the provided master image. Preserve the same ${predator}, ${prey}, ${cleanEnv}, lighting, subject scale, and first-frame composition.`;
+  const styleLineLong = `Photorealistic raw wildlife documentary style. ${safeArc} with explosive survival tension and ${tone.video}. Stable anatomy, grounded contact, believable animal body mass, correct physics, readable action, and clean continuity from the master image. No blood, no gore, no visible wounds.`;
+  const styleLineShort =
+    "Photorealistic raw wildlife documentary style. Stable anatomy, grounded contact, believable body mass, correct physics, readable action, no blood, no gore, no visible wounds.";
+  const continuityLong = quality?.referenceLock
+    ? "Keep subject identity locked to the master image, preserve markings, habitat continuity, horizon line, and the same readable spacing in every shot."
+    : "Preserve animal identity, habitat continuity, horizon line, and the same readable spacing in every shot.";
+  const continuityShort =
+    "Preserve animal identity, habitat continuity, spacing, and first-frame readability in every shot.";
+  const contextLine = contextSnippet
+    ? `Use the same scene idea: ${contextSnippet}.`
+    : "";
+  const weatherLine = cleanWeather ? `Keep the same weather feel: ${cleanWeather}.` : "";
 
-  const wideRule = klingWidePhysicsRule();
-  const scenario = buildPromptScenarioContext({
-    predator,
-    prey,
-    env,
-    arc,
-    weather,
-    quality,
-    engine: "kling",
-  });
-  const {
-    isAquatic,
-    isShoreline,
-    isWaterForwardStrike,
-    isRutMirrorMatch,
-    micro,
-    rutCue,
-    cameraPromptTail,
-    cameraBreakdownLine,
-    beat1: s1,
-    beat3: s3,
-    beat4: s4,
-  } = scenario;
+  const waterShotsLong = [
+    `Shot 1, 0–3s: Silent danger setup. ${prey} holds at the muddy water edge with tense but natural hesitation while ${predator} stays nearly invisible at the waterline, readable through eyes, snout, armored back, or subtle surface movement. Low documentary push-in, slight ripples, dry grass or reeds moving, both subjects visible and grounded.`,
+    `Shot 2, 3–6s: Ambush trigger. ${predator} explodes forward in one low surge from the water or shoreline lane. Mud, spray, and wake kick up in a physically believable burst while ${prey} jerks upward or sideways in immediate survival reaction. Keep anatomy stable, keep both bodies readable, and avoid overlap-heavy chaos.`,
+    `Shot 3, 6–10s: Impact struggle without visible injury. ${predator} stays low and drives pressure through the waterline or bank edge while ${prey} braces, slips, twists, or pulls away with grounded resistance. Splashes, churned mud, and tense handheld documentary energy, but no blood, no gore, no visible wounds.`,
+    `Shot 4, 10–13s: Dragging or escape pressure. ${predator} pulls toward deeper water, stronger cover, or a tighter strike lane while ${prey} resists with visible body weight, hoof or paw traction, and realistic desperation. Keep both animals fully readable, physics clean, and the struggle unresolved.`,
+    `Shot 5, 13–15s: Cliffhanger finish. ${prey} nearly breaks free or regains a narrow escape angle while ${predator} stays locked low in the same attack lane. End on a dramatic splash, recoil, or hard survival beat with both animals still visible and the outcome unresolved.`,
+  ];
 
-  const pressurePredator = isAquatic
-    ? "holds controlled forward pressure through the water while staying fully readable"
-    : isShoreline
-      ? isWaterForwardStrike
-        ? "leans farther forward from the bank as the strike lane tightens without collapsing the spacing"
-        : "leans farther forward from the shoreline with stronger visible ambush pressure while staying readable"
-      : isRutMirrorMatch
-        ? `edges forward with heavier shoulder-line pressure while keeping ${rutCue.room}`
-        : "leans farther forward with stronger visible pressure while staying fully readable";
+  const packShotsLong = [
+    `Shot 1, 0–3s: Fast hook setup. ${predator} enters with visible pack spacing or coordinated forward pressure while ${prey} stays readable in the same lane, already alert to danger. Wide 9:16 documentary frame, clean subject separation, strong silhouettes, immediate survival tension from frame one.`,
+    `Shot 2, 3–6s: Pressure build. ${predator} narrows the reaction lane with one organized advance, cutting escape angles without turning into messy overlap. ${prey} adjusts footing, pivots, or surges forward under pressure while terrain interaction stays grounded and believable.`,
+    `Shot 3, 6–10s: Burst action. One explosive acceleration beat from ${predator} forces a decisive survival response from ${prey}. Keep the motion readable, preserve animal spacing, and emphasize weight transfer, traction, and body-mass realism instead of chaotic blur.`,
+    `Shot 4, 10–13s: Survival resistance. ${prey} counters with a desperate cut, brace, kick, or last-second angle change while ${predator} keeps pressure on the lane. Camera energy can rise slightly, but anatomy and geography must remain clear.`,
+    `Shot 5, 13–15s: Unresolved finish. ${prey} gains only a narrow escape margin or stays trapped in the pressure corridor while ${predator} holds the advantage. End on a cliffhanger survival frame with both sides still visible and the outcome unresolved.`,
+  ];
 
-  const pressurePrey = isAquatic
-    ? "tightens posture and makes one readable defensive adjustment in the current"
-    : isShoreline
-      ? isWaterForwardStrike
-        ? "shows one tense near-surface adjustment while keeping a clean bank-edge reaction lane"
-        : "lowers into one readable defensive footing adjustment near the bank"
-      : isRutMirrorMatch
-        ? "braces into one grounded footing reset without giving away the claim line"
-        : "lowers into one readable defensive adjustment without losing the reaction lane";
+  const aerialShotsLong = [
+    `Shot 1, 0–3s: Aerial setup. ${predator} reads instantly above or just off the terrain line while ${prey} moves below in a clean target lane. Keep the frame readable, with strong shape separation and immediate tension from the opening second.`,
+    `Shot 2, 3–6s: Commitment beat. ${predator} drops or surges with one controlled strike path while ${prey} reacts with a grounded pivot, sprint, or evasive burst. Preserve natural wing, talon, and body mechanics with no fantasy motion.`,
+    `Shot 3, 6–10s: Near-catch pressure. ${predator} closes distance and forces a high-tension reaction without turning the frame into clutter. ${prey} stays readable, terrain cues stay strong, and the action remains sharp and non-graphic.`,
+    `Shot 4, 10–13s: Recovery and counter-move. ${prey} twists away, drops lower, or cuts sideways while ${predator} re-centers for one more pressure beat. Keep the action clean, stable, and documentary-real.`,
+    `Shot 5, 13–15s: Cliffhanger finish. End on a final near-grab, near-miss, or hovering threat frame with both subjects visible, the escape lane still alive, and the survival outcome unresolved.`,
+  ];
 
-  const dustFreeGroundLine =
-    "Ground behavior: grounded paw or hoof contact only, no visible dust, no dirt spray, no debris particles, no kicked-up soil, no dust clouds.";
-  const continuityLine =
-    `Continuity: keep the same ${predator} (left) and ${prey} (right) identities from the source/master image with stable anatomy, stable markings, and no drift in scale or coat pattern.`;
-  const frameLine =
-    "Framing: full-body 9:16 vertical throughout, clean reaction lane between subjects, no overlap, and left-right readability must stay obvious in every beat.";
-  const sceneLine = quality?.motionOnlyI2V
-    ? `Scene: preserve the source/master image terrain and light continuity in ${cleanEnv}, ${cleanWeather}.`
-    : `Scene: ${cleanEnv}, ${cleanWeather}. Preserve continuity from the source/master image.`;
+  const defenderShotsLong = [
+    `Shot 1, 0–3s: Standoff setup. ${predator} and ${prey} lock into the same wide survival frame with immediate tension, clean spacing, and readable body mass. Keep both animals planted, grounded, and clearly visible from the first second.`,
+    `Shot 2, 3–6s: Forward commitment. ${predator} steps in with visible force or narrowing pressure while ${prey} braces and answers with planted footing, horn, shoulder, or body-line resistance. Keep geography clear and physics believable.`,
+    `Shot 3, 6–10s: Clash or shove without visible injury. One heavy impact or force transfer beat lands with mud, dust, snow, or ground movement, but no blood, no gore, and no visible wounds. Emphasize realistic animal weight and readable traction.`,
+    `Shot 4, 10–13s: Resistance phase. ${prey} resists, pushes back, or drags for balance while ${predator} maintains pressure. Keep both bodies visible, contact grounded, and the scene clean enough for documentary viewing.`,
+    `Shot 5, 13–15s: Unresolved finish. The dominant animal still has pressure, but the defender or prey remains visibly in the fight. End on a cliffhanger frame with both animals readable and the outcome unresolved.`,
+  ];
 
-  const openingLine = isAquatic
-    ? `${predator} (left) ${s1.predatorBeat}. ${prey} (right) ${s1.preyBeat}. Both subjects are fully readable from frame one with immediate visible tension.`
-    : isShoreline
-      ? isWaterForwardStrike
-        ? `${predator} (left) holds low at the bank with the shallow strike window readable. ${prey} (right) stays just off the bank with one tense near-surface hold. Both subjects are fully readable from frame one with immediate visible tension.`
-        : `${predator} (left) ${s1.predatorBeat}. ${prey} (right) ${s1.preyBeat}. Both subjects are fully readable from frame one with immediate visible tension.`
-      : isRutMirrorMatch
-        ? `${predator} (left) holds the ${rutCue.line} with ${rutCue.room}. ${prey} (right) answers with matching shoulder tension and planted footing. Both subjects are fully readable from frame one with immediate visible dominance.`
-        : `${predator} (left) ${s1.predatorBeat}. ${prey} (right) ${s1.preyBeat}. Both subjects are fully readable from frame one with immediate visible tension.`;
+  const ambushShotsLong = [
+    `Shot 1, 0–3s: Ambush setup. ${predator} holds hidden or half-revealed at the edge of cover while ${prey} moves through a readable survival lane. Immediate tension, clear silhouettes, and strong first-frame spacing.`,
+    `Shot 2, 3–6s: Sudden lunge. ${predator} commits to one explosive move from cover, brush, or shadow while ${prey} snaps into an instant evasive reaction. Keep the action physical and legible, not blurry or chaotic.`,
+    `Shot 3, 6–10s: Escape pressure. ${prey} twists, cuts, or braces while ${predator} stays committed to the same attack line. Terrain contact, body mass, and motion direction must stay consistent with real wildlife physics.`,
+    `Shot 4, 10–13s: Pursuit continuation. ${predator} keeps pressure on the lane while ${prey} throws everything into a survival move. Strong subject readability, minimal overlap, and tense handheld documentary energy.`,
+    `Shot 5, 13–15s: Cliffhanger survival beat. End on a final near-catch or near-escape frame with both animals visible, tension peaking, and no graphic injury shown.`,
+  ];
 
-  const pressureLine = `${predator} (left) ${pressurePredator}. ${prey} (right) ${pressurePrey}. Full bodies stay readable, spacing stays clean, and the reaction lane stays open.`;
+  const shotSetLong = isWaterAmbush
+    ? waterShotsLong
+    : isPackPressure
+      ? packShotsLong
+      : isAerialStrike
+        ? aerialShotsLong
+        : isDefender
+          ? defenderShotsLong
+          : ambushShotsLong;
 
-  const peakLine = isRutMirrorMatch
-    ? `${predator} (left) loads weight and commits one heavy clash beat while keeping ${rutCue.room}. ${prey} (right) answers with one grounded shove or recoil without losing planted footing. Force reads clearly with no overlap.`
-    : `${predator} (left) ${s3.predatorBeat}. ${prey} (right) ${s3.preyBeat}. Peak force stays readable with no overlap and one dominant action only.`;
+  const shotSetShort = shotSetLong.map((line) =>
+    line
+      .replace(/ with immediate tension from frame one\./g, ".")
+      .replace(/ Keep both animals fully readable,? /g, " Keep both readable, ")
+      .replace(/ realistic /g, " ")
+      .replace(/ documentary /g, " ")
+  );
 
-  const resolvedLine = isRutMirrorMatch
-    ? `${predator} (left) settles weight while keeping the ${rutCue.line} clean. ${prey} (right) rebalances once and holds the claim line. Tension remains readable to the final frame.`
-    : isWaterForwardStrike
-      ? `${predator} (left) ${s4.predatorBeat}. ${prey} (right) holds a tense near-surface line as the bank-edge splash settles. Tension remains readable to the final frame.`
-      : `${predator} (left) ${s4.predatorBeat}. ${prey} (right) ${s4.preyBeat}. Tension remains readable to the final frame.`;
+  const audioLineLong = isWaterAmbush
+    ? "Audio: deep water surge, heavy muddy splash, panic movement, wet traction loss, reeds or shoreline rustle, tense documentary ambience."
+    : isAerialStrike
+      ? "Audio: wing rush, sudden air cut, prey scramble, light terrain scuff, tense documentary ambience."
+      : isPackPressure
+        ? "Audio: pounding footfalls, heavy breathing, brush or grass movement, short warning calls, tense documentary ambience."
+        : isDefender
+          ? "Audio: hard breath, hoof or claw traction, body impact thump, ground scrape, tense documentary ambience."
+          : "Audio: sharp burst movement, terrain scrape, heavy breathing, tense documentary ambience.";
+  const audioLineShort = audioLineLong.replace(", tense documentary ambience.", ".");
 
-  const pasteReadyCore = [
-    "KLING DIRECT 15S MULTISHOT",
-    `Keep the same ${predator} (left) and ${prey} (right) from the source/master image with stable anatomy, stable markings, and stable scale.`,
-    `Scene: ${cleanEnv}, ${cleanWeather}. Full-body 9:16 vertical. Clean reaction lane. No overlap.`,
-    dustFreeGroundLine,
-    `Preserve source/master-image continuity for terrain, light direction, spacing, and grounded contact. ${micro}.`,
-    "",
-    `0–3s Hook / Opening Tension: Wide opening hold with a subtle push-in.${cameraPromptTail} ${openingLine}`,
-    "",
-    `3–7s Pressure Build: Steady wide pressure build with a subtle forward creep.${cameraPromptTail} ${pressureLine}`,
-    "",
-    `7–11s Peak Action: Wide peak-action read with restrained handheld energy.${cameraPromptTail} ${peakLine}`,
-    "",
-    `11–15s Resolved Tension / Final Hold: Locked wide final hold with a subtle pull-back.${cameraPromptTail} ${resolvedLine}`,
-    `Style: ${vibe.style}. ${tone.video}. Photorealistic wildlife documentary realism.`,
-  ]
-    .join("\n")
-    .trim();
+  const negativeBase = [
+    "blood",
+    "gore",
+    "visible wounds",
+    "torn flesh",
+    "exposed wounds",
+    "death close-up",
+    "dismemberment",
+    "fantasy monster",
+    "oversized animal",
+    "flying animal",
+    "floating body",
+    "broken legs",
+    "extra limbs",
+    "duplicate animals",
+    "humans",
+    "fences",
+    "zoo enclosure",
+    "text",
+    "subtitles",
+    "watermark",
+    "cartoon",
+    "CGI plastic skin",
+    "melted anatomy",
+    "excessive camera shake",
+    "wrong habitat",
+  ];
+  const predatorLower = predator.toLowerCase();
+  if (predatorLower.includes("crocodile") && !predatorLower.includes("alligator")) {
+    negativeBase.push("alligator instead of crocodile", "Everglades swamp look");
+  }
+  if (predatorLower.includes("alligator")) {
+    negativeBase.push("crocodile instead of alligator");
+  }
+  if (predatorLower.includes("shark")) {
+    negativeBase.push("riverbank reeds", "muddy waterhole", "Everglades swamp look");
+  }
+  if (predatorLower.includes("orca")) {
+    negativeBase.push("riverbank reeds", "muddy waterhole", "shark fin silhouette");
+  }
+  const negativeLine = `Negative prompt: ${Array.from(new Set(negativeBase)).join(", ")}`;
+
+  function buildPrompt(
+    lines: string[],
+    styleLine: string,
+    continuityLine: string,
+    audioLine: string
+  ) {
+    return [
+      openingLine,
+      [styleLine, continuityLine, weatherLine, contextLine].filter(Boolean).join(" "),
+      ...lines,
+      audioLine,
+      negativeLine,
+    ]
+      .filter(Boolean)
+      .join("\n\n")
+      .trim();
+  }
+
+  let pasteReadyCore = buildPrompt(
+    shotSetLong,
+    styleLineLong,
+    continuityLong,
+    audioLineLong
+  );
+
+  if (validateKlingPromptLength(pasteReadyCore).length > 2400) {
+    pasteReadyCore = buildPrompt(
+      shotSetLong,
+      styleLineShort,
+      continuityShort,
+      audioLineLong
+    );
+  }
+
+  if (validateKlingPromptLength(pasteReadyCore).length > 2400) {
+    pasteReadyCore = buildPrompt(
+      shotSetShort,
+      styleLineShort,
+      continuityShort,
+      audioLineShort
+    );
+  }
+
+  if (validateKlingPromptLength(pasteReadyCore).length > 2500) {
+    const trimmedContext = contextSnippet
+      ? `Same scene idea: ${clipPromptContext(contextSnippet).slice(0, 110)}.`
+      : "";
+    pasteReadyCore = [
+      openingLine,
+      [styleLineShort, continuityShort, trimmedContext].filter(Boolean).join(" "),
+      ...shotSetShort.map((line) =>
+        line.replace(/, and /g, ", ").replace(/ while /g, " while ")
+      ),
+      audioLineShort,
+      negativeLine,
+    ]
+      .filter(Boolean)
+      .join("\n\n")
+      .trim();
+  }
 
   const klingValidation = validateKlingPromptLength(pasteReadyCore);
   const klingLengthLine = klingValidation.isOver
     ? `PROMPT TOO LONG for WSTV house budget: ${klingValidation.length} / ~${KLING_CHAR_LIMIT}`
     : `Prompt length within WSTV house budget: ${klingValidation.length} / ~${KLING_CHAR_LIMIT} chars`;
 
-  const body = `═══ KLING DIRECT 15S MULTISHOT — REFERENCE BREAKDOWN ═══
-
-${sceneLine}
-${continuityLine}
-${frameLine}
-${dustFreeGroundLine}
-${wideRule}
-${context}
-
-Beat 1 — Hook / Opening Tension (0–3s):
-${openingLine}
-Camera: Wide opening hold with a subtle push-in.${cameraBreakdownLine}
-Environment motion: ${micro}.
-
-Beat 2 — Pressure Build (3–7s):
-${pressureLine}
-Camera: Steady wide pressure build with a subtle forward creep.${cameraBreakdownLine}
-Environment motion: ${micro}.
-
-Beat 3 — Peak Action (7–11s):
-${peakLine}
-Camera: Wide peak-action read with restrained handheld energy.${cameraBreakdownLine}
-Environment motion: ${micro}.
-
-Beat 4 — Resolved Tension / Final Hold (11–15s):
-${resolvedLine}
-Camera: Locked wide final hold with a subtle pull-back.${cameraBreakdownLine}
-Environment motion: ${micro}.`;
-
   return buildStructuredPrompt({
     fullText: `KLING DIRECT 15S MULTISHOT [${model}]
 ─────────────────────────────────────────────────────────
 ${note}
 ${qLead}
-${refLine}
-${motionRule}
-${context}
+Style note: ${vibe.style}. ${tone.video}.
+${klingWidePhysicsRule()}
 
 ${klingLengthLine}
-═══ PASTE INTO KLING — direct 15s multishot (copy this block only) ═══
+═══ PASTE INTO KLING — stays under 2500 chars (copy this block only) ═══
 ${pasteReadyCore}
 
-─── FULL BREAKDOWN — reference only, do NOT paste into Kling ───
-${body}
-
-─────────────────────────────────────────────────────────
-HOW TO USE (Kling direct 15s):
-1. Generate the master image first with the Nano Banana / Gemini image prompt.
-2. Upload the master image as the continuity anchor in Kling 3.0 Pro or Kling 3.0 Standard.
-3. Enable Bind Subject (Elements 3.0) so subject identity stays stable across the full 15-second sequence.
-4. Paste ONLY the block above the FULL BREAKDOWN line into Kling.
-5. Keep full-body 9:16 framing, left-right readability, and the clean reaction lane intact from opening through final hold.
-6. Keep grounded paw or hoof contact visible with dust-free ground behavior all the way through the final frame.
-✅ Direct one-paste 15-second multishot workflow - continuity preserved from the source/master image.`,
+─── OPTIONAL NOTES — reference only, do NOT paste into Kling ───
+Primary use: Global Viral Wildlife and other high-tension encounter lanes that start from a master still.
+Safety: no blood, no gore, no visible wounds, no death close-up.
+Continuity: preserve the same master-image spacing, habitat continuity, body mass, grounded contact, and readable action all the way through Shot 5.`,
     pasteReady: sanitizeForEngine(pasteReadyCore, "kling"),
     settings: [
       klingLengthLine,
       "Direct 15-second one-paste Kling workflow",
-      "Use the source/master image as the continuity anchor",
+      "Negative prompt embedded in the same copy block",
     ],
     metadata: {
       engine: "kling",

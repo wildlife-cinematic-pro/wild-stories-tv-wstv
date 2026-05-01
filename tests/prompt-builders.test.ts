@@ -525,12 +525,14 @@ describe("Step 7 — Opening readability and tension clarity", () => {
       quality
     );
     expect(out).toContain("KLING DIRECT 15S MULTISHOT");
-    expect(out).toContain("0–3s");
-    expect(out).toContain("3–7s");
-    expect(out).toContain("7–11s");
-    expect(out).toContain("11–15s");
-    expect(out).toContain("fully readable from frame one");
-    expect(out).toContain("no visible dust");
+    expect(out).toContain("Shot 1, 0–3s");
+    expect(out).toContain("Shot 2, 3–6s");
+    expect(out).toContain("Shot 3, 6–10s");
+    expect(out).toContain("Shot 4, 10–13s");
+    expect(out).toContain("Shot 5, 13–15s");
+    expect(out).toContain("Audio:");
+    expect(out).toContain("Negative prompt:");
+    expect(out).toContain("no blood, no gore, no visible wounds");
     expect(out).not.toContain("KLING NATIVE 10S");
   });
 });
@@ -618,10 +620,12 @@ describe("Step 7C — supporting prompt helpers keep readability language", () =
   } as const;
 
   function extractKlingPasteBlock(out: string): string {
-    const match = out.match(
-      /═══ PASTE INTO KLING — .*copy this block only\) ═══\n([\s\S]*?)\n\n─── FULL BREAKDOWN — reference only, do NOT paste into Kling ───/
+    return (
+      out
+        .split("═══ PASTE INTO KLING — stays under 2500 chars (copy this block only) ═══")[1]
+        ?.split("─── OPTIONAL NOTES — reference only, do NOT paste into Kling ───")[0]
+        ?.trim() ?? ""
     );
-    return match?.[1]?.trim() ?? "";
   }
 
   function extractKlingSixShotPasteBlock(out: string): string {
@@ -721,7 +725,7 @@ describe("Step 7C — supporting prompt helpers keep readability language", () =
     expect(out).toMatch(/cool rim light/i);
   });
 
-  it("Kling native paste-ready block is narrative style without field labels", () => {
+  it("Kling native paste-ready block is one copyable block without the old Kling prefix", () => {
     const out = buildKlingNative15s(
       klingBase.predator,
       klingBase.prey,
@@ -737,20 +741,26 @@ describe("Step 7C — supporting prompt helpers keep readability language", () =
 
     const pasteBlock = extractKlingPasteBlock(out);
     expect(pasteBlock.length).toBeGreaterThan(0);
+    expect(pasteBlock.startsWith("Image-to-video from the provided master image.")).toBe(true);
+    expect(pasteBlock).not.toContain("KLING 3.0 PRO DIRECT 15S MULTISHOT");
+    expect(pasteBlock).not.toContain("KLING DIRECT 15S MULTISHOT");
     expect(pasteBlock).not.toContain("Shot:");
     expect(pasteBlock).not.toContain("Characters:");
     expect(pasteBlock).not.toContain("Lighting & Location:");
-    expect(pasteBlock).toContain("KLING DIRECT 15S MULTISHOT");
-    expect(pasteBlock).toContain("0–3s Hook / Opening Tension");
-    expect(pasteBlock).toContain("3–7s Pressure Build");
-    expect(pasteBlock).toContain("7–11s Peak Action");
-    expect(pasteBlock).toContain("11–15s Resolved Tension / Final Hold");
-    expect(pasteBlock).toContain("Wide opening hold with a subtle push-in");
-    expect(pasteBlock).toContain("no visible dust, no dirt spray, no debris particles, no kicked-up soil, no dust clouds");
+    expect(pasteBlock).toContain("Shot 1, 0–3s");
+    expect(pasteBlock).toContain("Shot 2, 3–6s");
+    expect(pasteBlock).toContain("Shot 3, 6–10s");
+    expect(pasteBlock).toContain("Shot 4, 10–13s");
+    expect(pasteBlock).toContain("Shot 5, 13–15s");
+    expect(pasteBlock).toContain("Audio:");
+    expect(pasteBlock).toContain("Negative prompt:");
+    expect(pasteBlock).toContain("no blood");
+    expect(pasteBlock).toContain("no gore");
+    expect(pasteBlock).toContain("no visible wounds");
     expect(pasteBlock).not.toContain("KLING NATIVE 10S");
   });
 
-  it("Kling native paste-ready block stays within the 2500-char limit", () => {
+  it("Kling native paste-ready block stays within the 2500-char limit and keeps a full 15s body", () => {
     const out = buildKlingNative15s(
       klingBase.predator,
       klingBase.prey,
@@ -766,6 +776,7 @@ describe("Step 7C — supporting prompt helpers keep readability language", () =
 
     const pasteBlock = extractKlingPasteBlock(out);
     expect(pasteBlock.length).toBeLessThanOrEqual(2500);
+    expect(pasteBlock.length).toBeGreaterThan(1800);
   });
 
   it("Kling native paste-ready block excludes validator metadata", () => {

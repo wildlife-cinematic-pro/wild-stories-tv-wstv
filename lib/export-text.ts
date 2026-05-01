@@ -318,7 +318,7 @@ export function buildCopyAllPacksText(data: GeneratedPackage) {
     `=== KLING PACK (3.0 | WSTV action workflow | Negatives OK) ===`,
     kling || "(none)",
     "",
-    `=== KLING DIRECT (10s) ===`,
+    `=== KLING DIRECT 15S ===`,
     safeStr((data as Record<string, unknown>).klingNative15s) || "(none)",
     "",
     "",

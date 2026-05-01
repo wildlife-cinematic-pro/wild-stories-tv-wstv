@@ -178,6 +178,9 @@ describe("build-package refactor seam", () => {
       draft.basePkg.seedanceMultiShotPrompt
     );
     expect(prompts?.klingNative15s?.pasteReady.length).toBeGreaterThan(0);
+    expect(prompts?.klingNative15s?.pasteReady.startsWith("Image-to-video from the provided master image")).toBe(true);
+    expect(prompts?.klingNative15s?.pasteReady).toContain("Negative prompt:");
+    expect(prompts?.klingNative15s?.pasteReady).not.toContain("KLING 3.0 PRO DIRECT 15S MULTISHOT");
     expect(prompts?.klingSixShot?.pasteReady.length).toBeGreaterThan(0);
   });
 
