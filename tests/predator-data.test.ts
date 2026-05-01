@@ -3,6 +3,7 @@ import {
   filterPredatorOptionsByWildlifeScope,
   generateMonthlyCalendar,
   generateUSAViral30DayCalendar,
+  predatorData,
   suggestArc,
   suggestHabitat,
 } from "@/lib/predator-data";
@@ -33,6 +34,43 @@ describe("wildlife scope filtering", () => {
   });
 });
 
+describe("expanded wildlife dataset safety", () => {
+  it("keeps 100+ unique opposing animals available across the built-in dataset", () => {
+    const uniquePrey = new Set(
+      Object.values(predatorData).flatMap((info) => info.prey)
+    );
+
+    expect(uniquePrey.size).toBeGreaterThanOrEqual(100);
+  });
+
+  it("keeps opposing lists deduped per animal", () => {
+    for (const [animal, info] of Object.entries(predatorData)) {
+      expect(new Set(info.prey).size).toBe(
+        info.prey.length,
+        `${animal} prey list should not contain duplicates`
+      );
+    }
+  });
+
+  it("adds Warthog once for both crocodile entries", () => {
+    expect(
+      predatorData.Crocodile.prey.filter((animal) => animal === "Warthog")
+    ).toHaveLength(1);
+    expect(
+      predatorData["Nile Crocodile"].prey.filter(
+        (animal) => animal === "Warthog"
+      )
+    ).toHaveLength(1);
+  });
+
+  it("lets World Wildlife keep manual/custom animals available", () => {
+    expect(
+      filterPredatorOptionsByWildlifeScope(["Custom Panther"], "World Wildlife")
+    ).toEqual(["Custom Panther"]);
+  });
+});
+
+
 describe("suggestArc realism matching", () => {
   it("matches Grizzly Bear vs Bull Elk to giant clash", () => {
     expect(suggestArc("Grizzly Bear", "Bull Elk", "Chase and takedown")).toBe("Giant vs giant clash");
@@ -48,6 +86,12 @@ describe("suggestArc realism matching", () => {
 
   it("matches Coyote vs White-tailed Deer to escape from danger", () => {
     expect(suggestArc("Coyote", "White-tailed Deer", "Chase and takedown")).toBe("Escape from danger");
+  });
+
+  it("keeps Lion Pack using pack-pressure-safe arcs", () => {
+    expect(suggestArc("Lion Pack", "Zebra", "Chase and takedown")).toBe(
+      "Pack hunting strategy"
+    );
   });
 
   it("supports normalized Brown Bear naming", () => {
@@ -129,11 +173,23 @@ describe("suggestHabitat pair matching", () => {
     ).toBe("open prairie, brush edge, and field transition with clear escape lanes and readable survival-animal spacing");
   });
 
+  it("returns the exact muddy waterhole habitat for Crocodile vs Warthog", () => {
+    expect(
+      suggestHabitat("Crocodile", "Warthog", "fallback habitat")
+    ).toContain("dry-season African muddy waterhole");
+  });
+
+  it("returns surf-line habitat for Great White Shark vs Seal", () => {
+    expect(
+      suggestHabitat("Great White Shark", "Seal", "fallback habitat")
+    ).toContain("surf line");
+  });
+
   it("falls back when no pair-specific habitat exists", () => {
     expect(
       suggestHabitat(
         "Lion",
-        "Zebra",
+        "Gazelle",
         "fallback habitat"
       )
     ).toBe("fallback habitat");

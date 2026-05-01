@@ -28,7 +28,10 @@ import {
   getWeatherMicroGuidance,
 } from "@/lib/step-1-guidance";
 import {
+  FACEBOOK_SAFE_SURVIVAL_HINT,
   getRegionalWildlifeStep1Hint,
+  getWildlifeFocusPairingHighlights,
+  getWildlifeFocusSafetyDefaults,
   getWildlifeHabitatCompatibilityGuidance,
   getWildlifeScopeHelperText,
 } from "@/lib/wildlife-focus";
@@ -273,6 +276,12 @@ export default function Step1Setup({
     prey,
     habitat,
   });
+  const pairingHighlights = getWildlifeFocusPairingHighlights(
+    wildlifeScopeMode,
+    predator,
+    prey
+  );
+  const safetyDefaults = getWildlifeFocusSafetyDefaults();
 
   return (
     <div className="grid gap-6 xl:grid-cols-[minmax(0,1fr)_340px]">
@@ -380,7 +389,7 @@ export default function Step1Setup({
                 ))}
               </select>
               <p className="mt-1 text-[11px] text-gray-400">
-                Choose a wildlife focus to bias Step 1 toward animals and environments viewers recognize fastest in that region. World Wildlife restores the full list. Low Drift First Test prioritizes recognizable, AI-stable pairings. Custom animals stay available in every mode.
+                Choose a wildlife focus to bias Step 1 toward animals and environments viewers recognize fastest in that region. USA Viral Wildlife prioritizes Facebook-safe, U.S.-friendly pairings, while Global Viral Wildlife expands to globally recognizable animals without dropping the originality-first documentary framing. World Wildlife restores the full list. Custom animals stay available in every mode.
               </p>
               <p className="mt-1 text-[11px] text-gray-400">
                 {wildlifeScopeHelperText}
@@ -446,6 +455,37 @@ export default function Step1Setup({
                 {habitatCompatibility.message}
               </div>
             )}
+            <div className="rounded-2xl border border-violet-100 bg-violet-50/80 p-3 text-[11px] leading-relaxed text-violet-900 sm:col-span-2">
+              <div className="flex flex-wrap gap-2">
+                {pairingHighlights.badges.length > 0 ? (
+                  pairingHighlights.badges.map((badge) => (
+                    <span
+                      key={badge}
+                      className="rounded-full border border-violet-200 bg-white/80 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.08em] text-violet-700"
+                    >
+                      {badge}
+                    </span>
+                  ))
+                ) : (
+                  <span className="rounded-full border border-violet-200 bg-white/80 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.08em] text-violet-700">
+                    Facebook-safe
+                  </span>
+                )}
+              </div>
+              <p className="mt-2">
+                <span className="font-semibold">Facebook-safe survival framing:</span>{" "}
+                {FACEBOOK_SAFE_SURVIVAL_HINT}
+              </p>
+              {pairingHighlights.safeArcLabel && (
+                <p className="mt-1">
+                  <span className="font-semibold">Recommended safe arc:</span>{" "}
+                  {pairingHighlights.safeArcLabel}
+                </p>
+              )}
+              <p className="mt-1 text-violet-800/80">
+                {safetyDefaults.join(" • ")}
+              </p>
+            </div>
           </div>
         </section>
 
