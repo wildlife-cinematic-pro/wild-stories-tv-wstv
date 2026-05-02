@@ -97,6 +97,13 @@ export {
 } from "@/lib/prompt-builders/runway";
 
 export {
+  type RunwayMotionFirstInput,
+  buildRunwayMotionFirstPrompt,
+  makeRunwaySafePrompt,
+  validateRunwayMotionFirstPrompt,
+} from "@/lib/prompt-builders/runway-motion-first";
+
+export {
   type KlingPromptPack,
   buildKlingPromptPack,
   buildKlingShots,

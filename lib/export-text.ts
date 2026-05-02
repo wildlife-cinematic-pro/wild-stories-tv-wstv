@@ -1,5 +1,7 @@
 import type { GeneratedPackage } from "@/types";
 
+import { buildCreatorQaPack } from "@/lib/creator-qa-pack";
+
 function safeStr(v: unknown) {
   if (typeof v === "string") return v.trim();
   if (Array.isArray(v)) return v.map(String).join("\n").trim();
@@ -287,6 +289,7 @@ export function buildCopyAllPacksText(data: GeneratedPackage) {
   const animalBehavior = buildAnimalBehaviorText(data);
   const soundDesign = buildSoundDesignText(data);
   const firstFrameOverlay = buildFirstFrameOverlayText(data);
+  const creatorQaPack = buildCreatorQaPack(data);
   const shotImagePlanText = (data.shotImagePlan ?? [])
     .map(
       (plan, i) =>
@@ -305,6 +308,24 @@ export function buildCopyAllPacksText(data: GeneratedPackage) {
     "",
     `=== 4-SHOT IMAGE PLAN (NANO BANANA CONTINUITY) ===`,
     shotImagePlanText || "(none)",
+    "",
+    `=== CREATOR QA PACK ===`,
+    creatorQaPack.summaryText,
+    "",
+    `=== MASTER IMAGE QUALITY CHECK ===`,
+    creatorQaPack.masterImageSummary,
+    "",
+    `=== RUNWAY MOTION-FIRST PROMPT ===`,
+    creatorQaPack.runwayMotionFirstPrompt,
+    "",
+    `=== FACEBOOK VIRAL PACK ===`,
+    creatorQaPack.facebookSummary,
+    "",
+    `=== FAILURE FIX GUIDE ===`,
+    creatorQaPack.failureFixGuide || "(none)",
+    "",
+    `=== COMPACT NEGATIVE PROMPT ===`,
+    creatorQaPack.compactNegativePrompt || "(none)",
     "",
     `=== SEEDANCE PACK (I2V | simple motion-first prompting | NO negatives) ===`,
     seedance || "(none)",

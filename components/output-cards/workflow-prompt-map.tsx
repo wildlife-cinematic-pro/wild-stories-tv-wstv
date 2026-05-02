@@ -17,6 +17,7 @@ import {
   buildEnvironmentMasterReferencePrompt,
   buildFinalMergeMasterPrompt,
 } from "@/components/output-cards/reference-image-prompts";
+import { buildCreatorQaPack } from "@/lib/creator-qa-pack";
 
 function deriveDriftLabel(
   clipChaining?: string
@@ -322,6 +323,7 @@ export function WorkflowPromptMap({
     8: false,
     9: false,
     10: false,
+    11: false,
   };
 
   const [mode, setMode] = useState<WorkflowMode>("hybrid");
@@ -353,6 +355,7 @@ export function WorkflowPromptMap({
     8: null,
     9: null,
     10: null,
+    11: null,
   });
 
   const done = doneByMode[mode];
@@ -463,6 +466,17 @@ export function WorkflowPromptMap({
       environmentTag: environmentReferenceTag,
     });
     const elevenLabs20sPrompt = buildElevenLabs20sPrompt();
+    const creatorQaPack = buildCreatorQaPack(data);
+    const facebookViralPackText = creatorQaPack.facebookSummary;
+    const failureFixGuide = creatorQaPack.failureFixGuide;
+    const compactNegativePrompt = creatorQaPack.compactNegativePrompt;
+    const runwayMotionFirstPrompt = creatorQaPack.runwayMotionFirstPrompt;
+    const creatorQaPackText = [
+      creatorQaPack.summaryText,
+      "",
+      "ELEVENLABS MUSIC PROMPT",
+      elevenLabs20sPrompt,
+    ].join("\n");
     const referenceBuildPrompts = [
       "Lead Animal Master Image",
       leadMasterPrompt,
@@ -850,10 +864,26 @@ export function WorkflowPromptMap({
             value: elevenLabs20sPrompt,
             actions: [{ label: "Copy ElevenLabs 20s Music Prompt", value: elevenLabs20sPrompt }],
           },
+          {
+            step: 11,
+            title: "Creator QA Pack",
+            badge: "QA + export helpers",
+            color: hybridColor,
+            help: "Quick creator pack for master-image checks, Runway motion-first wording, Facebook packaging, failure fixes, and compact negative cleanup.",
+            value: creatorQaPackText,
+            actions: [
+              { label: "Copy Creator QA Pack", value: creatorQaPackText },
+              { label: "Copy Runway Motion-First", value: runwayMotionFirstPrompt, secondary: true },
+              { label: "Copy Facebook Viral Pack", value: facebookViralPackText, secondary: true },
+              { label: "Copy Compact Negative", value: compactNegativePrompt, secondary: true },
+              { label: "Copy Failure Fix Guide", value: failureFixGuide, secondary: true },
+            ],
+          },
         ],
       },
     };
   }, [
+    data,
     imagePrompt,
     imagePromptCard,
     environmentName,

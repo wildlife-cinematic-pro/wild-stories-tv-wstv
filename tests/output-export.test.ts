@@ -196,6 +196,12 @@ describe("live export TXT path", () => {
     expect(text).toContain("Clear U.S. wildlife setup.");
     expect(text).toContain("FRAME HEURISTICS");
     expect(text).toContain("GPT IMAGE 2 BACKUP PROMPT");
+    expect(text).toContain("=== CREATOR QA PACK ===");
+    expect(text).toContain("=== MASTER IMAGE QUALITY CHECK ===");
+    expect(text).toContain("=== RUNWAY MOTION-FIRST PROMPT ===");
+    expect(text).toContain("=== FACEBOOK VIRAL PACK ===");
+    expect(text).toContain("=== FAILURE FIX GUIDE ===");
+    expect(text).toContain("=== COMPACT NEGATIVE PROMPT ===");
     expect(text).not.toMatch(/balanced first-frame clarity|balanced facebook cover readability|context fit/i);
     expect(text).not.toContain("same environment continuity");
     expect(text).not.toContain("stable clean air");
