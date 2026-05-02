@@ -183,7 +183,7 @@ export default function OutputCards({
       eyebrow: "Prompts",
       title: `${data.shotImagePlan?.length ?? 0} image prompts ready`,
       detail:
-        "Image prompt, thumbnail prompt, and continuity image plan are grouped together here.",
+        "Image prompt, thumbnail prompt, continuity image plan, and Creator QA Pack are grouped together here.",
       footer: "Open core prompt workspace",
     },
     {

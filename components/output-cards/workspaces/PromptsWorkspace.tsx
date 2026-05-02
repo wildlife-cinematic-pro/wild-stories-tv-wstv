@@ -5,6 +5,7 @@ import {
   getGptImage2PromptCard,
   getImagePromptCard,
 } from "@/components/output-cards/prompt-utils";
+import { buildCreatorQaPack } from "@/lib/creator-qa-pack";
 
 import type { GeneratedPackage } from "@/types";
 
@@ -17,13 +18,15 @@ export function PromptsWorkspace({
 }) {
   const imagePromptCard = getImagePromptCard(data);
   const gptImage2PromptCard = getGptImage2PromptCard(data);
+  const creatorQaPack = buildCreatorQaPack(data);
 
   return (
     <div className="space-y-6">
       <div className="rounded-2xl border border-amber-500/30 bg-amber-500/12 p-4 text-sm text-amber-900 shadow-sm dark:text-amber-100">
         Core prompt workspace मा primary master image prompt, GPT Image 2 backup prompt,
-        thumbnail prompt, negative prompt, र continuity image plan grouped छन् so
-        wildlife master still, backup cover frame, अनि motion handoff यही tab बाट manage हुन्छ.
+        thumbnail prompt, negative prompt, continuity image plan, अनि Creator QA Pack
+        grouped छन् so wildlife master still, backup cover frame, motion handoff, अनि
+        creator-side fixes यही tab बाट manage हुन्छ.
       </div>
 
       <SectionLabel label="Core Prompts" />
@@ -87,6 +90,62 @@ export function PromptsWorkspace({
           ]}
         />
       )}
+
+      <SectionLabel label="Creator QA Pack" />
+
+      <Card
+        title="🧪 Creator QA Pack"
+        value={creatorQaPack.summaryText}
+        onCopy={onCopy}
+        accent="border-l-indigo-500"
+        extraActions={[
+          {
+            label: "Copy Fix Prompt",
+            onClick: () => onCopy(creatorQaPack.masterImageFixPrompt),
+            className:
+              "rounded border border-indigo-300 bg-indigo-500/12 px-3 py-1 text-sm font-semibold text-indigo-800 hover:bg-indigo-500/20 active:scale-95 dark:text-indigo-100",
+          },
+          {
+            label: "Copy Runway Motion-First",
+            onClick: () => onCopy(creatorQaPack.runwayMotionFirstPrompt),
+            className:
+              "rounded border border-indigo-300 bg-indigo-500/12 px-3 py-1 text-sm font-semibold text-indigo-800 hover:bg-indigo-500/20 active:scale-95 dark:text-indigo-100",
+          },
+          {
+            label: "Copy Compact Negative",
+            onClick: () => onCopy(creatorQaPack.compactNegativePrompt),
+            className:
+              "rounded border border-indigo-300 bg-indigo-500/12 px-3 py-1 text-sm font-semibold text-indigo-800 hover:bg-indigo-500/20 active:scale-95 dark:text-indigo-100",
+          },
+          {
+            label: "Copy Failure Repair",
+            onClick: () => onCopy(creatorQaPack.failureRepairPrompt),
+            className:
+              "rounded border border-indigo-300 bg-indigo-500/12 px-3 py-1 text-sm font-semibold text-indigo-800 hover:bg-indigo-500/20 active:scale-95 dark:text-indigo-100",
+          },
+        ]}
+      />
+
+      <Card
+        title="📣 Facebook Viral Pack"
+        value={creatorQaPack.facebookSummary}
+        onCopy={onCopy}
+        accent="border-l-rose-400"
+        extraActions={[
+          {
+            label: "Copy Caption",
+            onClick: () => onCopy(creatorQaPack.facebookCaption),
+            className:
+              "rounded border border-rose-300 bg-rose-500/12 px-3 py-1 text-sm font-semibold text-rose-800 hover:bg-rose-500/20 active:scale-95 dark:text-rose-100",
+          },
+          {
+            label: "Copy Hashtags",
+            onClick: () => onCopy(creatorQaPack.facebookHashtags),
+            className:
+              "rounded border border-rose-300 bg-rose-500/12 px-3 py-1 text-sm font-semibold text-rose-800 hover:bg-rose-500/20 active:scale-95 dark:text-rose-100",
+          },
+        ]}
+      />
 
       {data.thumbnailPrompt && (
         <Card
