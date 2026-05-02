@@ -29,6 +29,7 @@ import {
   getToneMicroGuidance,
   getWeatherMicroGuidance,
 } from "@/lib/step-1-guidance";
+import { buildSceneIntelligenceReport } from "@/lib/scene-intelligence";
 import {
   FACEBOOK_SAFE_SURVIVAL_HINT,
   getRegionalWildlifeStep1Hint,
@@ -292,20 +293,38 @@ export default function Step1Setup({
   const safetyDefaults = getWildlifeFocusSafetyDefaults();
   const [leadAnimalSearch, setLeadAnimalSearch] = useState("");
 
-const leadAnimalQuery = leadAnimalSearch.trim().toLowerCase();
-
-const leadAnimalMatches = leadAnimalQuery
-  ? predatorOptions.filter((option) =>
-      option.toLowerCase().includes(leadAnimalQuery)
-    )
-  : predatorOptions;
-
-const filteredPredatorOptions = leadAnimalMatches.includes(predator)
-  ? leadAnimalMatches
-  : [predator, ...leadAnimalMatches];
-
-const leadAnimalSearchHasNoResults =
-  leadAnimalQuery.length > 0 && leadAnimalMatches.length === 0;
+  const leadAnimalQuery = leadAnimalSearch.trim().toLowerCase();
+  const leadAnimalMatches = leadAnimalQuery
+    ? predatorOptions.filter((option) =>
+        option.toLowerCase().includes(leadAnimalQuery)
+      )
+    : predatorOptions;
+  const filteredPredatorOptions = leadAnimalMatches.includes(predator)
+    ? leadAnimalMatches
+    : [predator, ...leadAnimalMatches];
+  const leadAnimalSearchHasNoResults =
+    leadAnimalQuery.length > 0 && leadAnimalMatches.length === 0;
+  const sceneReport = buildSceneIntelligenceReport({
+    predator,
+    prey,
+    contentLane,
+    arc,
+    habitat,
+    weather,
+    depthMode,
+    cameraAnglePreset,
+    emotionalTone,
+    animalVibe,
+    environment: finalEnvironment,
+  });
+  const sceneReportColor =
+    sceneReport.severity === "success"
+      ? "border-emerald-100 bg-emerald-50/80 text-emerald-900"
+      : sceneReport.severity === "info"
+        ? "border-sky-100 bg-sky-50/80 text-sky-900"
+        : sceneReport.severity === "warning"
+          ? "border-amber-100 bg-amber-50/80 text-amber-900"
+          : "border-rose-100 bg-rose-50/80 text-rose-900";
 
   return (
     <div className="grid gap-6 xl:grid-cols-[minmax(0,1fr)_340px]">
@@ -419,69 +438,68 @@ const leadAnimalSearchHasNoResults =
                 {wildlifeScopeHelperText}
               </p>
             </div>
-          <div>
-  <label className="mb-1.5 block text-[11px] font-medium text-gray-500">
-    Lead Animal
-  </label>
+            <div>
+              <label className="mb-1.5 block text-[11px] font-medium text-gray-500">
+                Lead Animal
+              </label>
+              <div className="space-y-2">
+                <div className="flex gap-2">
+                  <input
+                    type="search"
+                    value={leadAnimalSearch}
+                    onChange={(event) => setLeadAnimalSearch(event.target.value)}
+                    placeholder="Search lead animal..."
+                    className="min-w-0 flex-1 rounded-xl border border-gray-200 bg-gray-50 px-3 py-2.5 text-sm font-medium text-gray-900 placeholder:text-gray-400 focus:border-gray-400 focus:outline-none"
+                  />
 
-  <div className="space-y-2">
-    <div className="flex gap-2">
-      <input
-        type="search"
-        value={leadAnimalSearch}
-        onChange={(event) => setLeadAnimalSearch(event.target.value)}
-        placeholder="Search lead animal..."
-        className="min-w-0 flex-1 rounded-xl border border-gray-200 bg-gray-50 px-3 py-2.5 text-sm font-medium text-gray-900 placeholder:text-gray-400 focus:border-gray-400 focus:outline-none"
-      />
+                  {leadAnimalSearch && (
+                    <button
+                      type="button"
+                      onClick={() => setLeadAnimalSearch("")}
+                      className="rounded-xl border border-gray-200 bg-white px-3 py-2 text-xs font-semibold text-gray-500 hover:bg-gray-50"
+                    >
+                      Clear
+                    </button>
+                  )}
+                </div>
 
-      {leadAnimalSearch && (
-        <button
-          type="button"
-          onClick={() => setLeadAnimalSearch("")}
-          className="rounded-xl border border-gray-200 bg-white px-3 py-2 text-xs font-semibold text-gray-500 hover:bg-gray-50"
-        >
-          Clear
-        </button>
-      )}
-    </div>
+                <select
+                  value={predator}
+                  onChange={(event) => {
+                    onPredatorChange(event.target.value);
+                    setLeadAnimalSearch("");
+                  }}
+                  className="w-full rounded-xl border border-gray-200 bg-gray-50 px-3 py-2.5 text-sm font-medium text-gray-900 focus:border-gray-400 focus:outline-none"
+                >
+                  {filteredPredatorOptions.map((option) => (
+                    <option key={option} value={option}>
+                      {option}
+                    </option>
+                  ))}
+                </select>
+              </div>
 
-    <select
-      value={predator}
-      onChange={(event) => {
-        onPredatorChange(event.target.value);
-        setLeadAnimalSearch("");
-      }}
-      className="w-full rounded-xl border border-gray-200 bg-gray-50 px-3 py-2.5 text-sm font-medium text-gray-900 focus:border-gray-400 focus:outline-none"
-    >
-      {filteredPredatorOptions.map((option) => (
-        <option key={option} value={option}>
-          {option}
-        </option>
-      ))}
-    </select>
-  </div>
+              {leadAnimalSearchHasNoResults && (
+                <p className="mt-1 text-[11px] text-amber-600">
+                  No lead animal found for “{leadAnimalSearch}”. Current selected animal is still kept.
+                </p>
+              )}
 
-  {leadAnimalSearchHasNoResults && (
-    <p className="mt-1 text-[11px] text-amber-600">
-      No lead animal found for “{leadAnimalSearch}”. Current selected animal is still kept.
-    </p>
-  )}
+              <p className="mt-1 text-[11px] text-gray-400">
+                Sets the primary behavior cue; search or choose the animal viewers recognize first.
+              </p>
 
-  <p className="mt-1 text-[11px] text-gray-400">
-    Sets the primary behavior cue; search or choose the animal viewers recognize first.
-  </p>
+              <p className="mt-0.5 text-[11px] text-gray-400">
+                Showing {leadAnimalMatches.length} of {predatorOptions.length} lead animals.
+              </p>
 
-  <p className="mt-0.5 text-[11px] text-gray-400">
-    Showing {leadAnimalMatches.length} of {predatorOptions.length} lead animals.
-  </p>
-
-  {customPredatorCount > 0 && (
-    <p className="mt-0.5 text-[11px] text-gray-400">
-      {customPredatorCount} custom animal
-      {customPredatorCount > 1 ? "s" : ""} added
-    </p>
-  )}
-</div>
+              {customPredatorCount > 0 && (
+                <p className="mt-0.5 text-[11px] text-gray-400">
+                  {customPredatorCount} custom animal
+                  {customPredatorCount > 1 ? "s" : ""} added
+                </p>
+              )}
+            </div>
             <div>
               <label className="mb-1.5 block text-[11px] font-medium text-gray-500">
                 Opposing Animal
@@ -569,6 +587,60 @@ const leadAnimalSearchHasNoResults =
           <p className="mb-4 mt-1 text-[11px] leading-relaxed text-gray-500">
             These controls bias the existing arc engine. Auto choices are safest; lane and habitat choices make the first Facebook test more specific.
           </p>
+          <div className={`mb-4 rounded-2xl border p-4 text-[11px] leading-relaxed ${sceneReportColor}`}>
+            <div className="flex flex-wrap items-center justify-between gap-2">
+              <span className="text-sm font-bold">
+                Scene Fit: {sceneReport.score}/100
+              </span>
+              <span className="rounded-full bg-white/80 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.08em]">
+                {sceneReport.label}
+              </span>
+            </div>
+
+            <p className="mt-2">
+              <span className="font-semibold">Issue:</span> {sceneReport.issue}
+            </p>
+            <p className="mt-1">
+              <span className="font-semibold">Fix:</span> {sceneReport.fix}
+            </p>
+
+            <div className="mt-3 rounded-xl bg-white/70 p-3">
+              <div className="font-semibold">Recommended Scene</div>
+              <div className="mt-1">
+                {sceneReport.recommended.habitat} + {sceneReport.recommended.weather} +{" "}
+                {sceneReport.recommended.cameraAnglePreset}
+              </div>
+              <div className="mt-1 text-[10px] opacity-80">
+                {sceneReport.recommended.depthMode} • {sceneReport.recommended.emotionalTone} •{" "}
+                {sceneReport.recommended.animalVibe}
+              </div>
+            </div>
+
+            {sceneReport.reasons.length > 0 && (
+              <div className="mt-3 space-y-1">
+                {sceneReport.reasons.slice(0, 3).map((reason) => (
+                  <p key={reason} className="text-[10px] opacity-85">
+                    • {reason}
+                  </p>
+                ))}
+              </div>
+            )}
+
+            <button
+              type="button"
+              onClick={() => {
+                onHabitatChange(sceneReport.recommended.habitat);
+                onWeatherChange(sceneReport.recommended.weather);
+                onDepthModeChange(sceneReport.recommended.depthMode);
+                onCameraAnglePresetChange(sceneReport.recommended.cameraAnglePreset);
+                onEmotionalToneChange(sceneReport.recommended.emotionalTone);
+                onAnimalVibeChange(sceneReport.recommended.animalVibe);
+              }}
+              className="mt-3 rounded-xl bg-gray-900 px-3 py-2 text-xs font-semibold text-white shadow-sm hover:bg-black active:scale-[0.98]"
+            >
+              Apply Recommended Scene
+            </button>
+          </div>
           <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
             <div>
               <label className="mb-1.5 block text-[11px] font-medium text-gray-500">
