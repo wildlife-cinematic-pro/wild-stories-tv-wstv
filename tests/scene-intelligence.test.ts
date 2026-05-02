@@ -76,6 +76,78 @@ describe("buildSceneIntelligenceReport", () => {
     expect(["Good", "Strong"]).toContain(report.label);
   });
 
+  it("does not send grizzly bear and bison to riverbank reeds", () => {
+    const report = buildSceneIntelligenceReport({
+      predator: "Grizzly Bear",
+      prey: "Bison",
+      contentLane: "Defender",
+      arc: "Defender stands ground",
+      habitat: "Auto",
+      weather: "Golden Hour",
+      depthMode: "Balanced Depth",
+      cameraAnglePreset: "Front full-body",
+      emotionalTone: "Raw Tension",
+      animalVibe: "National Geographic Wild",
+      environment: "wide mountain meadow with planted footing",
+    });
+
+    expect(report.recommended.habitat).not.toBe("Riverbank Reeds");
+  });
+
+  it("does not send golden eagle and rabbit to riverbank reeds", () => {
+    const report = buildSceneIntelligenceReport({
+      predator: "Golden Eagle",
+      prey: "Rabbit",
+      contentLane: "Escape",
+      arc: "Ambush attack",
+      habitat: "Auto",
+      weather: "Golden Hour",
+      depthMode: "Balanced Depth",
+      cameraAnglePreset: "Front full-body",
+      emotionalTone: "Raw Tension",
+      animalVibe: "National Geographic Wild",
+      environment: "open highland scrub ridge",
+    });
+
+    expect(report.recommended.habitat).not.toBe("Riverbank Reeds");
+  });
+
+  it("recommends riverbank reeds for black bear and salmon", () => {
+    const report = buildSceneIntelligenceReport({
+      predator: "Black Bear",
+      prey: "Salmon",
+      contentLane: "Fishing Strike",
+      arc: "Ambush attack",
+      habitat: "Auto",
+      weather: "Golden Hour",
+      depthMode: "Balanced Depth",
+      cameraAnglePreset: "Front full-body",
+      emotionalTone: "Raw Tension",
+      animalVibe: "National Geographic Wild",
+      environment: "cold river bend with moving water",
+    });
+
+    expect(report.recommended.habitat).toBe("Riverbank Reeds");
+  });
+
+  it("recommends riverbank reeds for bald eagle and salmon", () => {
+    const report = buildSceneIntelligenceReport({
+      predator: "Bald Eagle",
+      prey: "Salmon",
+      contentLane: "Fishing Strike",
+      arc: "Ambush attack",
+      habitat: "Auto",
+      weather: "Golden Hour",
+      depthMode: "Balanced Depth",
+      cameraAnglePreset: "Front full-body",
+      emotionalTone: "Raw Tension",
+      animalVibe: "National Geographic Wild",
+      environment: "rocky river edge with visible shallows",
+    });
+
+    expect(report.recommended.habitat).toBe("Riverbank Reeds");
+  });
+
   it("does not over-reward tiger and deer in an everglades marsh", () => {
     const report = buildSceneIntelligenceReport({
       predator: "Tiger",

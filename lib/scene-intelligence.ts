@@ -52,12 +52,15 @@ export type SceneIntelligenceReport = {
   reasons: string[];
 };
 
-const WATER_PREDATORS = [
+const DIRECT_WATER_PREDATORS = [
   "crocodile",
   "alligator",
   "caiman",
   "nile crocodile",
   "saltwater crocodile",
+] as const;
+
+const CONDITIONAL_WATER_PREDATORS = [
   "jaguar",
   "bald eagle",
   "eagle",
@@ -69,8 +72,10 @@ const WATER_PREY = [
   "fish",
   "trout",
   "seal",
+  "duck",
   "water buffalo",
-  "warthog",
+  "frog",
+  "crayfish",
 ] as const;
 
 const OPEN_CHASE_PREDATORS = [
@@ -116,6 +121,9 @@ const WATER_ENVIRONMENT_HINTS = [
   "ocean",
   "surf",
   "fjord",
+  "creek",
+  "reeds",
+  "wetland",
 ] as const;
 
 function normalize(value: string): string {
@@ -133,11 +141,16 @@ function clampScore(value: number): number {
 function getRecommendedHabitat(input: SceneIntelligenceInput): HabitatPreset {
   const predator = normalize(input.predator);
   const prey = normalize(input.prey);
+  const environment = normalize(input.environment);
+
+  if (includesAny(predator, DIRECT_WATER_PREDATORS)) {
+    return "Riverbank Reeds";
+  }
 
   if (
-    includesAny(predator, WATER_PREDATORS) ||
-    (includesAny(predator, ["jaguar", "bald eagle", "eagle", "bear"]) &&
-      includesAny(prey, WATER_PREY))
+    includesAny(predator, CONDITIONAL_WATER_PREDATORS) &&
+    (includesAny(prey, WATER_PREY) ||
+      includesAny(environment, WATER_ENVIRONMENT_HINTS))
   ) {
     return "Riverbank Reeds";
   }
@@ -162,7 +175,10 @@ function isWaterCompatible(input: SceneIntelligenceInput): boolean {
   const environment = normalize(input.environment);
 
   return (
-    includesAny(predator, WATER_PREDATORS) ||
+    includesAny(predator, DIRECT_WATER_PREDATORS) ||
+    (includesAny(predator, CONDITIONAL_WATER_PREDATORS) &&
+      (includesAny(prey, WATER_PREY) ||
+        includesAny(environment, WATER_ENVIRONMENT_HINTS))) ||
     includesAny(prey, WATER_PREY) ||
     includesAny(environment, WATER_ENVIRONMENT_HINTS)
   );
