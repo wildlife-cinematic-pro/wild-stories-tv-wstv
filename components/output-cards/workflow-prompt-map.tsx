@@ -407,7 +407,7 @@ export function WorkflowPromptMap({
       actions: [
         { label: "Copy Image Prompt", value: imagePrompt },
         {
-          label: "Copy BODY",
+          label: "Copy Image Body",
           value: imagePromptCard.pasteReady,
           secondary: true,
         },

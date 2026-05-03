@@ -52,7 +52,7 @@ test("main build flow generates output, keeps workspace tabs reachable, and show
   await expect(page.getByText(/Advanced workspace research/i)).toBeVisible();
 
   await page.locator('[data-workspace-tab="overview"]').click();
-  const copyAllButton = page.getByRole("button", { name: /Copy All Packs/i });
+  const copyAllButton = page.getByRole("button", { name: /Copy All Output/i });
   const copyAllHandle = await copyAllButton.elementHandle();
   expect(copyAllHandle).not.toBeNull();
 

@@ -53,6 +53,7 @@ export function PublishingWorkspace({
           value={data.hook}
           onCopy={handleCopy}
           accent="border-l-orange-500"
+          copyLabel="Copy Hook"
         />
       ) : null}
 
@@ -68,6 +69,7 @@ export function PublishingWorkspace({
           value={data.caption}
           onCopy={handleCopy}
           accent="border-l-emerald-500"
+          copyLabel="Copy Caption"
         />
       ) : null}
 
@@ -78,16 +80,17 @@ export function PublishingWorkspace({
           onCopy={handleCopy}
           accent="border-l-indigo-500"
           aiEnhanced={data.aiEnhanced}
+          copyLabel="Copy Voiceover"
         />
       )}
 
-      {data.cta && <Card title="📢 CTA" value={data.cta} onCopy={handleCopy} />}
+      {data.cta && <Card title="📢 CTA" value={data.cta} onCopy={handleCopy} copyLabel="Copy CTA" />}
 
       {data.hashtags && (
-        <Card title="# Hashtags" value={data.hashtags} onCopy={handleCopy} />
+        <Card title="# Hashtags" value={data.hashtags} onCopy={handleCopy} copyLabel="Copy Hashtags" />
       )}
 
-      {data.tags && <Card title="Tags" value={data.tags} onCopy={handleCopy} />}
+      {data.tags && <Card title="Tags" value={data.tags} onCopy={handleCopy} copyLabel="Copy Tags" />}
 
       {data.platformPack && (
         <>
