@@ -42,6 +42,7 @@ import {
 } from "@/lib/model-specs";
 import { DEFAULT_CAMERA_ANGLE_PRESET } from "@/lib/camera-angle-presets";
 import { buildStoryboardPreviewLinkMetadata } from "@/lib/storyboard-link-metadata";
+import { WORKFLOW_TEST_PRESETS } from "@/lib/workflow-presets";
 import { getWildlifeScopeDefaultSelection } from "@/lib/wildlife-focus";
 import {
   useBuildPreview,
@@ -214,6 +215,21 @@ export default function Page() {
   const applyWorkflowPreset = useCallback(
     (preset: { snapshot: BuildWorkflowPresetSnapshot }) => {
       applyBuildSnapshot(preset.snapshot);
+    },
+    [applyBuildSnapshot]
+  );
+
+  const handleApplyWorkflowTestPreset = useCallback(
+    (presetId: string) => {
+      const preset = WORKFLOW_TEST_PRESETS.find((candidate) => candidate.id === presetId);
+
+      if (!preset) {
+        return;
+      }
+
+      applyBuildSnapshot(preset.snapshot);
+      setStep(1);
+      setActiveTab("build");
     },
     [applyBuildSnapshot]
   );
@@ -1046,6 +1062,7 @@ export default function Page() {
                 onHabitatChange={setHabitat}
                 onEmotionalToneChange={setEmotionalTone}
                 onAnimalVibeChange={setAnimalVibe}
+                onApplyWorkflowTestPreset={handleApplyWorkflowTestPreset}
                 onResetDefaults={handleResetDefaults}
                 onContinue={() => setStep(2)}
                 onWorkflowPresetNameChange={workflowPresetControls.setPresetName}
