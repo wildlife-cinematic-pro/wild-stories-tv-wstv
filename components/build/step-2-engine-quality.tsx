@@ -16,7 +16,9 @@ import type { QualityRecommendations } from "@/lib/recommendations";
 import type {
   AIProvider,
   Arc,
+  ContentLane,
   DurationLane,
+  HabitatPreset,
   HookFamily,
   KlingModel,
   MediaAnalysisResult,
@@ -63,7 +65,10 @@ type Step2EngineQualityProps = {
   predator: string;
   prey: string;
   arc: Arc;
+  habitat: HabitatPreset;
   weather: Weather;
+  finalEnvironment: string;
+  contentLane: ContentLane;
   driftRisk: PredatorInfo["driftRisk"];
   onDurationLaneChange: (lane: DurationLane) => void;
   onHookModeChange: (mode: HookFamily | "all") => void;
@@ -108,7 +113,10 @@ export default function Step2EngineQuality({
   predator,
   prey,
   arc,
+  habitat,
   weather,
+  finalEnvironment,
+  contentLane,
   driftRisk,
   onDurationLaneChange,
   onHookModeChange,
@@ -123,6 +131,9 @@ export default function Step2EngineQuality({
     preyName: prey,
     arc,
     weather,
+    contentLane,
+    habitat,
+    finalEnvironment,
   });
   const [promptModeOverride, setPromptModeOverride] =
     useState<EnginePromptMode | null>(null);
@@ -134,6 +145,9 @@ export default function Step2EngineQuality({
     preyName: prey,
     arc,
     weather,
+    contentLane,
+    habitat,
+    finalEnvironment,
     mode: activePromptMode,
   });
   const promptHealthColor =

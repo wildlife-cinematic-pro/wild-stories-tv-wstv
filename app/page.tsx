@@ -1165,8 +1165,11 @@ export default function Page() {
                 onSceneDescriptionChange={handleSceneDescriptionChange}
                 predator={predator}
                 prey={prey}
-                arc={arc}
+                arc={previewArc}
+                habitat={habitat}
                 weather={weather}
+                finalEnvironment={finalEnvironment}
+                contentLane={contentLane}
                 driftRisk={preset.driftRisk}
                 onDurationLaneChange={setDurationLane}
                 onHookModeChange={setHookMode}

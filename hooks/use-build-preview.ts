@@ -247,9 +247,20 @@ export function useBuildPreview({
         arc: previewArc,
         habitat,
         environment: finalEnvironment,
+        weather,
+        contentLane,
         variant: sceneDescriptionVariant,
       }),
-    [predator, prey, previewArc, habitat, finalEnvironment, sceneDescriptionVariant]
+    [
+      predator,
+      prey,
+      previewArc,
+      habitat,
+      finalEnvironment,
+      weather,
+      contentLane,
+      sceneDescriptionVariant,
+    ]
   );
 
   useEffect(() => {
@@ -272,6 +283,8 @@ export function useBuildPreview({
       arc: previewArc,
       habitat,
       environment: finalEnvironment,
+      weather,
+      contentLane,
       variant,
     });
 

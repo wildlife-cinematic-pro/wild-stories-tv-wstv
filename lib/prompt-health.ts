@@ -1,4 +1,6 @@
-import type { AnimalVibe, Arc, Weather } from "@/types";
+import { buildQaSafeSceneDescription } from "@/lib/scene-description-optimizer";
+
+import type { AnimalVibe, Arc, ContentLane, HabitatPreset, Weather } from "@/types";
 
 export type EnginePromptMode = "runway-safe" | "kling-action" | "universal";
 
@@ -9,6 +11,9 @@ export type PromptHealthInput = {
   arc?: Arc;
   weather?: Weather;
   animalVibe?: AnimalVibe;
+  contentLane?: ContentLane;
+  habitat?: HabitatPreset;
+  finalEnvironment?: string;
 };
 
 export type PromptHealthReport = {
@@ -249,18 +254,32 @@ export function buildEnginePromptRecommendation(
         ? "Action-forward wording that keeps the movement readable."
         : "Balanced wording for teams using both Runway and Kling.";
 
+  const qaSafeSceneDescription =
+    input.arc && input.habitat && input.weather && input.contentLane && input.finalEnvironment
+      ? buildQaSafeSceneDescription({
+          predator,
+          prey,
+          arc: input.arc,
+          habitat: input.habitat,
+          weather: input.weather,
+          contentLane: input.contentLane,
+          finalEnvironment: input.finalEnvironment,
+          sceneDescription: input.prompt,
+        })
+      : cleanWhitespace(
+          `Slow push-in as ${predator} makes one clear move and ${prey} reacts once, keeping both animals readable with grounded motion and clean spacing.`
+        );
+
   if (mode === "runway-safe") {
     return {
       mode,
       title: "Runway-safe optimizer",
       summary,
-      prompt: cleanWhitespace(
-        `Image-to-video from the same source image. Slow documentary push-in as ${predator} makes one clear move and ${prey} reacts once. Keep full bodies readable, preserve the same terrain and spacing, and let light habitat motion carry the frame. Cinematic wildlife documentary realism.`
-      ),
+      prompt: qaSafeSceneDescription,
       reasons: [
         "Cuts multi-shot wording down to one readable motion beat.",
-        "Keeps camera motion, subject motion, and scene motion simple.",
-        "Avoids negative-prompt phrasing inside the main video instruction.",
+        "Keeps one camera lane, one lead action, and one clear reaction.",
+        "Avoids negative phrasing and conflicting instruction text.",
       ],
     };
   }
@@ -271,7 +290,11 @@ export function buildEnginePromptRecommendation(
       title: "Kling-action optimizer",
       summary,
       prompt: cleanWhitespace(
-        `${predator} drives the action lane with one strong readable burst while ${prey} reacts under pressure. Use a clear forward camera move, preserve subject separation, keep body mass and footing stable, and let the habitat motion reinforce the clash. Dangerous but realistic wildlife documentary energy.`
+        qaSafeSceneDescription
+          .replace(/^Slow documentary push-in/i, "Forward pressure move")
+          .replace(/^Slow tracking push-in/i, "Forward tracking move")
+          .replace(/^Slow low push-in/i, "Low pressure move")
+          .replace(/^Slow push-in/i, "Forward pressure move")
       ),
       reasons: [
         "Allows stronger action language without turning into a full shot list.",
@@ -285,13 +308,13 @@ export function buildEnginePromptRecommendation(
     mode,
     title: "Universal optimizer",
     summary,
-    prompt: cleanWhitespace(
+    prompt: qaSafeSceneDescription || cleanWhitespace(
       `${cleanedPrompt || `${predator} moves once and ${prey} reacts once.`} Preserve clear subject spacing, grounded contact, one clean camera move, and simple habitat motion in a cinematic wildlife documentary frame.`
     ),
     reasons: [
       "Balances direct motion language for mixed-engine workflows.",
       "Removes the noisiest negative and multi-shot phrasing first.",
-      "Stays close to the user's scene idea without silently rewriting generation behavior.",
+      "Keeps the scene description close to a clean one-shot wildlife setup.",
     ],
   };
 }
