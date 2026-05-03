@@ -8,6 +8,7 @@ import OutputCards from "@/components/OutputCards";
 import type { PublishFlowSummary } from "@/lib/build-package";
 import { analyzeOutputReadiness } from "@/lib/output-readiness";
 import { formatPipelineStyleLabel } from "@/lib/page-build-helpers";
+import { buildWorkflowQaSummary } from "@/lib/workflow-qa";
 import type {
   AIProvider,
   ConceptVariant,
@@ -24,6 +25,15 @@ type Step3GenerateProps = {
   prey: string;
   contentLane: ContentLane;
   activeProvider: AIProvider;
+  arc: string;
+  habitat: string;
+  weather: string;
+  depthMode: string;
+  cameraAnglePreset: string;
+  emotionalTone: string;
+  animalVibe: string;
+  finalEnvironment: string;
+  sceneDescription: string;
   onActiveProviderChange: (provider: AIProvider) => void;
   onGenerate: () => void;
   onRegenerateUnlocked: () => void;
@@ -51,6 +61,15 @@ export default function Step3Generate({
   prey,
   contentLane,
   activeProvider,
+  arc,
+  habitat,
+  weather,
+  depthMode,
+  cameraAnglePreset,
+  emotionalTone,
+  animalVibe,
+  finalEnvironment,
+  sceneDescription,
   onActiveProviderChange,
   onGenerate,
   onRegenerateUnlocked,
@@ -94,6 +113,27 @@ export default function Step3Generate({
     : pkg?.durationLane
       ? pkg.durationLane.toUpperCase()
       : "Selected lane";
+  const workflowQa = buildWorkflowQaSummary({
+    predator,
+    prey,
+    arc,
+    contentLane,
+    habitat,
+    weather,
+    depthMode,
+    cameraAnglePreset,
+    emotionalTone,
+    animalVibe,
+    finalEnvironment,
+    sceneDescription,
+    pkg,
+  });
+  const workflowQaColor =
+    workflowQa.status === "Ready"
+      ? "border-emerald-200 bg-emerald-50 text-emerald-900"
+      : workflowQa.status === "Needs review"
+        ? "border-amber-200 bg-amber-50 text-amber-900"
+        : "border-rose-200 bg-rose-50 text-rose-900";
 
   return (
     <div className="space-y-6">
@@ -378,6 +418,72 @@ export default function Step3Generate({
               </div>
             </div>
           )}
+
+          <div className={`mb-4 rounded-2xl border p-4 shadow-sm ${workflowQaColor}`}>
+            <div className="flex flex-wrap items-start justify-between gap-3">
+              <div>
+                <div className="flex flex-wrap items-center gap-2">
+                  <div className="text-[11px] font-semibold uppercase tracking-[0.14em] opacity-70">
+                    Final QA Summary
+                  </div>
+                  <span className="rounded-full bg-white/80 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.08em] text-gray-900">
+                    {workflowQa.status}
+                  </span>
+                </div>
+                <div className="mt-1 text-sm font-semibold">
+                  Overall score: {workflowQa.score}/100
+                </div>
+                <div className="mt-1 text-xs leading-relaxed opacity-80">
+                  Advisory only. Use this card as a final review gate before copying prompts or exporting the package.
+                </div>
+              </div>
+              <div className="rounded-2xl border border-white/70 bg-white/70 px-3 py-2 text-xs font-semibold text-gray-900">
+                {predator} vs {prey}
+              </div>
+            </div>
+
+            <div className="mt-4 grid gap-2 sm:grid-cols-2 xl:grid-cols-3">
+              {workflowQa.items.map((item) => (
+                <div
+                  key={item.label}
+                  className={`rounded-xl border bg-white/80 p-3 text-[11px] leading-relaxed ${
+                    item.status === "pass"
+                      ? "border-emerald-200 text-emerald-900"
+                      : item.status === "warning"
+                        ? "border-amber-200 text-amber-900"
+                        : "border-rose-200 text-rose-900"
+                  }`}
+                >
+                  <div className="flex items-center gap-2 font-semibold">
+                    <span
+                      className={`inline-flex rounded-full px-2 py-0.5 text-[10px] font-semibold ${
+                        item.status === "pass"
+                          ? "bg-emerald-100 text-emerald-700"
+                          : item.status === "warning"
+                            ? "bg-amber-100 text-amber-700"
+                            : "bg-rose-100 text-rose-700"
+                      }`}
+                    >
+                      {item.status}
+                    </span>
+                    <span>{item.label}</span>
+                  </div>
+                  <div className="mt-1 text-[10px] opacity-90">{item.detail}</div>
+                </div>
+              ))}
+            </div>
+
+            {workflowQa.topFixes.length > 0 && (
+              <div className="mt-4 rounded-xl border border-white/70 bg-white/70 p-3">
+                <div className="text-[11px] font-semibold text-gray-900">Top fixes</div>
+                <div className="mt-2 space-y-1 text-[10px] leading-relaxed text-gray-700">
+                  {workflowQa.topFixes.map((fix) => (
+                    <p key={fix}>• {fix}</p>
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
 
           <div className="mb-4 rounded-2xl border border-gray-200 bg-white/80 p-4 shadow-sm shadow-gray-200/60">
             <div className="flex flex-wrap items-start justify-between gap-3">

@@ -1185,6 +1185,15 @@ export default function Page() {
                 prey={prey}
                 contentLane={contentLane}
                 activeProvider={activeProvider}
+                arc={arc}
+                habitat={habitat}
+                weather={weather}
+                depthMode={depthMode}
+                cameraAnglePreset={cameraAnglePreset}
+                emotionalTone={emotionalTone}
+                animalVibe={animalVibe}
+                finalEnvironment={finalEnvironment}
+                sceneDescription={sceneDescription}
                 onActiveProviderChange={setActiveProvider}
                 onGenerate={handleGenerate}
                 onRegenerateUnlocked={handleRegenerateUnlockedSections}
