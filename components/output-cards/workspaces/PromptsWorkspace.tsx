@@ -37,9 +37,10 @@ export function PromptsWorkspace({
         onCopy={onCopy}
         accent="border-l-amber-500"
         aiEnhanced={data.aiEnhanced}
+        copyLabel="Copy Image Prompt"
         extraActions={[
           {
-            label: "Copy BODY",
+            label: "Copy Image Body",
             onClick: () => onCopy(imagePromptCard.pasteReady),
             className:
               "rounded border border-amber-300 bg-amber-500/12 px-3 py-1 text-sm font-semibold text-amber-800 hover:bg-amber-500/20 active:scale-95 dark:text-amber-100",
@@ -53,6 +54,7 @@ export function PromptsWorkspace({
           value={data.gptImage2Prompt}
           onCopy={onCopy}
           accent="border-l-cyan-400"
+          copyLabel="Copy GPT Prompt"
           extraActions={[
             {
               label: "BACKUP / COVER",
@@ -61,7 +63,7 @@ export function PromptsWorkspace({
                 "cursor-default rounded border border-cyan-300 bg-cyan-500/10 px-2 py-1 text-[10px] font-bold text-cyan-800 dark:text-cyan-100",
             },
             {
-              label: "Copy BODY",
+              label: "Copy GPT Body",
               onClick: () => onCopy(gptImage2PromptCard.pasteReady),
               className:
                 "rounded border border-cyan-300 bg-cyan-500/12 px-3 py-1 text-sm font-semibold text-cyan-800 hover:bg-cyan-500/20 active:scale-95 dark:text-cyan-100",
@@ -80,6 +82,7 @@ export function PromptsWorkspace({
           value={data.negativePrompt}
           onCopy={onCopy}
           accent="border-l-red-400"
+          copyLabel="Copy Negative Prompt"
           extraActions={[
             {
               label: "⚠️ NOT for Runway",
@@ -98,6 +101,7 @@ export function PromptsWorkspace({
         value={creatorQaPack.summaryText}
         onCopy={onCopy}
         accent="border-l-indigo-500"
+        copyLabel="Copy Creator QA Pack"
         extraActions={[
           {
             label: "Copy Fix Prompt",
@@ -131,6 +135,7 @@ export function PromptsWorkspace({
         value={creatorQaPack.facebookSummary}
         onCopy={onCopy}
         accent="border-l-rose-400"
+        copyLabel="Copy Facebook Pack"
         extraActions={[
           {
             label: "Copy Caption",
@@ -153,6 +158,7 @@ export function PromptsWorkspace({
           value={data.thumbnailPrompt}
           onCopy={onCopy}
           accent="border-l-purple-400"
+          copyLabel="Copy Thumbnail Prompt"
         />
       )}
     </div>

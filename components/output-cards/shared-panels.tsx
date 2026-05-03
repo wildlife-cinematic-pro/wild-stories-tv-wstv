@@ -173,7 +173,7 @@ export function ProShotCard({
             className="rounded border border-[color:var(--border)] bg-[color:var(--surface-elevated)] px-2 py-1 text-[11px] font-bold text-[color:var(--muted)] hover:bg-[color:var(--surface-muted)] active:scale-95"
             title="Copy full shot with instructions"
           >
-            Copy FULL
+            Copy Full Card
           </button>
 
           <button
@@ -182,7 +182,7 @@ export function ProShotCard({
             className={`rounded px-2 py-1 text-[11px] font-bold text-white active:scale-95 ${btnColor}`}
             title="Copy paste-ready prompt only"
           >
-            Copy BODY
+            Copy {engineLabel} Prompt
           </button>
         </div>
       </div>
@@ -221,6 +221,7 @@ export function Card({
   accent,
   aiEnhanced,
   extraActions,
+  copyLabel,
 }: {
   title: string;
   value: string;
@@ -228,6 +229,7 @@ export function Card({
   accent?: string;
   aiEnhanced?: boolean;
   extraActions?: { label: string; onClick: () => void; className?: string }[];
+  copyLabel?: string;
 }) {
   return (
     <div
@@ -261,7 +263,7 @@ export function Card({
             onClick={() => onCopy(value)}
             type="button"
           >
-            Copy
+            {copyLabel ?? "Copy"}
           </button>
         </div>
       </div>

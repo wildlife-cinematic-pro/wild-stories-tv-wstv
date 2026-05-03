@@ -6,6 +6,7 @@ import SectionLockControls from "@/components/build/section-lock-controls";
 import OutputCards from "@/components/OutputCards";
 
 import type { PublishFlowSummary } from "@/lib/build-package";
+import { analyzeOutputReadiness } from "@/lib/output-readiness";
 import { formatPipelineStyleLabel } from "@/lib/page-build-helpers";
 import type {
   AIProvider,
@@ -71,6 +72,29 @@ export default function Step3Generate({
   onDismissLastGeneratedRestoreNotice,
   onBack,
 }: Step3GenerateProps) {
+  const outputReadiness = pkg
+    ? analyzeOutputReadiness({
+        predatorName: pkg.predatorName ?? predator,
+        preyName: pkg.preyName ?? prey,
+        imagePrompt: pkg.imagePrompt,
+        runwayShots: pkg.runwayShots,
+        klingShots: pkg.klingShots,
+        seedanceShots: pkg.seedanceShots,
+        caption: pkg.caption,
+        hashtags: pkg.hashtags,
+        negativePrompt: pkg.negativePrompt,
+        routingNote: pkg.routingNote,
+      })
+    : null;
+  const mainEnginePath = publishFlowSummary?.pipelineStyle
+    ? formatPipelineStyleLabel(publishFlowSummary.pipelineStyle)
+    : "Hybrid / selected workflow";
+  const durationLaneLabel = publishFlowSummary?.durationLane
+    ? publishFlowSummary.durationLane.toUpperCase()
+    : pkg?.durationLane
+      ? pkg.durationLane.toUpperCase()
+      : "Selected lane";
+
   return (
     <div className="space-y-6">
       <section className="rounded-[24px] bg-gray-900 p-5 shadow-[0_18px_40px_rgba(15,23,42,0.18)] sm:p-6">
@@ -286,6 +310,71 @@ export default function Step3Generate({
                     ? "Publish-worthy"
                     : "Review before publish"}
                 </div>
+              </div>
+            </div>
+          )}
+
+          {outputReadiness && (
+            <div className="mb-4 rounded-2xl border border-slate-200 bg-white p-4 shadow-sm shadow-slate-200/60">
+              <div className="flex flex-wrap items-start justify-between gap-3">
+                <div>
+                  <div className="flex flex-wrap items-center gap-2">
+                    <div className="text-[11px] font-semibold uppercase tracking-[0.14em] text-slate-400">
+                      Output Review
+                    </div>
+                    <span
+                      className={`rounded-full px-2.5 py-1 text-[10px] font-semibold ${
+                        outputReadiness.status === "Ready"
+                          ? "bg-emerald-100 text-emerald-700"
+                          : "bg-amber-100 text-amber-700"
+                      }`}
+                    >
+                      {outputReadiness.status}
+                    </span>
+                  </div>
+                  <div className="mt-1 text-sm font-semibold text-slate-900">
+                    {pkg.predatorName ?? predator} vs {pkg.preyName ?? prey}
+                  </div>
+                  <div className="mt-1 text-xs leading-relaxed text-slate-500">
+                    Review prompts before copying into Runway/Kling. Export is advisory and does not upload automatically.
+                  </div>
+                </div>
+
+                <div className="grid min-w-[220px] gap-2 rounded-2xl border border-slate-200 bg-slate-50 p-3 text-[11px] text-slate-700 sm:grid-cols-2">
+                  <div>
+                    <div className="font-semibold text-slate-500">Main engine path</div>
+                    <div className="mt-1 font-semibold text-slate-900">{mainEnginePath}</div>
+                  </div>
+                  <div>
+                    <div className="font-semibold text-slate-500">Duration lane</div>
+                    <div className="mt-1 font-semibold text-slate-900">{durationLaneLabel}</div>
+                  </div>
+                  <div className="sm:col-span-2">
+                    <div className="font-semibold text-slate-500">Scene arc</div>
+                    <div className="mt-1 font-semibold text-slate-900">
+                      {publishFlowSummary?.arcName ?? pkg.arcName ?? "Current workflow"}
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <div className="mt-4 grid gap-2 sm:grid-cols-2 xl:grid-cols-3">
+                {outputReadiness.items.map((item) => (
+                  <div
+                    key={item.label}
+                    className={`rounded-xl border p-3 text-[11px] leading-relaxed ${
+                      item.status === "pass"
+                        ? "border-emerald-200 bg-emerald-50 text-emerald-900"
+                        : "border-amber-200 bg-amber-50 text-amber-900"
+                    }`}
+                  >
+                    <div className="flex items-center gap-2 font-semibold">
+                      <span aria-hidden="true">{item.status === "pass" ? "✓" : "!"}</span>
+                      <span>{item.label}</span>
+                    </div>
+                    <div className="mt-1 text-[10px] opacity-90">{item.detail}</div>
+                  </div>
+                ))}
               </div>
             </div>
           )}
