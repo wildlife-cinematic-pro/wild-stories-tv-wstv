@@ -30,6 +30,7 @@ type Step3GenerateProps = {
   isGenerating: boolean;
   isRegeneratingUnlocked: boolean;
   error: string;
+  enhancementNotice?: string | null;
   pkg: GeneratedPackage | null;
   packageLocks: PackageLockState;
   onTogglePackageLock: (key: PackageLockKey) => void;
@@ -57,6 +58,7 @@ export default function Step3Generate({
   isGenerating,
   isRegeneratingUnlocked,
   error,
+  enhancementNotice,
   pkg,
   packageLocks,
   onTogglePackageLock,
@@ -178,6 +180,12 @@ export default function Step3Generate({
           />
         )}
       </section>
+
+      {enhancementNotice && (
+        <div className="rounded-xl border border-sky-200 bg-sky-50 p-4">
+          <p className="text-sm font-semibold text-sky-900">{enhancementNotice}</p>
+        </div>
+      )}
 
       {error && (
         <div className="rounded-xl border border-red-200 bg-red-50 p-4">

@@ -142,6 +142,7 @@ export default function Page() {
   const [pkg, setPkg] = useState<GeneratedPackage | null>(null);
   const [isGenerating, setIsGenerating] = useState(false);
   const [isRegeneratingUnlocked, setIsRegeneratingUnlocked] = useState(false);
+  const [enhancementNotice, setEnhancementNotice] = useState<string | null>(null);
   const [packageLocks, setPackageLocks] = useState<PackageLockState>(() =>
     createDefaultPackageLockState()
   );
@@ -704,6 +705,7 @@ export default function Page() {
     setIsGenerating,
     setIsRegeneratingUnlocked,
     setError,
+    setEnhancementNotice,
     onGenerated: () => {
       setLastGeneratedRestoreNotice(null);
       setStep(3);
@@ -1191,6 +1193,7 @@ export default function Page() {
                 isGenerating={isGenerating}
                 isRegeneratingUnlocked={isRegeneratingUnlocked}
                 error={error}
+                enhancementNotice={enhancementNotice}
                 pkg={pkg}
                 packageLocks={packageLocks}
                 onTogglePackageLock={handleTogglePackageLock}

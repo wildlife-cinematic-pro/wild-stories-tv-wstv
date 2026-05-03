@@ -76,6 +76,24 @@ export const copyPolishResponseSchema = z
 
 export type CopyPolishResponse = z.infer<typeof copyPolishResponseSchema>;
 
+export const copyPolishSkippedResponseSchema = z
+  .object({
+    skipped: z.literal(true),
+    provider: z.enum(["claude", "gemini"]),
+    reason: z.string().min(1),
+    message: z.string().min(1),
+  })
+  .strict();
+
+export type CopyPolishSkippedResponse = z.infer<typeof copyPolishSkippedResponseSchema>;
+
+export const copyPolishEndpointResponseSchema = z.union([
+  copyPolishResponseSchema,
+  copyPolishSkippedResponseSchema,
+]);
+
+export type CopyPolishEndpointResponse = z.infer<typeof copyPolishEndpointResponseSchema>;
+
 export const mediaAnalysisSchema = z
   .object({
     animalName: z.string().min(1),
