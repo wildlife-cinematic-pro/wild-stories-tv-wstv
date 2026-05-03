@@ -674,7 +674,7 @@ export default function Step2EngineQuality({
             <p className="mt-1 text-[11px] leading-relaxed opacity-80">
               {promptRecommendation.summary}
             </p>
-            <div className="mt-3 rounded-xl border border-sky-100 bg-white p-3 text-[11px] font-medium leading-relaxed text-sky-950 shadow-sm">
+            <div className="mt-3 rounded-xl border border-slate-700 bg-slate-900 p-3 text-[11px] font-medium leading-relaxed text-white shadow-sm">
               {promptRecommendation.prompt}
             </div>
             <div className="mt-3 space-y-1 text-[11px] leading-relaxed opacity-85">
