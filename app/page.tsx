@@ -43,6 +43,11 @@ import {
 import { DEFAULT_CAMERA_ANGLE_PRESET } from "@/lib/camera-angle-presets";
 import { buildStoryboardPreviewLinkMetadata } from "@/lib/storyboard-link-metadata";
 import { WORKFLOW_TEST_PRESETS } from "@/lib/workflow-presets";
+import {
+  appendCreatorQaRun,
+  buildCreatorQaRun,
+  type CreatorQaRun,
+} from "@/lib/creator-qa-run-history";
 import { getWildlifeScopeDefaultSelection } from "@/lib/wildlife-focus";
 import {
   useBuildPreview,
@@ -164,6 +169,9 @@ export default function Page() {
     useState<PromotedVariantPublishCopyOverride | null>(null);
   const [lastGeneratedRestoreNotice, setLastGeneratedRestoreNotice] =
     useState<string | null>(null);
+  const [creatorQaRuns, setCreatorQaRuns] = useState<CreatorQaRun[]>([]);
+  const [shouldRecordCreatorQaRun, setShouldRecordCreatorQaRun] = useState(false);
+  const lastRecordedCreatorQaRunIdRef = useRef("");
 
   const applyBuildSnapshot = useCallback(
     (
@@ -202,6 +210,7 @@ export default function Page() {
       setStrictOriginalityGuard(snapshot.strictOriginalityGuard);
       setPromotedPublishCopyOverride(null);
       setLastGeneratedRestoreNotice(null);
+      setShouldRecordCreatorQaRun(false);
       setError("");
 
       if (options.clearGeneratedOutput !== false) {
@@ -666,6 +675,62 @@ export default function Page() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [autoApplyHighDrift, qualityReco.level, predator, prey, arc, preset.driftRisk, runwayModel, klingModel]);
 
+  useEffect(() => {
+    if (!shouldRecordCreatorQaRun || !pkg) {
+      return;
+    }
+
+    const matchedWorkflowTestPreset = WORKFLOW_TEST_PRESETS.find(
+      (presetCandidate) =>
+        presetCandidate.snapshot.predator === predator &&
+        presetCandidate.snapshot.prey === prey
+    );
+    const run = buildCreatorQaRun({
+      id: pkg.generationId,
+      createdAt: pkg.generatedAt,
+      presetName: matchedWorkflowTestPreset?.label,
+      predator,
+      prey,
+      arc: previewArc,
+      contentLane,
+      habitat,
+      weather,
+      depthMode,
+      cameraAnglePreset,
+      emotionalTone,
+      animalVibe,
+      finalEnvironment,
+      sceneDescription,
+      pkg,
+    });
+
+    if (lastRecordedCreatorQaRunIdRef.current === run.id) {
+      setShouldRecordCreatorQaRun(false);
+      return;
+    }
+
+    lastRecordedCreatorQaRunIdRef.current = run.id;
+    setCreatorQaRuns((history) => appendCreatorQaRun(history, run));
+    setShouldRecordCreatorQaRun(false);
+  }, [
+    animalVibe,
+    cameraAnglePreset,
+    contentLane,
+    depthMode,
+    emotionalTone,
+    finalEnvironment,
+    habitat,
+    pkg,
+    predator,
+    prey,
+    previewArc,
+    sceneDescription,
+    shouldRecordCreatorQaRun,
+    weather,
+  ]);
+
+
+
   const {
     handleGenerate,
     handleRegenerateUnlockedSections,
@@ -724,6 +789,7 @@ export default function Page() {
     setEnhancementNotice,
     onGenerated: () => {
       setLastGeneratedRestoreNotice(null);
+      setShouldRecordCreatorQaRun(true);
       setStep(3);
     },
   });
@@ -1238,6 +1304,8 @@ export default function Page() {
                 onDismissLastGeneratedRestoreNotice={() =>
                   setLastGeneratedRestoreNotice(null)
                 }
+                creatorQaRuns={creatorQaRuns}
+                onClearCreatorQaRuns={() => setCreatorQaRuns([])}
                 onBack={() => setStep(2)}
               />
             )}
