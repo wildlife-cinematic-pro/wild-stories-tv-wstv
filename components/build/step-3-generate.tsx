@@ -6,6 +6,7 @@ import SectionLockControls from "@/components/build/section-lock-controls";
 import OutputCards from "@/components/OutputCards";
 
 import type { PublishFlowSummary } from "@/lib/build-package";
+import type { CreatorQaRun } from "@/lib/creator-qa-run-history";
 import { analyzeOutputReadiness } from "@/lib/output-readiness";
 import { formatPipelineStyleLabel } from "@/lib/page-build-helpers";
 import { buildWorkflowQaSummary } from "@/lib/workflow-qa";
@@ -54,6 +55,8 @@ type Step3GenerateProps = {
   onRestoreVersion: (version: PromptVersion) => void;
   lastGeneratedRestoreNotice?: string | null;
   onDismissLastGeneratedRestoreNotice?: () => void;
+  creatorQaRuns: CreatorQaRun[];
+  onClearCreatorQaRuns: () => void;
   onBack: () => void;
 };
 
@@ -91,6 +94,8 @@ export default function Step3Generate({
   onRestoreVersion,
   lastGeneratedRestoreNotice,
   onDismissLastGeneratedRestoreNotice,
+  creatorQaRuns,
+  onClearCreatorQaRuns,
   onBack,
 }: Step3GenerateProps) {
   const outputReadiness = pkg
@@ -136,6 +141,33 @@ export default function Step3Generate({
       : workflowQa.status === "Needs review"
         ? "border-amber-200 bg-amber-50 text-amber-900"
         : "border-rose-200 bg-rose-50 text-rose-900";
+
+  const formatCreatorQaRunTimestamp = (createdAt: string, index: number) => {
+    if (index === 0) {
+      return "Latest";
+    }
+
+    const date = new Date(createdAt);
+
+    return Number.isNaN(date.getTime())
+      ? createdAt
+      : date.toLocaleTimeString([], {
+          hour: "2-digit",
+          minute: "2-digit",
+        });
+  };
+
+  const getCreatorQaRunStatusClasses = (status?: CreatorQaRun["finalQaStatus"]) => {
+    if (status === "Ready") {
+      return "bg-emerald-100 text-emerald-700";
+    }
+
+    if (status === "Needs review") {
+      return "bg-amber-100 text-amber-700";
+    }
+
+    return "bg-rose-100 text-rose-700";
+  };
 
   return (
     <div className="space-y-6">
@@ -491,6 +523,68 @@ export default function Step3Generate({
                 </div>
               </div>
             )}
+          </div>
+
+          <div className="mb-4 rounded-2xl border border-slate-800 bg-slate-950 p-4 text-white shadow-[0_18px_40px_rgba(15,23,42,0.18)]">
+            <div className="flex flex-wrap items-start justify-between gap-3">
+              <div>
+                <div className="text-[11px] font-semibold uppercase tracking-[0.14em] text-white/45">
+                  Recent QA Runs
+                </div>
+                <div className="mt-1 text-sm font-semibold text-white">
+                  Compare the latest preset test summaries
+                </div>
+                <div className="mt-1 text-xs leading-relaxed text-white/60">
+                  Local only. Clears safely and never changes your generated package.
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={onClearCreatorQaRuns}
+                className="rounded-xl border border-white/12 bg-white/8 px-3 py-2 text-xs font-semibold text-white/80 transition hover:bg-white/12 active:scale-[0.98]"
+              >
+                Clear History
+              </button>
+            </div>
+
+            <div className="mt-4 grid gap-2">
+              {creatorQaRuns.length > 0 ? (
+                creatorQaRuns.map((run, index) => (
+                  <div
+                    key={run.id}
+                    className="rounded-xl border border-white/10 bg-white/6 p-3 text-xs text-white/85"
+                  >
+                    <div className="flex flex-wrap items-center justify-between gap-2">
+                      <div>
+                        <div className="font-semibold text-white">
+                          {run.presetName ?? `${run.predator} vs ${run.prey}`}
+                        </div>
+                        <div className="mt-1 text-[11px] text-white/55">
+                          {run.predator} vs {run.prey}
+                        </div>
+                      </div>
+                      <div className="flex flex-wrap items-center gap-2">
+                        <span className={`rounded-full px-2.5 py-1 text-[10px] font-semibold ${getCreatorQaRunStatusClasses(run.finalQaStatus)}`}>
+                          {run.finalQaStatus ?? "Risky"}
+                        </span>
+                        <span className="rounded-full border border-white/10 bg-white/8 px-2.5 py-1 text-[10px] font-semibold text-white/75">
+                          {run.finalQaScore ?? "--"}/100
+                        </span>
+                      </div>
+                    </div>
+                    <div className="mt-2 flex flex-wrap items-center gap-2 text-[10px] text-white/60">
+                      <span>{formatCreatorQaRunTimestamp(run.createdAt, index)}</span>
+                      <span>• Prompt health: {run.promptHealthLabel ?? "n/a"}</span>
+                      <span>• {run.outputReady ? "Output ready" : "Needs output review"}</span>
+                    </div>
+                  </div>
+                ))
+              ) : (
+                <div className="rounded-xl border border-dashed border-white/15 bg-white/4 p-3 text-xs text-white/55">
+                  Generate from a Creator QA preset to start a local comparison history.
+                </div>
+              )}
+            </div>
           </div>
 
           <div className="mb-4 rounded-2xl border border-gray-200 bg-white/80 p-4 shadow-sm shadow-gray-200/60">
