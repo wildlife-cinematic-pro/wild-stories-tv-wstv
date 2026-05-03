@@ -20,6 +20,7 @@ import {
   stringifyWorkflowPresetPackExportPayload,
   stringifyWorkflowPresetExportPayload,
   updateWorkflowPreset,
+  WORKFLOW_TEST_PRESETS,
 } from "@/lib/workflow-presets";
 
 function makeSnapshot(
@@ -573,5 +574,41 @@ describe("workflow presets", () => {
       tags: ["Rut Battle"],
     });
     expect(packs[0].presets[0].snapshot.arc).toBe("Pack hunting strategy");
+  });
+
+  it("ships creator QA test presets with valid setup-only snapshots", () => {
+    expect(WORKFLOW_TEST_PRESETS).toHaveLength(5);
+
+    for (const preset of WORKFLOW_TEST_PRESETS) {
+      expect(preset.id.length).toBeGreaterThan(0);
+      expect(preset.label.length).toBeGreaterThan(0);
+      expect(preset.summary.length).toBeGreaterThan(0);
+      expect(preset.snapshot.predator.length).toBeGreaterThan(0);
+      expect(preset.snapshot.prey.length).toBeGreaterThan(0);
+      expect(preset.snapshot.activeProvider).toBe("none");
+      expect(preset.snapshot.sceneDescriptionMode).toBe("auto");
+      expect(preset.snapshot.sceneDescription).toBe("");
+      expect(preset.snapshot.sceneDescriptionTouched).toBe(false);
+    }
+  });
+
+  it("keeps water-focused presets on waterline-compatible habitats", () => {
+    const crocodilePreset = WORKFLOW_TEST_PRESETS.find((preset) => preset.id === "crocodile-warthog");
+    const eaglePreset = WORKFLOW_TEST_PRESETS.find((preset) => preset.id === "bald-eagle-salmon");
+
+    expect(crocodilePreset?.snapshot.habitat).toBe("Riverbank Reeds");
+    expect(crocodilePreset?.snapshot.cameraAnglePreset).toBe("Waterline");
+    expect(eaglePreset?.snapshot.habitat).toBe("Riverbank Reeds");
+    expect(eaglePreset?.snapshot.cameraAnglePreset).toBe("Waterline");
+  });
+
+  it("keeps arctic and open-lane presets in compatible habitats", () => {
+    const polarPreset = WORKFLOW_TEST_PRESETS.find((preset) => preset.id === "polar-bear-arctic-fox");
+    const wolfPreset = WORKFLOW_TEST_PRESETS.find((preset) => preset.id === "wolf-pack-bull-elk");
+
+    expect(polarPreset?.snapshot.habitat).toBe("Snow Field Tundra");
+    expect(polarPreset?.snapshot.weather).toBe("Overcast");
+    expect(wolfPreset?.snapshot.habitat).toBe("Rocky Mountain Meadow");
+    expect(wolfPreset?.snapshot.arc).toBe("Pack hunting strategy");
   });
 });
