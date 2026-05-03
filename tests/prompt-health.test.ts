@@ -72,10 +72,17 @@ describe("buildEnginePromptRecommendation", () => {
         "Do not show blood. Slow push-in as the wolf lunges and the elk reacts.",
       predatorName: "Wolf",
       preyName: "Elk",
+      arc: "Chase and takedown",
+      habitat: "Open Prairie Grassland",
+      weather: "Golden Hour",
+      contentLane: "Escape",
+      finalEnvironment: "Open prairie grassland with a clear chase lane.",
       mode: "runway-safe",
     });
 
     expect(recommendation.prompt.toLowerCase()).not.toContain("do not");
-    expect(recommendation.prompt.toLowerCase()).toContain("image-to-video");
+    expect(recommendation.prompt.toLowerCase()).toContain("slow");
+    expect(recommendation.prompt).toContain("Wolf");
+    expect(recommendation.prompt).toContain("Elk");
   });
 });
