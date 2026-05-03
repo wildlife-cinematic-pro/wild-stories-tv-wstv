@@ -651,7 +651,7 @@ export default function Step2EngineQuality({
                     className={`rounded-full border px-3 py-1.5 text-[10px] font-semibold uppercase tracking-[0.08em] transition-all active:scale-[0.98] ${
                       isActive
                         ? "border-gray-900 bg-gray-900 text-white"
-                        : "border-gray-200 bg-white/85 text-gray-700 hover:bg-white"
+                        : "border-gray-300 bg-white text-gray-800 hover:bg-gray-50"
                     }`}
                   >
                     {mode}
@@ -674,7 +674,7 @@ export default function Step2EngineQuality({
             <p className="mt-1 text-[11px] leading-relaxed opacity-80">
               {promptRecommendation.summary}
             </p>
-            <div className="mt-3 rounded-xl border border-white/80 bg-white/85 p-3 text-[11px] leading-relaxed text-gray-800">
+            <div className="mt-3 rounded-xl border border-sky-100 bg-white p-3 text-[11px] font-medium leading-relaxed text-sky-950 shadow-sm">
               {promptRecommendation.prompt}
             </div>
             <div className="mt-3 space-y-1 text-[11px] leading-relaxed opacity-85">
