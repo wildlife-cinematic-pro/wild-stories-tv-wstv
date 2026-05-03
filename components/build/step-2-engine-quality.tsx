@@ -126,6 +126,7 @@ export default function Step2EngineQuality({
   });
   const [promptModeOverride, setPromptModeOverride] =
     useState<EnginePromptMode | null>(null);
+  const [optimizedPromptCopied, setOptimizedPromptCopied] = useState(false);
   const activePromptMode = promptModeOverride ?? promptHealth.recommendedMode;
   const promptRecommendation = buildEnginePromptRecommendation({
     prompt: sceneDescription,
@@ -143,6 +144,24 @@ export default function Step2EngineQuality({
         : promptHealth.severity === "warning"
           ? "border-amber-100 bg-amber-50/80 text-amber-900"
           : "border-rose-100 bg-rose-50/80 text-rose-900";
+
+  const handleApplyOptimizedPrompt = () => {
+    onSceneDescriptionChange(promptRecommendation.prompt);
+  };
+
+  const handleCopyOptimizedPrompt = async () => {
+    if (typeof navigator === "undefined" || !navigator.clipboard?.writeText) {
+      return;
+    }
+
+    try {
+      await navigator.clipboard.writeText(promptRecommendation.prompt);
+      setOptimizedPromptCopied(true);
+      globalThis.setTimeout(() => setOptimizedPromptCopied(false), 1600);
+    } catch {
+      // Fail gracefully when clipboard access is unavailable.
+    }
+  };
 
   return (
     <div className="grid gap-6 xl:grid-cols-[minmax(0,1fr)_380px]">
@@ -677,6 +696,27 @@ export default function Step2EngineQuality({
             <div className="mt-3 rounded-xl border border-slate-700 bg-slate-900 p-3 text-[11px] font-medium leading-relaxed text-white shadow-sm">
               {promptRecommendation.prompt}
             </div>
+            <div className="mt-3 flex flex-wrap gap-2">
+              <button
+                type="button"
+                onClick={handleApplyOptimizedPrompt}
+                className="rounded-xl bg-gray-900 px-3 py-2 text-xs font-semibold text-white shadow-sm hover:bg-black active:scale-[0.98]"
+              >
+                Apply Optimized Prompt
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  void handleCopyOptimizedPrompt();
+                }}
+                className="rounded-xl border border-gray-300 bg-white px-3 py-2 text-xs font-semibold text-gray-800 shadow-sm hover:bg-gray-50 active:scale-[0.98]"
+              >
+                {optimizedPromptCopied ? "Copied" : "Copy Optimized Prompt"}
+              </button>
+            </div>
+            <p className="mt-2 text-[11px] leading-relaxed opacity-80">
+              Apply replaces the current scene description. Copy only copies the preview.
+            </p>
             <div className="mt-3 space-y-1 text-[11px] leading-relaxed opacity-85">
               {promptRecommendation.reasons.map((reason) => (
                 <p key={reason}>• {reason}</p>
