@@ -52,6 +52,18 @@ export type SceneIntelligenceReport = {
   reasons: string[];
 };
 
+export type ScenePresetLabel = "Safest" | "Most Viral" | "Most Realistic";
+
+export type ScenePresetOption = {
+  label: ScenePresetLabel;
+  habitat: HabitatPreset;
+  weather: Weather;
+  depthMode: DepthMode;
+  cameraAnglePreset: CameraAnglePreset;
+  emotionalTone: EmotionalTone;
+  animalVibe: AnimalVibe;
+};
+
 const DIRECT_WATER_PREDATORS = [
   "crocodile",
   "alligator",
@@ -108,6 +120,13 @@ const HEAVY_DEFENDER_PREDATORS = [
   "water buffalo",
   "rhinoceros",
   "elephant",
+] as const;
+
+const WATER_HEAVY_HABITATS = [
+  "Riverbank Reeds",
+  "Everglades Marsh",
+  "Cypress Swamp Edge",
+  "Coastal Cliffline",
 ] as const;
 
 const WATER_ENVIRONMENT_HINTS = [
@@ -182,6 +201,44 @@ function isWaterCompatible(input: SceneIntelligenceInput): boolean {
     includesAny(prey, WATER_PREY) ||
     includesAny(environment, WATER_ENVIRONMENT_HINTS)
   );
+}
+
+function isHeavyDefenderInput(input: SceneIntelligenceInput): boolean {
+  const predator = normalize(input.predator);
+
+  return (
+    includesAny(predator, HEAVY_DEFENDER_PREDATORS) ||
+    input.arc === "Defender stands ground" ||
+    input.arc === "Giant vs giant clash" ||
+    input.arc === "Territory dominance battle"
+  );
+}
+
+function getMostViralTone(input: SceneIntelligenceInput): EmotionalTone {
+  if (
+    input.arc === "Defender stands ground" ||
+    input.arc === "Giant vs giant clash" ||
+    input.arc === "Territory dominance battle" ||
+    includesAny(normalize(input.predator), DIRECT_WATER_PREDATORS)
+  ) {
+    return "Raw Tension";
+  }
+
+  return "Explosive Energy";
+}
+
+function getMostRealisticWeather(
+  report: SceneIntelligenceReport
+): Weather {
+  if (
+    WATER_HEAVY_HABITATS.includes(
+      report.recommended.habitat as (typeof WATER_HEAVY_HABITATS)[number]
+    )
+  ) {
+    return "Overcast";
+  }
+
+  return "Dawn";
 }
 
 function getLabel(score: number): SceneIntelligenceLabel {
@@ -319,4 +376,46 @@ export function buildSceneIntelligenceReport(
     recommended,
     reasons,
   };
+}
+
+export function buildScenePresetOptions(
+  report: SceneIntelligenceReport,
+  input: SceneIntelligenceInput
+): ScenePresetOption[] {
+  const mostRealisticHabitat =
+    report.recommended.habitat === "Auto"
+      ? "Auto"
+      : report.recommended.habitat;
+
+  return [
+    {
+      label: "Safest",
+      habitat: "Auto",
+      weather: "Golden Hour",
+      depthMode: "Balanced Depth",
+      cameraAnglePreset: "Front full-body",
+      emotionalTone: "Raw Tension",
+      animalVibe: "BBC Earth Documentary",
+    },
+    {
+      label: "Most Viral",
+      habitat: report.recommended.habitat,
+      weather: "Golden Hour",
+      depthMode: "Balanced Depth",
+      cameraAnglePreset: "Front full-body",
+      emotionalTone: getMostViralTone(input),
+      animalVibe: "National Geographic Wild",
+    },
+    {
+      label: "Most Realistic",
+      habitat: mostRealisticHabitat,
+      weather: getMostRealisticWeather(report),
+      depthMode: "Detailed Background",
+      cameraAnglePreset: "Front full-body",
+      emotionalTone: isHeavyDefenderInput(input)
+        ? "Calm Dominance"
+        : "Raw Tension",
+      animalVibe: "BBC Earth Documentary",
+    },
+  ];
 }

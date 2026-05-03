@@ -1,6 +1,9 @@
 import { describe, expect, it } from "vitest";
 
-import { buildSceneIntelligenceReport } from "@/lib/scene-intelligence";
+import {
+  buildSceneIntelligenceReport,
+  buildScenePresetOptions,
+} from "@/lib/scene-intelligence";
 
 describe("buildSceneIntelligenceReport", () => {
   it("flags crocodile and warthog in a forest clearing as a mismatch", () => {
@@ -165,5 +168,93 @@ describe("buildSceneIntelligenceReport", () => {
 
     expect(report.recommended.habitat).toBe("Auto");
     expect(report.label).not.toBe("Strong");
+  });
+});
+
+
+describe("buildScenePresetOptions", () => {
+  it("returns the safest preset with auto habitat and documentary defaults", () => {
+    const input = {
+      predator: "Crocodile",
+      prey: "Warthog",
+      contentLane: "Fishing Strike" as const,
+      arc: "Ambush attack" as const,
+      habitat: "Forest Clearing" as const,
+      weather: "Golden Hour" as const,
+      depthMode: "Balanced Depth" as const,
+      cameraAnglePreset: "Front full-body" as const,
+      emotionalTone: "Raw Tension" as const,
+      animalVibe: "National Geographic Wild" as const,
+      environment: "dry forest clearing",
+    };
+    const report = buildSceneIntelligenceReport(input);
+    const [safest] = buildScenePresetOptions(report, input);
+
+    expect(safest).toMatchObject({
+      label: "Safest",
+      habitat: "Auto",
+      weather: "Golden Hour",
+      depthMode: "Balanced Depth",
+      cameraAnglePreset: "Front full-body",
+      emotionalTone: "Raw Tension",
+      animalVibe: "BBC Earth Documentary",
+    });
+  });
+
+  it("returns a viral preset that keeps safer tone for water ambush pairs", () => {
+    const input = {
+      predator: "Crocodile",
+      prey: "Warthog",
+      contentLane: "Fishing Strike" as const,
+      arc: "Ambush attack" as const,
+      habitat: "Forest Clearing" as const,
+      weather: "Golden Hour" as const,
+      depthMode: "Balanced Depth" as const,
+      cameraAnglePreset: "Front full-body" as const,
+      emotionalTone: "Raw Tension" as const,
+      animalVibe: "National Geographic Wild" as const,
+      environment: "muddy water edge",
+    };
+    const report = buildSceneIntelligenceReport(input);
+    const presets = buildScenePresetOptions(report, input);
+    const viral = presets.find((preset) => preset.label === "Most Viral");
+
+    expect(viral).toMatchObject({
+      habitat: "Riverbank Reeds",
+      weather: "Golden Hour",
+      depthMode: "Balanced Depth",
+      emotionalTone: "Raw Tension",
+      animalVibe: "National Geographic Wild",
+    });
+  });
+
+  it("returns a realistic preset with documentary tone and detailed background", () => {
+    const input = {
+      predator: "Bison",
+      prey: "Wolf Pack",
+      contentLane: "Defender" as const,
+      arc: "Defender stands ground" as const,
+      habitat: "Auto" as const,
+      weather: "Golden Hour" as const,
+      depthMode: "Balanced Depth" as const,
+      cameraAnglePreset: "Front full-body" as const,
+      emotionalTone: "Raw Tension" as const,
+      animalVibe: "National Geographic Wild" as const,
+      environment: "rocky meadow with planted footing",
+    };
+    const report = buildSceneIntelligenceReport(input);
+    const presets = buildScenePresetOptions(report, input);
+    const realistic = presets.find(
+      (preset) => preset.label === "Most Realistic"
+    );
+
+    expect(realistic).toMatchObject({
+      habitat: "Rocky Mountain Meadow",
+      weather: "Dawn",
+      depthMode: "Detailed Background",
+      cameraAnglePreset: "Front full-body",
+      emotionalTone: "Calm Dominance",
+      animalVibe: "BBC Earth Documentary",
+    });
   });
 });

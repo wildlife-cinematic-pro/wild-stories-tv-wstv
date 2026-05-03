@@ -29,7 +29,10 @@ import {
   getToneMicroGuidance,
   getWeatherMicroGuidance,
 } from "@/lib/step-1-guidance";
-import { buildSceneIntelligenceReport } from "@/lib/scene-intelligence";
+import {
+  buildSceneIntelligenceReport,
+  buildScenePresetOptions,
+} from "@/lib/scene-intelligence";
 import {
   FACEBOOK_SAFE_SURVIVAL_HINT,
   getRegionalWildlifeStep1Hint,
@@ -304,7 +307,7 @@ export default function Step1Setup({
     : [predator, ...leadAnimalMatches];
   const leadAnimalSearchHasNoResults =
     leadAnimalQuery.length > 0 && leadAnimalMatches.length === 0;
-  const sceneReport = buildSceneIntelligenceReport({
+  const sceneIntelligenceInput = {
     predator,
     prey,
     contentLane,
@@ -316,7 +319,27 @@ export default function Step1Setup({
     emotionalTone,
     animalVibe,
     environment: finalEnvironment,
-  });
+  };
+  const sceneReport = buildSceneIntelligenceReport(sceneIntelligenceInput);
+  const scenePresetOptions = buildScenePresetOptions(
+    sceneReport,
+    sceneIntelligenceInput
+  );
+  const applySceneSettings = (preset: {
+    habitat: HabitatPreset;
+    weather: Weather;
+    depthMode: DepthMode;
+    cameraAnglePreset: CameraAnglePreset;
+    emotionalTone: EmotionalTone;
+    animalVibe: AnimalVibe;
+  }) => {
+    onHabitatChange(preset.habitat);
+    onWeatherChange(preset.weather);
+    onDepthModeChange(preset.depthMode);
+    onCameraAnglePresetChange(preset.cameraAnglePreset);
+    onEmotionalToneChange(preset.emotionalTone);
+    onAnimalVibeChange(preset.animalVibe);
+  };
   const sceneReportColor =
     sceneReport.severity === "success"
       ? "border-emerald-100 bg-emerald-50/80 text-emerald-900"
@@ -626,16 +649,27 @@ export default function Step1Setup({
               </div>
             )}
 
+            <div className="mt-3">
+              <p className="text-[10px] font-medium uppercase tracking-[0.08em] opacity-70">
+                Scene presets quickly tune the same animal pair for safety, virality, or realism.
+              </p>
+              <div className="mt-2 flex flex-wrap gap-2">
+                {scenePresetOptions.map((preset) => (
+                  <button
+                    key={preset.label}
+                    type="button"
+                    onClick={() => applySceneSettings(preset)}
+                    className="rounded-full border border-gray-200 bg-white/85 px-3 py-1.5 text-[10px] font-semibold uppercase tracking-[0.08em] text-gray-700 shadow-sm hover:bg-white active:scale-[0.98]"
+                  >
+                    {preset.label}
+                  </button>
+                ))}
+              </div>
+            </div>
+
             <button
               type="button"
-              onClick={() => {
-                onHabitatChange(sceneReport.recommended.habitat);
-                onWeatherChange(sceneReport.recommended.weather);
-                onDepthModeChange(sceneReport.recommended.depthMode);
-                onCameraAnglePresetChange(sceneReport.recommended.cameraAnglePreset);
-                onEmotionalToneChange(sceneReport.recommended.emotionalTone);
-                onAnimalVibeChange(sceneReport.recommended.animalVibe);
-              }}
+              onClick={() => applySceneSettings(sceneReport.recommended)}
               className="mt-3 rounded-xl bg-gray-900 px-3 py-2 text-xs font-semibold text-white shadow-sm hover:bg-black active:scale-[0.98]"
             >
               Apply Recommended Scene
