@@ -37,7 +37,9 @@ test("main build flow generates output, keeps workspace tabs reachable, and show
   await expect(page.getByText("Generate for Reels")).toBeVisible();
   await page.getByRole("button", { name: /Generate.*vs/i }).click();
 
-  await expect(page.getByText("Generated Output")).toBeVisible({ timeout: 10_000 });
+  await expect(page.getByText("Generated Output", { exact: true })).toBeVisible({
+    timeout: 10_000,
+  });
   await expect(page.getByRole("tablist", { name: /Output workspace navigation/i })).toBeVisible();
   await expect(page.getByRole("tab", { name: /Overview workspace/i })).toHaveAttribute(
     "aria-selected",
