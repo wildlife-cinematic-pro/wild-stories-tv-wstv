@@ -46,7 +46,9 @@ import { WORKFLOW_TEST_PRESETS } from "@/lib/workflow-presets";
 import {
   appendCreatorQaRun,
   buildCreatorQaRun,
+  buildPinnedGeneratedOutput,
   type CreatorQaRun,
+  type PinnedGeneratedOutput,
 } from "@/lib/creator-qa-run-history";
 import { getWildlifeScopeDefaultSelection } from "@/lib/wildlife-focus";
 import {
@@ -170,6 +172,7 @@ export default function Page() {
   const [lastGeneratedRestoreNotice, setLastGeneratedRestoreNotice] =
     useState<string | null>(null);
   const [creatorQaRuns, setCreatorQaRuns] = useState<CreatorQaRun[]>([]);
+  const [pinnedOutput, setPinnedOutput] = useState<PinnedGeneratedOutput | null>(null);
   const [shouldRecordCreatorQaRun, setShouldRecordCreatorQaRun] = useState(false);
   const lastRecordedCreatorQaRunIdRef = useRef("");
 
@@ -674,6 +677,46 @@ export default function Page() {
     applyRecommendedQuality();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [autoApplyHighDrift, qualityReco.level, predator, prey, arc, preset.driftRisk, runwayModel, klingModel]);
+
+  const handlePinCurrentOutput = useCallback(() => {
+    if (!pkg) {
+      return;
+    }
+
+    const pinned = buildPinnedGeneratedOutput({
+      id: pkg.generationId,
+      createdAt: pkg.generatedAt,
+      predator,
+      prey,
+      arc: previewArc,
+      contentLane,
+      habitat,
+      weather,
+      depthMode,
+      cameraAnglePreset,
+      emotionalTone,
+      animalVibe,
+      finalEnvironment,
+      sceneDescription,
+      pkg,
+    });
+
+    setPinnedOutput(pinned);
+  }, [
+    animalVibe,
+    cameraAnglePreset,
+    contentLane,
+    depthMode,
+    emotionalTone,
+    finalEnvironment,
+    habitat,
+    pkg,
+    predator,
+    prey,
+    previewArc,
+    sceneDescription,
+    weather,
+  ]);
 
   useEffect(() => {
     if (!shouldRecordCreatorQaRun || !pkg) {
@@ -1305,6 +1348,9 @@ export default function Page() {
                   setLastGeneratedRestoreNotice(null)
                 }
                 creatorQaRuns={creatorQaRuns}
+                pinnedOutput={pinnedOutput}
+                onPinCurrentOutput={handlePinCurrentOutput}
+                onClearPinnedOutput={() => setPinnedOutput(null)}
                 onClearCreatorQaRuns={() => setCreatorQaRuns([])}
                 onBack={() => setStep(2)}
               />
