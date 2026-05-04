@@ -35,6 +35,10 @@ export function PublishingWorkspace({
         hashtags, platform pack, अनि posting time guidance.
       </div>
 
+      <div className="rounded-2xl border border-rose-200/70 bg-white/80 p-4 text-sm text-rose-950 shadow-sm dark:border-rose-200/20 dark:bg-white/5 dark:text-rose-100">
+        Publishing copy stays separate from the engine prompts here, so caption, hashtags, hook, and CTA remain lightweight editorial surfaces you can copy fast.
+      </div>
+
       <FacebookPublishReadinessPanel data={data} />
       <MonetizedPagePerformancePanel key={monetizedPanelKey} data={data} onCopy={handleCopy} />
 
@@ -54,6 +58,9 @@ export function PublishingWorkspace({
           onCopy={handleCopy}
           accent="border-l-orange-500"
           copyLabel="Copy Hook"
+          className="border-orange-200/70 bg-orange-50/60"
+          valueClassName="text-orange-950 dark:text-orange-50"
+          copyButtonClassName="rounded-xl bg-orange-600 px-3 py-2 text-sm font-semibold text-white hover:bg-orange-700 active:scale-95"
         />
       ) : null}
 
@@ -70,6 +77,9 @@ export function PublishingWorkspace({
           onCopy={handleCopy}
           accent="border-l-emerald-500"
           copyLabel="Copy Caption"
+          className="border-emerald-200/70 bg-emerald-50/60"
+          valueClassName="text-emerald-950 dark:text-emerald-50"
+          copyButtonClassName="rounded-xl bg-emerald-600 px-3 py-2 text-sm font-semibold text-white hover:bg-emerald-700 active:scale-95"
         />
       ) : null}
 
@@ -81,16 +91,47 @@ export function PublishingWorkspace({
           accent="border-l-indigo-500"
           aiEnhanced={data.aiEnhanced}
           copyLabel="Copy Voiceover"
+          className="border-indigo-200/70 bg-indigo-50/55"
+          valueClassName="text-indigo-950 dark:text-indigo-50"
+          copyButtonClassName="rounded-xl border border-indigo-300 bg-white/85 px-3 py-2 text-sm font-semibold text-indigo-900 hover:bg-indigo-50 active:scale-95 dark:border-indigo-200/40 dark:bg-transparent dark:text-indigo-100"
         />
       )}
 
-      {data.cta && <Card title="📢 CTA" value={data.cta} onCopy={handleCopy} copyLabel="Copy CTA" />}
-
-      {data.hashtags && (
-        <Card title="# Hashtags" value={data.hashtags} onCopy={handleCopy} copyLabel="Copy Hashtags" />
+      {data.cta && (
+        <Card
+          title="📢 CTA"
+          value={data.cta}
+          onCopy={handleCopy}
+          copyLabel="Copy CTA"
+          className="border-rose-200/70 bg-rose-50/55"
+          valueClassName="text-rose-950 dark:text-rose-50"
+          copyButtonClassName="rounded-xl border border-rose-300 bg-white/85 px-3 py-2 text-sm font-semibold text-rose-900 hover:bg-rose-50 active:scale-95 dark:border-rose-200/40 dark:bg-transparent dark:text-rose-100"
+        />
       )}
 
-      {data.tags && <Card title="Tags" value={data.tags} onCopy={handleCopy} copyLabel="Copy Tags" />}
+      {data.hashtags && (
+        <Card
+          title="# Hashtags"
+          value={data.hashtags}
+          onCopy={handleCopy}
+          copyLabel="Copy Hashtags"
+          className="border-sky-200/70 bg-sky-50/55"
+          valueClassName="text-sky-950 dark:text-sky-50"
+          copyButtonClassName="rounded-xl border border-sky-300 bg-white/85 px-3 py-2 text-sm font-semibold text-sky-900 hover:bg-sky-50 active:scale-95 dark:border-sky-200/40 dark:bg-transparent dark:text-sky-100"
+        />
+      )}
+
+      {data.tags && (
+        <Card
+          title="Tags"
+          value={data.tags}
+          onCopy={handleCopy}
+          copyLabel="Copy Tags"
+          className="border-slate-200/70 bg-slate-50/55"
+          valueClassName="text-slate-900 dark:text-slate-100"
+          copyButtonClassName="rounded-xl border border-slate-300 bg-white/85 px-3 py-2 text-sm font-semibold text-slate-900 hover:bg-slate-50 active:scale-95 dark:border-slate-200/40 dark:bg-transparent dark:text-slate-100"
+        />
+      )}
 
       {data.platformPack && (
         <>

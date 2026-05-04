@@ -38,12 +38,15 @@ export function PromptsWorkspace({
         accent="border-l-amber-500"
         aiEnhanced={data.aiEnhanced}
         copyLabel="Copy Image Prompt"
+        className="border-amber-300/80 bg-amber-50/70 shadow-[0_12px_30px_rgba(245,158,11,0.12)]"
+        valueClassName="text-amber-950 dark:text-amber-50"
+        copyButtonClassName="w-full rounded-xl bg-amber-600 px-4 py-2 text-sm font-extrabold text-white hover:bg-amber-700 active:scale-95 sm:w-auto"
         extraActions={[
           {
             label: "Copy Image Body",
             onClick: () => onCopy(imagePromptCard.pasteReady),
             className:
-              "rounded border border-amber-300 bg-amber-500/12 px-3 py-1 text-sm font-semibold text-amber-800 hover:bg-amber-500/20 active:scale-95 dark:text-amber-100",
+              "rounded-xl border border-amber-300 bg-white/80 px-3 py-2 text-sm font-semibold text-amber-900 hover:bg-amber-50 active:scale-95 dark:border-amber-200/40 dark:bg-transparent dark:text-amber-100",
           },
         ]}
       />
@@ -55,18 +58,21 @@ export function PromptsWorkspace({
           onCopy={onCopy}
           accent="border-l-cyan-400"
           copyLabel="Copy GPT Prompt"
+          className="border-cyan-200/80 bg-cyan-50/40 shadow-none"
+          valueClassName="text-cyan-950 dark:text-cyan-50"
+          copyButtonClassName="rounded-xl border border-cyan-300 bg-white/85 px-3 py-2 text-sm font-semibold text-cyan-900 hover:bg-cyan-50 active:scale-95 dark:border-cyan-200/40 dark:bg-transparent dark:text-cyan-100"
           extraActions={[
             {
               label: "BACKUP / COVER",
               onClick: () => {},
               className:
-                "cursor-default rounded border border-cyan-300 bg-cyan-500/10 px-2 py-1 text-[10px] font-bold text-cyan-800 dark:text-cyan-100",
+                "cursor-default rounded border border-cyan-200 bg-white/80 px-2 py-1 text-[10px] font-bold text-cyan-700 dark:border-cyan-200/40 dark:bg-transparent dark:text-cyan-100",
             },
             {
               label: "Copy GPT Body",
               onClick: () => onCopy(gptImage2PromptCard.pasteReady),
               className:
-                "rounded border border-cyan-300 bg-cyan-500/12 px-3 py-1 text-sm font-semibold text-cyan-800 hover:bg-cyan-500/20 active:scale-95 dark:text-cyan-100",
+                "rounded-xl border border-cyan-200 bg-white/80 px-3 py-2 text-sm font-semibold text-cyan-900 hover:bg-cyan-50 active:scale-95 dark:border-cyan-200/40 dark:bg-transparent dark:text-cyan-100",
             },
           ]}
         />
