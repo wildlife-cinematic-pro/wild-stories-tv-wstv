@@ -8,7 +8,10 @@ import SectionLockControls from "@/components/build/section-lock-controls";
 import OutputCards from "@/components/OutputCards";
 
 import type { PublishFlowSummary } from "@/lib/build-package";
-import type { CreatorQaRun } from "@/lib/creator-qa-run-history";
+import type {
+  CreatorQaRun,
+  PinnedGeneratedOutput,
+} from "@/lib/creator-qa-run-history";
 import { analyzeOutputReadiness } from "@/lib/output-readiness";
 import { formatPipelineStyleLabel } from "@/lib/page-build-helpers";
 import { buildWorkflowQaSummary } from "@/lib/workflow-qa";
@@ -58,6 +61,9 @@ type Step3GenerateProps = {
   lastGeneratedRestoreNotice?: string | null;
   onDismissLastGeneratedRestoreNotice?: () => void;
   creatorQaRuns: CreatorQaRun[];
+  pinnedOutput: PinnedGeneratedOutput | null;
+  onPinCurrentOutput: () => void;
+  onClearPinnedOutput: () => void;
   onClearCreatorQaRuns: () => void;
   onBack: () => void;
 };
@@ -97,6 +103,9 @@ export default function Step3Generate({
   lastGeneratedRestoreNotice,
   onDismissLastGeneratedRestoreNotice,
   creatorQaRuns,
+  pinnedOutput,
+  onPinCurrentOutput,
+  onClearPinnedOutput,
   onClearCreatorQaRuns,
   onBack,
 }: Step3GenerateProps) {
@@ -149,6 +158,17 @@ export default function Step3Generate({
         ? "border-amber-200 bg-amber-50 text-amber-900"
         : "border-rose-200 bg-rose-50 text-rose-900";
   const quickFixes = workflowQa.topFixes.slice(0, 2);
+
+  const formatPinnedOutputTimestamp = (createdAt: string) => {
+    const date = new Date(createdAt);
+
+    return Number.isNaN(date.getTime())
+      ? createdAt
+      : date.toLocaleTimeString([], {
+          hour: "2-digit",
+          minute: "2-digit",
+        });
+  };
 
   const formatCreatorQaRunTimestamp = (createdAt: string, index: number) => {
     if (index === 0) {
@@ -592,11 +612,20 @@ export default function Step3Generate({
                     Copy shortcuts only. Existing output workspaces and export actions stay available below.
                   </div>
                 </div>
-                {copyFeedback && (
-                  <div className="rounded-full bg-slate-900 px-2.5 py-1 text-[10px] font-semibold text-white">
-                    {copyFeedback} copied
-                  </div>
-                )}
+                <div className="flex flex-wrap items-center gap-2">
+                  {copyFeedback && (
+                    <div className="rounded-full bg-slate-900 px-2.5 py-1 text-[10px] font-semibold text-white">
+                      {copyFeedback} copied
+                    </div>
+                  )}
+                  <button
+                    type="button"
+                    onClick={onPinCurrentOutput}
+                    className="rounded-xl border border-slate-200 bg-white px-3.5 py-2 text-xs font-semibold text-slate-800 shadow-sm hover:bg-slate-50 active:scale-[0.98]"
+                  >
+                    Pin This Output
+                  </button>
+                </div>
               </div>
               <div className="mt-4 flex flex-wrap gap-2 overflow-x-auto pb-1">
                 <button
@@ -629,6 +658,51 @@ export default function Step3Generate({
                 </button>
               </div>
             </div>
+
+            {pinnedOutput && (
+              <div className="mb-4 rounded-2xl border border-violet-200 bg-violet-50 p-4 shadow-sm shadow-violet-100/60">
+                <div className="flex flex-wrap items-start justify-between gap-3">
+                  <div>
+                    <div className="text-[11px] font-semibold uppercase tracking-[0.14em] text-violet-500">
+                      Pinned Best Output
+                    </div>
+                    <div className="mt-1 text-sm font-semibold text-violet-950">
+                      {pinnedOutput.predator} vs {pinnedOutput.prey}
+                    </div>
+                    <div className="mt-2 flex flex-wrap items-center gap-2 text-[10px] font-semibold uppercase tracking-[0.08em] text-violet-700/90">
+                      <span className="rounded-full bg-white/85 px-2.5 py-1 text-violet-900">
+                        {pinnedOutput.finalQaStatus ?? "Risky"}
+                      </span>
+                      <span className="rounded-full bg-white/70 px-2.5 py-1 text-violet-900">
+                        {pinnedOutput.finalQaScore ?? "--"}/100
+                      </span>
+                      <span>Saved {formatPinnedOutputTimestamp(pinnedOutput.createdAt)}</span>
+                    </div>
+                  </div>
+                  <div className="flex flex-wrap gap-2">
+                    <button
+                      type="button"
+                      onClick={() =>
+                        handleCopy(
+                          "Pinned Full Package",
+                          buildFullPackageText(pinnedOutput.package)
+                        )
+                      }
+                      className="rounded-xl bg-violet-900 px-3.5 py-2 text-xs font-semibold text-white shadow-sm hover:bg-violet-950 active:scale-[0.98]"
+                    >
+                      Copy Pinned Full Package
+                    </button>
+                    <button
+                      type="button"
+                      onClick={onClearPinnedOutput}
+                      className="rounded-xl border border-violet-200 bg-white px-3.5 py-2 text-xs font-semibold text-violet-800 shadow-sm hover:bg-violet-100 active:scale-[0.98]"
+                    >
+                      Clear Pinned Output
+                    </button>
+                  </div>
+                </div>
+              </div>
+            )}
 
             {creatorQaRuns.length > 0 && (
               <div className="mb-4 rounded-2xl border border-slate-800 bg-slate-950 p-4 text-white shadow-[0_18px_40px_rgba(15,23,42,0.18)]">

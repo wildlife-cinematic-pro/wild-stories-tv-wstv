@@ -16,6 +16,16 @@ export type CreatorQaRun = {
   outputReady?: boolean;
 };
 
+export type PinnedGeneratedOutput = {
+  id: string;
+  createdAt: string;
+  predator: string;
+  prey: string;
+  finalQaScore?: number;
+  finalQaStatus?: "Ready" | "Needs review" | "Risky";
+  package: GeneratedPackage;
+};
+
 export type CreatorQaRunInput = {
   id?: string;
   createdAt?: string;
@@ -91,6 +101,37 @@ export function buildCreatorQaRun(input: CreatorQaRunInput): CreatorQaRun {
     finalQaStatus: workflowQa.status,
     promptHealthLabel: promptHealth.label,
     outputReady: outputReadiness.status === "Ready",
+  };
+}
+
+export function buildPinnedGeneratedOutput(
+  input: CreatorQaRunInput
+): PinnedGeneratedOutput {
+  const workflowQa = buildWorkflowQaSummary({
+    predator: input.predator,
+    prey: input.prey,
+    arc: input.arc,
+    contentLane: input.contentLane,
+    habitat: input.habitat,
+    weather: input.weather,
+    depthMode: input.depthMode,
+    cameraAnglePreset: input.cameraAnglePreset,
+    emotionalTone: input.emotionalTone,
+    animalVibe: input.animalVibe,
+    finalEnvironment: input.finalEnvironment,
+    sceneDescription: input.sceneDescription,
+    pkg: input.pkg,
+  });
+
+  return {
+    id: input.id ?? input.pkg.generationId ?? buildFallbackId(input),
+    createdAt:
+      input.createdAt ?? input.pkg.generatedAt ?? new Date().toISOString(),
+    predator: input.predator,
+    prey: input.prey,
+    finalQaScore: workflowQa.score,
+    finalQaStatus: workflowQa.status,
+    package: input.pkg,
   };
 }
 

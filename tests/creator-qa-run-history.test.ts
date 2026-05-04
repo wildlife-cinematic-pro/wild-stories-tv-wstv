@@ -3,6 +3,7 @@ import { describe, expect, it } from "vitest";
 import {
   appendCreatorQaRun,
   buildCreatorQaRun,
+  buildPinnedGeneratedOutput,
   MAX_CREATOR_QA_RUNS,
   type CreatorQaRun,
 } from "@/lib/creator-qa-run-history";
@@ -45,6 +46,32 @@ function makePackage(overrides: Partial<GeneratedPackage> = {}): GeneratedPackag
 }
 
 describe("creator QA run history", () => {
+  it("builds a pinned output summary without changing the package", () => {
+    const pkg = makePackage();
+    const pinned = buildPinnedGeneratedOutput({
+      predator: "Crocodile",
+      prey: "Warthog",
+      arc: "Ambush attack",
+      contentLane: "Fishing Strike",
+      habitat: "Riverbank Reeds",
+      weather: "Golden Hour",
+      depthMode: "Balanced Depth",
+      cameraAnglePreset: "Waterline",
+      emotionalTone: "Raw Tension",
+      animalVibe: "National Geographic Wild",
+      finalEnvironment: "Riverbank reeds with clean waterline spacing",
+      sceneDescription:
+        "Slow low push-in near the waterline as Crocodile surges once and Warthog recoils toward open ground, keeping both animals readable with grounded motion and clean spacing.",
+      pkg,
+    });
+
+    expect(pinned.predator).toBe("Crocodile");
+    expect(pinned.prey).toBe("Warthog");
+    expect(pinned.finalQaStatus).toBeDefined();
+    expect(pinned.finalQaScore).toBeGreaterThan(0);
+    expect(pinned.package).toBe(pkg);
+  });
+
   it("builds a compact run summary from the current workflow", () => {
     const run = buildCreatorQaRun({
       presetName: "Crocodile vs Warthog",
