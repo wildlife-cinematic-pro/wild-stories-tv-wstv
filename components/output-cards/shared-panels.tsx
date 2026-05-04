@@ -143,7 +143,7 @@ export function ProShotCard({
   const engineLabel = isRunway ? "Runway" : isSeedance ? "Seedance" : "Kling";
 
   return (
-    <div className={`rounded-xl border ${borderColor} bg-[color:var(--surface-elevated)] p-3`}>
+    <div className={`min-w-0 rounded-xl border ${borderColor} bg-[color:var(--surface-elevated)] p-3`}>
       <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
         <div className="flex flex-wrap items-center gap-2">
           <div className="text-xs font-extrabold text-[color:var(--text)]">
@@ -187,7 +187,7 @@ export function ProShotCard({
         </div>
       </div>
 
-      <pre className="max-h-40 overflow-auto whitespace-pre-wrap text-xs leading-relaxed text-[color:var(--text)]">
+      <pre className="whitespace-pre-wrap break-words text-xs leading-relaxed text-[color:var(--text)]">
         {promptCard.fullText || shot || "—"}
       </pre>
 
@@ -239,7 +239,7 @@ export function Card({
 }) {
   return (
     <div
-      className={`rounded-xl border bg-[color:var(--surface-elevated)] p-4 shadow-sm ${
+      className={`min-w-0 rounded-xl border bg-[color:var(--surface-elevated)] p-4 shadow-sm ${
         accent ? `border-l-4 ${accent}` : "border-[color:var(--border)]"
       } ${aiEnhanced ? "ring-1 ring-purple-200" : ""} ${className ?? ""}`}
     >
@@ -277,7 +277,7 @@ export function Card({
         </div>
       </div>
       <p
-        className={`whitespace-pre-wrap text-sm leading-7 text-[color:var(--muted)] ${
+        className={`whitespace-pre-wrap break-words text-xs leading-relaxed text-[color:var(--text)] ${
           valueClassName ?? ""
         }`}
       >
