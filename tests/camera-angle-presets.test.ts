@@ -169,8 +169,10 @@ describe("camera angle presets", () => {
     );
 
     expect(imagePrompt).toMatch(/low camera position/i);
-    expect(runway.shot1.pasteReady).toMatch(/low camera height/i);
-    expect(kling.shot1.pasteReady).toMatch(/low-angle power framing/i);
+    expect(runway.shot3.pasteReady).toMatch(/low camera height/i);
+    expect(kling.shot3.pasteReady).toMatch(/low-angle power framing/i);
+    expect(runway.shot1.pasteReady).toMatch(/fully readable from frame one/i);
+    expect(kling.shot1.pasteReady).toMatch(/fully readable from frame one/i);
     expect(imagePrompt).not.toMatch(/camera angle preset:/i);
     expect(runway.shot1.pasteReady).not.toMatch(/camera preset:/i);
     expect(kling.shot1.pasteReady).not.toMatch(/camera preset:/i);
@@ -296,8 +298,11 @@ describe("camera angle presets", () => {
 
     expect(draft.basePkg.cameraAnglePreset).toBe("Side profile");
     expect(draft.basePkg.imagePrompt).toMatch(/side-profile wildlife framing/i);
+    expect(draft.basePkg.structuredPrompts?.workflowShots?.[1].pasteReady).toMatch(
+      /side-profile wildlife framing with the action line visible across the frame/i
+    );
     expect(draft.basePkg.structuredPrompts?.workflowShots?.[0].pasteReady).toMatch(
-      /side-profile tracking bias/i
+      /fully readable from frame one/i
     );
   });
 });
