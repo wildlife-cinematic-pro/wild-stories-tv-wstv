@@ -1,5 +1,7 @@
 "use client";
 
+import { useState } from "react";
+
 import ConceptVariantLab from "@/components/build/concept-variant-lab";
 import GenerationOutputBoundary from "@/components/build/generation-output-boundary";
 import SectionLockControls from "@/components/build/section-lock-controls";
@@ -98,6 +100,10 @@ export default function Step3Generate({
   onClearCreatorQaRuns,
   onBack,
 }: Step3GenerateProps) {
+  const [isQaDetailsOpen, setIsQaDetailsOpen] = useState(false);
+  const [isRecentRunsOpen, setIsRecentRunsOpen] = useState(false);
+  const [copyFeedback, setCopyFeedback] = useState<string | null>(null);
+
   const outputReadiness = pkg
     ? analyzeOutputReadiness({
         predatorName: pkg.predatorName ?? predator,
@@ -141,6 +147,7 @@ export default function Step3Generate({
       : workflowQa.status === "Needs review"
         ? "border-amber-200 bg-amber-50 text-amber-900"
         : "border-rose-200 bg-rose-50 text-rose-900";
+  const quickFixes = workflowQa.topFixes.slice(0, 2);
 
   const formatCreatorQaRunTimestamp = (createdAt: string, index: number) => {
     if (index === 0) {
@@ -157,7 +164,9 @@ export default function Step3Generate({
         });
   };
 
-  const getCreatorQaRunStatusClasses = (status?: CreatorQaRun["finalQaStatus"]) => {
+  const getCreatorQaRunStatusClasses = (
+    status?: CreatorQaRun["finalQaStatus"]
+  ) => {
     if (status === "Ready") {
       return "bg-emerald-100 text-emerald-700";
     }
@@ -167,6 +176,42 @@ export default function Step3Generate({
     }
 
     return "bg-rose-100 text-rose-700";
+  };
+
+  const buildFullPackageText = (data: GeneratedPackage) => {
+    const sections = [
+      ["Image Prompt", data.imagePrompt],
+      ["Negative Prompt", data.negativePrompt],
+      ["Runway Prompt", data.runwayShots.join("\n\n")],
+      ["Kling Prompt", data.klingShots.join("\n\n")],
+      ["Seedance Prompt", data.seedanceShots?.join("\n\n") ?? ""],
+      ["Caption", data.caption],
+      ["Hashtags", data.hashtags],
+      ["Routing Note", data.routingNote],
+    ].filter(([, body]) => Boolean(body && body.trim()));
+
+    return sections
+      .map(([label, body]) => `${label.toUpperCase()}\n${body}`)
+      .join("\n\n");
+  };
+
+  const handleCopy = async (label: string, text: string | undefined) => {
+    if (!text?.trim()) {
+      return;
+    }
+
+    try {
+      if (!navigator?.clipboard?.writeText) {
+        setCopyFeedback(null);
+        return;
+      }
+
+      await navigator.clipboard.writeText(text);
+      setCopyFeedback(label);
+      window.setTimeout(() => setCopyFeedback((current) => (current === label ? null : current)), 1800);
+    } catch {
+      setCopyFeedback(null);
+    }
   };
 
   return (
@@ -270,359 +315,425 @@ export default function Step3Generate({
           resetKey={`${pkg.hook ?? ""}|${pkg.caption ?? ""}|${pkg.routingNote ?? ""}`}
         >
           <section>
-          {lastGeneratedRestoreNotice && (
-            <div
-              className="mb-4 flex flex-wrap items-start justify-between gap-3 rounded-2xl border border-sky-200 bg-sky-50 px-4 py-3 text-sm text-sky-900 shadow-sm shadow-sky-100/60"
-              data-testid="last-generated-restore-notice"
-            >
-              <div>
-                <div className="text-[10px] font-semibold uppercase tracking-[0.14em] text-sky-600">
-                  Restored Output
-                </div>
-                <div className="mt-1 font-semibold">
-                  {lastGeneratedRestoreNotice}
-                </div>
-              </div>
-              {onDismissLastGeneratedRestoreNotice && (
-                <button
-                  type="button"
-                  onClick={onDismissLastGeneratedRestoreNotice}
-                  className="rounded-xl border border-sky-200 bg-white px-3 py-1.5 text-xs font-semibold text-sky-700 shadow-sm shadow-sky-100/70 hover:bg-sky-100 active:scale-[0.98]"
-                >
-                  Dismiss
-                </button>
-              )}
-            </div>
-          )}
-          {publishFlowSummary && (
-            <div className="mb-4 grid gap-3 md:grid-cols-2 xl:grid-cols-5">
-              <div className="rounded-2xl border border-gray-200 bg-white p-4 shadow-sm shadow-gray-200/60">
-                <div className="text-[10px] font-semibold uppercase tracking-[0.1em] text-gray-400">
-                  1. User Inputs
-                </div>
-                <div className="mt-2 text-sm font-semibold text-gray-900">
-                  {publishFlowSummary.predatorName} vs {publishFlowSummary.preyName}
-                </div>
-                <div className="mt-1 text-xs text-gray-500">
-                  {publishFlowSummary.arcName} • {publishFlowSummary.marketMode}
-                </div>
-              </div>
-              <div className="rounded-2xl border border-blue-200 bg-blue-50 p-4 shadow-sm shadow-blue-100/60">
-                <div className="text-[10px] font-semibold uppercase tracking-[0.1em] text-blue-500">
-                  2. U.S. Score
-                </div>
-                <div className="mt-2 text-sm font-semibold text-blue-900">
-                  {publishFlowSummary.usAudienceScore.total}/100
-                </div>
-                <div className="mt-1 text-xs text-blue-700">
-                  {publishFlowSummary.usAudienceScore.summary}
-                </div>
-              </div>
-              <div className="rounded-2xl border border-violet-200 bg-violet-50 p-4 shadow-sm shadow-violet-100/60">
-                <div className="text-[10px] font-semibold uppercase tracking-[0.1em] text-violet-500">
-                  3. Opening Score
-                </div>
-                <div className="mt-2 text-sm font-semibold text-violet-900">
-                  {publishFlowSummary.openingFrameScore.total}/100
-                </div>
-                <div className="mt-1 text-xs text-violet-700">
-                  {publishFlowSummary.openingFrameScore.summary}
-                </div>
-              </div>
+            {lastGeneratedRestoreNotice && (
               <div
-                className={`rounded-2xl border p-4 shadow-sm ${
-                  publishFlowSummary.publishGuardReport.isPass
-                    ? "border-emerald-200 bg-emerald-50 shadow-emerald-100/60"
-                    : "border-amber-200 bg-amber-50 shadow-amber-100/60"
-                }`}
+                className="mb-4 flex flex-wrap items-start justify-between gap-3 rounded-2xl border border-sky-200 bg-sky-50 px-4 py-3 text-sm text-sky-900 shadow-sm shadow-sky-100/60"
+                data-testid="last-generated-restore-notice"
               >
-                <div
-                  className={`text-[10px] font-semibold uppercase tracking-[0.1em] ${
-                    publishFlowSummary.publishGuardReport.isPass
-                      ? "text-emerald-500"
-                      : "text-amber-500"
-                  }`}
-                >
-                  4. Publish Guard
-                </div>
-                <div
-                  className={`mt-2 text-sm font-semibold ${
-                    publishFlowSummary.publishGuardReport.isPass
-                      ? "text-emerald-900"
-                      : "text-amber-900"
-                  }`}
-                >
-                  {publishFlowSummary.publishGuardReport.isPass
-                    ? "Pass"
-                    : "Needs cleanup"}
-                </div>
-                <div
-                  className={`mt-1 text-xs ${
-                    publishFlowSummary.publishGuardReport.isPass
-                      ? "text-emerald-700"
-                      : "text-amber-700"
-                  }`}
-                >
-                  {publishFlowSummary.publishGuardReport.warnings[0] ??
-                    "Packaging is within the default fast-publish guard."}
-                </div>
-              </div>
-              <div className="rounded-2xl border border-gray-200 bg-white p-4 shadow-sm shadow-gray-200/60">
-                <div className="text-[10px] font-semibold uppercase tracking-[0.1em] text-gray-400">
-                  5. Final Output
-                </div>
-                <div className="mt-2 text-sm font-semibold text-gray-900">
-                  {publishFlowSummary.durationLane.toUpperCase()} •{" "}
-                  {formatPipelineStyleLabel(publishFlowSummary.pipelineStyle)}
-                </div>
-                <div className="mt-1 text-xs text-gray-500">
-                  Hook: {publishFlowSummary.hookFamily}{" "}
-                  {publishFlowSummary.fastPublishMode ? "• Fast publish" : ""}
-                </div>
-                <div
-                  className={`mt-2 inline-flex rounded-full px-2.5 py-1 text-[10px] font-semibold ${
-                    publishFlowSummary.publishWorthy
-                      ? "bg-emerald-100 text-emerald-700"
-                      : "bg-amber-100 text-amber-700"
-                  }`}
-                >
-                  {publishFlowSummary.publishWorthy
-                    ? "Publish-worthy"
-                    : "Review before publish"}
-                </div>
-              </div>
-            </div>
-          )}
-
-          {outputReadiness && (
-            <div className="mb-4 rounded-2xl border border-slate-200 bg-white p-4 shadow-sm shadow-slate-200/60">
-              <div className="flex flex-wrap items-start justify-between gap-3">
                 <div>
-                  <div className="flex flex-wrap items-center gap-2">
-                    <div className="text-[11px] font-semibold uppercase tracking-[0.14em] text-slate-400">
-                      Output Review
+                  <div className="text-[10px] font-semibold uppercase tracking-[0.14em] text-sky-600">
+                    Restored Output
+                  </div>
+                  <div className="mt-1 font-semibold">
+                    {lastGeneratedRestoreNotice}
+                  </div>
+                </div>
+                {onDismissLastGeneratedRestoreNotice && (
+                  <button
+                    type="button"
+                    onClick={onDismissLastGeneratedRestoreNotice}
+                    className="rounded-xl border border-sky-200 bg-white px-3 py-1.5 text-xs font-semibold text-sky-700 shadow-sm shadow-sky-100/70 hover:bg-sky-100 active:scale-[0.98]"
+                  >
+                    Dismiss
+                  </button>
+                )}
+              </div>
+            )}
+
+            {publishFlowSummary && (
+              <div className="mb-4 overflow-x-auto pb-1">
+                <div className="grid min-w-[940px] gap-3 md:grid-cols-2 xl:grid-cols-5">
+                  <div className="rounded-2xl border border-gray-200 bg-white p-4 shadow-sm shadow-gray-200/60">
+                    <div className="text-[10px] font-semibold uppercase tracking-[0.1em] text-gray-400">
+                      1. User Inputs
                     </div>
-                    <span
-                      className={`rounded-full px-2.5 py-1 text-[10px] font-semibold ${
-                        outputReadiness.status === "Ready"
+                    <div className="mt-2 text-sm font-semibold text-gray-900">
+                      {publishFlowSummary.predatorName} vs {publishFlowSummary.preyName}
+                    </div>
+                    <div className="mt-1 text-xs text-gray-500">
+                      {publishFlowSummary.arcName} • {publishFlowSummary.marketMode}
+                    </div>
+                  </div>
+                  <div className="rounded-2xl border border-blue-200 bg-blue-50 p-4 shadow-sm shadow-blue-100/60">
+                    <div className="text-[10px] font-semibold uppercase tracking-[0.1em] text-blue-500">
+                      2. U.S. Score
+                    </div>
+                    <div className="mt-2 text-sm font-semibold text-blue-900">
+                      {publishFlowSummary.usAudienceScore.total}/100
+                    </div>
+                    <div className="mt-1 text-xs text-blue-700">
+                      {publishFlowSummary.usAudienceScore.summary}
+                    </div>
+                  </div>
+                  <div className="rounded-2xl border border-violet-200 bg-violet-50 p-4 shadow-sm shadow-violet-100/60">
+                    <div className="text-[10px] font-semibold uppercase tracking-[0.1em] text-violet-500">
+                      3. Opening Score
+                    </div>
+                    <div className="mt-2 text-sm font-semibold text-violet-900">
+                      {publishFlowSummary.openingFrameScore.total}/100
+                    </div>
+                    <div className="mt-1 text-xs text-violet-700">
+                      {publishFlowSummary.openingFrameScore.summary}
+                    </div>
+                  </div>
+                  <div
+                    className={`rounded-2xl border p-4 shadow-sm ${
+                      publishFlowSummary.publishGuardReport.isPass
+                        ? "border-emerald-200 bg-emerald-50 shadow-emerald-100/60"
+                        : "border-amber-200 bg-amber-50 shadow-amber-100/60"
+                    }`}
+                  >
+                    <div
+                      className={`text-[10px] font-semibold uppercase tracking-[0.1em] ${
+                        publishFlowSummary.publishGuardReport.isPass
+                          ? "text-emerald-500"
+                          : "text-amber-500"
+                      }`}
+                    >
+                      4. Publish Guard
+                    </div>
+                    <div
+                      className={`mt-2 text-sm font-semibold ${
+                        publishFlowSummary.publishGuardReport.isPass
+                          ? "text-emerald-900"
+                          : "text-amber-900"
+                      }`}
+                    >
+                      {publishFlowSummary.publishGuardReport.isPass
+                        ? "Pass"
+                        : "Needs cleanup"}
+                    </div>
+                    <div
+                      className={`mt-1 text-xs ${
+                        publishFlowSummary.publishGuardReport.isPass
+                          ? "text-emerald-700"
+                          : "text-amber-700"
+                      }`}
+                    >
+                      {publishFlowSummary.publishGuardReport.warnings[0] ??
+                        "Packaging is within the default fast-publish guard."}
+                    </div>
+                  </div>
+                  <div className="rounded-2xl border border-gray-200 bg-white p-4 shadow-sm shadow-gray-200/60">
+                    <div className="text-[10px] font-semibold uppercase tracking-[0.1em] text-gray-400">
+                      5. Final Output
+                    </div>
+                    <div className="mt-2 text-sm font-semibold text-gray-900">
+                      {publishFlowSummary.durationLane.toUpperCase()} •{" "}
+                      {formatPipelineStyleLabel(publishFlowSummary.pipelineStyle)}
+                    </div>
+                    <div className="mt-1 text-xs text-gray-500">
+                      Hook: {publishFlowSummary.hookFamily}{" "}
+                      {publishFlowSummary.fastPublishMode ? "• Fast publish" : ""}
+                    </div>
+                    <div
+                      className={`mt-2 inline-flex rounded-full px-2.5 py-1 text-[10px] font-semibold ${
+                        publishFlowSummary.publishWorthy
                           ? "bg-emerald-100 text-emerald-700"
                           : "bg-amber-100 text-amber-700"
                       }`}
                     >
-                      {outputReadiness.status}
-                    </span>
-                  </div>
-                  <div className="mt-1 text-sm font-semibold text-slate-900">
-                    {pkg.predatorName ?? predator} vs {pkg.preyName ?? prey}
-                  </div>
-                  <div className="mt-1 text-xs leading-relaxed text-slate-500">
-                    Review prompts before copying into Runway/Kling. Export is advisory and does not upload automatically.
-                  </div>
-                </div>
-
-                <div className="grid min-w-[220px] gap-2 rounded-2xl border border-slate-200 bg-slate-50 p-3 text-[11px] text-slate-700 sm:grid-cols-2">
-                  <div>
-                    <div className="font-semibold text-slate-500">Main engine path</div>
-                    <div className="mt-1 font-semibold text-slate-900">{mainEnginePath}</div>
-                  </div>
-                  <div>
-                    <div className="font-semibold text-slate-500">Duration lane</div>
-                    <div className="mt-1 font-semibold text-slate-900">{durationLaneLabel}</div>
-                  </div>
-                  <div className="sm:col-span-2">
-                    <div className="font-semibold text-slate-500">Scene arc</div>
-                    <div className="mt-1 font-semibold text-slate-900">
-                      {publishFlowSummary?.arcName ?? pkg.arcName ?? "Current workflow"}
+                      {publishFlowSummary.publishWorthy
+                        ? "Publish-worthy"
+                        : "Review before publish"}
                     </div>
                   </div>
-                </div>
-              </div>
-
-              <div className="mt-4 grid gap-2 sm:grid-cols-2 xl:grid-cols-3">
-                {outputReadiness.items.map((item) => (
-                  <div
-                    key={item.label}
-                    className={`rounded-xl border p-3 text-[11px] leading-relaxed ${
-                      item.status === "pass"
-                        ? "border-emerald-200 bg-emerald-50 text-emerald-900"
-                        : "border-amber-200 bg-amber-50 text-amber-900"
-                    }`}
-                  >
-                    <div className="flex items-center gap-2 font-semibold">
-                      <span aria-hidden="true">{item.status === "pass" ? "✓" : "!"}</span>
-                      <span>{item.label}</span>
-                    </div>
-                    <div className="mt-1 text-[10px] opacity-90">{item.detail}</div>
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
-
-          <div className={`mb-4 rounded-2xl border p-4 shadow-sm ${workflowQaColor}`}>
-            <div className="flex flex-wrap items-start justify-between gap-3">
-              <div>
-                <div className="flex flex-wrap items-center gap-2">
-                  <div className="text-[11px] font-semibold uppercase tracking-[0.14em] opacity-70">
-                    Final QA Summary
-                  </div>
-                  <span className="rounded-full bg-white/80 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.08em] text-gray-900">
-                    {workflowQa.status}
-                  </span>
-                </div>
-                <div className="mt-1 text-sm font-semibold">
-                  Overall score: {workflowQa.score}/100
-                </div>
-                <div className="mt-1 text-xs leading-relaxed opacity-80">
-                  Advisory only. Use this card as a final review gate before copying prompts or exporting the package.
-                </div>
-              </div>
-              <div className="rounded-2xl border border-white/70 bg-white/70 px-3 py-2 text-xs font-semibold text-gray-900">
-                {predator} vs {prey}
-              </div>
-            </div>
-
-            <div className="mt-4 grid gap-2 sm:grid-cols-2 xl:grid-cols-3">
-              {workflowQa.items.map((item) => (
-                <div
-                  key={item.label}
-                  className={`rounded-xl border bg-white/80 p-3 text-[11px] leading-relaxed ${
-                    item.status === "pass"
-                      ? "border-emerald-200 text-emerald-900"
-                      : item.status === "warning"
-                        ? "border-amber-200 text-amber-900"
-                        : "border-rose-200 text-rose-900"
-                  }`}
-                >
-                  <div className="flex items-center gap-2 font-semibold">
-                    <span
-                      className={`inline-flex rounded-full px-2 py-0.5 text-[10px] font-semibold ${
-                        item.status === "pass"
-                          ? "bg-emerald-100 text-emerald-700"
-                          : item.status === "warning"
-                            ? "bg-amber-100 text-amber-700"
-                            : "bg-rose-100 text-rose-700"
-                      }`}
-                    >
-                      {item.status}
-                    </span>
-                    <span>{item.label}</span>
-                  </div>
-                  <div className="mt-1 text-[10px] opacity-90">{item.detail}</div>
-                </div>
-              ))}
-            </div>
-
-            {workflowQa.topFixes.length > 0 && (
-              <div className="mt-4 rounded-xl border border-white/70 bg-white/70 p-3">
-                <div className="text-[11px] font-semibold text-gray-900">Top fixes</div>
-                <div className="mt-2 space-y-1 text-[10px] leading-relaxed text-gray-700">
-                  {workflowQa.topFixes.map((fix) => (
-                    <p key={fix}>• {fix}</p>
-                  ))}
                 </div>
               </div>
             )}
-          </div>
 
-          <div className="mb-4 rounded-2xl border border-slate-800 bg-slate-950 p-4 text-white shadow-[0_18px_40px_rgba(15,23,42,0.18)]">
-            <div className="flex flex-wrap items-start justify-between gap-3">
-              <div>
-                <div className="text-[11px] font-semibold uppercase tracking-[0.14em] text-white/45">
-                  Recent QA Runs
-                </div>
-                <div className="mt-1 text-sm font-semibold text-white">
-                  Compare the latest preset test summaries
-                </div>
-                <div className="mt-1 text-xs leading-relaxed text-white/60">
-                  Local only. Clears safely and never changes your generated package.
-                </div>
-              </div>
-              <button
-                type="button"
-                onClick={onClearCreatorQaRuns}
-                className="rounded-xl border border-white/12 bg-white/8 px-3 py-2 text-xs font-semibold text-white/80 transition hover:bg-white/12 active:scale-[0.98]"
-              >
-                Clear History
-              </button>
-            </div>
-
-            <div className="mt-4 grid gap-2">
-              {creatorQaRuns.length > 0 ? (
-                creatorQaRuns.map((run, index) => (
-                  <div
-                    key={run.id}
-                    className="rounded-xl border border-white/10 bg-white/6 p-3 text-xs text-white/85"
-                  >
-                    <div className="flex flex-wrap items-center justify-between gap-2">
-                      <div>
-                        <div className="font-semibold text-white">
-                          {run.presetName ?? `${run.predator} vs ${run.prey}`}
-                        </div>
-                        <div className="mt-1 text-[11px] text-white/55">
-                          {run.predator} vs {run.prey}
-                        </div>
-                      </div>
-                      <div className="flex flex-wrap items-center gap-2">
-                        <span className={`rounded-full px-2.5 py-1 text-[10px] font-semibold ${getCreatorQaRunStatusClasses(run.finalQaStatus)}`}>
-                          {run.finalQaStatus ?? "Risky"}
-                        </span>
-                        <span className="rounded-full border border-white/10 bg-white/8 px-2.5 py-1 text-[10px] font-semibold text-white/75">
-                          {run.finalQaScore ?? "--"}/100
-                        </span>
-                      </div>
+            <div className={`mb-4 rounded-2xl border p-4 shadow-sm ${workflowQaColor}`}>
+              <div className="flex flex-wrap items-start justify-between gap-3">
+                <div>
+                  <div className="flex flex-wrap items-center gap-2">
+                    <div className="text-[11px] font-semibold uppercase tracking-[0.14em] opacity-70">
+                      Final QA Summary
                     </div>
-                    <div className="mt-2 flex flex-wrap items-center gap-2 text-[10px] text-white/60">
-                      <span>{formatCreatorQaRunTimestamp(run.createdAt, index)}</span>
-                      <span>• Prompt health: {run.promptHealthLabel ?? "n/a"}</span>
-                      <span>• {run.outputReady ? "Output ready" : "Needs output review"}</span>
-                    </div>
+                    <span className="rounded-full bg-white/85 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.08em] text-gray-900">
+                      {workflowQa.status}
+                    </span>
+                    <span className="rounded-full bg-white/70 px-2.5 py-1 text-[10px] font-semibold text-gray-900">
+                      {workflowQa.score}/100
+                    </span>
                   </div>
-                ))
-              ) : (
-                <div className="rounded-xl border border-dashed border-white/15 bg-white/4 p-3 text-xs text-white/55">
-                  Generate from a Creator QA preset to start a local comparison history.
+                  <div className="mt-1 text-sm font-semibold">
+                    {pkg.predatorName ?? predator} vs {pkg.preyName ?? prey}
+                  </div>
+                  <div className="mt-1 flex flex-wrap gap-2 text-[10px] font-semibold uppercase tracking-[0.08em] opacity-80">
+                    <span>{mainEnginePath}</span>
+                    <span>•</span>
+                    <span>{durationLaneLabel}</span>
+                    <span>•</span>
+                    <span>{publishFlowSummary?.arcName ?? pkg.arcName ?? arc}</span>
+                  </div>
+                  <div className="mt-2 text-xs leading-relaxed opacity-85">
+                    Review prompts before copying into Runway/Kling. Export is advisory and does not upload automatically.
+                  </div>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setIsQaDetailsOpen((current) => !current)}
+                  className="rounded-xl border border-white/70 bg-white/75 px-3 py-2 text-xs font-semibold text-gray-900 shadow-sm hover:bg-white active:scale-[0.98]"
+                >
+                  {isQaDetailsOpen ? "Hide checklist" : "Show checklist"}
+                </button>
+              </div>
+
+              <div className="mt-4 flex flex-wrap gap-2">
+                {workflowQa.items.map((item) => (
+                  <span
+                    key={item.label}
+                    className={`inline-flex rounded-full border px-2.5 py-1 text-[10px] font-semibold ${
+                      item.status === "pass"
+                        ? "border-emerald-200 bg-emerald-100 text-emerald-700"
+                        : item.status === "warning"
+                          ? "border-amber-200 bg-amber-100 text-amber-700"
+                          : "border-rose-200 bg-rose-100 text-rose-700"
+                    }`}
+                  >
+                    {item.label}
+                  </span>
+                ))}
+              </div>
+
+              {quickFixes.length > 0 && (
+                <div className="mt-4 rounded-xl border border-white/70 bg-white/70 p-3">
+                  <div className="text-[11px] font-semibold text-gray-900">Top fixes</div>
+                  <div className="mt-2 space-y-1 text-[10px] leading-relaxed text-gray-700">
+                    {quickFixes.map((fix) => (
+                      <p key={fix}>• {fix}</p>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {isQaDetailsOpen && (
+                <div className="mt-4 space-y-4">
+                  <div className="grid gap-2 sm:grid-cols-2 xl:grid-cols-3">
+                    {workflowQa.items.map((item) => (
+                      <div
+                        key={item.label}
+                        className={`rounded-xl border bg-white/80 p-3 text-[11px] leading-relaxed ${
+                          item.status === "pass"
+                            ? "border-emerald-200 text-emerald-900"
+                            : item.status === "warning"
+                              ? "border-amber-200 text-amber-900"
+                              : "border-rose-200 text-rose-900"
+                        }`}
+                      >
+                        <div className="flex items-center gap-2 font-semibold">
+                          <span
+                            className={`inline-flex rounded-full px-2 py-0.5 text-[10px] font-semibold ${
+                              item.status === "pass"
+                                ? "bg-emerald-100 text-emerald-700"
+                                : item.status === "warning"
+                                  ? "bg-amber-100 text-amber-700"
+                                  : "bg-rose-100 text-rose-700"
+                            }`}
+                          >
+                            {item.status}
+                          </span>
+                          <span>{item.label}</span>
+                        </div>
+                        <div className="mt-1 text-[10px] opacity-90">{item.detail}</div>
+                      </div>
+                    ))}
+                  </div>
+
+                  {outputReadiness && (
+                    <div className="rounded-xl border border-white/70 bg-white/70 p-3">
+                      <div className="flex flex-wrap items-center gap-2">
+                        <div className="text-[11px] font-semibold text-gray-900">Output readiness</div>
+                        <span
+                          className={`rounded-full px-2.5 py-1 text-[10px] font-semibold ${
+                            outputReadiness.status === "Ready"
+                              ? "bg-emerald-100 text-emerald-700"
+                              : "bg-amber-100 text-amber-700"
+                          }`}
+                        >
+                          {outputReadiness.status}
+                        </span>
+                      </div>
+                      <div className="mt-3 grid gap-2 sm:grid-cols-2 xl:grid-cols-3">
+                        {outputReadiness.items.map((item) => (
+                          <div
+                            key={item.label}
+                            className={`rounded-xl border p-3 text-[11px] leading-relaxed ${
+                              item.status === "pass"
+                                ? "border-emerald-200 bg-emerald-50 text-emerald-900"
+                                : "border-amber-200 bg-amber-50 text-amber-900"
+                            }`}
+                          >
+                            <div className="flex items-center gap-2 font-semibold">
+                              <span aria-hidden="true">{item.status === "pass" ? "✓" : "!"}</span>
+                              <span>{item.label}</span>
+                            </div>
+                            <div className="mt-1 text-[10px] opacity-90">{item.detail}</div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
                 </div>
               )}
             </div>
-          </div>
 
-          <div className="mb-4 rounded-2xl border border-gray-200 bg-white/80 p-4 shadow-sm shadow-gray-200/60">
-            <div className="flex flex-wrap items-start justify-between gap-3">
-              <div>
-                <div className="flex flex-wrap items-center gap-2">
-                  <div className="text-[11px] font-semibold uppercase tracking-[0.14em] text-gray-400">
-                    Generated Output
+            <div className="mb-4 rounded-2xl border border-slate-200 bg-white p-4 shadow-sm shadow-slate-200/60">
+              <div className="flex flex-wrap items-start justify-between gap-3">
+                <div>
+                  <div className="text-[11px] font-semibold uppercase tracking-[0.14em] text-slate-400">
+                    Quick Export Bar
                   </div>
-                  <span className="rounded-full bg-gray-900 px-2.5 py-1 text-[10px] font-semibold text-white/80">
-                    Ready to scan
-                  </span>
+                  <div className="mt-1 text-sm font-semibold text-slate-900">
+                    Shortcut copy actions for the current output package
+                  </div>
+                  <div className="mt-1 text-xs leading-relaxed text-slate-500">
+                    Copy shortcuts only. Existing output workspaces and export actions stay available below.
+                  </div>
                 </div>
-                <div className="mt-1 text-sm font-semibold text-gray-800">
-                  Prompt pack, workflow guidance, and export-ready copy
-                </div>
-                <div className="mt-1 text-xs leading-relaxed text-gray-500">
-                  Core prompts, workflow notes, and posting assets are grouped
-                  below for quick review.
-                </div>
+                {copyFeedback && (
+                  <div className="rounded-full bg-slate-900 px-2.5 py-1 text-[10px] font-semibold text-white">
+                    {copyFeedback} copied
+                  </div>
+                )}
               </div>
-              <div className="flex flex-wrap items-center gap-1.5">
-                <span className="rounded-full bg-violet-100 px-2.5 py-1 text-[10px] font-semibold text-violet-700">
-                  Seedance
-                </span>
-                <span className="rounded-full bg-green-100 px-2.5 py-1 text-[10px] font-semibold text-green-700">
-                  Runway
-                </span>
-                <span className="rounded-full bg-blue-100 px-2.5 py-1 text-[10px] font-semibold text-blue-700">
-                  Kling
-                </span>
+              <div className="mt-4 flex flex-wrap gap-2 overflow-x-auto pb-1">
+                <button
+                  type="button"
+                  onClick={() => handleCopy("Full Package", buildFullPackageText(pkg))}
+                  className="rounded-xl bg-gray-900 px-3.5 py-2 text-xs font-semibold text-white shadow-sm hover:bg-black active:scale-[0.98]"
+                >
+                  Copy Full Package
+                </button>
+                <button
+                  type="button"
+                  onClick={() => handleCopy("Image Prompt", pkg.imagePrompt)}
+                  className="rounded-xl border border-slate-200 bg-white px-3.5 py-2 text-xs font-semibold text-slate-800 shadow-sm hover:bg-slate-50 active:scale-[0.98]"
+                >
+                  Copy Image Prompt
+                </button>
+                <button
+                  type="button"
+                  onClick={() => handleCopy("Caption", pkg.caption)}
+                  className="rounded-xl border border-slate-200 bg-white px-3.5 py-2 text-xs font-semibold text-slate-800 shadow-sm hover:bg-slate-50 active:scale-[0.98]"
+                >
+                  Copy Caption
+                </button>
+                <button
+                  type="button"
+                  onClick={() => handleCopy("Hashtags", pkg.hashtags)}
+                  className="rounded-xl border border-slate-200 bg-white px-3.5 py-2 text-xs font-semibold text-slate-800 shadow-sm hover:bg-slate-50 active:scale-[0.98]"
+                >
+                  Copy Hashtags
+                </button>
               </div>
             </div>
-          </div>
-          <div className="overflow-hidden rounded-2xl border border-gray-200 bg-white">
-            <OutputCards data={pkg} onRestoreVersion={onRestoreVersion} />
-          </div>
-        </section>
+
+            {creatorQaRuns.length > 0 && (
+              <div className="mb-4 rounded-2xl border border-slate-800 bg-slate-950 p-4 text-white shadow-[0_18px_40px_rgba(15,23,42,0.18)]">
+                <div className="flex flex-wrap items-start justify-between gap-3">
+                  <button
+                    type="button"
+                    onClick={() => setIsRecentRunsOpen((current) => !current)}
+                    className="text-left"
+                  >
+                    <div className="text-[11px] font-semibold uppercase tracking-[0.14em] text-white/45">
+                      Recent QA Runs — {creatorQaRuns.length} runs
+                    </div>
+                    <div className="mt-1 text-sm font-semibold text-white">
+                      {isRecentRunsOpen ? "Hide local preset comparisons" : "Show local preset comparisons"}
+                    </div>
+                    <div className="mt-1 text-xs leading-relaxed text-white/60">
+                      Local only. Clears safely and never changes your generated package.
+                    </div>
+                  </button>
+                  <div className="flex flex-wrap items-center gap-2">
+                    <span className="rounded-full border border-white/10 bg-white/8 px-2.5 py-1 text-[10px] font-semibold text-white/70">
+                      {creatorQaRuns[0]?.presetName ?? `${creatorQaRuns[0]?.predator} vs ${creatorQaRuns[0]?.prey}`}
+                    </span>
+                    <button
+                      type="button"
+                      onClick={onClearCreatorQaRuns}
+                      className="rounded-xl border border-white/12 bg-white/8 px-3 py-2 text-xs font-semibold text-white/80 transition hover:bg-white/12 active:scale-[0.98]"
+                    >
+                      Clear History
+                    </button>
+                  </div>
+                </div>
+
+                {isRecentRunsOpen && (
+                  <div className="mt-4 grid gap-2">
+                    {creatorQaRuns.map((run, index) => (
+                      <div
+                        key={run.id}
+                        className="rounded-xl border border-white/10 bg-white/6 p-3 text-xs text-white/85"
+                      >
+                        <div className="flex flex-wrap items-center justify-between gap-2">
+                          <div>
+                            <div className="font-semibold text-white">
+                              {run.presetName ?? `${run.predator} vs ${run.prey}`}
+                            </div>
+                            <div className="mt-1 text-[11px] text-white/55">
+                              {run.predator} vs {run.prey}
+                            </div>
+                          </div>
+                          <div className="flex flex-wrap items-center gap-2">
+                            <span className={`rounded-full px-2.5 py-1 text-[10px] font-semibold ${getCreatorQaRunStatusClasses(run.finalQaStatus)}`}>
+                              {run.finalQaStatus ?? "Risky"}
+                            </span>
+                            <span className="rounded-full border border-white/10 bg-white/8 px-2.5 py-1 text-[10px] font-semibold text-white/75">
+                              {run.finalQaScore ?? "--"}/100
+                            </span>
+                          </div>
+                        </div>
+                        <div className="mt-2 flex flex-wrap items-center gap-2 text-[10px] text-white/60">
+                          <span>{formatCreatorQaRunTimestamp(run.createdAt, index)}</span>
+                          <span>• Prompt health: {run.promptHealthLabel ?? "n/a"}</span>
+                          <span>• {run.outputReady ? "Output ready" : "Needs output review"}</span>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            )}
+
+            <div className="mb-4 rounded-2xl border border-gray-200 bg-white/80 p-4 shadow-sm shadow-gray-200/60">
+              <div className="flex flex-wrap items-start justify-between gap-3">
+                <div>
+                  <div className="flex flex-wrap items-center gap-2">
+                    <div className="text-[11px] font-semibold uppercase tracking-[0.14em] text-gray-400">
+                      Generated Output
+                    </div>
+                    <span className="rounded-full bg-gray-900 px-2.5 py-1 text-[10px] font-semibold text-white/80">
+                      Ready to scan
+                    </span>
+                  </div>
+                  <div className="mt-1 text-sm font-semibold text-gray-800">
+                    Prompt pack, workflow guidance, and export-ready copy
+                  </div>
+                  <div className="mt-1 text-xs leading-relaxed text-gray-500">
+                    Core prompts, workflow notes, and posting assets are grouped
+                    below for quick review.
+                  </div>
+                </div>
+                <div className="flex flex-wrap items-center gap-1.5">
+                  <span className="rounded-full bg-violet-100 px-2.5 py-1 text-[10px] font-semibold text-violet-700">
+                    Seedance
+                  </span>
+                  <span className="rounded-full bg-green-100 px-2.5 py-1 text-[10px] font-semibold text-green-700">
+                    Runway
+                  </span>
+                  <span className="rounded-full bg-blue-100 px-2.5 py-1 text-[10px] font-semibold text-blue-700">
+                    Kling
+                  </span>
+                </div>
+              </div>
+            </div>
+            <div className="overflow-hidden rounded-2xl border border-gray-200 bg-white">
+              <OutputCards data={pkg} onRestoreVersion={onRestoreVersion} />
+            </div>
+          </section>
         </GenerationOutputBoundary>
       )}
 
