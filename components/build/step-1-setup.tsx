@@ -346,6 +346,20 @@ export default function Step1Setup({
     onEmotionalToneChange(preset.emotionalTone);
     onAnimalVibeChange(preset.animalVibe);
   };
+  const isScenePresetActive = (preset: {
+    habitat: HabitatPreset;
+    weather: Weather;
+    depthMode: DepthMode;
+    cameraAnglePreset: CameraAnglePreset;
+    emotionalTone: EmotionalTone;
+    animalVibe: AnimalVibe;
+  }) =>
+    habitat === preset.habitat &&
+    weather === preset.weather &&
+    depthMode === preset.depthMode &&
+    cameraAnglePreset === preset.cameraAnglePreset &&
+    emotionalTone === preset.emotionalTone &&
+    animalVibe === preset.animalVibe;
   const sceneReportColor =
     sceneReport.severity === "success"
       ? "border-emerald-100 bg-emerald-50/80 text-emerald-900"
@@ -798,7 +812,11 @@ export default function Step1Setup({
                       key={preset.label}
                       type="button"
                       onClick={() => applySceneSettings(preset)}
-                      className="rounded-full border border-gray-200 bg-white/85 px-3 py-1.5 text-[10px] font-semibold uppercase tracking-[0.08em] text-gray-700 shadow-sm hover:bg-white active:scale-[0.98]"
+                      className={
+                        isScenePresetActive(preset)
+                          ? "rounded-full border border-sky-700 bg-sky-900 px-3 py-1.5 text-[10px] font-semibold uppercase tracking-[0.08em] text-white shadow-sm hover:bg-sky-950 active:scale-[0.98]"
+                          : "rounded-full border border-gray-300 bg-white px-3 py-1.5 text-[10px] font-semibold uppercase tracking-[0.08em] text-gray-800 shadow-sm hover:bg-gray-50 active:scale-[0.98]"
+                      }
                     >
                       {preset.label}
                     </button>
