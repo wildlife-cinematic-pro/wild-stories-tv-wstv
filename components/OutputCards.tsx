@@ -344,36 +344,40 @@ export default function OutputCards({
           title="Export Summary"
           description="Text export, JSON export, and full-package copy stay advisory only. Nothing uploads automatically from this panel."
         >
-          <div className="rounded-2xl border border-[color:var(--border)] bg-[color:var(--surface-elevated)] p-4 shadow-[var(--surface-shadow)]">
+          <div className="rounded-2xl border border-[color:var(--border)] bg-[color:var(--surface-elevated)] p-4 shadow-[var(--surface-shadow)] sm:p-5">
             <div className="flex flex-wrap gap-2">
               <button
                 type="button"
                 onClick={copyAllPacks}
-                className="rounded-xl bg-gray-900 px-3.5 py-2 text-xs font-extrabold text-white hover:bg-black active:scale-95"
+                className="w-full rounded-xl bg-gray-900 px-4 py-2.5 text-sm font-extrabold text-white hover:bg-black active:scale-95 sm:w-auto sm:min-w-[13rem]"
               >
                 Copy Full Package
               </button>
               <button
                 type="button"
                 onClick={exportTxt}
-                className="rounded-xl border border-[color:var(--border)] bg-[color:var(--surface)] px-3.5 py-2 text-xs font-extrabold text-[color:var(--text)] hover:bg-[color:var(--surface-muted)] active:scale-95"
+                className="rounded-xl border border-[color:var(--border)] bg-[color:var(--surface)] px-4 py-2.5 text-xs font-bold text-[color:var(--text)] hover:bg-[color:var(--surface-muted)] active:scale-95"
               >
                 Export Text
               </button>
               <button
                 type="button"
                 onClick={exportJson}
-                className="rounded-xl border border-[color:var(--border)] bg-[color:var(--surface)] px-3.5 py-2 text-xs font-extrabold text-[color:var(--text)] hover:bg-[color:var(--surface-muted)] active:scale-95"
+                className="rounded-xl border border-[color:var(--border)] bg-[color:var(--surface)] px-4 py-2.5 text-xs font-bold text-[color:var(--text)] hover:bg-[color:var(--surface-muted)] active:scale-95"
               >
                 Export JSON
               </button>
             </div>
 
-            <div className="mt-3 text-xs leading-relaxed text-[color:var(--muted)]">
-              Includes image prompt, video prompts, caption, hashtags, safety notes, and metadata when available.
+            <div className="mt-3 text-xs font-semibold uppercase tracking-[0.12em] text-[color:var(--muted)]">
+              Included in the full package
             </div>
 
-            <div className="mt-3 flex flex-wrap gap-2">
+            <div className="mt-2 text-sm leading-relaxed text-[color:var(--muted)]">
+              Image prompt, video prompts, caption, hashtags, safety notes, and metadata stay bundled here when available.
+            </div>
+
+            <div className="mt-3 flex flex-wrap gap-1.5">
               {exportSummaryItems.map((item) => (
                 <span
                   key={item.label}

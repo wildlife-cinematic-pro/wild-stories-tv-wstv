@@ -222,6 +222,9 @@ export function Card({
   aiEnhanced,
   extraActions,
   copyLabel,
+  className,
+  valueClassName,
+  copyButtonClassName,
 }: {
   title: string;
   value: string;
@@ -230,21 +233,24 @@ export function Card({
   aiEnhanced?: boolean;
   extraActions?: { label: string; onClick: () => void; className?: string }[];
   copyLabel?: string;
+  className?: string;
+  valueClassName?: string;
+  copyButtonClassName?: string;
 }) {
   return (
     <div
       className={`rounded-xl border bg-[color:var(--surface-elevated)] p-4 shadow-sm ${
         accent ? `border-l-4 ${accent}` : "border-[color:var(--border)]"
-      } ${aiEnhanced ? "ring-1 ring-purple-200" : ""}`}
+      } ${aiEnhanced ? "ring-1 ring-purple-200" : ""} ${className ?? ""}`}
     >
-      <div className="mb-3 flex items-center justify-between gap-3">
+      <div className="mb-3 flex flex-wrap items-start justify-between gap-3">
         <h2 className="flex items-center gap-2 font-bold text-[color:var(--text)]">
           {title}
           {aiEnhanced && (
             <span className="text-xs font-normal text-purple-500">✦ AI</span>
           )}
         </h2>
-        <div className="flex flex-wrap items-center gap-2">
+        <div className="flex w-full flex-wrap items-center gap-2 sm:w-auto sm:justify-end">
           {extraActions?.map((action) => (
             <button
               key={action.label}
@@ -259,7 +265,10 @@ export function Card({
             </button>
           ))}
           <button
-            className="rounded bg-gray-900 px-3 py-1 text-sm text-white hover:bg-black active:scale-95"
+            className={
+              copyButtonClassName ??
+              "rounded bg-gray-900 px-3 py-1 text-sm text-white hover:bg-black active:scale-95"
+            }
             onClick={() => onCopy(value)}
             type="button"
           >
@@ -267,7 +276,11 @@ export function Card({
           </button>
         </div>
       </div>
-      <p className="whitespace-pre-wrap text-sm leading-7 text-[color:var(--muted)]">
+      <p
+        className={`whitespace-pre-wrap text-sm leading-7 text-[color:var(--muted)] ${
+          valueClassName ?? ""
+        }`}
+      >
         {value || <span className="italic text-[color:var(--muted)]">Generate गर्नुस्...</span>}
       </p>
     </div>
