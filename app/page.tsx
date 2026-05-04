@@ -718,6 +718,23 @@ export default function Page() {
     weather,
   ]);
 
+  const handleRestorePinnedOutput = useCallback(() => {
+    if (!pinnedOutput) {
+      return;
+    }
+
+    setPkg(pinnedOutput.package);
+    setPublishFlowSummary(null);
+    setLastGeneratedRestoreNotice(
+      "Restored pinned output as the current generated package. Step 1 and Step 2 setup values stay unchanged."
+    );
+    setEnhancementNotice(null);
+    setError("");
+    setShouldRecordCreatorQaRun(false);
+    setStep(3);
+    setActiveTab("build");
+  }, [pinnedOutput]);
+
   useEffect(() => {
     if (!shouldRecordCreatorQaRun || !pkg) {
       return;
@@ -1350,6 +1367,7 @@ export default function Page() {
                 creatorQaRuns={creatorQaRuns}
                 pinnedOutput={pinnedOutput}
                 onPinCurrentOutput={handlePinCurrentOutput}
+                onRestorePinnedOutput={handleRestorePinnedOutput}
                 onClearPinnedOutput={() => setPinnedOutput(null)}
                 onClearCreatorQaRuns={() => setCreatorQaRuns([])}
                 onBack={() => setStep(2)}

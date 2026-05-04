@@ -8,6 +8,7 @@ import SectionLockControls from "@/components/build/section-lock-controls";
 import OutputCards from "@/components/OutputCards";
 
 import type { PublishFlowSummary } from "@/lib/build-package";
+import { buildPinnedOutputComparison } from "@/lib/creator-qa-run-history";
 import type {
   CreatorQaRun,
   PinnedGeneratedOutput,
@@ -63,6 +64,7 @@ type Step3GenerateProps = {
   creatorQaRuns: CreatorQaRun[];
   pinnedOutput: PinnedGeneratedOutput | null;
   onPinCurrentOutput: () => void;
+  onRestorePinnedOutput: () => void;
   onClearPinnedOutput: () => void;
   onClearCreatorQaRuns: () => void;
   onBack: () => void;
@@ -105,6 +107,7 @@ export default function Step3Generate({
   creatorQaRuns,
   pinnedOutput,
   onPinCurrentOutput,
+  onRestorePinnedOutput,
   onClearPinnedOutput,
   onClearCreatorQaRuns,
   onBack,
@@ -158,6 +161,14 @@ export default function Step3Generate({
         ? "border-amber-200 bg-amber-50 text-amber-900"
         : "border-rose-200 bg-rose-50 text-rose-900";
   const quickFixes = workflowQa.topFixes.slice(0, 2);
+  const currentOutputPredator = pkg?.predatorName ?? predator;
+  const currentOutputPrey = pkg?.preyName ?? prey;
+  const pinnedOutputComparison = buildPinnedOutputComparison({
+    pinnedOutput,
+    currentQaScore: workflowQa.score,
+    currentPredator: currentOutputPredator,
+    currentPrey: currentOutputPrey,
+  });
 
   const formatPinnedOutputTimestamp = (createdAt: string) => {
     const date = new Date(createdAt);
@@ -682,13 +693,20 @@ export default function Step3Generate({
                   <div className="flex flex-wrap gap-2">
                     <button
                       type="button"
+                      onClick={onRestorePinnedOutput}
+                      className="rounded-xl bg-violet-900 px-3.5 py-2 text-xs font-semibold text-white shadow-sm hover:bg-violet-950 active:scale-[0.98]"
+                    >
+                      Restore Pinned Output
+                    </button>
+                    <button
+                      type="button"
                       onClick={() =>
                         handleCopy(
                           "Pinned Full Package",
                           buildFullPackageText(pinnedOutput.package)
                         )
                       }
-                      className="rounded-xl bg-violet-900 px-3.5 py-2 text-xs font-semibold text-white shadow-sm hover:bg-violet-950 active:scale-[0.98]"
+                      className="rounded-xl border border-violet-200 bg-white px-3.5 py-2 text-xs font-semibold text-violet-800 shadow-sm hover:bg-violet-100 active:scale-[0.98]"
                     >
                       Copy Pinned Full Package
                     </button>
@@ -699,6 +717,40 @@ export default function Step3Generate({
                     >
                       Clear Pinned Output
                     </button>
+                  </div>
+                </div>
+
+                <div className="mt-4 rounded-xl border border-violet-200 bg-white/80 p-3 text-xs leading-relaxed text-violet-950">
+                  <div className="flex flex-wrap items-center gap-2">
+                    <div className="font-semibold">Compare current vs pinned</div>
+                    <span className="rounded-full bg-violet-100 px-2.5 py-1 text-[10px] font-semibold text-violet-800">
+                      {pinnedOutputComparison.label}
+                    </span>
+                  </div>
+                  <div className="mt-3 grid gap-2 sm:grid-cols-2">
+                    <div className="rounded-xl border border-violet-100 bg-violet-50/70 p-3">
+                      <div className="text-[10px] font-semibold uppercase tracking-[0.08em] text-violet-500">Current</div>
+                      <div className="mt-1 font-semibold">{currentOutputPredator} vs {currentOutputPrey}</div>
+                      <div className="mt-1 text-[11px] text-violet-900/85">
+                        {workflowQa.status} • {workflowQa.score}/100
+                      </div>
+                    </div>
+                    <div className="rounded-xl border border-violet-100 bg-violet-50/70 p-3">
+                      <div className="text-[10px] font-semibold uppercase tracking-[0.08em] text-violet-500">Pinned</div>
+                      <div className="mt-1 font-semibold">{pinnedOutput.predator} vs {pinnedOutput.prey}</div>
+                      <div className="mt-1 text-[11px] text-violet-900/85">
+                        {pinnedOutput.finalQaStatus ?? "Risky"} • {pinnedOutput.finalQaScore ?? "--"}/100
+                      </div>
+                    </div>
+                  </div>
+                  {pinnedOutputComparison.pairsDiffer && (
+                    <div className="mt-3 space-y-1 text-[11px] text-violet-900/85">
+                      <div>Pinned: {pinnedOutputComparison.pinnedPair}</div>
+                      <div>Current: {pinnedOutputComparison.currentPair}</div>
+                    </div>
+                  )}
+                  <div className="mt-3 text-[11px] text-violet-900/80">
+                    Restore swaps the visible generated package only. Step 1 and Step 2 setup values stay unchanged.
                   </div>
                 </div>
               </div>
