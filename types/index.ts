@@ -667,6 +667,7 @@ export type QualityOptions = {
   singleActionRule: boolean;
   microMotion: boolean;
   heroVeo: boolean;
+  intensityMode?: boolean; // Slightly increases action energy and environmental response without sacrificing readability
   seamlessShot?: boolean; // Appends "Continuous, seamless shot" to Runway prompts
 };
 
