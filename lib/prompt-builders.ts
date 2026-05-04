@@ -52,6 +52,7 @@ export {
   type FourShotPromptPack,
   buildStructuredPrompt,
   promptPackToLegacyText,
+  promptPackToFastOutputText,
   promptPackToArray,
   build10Ideas,
   buildCapCutPlan,
@@ -81,12 +82,14 @@ export {
   type RunwayPromptPack,
   buildRunwayPromptPack,
   buildRunwayShots,
+  buildRunwayFastOutput,
 } from "@/lib/prompt-builders/runway";
 
 export {
   type KlingPromptPack,
   buildKlingPromptPack,
   buildKlingShots,
+  buildKlingFastOutput,
   buildKlingNative15sCard,
   buildKlingNative15s,
   buildKlingSixShotCard,
