@@ -26,6 +26,19 @@ export type PinnedGeneratedOutput = {
   package: GeneratedPackage;
 };
 
+export type PinnedOutputComparisonLabel =
+  | "Pinned is stronger"
+  | "Current is stronger"
+  | "Same score"
+  | "Compare unavailable";
+
+export type PinnedOutputComparison = {
+  label: PinnedOutputComparisonLabel;
+  pairsDiffer: boolean;
+  pinnedPair: string;
+  currentPair: string;
+};
+
 export type CreatorQaRunInput = {
   id?: string;
   createdAt?: string;
@@ -132,6 +145,51 @@ export function buildPinnedGeneratedOutput(
     finalQaScore: workflowQa.score,
     finalQaStatus: workflowQa.status,
     package: input.pkg,
+  };
+}
+
+export function buildPinnedOutputComparison(input: {
+  pinnedOutput: PinnedGeneratedOutput | null;
+  currentQaScore?: number;
+  currentPredator: string;
+  currentPrey: string;
+}): PinnedOutputComparison {
+  const pinnedPair = input.pinnedOutput
+    ? `${input.pinnedOutput.predator} vs ${input.pinnedOutput.prey}`
+    : "Pinned output unavailable";
+  const currentPair = `${input.currentPredator} vs ${input.currentPrey}`;
+  const pairsDiffer = Boolean(
+    input.pinnedOutput &&
+      (input.pinnedOutput.predator !== input.currentPredator ||
+        input.pinnedOutput.prey !== input.currentPrey)
+  );
+
+  const pinnedScore = input.pinnedOutput?.finalQaScore;
+  const currentScore = input.currentQaScore;
+
+  if (typeof pinnedScore !== "number" || typeof currentScore !== "number") {
+    return {
+      label: "Compare unavailable",
+      pairsDiffer,
+      pinnedPair,
+      currentPair,
+    };
+  }
+
+  if (pinnedScore === currentScore) {
+    return {
+      label: "Same score",
+      pairsDiffer,
+      pinnedPair,
+      currentPair,
+    };
+  }
+
+  return {
+    label: pinnedScore > currentScore ? "Pinned is stronger" : "Current is stronger",
+    pairsDiffer,
+    pinnedPair,
+    currentPair,
   };
 }
 

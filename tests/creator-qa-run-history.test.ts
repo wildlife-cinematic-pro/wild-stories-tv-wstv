@@ -4,6 +4,7 @@ import {
   appendCreatorQaRun,
   buildCreatorQaRun,
   buildPinnedGeneratedOutput,
+  buildPinnedOutputComparison,
   MAX_CREATOR_QA_RUNS,
   type CreatorQaRun,
 } from "@/lib/creator-qa-run-history";
@@ -98,6 +99,57 @@ describe("creator QA run history", () => {
     expect(run.finalQaScore).toBeGreaterThan(0);
     expect(run.promptHealthLabel).toBeDefined();
     expect(run.outputReady).toBe(true);
+  });
+
+
+  it("compares pinned and current output scores", () => {
+    const pinned = buildPinnedGeneratedOutput({
+      predator: "Crocodile",
+      prey: "Warthog",
+      arc: "Ambush attack",
+      contentLane: "Fishing Strike",
+      habitat: "Riverbank Reeds",
+      weather: "Golden Hour",
+      depthMode: "Balanced Depth",
+      cameraAnglePreset: "Waterline",
+      emotionalTone: "Raw Tension",
+      animalVibe: "National Geographic Wild",
+      finalEnvironment: "Riverbank reeds with clean waterline spacing",
+      sceneDescription:
+        "Slow low push-in near the waterline as Crocodile surges once and Warthog recoils toward open ground, keeping both animals readable with grounded motion and clean spacing.",
+      pkg: makePackage(),
+    });
+
+    expect(
+      buildPinnedOutputComparison({
+        pinnedOutput: pinned,
+        currentQaScore: (pinned.finalQaScore ?? 0) - 5,
+        currentPredator: "Black Bear",
+        currentPrey: "Ground Squirrel",
+      })
+    ).toMatchObject({
+      label: "Pinned is stronger",
+      pairsDiffer: true,
+      pinnedPair: "Crocodile vs Warthog",
+      currentPair: "Black Bear vs Ground Squirrel",
+    });
+
+    expect(
+      buildPinnedOutputComparison({
+        pinnedOutput: pinned,
+        currentQaScore: pinned.finalQaScore,
+        currentPredator: "Crocodile",
+        currentPrey: "Warthog",
+      }).label
+    ).toBe("Same score");
+
+    expect(
+      buildPinnedOutputComparison({
+        pinnedOutput: pinned,
+        currentPredator: "Crocodile",
+        currentPrey: "Warthog",
+      }).label
+    ).toBe("Compare unavailable");
   });
 
   it("keeps only the latest five runs", () => {
