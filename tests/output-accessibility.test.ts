@@ -46,5 +46,8 @@ describe("output workspace accessibility source guards", () => {
     expect(fastPublishPanel).toContain('5. Shot 4 Runway');
     expect(fastPublishPanel).toContain('7. 5 Hashtags');
     expect(promptsWorkspace).toContain('GPT Image 2 Backup Prompt');
+    expect(promptsWorkspace).toContain('Creator QA Pack');
+    expect(promptsWorkspace).toContain('Copy Fix Prompt');
+    expect(promptsWorkspace).toContain('Copy Caption');
   });
 });

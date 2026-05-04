@@ -42,6 +42,14 @@ import {
 } from "@/lib/model-specs";
 import { DEFAULT_CAMERA_ANGLE_PRESET } from "@/lib/camera-angle-presets";
 import { buildStoryboardPreviewLinkMetadata } from "@/lib/storyboard-link-metadata";
+import { WORKFLOW_TEST_PRESETS } from "@/lib/workflow-presets";
+import {
+  appendCreatorQaRun,
+  buildCreatorQaRun,
+  buildPinnedGeneratedOutput,
+  type CreatorQaRun,
+  type PinnedGeneratedOutput,
+} from "@/lib/creator-qa-run-history";
 import { getWildlifeScopeDefaultSelection } from "@/lib/wildlife-focus";
 import {
   useBuildPreview,
@@ -142,6 +150,7 @@ export default function Page() {
   const [pkg, setPkg] = useState<GeneratedPackage | null>(null);
   const [isGenerating, setIsGenerating] = useState(false);
   const [isRegeneratingUnlocked, setIsRegeneratingUnlocked] = useState(false);
+  const [enhancementNotice, setEnhancementNotice] = useState<string | null>(null);
   const [packageLocks, setPackageLocks] = useState<PackageLockState>(() =>
     createDefaultPackageLockState()
   );
@@ -162,6 +171,10 @@ export default function Page() {
     useState<PromotedVariantPublishCopyOverride | null>(null);
   const [lastGeneratedRestoreNotice, setLastGeneratedRestoreNotice] =
     useState<string | null>(null);
+  const [creatorQaRuns, setCreatorQaRuns] = useState<CreatorQaRun[]>([]);
+  const [pinnedOutput, setPinnedOutput] = useState<PinnedGeneratedOutput | null>(null);
+  const [shouldRecordCreatorQaRun, setShouldRecordCreatorQaRun] = useState(false);
+  const lastRecordedCreatorQaRunIdRef = useRef("");
 
   const applyBuildSnapshot = useCallback(
     (
@@ -200,6 +213,7 @@ export default function Page() {
       setStrictOriginalityGuard(snapshot.strictOriginalityGuard);
       setPromotedPublishCopyOverride(null);
       setLastGeneratedRestoreNotice(null);
+      setShouldRecordCreatorQaRun(false);
       setError("");
 
       if (options.clearGeneratedOutput !== false) {
@@ -213,6 +227,21 @@ export default function Page() {
   const applyWorkflowPreset = useCallback(
     (preset: { snapshot: BuildWorkflowPresetSnapshot }) => {
       applyBuildSnapshot(preset.snapshot);
+    },
+    [applyBuildSnapshot]
+  );
+
+  const handleApplyWorkflowTestPreset = useCallback(
+    (presetId: string) => {
+      const preset = WORKFLOW_TEST_PRESETS.find((candidate) => candidate.id === presetId);
+
+      if (!preset) {
+        return;
+      }
+
+      applyBuildSnapshot(preset.snapshot);
+      setStep(1);
+      setActiveTab("build");
     },
     [applyBuildSnapshot]
   );
@@ -649,6 +678,119 @@ export default function Page() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [autoApplyHighDrift, qualityReco.level, predator, prey, arc, preset.driftRisk, runwayModel, klingModel]);
 
+  const handlePinCurrentOutput = useCallback(() => {
+    if (!pkg) {
+      return;
+    }
+
+    const pinned = buildPinnedGeneratedOutput({
+      id: pkg.generationId,
+      createdAt: pkg.generatedAt,
+      predator,
+      prey,
+      arc: previewArc,
+      contentLane,
+      habitat,
+      weather,
+      depthMode,
+      cameraAnglePreset,
+      emotionalTone,
+      animalVibe,
+      finalEnvironment,
+      sceneDescription,
+      pkg,
+    });
+
+    setPinnedOutput(pinned);
+  }, [
+    animalVibe,
+    cameraAnglePreset,
+    contentLane,
+    depthMode,
+    emotionalTone,
+    finalEnvironment,
+    habitat,
+    pkg,
+    predator,
+    prey,
+    previewArc,
+    sceneDescription,
+    weather,
+  ]);
+
+  const handleRestorePinnedOutput = useCallback(() => {
+    if (!pinnedOutput) {
+      return;
+    }
+
+    setPkg(pinnedOutput.package);
+    setPublishFlowSummary(null);
+    setLastGeneratedRestoreNotice(
+      "Restored pinned output as the current generated package. Step 1 and Step 2 setup values stay unchanged."
+    );
+    setEnhancementNotice(null);
+    setError("");
+    setShouldRecordCreatorQaRun(false);
+    setStep(3);
+    setActiveTab("build");
+  }, [pinnedOutput]);
+
+  useEffect(() => {
+    if (!shouldRecordCreatorQaRun || !pkg) {
+      return;
+    }
+
+    const matchedWorkflowTestPreset = WORKFLOW_TEST_PRESETS.find(
+      (presetCandidate) =>
+        presetCandidate.snapshot.predator === predator &&
+        presetCandidate.snapshot.prey === prey
+    );
+    const run = buildCreatorQaRun({
+      id: pkg.generationId,
+      createdAt: pkg.generatedAt,
+      presetName: matchedWorkflowTestPreset?.label,
+      predator,
+      prey,
+      arc: previewArc,
+      contentLane,
+      habitat,
+      weather,
+      depthMode,
+      cameraAnglePreset,
+      emotionalTone,
+      animalVibe,
+      finalEnvironment,
+      sceneDescription,
+      pkg,
+    });
+
+    if (lastRecordedCreatorQaRunIdRef.current === run.id) {
+      setShouldRecordCreatorQaRun(false);
+      return;
+    }
+
+    lastRecordedCreatorQaRunIdRef.current = run.id;
+    setCreatorQaRuns((history) => appendCreatorQaRun(history, run));
+    setShouldRecordCreatorQaRun(false);
+  }, [
+    animalVibe,
+    cameraAnglePreset,
+    contentLane,
+    depthMode,
+    emotionalTone,
+    finalEnvironment,
+    habitat,
+    pkg,
+    predator,
+    prey,
+    previewArc,
+    sceneDescription,
+    shouldRecordCreatorQaRun,
+    weather,
+  ]);
+
+
+
   const {
     handleGenerate,
     handleRegenerateUnlockedSections,
@@ -704,8 +846,10 @@ export default function Page() {
     setIsGenerating,
     setIsRegeneratingUnlocked,
     setError,
+    setEnhancementNotice,
     onGenerated: () => {
       setLastGeneratedRestoreNotice(null);
+      setShouldRecordCreatorQaRun(true);
       setStep(3);
     },
   });
@@ -1044,6 +1188,7 @@ export default function Page() {
                 onHabitatChange={setHabitat}
                 onEmotionalToneChange={setEmotionalTone}
                 onAnimalVibeChange={setAnimalVibe}
+                onApplyWorkflowTestPreset={handleApplyWorkflowTestPreset}
                 onResetDefaults={handleResetDefaults}
                 onContinue={() => setStep(2)}
                 onWorkflowPresetNameChange={workflowPresetControls.setPresetName}
@@ -1165,8 +1310,11 @@ export default function Page() {
                 onSceneDescriptionChange={handleSceneDescriptionChange}
                 predator={predator}
                 prey={prey}
-                arc={arc}
+                arc={previewArc}
+                habitat={habitat}
                 weather={weather}
+                finalEnvironment={finalEnvironment}
+                contentLane={contentLane}
                 driftRisk={preset.driftRisk}
                 onDurationLaneChange={setDurationLane}
                 onHookModeChange={setHookMode}
@@ -1185,12 +1333,22 @@ export default function Page() {
                 prey={prey}
                 contentLane={contentLane}
                 activeProvider={activeProvider}
+                arc={arc}
+                habitat={habitat}
+                weather={weather}
+                depthMode={depthMode}
+                cameraAnglePreset={cameraAnglePreset}
+                emotionalTone={emotionalTone}
+                animalVibe={animalVibe}
+                finalEnvironment={finalEnvironment}
+                sceneDescription={sceneDescription}
                 onActiveProviderChange={setActiveProvider}
                 onGenerate={handleGenerate}
                 onRegenerateUnlocked={handleRegenerateUnlockedSections}
                 isGenerating={isGenerating}
                 isRegeneratingUnlocked={isRegeneratingUnlocked}
                 error={error}
+                enhancementNotice={enhancementNotice}
                 pkg={pkg}
                 packageLocks={packageLocks}
                 onTogglePackageLock={handleTogglePackageLock}
@@ -1206,6 +1364,12 @@ export default function Page() {
                 onDismissLastGeneratedRestoreNotice={() =>
                   setLastGeneratedRestoreNotice(null)
                 }
+                creatorQaRuns={creatorQaRuns}
+                pinnedOutput={pinnedOutput}
+                onPinCurrentOutput={handlePinCurrentOutput}
+                onRestorePinnedOutput={handleRestorePinnedOutput}
+                onClearPinnedOutput={() => setPinnedOutput(null)}
+                onClearCreatorQaRuns={() => setCreatorQaRuns([])}
                 onBack={() => setStep(2)}
               />
             )}

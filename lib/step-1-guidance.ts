@@ -234,7 +234,7 @@ export function getHabitatOverrideGuidance(
 
   return {
     label: "Manual habitat override active",
-    message: `Use this only when the location is intentional. It can improve a specific Facebook test, but it can also weaken realism if it fights ${laneNote}.`,
+    message: `Keep this only when the location is intentional. It can weaken realism if it fights ${laneNote}.`,
     isWarning: true,
   };
 }

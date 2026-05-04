@@ -26,7 +26,7 @@ import {
   buildExportTxtFull as buildExportTxtFullFromPackage,
 } from "@/lib/export-text";
 import { getDecision } from "@/lib/decision-engine";
-import { downloadText } from "@/lib/storage";
+import { downloadJson, downloadText } from "@/lib/storage";
 import { buildUsagePayload, trackUsage } from "@/lib/usage-tracker";
 
 import type { GeneratedPackage, PromptVersion } from "@/types";
@@ -94,12 +94,21 @@ export default function OutputCards({
     trackUsage("export_txt", buildUsagePayload(data));
   }
 
+  function exportJson() {
+    const predator = safeStr(data.predatorName || "predator");
+    const prey = safeStr(data.preyName || "prey");
+    const arc = safeStr(data.arcName || "arc").replace(/\s+/g, "_");
+    downloadJson(`wstv-export-${predator}-vs-${prey}-${arc}.json`, data);
+    trackUsage("export_txt", { ...buildUsagePayload(data), format: "json" });
+  }
+
   const runwayShotCount = data.runwayShots?.length ?? 0;
   const klingShotCount = data.klingShots?.length ?? 0;
   const seedanceShotCount = data.seedanceShots?.length ?? 0;
   const directPromptCount = [
     Boolean(data.seedanceMultiShotPrompt),
-    Boolean(data.klingNative15s),
+    Boolean(data.klingFramesPrompt ?? data.klingNative15s),
+    Boolean(data.klingMultishotShots?.length),
   ].filter(Boolean).length;
 
   const workspaceTabs: {
@@ -163,6 +172,33 @@ export default function OutputCards({
 
   const decision = useMemo(() => getDecision(data), [data]);
 
+  const exportSummaryItems = [
+    {
+      label: "Image prompt",
+      included: Boolean(safeStr(data.imagePrompt)),
+    },
+    {
+      label: "Video prompts",
+      included: runwayShotCount + klingShotCount + seedanceShotCount > 0,
+    },
+    {
+      label: "Caption",
+      included: Boolean(safeStr(data.caption)),
+    },
+    {
+      label: "Hashtags",
+      included: Boolean(safeStr(data.hashtags)),
+    },
+    {
+      label: "Safety notes",
+      included: Boolean(safeStr(data.negativePrompt) || safeStr(data.qualitySummary)),
+    },
+    {
+      label: "Metadata",
+      included: Boolean(safeStr(data.predatorName) && safeStr(data.preyName) && safeStr(data.arcName)),
+    },
+  ];
+
   const workspaceOverviewCards = [
     {
       key: "overview" as const,
@@ -182,7 +218,7 @@ export default function OutputCards({
       eyebrow: "Prompts",
       title: `${data.shotImagePlan?.length ?? 0} image prompts ready`,
       detail:
-        "Image prompt, thumbnail prompt, and continuity image plan are grouped together here.",
+        "Image prompt, thumbnail prompt, continuity image plan, and Creator QA Pack are grouped together here.",
       footer: "Open core prompt workspace",
     },
     {
@@ -282,19 +318,82 @@ export default function OutputCards({
               onClick={copyAllPacks}
               className="rounded-xl bg-gray-900 px-4 py-2 text-xs font-extrabold text-white hover:bg-black active:scale-95"
             >
-              📋 Copy All Packs
+              📋 Copy All Output
             </button>
             <button
               type="button"
               onClick={exportTxt}
               className="rounded-xl border border-[color:var(--border)] bg-[color:var(--surface)] px-4 py-2 text-xs font-extrabold text-[color:var(--text)] hover:border-cyan-400/60 hover:text-cyan-200 active:scale-95"
             >
-              ⬇ Export TXT
+              ⬇ Export Text
+            </button>
+            <button
+              type="button"
+              onClick={exportJson}
+              className="rounded-xl border border-[color:var(--border)] bg-[color:var(--surface)] px-4 py-2 text-xs font-extrabold text-[color:var(--text)] hover:border-cyan-400/60 hover:text-cyan-200 active:scale-95"
+            >
+              ⬇ Export JSON
             </button>
           </>
         }
         headerMeta={headerMeta}
+        desktopScrollMode="workspace"
+        desktopSidebarCollapsible
       >
+        <WorkspaceSection
+          title="Export Summary"
+          description="Text export, JSON export, and full-package copy stay advisory only. Nothing uploads automatically from this panel."
+        >
+          <div className="rounded-2xl border border-[color:var(--border)] bg-[color:var(--surface-elevated)] p-4 shadow-[var(--surface-shadow)] sm:p-5">
+            <div className="flex flex-wrap gap-2">
+              <button
+                type="button"
+                onClick={copyAllPacks}
+                className="w-full rounded-xl bg-gray-900 px-4 py-2.5 text-sm font-extrabold text-white hover:bg-black active:scale-95 sm:w-auto sm:min-w-[13rem]"
+              >
+                Copy Full Package
+              </button>
+              <button
+                type="button"
+                onClick={exportTxt}
+                className="rounded-xl border border-[color:var(--border)] bg-[color:var(--surface)] px-4 py-2.5 text-xs font-bold text-[color:var(--text)] hover:bg-[color:var(--surface-muted)] active:scale-95"
+              >
+                Export Text
+              </button>
+              <button
+                type="button"
+                onClick={exportJson}
+                className="rounded-xl border border-[color:var(--border)] bg-[color:var(--surface)] px-4 py-2.5 text-xs font-bold text-[color:var(--text)] hover:bg-[color:var(--surface-muted)] active:scale-95"
+              >
+                Export JSON
+              </button>
+            </div>
+
+            <div className="mt-3 text-xs font-semibold uppercase tracking-[0.12em] text-[color:var(--muted)]">
+              Included in the full package
+            </div>
+
+            <div className="mt-2 text-sm leading-relaxed text-[color:var(--muted)]">
+              Image prompt, video prompts, caption, hashtags, safety notes, and metadata stay bundled here when available.
+            </div>
+
+            <div className="mt-3 flex flex-wrap gap-1.5">
+              {exportSummaryItems.map((item) => (
+                <span
+                  key={item.label}
+                  className={`inline-flex rounded-full border px-2.5 py-1 text-[10px] font-semibold ${
+                    item.included
+                      ? "border-emerald-400/30 bg-emerald-500/10 text-emerald-200"
+                      : "border-amber-400/30 bg-amber-500/10 text-amber-200"
+                  }`}
+                >
+                  {item.label} {item.included ? "included" : "missing"}
+                </span>
+              ))}
+            </div>
+          </div>
+        </WorkspaceSection>
+
         {activeWorkspace === "overview" && (
           <div className="space-y-5">
             <WorkspaceSection

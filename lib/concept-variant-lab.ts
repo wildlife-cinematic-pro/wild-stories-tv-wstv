@@ -906,6 +906,8 @@ export function buildConceptVariantLab(
       arc: blueprint.arc,
       habitat: blueprint.habitat,
       environment: finalEnvironment,
+      weather: input.weather,
+      contentLane: input.contentLane,
       variant: blueprint.sceneDescriptionVariant,
     });
     const shortCaption = buildShortCaption(

@@ -143,7 +143,7 @@ export function ProShotCard({
   const engineLabel = isRunway ? "Runway" : isSeedance ? "Seedance" : "Kling";
 
   return (
-    <div className={`rounded-xl border ${borderColor} bg-[color:var(--surface-elevated)] p-3`}>
+    <div className={`min-w-0 rounded-xl border ${borderColor} bg-[color:var(--surface-elevated)] p-3`}>
       <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
         <div className="flex flex-wrap items-center gap-2">
           <div className="text-xs font-extrabold text-[color:var(--text)]">
@@ -173,7 +173,7 @@ export function ProShotCard({
             className="rounded border border-[color:var(--border)] bg-[color:var(--surface-elevated)] px-2 py-1 text-[11px] font-bold text-[color:var(--muted)] hover:bg-[color:var(--surface-muted)] active:scale-95"
             title="Copy full shot with instructions"
           >
-            Copy FULL
+            Copy Full Card
           </button>
 
           <button
@@ -182,12 +182,12 @@ export function ProShotCard({
             className={`rounded px-2 py-1 text-[11px] font-bold text-white active:scale-95 ${btnColor}`}
             title="Copy paste-ready prompt only"
           >
-            Copy BODY
+            Copy {engineLabel} Prompt
           </button>
         </div>
       </div>
 
-      <pre className="max-h-40 overflow-auto whitespace-pre-wrap text-xs leading-relaxed text-[color:var(--text)]">
+      <pre className="whitespace-pre-wrap break-words text-xs leading-relaxed text-[color:var(--text)]">
         {promptCard.fullText || shot || "—"}
       </pre>
 
@@ -221,6 +221,10 @@ export function Card({
   accent,
   aiEnhanced,
   extraActions,
+  copyLabel,
+  className,
+  valueClassName,
+  copyButtonClassName,
 }: {
   title: string;
   value: string;
@@ -228,21 +232,25 @@ export function Card({
   accent?: string;
   aiEnhanced?: boolean;
   extraActions?: { label: string; onClick: () => void; className?: string }[];
+  copyLabel?: string;
+  className?: string;
+  valueClassName?: string;
+  copyButtonClassName?: string;
 }) {
   return (
     <div
-      className={`rounded-xl border bg-[color:var(--surface-elevated)] p-4 shadow-sm ${
+      className={`min-w-0 rounded-xl border bg-[color:var(--surface-elevated)] p-4 shadow-sm ${
         accent ? `border-l-4 ${accent}` : "border-[color:var(--border)]"
-      } ${aiEnhanced ? "ring-1 ring-purple-200" : ""}`}
+      } ${aiEnhanced ? "ring-1 ring-purple-200" : ""} ${className ?? ""}`}
     >
-      <div className="mb-3 flex items-center justify-between gap-3">
+      <div className="mb-3 flex flex-wrap items-start justify-between gap-3">
         <h2 className="flex items-center gap-2 font-bold text-[color:var(--text)]">
           {title}
           {aiEnhanced && (
             <span className="text-xs font-normal text-purple-500">✦ AI</span>
           )}
         </h2>
-        <div className="flex flex-wrap items-center gap-2">
+        <div className="flex w-full flex-wrap items-center gap-2 sm:w-auto sm:justify-end">
           {extraActions?.map((action) => (
             <button
               key={action.label}
@@ -257,15 +265,22 @@ export function Card({
             </button>
           ))}
           <button
-            className="rounded bg-gray-900 px-3 py-1 text-sm text-white hover:bg-black active:scale-95"
+            className={
+              copyButtonClassName ??
+              "rounded bg-gray-900 px-3 py-1 text-sm text-white hover:bg-black active:scale-95"
+            }
             onClick={() => onCopy(value)}
             type="button"
           >
-            Copy
+            {copyLabel ?? "Copy"}
           </button>
         </div>
       </div>
-      <p className="whitespace-pre-wrap text-sm leading-7 text-[color:var(--muted)]">
+      <p
+        className={`whitespace-pre-wrap break-words text-xs leading-relaxed text-[color:var(--text)] ${
+          valueClassName ?? ""
+        }`}
+      >
         {value || <span className="italic text-[color:var(--muted)]">Generate गर्नुस्...</span>}
       </p>
     </div>

@@ -17,6 +17,20 @@ import {
 import { jsonError, sanitizeString, type Provider } from "./request-utils";
 
 const providerResponseSchema = copyPolishResponseSchema;
+const GEMINI_COPY_POLISH_SKIPPED_MESSAGE =
+  "Gemini copy polish skipped — using base generated copy.";
+
+function jsonOptionalCopyPolishSkip(reason: string) {
+  return NextResponse.json(
+    {
+      skipped: true,
+      provider: "gemini",
+      reason,
+      message: GEMINI_COPY_POLISH_SKIPPED_MESSAGE,
+    },
+    { status: 200 }
+  );
+}
 
 function jsonProviderFailure(detailedData: unknown) {
   if (process.env.NODE_ENV === "production") {
@@ -233,7 +247,7 @@ export async function handleCopyPolishRequest(body: unknown) {
   try {
     if (provider === "gemini") {
       const apiKey = process.env.GEMINI_API_KEY;
-      if (!apiKey) return jsonError("Missing GEMINI_API_KEY", 500);
+      if (!apiKey) return jsonOptionalCopyPolishSkip("missing_gemini_api_key");
 
       const stable = getGeminiModelStable();
       let { res, data } = await callGeminiText(stable, apiKey, polishPrompt);
@@ -247,37 +261,24 @@ export async function handleCopyPolishRequest(body: unknown) {
         }
       }
 
-      if (!res.ok) return jsonProviderFailure(data);
+      if (!res.ok) return jsonOptionalCopyPolishSkip("provider_error");
 
       const rawGeminiText = sanitizeString(extractGeminiText(data), 40_000);
       let obj: Record<string, unknown>;
       try {
         obj = parseProviderJsonObject(rawGeminiText, "Gemini copy polish");
-      } catch (error) {
-        return jsonProviderFailure({
-          message:
-            error instanceof Error ? error.message : "Gemini returned invalid JSON for copy polish",
-          rawGeminiText,
-        });
+      } catch {
+        return jsonOptionalCopyPolishSkip("invalid_gemini_json");
       }
 
       const normalizedGemini = normalizeGeminiCopyPolishObject(obj);
+      if (!hasUsableGeneratedPackageEnhancements(normalizedGemini)) {
+        return jsonOptionalCopyPolishSkip("no_usable_fields");
+      }
+
       const out = providerResponseSchema.safeParse(normalizedGemini);
       if (!out.success) {
-        return jsonProviderFailure({
-          issues: out.error.issues.map((issue) => ({
-            path: issue.path.join(".") || "(root)",
-            message: issue.message,
-          })),
-          normalizedGeminiObject: normalizedGemini,
-          rawGeminiText,
-        });
-      }
-      if (!hasUsableGeneratedPackageEnhancements(out.data)) {
-        return jsonProviderFailure({
-          normalizedGeminiObject: normalizedGemini,
-          rawGeminiText,
-        });
+        return jsonOptionalCopyPolishSkip("invalid_gemini_response");
       }
 
       return NextResponse.json({ ...out.data, aiEnhanced: true }, { status: 200 });
@@ -308,6 +309,9 @@ export async function handleCopyPolishRequest(body: unknown) {
 
     return NextResponse.json({ ...out.data, aiEnhanced: true }, { status: 200 });
   } catch (err) {
+    if (provider === "gemini") {
+      return jsonOptionalCopyPolishSkip("provider_error");
+    }
     return jsonError("Copy polish error", 500, String(err));
   }
 }
