@@ -337,6 +337,8 @@ export default function OutputCards({
           </>
         }
         headerMeta={headerMeta}
+        desktopScrollMode="workspace"
+        desktopSidebarCollapsible
       >
         <WorkspaceSection
           title="Export Summary"
