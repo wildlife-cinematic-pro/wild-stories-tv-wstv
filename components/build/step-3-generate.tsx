@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useRef, useState } from "react";
 
 import ConceptVariantLab from "@/components/build/concept-variant-lab";
 import GenerationOutputBoundary from "@/components/build/generation-output-boundary";
@@ -103,6 +103,7 @@ export default function Step3Generate({
   const [isQaDetailsOpen, setIsQaDetailsOpen] = useState(false);
   const [isRecentRunsOpen, setIsRecentRunsOpen] = useState(false);
   const [copyFeedback, setCopyFeedback] = useState<string | null>(null);
+  const generatedOutputTopRef = useRef<HTMLElement | null>(null);
 
   const outputReadiness = pkg
     ? analyzeOutputReadiness({
@@ -314,7 +315,7 @@ export default function Step3Generate({
         <GenerationOutputBoundary
           resetKey={`${pkg.hook ?? ""}|${pkg.caption ?? ""}|${pkg.routingNote ?? ""}`}
         >
-          <section>
+          <section ref={generatedOutputTopRef}>
             {lastGeneratedRestoreNotice && (
               <div
                 className="mb-4 flex flex-wrap items-start justify-between gap-3 rounded-2xl border border-sky-200 bg-sky-50 px-4 py-3 text-sm text-sky-900 shadow-sm shadow-sky-100/60"
@@ -737,13 +738,30 @@ export default function Step3Generate({
         </GenerationOutputBoundary>
       )}
 
-      <div className="flex gap-2 border-t border-gray-200/80 pt-5">
+      <div className="flex flex-wrap gap-2 border-t border-gray-200/80 pt-5">
         <button
           type="button"
           onClick={onBack}
           className="rounded-2xl border border-gray-200 bg-white px-5 py-2.5 text-sm font-semibold text-gray-600 shadow-sm shadow-gray-100/80 hover:bg-gray-50 active:scale-[0.98]"
         >
           ← Back
+        </button>
+        <button
+          type="button"
+          onClick={() => {
+            if (generatedOutputTopRef.current) {
+              generatedOutputTopRef.current.scrollIntoView({
+                behavior: "smooth",
+                block: "start",
+              });
+              return;
+            }
+
+            window.scrollTo({ top: 0, behavior: "smooth" });
+          }}
+          className="rounded-2xl border border-gray-200 bg-white px-5 py-2.5 text-sm font-semibold text-gray-600 shadow-sm shadow-gray-100/80 hover:bg-gray-50 active:scale-[0.98]"
+        >
+          ↑ Top
         </button>
       </div>
     </div>
