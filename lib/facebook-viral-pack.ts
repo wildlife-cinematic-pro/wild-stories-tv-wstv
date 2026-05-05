@@ -21,14 +21,22 @@ export type FacebookViralPack = {
 };
 
 const ARC_HOOKS: Record<Arc, string> = {
-  "Ambush attack": "This ambush turns fast",
-  "Predator vs predator fight": "Only one holds the line",
-  "Chase and takedown": "The escape lane is closing",
-  "Escape from danger": "The gap is almost gone",
-  "Territory dominance battle": "Who owns this ground?",
-  "Pack hunting strategy": "The pressure line tightens",
-  "Defender stands ground": "It refuses to give ground",
-  "Giant vs giant clash": "The impact is coming",
+  "Ambush attack":
+    "Nobody saw this coming. Who walks away?",
+  "Predator vs predator fight":
+    "Two apex predators. Only one holds ground.",
+  "Chase and takedown":
+    "The gap is closing fast. Can it escape?",
+  "Escape from danger":
+    "Half a second decides everything here.",
+  "Territory dominance battle":
+    "This ground belongs to one. Who earns it?",
+  "Pack hunting strategy":
+    "Coordinated. Calculated. No escape route.",
+  "Defender stands ground":
+    "It refused to run. Would you have?",
+  "Giant vs giant clash":
+    "The impact you did NOT see coming.",
 };
 
 function clampToLength(input: string, maxChars: number): string {
