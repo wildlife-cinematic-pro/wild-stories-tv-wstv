@@ -60,12 +60,12 @@ export function DirectWorkspace({
             </p>
           </div>
 
-          <div className="flex flex-wrap gap-2">
+          <div className="grid w-full min-w-0 grid-cols-1 gap-2 sm:flex sm:w-auto sm:flex-wrap">
             {data.seedanceMultiShotPrompt && (
               <button
                 type="button"
                 onClick={() => onDirectWorkspaceChange("seedance")}
-                className={`rounded-xl border px-3 py-2 text-xs font-extrabold ${
+                className={`w-full rounded-xl border px-3 py-2 text-xs font-extrabold sm:w-auto ${
                   resolvedDirectWorkspace === "seedance"
                     ? "border-orange-700 bg-orange-700 text-white"
                     : "border-orange-200 bg-[color:var(--surface-elevated)] text-orange-800 hover:bg-orange-500/12 dark:text-orange-100"
@@ -78,7 +78,7 @@ export function DirectWorkspace({
               <button
                 type="button"
                 onClick={() => onDirectWorkspaceChange("kling15")}
-                className={`rounded-xl border px-3 py-2 text-xs font-extrabold ${
+                className={`w-full rounded-xl border px-3 py-2 text-xs font-extrabold sm:w-auto ${
                   resolvedDirectWorkspace === "kling15"
                     ? "border-blue-700 bg-blue-700 text-white"
                     : "border-blue-200 bg-[color:var(--surface-elevated)] text-blue-800 hover:bg-blue-500/12 dark:text-blue-100"
@@ -104,22 +104,22 @@ export function DirectWorkspace({
               </span>
             </div>
 
-            <pre className="max-h-[420px] overflow-auto whitespace-pre-wrap rounded-xl border border-orange-200 bg-[color:var(--surface-elevated)] p-3 text-xs leading-relaxed text-[color:var(--text)]">
+            <pre className="max-w-full whitespace-pre-wrap break-words rounded-xl border border-orange-200 bg-[color:var(--surface-elevated)] p-3 text-xs leading-relaxed text-[color:var(--text)] [overflow-wrap:anywhere]">
               {seedanceMultiShotCard.fullText}
             </pre>
 
-            <div className="mt-3 flex flex-wrap gap-2">
+            <div className="mt-3 grid min-w-0 grid-cols-1 gap-2 sm:flex sm:flex-wrap">
               <button
                 type="button"
                 onClick={() => onCopy(seedanceMultiShotCard.fullText)}
-                className="rounded-xl bg-orange-700 px-4 py-2 text-sm font-extrabold text-white hover:bg-orange-800 active:scale-[0.98]"
+                className="w-full rounded-xl bg-orange-700 px-4 py-2 text-sm font-extrabold text-white hover:bg-orange-800 active:scale-[0.98] sm:w-auto"
               >
                 Copy Full Seedance Prompt
               </button>
               <button
                 type="button"
                 onClick={() => onCopy(seedanceMultiShotCard.pasteReady)}
-                className="rounded-xl border border-orange-300 bg-[color:var(--surface-elevated)] px-4 py-2 text-sm font-extrabold text-orange-700 hover:bg-orange-500/12 active:scale-[0.98] dark:text-orange-100"
+                className="w-full rounded-xl border border-orange-300 bg-[color:var(--surface-elevated)] px-4 py-2 text-sm font-extrabold text-orange-700 hover:bg-orange-500/12 active:scale-[0.98] dark:text-orange-100 sm:w-auto"
               >
                 Copy Paste-Ready Seedance Prompt
               </button>
@@ -139,22 +139,22 @@ export function DirectWorkspace({
             </span>
           </div>
 
-          <pre className="max-h-[360px] overflow-auto whitespace-pre-wrap rounded-xl border border-blue-200 bg-[color:var(--surface-elevated)] p-3 text-xs leading-relaxed text-[color:var(--text)]">
+          <pre className="max-w-full whitespace-pre-wrap break-words rounded-xl border border-blue-200 bg-[color:var(--surface-elevated)] p-3 text-xs leading-relaxed text-[color:var(--text)] [overflow-wrap:anywhere]">
             {klingFramesCard.fullText}
           </pre>
 
-          <div className="flex flex-wrap gap-2">
+          <div className="grid min-w-0 grid-cols-1 gap-2 sm:flex sm:flex-wrap">
             <button
               type="button"
               onClick={() => onCopy(klingFramesCard.pasteReady)}
-              className="rounded-xl bg-blue-700 px-4 py-2 text-sm font-extrabold text-white hover:bg-blue-800 active:scale-[0.98]"
+              className="w-full rounded-xl bg-blue-700 px-4 py-2 text-sm font-extrabold text-white hover:bg-blue-800 active:scale-[0.98] sm:w-auto"
             >
               Copy Kling Frames Prompt
             </button>
             <button
               type="button"
               onClick={() => onCopy(klingFramesCard.fullText)}
-              className="rounded-xl border border-blue-300 bg-[color:var(--surface-elevated)] px-4 py-2 text-sm font-extrabold text-blue-700 hover:bg-blue-500/12 active:scale-[0.98] dark:text-blue-100"
+              className="w-full rounded-xl border border-blue-300 bg-[color:var(--surface-elevated)] px-4 py-2 text-sm font-extrabold text-blue-700 hover:bg-blue-500/12 active:scale-[0.98] dark:text-blue-100 sm:w-auto"
             >
               Copy Frames Card + Notes
             </button>
@@ -179,13 +179,13 @@ export function DirectWorkspace({
                   <div className="mb-2 text-xs font-black text-blue-900 dark:text-blue-100">
                     Shot {index + 1}: {card.pasteReady.length}/512
                   </div>
-                  <pre className="max-h-48 overflow-auto whitespace-pre-wrap text-xs leading-relaxed text-[color:var(--text)]">
+                  <pre className="max-w-full whitespace-pre-wrap break-words text-xs leading-relaxed text-[color:var(--text)] [overflow-wrap:anywhere]">
                     {card.pasteReady}
                   </pre>
                   <button
                     type="button"
                     onClick={() => onCopy(card.pasteReady)}
-                    className="mt-3 rounded-lg border border-blue-300 bg-[color:var(--surface-elevated)] px-3 py-1.5 text-xs font-extrabold text-blue-800 hover:bg-blue-500/12 active:scale-[0.98] dark:text-blue-100"
+                    className="mt-3 w-full rounded-lg border border-blue-300 bg-[color:var(--surface-elevated)] px-3 py-1.5 text-xs font-extrabold text-blue-800 hover:bg-blue-500/12 active:scale-[0.98] dark:text-blue-100 sm:w-auto"
                   >
                     Copy Shot {index + 1}
                   </button>

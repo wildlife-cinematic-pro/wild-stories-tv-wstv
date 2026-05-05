@@ -166,11 +166,11 @@ export function ProShotCard({
           )}
         </div>
 
-        <div className="flex w-full min-w-0 flex-wrap items-center gap-1 sm:w-auto sm:justify-end">
+        <div className="grid w-full min-w-0 grid-cols-1 gap-1 sm:flex sm:w-auto sm:flex-wrap sm:justify-end">
           <button
             type="button"
             onClick={() => onCopy(shot)}
-            className="rounded border border-[color:var(--border)] bg-[color:var(--surface-elevated)] px-2 py-1 text-[11px] font-bold text-[color:var(--muted)] hover:bg-[color:var(--surface-muted)] active:scale-95"
+            className="w-full rounded border border-[color:var(--border)] bg-[color:var(--surface-elevated)] px-2 py-1 text-[11px] font-bold text-[color:var(--muted)] hover:bg-[color:var(--surface-muted)] active:scale-95 sm:w-auto"
             title="Copy full shot with instructions"
           >
             Copy Full Card
@@ -179,7 +179,7 @@ export function ProShotCard({
           <button
             type="button"
             onClick={() => onCopy(pasteReady)}
-            className={`rounded px-2 py-1 text-[11px] font-bold text-white active:scale-95 ${btnColor}`}
+            className={`w-full rounded px-2 py-1 text-[11px] font-bold text-white active:scale-95 sm:w-auto ${btnColor}`}
             title="Copy paste-ready prompt only"
           >
             Copy {engineLabel} Prompt
@@ -250,7 +250,7 @@ export function Card({
             <span className="text-xs font-normal text-purple-500">✦ AI</span>
           )}
         </h2>
-        <div className="flex w-full min-w-0 flex-wrap items-center gap-2 sm:w-auto sm:justify-end">
+        <div className="grid w-full min-w-0 grid-cols-1 gap-2 sm:flex sm:w-auto sm:flex-wrap sm:justify-end">
           {extraActions?.map((action) => (
             <button
               key={action.label}
@@ -267,7 +267,7 @@ export function Card({
           <button
             className={
               copyButtonClassName ??
-              "rounded bg-gray-900 px-3 py-1 text-sm text-white hover:bg-black active:scale-95"
+              "w-full rounded bg-gray-900 px-3 py-1 text-sm text-white hover:bg-black active:scale-95 sm:w-auto"
             }
             onClick={() => onCopy(value)}
             type="button"
@@ -333,13 +333,13 @@ export function ShotImagePlanPanel({
               <button
                 type="button"
                 onClick={() => onCopy(plan.prompt)}
-                className="rounded bg-gray-900 px-2 py-1 text-[11px] font-bold text-white hover:bg-black active:scale-95"
+                className="w-full rounded bg-gray-900 px-2 py-1 text-[11px] font-bold text-white hover:bg-black active:scale-95 sm:w-auto"
               >
                 Copy
               </button>
             </div>
 
-            <pre className="max-h-40 max-w-full overflow-auto whitespace-pre-wrap break-words text-xs leading-relaxed text-[color:var(--text)] [overflow-wrap:anywhere]">
+            <pre className="max-w-full whitespace-pre-wrap break-words text-xs leading-relaxed text-[color:var(--text)] [overflow-wrap:anywhere]">
               {plan.prompt}
             </pre>
           </div>
@@ -523,7 +523,7 @@ export function WorkspaceJumpCard({
     <button
       type="button"
       onClick={onClick}
-      className={`rounded-2xl border p-4 text-left transition ${
+      className={`min-w-0 max-w-full overflow-hidden rounded-2xl border p-4 text-left transition ${
         active ? accent.active : accent.idle
       }`}
     >
