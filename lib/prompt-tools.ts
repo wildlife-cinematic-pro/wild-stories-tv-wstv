@@ -144,24 +144,46 @@ export function makeFacebookCaption(input: FacebookCaptionInput): {
   caption: string;
   hashtags: string[];
 } {
-  const toneLead =
-    input.tone === "mystery"
-      ? "What happens next?"
-      : input.tone === "survival"
-        ? "Survival pressure builds."
-        : input.tone === "danger"
-          ? "Danger closes fast."
-          : "Wildlife tension, frame one.";
+  const pred = input.predatorName ?? "Predator";
+  const prey = input.preyName ?? "Prey";
+  const env = input.environmentName ?? "the wild";
 
-  const captionBase = `${toneLead} ${input.predatorName} vs ${input.preyName} in ${input.environmentName ?? "a locked natural habitat"}. Documentary-safe survival tension.`;
-  const caption = clampPrompt(captionBase, 150);
+  // Facebook 2026: Hook first 5 words + emotion + "?" trigger
+  const hooks: Record<string, string> = {
+    mystery:   `Nobody saw this coming in ${env}.`,
+    survival:  `This is pure survival. No rules.`,
+    danger:    `The danger hit before anyone reacted.`,
+    documentary: `This is what nature actually looks like.`,
+  };
+
+  const questions: Record<string, string> = {
+    mystery:    `Who do you think made it out?`,
+    survival:   `Would you have survived this?`,
+    danger:     `Did you catch what happened at the end?`,
+    documentary:`Who are you rooting for here?`,
+  };
+
+  const tone = input.tone ?? "documentary";
+  const hookLine = hooks[tone] ?? hooks.documentary;
+  const questionLine = questions[tone] ?? questions.documentary;
+
+  // Build: Hook + animals + question (150 char max)
+  const full = `${hookLine} ${pred} vs ${prey} — ${questionLine}`;
+  const caption = wordSafeTrim(full, 150);
+
+  // Facebook 2026 USA viral hashtags — image-specific + trending
+  const predTag = `#${pred.replace(/[^A-Za-z0-9]/g, "")}`;
+  const envTag  = `#${env.replace(/[^A-Za-z0-9 ]/g, "")
+    .split(" ")
+    .map(w => w.charAt(0).toUpperCase() + w.slice(1))
+    .join("")}`;
 
   const baseTags = [
-    "#WildlifeReels",
-    `#${input.predatorName.replace(/[^A-Za-z0-9]/g, "")}`,
-    `#${input.preyName.replace(/[^A-Za-z0-9]/g, "")}`,
-    "#NatureDocumentary",
-    "#USAWildlife",
+    "#NatureIsWild",       // mega broad — millions of USA posts
+    predTag,               // image-specific
+    "#WildlifeNation",     // community/USA feel
+    envTag,                // environment-specific
+    "#Trending2026",       // time-stamped trend tag
   ];
 
   return {
