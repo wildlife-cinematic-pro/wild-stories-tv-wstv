@@ -45,15 +45,52 @@ describe("hybrid reference image prompts", () => {
     expect(prompt).toContain("no visible wounds");
   });
 
-  it("strengthens the environment master reference prompt", () => {
+  it("keeps the old string environment call backward compatible", () => {
     const prompt = buildEnvironmentMasterReferencePrompt("dense jungle river edge");
 
     expect(prompt).toContain("Environment only, no animals, no humans");
     expect(prompt).toContain("Open central attack/escape corridor");
     expect(prompt).toContain("clear subject-ready space");
-    expect(prompt).toContain("foreground texture");
-    expect(prompt).toContain("midground action lane");
-    expect(prompt).toContain("layered background depth");
+  });
+
+  it("adapts the environment prompt for wolf pack vs bison", () => {
+    const prompt = buildEnvironmentMasterReferencePrompt({
+      environmentName:
+        "South Florida Everglades marsh with sawgrass, shallow reflective water, muddy banks",
+      leadAnimalName: "Wolf Pack",
+      oppositeAnimalName: "Bison",
+      arcName: "Pack hunting strategy",
+    });
+
+    expect(prompt).toContain("future Wolf Pack vs Bison scene");
+    expect(prompt).toContain("Environment only, no animals, no humans");
+    expect(prompt).toMatch(/pack|pressure/i);
+    expect(prompt).toMatch(/water-edge|waterline|crossing/i);
+    expect(prompt).toContain("clear subject-ready space");
+  });
+
+  it("adapts the environment prompt for wild boar vs black bear", () => {
+    const prompt = buildEnvironmentMasterReferencePrompt({
+      environmentName: "muddy riverbank clearing with reeds and packed shoreline earth",
+      leadAnimalName: "Wild Boar",
+      oppositeAnimalName: "Black Bear",
+      arcName: "Defender standoff",
+    });
+
+    expect(prompt).toContain("future Wild Boar vs Black Bear scene");
+    expect(prompt).toMatch(/confrontation|charge lane|muddy-bank/i);
+  });
+
+  it("adapts the environment prompt for fox vs rabbit", () => {
+    const prompt = buildEnvironmentMasterReferencePrompt({
+      environmentName: "short meadow grass with brush pockets and narrow ground trails",
+      leadAnimalName: "Fox",
+      oppositeAnimalName: "Rabbit",
+      arcName: "Fast chase break",
+    });
+
+    expect(prompt).toContain("future Fox vs Rabbit scene");
+    expect(prompt).toMatch(/low|narrow|zigzag escape/i);
   });
 
   it("keeps the final merge prompt on exactly three active references", () => {

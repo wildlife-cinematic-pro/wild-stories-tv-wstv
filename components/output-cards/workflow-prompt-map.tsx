@@ -456,7 +456,13 @@ export function WorkflowPromptMap({
       contactLabel: "grounded paw/hoof/foot contact or natural perch contact for bird species",
       role: "opposite",
     });
-    const environmentMasterPrompt = buildEnvironmentMasterReferencePrompt(environmentName);
+    const environmentMasterPrompt = buildEnvironmentMasterReferencePrompt({
+      environmentName,
+      leadAnimalName,
+      oppositeAnimalName,
+      arcName: data.arcName,
+      cameraAnglePreset: data.cameraAnglePreset,
+    });
     const finalMergeMasterPrompt = buildFinalMergeMasterPrompt({
       leadAnimalName,
       oppositeAnimalName,
