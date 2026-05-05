@@ -42,7 +42,7 @@ export default function WorkspaceShell({
   return (
     <div
       className={[
-        "grid gap-5",
+        "grid min-w-0 max-w-full overflow-hidden gap-5",
         desktopGridClass,
         isWorkspaceScroll
           ? "lg:h-[calc(100vh-var(--app-header-height)-1.5rem)] lg:items-start lg:gap-5"
@@ -65,37 +65,37 @@ export default function WorkspaceShell({
 
       <div
         className={[
-          "min-w-0 space-y-5 lg:space-y-4",
+          "min-w-0 max-w-full overflow-hidden space-y-5 lg:space-y-4",
           isWorkspaceScroll
             ? "lg:max-h-[calc(100vh-var(--app-header-height)-1.5rem)] lg:overflow-y-auto lg:overscroll-contain lg:pr-2"
             : "lg:pr-1 xl:pr-2",
         ].join(" ")}
       >
-        <section className="rounded-[28px] border border-[color:var(--border)] bg-[color:var(--surface-elevated)] p-6 shadow-[var(--surface-shadow)] lg:p-4 xl:p-5">
-          <div className="flex flex-wrap items-start justify-between gap-3 xl:gap-4">
+        <section className="min-w-0 max-w-full overflow-hidden rounded-[28px] border border-[color:var(--border)] bg-[color:var(--surface-elevated)] p-4 shadow-[var(--surface-shadow)] sm:p-6 lg:p-4 xl:p-5">
+          <div className="flex min-w-0 flex-wrap items-start justify-between gap-3 xl:gap-4">
             <div className="min-w-0 flex-1">
               <div className="text-[11px] font-semibold uppercase tracking-[0.2em] text-cyan-300/80">
                 {sidebarTitle}
               </div>
-              <h1 className="mt-2 text-2xl font-semibold tracking-tight text-[color:var(--text)] xl:text-3xl">
+              <h1 className="mt-2 max-w-full break-words text-2xl font-semibold tracking-tight text-[color:var(--text)] xl:text-3xl">
                 {title}
               </h1>
               {subtitle ? (
-                <p className="mt-2 max-w-3xl text-sm leading-6 text-[color:var(--muted)]">
+                <p className="mt-2 max-w-3xl break-words text-sm leading-6 text-[color:var(--muted)] [overflow-wrap:anywhere]">
                   {subtitle}
                 </p>
               ) : null}
             </div>
-            {topActions ? <div className="flex shrink-0 flex-wrap gap-2">{topActions}</div> : null}
+            {topActions ? <div className="flex w-full min-w-0 flex-wrap gap-2 sm:w-auto sm:justify-end">{topActions}</div> : null}
           </div>
-          {headerMeta ? <div className="mt-3 min-w-0 max-w-full">{headerMeta}</div> : null}
+          {headerMeta ? <div className="mt-3 min-w-0 max-w-full overflow-hidden">{headerMeta}</div> : null}
         </section>
 
         <div
           id={`workspace-panel-${activeItem}`}
           role="tabpanel"
           aria-labelledby={`workspace-tab-${activeItem}`}
-          className="min-w-0 pb-6"
+          className="min-w-0 max-w-full overflow-hidden pb-6"
         >
           {children}
         </div>
