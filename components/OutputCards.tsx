@@ -316,21 +316,21 @@ export default function OutputCards({
             <button
               type="button"
               onClick={copyAllPacks}
-              className="rounded-xl bg-gray-900 px-4 py-2 text-xs font-extrabold text-white hover:bg-black active:scale-95"
+              className="w-full rounded-xl bg-gray-900 px-4 py-2 text-xs font-extrabold text-white hover:bg-black active:scale-95 sm:w-auto"
             >
               📋 Copy All Output
             </button>
             <button
               type="button"
               onClick={exportTxt}
-              className="rounded-xl border border-[color:var(--border)] bg-[color:var(--surface)] px-4 py-2 text-xs font-extrabold text-[color:var(--text)] hover:border-cyan-400/60 hover:text-cyan-200 active:scale-95"
+              className="w-full rounded-xl border border-[color:var(--border)] bg-[color:var(--surface)] px-4 py-2 text-xs font-extrabold text-[color:var(--text)] hover:border-cyan-400/60 hover:text-cyan-200 active:scale-95 sm:w-auto"
             >
               ⬇ Export Text
             </button>
             <button
               type="button"
               onClick={exportJson}
-              className="rounded-xl border border-[color:var(--border)] bg-[color:var(--surface)] px-4 py-2 text-xs font-extrabold text-[color:var(--text)] hover:border-cyan-400/60 hover:text-cyan-200 active:scale-95"
+              className="w-full rounded-xl border border-[color:var(--border)] bg-[color:var(--surface)] px-4 py-2 text-xs font-extrabold text-[color:var(--text)] hover:border-cyan-400/60 hover:text-cyan-200 active:scale-95 sm:w-auto"
             >
               ⬇ Export JSON
             </button>
@@ -356,14 +356,14 @@ export default function OutputCards({
               <button
                 type="button"
                 onClick={exportTxt}
-                className="rounded-xl border border-[color:var(--border)] bg-[color:var(--surface)] px-4 py-2.5 text-xs font-bold text-[color:var(--text)] hover:bg-[color:var(--surface-muted)] active:scale-95"
+                className="w-full rounded-xl border border-[color:var(--border)] bg-[color:var(--surface)] px-4 py-2.5 text-xs font-bold text-[color:var(--text)] hover:bg-[color:var(--surface-muted)] active:scale-95 sm:w-auto"
               >
                 Export Text
               </button>
               <button
                 type="button"
                 onClick={exportJson}
-                className="rounded-xl border border-[color:var(--border)] bg-[color:var(--surface)] px-4 py-2.5 text-xs font-bold text-[color:var(--text)] hover:bg-[color:var(--surface-muted)] active:scale-95"
+                className="w-full rounded-xl border border-[color:var(--border)] bg-[color:var(--surface)] px-4 py-2.5 text-xs font-bold text-[color:var(--text)] hover:bg-[color:var(--surface-muted)] active:scale-95 sm:w-auto"
               >
                 Export JSON
               </button>
@@ -400,7 +400,7 @@ export default function OutputCards({
               title="Workspace map"
               description="Overview stays as the orientation hub. Switch straight into prompts, video, direct paste blocks, publishing, or QA without the old long horizontal desktop rail."
             >
-              <div className="grid gap-3 lg:grid-cols-2 2xl:grid-cols-3">
+              <div className="grid min-w-0 gap-3 lg:grid-cols-2 2xl:grid-cols-3">
                 {workspaceOverviewCards.map((item) => (
                   <WorkspaceJumpCard
                     key={item.key}

@@ -86,7 +86,11 @@ export default function WorkspaceShell({
                 </p>
               ) : null}
             </div>
-            {topActions ? <div className="flex w-full min-w-0 flex-wrap gap-2 sm:w-auto sm:justify-end">{topActions}</div> : null}
+            {topActions ? (
+              <div className="grid w-full min-w-0 max-w-full grid-cols-1 gap-2 sm:flex sm:w-auto sm:flex-wrap sm:justify-end">
+                {topActions}
+              </div>
+            ) : null}
           </div>
           {headerMeta ? <div className="mt-3 min-w-0 max-w-full overflow-hidden">{headerMeta}</div> : null}
         </section>
@@ -95,7 +99,7 @@ export default function WorkspaceShell({
           id={`workspace-panel-${activeItem}`}
           role="tabpanel"
           aria-labelledby={`workspace-tab-${activeItem}`}
-          className="min-w-0 max-w-full overflow-hidden pb-6"
+          className="min-w-0 max-w-full overflow-hidden pb-[calc(env(safe-area-inset-bottom)+1.5rem)]"
         >
           {children}
         </div>

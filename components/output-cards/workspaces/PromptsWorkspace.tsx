@@ -22,7 +22,7 @@ export function PromptsWorkspace({
 
   return (
     <div className="space-y-6">
-      <div className="rounded-2xl border border-amber-500/30 bg-amber-500/12 p-4 text-sm text-amber-900 shadow-sm dark:text-amber-100">
+      <div className="min-w-0 max-w-full overflow-hidden rounded-2xl border border-amber-500/30 bg-amber-500/12 p-4 text-sm text-amber-900 shadow-sm dark:text-amber-100">
         Core prompt workspace मा primary master image prompt, GPT Image 2 backup prompt,
         thumbnail prompt, negative prompt, continuity image plan, अनि Creator QA Pack
         grouped छन् so wildlife master still, backup cover frame, motion handoff, अनि

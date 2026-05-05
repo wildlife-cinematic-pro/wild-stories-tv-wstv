@@ -30,12 +30,12 @@ export function PublishingWorkspace({
 
   return (
     <div className="space-y-6">
-      <div className="rounded-2xl border border-emerald-500/30 bg-emerald-500/12 p-4 text-sm text-emerald-900 shadow-sm dark:text-emerald-100">
+      <div className="min-w-0 max-w-full overflow-hidden rounded-2xl border border-emerald-500/30 bg-emerald-500/12 p-4 text-sm text-emerald-900 shadow-sm dark:text-emerald-100">
         Posting ready assets यहाँ राखिएको छ: hook, caption, voiceover, CTA,
         hashtags, platform pack, अनि posting time guidance.
       </div>
 
-      <div className="rounded-2xl border border-rose-200/70 bg-white/80 p-4 text-sm text-rose-950 shadow-sm dark:border-rose-200/20 dark:bg-white/5 dark:text-rose-100">
+      <div className="min-w-0 max-w-full overflow-hidden rounded-2xl border border-rose-200/70 bg-white/80 p-4 text-sm text-rose-950 shadow-sm dark:border-rose-200/20 dark:bg-white/5 dark:text-rose-100">
         Publishing copy stays separate from the engine prompts here, so caption, hashtags, hook, and CTA remain lightweight editorial surfaces you can copy fast.
       </div>
 
