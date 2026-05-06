@@ -143,10 +143,10 @@ export function ProShotCard({
   const engineLabel = isRunway ? "Runway" : isSeedance ? "Seedance" : "Kling";
 
   return (
-    <div className={`rounded-xl border ${borderColor} bg-[color:var(--surface-elevated)] p-3`}>
-      <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
-        <div className="flex flex-wrap items-center gap-2">
-          <div className="text-xs font-extrabold text-[color:var(--text)]">
+    <div className={`min-w-0 max-w-full overflow-hidden rounded-xl border ${borderColor} bg-[color:var(--surface-elevated)] p-3`}>
+      <div className="mb-2 flex min-w-0 flex-wrap items-center justify-between gap-2">
+        <div className="flex min-w-0 flex-wrap items-center gap-2">
+          <div className="break-words text-xs font-extrabold text-[color:var(--text)]">
             🎬 {engineLabel} Shot {index + 1}
           </div>
           {motionIntensity !== null && (
@@ -166,34 +166,34 @@ export function ProShotCard({
           )}
         </div>
 
-        <div className="flex flex-wrap items-center gap-1">
+        <div className="grid w-full min-w-0 grid-cols-1 gap-1 sm:flex sm:w-auto sm:flex-wrap sm:justify-end">
           <button
             type="button"
             onClick={() => onCopy(shot)}
-            className="rounded border border-[color:var(--border)] bg-[color:var(--surface-elevated)] px-2 py-1 text-[11px] font-bold text-[color:var(--muted)] hover:bg-[color:var(--surface-muted)] active:scale-95"
+            className="w-full rounded border border-[color:var(--border)] bg-[color:var(--surface-elevated)] px-2 py-1 text-[11px] font-bold text-[color:var(--muted)] hover:bg-[color:var(--surface-muted)] active:scale-95 sm:w-auto"
             title="Copy full shot with instructions"
           >
-            Copy FULL
+            Copy Full Card
           </button>
 
           <button
             type="button"
             onClick={() => onCopy(pasteReady)}
-            className={`rounded px-2 py-1 text-[11px] font-bold text-white active:scale-95 ${btnColor}`}
+            className={`w-full rounded px-2 py-1 text-[11px] font-bold text-white active:scale-95 sm:w-auto ${btnColor}`}
             title="Copy paste-ready prompt only"
           >
-            Copy BODY
+            Copy {engineLabel} Prompt
           </button>
         </div>
       </div>
 
-      <pre className="max-h-40 overflow-auto whitespace-pre-wrap text-xs leading-relaxed text-[color:var(--text)]">
+      <pre className="max-w-full whitespace-pre-wrap break-words text-xs leading-relaxed text-[color:var(--text)] [overflow-wrap:anywhere]">
         {promptCard.fullText || shot || "—"}
       </pre>
 
       {audioPrompt && (
-        <div className="mt-2 rounded-lg border border-indigo-200 bg-indigo-50 p-2">
-          <div className="flex items-center justify-between gap-2">
+        <div className="mt-2 min-w-0 max-w-full overflow-hidden rounded-lg border border-indigo-200 bg-indigo-50 p-2">
+          <div className="flex min-w-0 items-center justify-between gap-2">
             <span className="text-[10px] font-bold text-indigo-700">
               🔊 Audio Prompt
             </span>
@@ -205,7 +205,7 @@ export function ProShotCard({
               Copy Audio
             </button>
           </div>
-          <p className="mt-1 text-[11px] leading-relaxed text-indigo-800">
+          <p className="mt-1 break-words text-[11px] leading-relaxed text-indigo-800 [overflow-wrap:anywhere]">
             {audioPrompt}
           </p>
         </div>
@@ -221,6 +221,10 @@ export function Card({
   accent,
   aiEnhanced,
   extraActions,
+  copyLabel,
+  className,
+  valueClassName,
+  copyButtonClassName,
 }: {
   title: string;
   value: string;
@@ -228,21 +232,25 @@ export function Card({
   accent?: string;
   aiEnhanced?: boolean;
   extraActions?: { label: string; onClick: () => void; className?: string }[];
+  copyLabel?: string;
+  className?: string;
+  valueClassName?: string;
+  copyButtonClassName?: string;
 }) {
   return (
     <div
-      className={`rounded-xl border bg-[color:var(--surface-elevated)] p-4 shadow-sm ${
+      className={`min-w-0 max-w-full overflow-hidden rounded-xl border bg-[color:var(--surface-elevated)] p-4 shadow-sm ${
         accent ? `border-l-4 ${accent}` : "border-[color:var(--border)]"
-      } ${aiEnhanced ? "ring-1 ring-purple-200" : ""}`}
+      } ${aiEnhanced ? "ring-1 ring-purple-200" : ""} ${className ?? ""}`}
     >
-      <div className="mb-3 flex items-center justify-between gap-3">
-        <h2 className="flex items-center gap-2 font-bold text-[color:var(--text)]">
+      <div className="mb-3 flex min-w-0 flex-wrap items-start justify-between gap-3">
+        <h2 className="flex min-w-0 items-center gap-2 break-words font-bold text-[color:var(--text)] [overflow-wrap:anywhere]">
           {title}
           {aiEnhanced && (
             <span className="text-xs font-normal text-purple-500">✦ AI</span>
           )}
         </h2>
-        <div className="flex flex-wrap items-center gap-2">
+        <div className="grid w-full min-w-0 grid-cols-1 gap-2 sm:flex sm:w-auto sm:flex-wrap sm:justify-end">
           {extraActions?.map((action) => (
             <button
               key={action.label}
@@ -257,15 +265,22 @@ export function Card({
             </button>
           ))}
           <button
-            className="rounded bg-gray-900 px-3 py-1 text-sm text-white hover:bg-black active:scale-95"
+            className={
+              copyButtonClassName ??
+              "w-full rounded bg-gray-900 px-3 py-1 text-sm text-white hover:bg-black active:scale-95 sm:w-auto"
+            }
             onClick={() => onCopy(value)}
             type="button"
           >
-            Copy
+            {copyLabel ?? "Copy"}
           </button>
         </div>
       </div>
-      <p className="whitespace-pre-wrap text-sm leading-7 text-[color:var(--muted)]">
+      <p
+        className={`max-w-full whitespace-pre-wrap break-words text-xs leading-relaxed text-[color:var(--text)] [overflow-wrap:anywhere] ${
+          valueClassName ?? ""
+        }`}
+      >
         {value || <span className="italic text-[color:var(--muted)]">Generate गर्नुस्...</span>}
       </p>
     </div>
@@ -280,9 +295,9 @@ export function ShotImagePlanPanel({
   onCopy: (text: string) => void;
 }) {
   return (
-    <div className="rounded-xl border border-amber-200 bg-amber-50 p-4 shadow-sm">
-      <div className="mb-3 flex flex-wrap items-center gap-2">
-        <span className="text-sm font-bold text-[color:var(--text)]">
+    <div className="min-w-0 max-w-full overflow-hidden rounded-xl border border-amber-200 bg-amber-50 p-4 shadow-sm">
+      <div className="mb-3 flex min-w-0 flex-wrap items-center gap-2">
+        <span className="break-words text-sm font-bold text-[color:var(--text)]">
           🖼️ 4-Shot Image Plan
         </span>
         <span className="rounded bg-amber-100 px-2 py-0.5 text-xs font-bold text-amber-700">
@@ -290,7 +305,7 @@ export function ShotImagePlanPanel({
         </span>
       </div>
 
-      <p className="mb-3 text-xs leading-5 text-amber-800">
+      <p className="mb-3 break-words text-xs leading-5 text-amber-800 [overflow-wrap:anywhere]">
         Generate one master hero image first. Then create each shot image by
         editing from the master or the previous shot image instead of starting
         from scratch.
@@ -300,11 +315,11 @@ export function ShotImagePlanPanel({
         {plans.map((plan, index) => (
           <div
             key={`${plan.title}-${index}`}
-            className="rounded-lg border border-amber-200 bg-[color:var(--surface-elevated)] p-3"
+            className="min-w-0 max-w-full overflow-hidden rounded-lg border border-amber-200 bg-[color:var(--surface-elevated)] p-3"
           >
-            <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
-              <div className="flex flex-wrap items-center gap-2">
-                <span className="text-xs font-extrabold text-[color:var(--text)]">
+            <div className="mb-2 flex min-w-0 flex-wrap items-center justify-between gap-2">
+              <div className="flex min-w-0 flex-wrap items-center gap-2">
+                <span className="break-words text-xs font-extrabold text-[color:var(--text)] [overflow-wrap:anywhere]">
                   {plan.title}
                 </span>
                 <span className="rounded bg-gray-100 px-2 py-0.5 text-[10px] font-bold text-[color:var(--muted)]">
@@ -318,13 +333,13 @@ export function ShotImagePlanPanel({
               <button
                 type="button"
                 onClick={() => onCopy(plan.prompt)}
-                className="rounded bg-gray-900 px-2 py-1 text-[11px] font-bold text-white hover:bg-black active:scale-95"
+                className="w-full rounded bg-gray-900 px-2 py-1 text-[11px] font-bold text-white hover:bg-black active:scale-95 sm:w-auto"
               >
                 Copy
               </button>
             </div>
 
-            <pre className="max-h-40 overflow-auto whitespace-pre-wrap text-xs leading-relaxed text-[color:var(--text)]">
+            <pre className="max-w-full whitespace-pre-wrap break-words text-xs leading-relaxed text-[color:var(--text)] [overflow-wrap:anywhere]">
               {plan.prompt}
             </pre>
           </div>
@@ -357,11 +372,11 @@ export function ShotImagePlanPanel({
 
 export function SectionLabel({ label }: { label: string }) {
   return (
-    <div className="mb-3 mt-8 flex items-center gap-3">
+    <div className="mb-3 mt-8 flex min-w-0 items-center gap-3">
       <span className="text-xs font-bold uppercase tracking-widest text-[color:var(--muted)]">
         {label}
       </span>
-      <div className="h-px flex-1 bg-gray-200" />
+      <div className="h-px min-w-0 flex-1 bg-gray-200" />
     </div>
   );
 }
@@ -508,7 +523,7 @@ export function WorkspaceJumpCard({
     <button
       type="button"
       onClick={onClick}
-      className={`rounded-2xl border p-4 text-left transition ${
+      className={`min-w-0 max-w-full overflow-hidden rounded-2xl border p-4 text-left transition ${
         active ? accent.active : accent.idle
       }`}
     >

@@ -87,7 +87,7 @@ export function VideoWorkspace({
             </p>
           </div>
 
-          <div className="flex flex-wrap gap-2">
+          <div className="grid w-full min-w-0 grid-cols-1 gap-2 sm:flex sm:w-auto sm:flex-wrap">
             {[
               { key: "hybrid" as const, label: "Hybrid Primary" },
               { key: "seedance" as const, label: "Seedance Optional" },
@@ -98,7 +98,7 @@ export function VideoWorkspace({
                 key={item.key}
                 type="button"
                 onClick={() => onVideoWorkspaceChange(item.key)}
-                className={`rounded-xl border px-3 py-2 text-xs font-extrabold ${
+                className={`w-full rounded-xl border px-3 py-2 text-xs font-extrabold sm:w-auto ${
                   videoWorkspace === item.key
                     ? "border-gray-900 bg-gray-900 text-white"
                     : "border-[color:var(--border)] bg-[color:var(--surface-elevated)] text-[color:var(--text)] hover:bg-[color:var(--surface-muted)]"
@@ -214,7 +214,7 @@ export function VideoWorkspace({
             background movement + camera movement, and avoid negative prompts.
           </p>
 
-          <div className="mb-3 flex flex-wrap gap-2">
+          <div className="mb-3 grid min-w-0 grid-cols-1 gap-2 sm:flex sm:flex-wrap">
             <button
               type="button"
               onClick={() =>
@@ -225,7 +225,7 @@ export function VideoWorkspace({
                     .join("\n\n---\n\n")
                 )
               }
-              className="rounded-lg border border-orange-200 bg-orange-100 px-3 py-1.5 text-xs font-extrabold text-orange-900 hover:bg-orange-200 active:scale-95 dark:bg-orange-500/15 dark:text-orange-100 dark:hover:bg-orange-500/25"
+              className="w-full rounded-lg border border-orange-200 bg-orange-100 px-3 py-1.5 text-xs font-extrabold text-orange-900 hover:bg-orange-200 active:scale-95 dark:bg-orange-500/15 dark:text-orange-100 dark:hover:bg-orange-500/25 sm:w-auto"
             >
               Copy Seedance Bodies
             </button>
@@ -237,7 +237,7 @@ export function VideoWorkspace({
                   onOpenDirectWorkspace("seedance");
                   onOpenWorkspace("direct");
                 }}
-                className="rounded-lg border border-orange-300 bg-[color:var(--surface-elevated)] px-3 py-1.5 text-xs font-extrabold text-orange-800 hover:bg-orange-500/12 active:scale-95 dark:text-orange-100"
+                className="w-full rounded-lg border border-orange-300 bg-[color:var(--surface-elevated)] px-3 py-1.5 text-xs font-extrabold text-orange-800 hover:bg-orange-500/12 active:scale-95 dark:text-orange-100 sm:w-auto"
               >
                 Open Direct Seedance Prompt
               </button>
@@ -261,7 +261,7 @@ export function VideoWorkspace({
 
       {videoWorkspace === "runway" && (
         <div className="rounded-2xl border border-green-500/30 bg-green-500/12 p-4 shadow-sm">
-          <div className="mb-2 flex items-center justify-between gap-2">
+          <div className="mb-2 flex min-w-0 flex-wrap items-center justify-between gap-2">
             <div className="text-sm font-extrabold text-green-900 dark:text-green-100">
               Runway Shots
             </div>
@@ -282,7 +282,7 @@ export function VideoWorkspace({
             handoff frame.
           </p>
 
-          <div className="mb-3 flex flex-wrap gap-2">
+          <div className="mb-3 grid min-w-0 grid-cols-1 gap-2 sm:flex sm:flex-wrap">
             <button
               type="button"
               onClick={() =>
@@ -293,7 +293,7 @@ export function VideoWorkspace({
                     .join("\n\n---\n\n")
                 )
               }
-              className="rounded-lg border border-green-200 bg-green-100 px-3 py-1.5 text-xs font-extrabold text-green-900 hover:bg-green-200 active:scale-95 dark:bg-green-500/15 dark:text-green-100 dark:hover:bg-green-500/25"
+              className="w-full rounded-lg border border-green-200 bg-green-100 px-3 py-1.5 text-xs font-extrabold text-green-900 hover:bg-green-200 active:scale-95 dark:bg-green-500/15 dark:text-green-100 dark:hover:bg-green-500/25 sm:w-auto"
             >
               Copy Runway Bodies
             </button>
@@ -316,7 +316,7 @@ export function VideoWorkspace({
 
       {videoWorkspace === "kling" && (
         <div className="rounded-2xl border border-blue-500/30 bg-blue-500/12 p-4 shadow-sm">
-          <div className="mb-2 flex items-center justify-between gap-2">
+          <div className="mb-2 flex min-w-0 flex-wrap items-center justify-between gap-2">
             <div className="text-sm font-extrabold text-blue-900 dark:text-blue-100">
               Kling Shots
             </div>
@@ -336,7 +336,7 @@ export function VideoWorkspace({
             reference.
           </p>
 
-          <div className="mb-3 flex flex-wrap gap-2">
+          <div className="mb-3 grid min-w-0 grid-cols-1 gap-2 sm:flex sm:flex-wrap">
             <button
               type="button"
               onClick={() =>
@@ -347,7 +347,7 @@ export function VideoWorkspace({
                     .join("\n\n---\n\n")
                 )
               }
-              className="rounded-lg border border-blue-200 bg-blue-100 px-3 py-1.5 text-xs font-extrabold text-blue-900 hover:bg-blue-200 active:scale-95 dark:bg-blue-500/15 dark:text-blue-100 dark:hover:bg-blue-500/25"
+              className="w-full rounded-lg border border-blue-200 bg-blue-100 px-3 py-1.5 text-xs font-extrabold text-blue-900 hover:bg-blue-200 active:scale-95 dark:bg-blue-500/15 dark:text-blue-100 dark:hover:bg-blue-500/25 sm:w-auto"
             >
               Copy Kling Bodies
             </button>
@@ -358,9 +358,9 @@ export function VideoWorkspace({
                   onOpenDirectWorkspace("kling15");
                   onOpenWorkspace("direct");
                 }}
-                className="rounded-lg border border-blue-300 bg-[color:var(--surface-elevated)] px-3 py-1.5 text-xs font-extrabold text-blue-800 hover:bg-blue-500/12 active:scale-95 dark:text-blue-100"
+                className="w-full rounded-lg border border-blue-300 bg-[color:var(--surface-elevated)] px-3 py-1.5 text-xs font-extrabold text-blue-800 hover:bg-blue-500/12 active:scale-95 dark:text-blue-100 sm:w-auto"
               >
-                Open Kling 10s Direct Prompt
+                Open Kling Frames + Multishot
               </button>
             )}
           </div>

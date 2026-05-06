@@ -32,6 +32,8 @@ import {
   buildShotImagePlan,
   buildRunwayPromptPack,
   buildKlingPromptPack,
+  buildKlingFramesPromptCard,
+  buildKlingMultishotPromptCards,
   buildKlingNative15sCard,
   buildKlingSixShotCard,
   buildNegativePrompt,
@@ -296,7 +298,31 @@ export function buildGeneratedPackageDraft(
     quality: input.quality,
     cameraAnglePreset: input.cameraAnglePreset,
   });
+  const klingFramesPromptCard = buildKlingFramesPromptCard(
+    input.predator,
+    input.prey,
+    input.finalEnvironment,
+    input.finalArc,
+    input.weather,
+    input.klingModel,
+    input.emotionalTone,
+    input.animalVibe,
+    input.sceneInject,
+    input.quality
+  );
   const klingNative15sCard = buildKlingNative15sCard(
+    input.predator,
+    input.prey,
+    input.finalEnvironment,
+    input.finalArc,
+    input.weather,
+    input.klingModel,
+    input.emotionalTone,
+    input.animalVibe,
+    input.sceneInject,
+    input.quality
+  );
+  const klingMultishotCards = buildKlingMultishotPromptCards(
     input.predator,
     input.prey,
     input.finalEnvironment,
@@ -452,6 +478,8 @@ export function buildGeneratedPackageDraft(
         fourShotWorkflowPack.shot4,
       ],
       klingNative15s: klingNative15sCard,
+      klingFramesPrompt: klingFramesPromptCard,
+      klingMultishotShots: klingMultishotCards,
       klingSixShot: klingSixShotCard,
     },
     runwayShots: [
@@ -475,6 +503,8 @@ export function buildGeneratedPackageDraft(
     seedanceMultiShotPrompt: seedancePack.multiShotPrompt.fullText,
     seedanceWorkflowGuide: seedancePack.workflowGuide,
     klingNative15s: klingNative15sCard.fullText,
+    klingFramesPrompt: klingFramesPromptCard.fullText,
+    klingMultishotShots: klingMultishotCards.map((card) => card.fullText),
     klingSixShot: klingSixShotCard.fullText,
     motionStrength,
     capCutPlan,

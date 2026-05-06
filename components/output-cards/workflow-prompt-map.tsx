@@ -6,10 +6,18 @@ import type { GeneratedPackage } from "@/types";
 
 import {
   getImagePromptCard,
+  getKlingFramesPromptCard,
+  getKlingMultishotPromptCards,
   getPromptCardForEngine,
   getWorkflowPromptCard,
   safeText,
 } from "@/components/output-cards/prompt-utils";
+import {
+  buildAnimalMasterReferencePrompt,
+  buildEnvironmentMasterReferencePrompt,
+  buildFinalMergeMasterPrompt,
+} from "@/components/output-cards/reference-image-prompts";
+import { buildCreatorQaPack } from "@/lib/creator-qa-pack";
 
 function deriveDriftLabel(
   clipChaining?: string
@@ -211,57 +219,6 @@ function slugifyReference(
   return slug || fallback;
 }
 
-function buildAnimalMasterReferencePrompt({
-  subjectName,
-  stanceLabel,
-  identityMarkers,
-  contactLabel,
-}: {
-  subjectName: string;
-  stanceLabel: string;
-  identityMarkers: string;
-  contactLabel: string;
-}) {
-  return [
-    `Photorealistic wildlife documentary master reference image, 9:16 vertical.`,
-    `${subjectName} only.`,
-    `Full body readable, ${stanceLabel}, stable anatomy, ${identityMarkers}, realistic scale, ${contactLabel}, simple uncluttered natural background, clean subject separation, production-ready Runway Gen-4 Image reference.`,
-  ].join(" ");
-}
-
-function buildEnvironmentMasterReferencePrompt(environmentName: string) {
-  return [
-    `Photorealistic ${environmentName} environment/background reference prompt, 9:16 vertical.`,
-    `Environment-only composition, open central wildlife corridor, clean subject-ready space, readable habitat texture, lighting and atmosphere, natural ground plane, documentary realism, production-ready environment reference image.`,
-  ].join(" ");
-}
-
-function buildFinalMergeMasterPrompt({
-  leadAnimalName,
-  oppositeAnimalName,
-  environmentName,
-  leadTag,
-  oppositeTag,
-  environmentTag,
-}: {
-  leadAnimalName: string;
-  oppositeAnimalName: string;
-  environmentName: string;
-  leadTag: string;
-  oppositeTag: string;
-  environmentTag: string;
-}) {
-  return [
-    `Use exactly 3 active Runway references: ${leadTag}, ${oppositeTag}, ${environmentTag}.`,
-    ``,
-    `Use ${leadTag} only for ${leadAnimalName} identity: coat, head profile, body scale, and grounded paw/hoof/foot contact.`,
-    `Use ${oppositeTag} only for ${oppositeAnimalName} identity: coat, body scale, legs, and grounded paw/hoof/foot contact.`,
-    `Use ${environmentTag} only for background, lighting, ground texture, and atmosphere.`,
-    ``,
-    `Photorealistic wildlife documentary final scene master image, 9:16 vertical. ${leadAnimalName} on the left, ${oppositeAnimalName} on the right, both fully visible with clean readable spacing and one clear open reaction lane between them. ${environmentName} with habitat texture, crisp clean air, stable anatomy, grounded contact, cinematic telephoto documentary framing, video-ready source frame.`,
-  ].join("\n");
-}
-
 function buildHybridRoutingGuide() {
   return [
     "PRIMARY HYBRID 4-SHOT ROUTING",
@@ -321,6 +278,17 @@ export function WorkflowPromptMap({
   const klingShots = (data.klingShots ?? []).map(safeText);
   const imagePrompt = safeText(data.imagePrompt);
   const imagePromptCard = getImagePromptCard(data);
+  const klingFramesPromptCard = getKlingFramesPromptCard(data);
+  const klingMultishotPromptCards = getKlingMultishotPromptCards(data);
+  const promptLimitRows = [
+    { label: "Kling Frames Prompt", count: klingFramesPromptCard.pasteReady.length, limit: 2500 },
+    ...klingMultishotPromptCards.map((card, index) => ({
+      label: `Kling Multishot Shot ${index + 1}`,
+      count: card.pasteReady.length,
+      limit: 512,
+    })),
+    { label: "Nano Banana 2 Image Prompt", count: imagePromptCard.pasteReady.length, limit: 5000 },
+  ];
   const seedancePromptCards = seedanceShots.map((_, index) =>
     getPromptCardForEngine(data, "seedance", index)
   );
@@ -355,6 +323,7 @@ export function WorkflowPromptMap({
     8: false,
     9: false,
     10: false,
+    11: false,
   };
 
   const [mode, setMode] = useState<WorkflowMode>("hybrid");
@@ -386,6 +355,7 @@ export function WorkflowPromptMap({
     8: null,
     9: null,
     10: null,
+    11: null,
   });
 
   const done = doneByMode[mode];
@@ -437,7 +407,7 @@ export function WorkflowPromptMap({
       actions: [
         { label: "Copy Image Prompt", value: imagePrompt },
         {
-          label: "Copy BODY",
+          label: "Copy Image Body",
           value: imagePromptCard.pasteReady,
           secondary: true,
         },
@@ -474,17 +444,25 @@ export function WorkflowPromptMap({
     ].join("\n\n");
     const leadMasterPrompt = buildAnimalMasterReferencePrompt({
       subjectName: leadAnimalName,
-      stanceLabel: "neutral grounded stance",
-      identityMarkers: "clear identity markers",
-      contactLabel: "grounded paw/hoof/foot contact",
+      stanceLabel: "alert pre-attack posture",
+      identityMarkers: "species-specific identity, readable head profile, coat/skin/marking detail, and clear body-scale cues",
+      contactLabel: "grounded paw/hoof/foot contact or natural perch contact for bird species",
+      role: "lead",
     });
     const oppositeMasterPrompt = buildAnimalMasterReferencePrompt({
       subjectName: oppositeAnimalName,
-      stanceLabel: "alert grounded stance",
-      identityMarkers: "clear identity markers",
-      contactLabel: "grounded paw/hoof/foot contact",
+      stanceLabel: "alert survival-reaction posture",
+      identityMarkers: "species-specific identity, readable side profile, coat/skin/marking detail, and clear scale cues",
+      contactLabel: "grounded paw/hoof/foot contact or natural perch contact for bird species",
+      role: "opposite",
     });
-    const environmentMasterPrompt = buildEnvironmentMasterReferencePrompt(environmentName);
+    const environmentMasterPrompt = buildEnvironmentMasterReferencePrompt({
+      environmentName,
+      leadAnimalName,
+      oppositeAnimalName,
+      arcName: data.arcName,
+      cameraAnglePreset: data.cameraAnglePreset,
+    });
     const finalMergeMasterPrompt = buildFinalMergeMasterPrompt({
       leadAnimalName,
       oppositeAnimalName,
@@ -494,6 +472,17 @@ export function WorkflowPromptMap({
       environmentTag: environmentReferenceTag,
     });
     const elevenLabs20sPrompt = buildElevenLabs20sPrompt();
+    const creatorQaPack = buildCreatorQaPack(data);
+    const facebookViralPackText = creatorQaPack.facebookSummary;
+    const failureFixGuide = creatorQaPack.failureFixGuide;
+    const compactNegativePrompt = creatorQaPack.compactNegativePrompt;
+    const runwayMotionFirstPrompt = creatorQaPack.runwayMotionFirstPrompt;
+    const creatorQaPackText = [
+      creatorQaPack.summaryText,
+      "",
+      "ELEVENLABS MUSIC PROMPT",
+      elevenLabs20sPrompt,
+    ].join("\n");
     const referenceBuildPrompts = [
       "Lead Animal Master Image",
       leadMasterPrompt,
@@ -881,10 +870,26 @@ export function WorkflowPromptMap({
             value: elevenLabs20sPrompt,
             actions: [{ label: "Copy ElevenLabs 20s Music Prompt", value: elevenLabs20sPrompt }],
           },
+          {
+            step: 11,
+            title: "Creator QA Pack",
+            badge: "QA + export helpers",
+            color: hybridColor,
+            help: "Quick creator pack for master-image checks, Runway motion-first wording, Facebook packaging, failure fixes, and compact negative cleanup.",
+            value: creatorQaPackText,
+            actions: [
+              { label: "Copy Creator QA Pack", value: creatorQaPackText },
+              { label: "Copy Runway Motion-First", value: runwayMotionFirstPrompt, secondary: true },
+              { label: "Copy Facebook Viral Pack", value: facebookViralPackText, secondary: true },
+              { label: "Copy Compact Negative", value: compactNegativePrompt, secondary: true },
+              { label: "Copy Failure Fix Guide", value: failureFixGuide, secondary: true },
+            ],
+          },
         ],
       },
     };
   }, [
+    data,
     imagePrompt,
     imagePromptCard,
     environmentName,
@@ -969,6 +974,29 @@ export function WorkflowPromptMap({
 
       <div className="mb-3 rounded-xl border border-indigo-200 bg-indigo-50 p-3 text-xs text-indigo-800">
         <strong>Pipeline:</strong> {pipeline}
+      </div>
+
+      <div className="mb-3 rounded-xl border border-slate-200 bg-slate-50 p-3 dark:border-[color:var(--border)] dark:bg-[color:var(--surface-muted)]">
+        <div className="mb-2 text-[11px] font-extrabold uppercase tracking-wide text-slate-600 dark:text-[color:var(--muted)]">
+          Prompt limits
+        </div>
+        <div className="flex flex-wrap gap-2">
+          {promptLimitRows.map((row) => {
+            const pass = row.count <= row.limit;
+            return (
+              <span
+                key={row.label}
+                className={`rounded-full px-2 py-0.5 text-[11px] font-extrabold ring-1 ${
+                  pass
+                    ? "bg-green-100 text-green-700 ring-green-200 dark:bg-green-500/15 dark:text-green-100"
+                    : "bg-rose-100 text-rose-700 ring-rose-200 dark:bg-rose-500/15 dark:text-rose-100"
+                }`}
+              >
+                {row.label}: {row.count}/{row.limit} {pass ? "pass" : "over"}
+              </span>
+            );
+          })}
+        </div>
       </div>
 
       <div className="mb-4 rounded-xl border border-orange-200 bg-orange-50 p-3 text-xs text-orange-800">

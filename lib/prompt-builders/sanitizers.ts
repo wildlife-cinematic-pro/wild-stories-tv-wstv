@@ -2,8 +2,18 @@ import type { Weather } from "@/types";
 
 import { weatherVariants } from "@/lib/predator-data";
 
-// [House] Observed practical prompt budget; vendor hard limit not yet confirmed.
-export const KLING_CHAR_LIMIT = 2500;
+export const KLING_FRAMES_CHAR_LIMIT = 2500;
+export const KLING_FRAMES_TARGET_MIN = 2200;
+export const KLING_FRAMES_TARGET_MAX = 2400;
+export const KLING_MULTISHOT_SHOT_CHAR_LIMIT = 512;
+export const KLING_MULTISHOT_SHOT_TARGET_MIN = 350;
+export const KLING_MULTISHOT_SHOT_TARGET_MAX = 480;
+export const NANO_BANANA_2_CHAR_LIMIT = 5000;
+export const NANO_BANANA_2_TARGET_MIN = 3500;
+export const NANO_BANANA_2_TARGET_MAX = 4800;
+
+// Back-compat alias for existing Kling single-prompt checks.
+export const KLING_CHAR_LIMIT = KLING_FRAMES_CHAR_LIMIT;
 
 export function validateKlingPromptLength(prompt: string): {
   length: number;
@@ -23,6 +33,62 @@ export function validateKlingPromptLength(prompt: string): {
       ? `⚠️ Kling prompt ${length} chars — limit ${Math.abs(remaining)} chars le nacheko. Kling le silently truncate garxa!`
       : null,
   };
+}
+
+export function cleanupPromptArtifacts(input: string): string {
+  return String(input ?? "")
+    .replace(/\bno\s*,\s*no\b/gi, "no")
+    .replace(/\s+,/g, ",")
+    .replace(/,\s*,+/g, ",")
+    .replace(/,\s*(?:and\s*)?\./g, ".")
+    .replace(/\(\s*,\s*/g, "(")
+    .replace(/[ \t]{2,}/g, " ")
+    .replace(/\n{3,}/g, "\n\n")
+    .trim();
+}
+
+export function compactEnvironmentPhrase(input: string, minWords = 8, maxWords = 16): string {
+  const clean = sanitizeImageEnv(input)
+    .replace(/\b(?:realistic\s+)?(?:animal|wildlife|elk|wolf|mountain-lion|predator|prey)[^,.]*travel corridors?\b/gi, "")
+    .replace(/\bclean long-range visibility\b/gi, "")
+    .replace(/\bopen central wildlife corridor\b/gi, "open lane")
+    .replace(/\bwith strong clash readability and clean subject spacing\b/gi, "")
+    .replace(/\band\s+and\b/gi, "and");
+  const parts = clean
+    .split(/[,.]/)
+    .map((part) => part.trim())
+    .filter(Boolean);
+  const words = (parts.length ? parts.join(", ") : clean)
+    .split(/\s+/)
+    .map((word) => word.replace(/[;:]+$/g, ""))
+    .filter(Boolean);
+  const limited = words.slice(0, Math.max(minWords, Math.min(maxWords, words.length)));
+  return cleanupPromptArtifacts(limited.join(" ").replace(/\s+,/g, ","));
+}
+
+export function compactNegativePrompt(items: string[], maxItems = 18): string {
+  const unique = Array.from(
+    new Set(
+      items
+        .map((item) => cleanupPromptArtifacts(item).toLowerCase())
+        .filter(Boolean)
+    )
+  );
+  return `Negative prompt: ${unique.slice(0, maxItems).join(", ")}`;
+}
+
+export function clampPromptToCharLimit(input: string, maxChars: number): string {
+  const clean = cleanupPromptArtifacts(input);
+  if (clean.length <= maxChars) return clean;
+
+  const words = clean.split(/\s+/).filter(Boolean);
+  let out = "";
+  for (const word of words) {
+    const next = out ? `${out} ${word}` : word;
+    if (next.length > maxChars - 1) break;
+    out = next;
+  }
+  return cleanupPromptArtifacts(out.replace(/[,:;/-]+$/g, ""));
 }
 
 const SOCIAL_COPY_REPLACEMENTS: Array<[RegExp, string]> = [

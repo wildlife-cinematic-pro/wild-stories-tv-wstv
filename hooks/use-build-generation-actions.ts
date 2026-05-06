@@ -6,6 +6,7 @@ import type { PromotedVariantPublishCopyOverride } from "@/hooks/use-concept-var
 import type { DurationLaneMode, MarketMode } from "@/hooks/use-build-preview";
 import type {
   AIProvider,
+  ActionStylePreset,
   AnimalVibe,
   Arc,
   CameraAnglePreset,
@@ -25,7 +26,7 @@ import type {
   RunwayModel,
   Weather,
 } from "@/types";
-import { copyPolishResponseSchema } from "@/lib/schemas";
+import { copyPolishEndpointResponseSchema } from "@/lib/schemas";
 import {
   hasUsableGeneratedPackageEnhancements,
   type GeneratedPackageEnhancements,
@@ -56,6 +57,7 @@ interface UseBuildGenerationActionsInput {
   arc: Arc;
   previewArc: Arc;
   contentLane: ContentLane;
+  actionStyle: ActionStylePreset;
   cameraAnglePreset: CameraAnglePreset;
   weather: Weather;
   depthMode: DepthMode;
@@ -100,6 +102,7 @@ interface UseBuildGenerationActionsInput {
   setIsGenerating: Dispatch<SetStateAction<boolean>>;
   setIsRegeneratingUnlocked: Dispatch<SetStateAction<boolean>>;
   setError: Dispatch<SetStateAction<string>>;
+  setEnhancementNotice: Dispatch<SetStateAction<string | null>>;
   onGenerated: () => void;
 }
 
@@ -109,6 +112,7 @@ export function useBuildGenerationActions({
   arc,
   previewArc,
   contentLane,
+  actionStyle,
   cameraAnglePreset,
   weather,
   depthMode,
@@ -153,6 +157,7 @@ export function useBuildGenerationActions({
   setIsGenerating,
   setIsRegeneratingUnlocked,
   setError,
+  setEnhancementNotice,
   onGenerated,
 }: UseBuildGenerationActionsInput) {
   const activeGenerationIdRef = useRef(0);
@@ -183,6 +188,7 @@ export function useBuildGenerationActions({
       singleActionRule,
       microMotion,
       heroVeo,
+      actionStyle,
     };
 
     return buildGeneratedPackageDraft({
@@ -264,25 +270,33 @@ export function useBuildGenerationActions({
       }),
     });
     const data = await res.json().catch(() => ({} as unknown));
+    const parsedResponse = copyPolishEndpointResponseSchema.safeParse(data);
+
+    if (parsedResponse.success && "skipped" in parsedResponse.data && parsedResponse.data.skipped) {
+      setEnhancementNotice(parsedResponse.data.message);
+      return {};
+    }
+
     if (!res.ok) {
       throw new Error(
         ((data as Record<string, unknown>)?.error as string) ||
           `AI polish failed (${res.status})`
       );
     }
-    const parsedEnhanced = copyPolishResponseSchema.safeParse(data);
-    if (!parsedEnhanced.success) throw new Error("Invalid AI polish response");
+    if (!parsedResponse.success || "skipped" in parsedResponse.data) {
+      throw new Error("Invalid AI polish response");
+    }
 
     const enhanced: GeneratedPackageEnhancements = {
-      ...(parsedEnhanced.data.imagePrompt
-        ? { imagePrompt: parsedEnhanced.data.imagePrompt }
+      ...(parsedResponse.data.imagePrompt
+        ? { imagePrompt: parsedResponse.data.imagePrompt }
         : {}),
-      ...(parsedEnhanced.data.hook ? { hook: parsedEnhanced.data.hook } : {}),
-      ...(parsedEnhanced.data.caption
-        ? { caption: parsedEnhanced.data.caption }
+      ...(parsedResponse.data.hook ? { hook: parsedResponse.data.hook } : {}),
+      ...(parsedResponse.data.caption
+        ? { caption: parsedResponse.data.caption }
         : {}),
-      ...(parsedEnhanced.data.voiceoverLine
-        ? { voiceoverLine: parsedEnhanced.data.voiceoverLine }
+      ...(parsedResponse.data.voiceoverLine
+        ? { voiceoverLine: parsedResponse.data.voiceoverLine }
         : {}),
       aiEnhanced: true,
     };
@@ -348,6 +362,7 @@ export function useBuildGenerationActions({
 
     setIsGenerating(true);
     setError("");
+    setEnhancementNotice(null);
     try {
       const draft = buildCurrentPackageDraft();
       const enhanced = await buildEnhancementsForDraft(draft);
@@ -382,6 +397,7 @@ export function useBuildGenerationActions({
 
     setIsRegeneratingUnlocked(true);
     setError("");
+    setEnhancementNotice(null);
     try {
       const sceneInjectOverride = packageLocks.sceneDescription
         ? pkg.sceneDesc ?? ""

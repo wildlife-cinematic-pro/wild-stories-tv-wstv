@@ -464,6 +464,24 @@ export function promptPackToLegacyText(
   };
 }
 
+export function promptPackToFastOutputText(
+  pack: FourShotPromptPack<StructuredPrompt>
+): string {
+  return [
+    "SHOT 1 — MASTER IMAGE PROMPT",
+    pack.shot1.pasteReady,
+    "",
+    "SHOT 2 — CAMERA ANGLE PROMPT",
+    pack.shot2.pasteReady,
+    "",
+    "SHOT 3 — CAMERA ANGLE PROMPT",
+    pack.shot3.pasteReady,
+    "",
+    "SHOT 4 — CAMERA ANGLE PROMPT",
+    pack.shot4.pasteReady,
+  ].join("\n");
+}
+
 export function promptPackToArray(pack: FourShotPromptPack<StructuredPrompt>): StructuredPrompt[] {
   return [pack.shot1, pack.shot2, pack.shot3, pack.shot4];
 }

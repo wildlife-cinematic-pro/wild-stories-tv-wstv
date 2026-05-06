@@ -1,15 +1,25 @@
 "use client";
 
+import { useState } from "react";
+
 import MediaAnalyzer from "@/components/MediaAnalyzer";
 import QualityPanel, { type QualityPanelProps } from "@/components/QualityPanel";
 import { FeaturedModelCard, ModelCard } from "@/components/build/model-cards";
 
 import { KLING_MODELS, RUNWAY_MODELS } from "@/lib/model-specs";
+import {
+  analyzePromptHealth,
+  buildEnginePromptRecommendation,
+  type EnginePromptMode,
+} from "@/lib/prompt-health";
 import type { QualityRecommendations } from "@/lib/recommendations";
 import type {
   AIProvider,
+  ActionStylePreset,
   Arc,
+  ContentLane,
   DurationLane,
+  HabitatPreset,
   HookFamily,
   KlingModel,
   MediaAnalysisResult,
@@ -20,6 +30,14 @@ import type {
   USAudienceScoreResult,
   Weather,
 } from "@/types";
+
+const ACTION_STYLE_OPTIONS: ActionStylePreset[] = [
+  "Natural tension",
+  "Viral chase",
+  "Close-contact fight",
+  "Ambush burst",
+  "Forced retreat",
+];
 
 type Step2EngineQualityProps = {
   qualityReco: QualityRecommendations;
@@ -46,9 +64,11 @@ type Step2EngineQualityProps = {
   onMediaAnalysisComplete: (result: MediaAnalysisResult) => void;
   onClearMediaAnalysis: () => void;
   sceneDescription: string;
+  actionStyle: ActionStylePreset;
   sceneDescriptionMode: "auto" | "manual";
   sceneDescriptionTouched: boolean;
   sceneMode: "romanized" | "english";
+  onActionStyleChange: (style: ActionStylePreset) => void;
   onSceneModeChange: (mode: "romanized" | "english") => void;
   onAutoFillSceneDescription: () => void;
   onRegenerateSceneDescription: () => void;
@@ -56,7 +76,10 @@ type Step2EngineQualityProps = {
   predator: string;
   prey: string;
   arc: Arc;
+  habitat: HabitatPreset;
   weather: Weather;
+  finalEnvironment: string;
+  contentLane: ContentLane;
   driftRisk: PredatorInfo["driftRisk"];
   onDurationLaneChange: (lane: DurationLane) => void;
   onHookModeChange: (mode: HookFamily | "all") => void;
@@ -91,9 +114,11 @@ export default function Step2EngineQuality({
   onMediaAnalysisComplete,
   onClearMediaAnalysis,
   sceneDescription,
+  actionStyle,
   sceneDescriptionMode,
   sceneDescriptionTouched,
   sceneMode,
+  onActionStyleChange,
   onSceneModeChange,
   onAutoFillSceneDescription,
   onRegenerateSceneDescription,
@@ -101,7 +126,10 @@ export default function Step2EngineQuality({
   predator,
   prey,
   arc,
+  habitat,
   weather,
+  finalEnvironment,
+  contentLane,
   driftRisk,
   onDurationLaneChange,
   onHookModeChange,
@@ -110,6 +138,58 @@ export default function Step2EngineQuality({
   onBack,
   onContinue,
 }: Step2EngineQualityProps) {
+  const promptHealth = analyzePromptHealth({
+    prompt: sceneDescription,
+    predatorName: predator,
+    preyName: prey,
+    arc,
+    weather,
+    contentLane,
+    habitat,
+    finalEnvironment,
+  });
+  const [promptModeOverride, setPromptModeOverride] =
+    useState<EnginePromptMode | null>(null);
+  const [optimizedPromptCopied, setOptimizedPromptCopied] = useState(false);
+  const activePromptMode = promptModeOverride ?? promptHealth.recommendedMode;
+  const promptRecommendation = buildEnginePromptRecommendation({
+    prompt: sceneDescription,
+    predatorName: predator,
+    preyName: prey,
+    arc,
+    weather,
+    contentLane,
+    habitat,
+    finalEnvironment,
+    mode: activePromptMode,
+  });
+  const promptHealthColor =
+    promptHealth.severity === "success"
+      ? "border-emerald-100 bg-emerald-50/80 text-emerald-900"
+      : promptHealth.severity === "info"
+        ? "border-sky-100 bg-sky-50/80 text-sky-900"
+        : promptHealth.severity === "warning"
+          ? "border-amber-100 bg-amber-50/80 text-amber-900"
+          : "border-rose-100 bg-rose-50/80 text-rose-900";
+
+  const handleApplyOptimizedPrompt = () => {
+    onSceneDescriptionChange(promptRecommendation.prompt);
+  };
+
+  const handleCopyOptimizedPrompt = async () => {
+    if (typeof navigator === "undefined" || !navigator.clipboard?.writeText) {
+      return;
+    }
+
+    try {
+      await navigator.clipboard.writeText(promptRecommendation.prompt);
+      setOptimizedPromptCopied(true);
+      globalThis.setTimeout(() => setOptimizedPromptCopied(false), 1600);
+    } catch {
+      // Fail gracefully when clipboard access is unavailable.
+    }
+  };
+
   return (
     <div className="grid gap-6 xl:grid-cols-[minmax(0,1fr)_380px]">
       <div className="space-y-6">
@@ -348,6 +428,18 @@ export default function Step2EngineQuality({
                   onClick={() => onRunwayModelChange(model)}
                 />
               ))}
+
+              <div className="rounded-xl border border-green-100 bg-green-50 px-3.5 py-3 text-xs leading-relaxed text-green-900">
+                <div className="text-[10px] font-semibold uppercase tracking-[0.08em] text-green-600">
+                  Runway model use
+                </div>
+                <ul className="mt-2 space-y-1 text-[11px] text-green-800">
+                  <li>• Gen-4.5: final hero / clean wildlife I2V</li>
+                  <li>• Gen-4 Turbo: fast structure test</li>
+                  <li>• I2V prompts: motion/camera/physics only</li>
+                  <li>• Runway: no negative prompt</li>
+                </ul>
+              </div>
             </div>
             <div className="space-y-2">
               <div className="mb-1 flex items-center gap-2">
@@ -477,6 +569,40 @@ export default function Step2EngineQuality({
           </div>
 
           <div className="mb-3 flex flex-wrap items-center gap-2">
+            <div className="w-full rounded-xl border border-orange-200 bg-white/75 p-3">
+              <div className="flex flex-wrap items-center justify-between gap-2">
+                <div>
+                  <div className="text-[10px] font-semibold uppercase tracking-[0.08em] text-orange-700">
+                    Action Style
+                  </div>
+                  <p className="mt-1 text-[11px] leading-relaxed text-orange-700">
+                    Close-contact fight automatically unlocks Kling&apos;s faster clash path so you do not need to type trigger words by hand.
+                  </p>
+                </div>
+                <span className="rounded-full bg-orange-100 px-2.5 py-1 text-[10px] font-semibold text-orange-800">
+                  {actionStyle}
+                </span>
+              </div>
+              <div className="mt-3 flex flex-wrap gap-2">
+                {ACTION_STYLE_OPTIONS.map((style) => {
+                  const isActive = actionStyle === style;
+                  return (
+                    <button
+                      key={style}
+                      type="button"
+                      onClick={() => onActionStyleChange(style)}
+                      className={`rounded-xl border px-3 py-2 text-xs font-semibold transition-all ${
+                        isActive
+                          ? "border-orange-700 bg-orange-700 text-white"
+                          : "border-orange-200 bg-white text-orange-700 hover:bg-orange-100"
+                      }`}
+                    >
+                      {style}
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
             <div className="flex overflow-hidden rounded-xl border border-orange-200 bg-white">
               {(["romanized", "english"] as const).map((mode) => (
                 <button
@@ -537,6 +663,138 @@ export default function Step2EngineQuality({
                 ? "Blank allowed"
                 : `${sceneDescription.trim().length} chars`}
             </span>
+          </div>
+        </section>
+
+        <section className={`rounded-2xl border p-5 sm:p-6 ${promptHealthColor}`}>
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <div>
+              <h3 className="text-[11px] font-semibold uppercase tracking-[0.1em] opacity-70">
+                Prompt Health
+              </h3>
+              <p className="mt-1 text-xs leading-relaxed opacity-80">
+                Check whether the current scene description is clean for Runway,
+                Kling, or a balanced hybrid pass.
+              </p>
+            </div>
+            <div className="flex items-center gap-2">
+              <span className="rounded-full bg-white/85 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.08em]">
+                {promptHealth.label}
+              </span>
+              <span className="rounded-full bg-white/85 px-2.5 py-1 text-[10px] font-semibold">
+                {promptHealth.score}/100
+              </span>
+            </div>
+          </div>
+
+          <div className="mt-3 grid gap-3 md:grid-cols-2">
+            <div className="rounded-xl bg-white/70 p-3">
+              <div className="text-[10px] font-semibold uppercase tracking-[0.08em] opacity-70">
+                Top issues
+              </div>
+              <div className="mt-2 space-y-1.5 text-[11px] leading-relaxed">
+                {promptHealth.issues.slice(0, 3).map((issue) => (
+                  <p key={issue}>• {issue}</p>
+                ))}
+              </div>
+            </div>
+            <div className="rounded-xl bg-white/70 p-3">
+              <div className="text-[10px] font-semibold uppercase tracking-[0.08em] opacity-70">
+                Best fixes
+              </div>
+              <div className="mt-2 space-y-1.5 text-[11px] leading-relaxed">
+                {promptHealth.fixes.slice(0, 3).map((fix) => (
+                  <p key={fix}>• {fix}</p>
+                ))}
+              </div>
+            </div>
+          </div>
+
+          {promptHealth.detectedRisks.length > 0 && (
+            <div className="mt-3 rounded-xl bg-white/70 p-3 text-[11px] leading-relaxed">
+              <span className="font-semibold">Detected risks:</span>{" "}
+              {promptHealth.detectedRisks.join(" • ")}
+            </div>
+          )}
+
+          <div className="mt-3 rounded-xl bg-white/70 p-3">
+            <div className="flex flex-wrap items-center justify-between gap-2">
+              <div className="text-[10px] font-semibold uppercase tracking-[0.08em] opacity-70">
+                Recommended mode
+              </div>
+              <span className="rounded-full border border-white/80 bg-white/80 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.08em]">
+                {promptHealth.recommendedMode}
+              </span>
+            </div>
+            <div className="mt-2 flex flex-wrap gap-2">
+              {([
+                "runway-safe",
+                "kling-action",
+                "universal",
+              ] as const).map((mode) => {
+                const isActive = activePromptMode === mode;
+                const isRecommended = promptHealth.recommendedMode === mode;
+
+                return (
+                  <button
+                    key={mode}
+                    type="button"
+                    onClick={() => setPromptModeOverride(mode)}
+                    className={`rounded-full border px-3 py-1.5 text-[10px] font-semibold uppercase tracking-[0.08em] transition-all active:scale-[0.98] ${
+                      isActive
+                        ? "border-gray-900 bg-gray-900 text-white"
+                        : "border-gray-300 bg-white text-gray-800 hover:bg-gray-50"
+                    }`}
+                  >
+                    {mode}
+                    {isRecommended ? " • Recommended" : ""}
+                  </button>
+                );
+              })}
+            </div>
+            <p className="mt-2 text-[11px] leading-relaxed opacity-80">
+              These chips only change the local optimizer preview. They do not
+              rewrite the generated package automatically.
+            </p>
+          </div>
+
+          <div className="mt-3 rounded-xl bg-white/70 p-3">
+            <div className="text-[10px] font-semibold uppercase tracking-[0.08em] opacity-70">
+              Engine-specific prompt optimizer
+            </div>
+            <p className="mt-1 text-xs font-semibold">{promptRecommendation.title}</p>
+            <p className="mt-1 text-[11px] leading-relaxed opacity-80">
+              {promptRecommendation.summary}
+            </p>
+            <div className="mt-3 rounded-xl border border-slate-700 bg-slate-900 p-3 text-[11px] font-medium leading-relaxed text-white shadow-sm">
+              {promptRecommendation.prompt}
+            </div>
+            <div className="mt-3 flex flex-wrap gap-2">
+              <button
+                type="button"
+                onClick={handleApplyOptimizedPrompt}
+                className="rounded-xl bg-gray-900 px-3 py-2 text-xs font-semibold text-white shadow-sm hover:bg-black active:scale-[0.98]"
+              >
+                Apply Optimized Prompt
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  void handleCopyOptimizedPrompt();
+                }}
+                className="rounded-xl border border-gray-300 bg-white px-3 py-2 text-xs font-semibold text-gray-800 shadow-sm hover:bg-gray-50 active:scale-[0.98]"
+              >
+                {optimizedPromptCopied ? "Copied" : "Copy Optimized Prompt"}
+              </button>
+            </div>
+            <p className="mt-2 text-[11px] leading-relaxed opacity-80">
+              Apply replaces the current scene description. Copy only copies the preview.
+            </p>
+            <div className="mt-3 space-y-1 text-[11px] leading-relaxed opacity-85">
+              {promptRecommendation.reasons.map((reason) => (
+                <p key={reason}>• {reason}</p>
+              ))}
+            </div>
           </div>
         </section>
 

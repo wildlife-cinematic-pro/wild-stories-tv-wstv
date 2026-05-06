@@ -5,6 +5,10 @@ import {
   buildRunwayCameraPresetLine,
 } from "@/lib/camera-angle-presets";
 import {
+  buildCinematicDirectorPlan,
+  type CinematicDirectorPlan,
+} from "@/lib/cinematic-director-system";
+import {
   buildMicroMotionLine,
   getHabitatMode,
   getRutMirrorMatchCue,
@@ -35,6 +39,15 @@ export type PromptScenarioContext = {
   cameraPresetLine: string;
   cameraPromptTail: string;
   cameraBreakdownLine: string;
+  directorPlan: CinematicDirectorPlan;
+  shot1CameraPromptTail: string;
+  shot2CameraPromptTail: string;
+  shot3CameraPromptTail: string;
+  shot4CameraPromptTail: string;
+  shot1CameraBreakdownLine: string;
+  shot2CameraBreakdownLine: string;
+  shot3CameraBreakdownLine: string;
+  shot4CameraBreakdownLine: string;
   worldPlateContinuity: string;
   beat1: ReturnType<typeof oneActionArcBeat>;
   beat3: ReturnType<typeof oneActionArcBeat>;
@@ -47,6 +60,7 @@ export function buildPromptScenarioContext({
   predator,
   prey,
   env,
+  sceneDesc,
   arc,
   weather,
   quality,
@@ -56,6 +70,7 @@ export function buildPromptScenarioContext({
   predator: string;
   prey: string;
   env: string;
+  sceneDesc?: string;
   arc: Arc;
   weather: Weather;
   quality?: QualityOptions;
@@ -76,9 +91,30 @@ export function buildPromptScenarioContext({
       : buildKlingCameraPresetLine(cameraAnglePreset, habitatMode, env);
   const cameraPromptTail = cameraPresetLine ? ` ${cameraPresetLine}` : "";
   const cameraBreakdownLine = cameraPresetLine
-    ? `
-Camera preset: ${cameraPresetLine}`
+    ? `\nCamera preset: ${cameraPresetLine}`
     : "";
+  const directorPlan = buildCinematicDirectorPlan({
+    arc,
+    habitatMode,
+    cameraAnglePreset,
+    sceneDesc: sceneDesc?.trim() || env,
+  });
+  const shot1CameraPresetLine =
+    engine === "runway"
+      ? buildRunwayCameraPresetLine(directorPlan.shot1.preset, habitatMode, env)
+      : buildKlingCameraPresetLine(directorPlan.shot1.preset, habitatMode, env);
+  const shot2CameraPresetLine =
+    engine === "runway"
+      ? buildRunwayCameraPresetLine(directorPlan.shot2.preset, habitatMode, env)
+      : buildKlingCameraPresetLine(directorPlan.shot2.preset, habitatMode, env);
+  const shot3CameraPresetLine =
+    engine === "runway"
+      ? buildRunwayCameraPresetLine(directorPlan.shot3.preset, habitatMode, env)
+      : buildKlingCameraPresetLine(directorPlan.shot3.preset, habitatMode, env);
+  const shot4CameraPresetLine =
+    engine === "runway"
+      ? buildRunwayCameraPresetLine(directorPlan.shot4.preset, habitatMode, env)
+      : buildKlingCameraPresetLine(directorPlan.shot4.preset, habitatMode, env);
   const worldPlateContinuity = buildShotWorldContinuityLock(engine);
   const beat1 = sanitizeBeat(oneActionArcBeat(arc, "establish", gateOn, habitatMode));
   const beat3 = sanitizeBeat(oneActionArcBeat(arc, "action", gateOn, habitatMode));
@@ -108,6 +144,15 @@ Camera preset: ${cameraPresetLine}`
     cameraPresetLine,
     cameraPromptTail,
     cameraBreakdownLine,
+    directorPlan,
+    shot1CameraPromptTail: shot1CameraPresetLine ? ` ${shot1CameraPresetLine}` : "",
+    shot2CameraPromptTail: shot2CameraPresetLine ? ` ${shot2CameraPresetLine}` : "",
+    shot3CameraPromptTail: shot3CameraPresetLine ? ` ${shot3CameraPresetLine}` : "",
+    shot4CameraPromptTail: shot4CameraPresetLine ? ` ${shot4CameraPresetLine}` : "",
+    shot1CameraBreakdownLine: shot1CameraPresetLine ? `\nCamera preset: ${shot1CameraPresetLine}` : "",
+    shot2CameraBreakdownLine: shot2CameraPresetLine ? `\nCamera preset: ${shot2CameraPresetLine}` : "",
+    shot3CameraBreakdownLine: shot3CameraPresetLine ? `\nCamera preset: ${shot3CameraPresetLine}` : "",
+    shot4CameraBreakdownLine: shot4CameraPresetLine ? `\nCamera preset: ${shot4CameraPresetLine}` : "",
     worldPlateContinuity,
     beat1,
     beat3,

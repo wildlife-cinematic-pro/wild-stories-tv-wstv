@@ -1,5 +1,7 @@
 import type { GeneratedPackage } from "@/types";
 
+import { buildCreatorQaPack } from "@/lib/creator-qa-pack";
+
 function safeStr(v: unknown) {
   if (typeof v === "string") return v.trim();
   if (Array.isArray(v)) return v.map(String).join("\n").trim();
@@ -287,6 +289,7 @@ export function buildCopyAllPacksText(data: GeneratedPackage) {
   const animalBehavior = buildAnimalBehaviorText(data);
   const soundDesign = buildSoundDesignText(data);
   const firstFrameOverlay = buildFirstFrameOverlayText(data);
+  const creatorQaPack = buildCreatorQaPack(data);
   const shotImagePlanText = (data.shotImagePlan ?? [])
     .map(
       (plan, i) =>
@@ -306,6 +309,24 @@ export function buildCopyAllPacksText(data: GeneratedPackage) {
     `=== 4-SHOT IMAGE PLAN (NANO BANANA CONTINUITY) ===`,
     shotImagePlanText || "(none)",
     "",
+    `=== CREATOR QA PACK ===`,
+    creatorQaPack.summaryText,
+    "",
+    `=== MASTER IMAGE QUALITY CHECK ===`,
+    creatorQaPack.masterImageSummary,
+    "",
+    `=== RUNWAY MOTION-FIRST PROMPT ===`,
+    creatorQaPack.runwayMotionFirstPrompt,
+    "",
+    `=== FACEBOOK VIRAL PACK ===`,
+    creatorQaPack.facebookSummary,
+    "",
+    `=== FAILURE FIX GUIDE ===`,
+    creatorQaPack.failureFixGuide || "(none)",
+    "",
+    `=== COMPACT NEGATIVE PROMPT ===`,
+    creatorQaPack.compactNegativePrompt || "(none)",
+    "",
     `=== SEEDANCE PACK (I2V | simple motion-first prompting | NO negatives) ===`,
     seedance || "(none)",
     "",
@@ -318,8 +339,13 @@ export function buildCopyAllPacksText(data: GeneratedPackage) {
     `=== KLING PACK (3.0 | WSTV action workflow | Negatives OK) ===`,
     kling || "(none)",
     "",
-    `=== KLING DIRECT 15S ===`,
-    safeStr((data as Record<string, unknown>).klingNative15s) || "(none)",
+    `=== KLING FRAMES PROMPT ===`,
+    safeStr((data as Record<string, unknown>).klingFramesPrompt) || safeStr((data as Record<string, unknown>).klingNative15s) || "(none)",
+    "",
+    `=== KLING MULTISHOT 4-SHOT PROMPTS ===`,
+    Array.isArray((data as Record<string, unknown>).klingMultishotShots)
+      ? ((data as Record<string, unknown>).klingMultishotShots as unknown[]).map((shot, index) => `Shot ${index + 1}:\n${safeStr(shot)}`).join("\n\n")
+      : "(none)",
     "",
     "",
     twoPart,

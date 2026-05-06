@@ -181,9 +181,16 @@ describe("build-package refactor seam", () => {
       draft.basePkg.seedanceMultiShotPrompt
     );
     expect(prompts?.klingNative15s?.pasteReady.length).toBeGreaterThan(0);
-    expect(prompts?.klingNative15s?.pasteReady.startsWith("Image-to-video from the provided master image")).toBe(true);
+    expect(prompts?.klingNative15s?.pasteReady.startsWith("Image-to-video from master image")).toBe(true);
+    expect(prompts?.klingFramesPrompt?.pasteReady.length).toBeGreaterThan(0);
+    expect(prompts?.klingMultishotShots).toHaveLength(4);
+    expect(prompts?.klingMultishotShots?.every((shot) => shot.pasteReady.length <= 512)).toBe(true);
     expect(prompts?.klingNative15s?.pasteReady).toContain("Negative prompt:");
     expect(prompts?.klingNative15s?.pasteReady).not.toContain("KLING 3.0 PRO DIRECT 15S MULTISHOT");
+    expect(prompts?.klingFramesPrompt?.pasteReady).toContain("raw documentary tension");
+    expect(prompts?.klingFramesPrompt?.pasteReady).toContain("BBC Earth realism");
+    expect(prompts?.klingMultishotShots?.[1]?.pasteReady).toContain("BBC Earth");
+    expect(prompts?.klingMultishotShots?.[1]?.pasteReady).toContain("raw tension");
     expect(prompts?.klingSixShot?.pasteReady.length).toBeGreaterThan(0);
   });
 

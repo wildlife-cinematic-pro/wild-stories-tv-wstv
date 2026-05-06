@@ -256,9 +256,12 @@ describe("Content Lane system", () => {
     );
 
     expect(ambush).toContain("escape lane");
+    expect(ambush).not.toContain("Wild Crew");
     expect(ambush.toLowerCase()).not.toMatch(/who wins|killed|blood|gore/);
     expect(escape.toLowerCase()).toMatch(/warning sign|almost no time to turn/);
+    expect(escape).not.toContain("Wild Crew");
     expect(pack).toContain("open space");
+    expect(pack).not.toContain("Wild Crew");
     expect(ambush.length).toBeLessThanOrEqual(150);
     expect(escape.length).toBeLessThanOrEqual(150);
     expect(pack.length).toBeLessThanOrEqual(150);
@@ -283,7 +286,11 @@ describe("Content Lane system", () => {
     const escapePinned = buildPinnedComment("Escape from danger");
 
     expect(nonUs).not.toContain("escape lane");
+    expect(nonUs).not.toContain("Wild Crew");
     expect(giant).toContain("body shift");
+    expect(giant).not.toContain("Wild Crew");
+    expect(giant.length).toBeLessThanOrEqual(150);
+    expect(nonUs.length).toBeLessThanOrEqual(150);
     expect(ambushPinned).toContain("Wild Crew");
     expect(escapePinned).toContain("Wild Crew");
     expect(`${ambushPinned} ${escapePinned}`.toLowerCase()).not.toMatch(

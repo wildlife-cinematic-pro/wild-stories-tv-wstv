@@ -792,7 +792,11 @@ function selectPrimaryCandidate(
   const pool = primaryEligible.length ? primaryEligible : candidates;
 
   const imageMaster = pool.find((candidate) => candidate.key === "image-master");
-  if (imageMaster && imageMaster.confidenceLevel !== "Risky") {
+  const isSectionedNanoMaster =
+    imageMaster?.prompt.includes("Lead Animal Prompt:") &&
+    imageMaster.prompt.includes("Opposing Animal Prompt:") &&
+    imageMaster.prompt.includes("Safety / Continuity Prompt:");
+  if (imageMaster && (imageMaster.confidenceLevel !== "Risky" || isSectionedNanoMaster)) {
     return imageMaster;
   }
 
@@ -897,6 +901,40 @@ function buildCandidateDefinitions(
         source === "runway"
           ? "Strong advanced-control candidate when you need motion-led camera direction and a clean hybrid handoff."
           : "Strong action-beat candidate when you need one clear Kling motion block inside the hybrid route.",
+      prompt: shot.pasteReady,
+      metadata: shot.metadata,
+    });
+  });
+
+  const klingFramesPrompt = safeText(
+    pkg.structuredPrompts?.klingFramesPrompt?.pasteReady ??
+      pkg.structuredPrompts?.klingNative15s?.pasteReady ??
+      pkg.klingFramesPrompt ??
+      pkg.klingNative15s
+  );
+  if (klingFramesPrompt) {
+    candidates.push({
+      key: "kling-frames",
+      source: "kling",
+      label: "KLING FRAMES PROMPT",
+      engine: "Kling Frames single prompt",
+      reason:
+        "Best Kling single-field candidate when you need a 15-second Frames prompt capped at 2500 characters.",
+      prompt: klingFramesPrompt,
+      metadata:
+        pkg.structuredPrompts?.klingFramesPrompt?.metadata ??
+        pkg.structuredPrompts?.klingNative15s?.metadata,
+    });
+  }
+
+  (pkg.structuredPrompts?.klingMultishotShots ?? []).forEach((shot, index) => {
+    candidates.push({
+      key: `kling-multishot-${index + 1}`,
+      source: "kling",
+      label: `KLING MULTISHOT SHOT ${index + 1}`,
+      engine: `Kling Multishot Shot ${index + 1}`,
+      reason:
+        "Dedicated 4-shot Kling Multishot prompt capped at 512 characters for the shot field.",
       prompt: shot.pasteReady,
       metadata: shot.metadata,
     });
