@@ -78,6 +78,8 @@ import Step3Generate from "@/components/build/step-3-generate";
 
 type Step = 1 | 2 | 3;
 type TopTab = "build" | "workflows";
+
+const STORYBOARD_HANDOFF_KEY = "wstv-storyboard-handoff";
 type WorkflowTab = "wstv" | "runway";
 
 type QualityState = {
@@ -928,6 +930,53 @@ export default function Page() {
       }),
     [finalEnvironment, predator, prey]
   );
+
+  const storyboardHandoffPayload = useMemo(
+    () => ({
+      source: "build",
+      leadAnimal: predator,
+      opposingAnimal: prey,
+      environment: finalEnvironment,
+      lighting: weather,
+      visualStyle: [
+        "photorealistic wildlife documentary",
+        "cinematic realism",
+        emotionalTone,
+        animalVibe,
+        cameraAnglePreset,
+        depthMode,
+      ].join(", "),
+      reelType: [contentLane, previewArc, durationLane].join(" • "),
+      safetyRule:
+        "Clean survival tension only. No blood, no gore, no visible injury; preserve realistic animal behavior and Facebook-safe documentary framing.",
+      createdAt: new Date().toISOString(),
+    }),
+    [
+      animalVibe,
+      cameraAnglePreset,
+      contentLane,
+      depthMode,
+      durationLane,
+      emotionalTone,
+      finalEnvironment,
+      predator,
+      prey,
+      previewArc,
+      weather,
+    ]
+  );
+
+  const saveStoryboardHandoff = useCallback(() => {
+    window.localStorage.setItem(
+      STORYBOARD_HANDOFF_KEY,
+      JSON.stringify(storyboardHandoffPayload)
+    );
+  }, [storyboardHandoffPayload]);
+
+  const openStoryboardWorkflow = useCallback(() => {
+    saveStoryboardHandoff();
+    window.location.assign(currentStoryboardHref);
+  }, [currentStoryboardHref, saveStoryboardHandoff]);
   // ─── RENDER ───────────────────────────────────────────────────────────────
 
   return (
@@ -1068,6 +1117,7 @@ export default function Page() {
                     <Link
                       key={compactStoryboardLinkMetadata.key}
                       href={storyboardHref}
+                      onClick={saveStoryboardHandoff}
                       aria-label={compactStoryboardLinkMetadata.ariaLabel}
                       title={compactStoryboardLinkMetadata.title}
                       className="inline-flex items-center gap-2 rounded-xl border border-cyan-400/30 bg-cyan-500/10 px-3.5 py-2 text-xs font-semibold text-cyan-200 transition hover:border-cyan-300 hover:bg-cyan-500/15"
@@ -1108,6 +1158,7 @@ export default function Page() {
                 <Link
                   key={detailedStoryboardLinkMetadata.key}
                   href={currentStoryboardHref}
+                  onClick={saveStoryboardHandoff}
                   aria-label={detailedStoryboardLinkMetadata.ariaLabel}
                   title={detailedStoryboardLinkMetadata.title}
                   className="rounded-xl border border-[color:var(--border)] bg-[color:var(--surface)] px-4 py-2 text-sm font-semibold text-[color:var(--text)] transition hover:border-cyan-400/60 hover:text-cyan-200"
@@ -1134,6 +1185,8 @@ export default function Page() {
                 preyOptions={previewPreyOptions}
                 customPredatorCount={customPredators.length}
                 finalEnvironment={finalEnvironment}
+                storyboardHref={currentStoryboardHref}
+                onOpenStoryboardWorkflow={openStoryboardWorkflow}
                 driftRisk={preset.driftRisk}
                 workflowPresets={workflowPresetControls.presets}
                 workflowPresetPacks={workflowPresetControls.presetPacks}

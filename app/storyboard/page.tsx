@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 
 type ReelSettings = {
   subject: string;
@@ -26,6 +26,21 @@ type Shot = {
   bestFrameReuse: string;
   continuityLock: string;
 };
+
+type StoryboardHandoffPayload = {
+  source?: string;
+  leadAnimal?: string;
+  opposingAnimal?: string;
+  environment?: string;
+  lighting?: string;
+  visualStyle?: string;
+  reelType?: string;
+  safetyRule?: string;
+  createdAt?: string;
+};
+
+const STORYBOARD_HANDOFF_KEY = "wstv-storyboard-handoff";
+const CUSTOM_BUILD_PRESET_ID = "custom-build-setup";
 
 const workflowSteps = [
   "ChatGPT Storyboard",
@@ -389,8 +404,41 @@ const wildlifePresets: [WildlifePreset, ...WildlifePreset[]] = [
   },
 ];
 
-function getPresetById(presetId: string): WildlifePreset {
-  return wildlifePresets.find((preset) => preset.id === presetId) ?? wildlifePresets[0];
+function getPresetById(presetId: string): WildlifePreset | null {
+  return wildlifePresets.find((preset) => preset.id === presetId) ?? null;
+}
+
+function normalizeAnimalName(value: string): string {
+  return value
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, " ")
+    .replace(/\b(american|north|northern|south|southern|adult|male|female|bull|pack)\b/g, " ")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
+function animalMatches(input: string, presetAnimal: string): boolean {
+  const normalizedInput = normalizeAnimalName(input);
+  const normalizedPreset = normalizeAnimalName(presetAnimal);
+
+  if (!normalizedInput || !normalizedPreset) return false;
+  return (
+    normalizedInput === normalizedPreset ||
+    normalizedInput.includes(normalizedPreset) ||
+    normalizedPreset.includes(normalizedInput)
+  );
+}
+
+function findPresetForAnimals(leadAnimal: string, opposingAnimal: string): WildlifePreset | null {
+  return (
+    wildlifePresets.find((preset) =>
+      animalMatches(leadAnimal, preset.subject) && animalMatches(opposingAnimal, preset.opponent)
+    ) ??
+    wildlifePresets.find((preset) =>
+      animalMatches(leadAnimal, preset.opponent) && animalMatches(opposingAnimal, preset.subject)
+    ) ??
+    null
+  );
 }
 
 function buildPresetSettings(preset: WildlifePreset): ReelSettings {
@@ -444,6 +492,77 @@ function buildContinuityLock(preset: WildlifePreset, shot: PresetShotTemplate): 
     "Keep both animals readable, full-body scale logical, spacing believable, anatomy stable, grounded contact clear, and action non-graphic.",
     shot.bestFrameReuse,
   ].join(" ");
+}
+
+function buildCustomPreset(settings: ReelSettings): WildlifePreset {
+  const subject = settings.subject.trim() || "Lead animal";
+  const opponent = settings.opponent.trim() || "Opposing animal";
+  const environment = settings.environment.trim() || "natural wildlife habitat with a clear attack and escape lane";
+  const lighting = settings.lighting.trim() || "scene-appropriate cinematic wildlife documentary lighting";
+
+  return {
+    id: CUSTOM_BUILD_PRESET_ID,
+    name: "Custom Build Setup",
+    subject,
+    opponent,
+    environment,
+    lighting,
+    visualStyle: settings.visualStyle || "Photorealistic wildlife documentary, cinematic realism, strong survival tension",
+    reelType: settings.reelType || "25s custom wildlife survival reel",
+    terrainContinuity: environment,
+    shotTemplates: [
+      {
+        label: "Hook",
+        frameDescription:
+          subject + " and " + opponent + " are both visible in a 9:16 cinematic wildlife documentary frame, with readable full-body spacing, a clear attack/escape lane, and immediate survival tension in " + environment + ".",
+        masterFrame:
+          subject + " and " + opponent + " both fully readable in " + environment + ", open attack and escape lane, tense eye-line, grounded contact, strong subject separation",
+        motion:
+          "Both animals hold readable tension; the lead animal shifts posture while the opposing animal reacts subtly, keeping the first frame composition intact.",
+        bestFrameReuse: "Use the clearest end frame with both animals visible and the action lane established as the image base for Shot 2.",
+      },
+      {
+        label: "Trigger",
+        frameDescription:
+          "Sudden movement begins: " + subject + " increases pressure and " + opponent + " reacts fast, turning toward the open escape lane while staying anatomically grounded.",
+        masterFrame:
+          subject + " beginning a sudden pressure movement toward " + opponent + ", fast reaction posture, clear escape lane, realistic body weight, habitat detail in " + environment,
+        motion:
+          subject + " makes one clean pressure move as " + opponent + " snaps into a fast reaction and pivots toward the open lane.",
+        bestFrameReuse: "Reuse the sharpest reaction frame with both animals readable as the image base for Shot 3.",
+      },
+      {
+        label: "Escalation",
+        frameDescription:
+          "The sequence escalates into a chase, surge, dodge, stumble, or near-collision through " + environment + ", with strong survival tension and clean non-graphic action.",
+        masterFrame:
+          subject + " and " + opponent + " in a dynamic escalation beat, chase or dodge energy, grounded paw/hoof/contact, realistic anatomy, clear habitat detail, no contact injury",
+        motion:
+          "Animate a grounded chase or dodge beat with natural terrain response, stable anatomy, and readable spacing between both animals.",
+        bestFrameReuse: "Reuse the most stable escalation frame with clear spacing as the image base for Shot 4.",
+      },
+      {
+        label: "Peak Action",
+        frameDescription:
+          "Highest intensity moment: " + subject + " and " + opponent + " reach a near-clash or physical pressure beat, framed as clean survival tension with no blood, gore, or visible injury.",
+        masterFrame:
+          "peak non-graphic survival pressure between " + subject + " and " + opponent + ", near-clash without injury, strong cinematic depth, full-body readability, realistic habitat physics",
+        motion:
+          "Create one brief peak pressure move with realistic momentum, then hold enough separation for clean readability and no visible injury shown.",
+        bestFrameReuse: "Reuse the strongest readable peak-action end frame as the image base for Shot 5.",
+      },
+      {
+        label: "Exit / Unresolved Ending",
+        frameDescription:
+          "The action exits into an unresolved survival ending: one animal gains space while the other holds pressure, leaving the viewer wanting a replay.",
+        masterFrame:
+          subject + " and " + opponent + " separating or holding unresolved tension in " + environment + ", cinematic documentary ending, clean non-graphic survival suspense",
+        motion:
+          "Slow pull-back or held documentary frame as the animals separate or pause, ending before the outcome is fully resolved.",
+        bestFrameReuse: "Use the clean final unresolved frame as the thumbnail or next-reel continuity reference.",
+      },
+    ],
+  };
 }
 
 function buildPresetShots(preset: WildlifePreset): Shot[] {
@@ -536,7 +655,7 @@ function buildShotCopy(shot: Shot) {
   ].join("\n\n");
 }
 
-function buildAllCopy(settings: ReelSettings, shots: Shot[], presetName: string) {
+function buildAllCopy(settings: ReelSettings, shots: Shot[], presetName: string, sourceLabel: string) {
   return [
     "WSTV 5-Shot Wildlife Reel Storyboard",
     "",
@@ -544,8 +663,11 @@ function buildAllCopy(settings: ReelSettings, shots: Shot[], presetName: string)
     workflowSteps.join(" -> "),
     "",
     "Global Reel Settings:",
+    `Source: ${sourceLabel}`,
     `Selected Preset: ${presetName}`,
     "Total Duration: 25 seconds",
+    `Lead Animal: ${settings.subject}`,
+    `Opposing Animal: ${settings.opponent}`,
     `Main Subject / Animal 1: ${settings.subject}`,
     `Opponent / Animal 2: ${settings.opponent}`,
     `Environment / Habitat: ${settings.environment}`,
@@ -566,11 +688,14 @@ export default function StoryboardPage() {
   const [settings, setSettings] = useState<ReelSettings>(defaultSettings);
   const [shots, setShots] = useState<Shot[]>(templateShots);
   const [copyStatus, setCopyStatus] = useState<string>("");
+  const [loadedFromBuild, setLoadedFromBuild] = useState(false);
 
   const selectedPreset = getPresetById(selectedPresetId);
+  const selectedPresetName = selectedPreset?.name ?? "Custom Build Setup";
+  const sourceLabel = loadedFromBuild ? "Build setup" : "Storyboard preset";
   const allStoryboardText = useMemo(
-    () => buildAllCopy(settings, shots, selectedPreset.name),
-    [settings, shots, selectedPreset.name]
+    () => buildAllCopy(settings, shots, selectedPresetName, sourceLabel),
+    [settings, shots, selectedPresetName, sourceLabel]
   );
 
   function updateSetting(key: keyof ReelSettings, value: string) {
@@ -580,6 +705,37 @@ export default function StoryboardPage() {
   function updateShot(id: number, key: keyof Shot, value: string) {
     setShots((current) => current.map((shot) => (shot.id === id ? { ...shot, [key]: value } : shot)));
   }
+
+  useEffect(() => {
+    const rawHandoff = window.localStorage.getItem(STORYBOARD_HANDOFF_KEY);
+
+    if (!rawHandoff) return;
+
+    try {
+      const payload = JSON.parse(rawHandoff) as StoryboardHandoffPayload;
+      const nextSettings: ReelSettings = {
+        ...defaultSettings,
+        subject: payload.leadAnimal?.trim() || defaultSettings.subject,
+        opponent: payload.opposingAnimal?.trim() || defaultSettings.opponent,
+        environment: payload.environment?.trim() || defaultSettings.environment,
+        lighting: payload.lighting?.trim() || defaultSettings.lighting,
+        visualStyle: payload.visualStyle?.trim() || defaultSettings.visualStyle,
+        reelType: payload.reelType?.trim() || defaultSettings.reelType,
+        safetyRule: payload.safetyRule?.trim() || defaultSettings.safetyRule,
+      };
+      const matchingPreset = findPresetForAnimals(nextSettings.subject, nextSettings.opponent);
+      const nextPreset = matchingPreset ?? buildCustomPreset(nextSettings);
+
+      setLoadedFromBuild(payload.source === "build");
+      setSelectedPresetId(matchingPreset?.id ?? CUSTOM_BUILD_PRESET_ID);
+      setSettings(nextSettings);
+      setShots(buildPresetShots(nextPreset));
+      setCopyStatus("Loaded from Build setup");
+      window.setTimeout(() => setCopyStatus(""), 2200);
+    } catch {
+      window.localStorage.removeItem(STORYBOARD_HANDOFF_KEY);
+    }
+  }, []);
 
   async function copyText(text: string, status: string) {
     try {
@@ -593,15 +749,37 @@ export default function StoryboardPage() {
   }
 
   function generateTemplate() {
-    const preset = getPresetById(selectedPresetId);
+    const preset = selectedPresetId === CUSTOM_BUILD_PRESET_ID
+      ? buildCustomPreset(settings)
+      : getPresetById(selectedPresetId);
 
-    setSettings(buildPresetSettings(preset));
-    setShots(buildPresetShots(preset));
+    if (!preset) {
+      const customPreset = buildCustomPreset(settings);
+      setSelectedPresetId(CUSTOM_BUILD_PRESET_ID);
+      setShots(buildPresetShots(customPreset));
+    } else if (loadedFromBuild) {
+      const buildPreset = {
+        ...preset,
+        subject: settings.subject,
+        opponent: settings.opponent,
+        environment: settings.environment,
+        lighting: settings.lighting,
+        visualStyle: settings.visualStyle,
+        reelType: settings.reelType,
+        terrainContinuity: settings.environment,
+      };
+      setShots(buildPresetShots(buildPreset));
+    } else {
+      setSettings(buildPresetSettings(preset));
+      setShots(buildPresetShots(preset));
+    }
+
     setCopyStatus("Template generated");
     window.setTimeout(() => setCopyStatus(""), 1800);
   }
 
   function resetStoryboard() {
+    setLoadedFromBuild(false);
     setSelectedPresetId(defaultPreset.id);
     setSettings(defaultSettings);
     setShots(templateShots);
@@ -628,6 +806,11 @@ export default function StoryboardPage() {
                 </p>
               </div>
               <div className="flex flex-wrap items-center gap-3">
+                {loadedFromBuild ? (
+                  <span className="rounded-full border border-cyan-400/35 bg-cyan-500/10 px-3 py-1 text-xs font-semibold text-cyan-200">
+                    Loaded from Build setup
+                  </span>
+                ) : null}
                 {copyStatus ? (
                   <span className="rounded-full border border-emerald-400/35 bg-emerald-500/10 px-3 py-1 text-xs font-semibold text-emerald-300">
                     {copyStatus}
@@ -718,6 +901,7 @@ export default function StoryboardPage() {
                       {preset.name}
                     </option>
                   ))}
+                  <option value={CUSTOM_BUILD_PRESET_ID}>Custom Build Setup</option>
                 </select>
               </div>
               <div className="mt-4 grid gap-3 sm:grid-cols-3">
