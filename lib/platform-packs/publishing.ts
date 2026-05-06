@@ -55,6 +55,8 @@ const SHORT_CAPTIONS_2026: Partial<Record<Arc, (predator: string, prey: string, 
     `The ${predator.toLowerCase()} moved first. The ${prey.toLowerCase()} had almost no time to turn.`,
 };
 
+const COMMUNITY_NAME = "Wild Crew";
+
 const CAPTIONS_2026: Partial<Record<Arc, (predator: string, prey: string, env: string) => string>> = {
   "Ambush attack": (predator, prey, env) =>
     `In the ${env}, the danger was visible before the full move.
@@ -203,6 +205,19 @@ function prependContentLaneLead(raw: string, lead: string | null): string {
   return `${compactLead} ${compactRaw}`.replace(/\s+/g, " ").trim();
 }
 
+function buildCommunityCaption(arc: Arc): string | null {
+  switch (arc) {
+    case "Ambush attack":
+      return `${COMMUNITY_NAME}, watch the escape lane close in the final seconds.`;
+    case "Escape from danger":
+      return `${COMMUNITY_NAME}, did you spot the warning sign before the move?`;
+    case "Pack hunting strategy":
+      return `${COMMUNITY_NAME}, watch how the open space starts closing.`;
+    default:
+      return null;
+  }
+}
+
 export function buildCaption(
   predator: string,
   prey: string,
@@ -212,10 +227,14 @@ export function buildCaption(
 ): string {
   const cleanEnv = sanitizeSocialEnv(env);
 
-  const raw =
+  const baseRaw =
     SHORT_CAPTIONS_2026[arc]?.(predator, prey, cleanEnv) ??
     VIRAL_CAPTIONS[arc]?.(predator, prey, cleanEnv) ??
     `${predator} and ${prey} collide in the ${cleanEnv}, and the whole sequence turns on one immediate control shift.`;
+
+  const communityRaw = options.mode === "us-only" ? buildCommunityCaption(arc) : null;
+
+  const raw = communityRaw ?? baseRaw;
 
   const caption = options.mode === "us-only" ? raw.replace(/\s+—\s+/g, ": ") : raw;
 

@@ -231,4 +231,58 @@ describe("Content Lane system", () => {
   });
 
 
+  it("adds Wild Crew community captions for selected us-only arcs", () => {
+    const ambush = buildShortCaption(
+      "Mountain Lion",
+      "White-tailed Deer",
+      "Rocky Mountain forest edge and open meadow",
+      "Ambush attack",
+      { mode: "us-only" }
+    );
+    const escape = buildShortCaption(
+      "Gray Wolf",
+      "Pronghorn",
+      "Wyoming grassland and open sage plain",
+      "Escape from danger",
+      { mode: "us-only" }
+    );
+    const pack = buildShortCaption(
+      "Gray Wolf",
+      "Bull Elk",
+      "Northern forest opening and snow-packed edge",
+      "Pack hunting strategy",
+      { mode: "us-only" }
+    );
+
+    expect(ambush).toContain("Wild Crew");
+    expect(escape).toContain("Wild Crew");
+    expect(pack).toContain("Wild Crew");
+    expect(ambush.length).toBeLessThanOrEqual(150);
+    expect(escape.length).toBeLessThanOrEqual(150);
+    expect(pack.length).toBeLessThanOrEqual(150);
+  });
+
+  it("keeps fallback short captions for non-selected arcs and non-us-only mode", () => {
+    const giant = buildShortCaption(
+      "Bison",
+      "Moose",
+      "Open river meadow and dry grassland",
+      "Giant vs giant clash",
+      { mode: "us-only" }
+    );
+    const nonUs = buildShortCaption(
+      "Mountain Lion",
+      "White-tailed Deer",
+      "Rocky Mountain forest edge and open meadow",
+      "Ambush attack",
+      { mode: "default" }
+    );
+
+    expect(giant).not.toContain("Wild Crew");
+    expect(nonUs).not.toContain("Wild Crew");
+    expect(giant.length).toBeLessThanOrEqual(150);
+    expect(nonUs.length).toBeLessThanOrEqual(150);
+  });
+
+
 });
