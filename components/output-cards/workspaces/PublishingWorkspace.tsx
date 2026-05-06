@@ -109,6 +109,19 @@ export function PublishingWorkspace({
         />
       )}
 
+      {(data.pinnedComment ?? data.platformPack?.facebook.pinnedComment) && (
+        <Card
+          title="💬 Pinned Comment"
+          value={data.pinnedComment ?? data.platformPack?.facebook.pinnedComment ?? ""}
+          onCopy={handleCopy}
+          copyLabel="Copy Pinned Comment"
+          accent="border-l-sky-500"
+          className="border-sky-200/70 bg-sky-50/55"
+          valueClassName="text-sky-950 dark:text-sky-50"
+          copyButtonClassName="rounded-xl border border-sky-300 bg-white/85 px-3 py-2 text-sm font-semibold text-sky-900 hover:bg-sky-50 active:scale-95 dark:border-sky-200/40 dark:bg-transparent dark:text-sky-100"
+        />
+      )}
+
       {data.hashtags && (
         <Card
           title="# Hashtags"

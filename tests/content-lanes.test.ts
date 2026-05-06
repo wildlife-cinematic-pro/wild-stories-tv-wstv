@@ -9,6 +9,7 @@ import {
 import {
   build2026HookByFamily,
   buildHashtags,
+  buildPinnedComment,
   buildShortCaption,
 } from "@/lib/platform-packs";
 import { scoreUSAudience } from "@/lib/usAudienceProfile";
@@ -231,7 +232,7 @@ describe("Content Lane system", () => {
   });
 
 
-  it("adds Wild Crew community captions for selected us-only arcs", () => {
+  it("uses curiosity-led short captions for key Facebook us-only arcs", () => {
     const ambush = buildShortCaption(
       "Mountain Lion",
       "White-tailed Deer",
@@ -254,22 +255,19 @@ describe("Content Lane system", () => {
       { mode: "us-only" }
     );
 
-    expect(ambush).toContain("Wild Crew");
-    expect(escape).toContain("Wild Crew");
-    expect(pack).toContain("Wild Crew");
+    expect(ambush).toContain("escape lane");
+    expect(ambush).not.toContain("Wild Crew");
+    expect(ambush.toLowerCase()).not.toMatch(/who wins|killed|blood|gore/);
+    expect(escape.toLowerCase()).toMatch(/warning sign|almost no time to turn/);
+    expect(escape).not.toContain("Wild Crew");
+    expect(pack).toContain("open space");
+    expect(pack).not.toContain("Wild Crew");
     expect(ambush.length).toBeLessThanOrEqual(150);
     expect(escape.length).toBeLessThanOrEqual(150);
     expect(pack.length).toBeLessThanOrEqual(150);
   });
 
-  it("keeps fallback short captions for non-selected arcs and non-us-only mode", () => {
-    const giant = buildShortCaption(
-      "Bison",
-      "Moose",
-      "Open river meadow and dry grassland",
-      "Giant vs giant clash",
-      { mode: "us-only" }
-    );
+  it("keeps fallback captions outside us-only mode and builds Wild Crew pinned comments", () => {
     const nonUs = buildShortCaption(
       "Mountain Lion",
       "White-tailed Deer",
@@ -277,12 +275,27 @@ describe("Content Lane system", () => {
       "Ambush attack",
       { mode: "default" }
     );
+    const giant = buildShortCaption(
+      "Bison",
+      "Moose",
+      "Open river meadow and dry grassland",
+      "Giant vs giant clash",
+      { mode: "us-only" }
+    );
+    const ambushPinned = buildPinnedComment("Ambush attack");
+    const escapePinned = buildPinnedComment("Escape from danger");
 
-    expect(giant).not.toContain("Wild Crew");
+    expect(nonUs).not.toContain("escape lane");
     expect(nonUs).not.toContain("Wild Crew");
+    expect(giant).toContain("body shift");
+    expect(giant).not.toContain("Wild Crew");
     expect(giant.length).toBeLessThanOrEqual(150);
     expect(nonUs.length).toBeLessThanOrEqual(150);
+    expect(ambushPinned).toContain("Wild Crew");
+    expect(escapePinned).toContain("Wild Crew");
+    expect(`${ambushPinned} ${escapePinned}`.toLowerCase()).not.toMatch(
+      /like|share|follow|comment yes/
+    );
   });
-
 
 });

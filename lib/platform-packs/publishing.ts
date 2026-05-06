@@ -205,16 +205,62 @@ function prependContentLaneLead(raw: string, lead: string | null): string {
   return `${compactLead} ${compactRaw}`.replace(/\s+/g, " ").trim();
 }
 
-function buildCommunityCaption(arc: Arc): string | null {
+function buildCuriosityShortCaption(
+  predator: string,
+  prey: string,
+  env: string,
+  arc: Arc
+): string | null {
+  const predatorLower = predator.toLowerCase();
+  const preyLower = prey.toLowerCase();
+  const waterlineCue = /\b(water|river|marsh|swamp|bank|shore|lake|creek|channel)\b/i.test(
+    env
+  );
+
   switch (arc) {
     case "Ambush attack":
-      return `${COMMUNITY_NAME}, watch the escape lane close in the final seconds.`;
+      return `The ${preyLower} had one escape lane. The ${predatorLower} noticed it first.`;
     case "Escape from danger":
-      return `${COMMUNITY_NAME}, did you spot the warning sign before the move?`;
+      return waterlineCue
+        ? "The water looked calm until the first ripple changed everything."
+        : `The ${predatorLower} moved first. The ${preyLower} had almost no time to turn.`;
     case "Pack hunting strategy":
-      return `${COMMUNITY_NAME}, watch how the open space starts closing.`;
+      return `The ${preyLower} looked free for a second. Then the open space started closing.`;
+    case "Chase and takedown":
+      return `The ${predatorLower} committed early. The ${preyLower} lost clean running room fast.`;
+    case "Giant vs giant clash":
+      return `${predator} and ${prey} got too close. One body shift changed the whole read.`;
+    case "Defender stands ground":
+      return `The pressure kept building. This ${predatorLower} never gave ground.`;
+    case "Territory dominance battle":
+      return "The warning was visible early. One step changed the whole encounter.";
+    case "Predator vs predator fight":
+      return "Two apex predators met too close. One bad step shifted control fast.";
     default:
       return null;
+  }
+}
+
+export function buildPinnedComment(arc: Arc): string {
+  switch (arc) {
+    case "Ambush attack":
+      return `${COMMUNITY_NAME}, where did the ambush give itself away?`;
+    case "Chase and takedown":
+      return `${COMMUNITY_NAME}, which move closed the escape lane first?`;
+    case "Escape from danger":
+      return `${COMMUNITY_NAME}, would you have spotted the danger in time?`;
+    case "Pack hunting strategy":
+      return `${COMMUNITY_NAME}, which angle closed the open space first?`;
+    case "Defender stands ground":
+      return `${COMMUNITY_NAME}, what told you the stand would hold?`;
+    case "Giant vs giant clash":
+      return `${COMMUNITY_NAME}, which body shift made the standoff feel dangerous?`;
+    case "Territory dominance battle":
+      return `${COMMUNITY_NAME}, would you have noticed the claim earlier?`;
+    case "Predator vs predator fight":
+      return `${COMMUNITY_NAME}, which animal gave up position first?`;
+    default:
+      return `${COMMUNITY_NAME}, which moment changed the encounter?`;
   }
 }
 
@@ -231,10 +277,11 @@ export function buildCaption(
     SHORT_CAPTIONS_2026[arc]?.(predator, prey, cleanEnv) ??
     VIRAL_CAPTIONS[arc]?.(predator, prey, cleanEnv) ??
     `${predator} and ${prey} collide in the ${cleanEnv}, and the whole sequence turns on one immediate control shift.`;
-
-  const communityRaw = options.mode === "us-only" ? buildCommunityCaption(arc) : null;
-
-  const raw = communityRaw ?? baseRaw;
+  const curiosityRaw =
+    options.mode === "us-only"
+      ? buildCuriosityShortCaption(predator, prey, cleanEnv, arc)
+      : null;
+  const raw = curiosityRaw ?? baseRaw;
 
   const caption = options.mode === "us-only" ? raw.replace(/\s+—\s+/g, ": ") : raw;
 

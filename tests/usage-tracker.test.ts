@@ -76,6 +76,7 @@ function makePackage(overrides: Partial<GeneratedPackage> = {}): GeneratedPackag
         hook: "Mountain lion pressure closes before the mule deer clears the break.",
         caption:
           "Mountain lion pressure closes before the mule deer finds a clean turn. What changed the outcome first?",
+        pinnedComment: "Wild Crew, which moment changed the encounter?",
         hashtags:
           "#MountainLion #MuleDeer #WildlifeReel #PredatorPrey #NatureShorts",
         tags: "mountain lion,mule deer,wildlife reel,predator prey,nature shorts",

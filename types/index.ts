@@ -867,6 +867,7 @@ export type PlatformPostCommon = {
 export type FacebookPack = PlatformPostCommon & {
   hook: string;
   caption: string;
+  pinnedComment: string;
   hashtags: string;
   tags?: string;
   cmpNote: string;
@@ -1013,6 +1014,7 @@ export type GeneratedPackage = {
   recommendedHookIndex?: number;
   caption: string;
   caption2026: string;
+  pinnedComment?: string;
   cta: string;
   hashtags: string;
   tags?: string;

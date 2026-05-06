@@ -148,6 +148,7 @@ function makePackage(prefix: string): GeneratedPackage {
       facebook: {
         hook: `${prefix} fb hook`,
         caption: `${prefix} fb caption`,
+        pinnedComment: `${prefix} fb pinned comment`,
         hashtags: `${prefix} fb hashtags`,
         tags: `${prefix} fb tags`,
         bestTime: "7 PM",
