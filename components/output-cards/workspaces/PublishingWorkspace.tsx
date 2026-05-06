@@ -83,6 +83,15 @@ export function PublishingWorkspace({
 
       {data.cta && <Card title="📢 CTA" value={data.cta} onCopy={handleCopy} />}
 
+      {(data.pinnedComment ?? data.platformPack?.facebook.pinnedComment) && (
+        <Card
+          title="💬 Pinned Comment"
+          value={data.pinnedComment ?? data.platformPack?.facebook.pinnedComment ?? ""}
+          onCopy={handleCopy}
+          accent="border-l-sky-500"
+        />
+      )}
+
       {data.hashtags && (
         <Card title="# Hashtags" value={data.hashtags} onCopy={handleCopy} />
       )}

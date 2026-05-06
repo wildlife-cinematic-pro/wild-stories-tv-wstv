@@ -152,6 +152,9 @@ describe("build-package refactor seam", () => {
 
     expect(draft.basePkg.platformPack?.facebook.hook).toBe(draft.primaryHook);
     expect(draft.basePkg.hook).toBe(draft.basePkg.platformPack?.facebook.hook);
+    expect(draft.basePkg.pinnedComment).toBe(
+      draft.basePkg.platformPack?.facebook.pinnedComment
+    );
     expect(publishFlowSummary.primaryHook).toBe(
       draft.basePkg.platformPack?.facebook.hook
     );

@@ -25,6 +25,7 @@ import {
 import {
   buildHashtags,
   buildLongCaption,
+  buildPinnedComment,
   buildShortCaption,
   buildTags,
 } from "@/lib/platform-packs/publishing";
@@ -78,6 +79,7 @@ export {
   buildCaption,
   buildHashtags,
   buildLongCaption,
+  buildPinnedComment,
   buildSEOTitle,
   buildShortCaption,
   buildTags,
@@ -125,6 +127,7 @@ export function buildPlatformPack(
     contentLane: effectiveContentLane,
   });
   const tags = buildTags(predator, prey, arc);
+  const pinnedComment = buildPinnedComment(arc);
   const overlayGuidance = buildFirstFrameOverlayGuidance();
   const facebookOverlayPresets = buildFacebookFirstFrameOverlayPresets(
     hooks[0],
@@ -141,6 +144,7 @@ export function buildPlatformPack(
   const facebook: FacebookPack = {
     hook: hooks[0],
     caption: longCaption,
+    pinnedComment,
     hashtags,
     tags,
     bestTime:

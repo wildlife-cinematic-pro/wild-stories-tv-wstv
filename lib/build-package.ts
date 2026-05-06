@@ -484,6 +484,7 @@ export function buildGeneratedPackageDraft(
     recommendedHookIndex: input.recommendedHookIndex,
     caption: input.shortCaption ?? "",
     caption2026: input.longCaption ?? "",
+    pinnedComment: platformPack.facebook.pinnedComment,
     cta,
     hashtags: input.hashtags,
     tags: input.tags,

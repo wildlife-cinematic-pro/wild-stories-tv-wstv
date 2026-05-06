@@ -58,6 +58,10 @@ describe("platform pack hook engine v2", () => {
     );
     const guidance = JSON.stringify(pack).toLowerCase();
 
+    expect(pack.facebook.pinnedComment).toContain("Wild Crew");
+    expect(pack.facebook.pinnedComment.toLowerCase()).not.toMatch(
+      /like|share|follow|comment yes/
+    );
     expect(pack.facebook.cmpNote.toLowerCase()).toContain("upper safe zone");
     expect(pack.facebook.cmpNote.toLowerCase()).toContain("with or without sound");
     expect(pack.instagram.strategyNote?.toLowerCase()).toContain("species-clear");
