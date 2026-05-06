@@ -31,6 +31,7 @@ function makeSnapshot(
     prey: "Bull Elk",
     wildlifeScopeMode: "USA / Canada Wildlife",
     contentLane: "Pack Hunt",
+    actionStyle: "Natural tension",
     cameraAnglePreset: "Auto",
     arc: "Pack hunting strategy",
     habitat: "Rocky Mountain Meadow",

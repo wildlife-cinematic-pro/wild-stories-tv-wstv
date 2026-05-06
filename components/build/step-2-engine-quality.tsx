@@ -15,6 +15,7 @@ import {
 import type { QualityRecommendations } from "@/lib/recommendations";
 import type {
   AIProvider,
+  ActionStylePreset,
   Arc,
   ContentLane,
   DurationLane,
@@ -29,6 +30,14 @@ import type {
   USAudienceScoreResult,
   Weather,
 } from "@/types";
+
+const ACTION_STYLE_OPTIONS: ActionStylePreset[] = [
+  "Natural tension",
+  "Viral chase",
+  "Close-contact fight",
+  "Ambush burst",
+  "Forced retreat",
+];
 
 type Step2EngineQualityProps = {
   qualityReco: QualityRecommendations;
@@ -55,9 +64,11 @@ type Step2EngineQualityProps = {
   onMediaAnalysisComplete: (result: MediaAnalysisResult) => void;
   onClearMediaAnalysis: () => void;
   sceneDescription: string;
+  actionStyle: ActionStylePreset;
   sceneDescriptionMode: "auto" | "manual";
   sceneDescriptionTouched: boolean;
   sceneMode: "romanized" | "english";
+  onActionStyleChange: (style: ActionStylePreset) => void;
   onSceneModeChange: (mode: "romanized" | "english") => void;
   onAutoFillSceneDescription: () => void;
   onRegenerateSceneDescription: () => void;
@@ -103,9 +114,11 @@ export default function Step2EngineQuality({
   onMediaAnalysisComplete,
   onClearMediaAnalysis,
   sceneDescription,
+  actionStyle,
   sceneDescriptionMode,
   sceneDescriptionTouched,
   sceneMode,
+  onActionStyleChange,
   onSceneModeChange,
   onAutoFillSceneDescription,
   onRegenerateSceneDescription,
@@ -544,6 +557,40 @@ export default function Step2EngineQuality({
           </div>
 
           <div className="mb-3 flex flex-wrap items-center gap-2">
+            <div className="w-full rounded-xl border border-orange-200 bg-white/75 p-3">
+              <div className="flex flex-wrap items-center justify-between gap-2">
+                <div>
+                  <div className="text-[10px] font-semibold uppercase tracking-[0.08em] text-orange-700">
+                    Action Style
+                  </div>
+                  <p className="mt-1 text-[11px] leading-relaxed text-orange-700">
+                    Close-contact fight automatically unlocks Kling&apos;s faster clash path so you do not need to type trigger words by hand.
+                  </p>
+                </div>
+                <span className="rounded-full bg-orange-100 px-2.5 py-1 text-[10px] font-semibold text-orange-800">
+                  {actionStyle}
+                </span>
+              </div>
+              <div className="mt-3 flex flex-wrap gap-2">
+                {ACTION_STYLE_OPTIONS.map((style) => {
+                  const isActive = actionStyle === style;
+                  return (
+                    <button
+                      key={style}
+                      type="button"
+                      onClick={() => onActionStyleChange(style)}
+                      className={`rounded-xl border px-3 py-2 text-xs font-semibold transition-all ${
+                        isActive
+                          ? "border-orange-700 bg-orange-700 text-white"
+                          : "border-orange-200 bg-white text-orange-700 hover:bg-orange-100"
+                      }`}
+                    >
+                      {style}
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
             <div className="flex overflow-hidden rounded-xl border border-orange-200 bg-white">
               {(["romanized", "english"] as const).map((mode) => (
                 <button

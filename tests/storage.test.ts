@@ -84,6 +84,7 @@ function makeLastGeneratedOutputRecord(): LastGeneratedOutputRecord {
       prey: "White-tailed Deer",
       wildlifeScopeMode: "USA / Canada Wildlife",
       contentLane: "Escape",
+      actionStyle: "Natural tension",
       cameraAnglePreset: "Ground-level tension",
       arc: "Escape from danger",
       habitat: "Rocky Mountain Meadow",
