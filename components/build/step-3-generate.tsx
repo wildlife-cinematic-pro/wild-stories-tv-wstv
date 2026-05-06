@@ -1,9 +1,10 @@
 "use client";
 
-import { useRef, useState } from "react";
+import { useMemo, useRef, useState } from "react";
 
 import ConceptVariantLab from "@/components/build/concept-variant-lab";
 import GenerationOutputBoundary from "@/components/build/generation-output-boundary";
+import Runway2026ProductionAssistantCard from "@/components/build/runway-2026-production-assistant-card";
 import SectionLockControls from "@/components/build/section-lock-controls";
 import OutputCards from "@/components/OutputCards";
 
@@ -13,6 +14,7 @@ import {
   buildReviewOnlyPrompt,
 } from "@/lib/ai-handoff-prompts";
 import type { PublishFlowSummary } from "@/lib/build-package";
+import { buildCreatorQaPack } from "@/lib/creator-qa-pack";
 import { buildPinnedOutputComparison } from "@/lib/creator-qa-run-history";
 import type {
   CreatorQaRun,
@@ -20,6 +22,7 @@ import type {
 } from "@/lib/creator-qa-run-history";
 import { analyzeOutputReadiness } from "@/lib/output-readiness";
 import { formatPipelineStyleLabel } from "@/lib/page-build-helpers";
+import { buildRunway2026AssistantPack } from "@/lib/runway-2026-production-assistant";
 import { buildWorkflowQaSummary } from "@/lib/workflow-qa";
 import type {
   AIProvider,
@@ -144,21 +147,39 @@ export default function Step3Generate({
     : pkg?.durationLane
       ? pkg.durationLane.toUpperCase()
       : "Selected lane";
-  const workflowQa = buildWorkflowQaSummary({
-    predator,
-    prey,
-    arc,
-    contentLane,
-    habitat,
-    weather,
-    depthMode,
-    cameraAnglePreset,
-    emotionalTone,
-    animalVibe,
-    finalEnvironment,
-    sceneDescription,
-    pkg,
-  });
+  const workflowQa = useMemo(
+    () =>
+      buildWorkflowQaSummary({
+        predator,
+        prey,
+        arc,
+        contentLane,
+        habitat,
+        weather,
+        depthMode,
+        cameraAnglePreset,
+        emotionalTone,
+        animalVibe,
+        finalEnvironment,
+        sceneDescription,
+        pkg,
+      }),
+    [
+      animalVibe,
+      arc,
+      cameraAnglePreset,
+      contentLane,
+      depthMode,
+      emotionalTone,
+      finalEnvironment,
+      habitat,
+      pkg,
+      predator,
+      prey,
+      sceneDescription,
+      weather,
+    ]
+  );
   const workflowQaColor =
     workflowQa.status === "Ready"
       ? "border-emerald-200 bg-emerald-50 text-emerald-900"
@@ -180,6 +201,7 @@ export default function Step3Generate({
     pkg?.klingShots[0] ||
     pkg?.seedanceShots?.[0] ||
     "";
+  const creatorQaPack = useMemo(() => (pkg ? buildCreatorQaPack(pkg) : null), [pkg]);
   const aiHandoffInput = pkg
     ? {
         predator: currentOutputPredator,
@@ -195,6 +217,44 @@ export default function Step3Generate({
         hashtags: pkg.hashtags,
       }
     : null;
+  const runwayAssistantPack = useMemo(() => {
+    if (!pkg) {
+      return null;
+    }
+
+    return buildRunway2026AssistantPack({
+      predatorName: pkg.predatorName ?? predator,
+      preyName: pkg.preyName ?? prey,
+      environmentName: pkg.environmentName ?? finalEnvironment ?? habitat,
+      arcName: pkg.arcName ?? arc,
+      sceneDescription,
+      runwayModel: pkg.modelsUsed?.runway ?? "Gen-4.5",
+      klingModel: pkg.modelsUsed?.kling ?? "Kling 3.0 Pro",
+      imagePrompt: pkg.imagePrompt,
+      runwayShots: pkg.runwayShots,
+      klingShots: pkg.klingShots,
+      klingNative15s: pkg.klingNative15s,
+      negativePrompt: pkg.negativePrompt,
+      caption: pkg.caption,
+      hashtags: pkg.hashtags,
+      mainVideoPrompt,
+      failureRepairPromptAleph: creatorQaPack?.failureRepairPromptAleph,
+      qaStatus: workflowQa.status,
+      qaScore: workflowQa.score,
+      qaTopFixes: workflowQa.topFixes,
+    });
+  }, [
+    arc,
+    creatorQaPack?.failureRepairPromptAleph,
+    finalEnvironment,
+    habitat,
+    mainVideoPrompt,
+    pkg,
+    predator,
+    prey,
+    sceneDescription,
+    workflowQa,
+  ]);
 
   const formatPinnedOutputTimestamp = (createdAt: string) => {
     const date = new Date(createdAt);
@@ -635,6 +695,14 @@ export default function Step3Generate({
                 </div>
               )}
             </div>
+
+            {runwayAssistantPack && (
+              <Runway2026ProductionAssistantCard
+                pack={runwayAssistantPack}
+                onCopy={handleCopy}
+                copyFeedback={copyFeedback}
+              />
+            )}
 
             {aiHandoffInput && (
               <div className="mb-4 rounded-2xl border border-slate-200 bg-white p-4 shadow-sm shadow-slate-200/60">
