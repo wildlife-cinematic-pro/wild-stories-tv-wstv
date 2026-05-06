@@ -81,6 +81,7 @@ type Step1SetupProps = {
   preyOptions: string[];
   customPredatorCount: number;
   finalEnvironment: string;
+  storyboardHref: string;
   driftRisk: PredatorInfo["driftRisk"];
   workflowPresets: SavedWorkflowPreset[];
   workflowPresetPacks: SavedWorkflowPresetPack[];
@@ -123,6 +124,7 @@ type Step1SetupProps = {
   onResetDefaults: () => void;
   onContinue: () => void;
   onOpenCustomAnimal: () => void;
+  onOpenStoryboardWorkflow: () => void;
   onWorkflowPresetNameChange: (value: string) => void;
   onWorkflowPresetPackNameChange: (value: string) => void;
   onWorkflowPresetPackDescriptionChange: (value: string) => void;
@@ -181,6 +183,7 @@ export default function Step1Setup({
   preyOptions,
   customPredatorCount,
   finalEnvironment,
+  storyboardHref,
   driftRisk,
   workflowPresets,
   workflowPresetPacks,
@@ -223,6 +226,7 @@ export default function Step1Setup({
   onResetDefaults,
   onContinue,
   onOpenCustomAnimal,
+  onOpenStoryboardWorkflow,
   onWorkflowPresetNameChange,
   onWorkflowPresetPackNameChange,
   onWorkflowPresetPackDescriptionChange,
@@ -653,6 +657,26 @@ export default function Step1Setup({
               <div className="rounded-2xl border border-emerald-100 bg-emerald-50/70 p-3 text-[11px] leading-relaxed text-emerald-800 sm:col-span-2">
                 <span className="font-semibold">Facebook setup hint:</span>{" "}
                 {regionalStep1Hint} {animalPairGuidance}
+              </div>
+              <div className="rounded-2xl border border-cyan-100 bg-cyan-50/80 p-3 sm:col-span-2">
+                <div className="flex flex-wrap items-center justify-between gap-3">
+                  <div className="min-w-0">
+                    <p className="text-[11px] font-semibold uppercase tracking-[0.1em] text-cyan-700">
+                      Storyboard handoff
+                    </p>
+                    <p className="mt-1 text-[11px] leading-relaxed text-cyan-900/75">
+                      Send {predator} vs {prey} plus the current habitat setup into the 5-shot reel workflow.
+                    </p>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={onOpenStoryboardWorkflow}
+                    title={storyboardHref}
+                    className="rounded-xl border border-cyan-300 bg-cyan-600 px-3.5 py-2 text-xs font-semibold text-white shadow-sm transition hover:bg-cyan-500 active:scale-[0.98]"
+                  >
+                    Build 5-Shot Storyboard
+                  </button>
+                </div>
               </div>
               {wildlifeSafetyHint && (
                 <div className="rounded-2xl border border-rose-100 bg-rose-50/70 p-3 text-[11px] leading-relaxed text-rose-900 sm:col-span-2">
