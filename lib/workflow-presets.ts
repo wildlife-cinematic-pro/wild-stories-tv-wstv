@@ -1,5 +1,6 @@
 import type {
   AIProvider,
+  ActionStylePreset,
   AnimalVibe,
   Arc,
   BuildWorkflowPresetSnapshot,
@@ -63,6 +64,7 @@ export const WORKFLOW_TEST_PRESETS: WorkflowTestPreset[] = [
       prey: "Warthog",
       wildlifeScopeMode: "Global Viral Wildlife",
       contentLane: "Fishing Strike",
+      actionStyle: "Natural tension",
       cameraAnglePreset: "Waterline",
       arc: "Ambush attack",
       habitat: "Riverbank Reeds",
@@ -98,6 +100,7 @@ export const WORKFLOW_TEST_PRESETS: WorkflowTestPreset[] = [
       prey: "Ground Squirrel",
       wildlifeScopeMode: "USA Wildlife",
       contentLane: "Auto",
+      actionStyle: "Natural tension",
       cameraAnglePreset: "Front full-body",
       arc: "Ambush attack",
       habitat: "Forest Clearing",
@@ -133,6 +136,7 @@ export const WORKFLOW_TEST_PRESETS: WorkflowTestPreset[] = [
       prey: "Arctic Fox",
       wildlifeScopeMode: "World Wide Wildlife",
       contentLane: "Escape",
+      actionStyle: "Natural tension",
       cameraAnglePreset: "Front full-body",
       arc: "Escape from danger",
       habitat: "Snow Field Tundra",
@@ -168,6 +172,7 @@ export const WORKFLOW_TEST_PRESETS: WorkflowTestPreset[] = [
       prey: "Bull Elk",
       wildlifeScopeMode: "USA / Canada Wildlife",
       contentLane: "Pack Hunt",
+      actionStyle: "Natural tension",
       cameraAnglePreset: "Front full-body",
       arc: "Pack hunting strategy",
       habitat: "Rocky Mountain Meadow",
@@ -203,6 +208,7 @@ export const WORKFLOW_TEST_PRESETS: WorkflowTestPreset[] = [
       prey: "Salmon",
       wildlifeScopeMode: "USA / Canada Wildlife",
       contentLane: "Fishing Strike",
+      actionStyle: "Natural tension",
       cameraAnglePreset: "Waterline",
       arc: "Ambush attack",
       habitat: "Riverbank Reeds",
@@ -243,6 +249,13 @@ const hookModes: Array<HookFamily | "all"> = [
   "reversal",
 ];
 const aiProviders: AIProvider[] = ["none", "claude", "gemini"];
+const actionStylePresets: ActionStylePreset[] = [
+  "Natural tension",
+  "Viral chase",
+  "Close-contact fight",
+  "Ambush burst",
+  "Forced retreat",
+];
 
 function isRecord(value: unknown): value is Record<string, unknown> {
   return Boolean(value) && typeof value === "object" && !Array.isArray(value);
@@ -414,6 +427,11 @@ export function normalizeWorkflowPresetSnapshot(
       value.contentLane,
       contentLaneOptions,
       "Auto"
+    ),
+    actionStyle: pickOption<ActionStylePreset>(
+      value.actionStyle,
+      actionStylePresets,
+      "Natural tension"
     ),
     cameraAnglePreset: pickOption<CameraAnglePreset>(
       value.cameraAnglePreset,

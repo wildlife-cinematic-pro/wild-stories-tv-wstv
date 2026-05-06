@@ -6,6 +6,7 @@ import Link from "next/link";
 
 import type {
   AIProvider,
+  ActionStylePreset,
   Arc,
   CameraAnglePreset,
   DepthMode,
@@ -98,6 +99,7 @@ const DEFAULT_PREDATOR = "Mountain Lion";
 const DEFAULT_PREY = "White-tailed Deer";
 const DEFAULT_WILDLIFE_SCOPE_MODE: WildlifeScopeMode = "USA / Canada Wildlife";
 const DEFAULT_CONTENT_LANE: ContentLane = "Auto";
+const DEFAULT_ACTION_STYLE: ActionStylePreset = "Natural tension";
 const DEFAULT_CAMERA_PRESET: CameraAnglePreset = DEFAULT_CAMERA_ANGLE_PRESET;
 const DEFAULT_ARC: Arc = "Ambush attack";
 const DEFAULT_WEATHER: Weather = "Golden Hour";
@@ -116,6 +118,7 @@ export default function Page() {
     DEFAULT_WILDLIFE_SCOPE_MODE
   );
   const [contentLane, setContentLane] = useState<ContentLane>(DEFAULT_CONTENT_LANE);
+  const [actionStyle, setActionStyle] = useState<ActionStylePreset>(DEFAULT_ACTION_STYLE);
   const [cameraAnglePreset, setCameraAnglePreset] = useState<CameraAnglePreset>(
     DEFAULT_CAMERA_PRESET
   );
@@ -185,6 +188,7 @@ export default function Page() {
       setPrey(snapshot.prey);
       setWildlifeScopeMode(snapshot.wildlifeScopeMode);
       setContentLane(snapshot.contentLane);
+      setActionStyle(snapshot.actionStyle ?? DEFAULT_ACTION_STYLE);
       setCameraAnglePreset(snapshot.cameraAnglePreset);
       setArc(snapshot.arc);
       setConceptArcOverride(null);
@@ -251,6 +255,7 @@ export default function Page() {
     setPrey(DEFAULT_PREY);
     setWildlifeScopeMode(DEFAULT_WILDLIFE_SCOPE_MODE);
     setContentLane(DEFAULT_CONTENT_LANE);
+    setActionStyle(DEFAULT_ACTION_STYLE);
     setCameraAnglePreset(DEFAULT_CAMERA_PRESET);
     setArc(DEFAULT_ARC);
     setConceptArcOverride(null);
@@ -420,6 +425,7 @@ export default function Page() {
       prey,
       wildlifeScopeMode,
       contentLane,
+      actionStyle,
       cameraAnglePreset,
       arc: previewArc,
       habitat,
@@ -449,6 +455,7 @@ export default function Page() {
       activeProvider,
       animalVibe,
       autoApplyHighDrift,
+      actionStyle,
       cameraAnglePreset,
       contentLane,
       depthMode,
@@ -802,6 +809,7 @@ export default function Page() {
     arc,
     previewArc,
     contentLane,
+    actionStyle,
     cameraAnglePreset,
     weather,
     depthMode,
@@ -1301,9 +1309,11 @@ export default function Page() {
                 onMediaAnalysisComplete={setMediaAnalysis}
                 onClearMediaAnalysis={() => setMediaAnalysis(null)}
                 sceneDescription={sceneDescription}
+                actionStyle={actionStyle}
                 sceneDescriptionMode={sceneDescriptionMode}
                 sceneDescriptionTouched={sceneDescriptionTouched}
                 sceneMode={sceneMode}
+                onActionStyleChange={setActionStyle}
                 onSceneModeChange={setSceneMode}
                 onAutoFillSceneDescription={() => applyAutoSceneDescription(0)}
                 onRegenerateSceneDescription={handleSceneDescriptionRegenerate}

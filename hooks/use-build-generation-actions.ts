@@ -6,6 +6,7 @@ import type { PromotedVariantPublishCopyOverride } from "@/hooks/use-concept-var
 import type { DurationLaneMode, MarketMode } from "@/hooks/use-build-preview";
 import type {
   AIProvider,
+  ActionStylePreset,
   AnimalVibe,
   Arc,
   CameraAnglePreset,
@@ -56,6 +57,7 @@ interface UseBuildGenerationActionsInput {
   arc: Arc;
   previewArc: Arc;
   contentLane: ContentLane;
+  actionStyle: ActionStylePreset;
   cameraAnglePreset: CameraAnglePreset;
   weather: Weather;
   depthMode: DepthMode;
@@ -110,6 +112,7 @@ export function useBuildGenerationActions({
   arc,
   previewArc,
   contentLane,
+  actionStyle,
   cameraAnglePreset,
   weather,
   depthMode,
@@ -185,6 +188,7 @@ export function useBuildGenerationActions({
       singleActionRule,
       microMotion,
       heroVeo,
+      actionStyle,
     };
 
     return buildGeneratedPackageDraft({

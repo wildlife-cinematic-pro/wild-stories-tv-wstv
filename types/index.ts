@@ -131,6 +131,12 @@ export type DurationLane = "short" | "medium" | "long";
 export type PipelineStyle = "4-shot" | "long-hybrid-4-shot";
 
 export type HookFamily = "danger" | "curiosity" | "reversal";
+export type ActionStylePreset =
+  | "Natural tension"
+  | "Viral chase"
+  | "Close-contact fight"
+  | "Ambush burst"
+  | "Forced retreat";
 
 export type OpeningFrameScore = {
   total: number;
@@ -471,6 +477,7 @@ export type BuildWorkflowPresetSnapshot = {
   prey: string;
   wildlifeScopeMode: WildlifeScopeMode;
   contentLane: ContentLane;
+  actionStyle: ActionStylePreset;
   cameraAnglePreset: CameraAnglePreset;
   arc: Arc;
   habitat: HabitatPreset;
@@ -667,6 +674,7 @@ export type QualityOptions = {
   singleActionRule: boolean;
   microMotion: boolean;
   heroVeo: boolean;
+  actionStyle?: ActionStylePreset;
   intensityMode?: boolean; // Slightly increases action energy and environmental response without sacrificing readability
   seamlessShot?: boolean; // Appends "Continuous, seamless shot" to Runway prompts
 };

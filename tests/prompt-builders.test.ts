@@ -974,6 +974,35 @@ describe("Step 7C — supporting prompt helpers keep readability language", () =
     expect(out).not.toContain("Shot 2, 0:03-0:05");
   });
 
+  it("Kling close-contact action style unlocks the compact 3-shot 15s path without manual trigger words", () => {
+    const payload = buildKlingNative15sPayload(
+      "Wild Boar",
+      "Black Bear",
+      "South Florida Everglades marsh with shallow water channel, muddy banks, reeds, sawgrass, swamp vegetation, distant tree line",
+      "Overcast",
+      "Explosive Energy",
+      "BBC Earth Documentary",
+      "Both animals stay readable from frame one with immediate pressure.",
+      {
+        ...quality,
+        actionStyle: "Close-contact fight",
+      }
+    );
+
+    expect(payload.multishotPrompt).toContain("Shot 1, 0:00-0:04");
+    expect(payload.multishotPrompt).toContain("Shot 2, 0:04-0:09");
+    expect(payload.multishotPrompt).toContain("Shot 3, 0:09-0:15");
+    expect(payload.multishotPrompt).not.toContain("Shot 4, 0:08-0:12");
+    expect(payload.multishotPrompt).toMatch(/first clash hits by 5 seconds/i);
+    expect(payload.multishotPrompt).toMatch(/shoulder-to-shoulder/i);
+    expect(payload.multishotPrompt).toMatch(/controlled grapple/i);
+    expect(payload.multishotPrompt).toMatch(/pin-down hold near .*shoulder area|forced retreat/i);
+    expect(payload.multishotPrompt).toContain("both animals fully visible");
+    expect(payload.combinedPrompt.length).toBeLessThanOrEqual(2500);
+    expect(payload.totalChars).toBe(payload.combinedPrompt.length);
+    expect(payload.withinLimit).toBe(true);
+  });
+
   it("Kling close-contact trigger produces the earlier clash and grapple structure inside the 2500-char combined limit", () => {
     const payload = buildKlingNative15sPayload(
       "Wild Boar",

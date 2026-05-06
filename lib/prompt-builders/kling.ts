@@ -882,11 +882,29 @@ function normalizeCloseContactText(input?: string): string {
   return String(input ?? "").toLowerCase().trim();
 }
 
+type KlingCloseContactMode = "five-beat" | "compact-3-shot";
+
 function hasKlingCloseContactFightTrigger(sceneDesc?: string): boolean {
   const text = normalizeCloseContactText(sceneDesc);
-  return /(grapple|pin[- ]?down|body clash|shoulder[- ]to[- ]shoulder|overpower|wrestling pressure|forced retreat|close[- ]contact|restraint fight|body contact|dominant restraint)/i.test(
+  return /(grapple|pin[- ]?down|body clash|shoulder[- ]to[- ]shoulder|overpower|wrestling pressure|forced retreat|close[- ]?contact|restraint fight|body contact|dominant restraint)/i.test(
     text
   );
+}
+
+function getKlingCloseContactMode(
+  sceneDesc?: string,
+  quality?: QualityOptions
+): KlingCloseContactMode | null {
+  if (quality?.actionStyle === "Close-contact fight") {
+    return "compact-3-shot";
+  }
+
+  const text = normalizeCloseContactText(sceneDesc);
+  if (/compact[- ]?3[- ]?shot|3[- ]?shot close[- ]?contact/i.test(text)) {
+    return "compact-3-shot";
+  }
+
+  return hasKlingCloseContactFightTrigger(sceneDesc) ? "five-beat" : null;
 }
 
 function isWildBoarBlackBearPair(predator: string, prey: string): boolean {
@@ -938,7 +956,7 @@ function buildKlingCloseContactNegativePrompt(minimal = false): string {
   return items.join(", ");
 }
 
-function buildKlingCloseContactBeatSet(
+function buildKlingCloseContactFiveBeatSet(
   predator: string,
   prey: string,
   sceneDesc?: string,
@@ -991,6 +1009,51 @@ function buildKlingCloseContactBeatSet(
       ];
 }
 
+function buildKlingCloseContactThreeShotSet(
+  predator: string,
+  prey: string,
+  sceneDesc?: string,
+  compact = false
+): string[] {
+  const forcedRetreatEnding = /forced retreat|break away|breaks away|retreat/i.test(
+    normalizeCloseContactText(sceneDesc)
+  );
+
+  if (isWildBoarBlackBearPair(predator, prey)) {
+    return compact
+      ? [
+          `Shot 1, 0:00-0:04: ${predator} loads low on the left muddy bank and surges fast while ${prey} braces on the right edge of the shallow channel, both fully visible with immediate threat.`,
+          `Shot 2, 0:04-0:09: First clash hits by 5 seconds in a shoulder-to-shoulder body clash with muddy splash, low water burst, and a controlled grapple as ${prey} twists to break free.`,
+          forcedRetreatEnding
+            ? `Shot 3, 0:09-0:15: ${predator} keeps relentless pressure until ${prey} breaks into a forced retreat, with both animals fully visible, stable anatomy, and grounded hoof and paw contact.`
+            : `Shot 3, 0:09-0:15: ${predator} keeps relentless pressure into a dominant pin-down hold near ${prey}'s shoulder area, both animals fully visible with stable anatomy and grounded hoof and paw contact.`,
+        ]
+      : [
+          `Shot 1, 0:00-0:04: ${predator} loads low on the left muddy bank with immediate visible threat and explodes forward almost at once while ${prey} braces on the right edge of the shallow water channel, both animals fully visible in a wide readable frame.`,
+          `Shot 2, 0:04-0:09: First clash hits by 5 seconds in a hard shoulder-to-shoulder body clash with muddy splash, low water burst, and a controlled grapple as ${prey} twists hard to break free without losing full-body readability.`,
+          forcedRetreatEnding
+            ? `Shot 3, 0:09-0:15: ${predator} keeps relentless pressure through the grapple until ${prey} breaks into a forced retreat under heavy control, ending with stable anatomy, grounded hoof and paw contact, and both animals still fully visible.`
+            : `Shot 3, 0:09-0:15: ${predator} keeps relentless pressure through the grapple and converts it into a dominant pin-down hold near ${prey}'s shoulder area, ending with stable anatomy, grounded hoof and paw contact, and both animals still fully visible.`,
+        ];
+  }
+
+  return compact
+    ? [
+        `Shot 1, 0:00-0:04: Immediate visible threat and fast commit in a wide readable frame with both animals fully visible.`,
+        `Shot 2, 0:04-0:09: First clash hits by 5 seconds with shoulder-to-shoulder contact, clear impact, and a controlled grapple with grounded physics.`,
+        forcedRetreatEnding
+          ? `Shot 3, 0:09-0:15: Dominant pressure forces a believable retreat ending while both animals stay fully visible with stable anatomy and no visible injury.`
+          : `Shot 3, 0:09-0:15: Dominant restraint pressure resolves into a pin-down hold near the shoulder area while both animals stay fully visible with stable anatomy and no visible injury.`,
+      ]
+    : [
+        `Shot 1, 0:00-0:04: Immediate loaded threat with a fast commit, both animals fully visible in a wide readable frame, and no slow empty buildup before the move breaks.`,
+        `Shot 2, 0:04-0:09: First clash hits by 5 seconds with a shoulder-to-shoulder body clash, muddy or dust response, and a controlled grapple that keeps both bodies readable and grounded.`,
+        forcedRetreatEnding
+          ? `Shot 3, 0:09-0:15: Dominant pressure carries through the grapple until a forced retreat breaks loose, ending with stable anatomy, believable body mass, grounded contact, and no visible injury.`
+          : `Shot 3, 0:09-0:15: Dominant restraint pressure carries through the grapple into a pin-down hold near the shoulder area, ending with stable anatomy, believable body mass, grounded contact, and no visible injury.`,
+      ];
+}
+
 export function buildKlingNative15sPayload(
   predator: string,
   prey: string,
@@ -1001,6 +1064,7 @@ export function buildKlingNative15sPayload(
   sceneDesc?: string,
   quality?: QualityOptions
 ): KlingNative15sPayload {
+  const activeMode = getKlingCloseContactMode(sceneDesc, quality) ?? "five-beat";
   const cleanWeather = sanitizeWeatherPhrase(weatherVariants[weather]);
   const toneCue = getCompactKlingToneCue(emotionalTone);
   const vibeCue = getCompactKlingVibeCue(animalVibe);
@@ -1017,10 +1081,16 @@ export function buildKlingNative15sPayload(
       `Image-to-video from master image. Preserve the same ${predator} on the left and ${prey} on the right in ${envCue}.${weatherText} Same scale, spacing, and first-frame composition. Photorealistic raw wildlife documentary with ${toneCue}, ${vibeCue}, strong viral Facebook Reels energy, ${qualityCue}, both animals fully visible, wide readable framing, and grounded physics.`
     );
   });
-  const beatSets = [
-    buildKlingCloseContactBeatSet(predator, prey, sceneDesc, false),
-    buildKlingCloseContactBeatSet(predator, prey, sceneDesc, true),
-  ];
+  const beatSets =
+    activeMode === "compact-3-shot"
+      ? [
+          buildKlingCloseContactThreeShotSet(predator, prey, sceneDesc, false),
+          buildKlingCloseContactThreeShotSet(predator, prey, sceneDesc, true),
+        ]
+      : [
+          buildKlingCloseContactFiveBeatSet(predator, prey, sceneDesc, false),
+          buildKlingCloseContactFiveBeatSet(predator, prey, sceneDesc, true),
+        ];
   const continuityVariants = [
     "Continuity lock: keep exact animal identity, same habitat geometry, same lighting direction, stable anatomy, believable body mass, grounded hoof and paw contact, and no crop or overlap confusion.",
     "Continuity lock: keep exact animal identity, same habitat and lighting, stable anatomy, grounded contact, both animals fully visible, no crop, no overlap confusion.",
@@ -1223,7 +1293,9 @@ export function buildKlingFramesPromptCard(
     });
   }
 
-  if (hasKlingCloseContactFightTrigger(sceneDesc)) {
+  const closeContactMode = getKlingCloseContactMode(sceneDesc, quality);
+
+  if (closeContactMode) {
     const payload = buildKlingNative15sPayload(
       predator,
       prey,
@@ -1237,6 +1309,14 @@ export function buildKlingFramesPromptCard(
     const klingLengthLine = payload.withinLimit
       ? `Kling Frames Prompt: ${payload.totalChars} / ${KLING_FRAMES_CHAR_LIMIT} chars`
       : `PROMPT TOO LONG: ${payload.totalChars} / ${KLING_FRAMES_CHAR_LIMIT}`;
+    const closeContactLabel =
+      closeContactMode === "compact-3-shot"
+        ? "3-shot close-contact fight structure"
+        : "5-beat close-contact fight structure";
+    const closeContactNote =
+      closeContactMode === "compact-3-shot"
+        ? "Close-contact fight mode triggered from Action Style or scene description. The compact 3-shot pacing hits the first clash by 0:05 and keeps the strongest grapple pressure in the 0:04–0:15 range."
+        : "Close-contact fight mode triggered from scene description. Fight pacing now lands first contact by 0:05 and keeps the strongest clash pressure in the 0:05–0:12 range.";
 
     return buildStructuredPrompt({
       fullText: `KLING FRAMES PROMPT [${model}]
@@ -1250,13 +1330,13 @@ ${klingLengthLine}
 ${payload.combinedPrompt}
 
 ─── OPTIONAL NOTES — reference only, do NOT paste into Kling ───
-Close-contact fight mode triggered from scene description. Fight pacing now lands first contact by 0:05 and keeps the strongest clash pressure in the 0:05–0:12 range.`,
+${closeContactNote}`,
       pasteReady: sanitizeForEngine(payload.combinedPrompt, "kling"),
       settings: [
         klingLengthLine,
         `Combined prompt chars: ${payload.totalChars}`,
         `Within 2500-char limit: ${payload.withinLimit ? "yes" : "no"}`,
-        "5-beat close-contact fight structure",
+        closeContactLabel,
       ],
       metadata: {
         engine: "kling",
