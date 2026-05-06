@@ -1,22 +1,23 @@
 import { readFile } from "node:fs/promises";
 import path from "node:path";
 
-import {
-  deriveMasterImagePrompts,
-  formatSceneName,
-  getStoryboardMasterImageStrategy,
-  type StoryboardPreviewData,
-  type StoryboardPreviewScene,
-  type StoryboardValidationCheck,
-  type StoryboardValidationSummary,
-} from "@/lib/storyboard-from-build";
-
-type StoryboardSequenceScene = Omit<
-  StoryboardPreviewScene,
-  "displayName" | "negativePrompt" | "continuityRules"
-> & {
-  nanoBananaPrompt?: string;
-  gptImagePrompt?: string;
+type StoryboardSequenceScene = {
+  id: number;
+  name: string;
+  startTime: number;
+  duration: number;
+  camera: string;
+  motion: string;
+  finalShotReference: string | null;
+  previewImage: string | null;
+  previewVideo: string | null;
+  promptReference: string;
+  runwayPromptReference: string;
+  klingPromptReference: string;
+  imagePrompt: string;
+  videoPrompt: string;
+  runwayPrompt: string;
+  klingPrompt: string;
 };
 
 type StoryboardSequenceExport = {
@@ -24,6 +25,22 @@ type StoryboardSequenceExport = {
   duration: number;
   sceneCount: number;
   sequence: StoryboardSequenceScene[];
+};
+
+type StoryboardValidationSummary = {
+  sceneCount: number;
+  promptCount: number;
+  validScenes: number;
+  validPrompts: number;
+};
+
+type StoryboardValidationCheck = {
+  sceneId: number;
+  sceneName: string;
+  valid: boolean;
+  errors?: string[];
+  promptType?: string;
+  failedChecks?: string[];
 };
 
 type StoryboardValidationExport = {
@@ -34,19 +51,26 @@ type StoryboardValidationExport = {
   promptChecks: StoryboardValidationCheck[];
 };
 
-type StoryboardSourceScene = {
-  id: number;
-  description?: string;
-  subject?: string;
-  action?: string;
-  lighting?: string;
-  environment?: string;
-};
-
 type StoryboardSource = {
   negativePrompt?: string;
   continuityRules?: string[];
-  scenes?: StoryboardSourceScene[];
+};
+
+export type StoryboardPreviewScene = StoryboardSequenceScene & {
+  displayName: string;
+  negativePrompt: string;
+  continuityRules: string[];
+};
+
+export type StoryboardPreviewData = {
+  project: string;
+  duration: number;
+  sceneCount: number;
+  valid: boolean;
+  summary: StoryboardValidationSummary;
+  sceneChecks: StoryboardValidationCheck[];
+  promptChecks: StoryboardValidationCheck[];
+  sequence: StoryboardPreviewScene[];
 };
 
 const STORYBOARD_ROOT = path.join(process.cwd(), "storyboard_system");
@@ -60,37 +84,12 @@ async function readJsonFile<T>(filePath: string): Promise<T> {
   return JSON.parse(contents) as T;
 }
 
-function inferPairFromScene(scene: StoryboardSequenceScene): {
-  predator: string;
-  prey: string;
-} {
-  const text = `${scene.subject ?? ""} ${scene.action ?? ""} ${scene.imagePrompt ?? ""} ${scene.videoPrompt ?? ""}`.trim();
-  const lowerText = text.toLowerCase();
-  const leftMatch = /(?:a |an |the )?([a-z][a-z -]+?) on the left/.exec(lowerText);
-  const rightMatch = /(?:a |an |the )?([a-z][a-z -]+?) on the right/.exec(lowerText);
-
-  if (leftMatch && rightMatch) {
-    return {
-      predator: leftMatch[1].trim(),
-      prey: rightMatch[1].trim(),
-    };
-  }
-
-  const whileMatch = /(?:a |an |the )?([a-z][a-z -]+?) .* while (?:the |a |an )?([a-z][a-z -]+?) /.exec(
-    lowerText
-  );
-
-  if (whileMatch) {
-    return {
-      predator: whileMatch[1].trim(),
-      prey: whileMatch[2].trim(),
-    };
-  }
-
-  return {
-    predator: "wild predator",
-    prey: "wild prey",
-  };
+function formatSceneName(name: string): string {
+  return name
+    .split(/[_-]+/)
+    .filter(Boolean)
+    .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
+    .join(" ");
 }
 
 export async function loadStoryboardPreviewData(): Promise<StoryboardPreviewData | null> {
@@ -103,57 +102,21 @@ export async function loadStoryboardPreviewData(): Promise<StoryboardPreviewData
 
     const negativePrompt = source.negativePrompt ?? "";
     const continuityRules = source.continuityRules ?? [];
-    const sourceSceneMap = new Map((source.scenes ?? []).map((scene) => [scene.id, scene] as const));
-    const masterImageStrategy = getStoryboardMasterImageStrategy();
 
     return {
       project: sequenceExport.project,
       duration: sequenceExport.duration,
       sceneCount: sequenceExport.sceneCount,
       valid: validationExport.valid,
-      sourceLabel: "Static storyboard",
       summary: validationExport.summary,
       sceneChecks: validationExport.sceneChecks,
       promptChecks: validationExport.promptChecks,
-      negativePrompt,
-      continuityRules,
-      sequence: sequenceExport.sequence.map((scene) => {
-        const sourceScene = sourceSceneMap.get(scene.id);
-        const pair = inferPairFromScene(scene);
-        const description = sourceScene?.description ?? scene.description ?? formatSceneName(scene.name);
-        const subject = sourceScene?.subject ?? scene.subject ?? `${pair.predator} left, ${pair.prey} right`;
-        const action = sourceScene?.action ?? scene.action ?? "hold readable wildlife spacing";
-        const environment = sourceScene?.environment ?? scene.environment ?? "natural wildlife habitat with readable spacing";
-        const lighting = sourceScene?.lighting ?? scene.lighting ?? "natural wildlife documentary light";
-        const derivedPrompts = deriveMasterImagePrompts({
-          predator: pair.predator,
-          prey: pair.prey,
-          scene: {
-            camera: scene.camera,
-            description,
-            action,
-            environment,
-            lighting,
-          },
-          continuityRules,
-          negativePrompt,
-        });
-
-        return {
-          ...scene,
-          displayName: formatSceneName(scene.name),
-          description,
-          subject,
-          action,
-          environment,
-          lighting,
-          nanoBananaPrompt: scene.nanoBananaPrompt ?? derivedPrompts.nanoBananaPrompt,
-          gptImagePrompt: scene.gptImagePrompt ?? derivedPrompts.gptImagePrompt,
-          negativePrompt,
-          continuityRules,
-        };
-      }),
-      ...masterImageStrategy,
+      sequence: sequenceExport.sequence.map((scene) => ({
+        ...scene,
+        displayName: formatSceneName(scene.name),
+        negativePrompt,
+        continuityRules,
+      })),
     };
   } catch (error) {
     if (

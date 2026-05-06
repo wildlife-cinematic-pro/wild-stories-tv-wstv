@@ -27,10 +27,10 @@ export type StoryboardValidationCheck = {
 };
 
 export type StoryboardMasterImageStrategy = {
-  masterImagePrimaryEngine?: "nano-banana-2";
-  masterImageBackupEngine?: "gpt-image-2";
-  masterImageUseCase?: string;
-  backupImageUseCase?: string;
+  masterImagePrimaryEngine: "nano-banana-2";
+  masterImageBackupEngine: "gpt-image-2";
+  masterImageUseCase: string;
+  backupImageUseCase: string;
 };
 
 export type StoryboardPreviewScene = {
@@ -146,7 +146,7 @@ function slugify(value: string): string {
     .replace(/^_+|_+$/g, "");
 }
 
-export function formatSceneName(name: string): string {
+function formatSceneName(name: string): string {
   return name
     .split(/[_-]+/)
     .filter(Boolean)
@@ -170,6 +170,10 @@ function joinSentenceParts(parts: Array<string | null | undefined>): string {
 
 function normalizeAnimalName(value: string): string {
   return value.trim() || "wild animal";
+}
+
+function getLaneLabel(contentLane: ContentLane): string {
+  return contentLane === "Auto" ? "wildlife tension" : contentLane.toLowerCase();
 }
 
 function getWeatherLighting(weather: Weather): string {
@@ -201,7 +205,7 @@ function inferEnvironmentFromAnimals(
 ): string {
   const combined = `${predator} ${prey}`.toLowerCase();
 
-  if (/(orca|seal|shark|whale|dolphin)/.test(combined)) {
+  if (/(orc|seal|shark|whale|dolphin)/.test(combined)) {
     return "cold coastal water with readable spacing";
   }
 
@@ -275,7 +279,7 @@ function getSceneDurations(durationLane: DurationLane): number[] {
   }
 }
 
-function getCameraLines(cameraAnglePreset: CameraAnglePreset, hasFinalHold: boolean): string[] {
+function getCameraLines(cameraAnglePreset: CameraAnglePreset, hasFinalHold: boolean) {
   const establishing =
     cameraAnglePreset === "Overhead"
       ? "high overhead establishing shot"
@@ -314,7 +318,7 @@ function getCameraLines(cameraAnglePreset: CameraAnglePreset, hasFinalHold: bool
     : [establishing, entry, reaction, tension];
 }
 
-function getMotionLines(hasFinalHold: boolean): string[] {
+function getMotionLines(hasFinalHold: boolean) {
   return hasFinalHold
     ? ["slow pan", "subtle tracking move", "measured drift", "controlled push-in", "slow pull-back"]
     : ["slow pan", "subtle tracking move", "measured drift", "controlled hold"];
@@ -396,7 +400,7 @@ function buildBasePromptCore(args: {
   lighting: string;
   styleGuide?: string;
   continuityRules: readonly string[];
-}): string {
+}) {
   return joinSentenceParts([
     `${args.camera}, ${args.motion}`,
     `${args.description} in ${args.environment}`,
@@ -431,7 +435,7 @@ export function buildNanoBananaPrompt(args: {
     args.lighting,
     `${args.camera}, long-lens documentary framing`,
     `Continuity rules: ${continuity.join(", ")}`,
-    "Stable animal anatomy, realistic fur, feather, horn, or scale detail, grounded paw, hoof, claw, or body contact, consistent coat markings, clean first-frame composition for image-to-video",
+    "Stable animal anatomy, realistic fur, feather, horn, or scale detail, grounded contact, consistent coat markings, clean first-frame composition for image-to-video",
     negativePrompt,
   ]);
 }
@@ -454,13 +458,13 @@ export function buildGptImagePrompt(args: {
 
   return joinSentenceParts([
     "Clean wildlife cover still, 9:16 vertical, strict composition backup for GPT Image 2",
-    `A ${predatorName} and a ${preyName} with high subject readability, clean left-right blocking, thumbnail-safe framing, optional cover-safe negative space, and no text unless explicitly requested`,
+    `A ${predatorName} and a ${preyName} with high subject readability, clean left-right blocking, thumbnail-safe framing, and optional cover-safe negative space`,
     `${args.description}; ${args.action}`,
     args.environment,
     args.lighting,
     `${args.camera}, clear composition with readable foreground-background separation`,
     `Continuity rules: ${continuity.join(", ")}`,
-    "Poster-clean subject separation, stable anatomy, strict layout readability, alternate cover-safe composition",
+    "Poster-clean subject separation, stable anatomy, sharp silhouette readability, no text unless explicitly requested",
     negativePrompt,
   ]);
 }
@@ -566,10 +570,13 @@ function buildPreviewScene(args: {
 export function deriveMasterImagePrompts(args: {
   predator: string;
   prey: string;
-  scene: Pick<StoryboardPreviewScene, "camera" | "description" | "action" | "environment" | "lighting">;
+  scene: Pick<
+    StoryboardPreviewScene,
+    "camera" | "description" | "action" | "environment" | "lighting"
+  >;
   continuityRules?: readonly string[];
   negativePrompt?: string;
-}): { nanoBananaPrompt: string; gptImagePrompt: string } {
+}) {
   return {
     nanoBananaPrompt: buildNanoBananaPrompt({
       predator: args.predator,
@@ -688,11 +695,18 @@ function buildStoryboardSourceScenes(input: BuildStoryboardInput): StoryboardSou
     });
   }
 
-  return scenes.map((scene, index) => ({
-    id: index + 1,
-    duration: durations[index] ?? 4,
-    ...scene,
-  }));
+  let startTime = 0;
+
+  return scenes.map((scene, index) => {
+    const duration = durations[index] ?? 4;
+    const sourceScene: StoryboardSourceScene = {
+      id: index + 1,
+      duration,
+      ...scene,
+    };
+    startTime += duration;
+    return sourceScene;
+  });
 }
 
 function buildPreviewSequence(
@@ -752,7 +766,14 @@ export function buildStoryboardPreviewFromBuild(
 ): StoryboardPreviewData {
   const exportData = buildStoryboardJsonFromBuild(input);
   const sequence = buildPreviewSequence(input, exportData.scenes);
-  const promptTypes = ["image", "nano-banana-2", "gpt-image-2", "video", "runway", "kling"];
+  const promptTypes = [
+    "image",
+    "nano-banana-2",
+    "gpt-image-2",
+    "video",
+    "runway",
+    "kling",
+  ];
   const promptCount = sequence.length * promptTypes.length;
 
   return {
