@@ -428,6 +428,18 @@ export default function Step2EngineQuality({
                   onClick={() => onRunwayModelChange(model)}
                 />
               ))}
+
+              <div className="rounded-xl border border-green-100 bg-green-50 px-3.5 py-3 text-xs leading-relaxed text-green-900">
+                <div className="text-[10px] font-semibold uppercase tracking-[0.08em] text-green-600">
+                  Runway model use
+                </div>
+                <ul className="mt-2 space-y-1 text-[11px] text-green-800">
+                  <li>• Gen-4.5: final hero / clean wildlife I2V</li>
+                  <li>• Gen-4 Turbo: fast structure test</li>
+                  <li>• I2V prompts: motion/camera/physics only</li>
+                  <li>• Runway: no negative prompt</li>
+                </ul>
+              </div>
             </div>
             <div className="space-y-2">
               <div className="mb-1 flex items-center gap-2">
