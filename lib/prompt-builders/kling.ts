@@ -870,6 +870,199 @@ function buildKlingSafetyLine(includeDeath = false): string {
     : "no blood, no gore, no visible wounds.";
 }
 
+export type KlingNative15sPayload = {
+  multishotPrompt: string;
+  negativePrompt: string;
+  combinedPrompt: string;
+  totalChars: number;
+  withinLimit: boolean;
+};
+
+function normalizeCloseContactText(input?: string): string {
+  return String(input ?? "").toLowerCase().trim();
+}
+
+function hasKlingCloseContactFightTrigger(sceneDesc?: string): boolean {
+  const text = normalizeCloseContactText(sceneDesc);
+  return /(grapple|pin[- ]?down|body clash|shoulder[- ]to[- ]shoulder|overpower|wrestling pressure|forced retreat|close[- ]contact|restraint fight|body contact|dominant restraint)/i.test(
+    text
+  );
+}
+
+function isWildBoarBlackBearPair(predator: string, prey: string): boolean {
+  const pair = `${predator} ${prey}`.toLowerCase();
+  return pair.includes("boar") && pair.includes("bear");
+}
+
+function buildKlingCloseContactNegativePrompt(minimal = false): string {
+  const items = minimal
+    ? [
+        "blood",
+        "gore",
+        "visible injury",
+        "broken bones",
+        "killing",
+        "crop",
+        "hidden bodies",
+        "overlap confusion",
+        "chaotic blur",
+        "jump cuts",
+        "warped anatomy",
+        "extra limbs",
+        "humans",
+        "text",
+        "watermark",
+      ]
+    : [
+        "blood",
+        "gore",
+        "visible injury",
+        "torn flesh",
+        "broken bones",
+        "killing",
+        "graphic mauling",
+        "crop",
+        "hidden bodies",
+        "overlap confusion",
+        "chaotic blur",
+        "excessive camera shake",
+        "jump cuts",
+        "warped anatomy",
+        "extra limbs",
+        "merged bodies",
+        "humans",
+        "text",
+        "watermark",
+      ];
+
+  return items.join(", ");
+}
+
+function buildKlingCloseContactBeatSet(
+  predator: string,
+  prey: string,
+  sceneDesc?: string,
+  compact = false
+): string[] {
+  const forcedRetreatEnding = /forced retreat|break away|breaks away|retreat/i.test(
+    normalizeCloseContactText(sceneDesc)
+  );
+
+  if (isWildBoarBlackBearPair(predator, prey)) {
+    return compact
+      ? [
+          `Shot 1, 0:00-0:03: ${predator} loads low on the left muddy bank while ${prey} braces on the right edge of the shallow channel, both fully visible with a locked threat line.`,
+          `Shot 2, 0:03-0:05: ${predator} commits in one explosive muddy surge and closes the gap fast as ${prey} steps in to meet the line.`,
+          `Shot 3, 0:05-0:08: First contact by 5 seconds: shoulder-to-shoulder clash with a low water burst and muddy splash, both full bodies still readable.`,
+          `Shot 4, 0:08-0:12: Controlled grapple and wrestling pressure as ${predator} drives relentlessly and ${prey} twists to break free with grounded paw and hoof contact.`,
+          forcedRetreatEnding
+            ? `Shot 5, 0:12-0:15: ${prey} breaks into a forced retreat under heavy pressure while ${predator} owns the lane to the final frame.`
+            : `Shot 5, 0:12-0:15: ${predator} forces a dominant pin-down hold near ${prey}'s shoulder area while ${prey} twists but cannot reset, both animals fully visible.`,
+        ]
+      : [
+          `Shot 1, 0:00-0:03: ${predator} loads low on the left muddy bank while ${prey} braces on the right edge of the shallow water channel, both fully visible, locked on each other, and already showing loaded threat.`,
+          `Shot 2, 0:03-0:05: ${predator} commits in one explosive muddy charge and the distance closes fast as ${prey} twists in hard to meet the pressure instead of drifting backward.`,
+          `Shot 3, 0:05-0:08: First contact lands by 5 seconds with a hard shoulder-to-shoulder body clash, low water burst, and muddy splash while the wide frame keeps both full bodies readable.`,
+          `Shot 4, 0:08-0:12: Close-contact grapple and wrestling pressure stay controlled as ${predator} keeps relentless forward drive and ${prey} twists to break free with stable anatomy, believable body mass, and grounded hoof and paw contact.`,
+          forcedRetreatEnding
+            ? `Shot 5, 0:12-0:15: ${prey} finally breaks away into a forced retreat under heavy pressure while ${predator} still owns the lane, keeping the ending dominant, readable, and unresolved enough to replay.`
+            : `Shot 5, 0:12-0:15: ${predator} converts the grapple into a dominant pin-down hold near ${prey}'s shoulder area while ${prey} twists and strains to break loose, ending on hard visible restraint pressure rather than a weak near-fight hold.`,
+        ];
+  }
+
+  return compact
+    ? [
+        `Shot 1, 0:00-0:03: Immediate loaded posture and visible threat, both animals fully visible in a wide readable frame.`,
+        `Shot 2, 0:03-0:05: Sudden explosive commit closes distance fast with grounded acceleration.`,
+        `Shot 3, 0:05-0:08: First body clash by 5 seconds with shoulder-to-shoulder contact, clear impact, and both bodies still readable.`,
+        `Shot 4, 0:08-0:12: Controlled grapple and dominant restraint pressure with realistic traction, stable anatomy, and no overlap confusion.`,
+        forcedRetreatEnding
+          ? `Shot 5, 0:12-0:15: Forced retreat ending as one animal breaks away under heavy pressure while the other owns the lane.`
+          : `Shot 5, 0:12-0:15: Dominant pin-down hold near the shoulder area or a clean overpower hold, both animals still fully visible.`,
+      ]
+    : [
+        `Shot 1, 0:00-0:03: Immediate tension with loaded posture, visible threat, and both animals fully visible in a wide readable frame from the first moment.`,
+        `Shot 2, 0:03-0:05: Sudden explosive commit closes the distance fast with hard grounded acceleration and no wasted chase buildup.`,
+        `Shot 3, 0:05-0:08: First contact lands by 5 seconds in a shoulder-to-shoulder body clash with clear impact, realistic surface response, and both bodies still fully readable.`,
+        `Shot 4, 0:08-0:12: Controlled grapple and wrestling pressure take over as the lead animal keeps dominant restraint, the opposing animal twists to break free, and the frame stays readable with stable anatomy and grounded physics.`,
+        forcedRetreatEnding
+          ? `Shot 5, 0:12-0:15: End on a forced retreat as the opposing animal breaks away under heavy pressure while the lead animal still owns the lane, keeping the finish strong and believable.`
+          : `Shot 5, 0:12-0:15: End on a dominant pin-down hold near the shoulder area or a clean overpower hold, never graphic, always readable, with both animals still fully visible.`,
+      ];
+}
+
+export function buildKlingNative15sPayload(
+  predator: string,
+  prey: string,
+  env: string,
+  weather: Weather,
+  emotionalTone: EmotionalTone,
+  animalVibe: AnimalVibe,
+  sceneDesc?: string,
+  quality?: QualityOptions
+): KlingNative15sPayload {
+  const cleanWeather = sanitizeWeatherPhrase(weatherVariants[weather]);
+  const toneCue = getCompactKlingToneCue(emotionalTone);
+  const vibeCue = getCompactKlingVibeCue(animalVibe);
+  const qualityCue = buildCompactKlingQualityCue(quality);
+  const envVariants = [
+    compactEnvironmentPhrase(env, 12, 18),
+    compactEnvironmentPhrase(env, 8, 14),
+    compactEnvironmentPhrase(env, 6, 10),
+  ];
+  const introVariants = envVariants.map((envCue, index) => {
+    const weatherCue = index === 0 ? cleanWeather : index === 1 ? cleanWeather.replace(/\bcloudy overcast daylight\b/i, "overcast daylight") : "";
+    const weatherText = weatherCue ? ` ${weatherCue}.` : ".";
+    return cleanupPromptArtifacts(
+      `Image-to-video from master image. Preserve the same ${predator} on the left and ${prey} on the right in ${envCue}.${weatherText} Same scale, spacing, and first-frame composition. Photorealistic raw wildlife documentary with ${toneCue}, ${vibeCue}, strong viral Facebook Reels energy, ${qualityCue}, both animals fully visible, wide readable framing, and grounded physics.`
+    );
+  });
+  const beatSets = [
+    buildKlingCloseContactBeatSet(predator, prey, sceneDesc, false),
+    buildKlingCloseContactBeatSet(predator, prey, sceneDesc, true),
+  ];
+  const continuityVariants = [
+    "Continuity lock: keep exact animal identity, same habitat geometry, same lighting direction, stable anatomy, believable body mass, grounded hoof and paw contact, and no crop or overlap confusion.",
+    "Continuity lock: keep exact animal identity, same habitat and lighting, stable anatomy, grounded contact, both animals fully visible, no crop, no overlap confusion.",
+  ];
+  const negativeVariants = [
+    buildKlingCloseContactNegativePrompt(false),
+    buildKlingCloseContactNegativePrompt(true),
+  ];
+
+  const candidates: KlingNative15sPayload[] = [];
+
+  for (const intro of introVariants) {
+    for (const beats of beatSets) {
+      for (const continuity of continuityVariants) {
+        for (const negative of negativeVariants) {
+          const multishotPrompt = cleanupPromptArtifacts([
+            intro,
+            continuity,
+            ...beats,
+          ].join("\n\n"));
+          const combinedPrompt = `${multishotPrompt}\n\nNegative prompt: ${negative}`;
+          candidates.push({
+            multishotPrompt,
+            negativePrompt: negative,
+            combinedPrompt,
+            totalChars: combinedPrompt.length,
+            withinLimit: combinedPrompt.length <= KLING_CHAR_LIMIT,
+          });
+        }
+      }
+    }
+  }
+
+  const safeTargetHit = candidates.find((candidate) => candidate.totalChars <= 2350);
+  if (safeTargetHit) return safeTargetHit;
+
+  const hardLimitHit = candidates.find((candidate) => candidate.withinLimit);
+  if (hardLimitHit) return hardLimitHit;
+
+  return candidates.sort((a, b) => a.totalChars - b.totalChars)[0];
+}
+
 function clampKlingShotPrompt(input: string): string {
   return clampPromptToCharLimit(cleanupPromptArtifacts(input), KLING_MULTISHOT_SHOT_CHAR_LIMIT);
 }
@@ -1027,6 +1220,49 @@ export function buildKlingFramesPromptCard(
       fullText: `Kling Frames Prompt requires Kling 3.0 Pro or Kling 3.0 Standard. Selected: ${model}.`,
       pasteReady: `Kling Frames Prompt requires Kling 3.0 Pro or Kling 3.0 Standard. Selected: ${model}.`,
       metadata: { engine: "kling", title: "Kling Frames Prompt", variant: "kling-frames" },
+    });
+  }
+
+  if (hasKlingCloseContactFightTrigger(sceneDesc)) {
+    const payload = buildKlingNative15sPayload(
+      predator,
+      prey,
+      env,
+      weather,
+      emotionalTone,
+      animalVibe,
+      sceneDesc,
+      quality
+    );
+    const klingLengthLine = payload.withinLimit
+      ? `Kling Frames Prompt: ${payload.totalChars} / ${KLING_FRAMES_CHAR_LIMIT} chars`
+      : `PROMPT TOO LONG: ${payload.totalChars} / ${KLING_FRAMES_CHAR_LIMIT}`;
+
+    return buildStructuredPrompt({
+      fullText: `KLING FRAMES PROMPT [${model}]
+─────────────────────────────────────────────────────────
+${note}
+${qLead}
+Style note: ${vibe.style}. ${tone.video}.
+
+${klingLengthLine}
+═══ PASTE INTO KLING FRAMES — max 2500 chars (copy this block only) ═══
+${payload.combinedPrompt}
+
+─── OPTIONAL NOTES — reference only, do NOT paste into Kling ───
+Close-contact fight mode triggered from scene description. Fight pacing now lands first contact by 0:05 and keeps the strongest clash pressure in the 0:05–0:12 range.`,
+      pasteReady: sanitizeForEngine(payload.combinedPrompt, "kling"),
+      settings: [
+        klingLengthLine,
+        `Combined prompt chars: ${payload.totalChars}`,
+        `Within 2500-char limit: ${payload.withinLimit ? "yes" : "no"}`,
+        "5-beat close-contact fight structure",
+      ],
+      metadata: {
+        engine: "kling",
+        title: "Kling Frames Prompt",
+        variant: "kling-frames",
+      },
     });
   }
 

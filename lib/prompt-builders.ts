@@ -107,11 +107,13 @@ export {
 
 export {
   type KlingPromptPack,
+  type KlingNative15sPayload,
   buildKlingPromptPack,
   buildKlingShots,
   buildKlingFastOutput,
   buildKlingFramesPromptCard,
   buildKlingMultishotPromptCards,
+  buildKlingNative15sPayload,
   buildKlingNative15sCard,
   buildKlingNative15s,
   buildKlingSixShotCard,

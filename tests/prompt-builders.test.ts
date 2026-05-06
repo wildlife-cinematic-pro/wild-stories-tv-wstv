@@ -15,6 +15,7 @@ import {
   buildSeedancePromptPack,
   buildSeedanceShots,
   buildKlingNative15s,
+  buildKlingNative15sPayload,
   buildKlingNative15sCard,
   buildKlingFramesPromptCard,
   buildKlingMultishotPromptCards,
@@ -951,6 +952,96 @@ describe("Step 7C — supporting prompt helpers keep readability language", () =
     expect(shots.every((shot) => !/no\s*,\s*no/i.test(shot.pasteReady))).toBe(true);
     expect(shots[0].pasteReady).toMatch(/no blood, no gore, no visible wounds/i);
     expect(shots[3].pasteReady).toMatch(/no death close-up, no blood, no gore, no visible wounds/i);
+  });
+
+  it("Kling close-contact trigger keeps the standard 15s structure unchanged when trigger terms are absent", () => {
+    const out = buildKlingNative15s(
+      "Wolf Pack",
+      "Bison",
+      "Rocky Mountain meadow with sagebrush",
+      "Pack hunting strategy",
+      "Golden Hour",
+      "Kling 3.0 Pro",
+      "Raw Tension",
+      "BBC Earth Documentary",
+      "Both animals are visible immediately with no empty setup and clean tension from frame one.",
+      quality
+    );
+
+    expect(out).toContain("Shot 2, 3-6s");
+    expect(out).toContain("Shot 3, 6-10s");
+    expect(out).toContain("Shot 5, 13-15s");
+    expect(out).not.toContain("Shot 2, 0:03-0:05");
+  });
+
+  it("Kling close-contact trigger produces the earlier clash and grapple structure inside the 2500-char combined limit", () => {
+    const payload = buildKlingNative15sPayload(
+      "Wild Boar",
+      "Black Bear",
+      "South Florida Everglades marsh with shallow water channel, muddy banks, reeds, sawgrass, swamp vegetation, distant tree line",
+      "Overcast",
+      "Explosive Energy",
+      "BBC Earth Documentary",
+      "Close-contact restraint fight with body clash, controlled grapple, overpower pressure, dominant restraint, and pin-down hold.",
+      quality
+    );
+
+    expect(payload.multishotPrompt).toContain("Shot 1, 0:00-0:03");
+    expect(payload.multishotPrompt).toContain("Shot 2, 0:03-0:05");
+    expect(payload.multishotPrompt).toContain("Shot 3, 0:05-0:08");
+    expect(payload.multishotPrompt).toContain("Shot 4, 0:08-0:12");
+    expect(payload.multishotPrompt).toContain("Shot 5, 0:12-0:15");
+    expect(payload.multishotPrompt).toMatch(/explosive/i);
+    expect(payload.multishotPrompt).toMatch(/shoulder-to-shoulder/i);
+    expect(payload.multishotPrompt).toMatch(/grapple/i);
+    expect(payload.multishotPrompt).toMatch(/dominant/i);
+    expect(payload.multishotPrompt).toMatch(/pin-down hold near .*shoulder area|forced retreat/i);
+    expect(payload.multishotPrompt).toContain("both animals fully visible");
+    expect(payload.combinedPrompt).toContain("Negative prompt: ");
+    expect(payload.combinedPrompt.length).toBeLessThanOrEqual(2500);
+    expect(payload.totalChars).toBe(payload.combinedPrompt.length);
+    expect(payload.withinLimit).toBe(true);
+    expect(payload.negativePrompt).toContain("blood");
+    expect(payload.negativePrompt).toContain("gore");
+    expect(payload.negativePrompt).toContain("visible injury");
+  });
+
+  it("Kling close-contact path compacts long environment text while keeping the clash sequence intact", () => {
+    const payload = buildKlingNative15sPayload(
+      "Wild Boar",
+      "Black Bear",
+      "South Florida Everglades marsh with shallow reflective water, muddy banks, reeds, sawgrass, swamp vegetation, distant tree line, layered storm clouds, extra background foliage, long bank description, repeated marsh geometry, repeated waterline geometry, repeated vegetation geometry",
+      "Overcast",
+      "Explosive Energy",
+      "BBC Earth Documentary",
+      "Close-contact restraint fight with body clash, controlled grapple, overpower pressure, and forced retreat ending.",
+      quality
+    );
+
+    expect(payload.withinLimit).toBe(true);
+    expect(payload.combinedPrompt.length).toBeLessThanOrEqual(2500);
+    expect(payload.multishotPrompt).toContain("Shot 3, 0:05-0:08");
+    expect(payload.multishotPrompt).toMatch(/forced retreat|pin-down/i);
+  });
+
+  it("Kling close-contact path reports withinLimit=false when even the compacted combined prompt cannot fit", () => {
+    const hugePredator = `Wild Boar ${"alpha ".repeat(180)}`.trim();
+    const hugePrey = `Black Bear ${"omega ".repeat(180)}`.trim();
+    const payload = buildKlingNative15sPayload(
+      hugePredator,
+      hugePrey,
+      "South Florida Everglades marsh with shallow water channel, muddy banks, reeds, sawgrass",
+      "Overcast",
+      "Explosive Energy",
+      "BBC Earth Documentary",
+      "Close-contact restraint fight with body clash, controlled grapple, overpower pressure, and forced retreat ending.",
+      quality
+    );
+
+    expect(payload.totalChars).toBe(payload.combinedPrompt.length);
+    expect(payload.withinLimit).toBe(false);
+    expect(payload.multishotPrompt).toContain("Shot 3, 0:05-0:08");
+    expect(payload.negativePrompt).toContain("blood");
   });
 
   it("Kling Multishot adapts attack language across catalog pair types", () => {
