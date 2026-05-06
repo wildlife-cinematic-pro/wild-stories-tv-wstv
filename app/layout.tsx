@@ -4,9 +4,9 @@ import "./globals.css";
 import "./image-compact.css";
 
 export const metadata: Metadata = {
-  title: "AI Wildlife Cinematic Director",
+  title: "Wild Stories TV",
   description:
-    "Generate Seedance-first 4-shot wildlife prompt packs with optional Runway and Kling alternate workflows.",
+    "Cinematic AI wildlife reels, animal encounters, survival moments, and documentary-style wild stories. Join the Wild Crew.",
 };
 
 export default function RootLayout({
