@@ -149,7 +149,7 @@ export default function Page() {
   const [mediaAnalysis, setMediaAnalysis] = useState<MediaAnalysisResult | null>(null);
 
   // STEP 3
-  const [activeProvider, setActiveProvider] = useState<AIProvider>("none");
+  const [activeProvider, setActiveProvider] = useState<AIProvider>("gemini");
   const [pkg, setPkg] = useState<GeneratedPackage | null>(null);
   const [isGenerating, setIsGenerating] = useState(false);
   const [isRegeneratingUnlocked, setIsRegeneratingUnlocked] = useState(false);

@@ -354,7 +354,7 @@ export default function Step3Generate({
             still included as optional outputs.
           </div>
           <div className="flex flex-wrap gap-2">
-            {(["none", "gemini", "claude"] as AIProvider[]).map((provider) => (
+            {(["gemini", "openai", "claude", "none"] as AIProvider[]).map((provider) => (
               <button
                 key={provider}
                 type="button"
@@ -368,8 +368,10 @@ export default function Step3Generate({
                 {provider === "none"
                   ? "Off (Local)"
                   : provider === "gemini"
-                    ? "✦ Gemini"
-                    : "✦ Claude"}
+                    ? "✦ Gemini Default"
+                    : provider === "openai"
+                      ? "✦ ChatGPT / OpenAI"
+                      : "✦ Claude"}
               </button>
             ))}
           </div>

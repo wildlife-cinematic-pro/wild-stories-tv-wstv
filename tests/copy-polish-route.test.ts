@@ -3,20 +3,27 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 vi.mock("@/app/api/enhance/provider-calls", () => ({
   callGeminiText: vi.fn(),
   callClaudeText: vi.fn(),
+  callOpenAIText: vi.fn(),
   extractGeminiText: vi.fn(),
   extractClaudeText: vi.fn(),
+  extractOpenAIText: vi.fn(),
   getGeminiModelFallback: vi.fn(() => "gemini-flash-latest"),
   getGeminiModelStable: vi.fn(() => "gemini-2.5-flash"),
+  getOpenAIModelStable: vi.fn(() => "gpt-4.1-mini"),
 }));
 
 import { handleCopyPolishRequest } from "@/app/api/enhance/copy-polish";
 import {
   callGeminiText,
+  callOpenAIText,
   extractGeminiText,
+  extractOpenAIText,
 } from "@/app/api/enhance/provider-calls";
 
 const GEMINI_SKIP_MESSAGE =
   "Gemini copy polish skipped — using base generated copy.";
+const OPENAI_SKIP_MESSAGE =
+  "OpenAI copy polish skipped — using base generated copy.";
 
 const baseRequest = {
   provider: "gemini" as const,
@@ -120,6 +127,55 @@ describe("Gemini copy polish optional fallback", () => {
       aiEnhanced: true,
       imagePrompt: expect.stringContaining("same mountain lion and deer"),
       hook: "A mountain lion commits as the deer reads one escape lane.",
+    });
+  });
+});
+
+
+describe("OpenAI copy polish optional fallback", () => {
+  const originalOpenAIKey = process.env.OPENAI_API_KEY;
+  const openAIRequest = { ...baseRequest, provider: "openai" as const };
+
+  beforeEach(() => {
+    vi.clearAllMocks();
+    delete process.env.OPENAI_API_KEY;
+  });
+
+  afterEach(() => {
+    if (originalOpenAIKey === undefined) {
+      delete process.env.OPENAI_API_KEY;
+    } else {
+      process.env.OPENAI_API_KEY = originalOpenAIKey;
+    }
+  });
+
+  it("returns a skipped response when the OpenAI API key is missing", async () => {
+    const response = await handleCopyPolishRequest(openAIRequest);
+    expect(response.status).toBe(200);
+    await expect(response.json()).resolves.toEqual({
+      skipped: true,
+      provider: "openai",
+      reason: "missing_openai_api_key",
+      message: OPENAI_SKIP_MESSAGE,
+    });
+    expect(callOpenAIText).not.toHaveBeenCalled();
+  });
+
+  it("returns a skipped response when OpenAI sends invalid JSON", async () => {
+    process.env.OPENAI_API_KEY = "test-key";
+    vi.mocked(callOpenAIText).mockResolvedValue({
+      res: new Response("{}", { status: 200 }),
+      data: {},
+    });
+    vi.mocked(extractOpenAIText).mockReturnValue("Hook: non-json text");
+
+    const response = await handleCopyPolishRequest(openAIRequest);
+    expect(response.status).toBe(200);
+    await expect(response.json()).resolves.toEqual({
+      skipped: true,
+      provider: "openai",
+      reason: "invalid_openai_json",
+      message: OPENAI_SKIP_MESSAGE,
     });
   });
 });

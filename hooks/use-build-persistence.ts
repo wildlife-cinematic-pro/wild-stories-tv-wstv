@@ -92,6 +92,15 @@ function isHookMode(value: unknown): value is HookMode {
   );
 }
 
+function isAIProvider(value: unknown): value is AIProvider {
+  return (
+    value === "none" ||
+    value === "gemini" ||
+    value === "claude" ||
+    value === "openai"
+  );
+}
+
 export function useBuildPersistence({
   predator,
   prey,
@@ -157,7 +166,9 @@ export function useBuildPersistence({
     if (shared.habitat) setHabitat(shared.habitat);
 
     const saved = readSettings();
-    if (saved?.activeProvider) setActiveProvider(saved.activeProvider);
+    if (isAIProvider(saved?.activeProvider)) {
+      setActiveProvider(saved.activeProvider);
+    }
     if (
       saved?.runwayModel &&
       (RUNWAY_MODELS as readonly string[]).includes(saved.runwayModel)

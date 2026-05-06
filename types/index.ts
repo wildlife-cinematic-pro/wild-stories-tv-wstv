@@ -99,7 +99,7 @@ export type Arc =
   | "Giant vs giant clash";
 
 export type Engine = "RUNWAY" | "KLING";
-export type AIProvider = "none" | "claude" | "gemini";
+export type AIProvider = "none" | "gemini" | "claude" | "openai";
 export type RunwayModel = "Gen-4.5" | "Gen-4 Turbo" | "Gen-4";
 export type KlingModel =
   | "Kling 3.0 Pro"
