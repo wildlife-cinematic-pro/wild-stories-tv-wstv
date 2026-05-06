@@ -9,8 +9,10 @@ import { hasUsableGeneratedPackageEnhancements } from "@/lib/generated-package";
 import {
   callClaudeText,
   callGeminiText,
+  callOpenAIText,
   extractClaudeText,
   extractGeminiText,
+  extractOpenAIText,
   getGeminiModelFallback,
   getGeminiModelStable,
 } from "./provider-calls";
@@ -19,6 +21,8 @@ import { jsonError, sanitizeString, type Provider } from "./request-utils";
 const providerResponseSchema = copyPolishResponseSchema;
 const GEMINI_COPY_POLISH_SKIPPED_MESSAGE =
   "Gemini copy polish skipped — using base generated copy.";
+const OPENAI_COPY_POLISH_SKIPPED_MESSAGE =
+  "OpenAI copy polish skipped — using base generated copy.";
 
 function jsonOptionalCopyPolishSkip(reason: string) {
   return NextResponse.json(
@@ -27,6 +31,18 @@ function jsonOptionalCopyPolishSkip(reason: string) {
       provider: "gemini",
       reason,
       message: GEMINI_COPY_POLISH_SKIPPED_MESSAGE,
+    },
+    { status: 200 }
+  );
+}
+
+function jsonOpenAICopyPolishSkip(reason: string) {
+  return NextResponse.json(
+    {
+      skipped: true,
+      provider: "openai",
+      reason,
+      message: OPENAI_COPY_POLISH_SKIPPED_MESSAGE,
     },
     { status: 200 }
   );
@@ -284,6 +300,37 @@ export async function handleCopyPolishRequest(body: unknown) {
       return NextResponse.json({ ...out.data, aiEnhanced: true }, { status: 200 });
     }
 
+    if (provider === "openai") {
+      const apiKey = process.env.OPENAI_API_KEY;
+      if (!apiKey) return jsonOpenAICopyPolishSkip("missing_openai_api_key");
+
+      const { res, data } = await callOpenAIText(apiKey, polishPrompt);
+      if (!res.ok) return jsonOpenAICopyPolishSkip("provider_error");
+
+      const rawOpenAIText = sanitizeString(extractOpenAIText(data), 40_000);
+      let obj: Record<string, unknown>;
+      try {
+        obj = parseProviderJsonObject(rawOpenAIText, "OpenAI copy polish");
+      } catch {
+        return jsonOpenAICopyPolishSkip("invalid_openai_json");
+      }
+
+      if (!hasUsableGeneratedPackageEnhancements(obj)) {
+        return jsonOpenAICopyPolishSkip("no_usable_fields");
+      }
+
+      const out = providerResponseSchema.safeParse(obj);
+      if (!out.success) {
+        return jsonOpenAICopyPolishSkip("invalid_openai_response");
+      }
+
+      if (!hasUsableGeneratedPackageEnhancements(out.data)) {
+        return jsonOpenAICopyPolishSkip("no_usable_fields");
+      }
+
+      return NextResponse.json({ ...out.data, aiEnhanced: true }, { status: 200 });
+    }
+
     const apiKey = process.env.ANTHROPIC_API_KEY;
     if (!apiKey) return jsonError("Missing ANTHROPIC_API_KEY", 500);
 
@@ -311,6 +358,9 @@ export async function handleCopyPolishRequest(body: unknown) {
   } catch (err) {
     if (provider === "gemini") {
       return jsonOptionalCopyPolishSkip("provider_error");
+    }
+    if (provider === "openai") {
+      return jsonOpenAICopyPolishSkip("provider_error");
     }
     return jsonError("Copy polish error", 500, String(err));
   }

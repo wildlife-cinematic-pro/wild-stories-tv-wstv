@@ -85,7 +85,7 @@ export const WORKFLOW_TEST_PRESETS: WorkflowTestPreset[] = [
       autoApplyHighDrift: false,
       runwayModel: RUNWAY_MODELS[0],
       klingModel: KLING_MODELS[0],
-      activeProvider: "none",
+      activeProvider: "gemini",
       sceneDescriptionMode: "auto",
       sceneDescription: "",
       sceneDescriptionTouched: false,
@@ -121,7 +121,7 @@ export const WORKFLOW_TEST_PRESETS: WorkflowTestPreset[] = [
       autoApplyHighDrift: false,
       runwayModel: RUNWAY_MODELS[0],
       klingModel: KLING_MODELS[0],
-      activeProvider: "none",
+      activeProvider: "gemini",
       sceneDescriptionMode: "auto",
       sceneDescription: "",
       sceneDescriptionTouched: false,
@@ -157,7 +157,7 @@ export const WORKFLOW_TEST_PRESETS: WorkflowTestPreset[] = [
       autoApplyHighDrift: false,
       runwayModel: RUNWAY_MODELS[0],
       klingModel: KLING_MODELS[0],
-      activeProvider: "none",
+      activeProvider: "gemini",
       sceneDescriptionMode: "auto",
       sceneDescription: "",
       sceneDescriptionTouched: false,
@@ -193,7 +193,7 @@ export const WORKFLOW_TEST_PRESETS: WorkflowTestPreset[] = [
       autoApplyHighDrift: false,
       runwayModel: RUNWAY_MODELS[0],
       klingModel: KLING_MODELS[0],
-      activeProvider: "none",
+      activeProvider: "gemini",
       sceneDescriptionMode: "auto",
       sceneDescription: "",
       sceneDescriptionTouched: false,
@@ -229,7 +229,7 @@ export const WORKFLOW_TEST_PRESETS: WorkflowTestPreset[] = [
       autoApplyHighDrift: false,
       runwayModel: RUNWAY_MODELS[0],
       klingModel: KLING_MODELS[0],
-      activeProvider: "none",
+      activeProvider: "gemini",
       sceneDescriptionMode: "auto",
       sceneDescription: "",
       sceneDescriptionTouched: false,
@@ -248,7 +248,7 @@ const hookModes: Array<HookFamily | "all"> = [
   "curiosity",
   "reversal",
 ];
-const aiProviders: AIProvider[] = ["none", "claude", "gemini"];
+const aiProviders: AIProvider[] = ["gemini", "openai", "claude", "none"];
 const actionStylePresets: ActionStylePreset[] = [
   "Natural tension",
   "Viral chase",
@@ -486,7 +486,7 @@ export function normalizeWorkflowPresetSnapshot(
     activeProvider: pickOption<AIProvider>(
       value.activeProvider,
       aiProviders,
-      "none"
+      "gemini"
     ),
     sceneDescriptionMode,
     sceneDescription,

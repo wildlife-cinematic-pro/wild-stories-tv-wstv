@@ -1,7 +1,7 @@
 import { isIP } from "node:net";
 import { NextResponse } from "next/server";
 
-export type Provider = "gemini" | "claude";
+export type Provider = "gemini" | "claude" | "openai";
 
 function normalizeIpCandidate(value: string | null): string | undefined {
   if (!value) return undefined;

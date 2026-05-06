@@ -201,7 +201,7 @@ describe("workflow presets", () => {
       depthMode: "Balanced Depth",
       runwayModel: "Gen-4.5",
       klingModel: "Kling 3.0 Pro",
-      activeProvider: "none",
+      activeProvider: "gemini",
       sceneDescriptionMode: "manual",
       sceneDescriptionTouched: true,
     });
@@ -586,7 +586,7 @@ describe("workflow presets", () => {
       expect(preset.summary.length).toBeGreaterThan(0);
       expect(preset.snapshot.predator.length).toBeGreaterThan(0);
       expect(preset.snapshot.prey.length).toBeGreaterThan(0);
-      expect(preset.snapshot.activeProvider).toBe("none");
+      expect(preset.snapshot.activeProvider).toBe("gemini");
       expect(preset.snapshot.sceneDescriptionMode).toBe("auto");
       expect(preset.snapshot.sceneDescription).toBe("");
       expect(preset.snapshot.sceneDescriptionTouched).toBe(false);
