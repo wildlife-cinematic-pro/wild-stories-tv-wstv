@@ -6,10 +6,18 @@ import type { GeneratedPackage } from "@/types";
 
 import {
   getImagePromptCard,
+  getKlingFramesPromptCard,
+  getKlingMultishotPromptCards,
   getPromptCardForEngine,
   getWorkflowPromptCard,
   safeText,
 } from "@/components/output-cards/prompt-utils";
+import {
+  buildAnimalMasterReferencePrompt,
+  buildEnvironmentMasterReferencePrompt,
+  buildFinalMergeMasterPrompt,
+} from "@/components/output-cards/reference-image-prompts";
+import { buildCreatorQaPack } from "@/lib/creator-qa-pack";
 
 function deriveDriftLabel(
   clipChaining?: string
@@ -105,6 +113,133 @@ function TextBox({ value }: { value: string }) {
   );
 }
 
+type SlugifyReferenceOptions = {
+  maxWords?: number;
+  maxLength?: number;
+  suffix?: string;
+};
+
+const ENVIRONMENT_SLUG_STOP_WORDS = new Set([
+  "a",
+  "an",
+  "and",
+  "the",
+  "of",
+  "with",
+  "in",
+  "on",
+  "at",
+  "near",
+  "heavy",
+  "deep",
+  "dense",
+  "clean",
+  "clear",
+  "natural",
+  "realistic",
+  "north",
+  "american",
+]);
+
+const ENVIRONMENT_HABITAT_WORDS = new Set([
+  "forest",
+  "clearing",
+  "meadow",
+  "snow",
+  "winter",
+  "pine",
+  "hardwood",
+  "grassland",
+  "prairie",
+  "river",
+  "riverbank",
+  "marsh",
+  "wetland",
+  "tundra",
+  "mountain",
+  "valley",
+  "savanna",
+  "desert",
+  "coastal",
+  "coast",
+  "jungle",
+  "swamp",
+  "woodland",
+  "plain",
+  "field",
+  "ridge",
+  "yellowstone",
+]);
+
+function slugifyReference(
+  value: string,
+  fallback: string,
+  options: SlugifyReferenceOptions = {}
+) {
+  const rawWords = String(value || fallback)
+    .trim()
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, " ")
+    .split(/\s+/)
+    .filter(Boolean);
+  const suffix = options.suffix?.trim().toLowerCase();
+  let wordsForSlug = rawWords;
+
+  if (suffix === "env") {
+    if (rawWords.includes("forest") && rawWords.includes("clearing")) {
+      wordsForSlug = ["forest", "clearing"];
+    } else if (rawWords.includes("winter") && rawWords.includes("meadow")) {
+      wordsForSlug = ["winter", "meadow"];
+    } else if (rawWords.includes("yellowstone") && rawWords.includes("snow")) {
+      wordsForSlug = ["yellowstone", "snow"];
+    } else {
+      wordsForSlug = rawWords.filter((word) =>
+        ENVIRONMENT_HABITAT_WORDS.has(word) || !ENVIRONMENT_SLUG_STOP_WORDS.has(word)
+      );
+    }
+  }
+  const maxWords = options.maxWords && options.maxWords > 0 ? options.maxWords : wordsForSlug.length;
+  const trimmedWords = wordsForSlug.slice(0, maxWords);
+  const fallbackWords = String(fallback)
+    .trim()
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, " ")
+    .split(/\s+/)
+    .filter(Boolean);
+  let slug = (trimmedWords.length ? trimmedWords : fallbackWords).join("_");
+
+  if (options.maxLength && options.maxLength > 0 && slug.length > options.maxLength) {
+    slug = slug.slice(0, options.maxLength).replace(/_+$/g, "");
+  }
+
+  if (suffix && slug && !slug.endsWith(`_${suffix}`) && slug !== suffix) {
+    slug = `${slug}_${suffix}`;
+  }
+
+  return slug || fallback;
+}
+
+function buildHybridRoutingGuide() {
+  return [
+    "PRIMARY HYBRID 4-SHOT ROUTING",
+    "Gemini/Nano Banana 2 improves prompt quality and can draft optional concepts; it is not the whole production path.",
+    "1. Build the lead animal / predator master reference in Runway Gen-4 Image.",
+    "2. Build the opposite animal / prey-defender master reference in Runway Gen-4 Image.",
+    "3. Build the environment/background master reference in Runway Gen-4 Image.",
+    "4. Build the final scene master image in Runway Gen-4 References using exactly 3 active references.",
+    "5. Use the final scene master image as the source image for video generation.",
+    "6. Shot 1 uses Runway Gen-4/Gen-4.5 image-to-video for clean opening tension.",
+    "7. Shot 2 uses Kling for pressure/action physics.",
+    "8. Shot 3 uses Kling for peak action physics.",
+    "9. Shot 4 returns to Runway Gen-4/Gen-4.5 for resolved tension and final settle.",
+    "10. Add ElevenLabs 20s action music under the 4-shot edit.",
+  ].join("\n");
+}
+
+function buildElevenLabs20sPrompt() {
+  return "20-second cinematic wildlife action trailer music for a 4-shot survival sequence. Low suspense drone, rising deep drums, cinematic hits at 5s, 10s, and 15s, environment ambience, tense pulses, no vocals, no narration. End with a final bass hit and natural ambience tail.";
+}
+
 export function WorkflowPromptMap({
   data,
   onCopy,
@@ -126,11 +261,15 @@ export function WorkflowPromptMap({
     help: string;
     value: string;
     actions: WorkflowAction[];
+    checklist?: string;
   };
   type WorkflowConfig = {
     pipeline: string;
     bannerTitle: string;
     bannerBody: string;
+    workflowLabel?: string;
+    topNote?: string;
+    referenceBuildPrompts?: string;
     steps: WorkflowItem[];
   };
 
@@ -139,6 +278,17 @@ export function WorkflowPromptMap({
   const klingShots = (data.klingShots ?? []).map(safeText);
   const imagePrompt = safeText(data.imagePrompt);
   const imagePromptCard = getImagePromptCard(data);
+  const klingFramesPromptCard = getKlingFramesPromptCard(data);
+  const klingMultishotPromptCards = getKlingMultishotPromptCards(data);
+  const promptLimitRows = [
+    { label: "Kling Frames Prompt", count: klingFramesPromptCard.pasteReady.length, limit: 2500 },
+    ...klingMultishotPromptCards.map((card, index) => ({
+      label: `Kling Multishot Shot ${index + 1}`,
+      count: card.pasteReady.length,
+      limit: 512,
+    })),
+    { label: "Nano Banana 2 Image Prompt", count: imagePromptCard.pasteReady.length, limit: 5000 },
+  ];
   const seedancePromptCards = seedanceShots.map((_, index) =>
     getPromptCardForEngine(data, "seedance", index)
   );
@@ -153,6 +303,12 @@ export function WorkflowPromptMap({
   );
   const seedanceWorkflowGuide = safeText(data.seedanceWorkflowGuide ?? "");
   const routingNote = safeText(data.routingNote ?? "");
+  const leadAnimalName = safeText(data.predatorName) || "lead animal";
+  const oppositeAnimalName = safeText(data.preyName) || "opposite animal";
+  const environmentName = safeText(data.environmentName) || "natural wildlife environment";
+  const leadReferenceTag = `@${slugifyReference(leadAnimalName, "lead_animal")}`;
+  const oppositeReferenceTag = `@${slugifyReference(oppositeAnimalName, "opposite_animal")}`;
+  const environmentReferenceTag = `@${slugifyReference(environmentName, "environment", { maxWords: 4, maxLength: 40, suffix: "env" })}`;
 
   const drift = deriveDriftLabel(data.clipChaining);
 
@@ -163,6 +319,11 @@ export function WorkflowPromptMap({
     4: false,
     5: false,
     6: false,
+    7: false,
+    8: false,
+    9: false,
+    10: false,
+    11: false,
   };
 
   const [mode, setMode] = useState<WorkflowMode>("hybrid");
@@ -190,14 +351,14 @@ export function WorkflowPromptMap({
     4: null,
     5: null,
     6: null,
+    7: null,
+    8: null,
+    9: null,
+    10: null,
+    11: null,
   });
 
   const done = doneByMode[mode];
-
-  const copiedCount = useMemo(
-    () => Object.values(done).filter(Boolean).length,
-    [done]
-  );
 
   const workflows = useMemo<Record<WorkflowMode, WorkflowConfig>>(() => {
     const imageCardColor = {
@@ -230,6 +391,11 @@ export function WorkflowPromptMap({
       bg: "bg-indigo-50",
       badge: "bg-indigo-100 text-indigo-700",
     };
+    const musicColor = {
+      border: "border-rose-400",
+      bg: "bg-rose-50",
+      badge: "bg-rose-100 text-rose-700",
+    };
 
     const imageStep: WorkflowItem = {
       step: 1,
@@ -241,7 +407,7 @@ export function WorkflowPromptMap({
       actions: [
         { label: "Copy Image Prompt", value: imagePrompt },
         {
-          label: "Copy BODY",
+          label: "Copy Image Body",
           value: imagePromptCard.pasteReady,
           secondary: true,
         },
@@ -273,15 +439,70 @@ export function WorkflowPromptMap({
     ].join("\n");
 
     const hybridGuide = [
-      "PRIMARY HYBRID 4-SHOT ROUTING",
-      "This is the main WSTV production path.",
-      "1. Generate the master still first.",
-      "2. Shot 1 uses Runway for the clean readable opening tension.",
-      "3. Shot 2 uses Kling for pressure build.",
-      "4. Shot 3 uses Kling for peak action.",
-      "5. Shot 4 returns to Runway for the clean readable resolved tension.",
-      "6. Keep continuity-safe edited images between every shot handoff.",
-      routingNote || "Routing note: Runway 1 → Kling 2-3 → Runway 4.",
+      buildHybridRoutingGuide(),
+      routingNote ? `Routing note from package: ${routingNote}` : "Routing note: Runway Shot 1 → Kling Shot 2–3 → Runway Shot 4, all sourced from the final scene master image.",
+    ].join("\n\n");
+    const leadMasterPrompt = buildAnimalMasterReferencePrompt({
+      subjectName: leadAnimalName,
+      stanceLabel: "alert pre-attack posture",
+      identityMarkers: "species-specific identity, readable head profile, coat/skin/marking detail, and clear body-scale cues",
+      contactLabel: "grounded paw/hoof/foot contact or natural perch contact for bird species",
+      role: "lead",
+    });
+    const oppositeMasterPrompt = buildAnimalMasterReferencePrompt({
+      subjectName: oppositeAnimalName,
+      stanceLabel: "alert survival-reaction posture",
+      identityMarkers: "species-specific identity, readable side profile, coat/skin/marking detail, and clear scale cues",
+      contactLabel: "grounded paw/hoof/foot contact or natural perch contact for bird species",
+      role: "opposite",
+    });
+    const environmentMasterPrompt = buildEnvironmentMasterReferencePrompt({
+      environmentName,
+      leadAnimalName,
+      oppositeAnimalName,
+      arcName: data.arcName,
+      cameraAnglePreset: data.cameraAnglePreset,
+    });
+    const finalMergeMasterPrompt = buildFinalMergeMasterPrompt({
+      leadAnimalName,
+      oppositeAnimalName,
+      environmentName,
+      leadTag: leadReferenceTag,
+      oppositeTag: oppositeReferenceTag,
+      environmentTag: environmentReferenceTag,
+    });
+    const elevenLabs20sPrompt = buildElevenLabs20sPrompt();
+    const creatorQaPack = buildCreatorQaPack(data);
+    const facebookViralPackText = creatorQaPack.facebookSummary;
+    const failureFixGuide = creatorQaPack.failureFixGuide;
+    const compactNegativePrompt = creatorQaPack.compactNegativePrompt;
+    const runwayMotionFirstPrompt = creatorQaPack.runwayMotionFirstPrompt;
+    const creatorQaPackText = [
+      creatorQaPack.summaryText,
+      "",
+      "ELEVENLABS MUSIC PROMPT",
+      elevenLabs20sPrompt,
+    ].join("\n");
+    const referenceBuildPrompts = [
+      "Lead Animal Master Image",
+      leadMasterPrompt,
+      "",
+      "Opposite Animal Master Image",
+      oppositeMasterPrompt,
+      "",
+      "Environment Master Image",
+      environmentMasterPrompt,
+      "",
+      "Final Merge Master Image",
+      finalMergeMasterPrompt,
+    ].join("\n");
+    const runwayReferenceChecklist = [
+      "[ ] Lead animal reference saved",
+      "[ ] Opposite animal reference saved",
+      "[ ] Environment reference saved",
+      "[ ] Exactly 3 active references selected",
+      "[ ] Final merge image generated",
+      "[ ] Final merge image used as video source",
     ].join("\n");
 
     return {
@@ -517,18 +738,58 @@ export function WorkflowPromptMap({
       },
       hybrid: {
         pipeline:
-          "Image Prompt → Master Still → Runway Shot 1 Opening Tension → Kling Shot 2 Pressure Build → Kling Shot 3 Peak Action → Runway Shot 4 Resolved Tension → CapCut",
+          "Gemini prompt enhancement → Runway Gen-4 lead animal reference → Runway Gen-4 opposite animal reference → Runway Gen-4 environment reference → Runway Gen-4 final merge master image → Runway Shot 1 → Kling Shot 2 → Kling Shot 3 → Runway Shot 4 → Music: ElevenLabs 20s action music",
         bannerTitle: "Primary hybrid 4-shot route",
         bannerBody:
-          "This is the main WSTV production path. Use Runway for the clean opening and final settle, and Kling for Shot 2-3 pressure/action physics.",
+          "First build 3 Runway references and one final merge master image, then use Runway for the clean opening/final settle, Kling for Shot 2–3 pressure/action physics, and ElevenLabs for 20s action music.",
+        workflowLabel: "Gemini enhances prompts. Runway Gen-4 builds production references.",
+        topNote:
+          "Do not try to do the entire workflow inside Nano Banana 2 only. Nano Banana/Gemini improves prompt quality, but Runway Gen-4 References is the production step for reusable references, final scene master image, and Runway image-to-video continuity.",
+        referenceBuildPrompts,
         steps: [
-          imageStep,
+          {
+            step: 1,
+            title: "Lead Animal Master Image",
+            badge: "Gemini-enhanced prompt → Runway Gen-4 Image",
+            color: imageCardColor,
+            help: `Build the reusable production reference for ${leadAnimalName}. Gemini can improve wording; Runway Gen-4 Image creates the actual reference.`,
+            value: leadMasterPrompt,
+            actions: [{ label: "Copy Lead Animal Master Prompt", value: leadMasterPrompt }],
+          },
           {
             step: 2,
-            title: "Hybrid Shot 1 — Runway Opening Tension",
-            badge: "Runway",
+            title: "Opposite Animal Master Image",
+            badge: "Gemini-enhanced prompt → Runway Gen-4 Image",
+            color: imageCardColor,
+            help: `Build the reusable production reference for ${oppositeAnimalName}. Keep identity, anatomy, and contact readable.`,
+            value: oppositeMasterPrompt,
+            actions: [{ label: "Copy Opposite Animal Master Prompt", value: oppositeMasterPrompt }],
+          },
+          {
+            step: 3,
+            title: "Environment Master Image",
+            badge: "Gemini-enhanced prompt → Runway Gen-4 Image",
+            color: guideColor,
+            help: `Build the reusable background reference for ${environmentName}; environment-only composition with open central subject-ready space.`,
+            value: environmentMasterPrompt,
+            actions: [{ label: "Copy Environment Master Prompt", value: environmentMasterPrompt }],
+          },
+          {
+            step: 4,
+            title: "Final Merge Master Image",
+            badge: "Runway Gen-4 References · exactly 3 active references",
             color: runwayColor,
-            help: "Start with Runway for the cleanest first-frame readability and opening tension.",
+            help: `Merge ${leadReferenceTag}, ${oppositeReferenceTag}, and ${environmentReferenceTag} into one final scene master image for video source continuity.`,
+            value: finalMergeMasterPrompt,
+            actions: [{ label: "Copy Final Merge Master Prompt", value: finalMergeMasterPrompt }],
+            checklist: runwayReferenceChecklist,
+          },
+          {
+            step: 5,
+            title: "Hybrid Shot 1 — Runway Opening Tension",
+            badge: "Runway Gen-4/Gen-4.5 Image-to-Video · 5s",
+            color: runwayColor,
+            help: "Use the final scene master image as source. Start with Runway for clean first-frame readability and opening tension.",
             value: runwayShots[0] ?? "",
             actions: [
               {
@@ -541,11 +802,11 @@ export function WorkflowPromptMap({
             ],
           },
           {
-            step: 3,
+            step: 6,
             title: "Hybrid Shot 2 — Kling Pressure Build",
-            badge: "Kling",
+            badge: "Kling pressure/action physics · 5s",
             color: klingColor,
-            help: "Switch to Kling here for pressure build with stronger physics and readable body mechanics.",
+            help: "Use Kling here for pressure build with stronger physics and readable body mechanics from the continuity source.",
             value: klingShots[1] ?? "",
             actions: [
               {
@@ -558,9 +819,9 @@ export function WorkflowPromptMap({
             ],
           },
           {
-            step: 4,
+            step: 7,
             title: "Hybrid Shot 3 — Kling Peak Action",
-            badge: "Kling",
+            badge: "Kling peak action physics · 5s",
             color: klingColor,
             help: "Keep Kling for the strongest action beat before handing the final settle back to Runway.",
             value: klingShots[2] ?? "",
@@ -575,11 +836,11 @@ export function WorkflowPromptMap({
             ],
           },
           {
-            step: 5,
+            step: 8,
             title: "Hybrid Shot 4 — Runway Resolved Tension",
-            badge: "Runway",
+            badge: "Runway Gen-4/Gen-4.5 resolved tension · 5s",
             color: runwayColor,
-            help: "Return to Runway for the clean readable final resolve and stable continuity-safe ending.",
+            help: "Return to Runway for clean resolved tension, stable continuity, and a readable final settle.",
             value: runwayShots[3] ?? "",
             actions: [
               {
@@ -592,22 +853,53 @@ export function WorkflowPromptMap({
             ],
           },
           {
-            step: 6,
+            step: 9,
             title: "Hybrid Routing Rules",
             badge: "Hybrid guide",
             color: hybridColor,
-            help: "This pane shows the recommended engine handoff for the current WSTV hybrid workflow.",
+            help: "Recommended engine handoff for the WSTV hybrid route, with Runway references as the production-critical reference layer.",
             value: hybridGuide,
             actions: [{ label: "Copy Hybrid Rules", value: hybridGuide }],
+          },
+          {
+            step: 10,
+            title: "ElevenLabs 20s Action Music",
+            badge: "ElevenLabs 20s action music",
+            color: musicColor,
+            help: "Music: ElevenLabs 20s action music. Keep the Sound Effects prompt under 450 characters.",
+            value: elevenLabs20sPrompt,
+            actions: [{ label: "Copy ElevenLabs 20s Music Prompt", value: elevenLabs20sPrompt }],
+          },
+          {
+            step: 11,
+            title: "Creator QA Pack",
+            badge: "QA + export helpers",
+            color: hybridColor,
+            help: "Quick creator pack for master-image checks, Runway motion-first wording, Facebook packaging, failure fixes, and compact negative cleanup.",
+            value: creatorQaPackText,
+            actions: [
+              { label: "Copy Creator QA Pack", value: creatorQaPackText },
+              { label: "Copy Runway Motion-First", value: runwayMotionFirstPrompt, secondary: true },
+              { label: "Copy Facebook Viral Pack", value: facebookViralPackText, secondary: true },
+              { label: "Copy Compact Negative", value: compactNegativePrompt, secondary: true },
+              { label: "Copy Failure Fix Guide", value: failureFixGuide, secondary: true },
+            ],
           },
         ],
       },
     };
   }, [
+    data,
     imagePrompt,
     imagePromptCard,
+    environmentName,
+    environmentReferenceTag,
     klingPromptCards,
     klingShots,
+    leadAnimalName,
+    leadReferenceTag,
+    oppositeAnimalName,
+    oppositeReferenceTag,
     routingNote,
     runwayPromptCards,
     runwayShots,
@@ -618,6 +910,8 @@ export function WorkflowPromptMap({
   ]);
 
   const currentWorkflow = workflows[mode];
+  const copiedCount = currentWorkflow.steps.filter((item) => done[item.step]).length;
+  const totalStepCount = currentWorkflow.steps.length;
   const pipeline = currentWorkflow.pipeline;
 
   function scrollToStep(step: number) {
@@ -627,7 +921,8 @@ export function WorkflowPromptMap({
   }
 
   function nextStepOf(step: number) {
-    if (step >= 6) return 6;
+    const maxStep = currentWorkflow.steps.at(-1)?.step ?? step;
+    if (step >= maxStep) return maxStep;
     return step + 1;
   }
 
@@ -658,7 +953,7 @@ export function WorkflowPromptMap({
             WSTV Prompt Workflow Tracker
           </h2>
           <span className="rounded bg-gray-100 px-2 py-0.5 text-xs font-semibold text-[color:var(--muted)]">
-            {copiedCount}/6 done
+            {copiedCount}/{totalStepCount} done
           </span>
           <span
             className={`inline-flex items-center gap-2 rounded px-2 py-0.5 text-xs font-bold ${drift.pill}`}
@@ -681,10 +976,57 @@ export function WorkflowPromptMap({
         <strong>Pipeline:</strong> {pipeline}
       </div>
 
+      <div className="mb-3 rounded-xl border border-slate-200 bg-slate-50 p-3 dark:border-[color:var(--border)] dark:bg-[color:var(--surface-muted)]">
+        <div className="mb-2 text-[11px] font-extrabold uppercase tracking-wide text-slate-600 dark:text-[color:var(--muted)]">
+          Prompt limits
+        </div>
+        <div className="flex flex-wrap gap-2">
+          {promptLimitRows.map((row) => {
+            const pass = row.count <= row.limit;
+            return (
+              <span
+                key={row.label}
+                className={`rounded-full px-2 py-0.5 text-[11px] font-extrabold ring-1 ${
+                  pass
+                    ? "bg-green-100 text-green-700 ring-green-200 dark:bg-green-500/15 dark:text-green-100"
+                    : "bg-rose-100 text-rose-700 ring-rose-200 dark:bg-rose-500/15 dark:text-rose-100"
+                }`}
+              >
+                {row.label}: {row.count}/{row.limit} {pass ? "pass" : "over"}
+              </span>
+            );
+          })}
+        </div>
+      </div>
+
       <div className="mb-4 rounded-xl border border-orange-200 bg-orange-50 p-3 text-xs text-orange-800">
         <strong>{currentWorkflow.bannerTitle}:</strong>{" "}
         {currentWorkflow.bannerBody}
       </div>
+
+      {currentWorkflow.workflowLabel && (
+        <div className="mb-3 rounded-xl border border-green-200 bg-green-50 p-3 text-xs font-extrabold text-green-800">
+          {currentWorkflow.workflowLabel}
+        </div>
+      )}
+
+      {currentWorkflow.topNote && (
+        <div className="mb-4 rounded-xl border border-amber-200 bg-amber-50 p-3 text-xs leading-relaxed text-amber-900">
+          {currentWorkflow.topNote}
+        </div>
+      )}
+
+      {currentWorkflow.referenceBuildPrompts && (
+        <div className="mb-4">
+          <button
+            type="button"
+            onClick={() => onCopy(currentWorkflow.referenceBuildPrompts ?? "")}
+            className="rounded-lg bg-gray-900 px-4 py-2 text-xs font-bold text-white hover:bg-black active:scale-[0.99]"
+          >
+            📋 Copy All Reference Build Prompts
+          </button>
+        </div>
+      )}
 
       <div className="grid gap-4 md:grid-cols-3">
         {currentWorkflow.steps.map((item) => (
@@ -704,6 +1046,16 @@ export function WorkflowPromptMap({
               onToggle={() => toggle(item.step)}
             >
               <TextBox value={item.value} />
+              {item.checklist && (
+                <div className="mt-3 rounded-xl border border-green-200 bg-green-50 p-3">
+                  <div className="mb-2 text-[11px] font-extrabold uppercase tracking-wide text-green-800">
+                    Runway Reference Checklist
+                  </div>
+                  <pre className="whitespace-pre-wrap text-xs leading-relaxed text-green-900">
+                    {item.checklist}
+                  </pre>
+                </div>
+              )}
               <div className="mt-3 flex flex-wrap gap-2">
                 {item.actions.map((action) => (
                   <button

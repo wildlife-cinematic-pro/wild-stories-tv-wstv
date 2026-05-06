@@ -13,10 +13,12 @@ import { emotionalTonePrompt } from "@/lib/predator-data";
 import { RUNWAY_STYLE_NOTE } from "@/lib/model-specs";
 
 import {
+  buildAnchoredSideSubject,
   buildQualityLead,
   maybeGuard,
   type FourShotPromptPack,
   buildStructuredPrompt,
+  promptPackToFastOutputText,
   promptPackToLegacyText,
 } from "@/lib/prompt-builders/shared";
 import { buildPromptScenarioContext } from "@/lib/prompt-builders/scenario-context";
@@ -55,6 +57,7 @@ export function buildRunwayPromptPack(
     predator,
     prey,
     env,
+    sceneDesc,
     arc,
     weather,
     quality,
@@ -68,8 +71,15 @@ export function buildRunwayPromptPack(
     isRutMirrorMatch,
     micro,
     rutCue,
-    cameraPromptTail,
-    cameraBreakdownLine,
+    directorPlan,
+    shot1CameraPromptTail,
+    shot2CameraPromptTail,
+    shot3CameraPromptTail,
+    shot4CameraPromptTail,
+    shot1CameraBreakdownLine,
+    shot2CameraBreakdownLine,
+    shot3CameraBreakdownLine,
+    shot4CameraBreakdownLine,
     worldPlateContinuity,
     beat1: s1,
     beat3: s3,
@@ -90,6 +100,19 @@ export function buildRunwayPromptPack(
   const singleRule = quality?.singleActionRule
     ? "One primary subject action and one camera move only."
     : "Keep motion readable and limited.";
+  const intensityMode = !!quality?.intensityMode;
+  const intensityMotionCue = intensityMode
+    ? " Motion energy rises slightly faster while staying readable."
+    : "";
+  const intensityEnvironmentCue = intensityMode
+    ? " Terrain response hits slightly harder with more visible dust, splash, or ground reaction."
+    : "";
+  const intensityPeakSpacingCue = intensityMode
+    ? " Peak spacing tightens slightly while both bodies remain fully readable."
+    : "";
+  const intensityEndingCue = intensityMode
+    ? " The final beat should land with a stronger resolved release or an intentionally unresolved hold."
+    : "";
 
   const pressurePredator = isAquatic
     ? "leans into stronger forward water pressure without breaking spacing"
@@ -104,52 +127,128 @@ export function buildRunwayPromptPack(
           "one readable defensive adjustment"
         );
 
+  const shot2TensionCue = ` ${directorPlan.shot2TensionCue}${intensityMode ? " Let the pressure gather slightly faster without losing clean spacing." : ""}`;
+  const shot3TensionCue = ` ${directorPlan.shot3TensionCue}${intensityMode ? " Keep the peak beat tighter and more forceful without overlap confusion." : ""}`;
+
+  const shot1LeftSubject = isAquatic
+    ? buildAnchoredSideSubject(predator, "left", "glides once with controlled forward pressure through the water")
+    : isShoreline
+      ? isWaterForwardStrike
+        ? buildAnchoredSideSubject(predator, "left", "holds low at the bank with the shallow strike window visible")
+        : buildAnchoredSideSubject(predator, "left", "holds low at the water's edge with visible pressure")
+      : isRutMirrorMatch
+        ? buildAnchoredSideSubject(predator, "left", `holds the ${rutCue.line} with ${rutCue.room}`)
+        : buildAnchoredSideSubject(predator, "left", s1.predatorBeat);
+  const shot1RightSubject = isAquatic
+    ? buildAnchoredSideSubject(prey, "right", "holds tense position with locked eye-line")
+    : isShoreline
+      ? isWaterForwardStrike
+        ? buildAnchoredSideSubject(prey, "right", "stays just off the bank with one tense near-surface hold")
+        : buildAnchoredSideSubject(prey, "right", "stays tense near the bank with locked eye-line")
+      : isRutMirrorMatch
+        ? buildAnchoredSideSubject(prey, "right", "answers with matching shoulder tension and planted footing")
+        : buildAnchoredSideSubject(prey, "right", s1.preyBeat);
+  const shot2LeftSubject = isAquatic
+    ? buildAnchoredSideSubject(predator, "left", "leans into stronger forward water pressure without breaking spacing")
+    : isShoreline
+      ? isWaterForwardStrike
+        ? buildAnchoredSideSubject(predator, "left", "leans farther forward from the bank as the shallow strike window tightens")
+        : buildAnchoredSideSubject(predator, "left", "leans farther forward from the shoreline with stronger visible ambush pressure")
+      : isRutMirrorMatch
+        ? buildAnchoredSideSubject(predator, "left", `edges forward with heavier shoulder-line pressure while keeping ${rutCue.room}`)
+        : buildAnchoredSideSubject(predator, "left", pressurePredator);
+  const shot2RightSubject = isAquatic
+    ? buildAnchoredSideSubject(prey, "right", "tightens posture and makes one readable defensive adjustment in the current")
+    : isShoreline
+      ? isWaterForwardStrike
+        ? buildAnchoredSideSubject(prey, "right", "shows one tense surface-break adjustment tight to the bank-edge current")
+        : buildAnchoredSideSubject(prey, "right", "lowers into one readable defensive footing adjustment near the bank")
+      : isRutMirrorMatch
+        ? buildAnchoredSideSubject(prey, "right", "braces into one grounded footing reset without giving away the claim line")
+        : buildAnchoredSideSubject(prey, "right", pressurePrey);
+  const shot3LeftSubject = isAquatic
+    ? buildAnchoredSideSubject(predator, "left", "commits to one fast water-pressure burst")
+    : isShoreline
+      ? isWaterForwardStrike
+        ? buildAnchoredSideSubject(predator, "left", "bursts once from the bank edge into the strike window")
+        : buildAnchoredSideSubject(predator, "left", "bursts once from the shoreline")
+      : isRutMirrorMatch
+        ? buildAnchoredSideSubject(predator, "left", `loads weight and commits one heavy clash beat while keeping ${rutCue.room}`)
+        : buildAnchoredSideSubject(predator, "left", s3.predatorBeat);
+  const shot3RightSubject = isAquatic
+    ? buildAnchoredSideSubject(prey, "right", "reacts with one evasive dart")
+    : isShoreline
+      ? isWaterForwardStrike
+        ? buildAnchoredSideSubject(prey, "right", "reacts with one surface-break dart and turn")
+        : buildAnchoredSideSubject(prey, "right", "reacts with one evasive leap and turn")
+      : isRutMirrorMatch
+        ? buildAnchoredSideSubject(prey, "right", "answers with one grounded shove or recoil without losing planted footing")
+        : buildAnchoredSideSubject(prey, "right", s3.preyBeat);
+  const shot4LeftSubject = isAquatic
+    ? buildAnchoredSideSubject(predator, "left", "slows and stabilizes in the water")
+    : isShoreline
+      ? isWaterForwardStrike
+        ? buildAnchoredSideSubject(predator, "left", "settles low at the bank edge")
+        : buildAnchoredSideSubject(predator, "left", "settles low at the waterline")
+      : isRutMirrorMatch
+        ? buildAnchoredSideSubject(predator, "left", `settles weight while keeping the ${rutCue.line} clean`)
+        : buildAnchoredSideSubject(predator, "left", s4.predatorBeat);
+  const shot4RightSubject = isAquatic
+    ? buildAnchoredSideSubject(prey, "right", "holds tense eye-line as residual turbulence settles")
+    : isShoreline
+      ? isWaterForwardStrike
+        ? buildAnchoredSideSubject(prey, "right", "holds a tense near-surface line as residual splash and shoreline reaction fade")
+        : buildAnchoredSideSubject(prey, "right", "holds tense eye-line as residual splash and bank disturbance fade")
+      : isRutMirrorMatch
+        ? buildAnchoredSideSubject(prey, "right", "rebalances once and holds the claim line")
+        : buildAnchoredSideSubject(prey, "right", s4.preyBeat);
+
   const shot1PasteReady = finalizeRunwayPasteReady(sanitizeForEngine(sanitizeRunwayFPS(
     isAquatic
-      ? `Wide opening hold with a subtle push-in. Both subjects are fully readable from frame one. The left subject glides once with controlled forward pressure through the water. The right subject holds tense position with locked eye-line. Clear spacing, readable threat line, clean motion start.${cameraPromptTail} ${micro}${quality?.seamlessShot ? " Continuous, seamless shot." : ""}`.trim()
+      ? `Wide opening hold with a subtle push-in. Both subjects are fully readable from frame one. ${shot1LeftSubject}. ${shot1RightSubject}. Clear spacing, readable threat line, clean motion start.${shot1CameraPromptTail} ${micro}${intensityMode ? intensityEnvironmentCue : ""}${quality?.seamlessShot ? " Continuous, seamless shot." : ""}`.trim()
       : isShoreline
         ? isWaterForwardStrike
-          ? `Wide opening hold with a subtle push-in. Both subjects are fully readable from frame one. The left subject holds low at the bank with the shallow strike window visible. The right subject stays just off the bank with one tense near-surface hold. Clear bank-edge spacing, immediate visible tension, clean motion start.${cameraPromptTail} ${micro}${quality?.seamlessShot ? " Continuous, seamless shot." : ""}`.trim()
-          : `Wide opening hold with a subtle push-in. Both subjects are fully readable from frame one. The left subject holds low at the water's edge with visible pressure. The right subject stays tense near the bank with locked eye-line. Clear spacing, readable tension, clean motion start.${cameraPromptTail} ${micro}${quality?.seamlessShot ? " Continuous, seamless shot." : ""}`.trim()
+          ? `Wide opening hold with a subtle push-in. Both subjects are fully readable from frame one. ${shot1LeftSubject}. ${shot1RightSubject}. Clear bank-edge spacing, immediate visible tension, clean motion start.${shot1CameraPromptTail} ${micro}${intensityMode ? intensityEnvironmentCue : ""}${quality?.seamlessShot ? " Continuous, seamless shot." : ""}`.trim()
+          : `Wide opening hold with a subtle push-in. Both subjects are fully readable from frame one. ${shot1LeftSubject}. ${shot1RightSubject}. Clear spacing, readable tension, clean motion start.${shot1CameraPromptTail} ${micro}${intensityMode ? intensityEnvironmentCue : ""}${quality?.seamlessShot ? " Continuous, seamless shot." : ""}`.trim()
         : isRutMirrorMatch
-          ? `Wide opening hold with a subtle push-in. Both subjects are fully readable from frame one. The left subject holds the ${rutCue.line} with ${rutCue.room}. The right subject answers with matching shoulder tension and planted footing. Clear spacing, locked eye-line, dominance visible from the first second.${cameraPromptTail} ${micro}${quality?.seamlessShot ? " Continuous, seamless shot." : ""}`.trim()
-          : `Wide opening hold with a subtle push-in. Both subjects are fully readable from frame one. The left subject ${s1.predatorBeat}. The right subject ${s1.preyBeat}. Clear spacing, locked eye-line, readable tension from the first second.${cameraPromptTail} ${micro}${quality?.seamlessShot ? " Continuous, seamless shot." : ""}`.trim()
+          ? `Wide opening hold with a subtle push-in. Both subjects are fully readable from frame one. ${shot1LeftSubject}. ${shot1RightSubject}. Clear spacing, locked eye-line, dominance visible from the first second.${shot1CameraPromptTail} ${micro}${intensityMode ? intensityEnvironmentCue : ""}${quality?.seamlessShot ? " Continuous, seamless shot." : ""}`.trim()
+          : `Wide opening hold with a subtle push-in. Both subjects are fully readable from frame one. ${shot1LeftSubject}. ${shot1RightSubject}. Clear spacing, locked eye-line, readable tension from the first second.${shot1CameraPromptTail} ${micro}${intensityMode ? intensityEnvironmentCue : ""}${quality?.seamlessShot ? " Continuous, seamless shot." : ""}`.trim()
   ), "runway"));
 
   const shot2PasteReady = finalizeRunwayPasteReady(sanitizeForEngine(sanitizeRunwayFPS(
     isAquatic
-      ? `Wide pressure-build tracking shot with a gentle forward drift. Both subjects stay fully visible. The left subject leans into stronger forward water pressure without breaking spacing. The right subject tightens posture and makes one readable defensive adjustment in the current. The tension line grows stronger, spacing stays readable, and overlap stays controlled. Water displacement and current response build naturally. ${worldPlateContinuity}${cameraPromptTail} ${micro}${quality?.seamlessShot ? " Continuous, seamless shot." : ""}`.trim()
+      ? `Wide pressure-build tracking shot with a gentle forward drift. Both subjects stay fully visible. ${shot2LeftSubject}. ${shot2RightSubject}. The tension line grows stronger, spacing stays readable, and overlap stays controlled. Water displacement and current response build naturally.${shot2TensionCue}${intensityMotionCue}${intensityEnvironmentCue} ${worldPlateContinuity}${shot2CameraPromptTail} ${micro}${quality?.seamlessShot ? " Continuous, seamless shot." : ""}`.trim()
       : isShoreline
         ? isWaterForwardStrike
-          ? `Wide pressure-build tracking shot with a gentle forward drift. Both subjects stay fully visible. The left subject leans farther forward from the bank as the shallow strike window tightens. The right subject shows one tense surface-break adjustment tight to the bank-edge current. The strike line grows stronger, spacing stays clear, and overlap stays controlled. Bank-edge splash, shoreline reaction, and surface break stay natural. ${worldPlateContinuity}${cameraPromptTail} ${micro}${quality?.seamlessShot ? " Continuous, seamless shot." : ""}`.trim()
-          : `Wide pressure-build tracking shot with a gentle forward drift. Both subjects stay fully visible. The left subject leans farther forward from the shoreline with stronger visible ambush pressure. The right subject lowers into one readable defensive footing adjustment near the bank. The tension line grows stronger, spacing stays readable, and overlap stays controlled. Splash and bank disturbance remain natural. ${worldPlateContinuity}${cameraPromptTail} ${micro}${quality?.seamlessShot ? " Continuous, seamless shot." : ""}`.trim()
+          ? `Wide pressure-build tracking shot with a gentle forward drift. Both subjects stay fully visible. ${shot2LeftSubject}. ${shot2RightSubject}. The strike line grows stronger, spacing stays clear, and overlap stays controlled. Bank-edge splash, shoreline reaction, and surface break stay natural.${shot2TensionCue}${intensityMotionCue}${intensityEnvironmentCue} ${worldPlateContinuity}${shot2CameraPromptTail} ${micro}${quality?.seamlessShot ? " Continuous, seamless shot." : ""}`.trim()
+          : `Wide pressure-build tracking shot with a gentle forward drift. Both subjects stay fully visible. ${shot2LeftSubject}. ${shot2RightSubject}. The tension line grows stronger, spacing stays readable, and overlap stays controlled. Splash and bank disturbance remain natural.${shot2TensionCue}${intensityMotionCue}${intensityEnvironmentCue} ${worldPlateContinuity}${shot2CameraPromptTail} ${micro}${quality?.seamlessShot ? " Continuous, seamless shot." : ""}`.trim()
         : isRutMirrorMatch
-          ? `Wide pressure-build tracking shot with a gentle forward drift. Both subjects stay fully visible. The left subject edges forward with heavier shoulder-line pressure while keeping ${rutCue.room}. The right subject braces into one grounded footing reset without giving away the claim line. The standoff geometry tightens, spacing stays readable, and overlap stays controlled. Hoof traction and churned rut footing stay natural. ${worldPlateContinuity}${cameraPromptTail} ${micro}${quality?.seamlessShot ? " Continuous, seamless shot." : ""}`.trim()
-          : `Wide pressure-build tracking shot with a gentle forward drift. Both subjects stay fully visible. The left subject ${pressurePredator}. The right subject ${pressurePrey}. The tension line grows stronger, spacing stays readable, and overlap stays controlled. Ground compression and clean weight transfer stay natural. ${worldPlateContinuity}${cameraPromptTail} ${micro}${quality?.seamlessShot ? " Continuous, seamless shot." : ""}`.trim()
+          ? `Wide pressure-build tracking shot with a gentle forward drift. Both subjects stay fully visible. ${shot2LeftSubject}. ${shot2RightSubject}. The standoff geometry tightens, spacing stays readable, and overlap stays controlled. Hoof traction and churned rut footing stay natural.${shot2TensionCue}${intensityMotionCue}${intensityEnvironmentCue} ${worldPlateContinuity}${shot2CameraPromptTail} ${micro}${quality?.seamlessShot ? " Continuous, seamless shot." : ""}`.trim()
+          : `Wide pressure-build tracking shot with a gentle forward drift. Both subjects stay fully visible. ${shot2LeftSubject}. ${shot2RightSubject}. The tension line grows stronger, spacing stays readable, and overlap stays controlled. Ground compression and clean weight transfer stay natural.${shot2TensionCue}${intensityMotionCue}${intensityEnvironmentCue} ${worldPlateContinuity}${shot2CameraPromptTail} ${micro}${quality?.seamlessShot ? " Continuous, seamless shot." : ""}`.trim()
   ), "runway"));
 
   const shot3PasteReady = finalizeRunwayPasteReady(sanitizeForEngine(sanitizeRunwayFPS(
     isAquatic
-      ? `Wide peak-action read with restrained tracking. Both subjects stay fully visible. The left subject commits to one fast water-pressure burst. The right subject reacts with one evasive dart. Clear pursuit line, readable spacing, no overlap. Water displacement and current response stay forceful but readable. ${worldPlateContinuity}${cameraPromptTail} ${micro}${quality?.seamlessShot ? " Continuous, seamless shot." : ""}`.trim()
+      ? `Wide peak-action read with restrained tracking. Both subjects stay fully visible. ${shot3LeftSubject}. ${shot3RightSubject}. Clear pursuit line, readable spacing, no overlap. Water displacement and current response stay forceful but readable.${shot3TensionCue}${intensityMotionCue}${intensityPeakSpacingCue}${intensityEnvironmentCue} ${worldPlateContinuity}${shot3CameraPromptTail} ${micro}${quality?.seamlessShot ? " Continuous, seamless shot." : ""}`.trim()
       : isShoreline
         ? isWaterForwardStrike
-          ? `Wide peak-action read with restrained tracking. Both subjects stay fully visible. The left subject bursts once from the bank edge into the strike window. The right subject reacts with one surface-break dart and turn. Clear predator-to-prey line, readable spacing, no overlap. Shoreline reaction, bank splash, and surface break stay forceful but readable. ${worldPlateContinuity}${cameraPromptTail} ${micro}${quality?.seamlessShot ? " Continuous, seamless shot." : ""}`.trim()
-          : `Wide peak-action read with restrained tracking. Both subjects stay fully visible. The left subject bursts once from the shoreline. The right subject reacts with one evasive leap and turn. Clear predator-to-prey line, readable spacing, no overlap. Splash and bank disturbance stay forceful but readable. ${worldPlateContinuity}${cameraPromptTail} ${micro}${quality?.seamlessShot ? " Continuous, seamless shot." : ""}`.trim()
+          ? `Wide peak-action read with restrained tracking. Both subjects stay fully visible. ${shot3LeftSubject}. ${shot3RightSubject}. Clear predator-to-prey line, readable spacing, no overlap. Shoreline reaction, bank splash, and surface break stay forceful but readable.${shot3TensionCue}${intensityMotionCue}${intensityPeakSpacingCue}${intensityEnvironmentCue} ${worldPlateContinuity}${shot3CameraPromptTail} ${micro}${quality?.seamlessShot ? " Continuous, seamless shot." : ""}`.trim()
+          : `Wide peak-action read with restrained tracking. Both subjects stay fully visible. ${shot3LeftSubject}. ${shot3RightSubject}. Clear predator-to-prey line, readable spacing, no overlap. Splash and bank disturbance stay forceful but readable.${shot3TensionCue}${intensityMotionCue}${intensityPeakSpacingCue}${intensityEnvironmentCue} ${worldPlateContinuity}${shot3CameraPromptTail} ${micro}${quality?.seamlessShot ? " Continuous, seamless shot." : ""}`.trim()
         : isRutMirrorMatch
-          ? `Wide peak-action read with restrained tracking. Both subjects stay fully visible. The left subject loads weight and commits one heavy clash beat while keeping ${rutCue.room}. The right subject answers with one grounded shove or recoil without losing planted footing. Clear clash line, readable spacing, no overlap. Hoof traction and heavy shoulder transfer stay readable at speed. ${worldPlateContinuity}${cameraPromptTail} ${micro}${quality?.seamlessShot ? " Continuous, seamless shot." : ""}`.trim()
-          : `Wide peak-action read with restrained tracking. Both subjects stay fully visible. The left subject ${s3.predatorBeat}. The right subject ${s3.preyBeat}. Clear predator-to-prey line, readable spacing, no overlap. Ground compression and clean weight transfer stay readable at speed. ${worldPlateContinuity}${cameraPromptTail} ${micro}${quality?.seamlessShot ? " Continuous, seamless shot." : ""}`.trim()
+          ? `Wide peak-action read with restrained tracking. Both subjects stay fully visible. ${shot3LeftSubject}. ${shot3RightSubject}. Clear clash line, readable spacing, no overlap. Hoof traction and heavy shoulder transfer stay readable at speed.${shot3TensionCue}${intensityMotionCue}${intensityPeakSpacingCue}${intensityEnvironmentCue} ${worldPlateContinuity}${shot3CameraPromptTail} ${micro}${quality?.seamlessShot ? " Continuous, seamless shot." : ""}`.trim()
+          : `Wide peak-action read with restrained tracking. Both subjects stay fully visible. ${shot3LeftSubject}. ${shot3RightSubject}. Clear predator-to-prey line, readable spacing, no overlap. Ground compression and clean weight transfer stay readable at speed.${shot3TensionCue}${intensityMotionCue}${intensityPeakSpacingCue}${intensityEnvironmentCue} ${worldPlateContinuity}${shot3CameraPromptTail} ${micro}${quality?.seamlessShot ? " Continuous, seamless shot." : ""}`.trim()
   ), "runway"));
 
   const shot4PasteReady = finalizeRunwayPasteReady(sanitizeForEngine(sanitizeRunwayFPS(
     isAquatic
-      ? `Wide aftermath hold with a slow pull-back. Both subjects remain fully readable. The left subject slows and stabilizes in the water. The right subject holds tense eye-line as residual turbulence settles. Clear spacing remains readable to the end. ${worldPlateContinuity}${cameraPromptTail} ${micro}${quality?.seamlessShot ? " Continuous, seamless shot." : ""}`.trim()
+      ? `Wide aftermath hold with a slow pull-back. Both subjects remain fully readable. ${shot4LeftSubject}. ${shot4RightSubject}. Clear spacing remains readable to the end. ${worldPlateContinuity}${intensityEndingCue}${shot4CameraPromptTail} ${micro}${quality?.seamlessShot ? " Continuous, seamless shot." : ""}`.trim()
       : isShoreline
         ? isWaterForwardStrike
-          ? `Wide aftermath hold with a slow pull-back. Both subjects remain fully readable. The left subject settles low at the bank edge. The right subject holds a tense near-surface line as residual splash and shoreline reaction fade. Clear spacing remains readable to the end. ${worldPlateContinuity}${cameraPromptTail} ${micro}${quality?.seamlessShot ? " Continuous, seamless shot." : ""}`.trim()
-          : `Wide aftermath hold with a slow pull-back. Both subjects remain fully readable. The left subject settles low at the waterline. The right subject holds tense eye-line as residual splash and bank disturbance fade. Clear spacing remains readable to the end. ${worldPlateContinuity}${cameraPromptTail} ${micro}${quality?.seamlessShot ? " Continuous, seamless shot." : ""}`.trim()
+          ? `Wide aftermath hold with a slow pull-back. Both subjects remain fully readable. ${shot4LeftSubject}. ${shot4RightSubject}. Clear spacing remains readable to the end. ${worldPlateContinuity}${intensityEndingCue}${shot4CameraPromptTail} ${micro}${quality?.seamlessShot ? " Continuous, seamless shot." : ""}`.trim()
+          : `Wide aftermath hold with a slow pull-back. Both subjects remain fully readable. ${shot4LeftSubject}. ${shot4RightSubject}. Clear spacing remains readable to the end. ${worldPlateContinuity}${intensityEndingCue}${shot4CameraPromptTail} ${micro}${quality?.seamlessShot ? " Continuous, seamless shot." : ""}`.trim()
         : isRutMirrorMatch
-          ? `Wide aftermath hold with a slow pull-back. Both subjects remain fully readable. The left subject settles weight while keeping the ${rutCue.line} clean. The right subject rebalances once and holds the claim line. Residual atmosphere settles while spacing stays clear to the final frame. ${worldPlateContinuity}${cameraPromptTail} ${micro}${quality?.seamlessShot ? " Continuous, seamless shot." : ""}`.trim()
-          : `Wide aftermath hold with a slow pull-back. Both subjects remain fully readable. The left subject ${s4.predatorBeat}. The right subject ${s4.preyBeat}. Residual atmosphere settles while spacing stays clear to the final frame. ${worldPlateContinuity}${cameraPromptTail} ${micro}${quality?.seamlessShot ? " Continuous, seamless shot." : ""}`.trim()
+          ? `Wide aftermath hold with a slow pull-back. Both subjects remain fully readable. ${shot4LeftSubject}. ${shot4RightSubject}. Residual atmosphere settles while spacing stays clear to the final frame. ${worldPlateContinuity}${intensityEndingCue}${shot4CameraPromptTail} ${micro}${quality?.seamlessShot ? " Continuous, seamless shot." : ""}`.trim()
+          : `Wide aftermath hold with a slow pull-back. Both subjects remain fully readable. ${shot4LeftSubject}. ${shot4RightSubject}. Residual atmosphere settles while spacing stays clear to the final frame. ${worldPlateContinuity}${intensityEndingCue}${shot4CameraPromptTail} ${micro}${quality?.seamlessShot ? " Continuous, seamless shot." : ""}`.trim()
   ), "runway"));
 
   return {
@@ -168,11 +267,11 @@ ${shot1PasteReady}
 ─── SHOT BREAKDOWN ───
 Camera motion: wide opening hold with a subtle push-in.
 Opening priority: both subjects fully readable from frame one, immediate visible tension, locked eye-line, clear spacing.
-Subject action: left subject ${s1.predatorBeat}.
-Right-side reaction: right subject ${s1.preyBeat}.
-Environment motion: ${micro}.${cameraBreakdownLine}
+Subject action: ${shot1LeftSubject}.
+Right-side reaction: ${shot1RightSubject}.
+Environment motion: ${micro}.
 Tone: ${tone.video}.
-Framing: wide opening read, full-body visibility, clean silhouette separation.${cameraBreakdownLine}
+Framing: wide opening read, full-body visibility, clean silhouette separation.${shot1CameraBreakdownLine}
 Duration: 5 seconds recommended for the 4-shot WSTV workflow.
 FPS: 24 or 25 (set in Advanced).
 ⚠️ No negative prompt — Runway does not support negatives.
@@ -202,8 +301,8 @@ ${shot2PasteReady}
 ─── SHOT BREAKDOWN ───
 Camera motion: wide pressure-build tracking shot with a gentle forward drift.
 Action priority: both subjects fully visible, tension rising clearly, readable spacing, no overlap.
-Subject action: left subject ${pressurePredator}.
-Right-side reaction: right subject ${pressurePrey}.
+Subject action: ${shot2LeftSubject}.
+Right-side reaction: ${shot2RightSubject}.
 Environment motion: ${
   isAquatic
     ? `water displacement, turbulence, current response, ${micro}`
@@ -226,7 +325,7 @@ Physics: ${
         ? "preserve planted footing, open clash geometry, and readable heavy-body transfer."
         : "preserve natural acceleration, tension build, and controlled spacing."
 }
-Framing: wide action readability, full-body visibility, clean silhouette separation.${cameraBreakdownLine}
+Framing: wide action readability, full-body visibility, clean silhouette separation.${shot2CameraBreakdownLine}
 Duration: 5 seconds recommended for the 4-shot WSTV workflow.
 ⚠️ Use Shot 1 last frame as I2V input only if it remains a clean full-body handoff frame. Otherwise reuse the master still or a manually selected clean frame.`,
       pasteReady: shot2PasteReady,
@@ -254,8 +353,8 @@ ${shot3PasteReady}
 ─── SHOT BREAKDOWN ───
 Camera motion: wide peak-action read with restrained tracking.
 Action priority: both subjects fully visible, readable force, clear predator-to-prey spacing, no overlap.
-Subject action: left subject ${s3.predatorBeat}.
-Right-side reaction: right subject ${s3.preyBeat}.
+Subject action: ${shot3LeftSubject}.
+Right-side reaction: ${shot3RightSubject}.
 Environment motion: ${
   isAquatic
     ? `water displacement, turbulence, current response, ${micro}`
@@ -268,7 +367,7 @@ Environment motion: ${
         : `ground compression, foliage response, body-weight transfer, ${micro}`
 }.
 Mood: ${tone.video}.
-Framing: wide peak-action readability, full-body visibility, clean separation.
+Framing: wide peak-action readability, full-body visibility, clean separation.${shot3CameraBreakdownLine}
 Duration: 5 seconds recommended for the 4-shot WSTV workflow.
 ⚠️ Use Shot 2 last frame as I2V input only if it remains a clean full-body handoff frame. Otherwise reuse the master still or a manually selected clean continuity frame.`,
       pasteReady: shot3PasteReady,
@@ -296,11 +395,11 @@ ${shot4PasteReady}
 ─── SHOT BREAKDOWN ───
 Camera motion: wide aftermath hold with a slow pull-back.
 End-state priority: both subjects fully readable, spacing still clear, tension remains visible to the final frame.
-Subject action: left subject ${s4.predatorBeat}.
-Right-side reaction: right subject ${s4.preyBeat}.
+Subject action: ${shot4LeftSubject}.
+Right-side reaction: ${shot4RightSubject}.
 Environment motion: residual atmosphere — ${micro}.
 Mood: ${tone.image}.
-Framing: wide aftermath readability, full-body visibility, clean separation.
+Framing: wide aftermath readability, full-body visibility, clean separation.${shot4CameraBreakdownLine}
 Duration: 5 seconds recommended for the 4-shot WSTV workflow.
 ⚠️ Use Shot 3 last frame as I2V input only if it remains a clean full-body handoff frame. Otherwise reuse the master still or a manually selected clean continuity frame.`,
       pasteReady: shot4PasteReady,
@@ -340,6 +439,36 @@ export function buildRunwayShots(
       animalVibe,
       sceneDesc,
       quality
+    )
+  );
+}
+
+export function buildRunwayFastOutput(
+  predator: string,
+  prey: string,
+  env: string,
+  arc: Arc,
+  weather: Weather,
+  model: RunwayModel,
+  emotionalTone: EmotionalTone,
+  animalVibe: AnimalVibe,
+  sceneDesc?: string,
+  quality?: QualityOptions,
+  cameraAnglePreset: CameraAnglePreset = "Auto"
+): string {
+  return promptPackToFastOutputText(
+    buildRunwayPromptPack(
+      predator,
+      prey,
+      env,
+      arc,
+      weather,
+      model,
+      emotionalTone,
+      animalVibe,
+      sceneDesc,
+      quality,
+      cameraAnglePreset
     )
   );
 }

@@ -26,11 +26,14 @@ import type { OpeningFrameInput } from "@/lib/openingFrameScore";
 
 import {
   buildImagePromptCard,
+  buildGptImage2PromptCard,
   buildFourShotWorkflowPromptPack,
   buildSeedancePromptPack,
   buildShotImagePlan,
   buildRunwayPromptPack,
   buildKlingPromptPack,
+  buildKlingFramesPromptCard,
+  buildKlingMultishotPromptCards,
   buildKlingNative15sCard,
   buildKlingSixShotCard,
   buildNegativePrompt,
@@ -90,6 +93,9 @@ export type PublishFlowSummary = {
   publishGuardReport: PublishGuardReport;
   publishWorthy: boolean;
 };
+
+const FACEBOOK_AI_DISCLOSURE_REMINDER =
+  "⚠️ Reminder: Label this content as AI-generated before publishing to comply with Meta policy and SynthID detection.";
 
 export function buildOpeningFrameInput(
   arc: Arc,
@@ -215,6 +221,22 @@ export function buildGeneratedPackageDraft(
     "NANO_BANANA_2",
     input.cameraAnglePreset
   );
+  const gptImage2PromptCard = buildGptImage2PromptCard(
+    input.predator,
+    input.prey,
+    input.finalEnvironment,
+    input.finalArc,
+    input.presetLighting,
+    input.presetCameraGear,
+    input.presetTexture,
+    input.depthMode,
+    input.weather,
+    input.emotionalTone,
+    input.animalVibe,
+    input.sceneInject,
+    input.quality,
+    input.cameraAnglePreset
+  );
   const shotImagePlan = buildShotImagePlan(
     input.predator,
     input.prey,
@@ -276,7 +298,31 @@ export function buildGeneratedPackageDraft(
     quality: input.quality,
     cameraAnglePreset: input.cameraAnglePreset,
   });
+  const klingFramesPromptCard = buildKlingFramesPromptCard(
+    input.predator,
+    input.prey,
+    input.finalEnvironment,
+    input.finalArc,
+    input.weather,
+    input.klingModel,
+    input.emotionalTone,
+    input.animalVibe,
+    input.sceneInject,
+    input.quality
+  );
   const klingNative15sCard = buildKlingNative15sCard(
+    input.predator,
+    input.prey,
+    input.finalEnvironment,
+    input.finalArc,
+    input.weather,
+    input.klingModel,
+    input.emotionalTone,
+    input.animalVibe,
+    input.sceneInject,
+    input.quality
+  );
+  const klingMultishotCards = buildKlingMultishotPromptCards(
     input.predator,
     input.prey,
     input.finalEnvironment,
@@ -332,6 +378,12 @@ export function buildGeneratedPackageDraft(
     input.contentLane,
     input.finalHook
   );
+  platformPack.facebook.publishReminders = [
+    ...new Set([
+      ...(platformPack.facebook.publishReminders ?? []),
+      FACEBOOK_AI_DISCLOSURE_REMINDER,
+    ]),
+  ];
   const primaryHook = platformPack.facebook.hook;
   const seoTitle = buildSEOTitle(input.predator, input.prey, input.finalArc);
   const altTextPrompt = buildAltTextPrompt(
@@ -396,16 +448,20 @@ export function buildGeneratedPackageDraft(
     predatorName: input.predator,
     preyName: input.prey,
     arcName: input.finalArc,
+    environmentName: input.finalEnvironment,
+    weatherName: input.weather,
     cameraAnglePreset: input.cameraAnglePreset,
     generationId,
     generatedAt,
     imagePrompt: imagePromptCard.fullText,
+    gptImage2Prompt: gptImage2PromptCard.fullText,
     negativePrompt: negativePromptForKling,
     thumbnailPrompt,
     voiceoverLine,
     shotImagePlan,
     structuredPrompts: {
       imagePrompt: imagePromptCard,
+      gptImage2Prompt: gptImage2PromptCard,
       runwayShots: [runwayPack.shot1, runwayPack.shot2, runwayPack.shot3, runwayPack.shot4],
       klingShots: [klingPack.shot1, klingPack.shot2, klingPack.shot3, klingPack.shot4],
       seedanceShots: [
@@ -422,6 +478,8 @@ export function buildGeneratedPackageDraft(
         fourShotWorkflowPack.shot4,
       ],
       klingNative15s: klingNative15sCard,
+      klingFramesPrompt: klingFramesPromptCard,
+      klingMultishotShots: klingMultishotCards,
       klingSixShot: klingSixShotCard,
     },
     runwayShots: [
@@ -445,6 +503,8 @@ export function buildGeneratedPackageDraft(
     seedanceMultiShotPrompt: seedancePack.multiShotPrompt.fullText,
     seedanceWorkflowGuide: seedancePack.workflowGuide,
     klingNative15s: klingNative15sCard.fullText,
+    klingFramesPrompt: klingFramesPromptCard.fullText,
+    klingMultishotShots: klingMultishotCards.map((card) => card.fullText),
     klingSixShot: klingSixShotCard.fullText,
     motionStrength,
     capCutPlan,
@@ -454,6 +514,7 @@ export function buildGeneratedPackageDraft(
     recommendedHookIndex: input.recommendedHookIndex,
     caption: input.shortCaption ?? "",
     caption2026: input.longCaption ?? "",
+    pinnedComment: platformPack.facebook.pinnedComment,
     cta,
     hashtags: input.hashtags,
     tags: input.tags,

@@ -1,7 +1,9 @@
 import { arcs, depthModes, weatherOptions } from "@/lib/model-specs";
+import { buildQaSafeSceneDescription } from "@/lib/scene-description-optimizer";
 
 import type {
   Arc,
+  ContentLane,
   DepthMode,
   HabitatPreset,
   PipelineStyle,
@@ -27,117 +29,14 @@ export function formatPipelineStyleLabel(style: PipelineStyle): string {
     : "Hybrid 4-shot";
 }
 
-function buildSceneLeadSentence(
-  predator: string,
-  prey: string,
-  arc: Arc,
-  variant = 0
-): string {
-  const predatorLower = predator.toLowerCase();
-  const preyLower = prey.toLowerCase();
-  const variantIndex = Math.abs(variant) % 3;
-
-  switch (arc) {
-    case "Ambush attack":
-      return [
-        `The ${preyLower} looks up too late as the ${predatorLower} closes in.`,
-        `The ${predatorLower} is already in range before the ${preyLower} reads the danger.`,
-        `The ${preyLower} reacts late. The ${predatorLower} is already inside the moment.`,
-      ][variantIndex] ?? "";
-    case "Chase and takedown":
-      return [
-        `The ${predatorLower} commits first. The ${preyLower} has no time to reset.`,
-        `The ${preyLower} loses space fast once the ${predatorLower} commits.`,
-        `The ${predatorLower} drives the pace. The ${preyLower} never gets clear.`,
-      ][variantIndex] ?? "";
-    case "Defender stands ground":
-      return [
-        `The ${preyLower} keeps pressing. This ${predatorLower} never gives ground.`,
-        `The ${predatorLower} holds position and the ${preyLower} walks into real pressure.`,
-        `The ${preyLower} pushes closer. The ${predatorLower} refuses to move.`,
-      ][variantIndex] ?? "";
-    case "Giant vs giant clash":
-      return [
-        `${predator} and ${prey} get too close. One heavy step changes the standoff.`,
-        `${predator} and ${prey} hold the same space too long. The clash turns fast.`,
-        `${predator} and ${prey} stay chest-to-chest. The pressure shifts on one step.`,
-      ][variantIndex] ?? "";
-    case "Territory dominance battle":
-      return [
-        `The ${preyLower} crosses the wrong line. The ${predatorLower} answers immediately.`,
-        `The ${predatorLower} reads the boundary first. The ${preyLower} pays for it.`,
-        `The ${preyLower} steps too far in. The ${predatorLower} takes control fast.`,
-      ][variantIndex] ?? "";
-    case "Pack hunting strategy":
-      return [
-        `The ${preyLower} looks free for a second. Then the ${predatorLower} closes the lane.`,
-        `The ${predatorLower} takes away the escape lane before the ${preyLower} can reset.`,
-        `The ${preyLower} still has room, then the ${predatorLower} turns the spacing tight.`,
-      ][variantIndex] ?? "";
-    case "Predator vs predator fight":
-      return [
-        `${predator} and ${prey} meet too close. One bad read shifts control fast.`,
-        `${predator} and ${prey} hold the same ground. One move changes the balance.`,
-        `${predator} and ${prey} square up early. The control flips on one mistake.`,
-      ][variantIndex] ?? "";
-    case "Escape from danger":
-      return [
-        `The ${predatorLower} moves first. The ${preyLower} has almost no time to turn.`,
-        `The ${preyLower} reads the danger late as the ${predatorLower} closes fast.`,
-        `The ${predatorLower} commits instantly. The ${preyLower} is already under pressure.`,
-      ][variantIndex] ?? "";
-    default:
-      return `${predator} and ${prey} get too close. The pressure turns readable fast.`;
-  }
-}
-
-function compactSceneHabitatLabel(habitat: HabitatPreset, environment: string): string {
-  const base = habitat === "Auto" ? environment : habitat;
-  const cleaned = String(base ?? "")
-    .split(/[.,]/)[0]
-    .replace(/\bwith\b.*$/i, "")
-    .replace(/\s{2,}/g, " ")
-    .trim();
-
-  return cleaned
-    .split(/\s+/)
-    .slice(0, 4)
-    .join(" ")
-    .toLowerCase();
-}
-
-function finalizeAutoSceneDescription(raw: string, maxChars = 120): string {
-  const compact = String(raw ?? "").replace(/\s+/g, " ").trim();
-  const sentences =
-    compact.match(/[^.!?]+[.!?]?/g)?.map((sentence) => sentence.trim()).filter(Boolean) ?? [];
-  const limited = (sentences.length ? sentences : [compact]).slice(0, 2).join(" ");
-
-  if (limited.length <= maxChars) return limited;
-
-  const firstSentence = sentences[0] ?? compact;
-  if (firstSentence.length <= maxChars) return firstSentence;
-
-  const words = firstSentence.split(/\s+/).filter(Boolean);
-  let wordSafe = "";
-
-  for (const word of words) {
-    const next = wordSafe ? `${wordSafe} ${word}` : word;
-    if (next.length > maxChars) break;
-    wordSafe = next;
-  }
-
-  const resolved = wordSafe.replace(/[,:;/-]+$/g, "").trim();
-
-  if (!resolved) return firstSentence.trim();
-  return /[.!?]$/.test(resolved) ? resolved : `${resolved}.`;
-}
-
 export function buildAutoSceneDescription({
   predator,
   prey,
   arc,
   habitat,
   environment,
+  weather = "Golden Hour",
+  contentLane = "Auto",
   variant = 0,
 }: {
   predator: string;
@@ -145,19 +44,20 @@ export function buildAutoSceneDescription({
   arc: Arc;
   habitat: HabitatPreset;
   environment: string;
+  weather?: Weather;
+  contentLane?: ContentLane;
   variant?: number;
 }): string {
-  const variantIndex = Math.abs(variant) % 3;
-  const lead = buildSceneLeadSentence(predator, prey, arc, variantIndex);
-  const habitatLabel = compactSceneHabitatLabel(habitat, environment);
-  const safeHabitatLabel = habitatLabel || "wildlife habitat";
-  const context = [
-    "Clear U.S. wildlife setup.",
-    `Readable ${safeHabitatLabel} for a U.S. wildlife reel.`,
-    "Fast U.S. wildlife opener with clear tension.",
-  ][variantIndex] ?? "Clear U.S. wildlife setup.";
-
-  return finalizeAutoSceneDescription(`${lead} ${context}`);
+  return buildQaSafeSceneDescription({
+    predator,
+    prey,
+    arc,
+    habitat,
+    weather,
+    contentLane,
+    finalEnvironment: environment,
+    variant,
+  });
 }
 
 function toDriftRisk(value: unknown): DriftRisk {

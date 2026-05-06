@@ -16,7 +16,7 @@ test("main build flow generates output, keeps workspace tabs reachable, and show
   await expect(
     page.locator("button[aria-current=\"step\"]").filter({ hasText: "Wildlife Setup" })
   ).toBeVisible();
-  await expect(page.getByText("Wildlife Focus")).toBeVisible();
+  await expect(page.getByText("Wildlife Focus", { exact: true })).toBeVisible();
   await expect(
     page
       .getByText(/Sign in to keep My Library synced across devices/i)
@@ -37,7 +37,9 @@ test("main build flow generates output, keeps workspace tabs reachable, and show
   await expect(page.getByText("Generate for Reels")).toBeVisible();
   await page.getByRole("button", { name: /Generate.*vs/i }).click();
 
-  await expect(page.getByText("Generated Output")).toBeVisible({ timeout: 10_000 });
+  await expect(page.getByText("Generated Output", { exact: true })).toBeVisible({
+    timeout: 10_000,
+  });
   await expect(page.getByRole("tablist", { name: /Output workspace navigation/i })).toBeVisible();
   await expect(page.getByRole("tab", { name: /Overview workspace/i })).toHaveAttribute(
     "aria-selected",
@@ -52,7 +54,7 @@ test("main build flow generates output, keeps workspace tabs reachable, and show
   await expect(page.getByText(/Advanced workspace research/i)).toBeVisible();
 
   await page.locator('[data-workspace-tab="overview"]').click();
-  const copyAllButton = page.getByRole("button", { name: /Copy All Packs/i });
+  const copyAllButton = page.getByRole("button", { name: /Copy All Output/i });
   const copyAllHandle = await copyAllButton.elementHandle();
   expect(copyAllHandle).not.toBeNull();
 

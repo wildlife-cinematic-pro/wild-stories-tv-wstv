@@ -39,12 +39,11 @@ export function extractKlingPromptBody(shotText: string): string {
       const endCandidates = [
         afterMarker.indexOf("\n─── FULL BREAKDOWN"),
         afterMarker.indexOf("\n\n─── FULL BREAKDOWN"),
-        afterMarker.indexOf("\nAudio:"),
-        afterMarker.indexOf("\n\nAudio:"),
         afterMarker.indexOf("\nKling settings:"),
         afterMarker.indexOf("\n\nKling settings:"),
         afterMarker.indexOf("\n────────────────────────────────"),
         afterMarker.indexOf("\n─── FULL BREAKDOWN (reference only)"),
+        afterMarker.indexOf("\n─── OPTIONAL NOTES"),
       ].filter((n) => n >= 0);
 
       const end = endCandidates.length ? Math.min(...endCandidates) : -1;
@@ -179,6 +178,13 @@ export function getImagePromptCard(data: GeneratedPackage): StructuredPrompt {
   );
 }
 
+export function getGptImage2PromptCard(data: GeneratedPackage): StructuredPrompt {
+  return (
+    data.structuredPrompts?.gptImage2Prompt ??
+    buildLegacyPromptCard("image", String(data.gptImage2Prompt ?? ""))
+  );
+}
+
 export function getSeedanceMultiShotCard(
   data: GeneratedPackage
 ): StructuredPrompt {
@@ -194,6 +200,28 @@ export function getKlingNative15sCard(
   return (
     data.structuredPrompts?.klingNative15s ??
     buildLegacyPromptCard("kling", String(data.klingNative15s ?? ""))
+  );
+}
+
+
+export function getKlingFramesPromptCard(
+  data: GeneratedPackage
+): StructuredPrompt {
+  return (
+    data.structuredPrompts?.klingFramesPrompt ??
+    data.structuredPrompts?.klingNative15s ??
+    buildLegacyPromptCard("kling", String(data.klingFramesPrompt ?? data.klingNative15s ?? ""))
+  );
+}
+
+export function getKlingMultishotPromptCards(
+  data: GeneratedPackage
+): StructuredPrompt[] {
+  const structured = data.structuredPrompts?.klingMultishotShots;
+  if (structured?.length) return structured;
+
+  return (data.klingMultishotShots ?? []).map((shot) =>
+    buildLegacyPromptCard("kling", String(shot ?? ""))
   );
 }
 

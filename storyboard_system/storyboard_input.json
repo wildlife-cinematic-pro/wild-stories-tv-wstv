@@ -1,0 +1,49 @@
+{
+  "project": "generic_wildlife_standoff",
+  "mode": "runway_3_reference_final_scene",
+  "predator": {
+    "name": "grizzly bear",
+    "slug": "grizzly_bear",
+    "role": "predator",
+    "side": "right",
+    "description": "large grizzly bear with muscular shoulders, brown fur, broad head, visible claws, realistic body mass, full body readable",
+    "identityNotes": "Preserve fur tone, shoulder shape, head profile, claw detail, body scale, and grounded paw contact."
+  },
+  "prey": {
+    "name": "massive bison",
+    "slug": "massive_bison",
+    "role": "defender",
+    "side": "left",
+    "description": "massive shaggy dark brown bison with heavy shoulder hump, thick mane, short curved horns, powerful body mass, full body readable",
+    "identityNotes": "Preserve shaggy coat, shoulder hump, horn shape, head shape, body scale, and grounded hoof contact."
+  },
+  "environment": {
+    "name": "heavy snow winter meadow",
+    "slug": "heavy_snow_winter_meadow",
+    "description": "heavy deep snow winter meadow, 3 to 5 foot snowbanks, pine forest, distant mountain ridge, cold clean air",
+    "lighting": "soft overcast winter light with slight golden rim glow",
+    "rules": "environment reference only, no animals, no people, no buildings, no roads"
+  },
+  "finalScene": {
+    "composition": "prey/defender on the left, predator on the right, clear reaction lane between them",
+    "camera": "cinematic telephoto documentary framing",
+    "style": "photorealistic wildlife documentary",
+    "aspectRatio": "9:16",
+    "tension": "high survival tension with clean readable spacing",
+    "action": "defender holds dominant pressure while predator reacts defensively"
+  },
+  "video": {
+    "duration": 15,
+    "platform": "kling",
+    "format": "multi-shot",
+    "shotCount": 5,
+    "musicMood": "tense cinematic wildlife action trailer music",
+    "regionTarget": "USA and Canada viral wildlife shorts"
+  },
+  "aiEnhancement": {
+    "enabled": true,
+    "provider": "gemini",
+    "style": "viral wildlife documentary",
+    "strictness": "preserve identity, stable anatomy, grounded motion, positive prompt wording"
+  }
+}

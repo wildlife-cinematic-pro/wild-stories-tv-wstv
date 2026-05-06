@@ -1,0 +1,11 @@
+{
+  "type": "predator-master-image",
+  "engine": "runway-gen4-image",
+  "promptPath": "prompts/predator_master.txt",
+  "output": "master_images/predator_master/generic_wildlife_standoff.grizzly_bear.png",
+  "runwayTag": "@grizzly_bear",
+  "referenceRole": "predator identity only",
+  "subjectName": "grizzly bear",
+  "subjectSlug": "grizzly_bear",
+  "prompt": "Photorealistic wildlife documentary reusable Runway reference image, 9:16 vertical frame. Single animal only: grizzly bear. large grizzly bear with muscular shoulders, brown fur, broad head, visible claws, realistic body mass, full body readable. Role for later reference: predator identity only. Full body readable, neutral or grounded natural stance, stable anatomy, clear identity markers, realistic body mass, grounded hoof/paw/foot contact, simple uncluttered background. Identity preservation notes: Preserve fur tone, shoulder shape, head profile, claw detail, body scale, and grounded paw contact. Reusable master image for future final-scene composition."
+}

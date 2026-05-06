@@ -2,12 +2,18 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 
 import { createDefaultPackageLockState } from "@/lib/package-section-locks";
 import {
+  clearImportedMonetizedPagePerformanceRecords,
   createLastGeneratedOutputDebouncer,
   readCustomPredators,
   readLastGeneratedOutput,
+  readMonetizedPagePerformanceForGeneration,
+  readMonetizedPagePerformanceHistory,
   readRealGenerationEvidenceForGeneration,
   readRealGenerationEvidenceHistory,
   readSettings,
+  removeMonetizedPagePerformanceRecord,
+  upsertMonetizedPagePerformanceRecord,
+  upsertMonetizedPagePerformanceRecords,
   writeLastGeneratedOutput,
   writeRealGenerationEvidenceHistory,
   writeSettings,
@@ -76,8 +82,9 @@ function makeLastGeneratedOutputRecord(): LastGeneratedOutputRecord {
     snapshot: {
       predator: "Mountain Lion",
       prey: "White-tailed Deer",
-      wildlifeScopeMode: "USA Wildlife",
+      wildlifeScopeMode: "USA / Canada Wildlife",
       contentLane: "Escape",
+      actionStyle: "Natural tension",
       cameraAnglePreset: "Ground-level tension",
       arc: "Escape from danger",
       habitat: "Rocky Mountain Meadow",
@@ -242,6 +249,56 @@ describe("settings storage", () => {
     vi.useRealTimers();
   });
 
+  it("persists monetized page performance records by generation", () => {
+    installLocalStorageMock();
+
+    upsertMonetizedPagePerformanceRecord({
+      generationId: "generation_1",
+      postUrl: "https://facebook.com/post/1",
+      title: "Mountain lion pressure closes fast",
+      conceptLabel: "Mountain Lion vs White-tailed Deer • Escape from danger",
+      publishedAt: "2026-04-24 08:30 EST",
+      postedAtJST: "",
+      postedAtEST: "",
+      animalPair: "Mountain Lion vs White-tailed Deer",
+      predator: "Mountain Lion",
+      prey: "White-tailed Deer",
+      habitat: "Rocky Mountain Meadow",
+      arc: "Escape from danger",
+      durationLane: "short",
+      hookFamily: "danger",
+      contentLane: "Escape",
+      reach: 12000,
+      firstHourViews: "",
+      threeSecondViews: 5400,
+      threeSecondHoldRate: "",
+      oneMinuteViews: 620,
+      averageWatchTimeSeconds: 15,
+      watchPercentage: 46,
+      completionRate: "",
+      shares: 140,
+      comments: 72,
+      reactions: 880,
+      followsGained: 33,
+      profileVisits: 120,
+      linkClicks: 8,
+      usaFollowerPercent: "",
+      earningsUsd: "",
+      estimatedEarnings: 22,
+      rpm: 4.8,
+      monetizedPlays: 1800,
+      notes: "Strong repeat view signals.",
+    });
+
+    expect(readMonetizedPagePerformanceForGeneration("generation_1")).toMatchObject({
+      generationId: "generation_1",
+      estimatedEarnings: 22,
+      rpm: 4.8,
+      monetizedPlays: 1800,
+    });
+    expect(readMonetizedPagePerformanceHistory()).toHaveLength(1);
+  });
+
   it("persists real-generation evidence history and can read the current generation record", () => {
     installLocalStorageMock();
 
@@ -308,5 +365,197 @@ describe("settings storage", () => {
 
     expect(readLastGeneratedOutput()).toBeUndefined();
     expect(localStorage.getItem("wildlife_last_generated_output_v1")).toBeNull();
+  });
+
+  it("upserts imported monetized performance rows by record identity and keeps the latest version", () => {
+    installLocalStorageMock();
+
+    upsertMonetizedPagePerformanceRecords([
+      {
+        source: "facebook_csv",
+        generationId: "csv_generation_1",
+        contentId: "content_1",
+        postUrl: "https://facebook.com/post/1",
+        title: "Mountain lion pressure closes fast",
+        conceptLabel: "Mountain Lion vs White-tailed Deer • Escape from danger",
+        publishedAt: "2026-04-24 08:30 EST",
+        postedAtJST: "",
+        postedAtEST: "",
+        animalPair: "Mountain Lion vs White-tailed Deer",
+        predator: "Mountain Lion",
+        prey: "White-tailed Deer",
+        habitat: "Rocky Mountain Meadow",
+        arc: "Escape from danger",
+        durationLane: "short",
+        hookFamily: "danger",
+        contentLane: "Escape",
+        reach: 12000,
+        views: 15000,
+        firstHourViews: "",
+        threeSecondViews: 5400,
+        threeSecondHoldRate: "",
+        oneMinuteViews: 620,
+        averageWatchTimeSeconds: 15,
+        watchPercentage: 46,
+        completionRate: "",
+        shares: 140,
+        comments: 72,
+        reactions: 880,
+        followsGained: 33,
+        profileVisits: 120,
+        linkClicks: 8,
+        usaFollowerPercent: "",
+        earningsUsd: "",
+        estimatedEarnings: 22,
+        rpm: 4.8,
+        monetizedPlays: 1800,
+        notes: "First import.",
+      },
+      {
+        source: "facebook_csv",
+        generationId: "csv_generation_1",
+        contentId: "content_1",
+        postUrl: "https://facebook.com/post/1",
+        title: "Mountain lion pressure closes fast",
+        conceptLabel: "Mountain Lion vs White-tailed Deer • Escape from danger",
+        publishedAt: "2026-04-24 08:30 EST",
+        postedAtJST: "",
+        postedAtEST: "",
+        animalPair: "Mountain Lion vs White-tailed Deer",
+        predator: "Mountain Lion",
+        prey: "White-tailed Deer",
+        habitat: "Rocky Mountain Meadow",
+        arc: "Escape from danger",
+        durationLane: "short",
+        hookFamily: "danger",
+        contentLane: "Escape",
+        reach: 12000,
+        views: 15000,
+        firstHourViews: "",
+        threeSecondViews: 5400,
+        threeSecondHoldRate: "",
+        oneMinuteViews: 620,
+        averageWatchTimeSeconds: 15,
+        watchPercentage: 46,
+        completionRate: "",
+        shares: 140,
+        comments: 72,
+        reactions: 880,
+        followsGained: 33,
+        profileVisits: 120,
+        linkClicks: 8,
+        usaFollowerPercent: "",
+        earningsUsd: "",
+        estimatedEarnings: 29,
+        rpm: 5.1,
+        monetizedPlays: 2100,
+        notes: "Updated import.",
+      },
+    ]);
+
+    const history = readMonetizedPagePerformanceHistory();
+    expect(history).toHaveLength(1);
+    expect(history[0]).toMatchObject({
+      source: "facebook_csv",
+      estimatedEarnings: 29,
+      rpm: 5.1,
+      monetizedPlays: 2100,
+    });
+  });
+
+  it("can remove imported rows and clear imported records without deleting manual rows", () => {
+    installLocalStorageMock();
+
+    upsertMonetizedPagePerformanceRecord({
+      source: "manual",
+      generationId: "manual_generation_1",
+      postUrl: "https://facebook.com/post/manual",
+      title: "Manual post",
+      conceptLabel: "Manual concept",
+      publishedAt: "2026-04-24 08:30 EST",
+      postedAtJST: "",
+      postedAtEST: "",
+      animalPair: "Mountain Lion vs White-tailed Deer",
+      predator: "Mountain Lion",
+      prey: "White-tailed Deer",
+      habitat: "Rocky Mountain Meadow",
+      arc: "Escape from danger",
+      durationLane: "short",
+      hookFamily: "danger",
+      contentLane: "Escape",
+      firstHourViews: "",
+      threeSecondHoldRate: "",
+      averageWatchTimeSeconds: "",
+      completionRate: "",
+      usaFollowerPercent: "",
+      earningsUsd: "",
+      notes: "Manual row.",
+    });
+
+    upsertMonetizedPagePerformanceRecord({
+      source: "facebook_csv",
+      generationId: "csv_generation_2",
+      postUrl: "https://facebook.com/post/imported",
+      title: "Imported post",
+      conceptLabel: "Imported concept",
+      publishedAt: "2026-04-24 09:00 EST",
+      postedAtJST: "",
+      postedAtEST: "",
+      animalPair: "Mountain Lion vs White-tailed Deer",
+      predator: "Mountain Lion",
+      prey: "White-tailed Deer",
+      habitat: "Rocky Mountain Meadow",
+      arc: "Escape from danger",
+      durationLane: "short",
+      hookFamily: "danger",
+      contentLane: "Escape",
+      firstHourViews: "",
+      threeSecondHoldRate: "",
+      averageWatchTimeSeconds: "",
+      completionRate: "",
+      usaFollowerPercent: "",
+      earningsUsd: "",
+      notes: "Imported row.",
+    });
+
+    const importedRecord = readMonetizedPagePerformanceHistory().find(
+      (record) => record.source === "facebook_csv"
+    );
+    expect(importedRecord?.recordId).toBeTruthy();
+
+    removeMonetizedPagePerformanceRecord(importedRecord!.recordId!);
+    expect(readMonetizedPagePerformanceHistory()).toHaveLength(1);
+
+    upsertMonetizedPagePerformanceRecord({
+      source: "facebook_csv",
+      generationId: "csv_generation_3",
+      postUrl: "https://facebook.com/post/imported-2",
+      title: "Imported post 2",
+      conceptLabel: "Imported concept 2",
+      publishedAt: "2026-04-24 09:10 EST",
+      postedAtJST: "",
+      postedAtEST: "",
+      animalPair: "Mountain Lion vs White-tailed Deer",
+      predator: "Mountain Lion",
+      prey: "White-tailed Deer",
+      habitat: "Rocky Mountain Meadow",
+      arc: "Escape from danger",
+      durationLane: "short",
+      hookFamily: "danger",
+      contentLane: "Escape",
+      firstHourViews: "",
+      threeSecondHoldRate: "",
+      averageWatchTimeSeconds: "",
+      completionRate: "",
+      usaFollowerPercent: "",
+      earningsUsd: "",
+      notes: "Imported row 2.",
+    });
+
+    clearImportedMonetizedPagePerformanceRecords();
+
+    const history = readMonetizedPagePerformanceHistory();
+    expect(history).toHaveLength(1);
+    expect(history[0].source).toBe("manual");
   });
 });

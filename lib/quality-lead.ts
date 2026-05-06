@@ -48,6 +48,12 @@ export function buildQualityLead(
     bits.push("Hero Veo routing enabled for the most photoreal action beat or resolve shot.");
   }
 
+  if (opts.intensityMode) {
+    bits.push(
+      "Intensity mode — slightly faster action cues, stronger terrain response, and tighter peak spacing while preserving anatomy, readability, and clean subject separation."
+    );
+  }
+
   if (opts.seamlessShot) {
     bits.push("Seamless shot mode — continuous, uncut footage with no implied scene transitions.");
   }

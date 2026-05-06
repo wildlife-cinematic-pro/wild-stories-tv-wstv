@@ -96,6 +96,35 @@ export async function callClaudeText(apiKey: string, prompt: string) {
   return { res, data };
 }
 
+export function getOpenAIModelStable(): string {
+  return process.env.OPENAI_MODEL?.trim() || "gpt-4.1-mini";
+}
+
+export async function callOpenAIText(apiKey: string, prompt: string) {
+  const model = getOpenAIModelStable();
+
+  const res = await fetchWithProviderTimeout("https://api.openai.com/v1/responses", {
+    method: "POST",
+    headers: {
+      "content-type": "application/json",
+      authorization: `Bearer ${apiKey}`,
+    },
+    body: JSON.stringify({
+      model,
+      input: [
+        {
+          role: "user",
+          content: [{ type: "input_text", text: prompt }],
+        },
+      ],
+      max_output_tokens: 800,
+    }),
+  });
+
+  const data = await res.json().catch(() => ({}));
+  return { res, data };
+}
+
 export async function callClaudeVision(
   apiKey: string,
   args: { prompt: string; mimeType: string; base64Data: string }
@@ -142,6 +171,20 @@ export function extractGeminiText(data: Record<string, unknown>): string {
   const parts = candidates?.[0]?.content?.parts;
   const joined = (parts ?? []).map((p) => p?.text ?? "").join("");
   return joined || parts?.[0]?.text || "";
+}
+
+export function extractOpenAIText(data: Record<string, unknown>): string {
+  const outputText = data?.output_text;
+  if (typeof outputText === "string") return outputText;
+
+  const output = data?.output as
+    | { content?: { type?: string; text?: string }[] }[]
+    | undefined;
+
+  return (output ?? [])
+    .flatMap((item) => item.content ?? [])
+    .map((content) => content.text ?? "")
+    .join("");
 }
 
 export function extractClaudeText(data: Record<string, unknown>): string {

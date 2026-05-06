@@ -1,0 +1,65 @@
+/* Compact scrollable output panels for the photo-only Image Studio.
+   Scoped to /image outputs only through the nano-output card id.
+   Cards stay short on mobile, but prompt text can be scrolled inside each box.
+   Copy buttons still copy the full underlying prompt text. */
+
+.ui-theme-scope:has(#nano-output) section:has(pre) {
+  position: relative;
+}
+
+.ui-theme-scope:has(#nano-output) pre {
+  max-height: 12.5rem !important;
+  min-height: 7.5rem;
+  overflow-y: auto !important;
+  overflow-x: hidden !important;
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior: contain;
+  padding-bottom: 1.25rem !important;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(103, 232, 249, 0.45) rgba(255, 255, 255, 0.05);
+}
+
+.ui-theme-scope:has(#nano-output) pre::-webkit-scrollbar {
+  width: 0.45rem;
+}
+
+.ui-theme-scope:has(#nano-output) pre::-webkit-scrollbar-track {
+  background: rgba(255, 255, 255, 0.04);
+  border-radius: 999px;
+}
+
+.ui-theme-scope:has(#nano-output) pre::-webkit-scrollbar-thumb {
+  background: rgba(103, 232, 249, 0.42);
+  border-radius: 999px;
+}
+
+.ui-theme-scope:has(#nano-output) section:has(pre)::after {
+  content: "Scroll inside box • Copy gets full text";
+  position: absolute;
+  left: 1rem;
+  right: 1rem;
+  bottom: 0.55rem;
+  display: block;
+  padding: 0.45rem 0.7rem;
+  border-radius: 999px;
+  border: 1px solid rgba(103, 232, 249, 0.14);
+  background: rgba(2, 6, 23, 0.78);
+  backdrop-filter: blur(10px);
+  color: rgba(207, 250, 254, 0.58);
+  font-size: 0.62rem;
+  font-weight: 900;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  pointer-events: none;
+  text-align: center;
+}
+
+.ui-theme-scope:has(#nano-output) section:has(pre) > div:first-child button::after {
+  content: " Full";
+}
+
+@media (min-width: 768px) {
+  .ui-theme-scope:has(#nano-output) pre {
+    max-height: 16rem !important;
+  }
+}

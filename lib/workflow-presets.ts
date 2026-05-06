@@ -1,5 +1,6 @@
 import type {
   AIProvider,
+  ActionStylePreset,
   AnimalVibe,
   Arc,
   BuildWorkflowPresetSnapshot,
@@ -36,8 +37,8 @@ import {
   animalVibes,
   emotionalTones,
   isUSAWildlifeAnimal,
-  wildlifeScopeOptions,
 } from "@/lib/predator-data";
+import { normalizeWildlifeScopeMode } from "@/lib/wildlife-focus";
 
 export const MAX_WORKFLOW_PRESETS = 40;
 export const MAX_WORKFLOW_PRESET_PACKS = 24;
@@ -45,6 +46,196 @@ export const WORKFLOW_PRESET_EXPORT_SCHEMA = "wstv.workflow-presets";
 export const WORKFLOW_PRESET_EXPORT_VERSION = 1;
 export const WORKFLOW_PRESET_PACK_EXPORT_SCHEMA = "wstv.workflow-preset-pack";
 export const WORKFLOW_PRESET_PACK_EXPORT_VERSION = 1;
+
+export type WorkflowTestPreset = {
+  id: string;
+  label: string;
+  summary: string;
+  snapshot: BuildWorkflowPresetSnapshot;
+};
+
+export const WORKFLOW_TEST_PRESETS: WorkflowTestPreset[] = [
+  {
+    id: "crocodile-warthog",
+    label: "Crocodile vs Warthog",
+    summary: "Water ambush test",
+    snapshot: {
+      predator: "Crocodile",
+      prey: "Warthog",
+      wildlifeScopeMode: "Global Viral Wildlife",
+      contentLane: "Fishing Strike",
+      actionStyle: "Natural tension",
+      cameraAnglePreset: "Waterline",
+      arc: "Ambush attack",
+      habitat: "Riverbank Reeds",
+      weather: "Golden Hour",
+      durationLane: "short",
+      fastPublishMode: true,
+      strictOriginalityGuard: true,
+      hookMode: "all",
+      depthMode: "Balanced Depth",
+      emotionalTone: "Raw Tension",
+      animalVibe: "National Geographic Wild",
+      realismMode: "Reference Locked",
+      motionOnlyI2V: true,
+      referenceLock: true,
+      singleActionRule: true,
+      microMotion: true,
+      heroVeo: false,
+      autoApplyHighDrift: false,
+      runwayModel: RUNWAY_MODELS[0],
+      klingModel: KLING_MODELS[0],
+      activeProvider: "gemini",
+      sceneDescriptionMode: "auto",
+      sceneDescription: "",
+      sceneDescriptionTouched: false,
+    },
+  },
+  {
+    id: "black-bear-ground-squirrel",
+    label: "Black Bear vs Ground Squirrel",
+    summary: "Small-prey forest read test",
+    snapshot: {
+      predator: "Black Bear",
+      prey: "Ground Squirrel",
+      wildlifeScopeMode: "USA Wildlife",
+      contentLane: "Auto",
+      actionStyle: "Natural tension",
+      cameraAnglePreset: "Front full-body",
+      arc: "Ambush attack",
+      habitat: "Forest Clearing",
+      weather: "Golden Hour",
+      durationLane: "short",
+      fastPublishMode: true,
+      strictOriginalityGuard: true,
+      hookMode: "all",
+      depthMode: "Balanced Depth",
+      emotionalTone: "Silent Dread",
+      animalVibe: "BBC Earth Documentary",
+      realismMode: "Reference Locked",
+      motionOnlyI2V: true,
+      referenceLock: true,
+      singleActionRule: true,
+      microMotion: true,
+      heroVeo: false,
+      autoApplyHighDrift: false,
+      runwayModel: RUNWAY_MODELS[0],
+      klingModel: KLING_MODELS[0],
+      activeProvider: "gemini",
+      sceneDescriptionMode: "auto",
+      sceneDescription: "",
+      sceneDescriptionTouched: false,
+    },
+  },
+  {
+    id: "polar-bear-arctic-fox",
+    label: "Polar Bear vs Arctic Fox",
+    summary: "Snow habitat realism test",
+    snapshot: {
+      predator: "Polar Bear",
+      prey: "Arctic Fox",
+      wildlifeScopeMode: "World Wide Wildlife",
+      contentLane: "Escape",
+      actionStyle: "Natural tension",
+      cameraAnglePreset: "Front full-body",
+      arc: "Escape from danger",
+      habitat: "Snow Field Tundra",
+      weather: "Overcast",
+      durationLane: "short",
+      fastPublishMode: true,
+      strictOriginalityGuard: true,
+      hookMode: "all",
+      depthMode: "Detailed Background",
+      emotionalTone: "Desperate Survival",
+      animalVibe: "BBC Earth Documentary",
+      realismMode: "Reference Locked",
+      motionOnlyI2V: true,
+      referenceLock: true,
+      singleActionRule: true,
+      microMotion: true,
+      heroVeo: false,
+      autoApplyHighDrift: false,
+      runwayModel: RUNWAY_MODELS[0],
+      klingModel: KLING_MODELS[0],
+      activeProvider: "gemini",
+      sceneDescriptionMode: "auto",
+      sceneDescription: "",
+      sceneDescriptionTouched: false,
+    },
+  },
+  {
+    id: "wolf-pack-bull-elk",
+    label: "Wolf Pack vs Bull Elk",
+    summary: "Open-lane pack pressure test",
+    snapshot: {
+      predator: "Wolf Pack",
+      prey: "Bull Elk",
+      wildlifeScopeMode: "USA / Canada Wildlife",
+      contentLane: "Pack Hunt",
+      actionStyle: "Natural tension",
+      cameraAnglePreset: "Front full-body",
+      arc: "Pack hunting strategy",
+      habitat: "Rocky Mountain Meadow",
+      weather: "Dawn",
+      durationLane: "short",
+      fastPublishMode: true,
+      strictOriginalityGuard: true,
+      hookMode: "all",
+      depthMode: "Balanced Depth",
+      emotionalTone: "Raw Tension",
+      animalVibe: "National Geographic Wild",
+      realismMode: "Reference Locked",
+      motionOnlyI2V: true,
+      referenceLock: true,
+      singleActionRule: true,
+      microMotion: true,
+      heroVeo: false,
+      autoApplyHighDrift: false,
+      runwayModel: RUNWAY_MODELS[0],
+      klingModel: KLING_MODELS[0],
+      activeProvider: "gemini",
+      sceneDescriptionMode: "auto",
+      sceneDescription: "",
+      sceneDescriptionTouched: false,
+    },
+  },
+  {
+    id: "bald-eagle-salmon",
+    label: "Bald Eagle vs Salmon",
+    summary: "Fishing strike readability test",
+    snapshot: {
+      predator: "Bald Eagle",
+      prey: "Salmon",
+      wildlifeScopeMode: "USA / Canada Wildlife",
+      contentLane: "Fishing Strike",
+      actionStyle: "Natural tension",
+      cameraAnglePreset: "Waterline",
+      arc: "Ambush attack",
+      habitat: "Riverbank Reeds",
+      weather: "Golden Hour",
+      durationLane: "short",
+      fastPublishMode: true,
+      strictOriginalityGuard: true,
+      hookMode: "all",
+      depthMode: "Balanced Depth",
+      emotionalTone: "Raw Tension",
+      animalVibe: "National Geographic Wild",
+      realismMode: "Reference Locked",
+      motionOnlyI2V: true,
+      referenceLock: true,
+      singleActionRule: true,
+      microMotion: true,
+      heroVeo: false,
+      autoApplyHighDrift: false,
+      runwayModel: RUNWAY_MODELS[0],
+      klingModel: KLING_MODELS[0],
+      activeProvider: "gemini",
+      sceneDescriptionMode: "auto",
+      sceneDescription: "",
+      sceneDescriptionTouched: false,
+    },
+  },
+];
 
 const realismModes: RealismMode[] = [
   "Balanced",
@@ -57,7 +248,14 @@ const hookModes: Array<HookFamily | "all"> = [
   "curiosity",
   "reversal",
 ];
-const aiProviders: AIProvider[] = ["none", "claude", "gemini"];
+const aiProviders: AIProvider[] = ["gemini", "openai", "claude", "none"];
+const actionStylePresets: ActionStylePreset[] = [
+  "Natural tension",
+  "Viral chase",
+  "Close-contact fight",
+  "Ambush burst",
+  "Forced retreat",
+];
 
 function isRecord(value: unknown): value is Record<string, unknown> {
   return Boolean(value) && typeof value === "object" && !Array.isArray(value);
@@ -210,8 +408,8 @@ export function normalizeWorkflowPresetSnapshot(
 
   const sceneDescription = cleanString(value.sceneDescription);
   const defaultWildlifeScopeMode: WildlifeScopeMode = isUSAWildlifeAnimal(predator)
-    ? "USA Wildlife"
-    : "World Wildlife";
+    ? "USA / Canada Wildlife"
+    : "World Wide Wildlife";
   const sceneDescriptionMode = pickOption(
     value.sceneDescriptionMode,
     ["auto", "manual"] as const,
@@ -221,15 +419,19 @@ export function normalizeWorkflowPresetSnapshot(
   return {
     predator,
     prey,
-    wildlifeScopeMode: pickOption<WildlifeScopeMode>(
+    wildlifeScopeMode: normalizeWildlifeScopeMode(
       value.wildlifeScopeMode,
-      wildlifeScopeOptions,
       defaultWildlifeScopeMode
     ),
     contentLane: pickOption<ContentLane>(
       value.contentLane,
       contentLaneOptions,
       "Auto"
+    ),
+    actionStyle: pickOption<ActionStylePreset>(
+      value.actionStyle,
+      actionStylePresets,
+      "Natural tension"
     ),
     cameraAnglePreset: pickOption<CameraAnglePreset>(
       value.cameraAnglePreset,
@@ -284,7 +486,7 @@ export function normalizeWorkflowPresetSnapshot(
     activeProvider: pickOption<AIProvider>(
       value.activeProvider,
       aiProviders,
-      "none"
+      "gemini"
     ),
     sceneDescriptionMode,
     sceneDescription,

@@ -1,0 +1,28 @@
+{
+  "id": 1,
+  "name": "establishing_tension",
+  "description": "establishing tension in the habitat before the pressure move",
+  "camera": "cinematic telephoto documentary framing",
+  "motion": "slow controlled push-in",
+  "subject": "massive bison on the left and grizzly bear on the right with a clear open reaction lane",
+  "action": "both animals remain fully visible, separated, grounded, and alert",
+  "lighting": "soft overcast winter light with slight golden rim glow",
+  "style": "photorealistic wildlife documentary",
+  "environment": "heavy deep snow winter meadow, 3 to 5 foot snowbanks, pine forest, distant mountain ridge, cold clean air",
+  "duration": 3,
+  "generateVideo": true,
+  "videoEngine": "runway-gen-3",
+  "finalShotReference": "master_images/final_scene_master/generic_wildlife_standoff.final.png",
+  "fileBase": "01_establishing_tension",
+  "storyboardImageFile": "01_establishing_tension.storyboard.png",
+  "finalImageFile": "01_establishing_tension.final.png",
+  "videoFile": "01_establishing_tension.mp4",
+  "storyboardProject": "generic_wildlife_standoff",
+  "negativePrompt": "metadata only: avoid text overlays, malformed anatomy, duplicated limbs, unstable scale, cropped bodies, subject merge",
+  "continuityRules": [
+    "preserve subject identity from master references",
+    "maintain role-aware left-right blocking unless the prompt explicitly changes it",
+    "keep anatomy stable and grounded through all image and video outputs",
+    "preserve environment lighting, ground texture, and open reaction lane"
+  ]
+}

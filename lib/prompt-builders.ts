@@ -2,6 +2,15 @@ export { sanitizeForEngine } from "@/lib/prompt-builders/safety-vocabulary";
 
 export {
   KLING_CHAR_LIMIT,
+  KLING_FRAMES_CHAR_LIMIT,
+  KLING_FRAMES_TARGET_MIN,
+  KLING_FRAMES_TARGET_MAX,
+  KLING_MULTISHOT_SHOT_CHAR_LIMIT,
+  KLING_MULTISHOT_SHOT_TARGET_MIN,
+  KLING_MULTISHOT_SHOT_TARGET_MAX,
+  NANO_BANANA_2_CHAR_LIMIT,
+  NANO_BANANA_2_TARGET_MIN,
+  NANO_BANANA_2_TARGET_MAX,
   validateKlingPromptLength,
   finalizeGenerationText,
   sanitizeSocialCopyText,
@@ -16,6 +25,10 @@ export {
   sanitizeLightingPhrase,
   sanitizeImageTexture,
   sanitizeVideoBeatText,
+  cleanupPromptArtifacts,
+  compactEnvironmentPhrase,
+  compactNegativePrompt,
+  clampPromptToCharLimit,
 } from "@/lib/prompt-builders/sanitizers";
 
 export {
@@ -52,6 +65,7 @@ export {
   type FourShotPromptPack,
   buildStructuredPrompt,
   promptPackToLegacyText,
+  promptPackToFastOutputText,
   promptPackToArray,
   build10Ideas,
   buildCapCutPlan,
@@ -62,6 +76,8 @@ export {
 
 export {
   buildImagePromptCard,
+  buildGptImage2PromptCard,
+  buildGptImage2Prompt,
   buildImagePrompt,
   buildShotImagePlan,
   buildNegativePrompt,
@@ -79,12 +95,25 @@ export {
   type RunwayPromptPack,
   buildRunwayPromptPack,
   buildRunwayShots,
+  buildRunwayFastOutput,
 } from "@/lib/prompt-builders/runway";
 
 export {
+  type RunwayMotionFirstInput,
+  buildRunwayMotionFirstPrompt,
+  makeRunwaySafePrompt,
+  validateRunwayMotionFirstPrompt,
+} from "@/lib/prompt-builders/runway-motion-first";
+
+export {
   type KlingPromptPack,
+  type KlingNative15sPayload,
   buildKlingPromptPack,
   buildKlingShots,
+  buildKlingFastOutput,
+  buildKlingFramesPromptCard,
+  buildKlingMultishotPromptCards,
+  buildKlingNative15sPayload,
   buildKlingNative15sCard,
   buildKlingNative15s,
   buildKlingSixShotCard,

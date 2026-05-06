@@ -1,7 +1,7 @@
 // file: lib/schemas.ts
 import { z } from "zod";
 
-export const aiProviderSchema = z.enum(["none", "claude", "gemini"]);
+export const aiProviderSchema = z.enum(["none", "gemini", "claude", "openai"]);
 
 const copyPolishFieldSchema = z.string().trim().min(1);
 const copyPolishImprovementItemSchema = copyPolishFieldSchema.max(400);
@@ -33,7 +33,7 @@ const copyPolishBaseSchema = z
 // This is not the main cinematic prompt-pack architecture.
 export const copyPolishRequestSchema = z
   .object({
-    provider: z.enum(["claude", "gemini"]),
+    provider: z.enum(["claude", "gemini", "openai"]),
     predator: z.string().min(1).max(64),
     prey: z.string().min(1).max(64),
     env: z.string().min(1).max(300),
@@ -75,6 +75,24 @@ export const copyPolishResponseSchema = z
   });
 
 export type CopyPolishResponse = z.infer<typeof copyPolishResponseSchema>;
+
+export const copyPolishSkippedResponseSchema = z
+  .object({
+    skipped: z.literal(true),
+    provider: z.enum(["claude", "gemini", "openai"]),
+    reason: z.string().min(1),
+    message: z.string().min(1),
+  })
+  .strict();
+
+export type CopyPolishSkippedResponse = z.infer<typeof copyPolishSkippedResponseSchema>;
+
+export const copyPolishEndpointResponseSchema = z.union([
+  copyPolishResponseSchema,
+  copyPolishSkippedResponseSchema,
+]);
+
+export type CopyPolishEndpointResponse = z.infer<typeof copyPolishEndpointResponseSchema>;
 
 export const mediaAnalysisSchema = z
   .object({

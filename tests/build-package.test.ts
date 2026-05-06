@@ -152,6 +152,9 @@ describe("build-package refactor seam", () => {
 
     expect(draft.basePkg.platformPack?.facebook.hook).toBe(draft.primaryHook);
     expect(draft.basePkg.hook).toBe(draft.basePkg.platformPack?.facebook.hook);
+    expect(draft.basePkg.pinnedComment).toBe(
+      draft.basePkg.platformPack?.facebook.pinnedComment
+    );
     expect(publishFlowSummary.primaryHook).toBe(
       draft.basePkg.platformPack?.facebook.hook
     );
@@ -164,6 +167,11 @@ describe("build-package refactor seam", () => {
     expect(prompts?.imagePrompt?.fullText).toBe(draft.basePkg.imagePrompt);
     expect(prompts?.imagePrompt?.pasteReady).toBe(draft.basePkg.imagePrompt);
     expect(prompts?.imagePrompt?.metadata?.engine).toBe("image");
+    expect(prompts?.gptImage2Prompt?.fullText).toBe(draft.basePkg.gptImage2Prompt);
+    expect(prompts?.gptImage2Prompt?.pasteReady).toBe(draft.basePkg.gptImage2Prompt);
+    expect(prompts?.gptImage2Prompt?.metadata?.engine).toBe("image");
+    expect(prompts?.gptImage2Prompt?.fullText).toContain("No text unless explicitly requested.");
+    expect(prompts?.gptImage2Prompt?.fullText).toContain("Leave slight negative space for cover-safe framing and social preview overlays.");
     expect(prompts?.imagePrompt?.fullText).not.toMatch(/--ar\s+9:16/i);
     expect(prompts?.imagePrompt?.fullText).not.toMatch(/--style\s+raw/i);
 
@@ -173,7 +181,85 @@ describe("build-package refactor seam", () => {
       draft.basePkg.seedanceMultiShotPrompt
     );
     expect(prompts?.klingNative15s?.pasteReady.length).toBeGreaterThan(0);
+    expect(prompts?.klingNative15s?.pasteReady.startsWith("Image-to-video from master image")).toBe(true);
+    expect(prompts?.klingFramesPrompt?.pasteReady.length).toBeGreaterThan(0);
+    expect(prompts?.klingMultishotShots).toHaveLength(4);
+    expect(prompts?.klingMultishotShots?.every((shot) => shot.pasteReady.length <= 512)).toBe(true);
+    expect(prompts?.klingNative15s?.pasteReady).toContain("Negative prompt:");
+    expect(prompts?.klingNative15s?.pasteReady).not.toContain("KLING 3.0 PRO DIRECT 15S MULTISHOT");
+    expect(prompts?.klingFramesPrompt?.pasteReady).toContain("raw documentary tension");
+    expect(prompts?.klingFramesPrompt?.pasteReady).toContain("BBC Earth realism");
+    expect(prompts?.klingMultishotShots?.[1]?.pasteReady).toContain("BBC Earth");
+    expect(prompts?.klingMultishotShots?.[1]?.pasteReady).toContain("raw tension");
     expect(prompts?.klingSixShot?.pasteReady.length).toBeGreaterThan(0);
+  });
+
+  it("anchors runway prompts with explicit subject identity while preserving left/right positioning", () => {
+    const draft = buildGeneratedPackageDraft(
+      makeDraftInput({
+        predator: "Lion",
+        prey: "Wildebeest",
+        presetForIdeas: {
+          prey: ["Wildebeest"],
+          environment: "savanna golden hour grassland",
+          lighting: "golden-hour rim light over dry grass",
+          cameraGear: "Canon EOS R5, 400mm wildlife lens",
+          texture: "dust lift, taut muscle detail, sharp hoof contact",
+          defaultArc: "Escape from danger",
+          driftRisk: "LOW",
+        },
+        presetLighting: "golden-hour rim light over dry grass",
+        presetCameraGear: "Canon EOS R5, 400mm wildlife lens",
+        presetTexture: "dust lift, taut muscle detail, sharp hoof contact",
+        presetDriftRisk: "LOW",
+        finalEnvironment: "savanna golden hour grassland",
+        finalArc: "Escape from danger",
+        contentLane: "Escape",
+        weather: "Golden Hour",
+        durationLane: "medium",
+        selectedPipelineStyle: "4-shot",
+        sceneInject:
+          "Keep the chase lateral and readable with clear lead-chase spacing and no crowding.",
+        finalHook2026: [
+          "The lion closes one stride before the wildebeest finds its turn lane.",
+          "The chase line tightens before the cut opens.",
+          "One stride decides the escape window.",
+        ],
+        finalHook: "The lion closes one stride before the wildebeest finds its turn lane.",
+        shortCaption: "A golden-hour chase turns on one stride and one late cut.",
+        longCaption:
+          "The lion closes one stride before the wildebeest finds its escape line across open savanna grass at golden hour.",
+        hashtags: "#Lion #Wildebeest #WildlifeReel #Savanna #WSTV",
+      })
+    );
+
+    const runwayPromptText = [
+      draft.basePkg.structuredPrompts?.runwayShots?.[0]?.fullText ?? "",
+      draft.basePkg.structuredPrompts?.runwayShots?.[3]?.fullText ?? "",
+      draft.basePkg.structuredPrompts?.workflowShots?.[0]?.fullText ?? "",
+      draft.basePkg.structuredPrompts?.workflowShots?.[3]?.fullText ?? "",
+    ].join("\n\n");
+
+    expect(runwayPromptText).not.toMatch(/\bleft subject\b/i);
+    expect(runwayPromptText).not.toMatch(/\bright subject\b/i);
+    expect(runwayPromptText).toContain("Lion (left)");
+    expect(runwayPromptText).toContain("Wildebeest (right)");
+  });
+
+  it("adds the Meta AI disclosure reminder to the Facebook publish reminders without duplicates", () => {
+    const draft = buildGeneratedPackageDraft(makeDraftInput());
+    const reminders = draft.basePkg.platformPack?.facebook.publishReminders ?? [];
+
+    expect(reminders).toContain(
+      "⚠️ Reminder: Label this content as AI-generated before publishing to comply with Meta policy and SynthID detection."
+    );
+    expect(
+      reminders.filter(
+        (item) =>
+          item ===
+          "⚠️ Reminder: Label this content as AI-generated before publishing to comply with Meta policy and SynthID detection."
+      )
+    ).toHaveLength(1);
   });
 
   it("finalizes the draft with enhancements while preserving generated extras", () => {

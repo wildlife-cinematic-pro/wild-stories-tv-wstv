@@ -140,6 +140,37 @@ export function formatActionSubject(subject: string, beat: string): string {
   return `${subject} ${beat}`;
 }
 
+/**
+ * Anchors a left/right subject reference with the explicit animal identity while
+ * preserving the side-position logic used for multi-subject motion clarity.
+ */
+export function buildAnchoredSideSubject(
+  subject: string | undefined,
+  side: "left" | "right",
+  beat: string
+): string {
+  const cleanSubject = subject?.trim() ?? "";
+  const cleanBeat = beat.trim();
+
+  if (!cleanSubject) {
+    return `The ${side} subject ${cleanBeat}`.trim();
+  }
+
+  if (!cleanBeat) {
+    return `${cleanSubject} (${side})`;
+  }
+
+  const loweredSubject = cleanSubject.toLowerCase();
+  const loweredBeat = cleanBeat.toLowerCase();
+
+  if (loweredBeat.startsWith(loweredSubject)) {
+    const remainder = cleanBeat.slice(cleanSubject.length).trimStart();
+    return remainder ? `${cleanSubject} (${side}) ${remainder}` : `${cleanSubject} (${side})`;
+  }
+
+  return `${cleanSubject} (${side}) ${cleanBeat}`;
+}
+
 export function klingWidePhysicsRule(): string {
   return "WIDE PHYSICS RULE — Shot 2 and Shot 3 must be FIXED WIDE (full bodies visible) to preserve biomechanics, weight transfer, and collision readability. Kling 3.0's 4K output ensures micro-detail even in wide framing.";
 }
@@ -431,6 +462,24 @@ export function promptPackToLegacyText(
     shot3: pack.shot3.fullText,
     shot4: pack.shot4.fullText,
   };
+}
+
+export function promptPackToFastOutputText(
+  pack: FourShotPromptPack<StructuredPrompt>
+): string {
+  return [
+    "SHOT 1 — MASTER IMAGE PROMPT",
+    pack.shot1.pasteReady,
+    "",
+    "SHOT 2 — CAMERA ANGLE PROMPT",
+    pack.shot2.pasteReady,
+    "",
+    "SHOT 3 — CAMERA ANGLE PROMPT",
+    pack.shot3.pasteReady,
+    "",
+    "SHOT 4 — CAMERA ANGLE PROMPT",
+    pack.shot4.pasteReady,
+  ].join("\n");
 }
 
 export function promptPackToArray(pack: FourShotPromptPack<StructuredPrompt>): StructuredPrompt[] {

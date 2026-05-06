@@ -33,6 +33,10 @@ import {
 import { getQualityRecommendations } from "@/lib/recommendations";
 import { buildUSViewsModeReport } from "@/lib/usViewsMode";
 import { habitatPromptMap } from "@/lib/habitat-presets";
+import {
+  filterPreyOptionsByWildlifeScope,
+  getWildlifeFocusEnvironmentSuggestion,
+} from "@/lib/wildlife-focus";
 
 import type {
   Arc,
@@ -43,6 +47,7 @@ import type {
   HabitatPreset,
   HookFamily,
   KlingModel,
+  WildlifeScopeMode,
   MediaAnalysisResult,
   PipelineStyle,
   RealismMode,
@@ -67,6 +72,7 @@ type UseBuildPreviewInput = {
   weather: Weather;
   depthMode: DepthMode;
   customPredators: CustomPredatorForm[];
+  wildlifeScopeMode: WildlifeScopeMode;
   mediaAnalysis: MediaAnalysisResult | null;
   sceneDescriptionMode: SceneDescriptionMode;
   sceneDescriptionTouched: boolean;
@@ -104,6 +110,7 @@ export function useBuildPreview({
   weather,
   depthMode,
   customPredators,
+  wildlifeScopeMode,
   mediaAnalysis,
   sceneDescriptionMode,
   sceneDescriptionTouched,
@@ -175,14 +182,33 @@ export function useBuildPreview({
     );
   }, [predator, lionFallback, customPredators]);
 
-  const preyOptions = useMemo(
-    () => rankPreyOptionsForContentLane(contentLane, predator, preset.prey),
-    [contentLane, predator, preset.prey]
-  );
+  const preyOptions = useMemo(() => {
+    const regionCompatiblePrey = filterPreyOptionsByWildlifeScope(
+      predator,
+      preset.prey,
+      wildlifeScopeMode
+    );
+
+    return rankPreyOptionsForContentLane(
+      contentLane,
+      predator,
+      regionCompatiblePrey
+    );
+  }, [contentLane, predator, preset.prey, wildlifeScopeMode]);
+
+  const wildlifeFocusEnvironment =
+    habitat === "Auto"
+      ? getWildlifeFocusEnvironmentSuggestion(
+          wildlifeScopeMode,
+          predator,
+          prey,
+          preset.environment
+        )
+      : habitatPromptMap[habitat];
 
   const baseEnvironment =
     habitat === "Auto"
-      ? suggestHabitat(predator, prey, preset.environment)
+      ? suggestHabitat(predator, prey, wildlifeFocusEnvironment)
       : habitatPromptMap[habitat];
 
   const finalEnvironment =
@@ -221,9 +247,20 @@ export function useBuildPreview({
         arc: previewArc,
         habitat,
         environment: finalEnvironment,
+        weather,
+        contentLane,
         variant: sceneDescriptionVariant,
       }),
-    [predator, prey, previewArc, habitat, finalEnvironment, sceneDescriptionVariant]
+    [
+      predator,
+      prey,
+      previewArc,
+      habitat,
+      finalEnvironment,
+      weather,
+      contentLane,
+      sceneDescriptionVariant,
+    ]
   );
 
   useEffect(() => {
@@ -246,6 +283,8 @@ export function useBuildPreview({
       arc: previewArc,
       habitat,
       environment: finalEnvironment,
+      weather,
+      contentLane,
       variant,
     });
 

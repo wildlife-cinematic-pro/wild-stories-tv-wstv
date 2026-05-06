@@ -36,6 +36,9 @@ import {
   sanitizeLightingPhrase,
   sanitizeImageTexture,
   sanitizeVideoBeatText,
+  NANO_BANANA_2_CHAR_LIMIT,
+  cleanupPromptArtifacts,
+  clampPromptToCharLimit,
 } from "@/lib/prompt-builders/sanitizers";
 import { weatherVariants } from "@/lib/predator-data";
 import {
@@ -50,6 +53,11 @@ type SceneLockState = {
   lightingFamily: string;
   atmosphereFamily: string;
 };
+const DUST_FREE_NEGATIVE_TERMS =
+  "dust cloud, kicked-up dust, dirt spray, flying soil, debris particles, ground powder, sand burst, muddy splash, excessive particles, smoke-like dust, dusty blur, dust trail behind animals";
+const CLEAN_GROUND_CONTACT_LINE =
+  "Clean paw and hoof contact on firm vegetation-covered ground, no visible dust, no dirt spray, no debris particles, no kicked-up soil, no ground powder, no dust clouds.";
+
 
 function normalizeSceneText(value: string): string {
   return String(value ?? "")
@@ -142,7 +150,7 @@ function buildSceneLockGround(
   }
 
   if (/snow|frozen|frost|winter/.test(normalized) || weather === "Frozen Dusk") {
-    return "patchy early snow over dirt and grass";
+    return "patchy early snow over firm grass";
   }
 
   if (/forest|pine|aspen|woodland|leaf litter/.test(normalized)) {
@@ -150,14 +158,14 @@ function buildSceneLockGround(
   }
 
   if (/rock|cliff|scree/.test(normalized)) {
-    return "rocky dirt with sparse grass";
+    return "stable rocky ground with sparse grass";
   }
 
   if (/marsh|swamp|wetland|mud/.test(normalized)) {
-    return "muddy wet ground with reeds";
+    return "firm wet ground with reeds";
   }
 
-  return "dry grass and packed earth";
+  return "firm grass-covered ground with no loose soil";
 }
 
 function buildSceneLockLighting(cleanLighting: string, weather: Weather, cleanEnv: string): string {
@@ -345,14 +353,97 @@ function buildNanoBananaImagePrompt(
     isWaterForwardStrike
   );
 
+  const attackLane = habitatMode === "aquatic"
+    ? "one clean water attack lane with surface texture and a visible escape angle"
+    : habitatMode === "shoreline"
+      ? "one readable shoreline attack lane with bank edge, shallow water, and a visible escape path"
+      : "one clear ground-level attack and escape corridor with foreground texture and readable distance";
+  const reactionCue = isRutMirrorMatch
+    ? `the right-side ${predator} rival braces late with planted footing and visible survival pressure`
+    : `${prey} notices danger too late, turns toward one visible escape lane, and shows a clear survival reaction posture`;
+  const leadPosture = isRutMirrorMatch
+    ? `left-side ${predator} rival holds pre-clash pressure with readable body mass, planted footing, natural antler or shoulder geometry, and grounded contact`
+    : `${predator} holds a pre-attack or pressure posture with readable body mass, species-specific identity, stable anatomy, and grounded contact`;
+  const opposingLine = isRutMirrorMatch
+    ? `Opposing Animal Prompt: second ${predator} rival mirrors the standoff on the right with matching scale, clear identity separation, planted footing, and a late defensive brace. Keep the confrontation non-graphic and readable, with no fused antlers, no duplicate bodies, and no injury.`
+    : `Opposing Animal Prompt: ${prey} keeps accurate scale relationship to ${predator}, readable pose, direction of attention locked to the threat, and a visible escape lane. Show ${reactionCue}; use one species-appropriate survival posture, but avoid injury detail.`;
+  const sceneContext = sanitizedSceneDesc
+    ? `Scene context: ${clipPromptContext(sanitizedSceneDesc, 220)}`
+    : `Scene context: high-tension ${getSafeArcLabel(arc)} moment with attack lane, one survival reaction, and unresolved outcome.`;
+  const cameraPresetLine = buildImageCameraPresetLine(
+    cameraAnglePreset,
+    habitatMode,
+    cleanEnv
+  );
+  const cameraLightingLine = buildCameraLightingContinuityLine(
+    cameraAnglePreset,
+    habitatMode,
+    cleanEnv
+  );
+  const lightingAccentLine = buildSceneLockLightingAccent(cleanLighting);
+  const anatomyLine =
+    quality?.realismMode === "High Naturalism"
+      ? "Keep anatomy exact, coat or skin markings stable, natural wear intact, clean paw, hoof, claw, flipper, or shell contact visible, and realistic terrain interaction."
+      : quality?.realismMode === "Reference Locked"
+        ? "Keep anatomy exact, markings stable, identity locked, and grounded contact visible from the first frame."
+        : "Keep anatomy exact, markings stable, natural scale, and grounded contact.";
+  const textureLine = vibe.texture
+    ? `${cleanTexture}; ${vibe.texture.toLowerCase()}`
+    : cleanTexture;
+  const depthLine =
+    depth.lensNote === "cinematic telephoto depth separation"
+      ? "natural telephoto compression with strong subject separation and readable outlines"
+      : depth.lensNote === "balanced documentary depth"
+        ? "Telephoto framing keeps the midground readable. balanced wildlife field depth with clean subject separation"
+        : "deep documentary field clarity with habitat structure readable behind both animals";
+
+  const sections = [
+    `Lead Animal Prompt: ${predator} and ${prey} in ${cleanEnv}; ${leadPosture}. Put the lead animal in the same pair-compatible habitat and make the danger readable instantly. Emphasize species-specific markers, body scale, head shape, coat, feather, shell, skin, or fin detail, muscle tension, eye-line, weight transfer, and realistic contact with the terrain or water surface.`,
+    opposingLine,
+    `Environment Prompt: ${sceneLock.habitatLocation} on ${sceneLock.groundState}; ${attackLane}. Use pair-compatible cinematic habitat detail from ${cleanEnv}, foreground texture, readable midground distance, natural geography, and no long travel-corridor lists. ${sceneContext}`,
+    `Composition / Framing Prompt: Wide 9:16 documentary framing, 9:16 vertical, full-body visibility for both animals, clean spacing, one clear pressure/escape corridor, thumbnail-safe negative space, readable first-frame silhouettes, no crop through heads or feet, no overlap-heavy chaos. ${isRutMirrorMatch ? `Keep ${rutCue.room}, frontal antler line, claim-space pressure, and planted footing readable.` : ""} ${cameraPresetLine}`,
+    `Style / Lighting Prompt: raw wildlife documentary, natural light, ${sceneLock.lightingFamily} in ${sceneLock.atmosphereFamily}. ${depthLine}. ${lightingAccentLine} ${cameraLightingLine} No CGI look, no plastic skin, no fantasy monster styling, no staged studio lighting.`,
+    `Safety / Continuity Prompt: ${anatomyLine} Preserve identity, scale, spacing, habitat continuity, first-frame readability, stable outlines, and grounded contact. No blood, no gore, no visible wounds, no death close-up, no torn flesh, no exposed injury, no duplicate animals unless requested, no extra limbs, no distorted faces, no text, no watermark. Documentary survival pressure only; outcome unresolved. Texture detail: ${textureLine}. ${CLEAN_GROUND_CONTACT_LINE} Avoid: ${DUST_FREE_NEGATIVE_TERMS}.`,
+  ];
+
+  return clampPromptToCharLimit(cleanupPromptArtifacts(sections.join("\n\n")), NANO_BANANA_2_CHAR_LIMIT);
+}
+
+function buildGptImage2ImagePrompt(
+  predator: string,
+  prey: string,
+  cleanEnv: string,
+  arc: string,
+  cleanLighting: string,
+  cleanTexture: string,
+  depth: ReturnType<typeof getDepthPrompt>,
+  animalVibe: AnimalVibe,
+  habitatMode: ReturnType<typeof getHabitatMode>,
+  sanitizedSceneDesc: string,
+  weather: Weather,
+  quality?: QualityOptions,
+  cameraAnglePreset: CameraAnglePreset = "Auto"
+): string {
+  const vibe = animalVibePrompt[animalVibe];
+  const isWaterForwardStrike = isWaterForwardPreyScenario(predator, prey, cleanEnv);
+  const isRutMirrorMatch = isRutMirrorMatchScenario(predator, prey, arc, cleanEnv);
+  const rutCue = getRutMirrorMatchCue(predator);
+  const sceneLock = buildSceneLockState(
+    cleanEnv,
+    cleanLighting,
+    weather,
+    habitatMode,
+    isWaterForwardStrike
+  );
+
   const subjectLine = isRutMirrorMatch
-    ? `Two ${predator} rivals share one frame ${sceneLock.habitatLocation} during a rut standoff on ${sceneLock.groundState}.`
-    : `${predator} and ${prey} share one frame ${sceneLock.habitatLocation} during a high-tension ${getSafeArcLabel(arc)} beat on ${sceneLock.groundState}.`;
+    ? `Photorealistic wildlife documentary cover-safe still image, 9:16 vertical. Two ${predator} rivals share one frame ${sceneLock.habitatLocation} during a rut standoff on ${sceneLock.groundState}.`
+    : `Photorealistic wildlife documentary cover-safe still image, 9:16 vertical. ${predator} and ${prey} share one frame ${sceneLock.habitatLocation} during a high-tension ${getSafeArcLabel(arc)} beat on ${sceneLock.groundState}.`;
 
   const baseBlockingLine = isRutMirrorMatch
-    ? `Keep one ${predator} planted on the left and the other on the right with ${rutCue.room}, a clean frontal antler line, and open claim-space between them.`
+    ? `Keep one ${predator} on the left and the other on the right with ${rutCue.room}, a clean frontal antler line, and no overlap.`
     : habitatMode === "aquatic"
-      ? `Keep ${predator} on the left and ${prey} on the right with one clean water lane between them while both bodies stay fully readable.`
+      ? `Keep ${predator} on the left and ${prey} on the right with one clean water lane between them and both bodies fully readable.`
       : habitatMode === "shoreline"
         ? isWaterForwardStrike
           ? `Keep ${predator} low on the left at the bank and ${prey} on the right inside the shallow strike window with one open reaction lane between them.`
@@ -371,20 +462,20 @@ function buildNanoBananaImagePrompt(
   const blockingLine = sceneNoteCue ? `${baseBlockingLine} ${sceneNoteCue}` : baseBlockingLine;
 
   const compositionBase = isRutMirrorMatch
-    ? `Wide 9:16 documentary framing keeps both rivals fully visible, clash geometry clean, and ${rutCue.room} preserved.`
-    : `Wide 9:16 documentary framing keeps both animals fully visible with clean first-frame spacing.`;
+    ? `Thumbnail-safe 9:16 framing keeps both rivals fully visible, clash geometry clean, and ${rutCue.room} preserved.`
+    : `Thumbnail-safe 9:16 framing keeps both animals fully visible with clean first-frame spacing.`;
   const depthLine =
     depth.lensNote === "cinematic telephoto depth separation"
-      ? "Telephoto compression keeps the subjects separated."
+      ? "Telephoto compression keeps the subjects separated with strong silhouettes."
       : depth.lensNote === "balanced documentary depth"
-        ? "Telephoto framing keeps the midground readable."
-        : "The habitat stays readable behind them.";
+        ? "Natural wildlife field depth keeps both animals readable without clutter."
+        : "Habitat depth stays clean behind the subjects with readable spacing.";
   const cameraPresetLine = buildImageCameraPresetLine(
     cameraAnglePreset,
     habitatMode,
     cleanEnv
   );
-  const compositionLine = `${compositionBase}${cameraPresetLine ? ` ${cameraPresetLine}` : ""} ${depthLine}`;
+  const compositionLine = `${compositionBase}${cameraPresetLine ? ` ${cameraPresetLine}` : ""} ${depthLine} Leave slight negative space for cover-safe framing and social preview overlays.`;
 
   const lightingAccentLine = buildSceneLockLightingAccent(cleanLighting);
   const cameraLightingLine = buildCameraLightingContinuityLine(
@@ -394,18 +485,116 @@ function buildNanoBananaImagePrompt(
   );
   const atmosphereLine = `${sceneLock.lightingFamily} in ${sceneLock.atmosphereFamily}.${lightingAccentLine ? ` ${lightingAccentLine}` : ""}${cameraLightingLine ? ` ${cameraLightingLine}` : ""}`;
 
+  const actionLine = sanitizedSceneDesc
+    ? `Show ${clipPromptContext(sanitizedSceneDesc, 150)} Keep the tension readable without contact unless the scene description explicitly requests it.`
+    : isRutMirrorMatch
+      ? "Hold the confrontation at readable peak tension without horn or antler contact."
+      : `Show a readable ${getSafeArcLabel(arc)} moment without contact unless explicitly requested.`;
+
   const anatomyLine =
     quality?.realismMode === "High Naturalism"
-      ? "Keep anatomy exact, coat markings stable, grounded paw or hoof contact visible, and natural wear intact."
-      : quality?.realismMode === "Reference Locked"
-        ? "Keep anatomy exact, coat markings stable, and grounded paw or hoof contact visible."
-        : "Keep anatomy exact, coat markings stable, and body mechanics natural.";
+      ? "Exact animal anatomy, stable fur or feather markings, grounded paw, hoof, or claw contact, natural scale, and realistic terrain interaction."
+      : quality?.referenceLock
+        ? "Exact animal anatomy, stable markings, grounded contact, and continuity-safe identity across alternate stills."
+        : "Exact animal anatomy, stable markings, grounded contact, and natural scale.";
 
   const detailLine = vibe.texture
-    ? `Photoreal wildlife documentary detail with ${cleanTexture} and ${vibe.texture.toLowerCase()}. ${anatomyLine}`
-    : `Photoreal wildlife documentary detail with ${cleanTexture}. ${anatomyLine}`;
+    ? `Clean composition for a backup still, thumbnail, cover frame, or strict layout alternate with ${cleanTexture} and ${vibe.texture.toLowerCase()}. ${anatomyLine}`
+    : `Clean composition for a backup still, thumbnail, cover frame, or strict layout alternate with ${cleanTexture}. ${anatomyLine}`;
 
-  return `${subjectLine} ${blockingLine} ${compositionLine} ${atmosphereLine} ${detailLine}`;
+  const constraintLine =
+    "No text unless explicitly requested. Avoid text, watermark, logo, extra limbs, distorted anatomy, duplicate animals, overlapping subjects, dust clouds, debris spray, smoke-like particles, muddy blur, low-detail faces, cropped bodies.";
+
+  return `${subjectLine} ${blockingLine} ${actionLine} ${atmosphereLine} ${compositionLine} ${detailLine} ${CLEAN_GROUND_CONTACT_LINE} ${constraintLine}`;
+}
+
+export function buildGptImage2PromptCard(
+  predator: string,
+  prey: string,
+  env: string,
+  arc: string,
+  lighting: string,
+  cameraGear: string,
+  texture: string,
+  depthMode: DepthMode,
+  weather: Weather,
+  emotionalTone: EmotionalTone,
+  animalVibe: AnimalVibe,
+  sceneDesc?: string,
+  quality?: QualityOptions,
+  cameraAnglePreset: CameraAnglePreset = "Auto"
+): StructuredPrompt {
+  void emotionalTone;
+  void cameraGear;
+
+  const depth = getDepthPrompt(depthMode);
+  const cleanEnv = sanitizeImageEnv(env);
+  const cleanTexture = sanitizeImageTexture(texture, env);
+  const cleanLighting = sanitizeLightingPhrase(lighting, weather);
+  const sanitizedSceneDesc = stripLegacyImageFlags(sceneDesc?.trim() ?? "");
+  const habitatMode = getHabitatMode(predator, prey, env);
+
+  const prompt = finalizePrompt(
+    buildGptImage2ImagePrompt(
+      predator,
+      prey,
+      cleanEnv,
+      arc,
+      cleanLighting,
+      cleanTexture,
+      depth,
+      animalVibe,
+      habitatMode,
+      sanitizedSceneDesc,
+      weather,
+      quality,
+      cameraAnglePreset
+    )
+  );
+
+  return buildStructuredPrompt({
+    fullText: prompt,
+    pasteReady: prompt,
+    metadata: {
+      engine: "image",
+      title: "GPT Image 2 backup still",
+      variant: "single-shot",
+    },
+  });
+}
+
+export function buildGptImage2Prompt(
+  predator: string,
+  prey: string,
+  env: string,
+  arc: string,
+  lighting: string,
+  cameraGear: string,
+  texture: string,
+  depthMode: DepthMode,
+  weather: Weather,
+  emotionalTone: EmotionalTone,
+  animalVibe: AnimalVibe,
+  sceneDesc?: string,
+  quality?: QualityOptions,
+  cameraAnglePreset: CameraAnglePreset = "Auto"
+): string {
+  return buildGptImage2PromptCard(
+    predator,
+    prey,
+    env,
+    arc,
+    lighting,
+    cameraGear,
+    texture,
+    depthMode,
+    weather,
+    emotionalTone,
+    animalVibe,
+    sceneDesc,
+    quality,
+    cameraAnglePreset
+  ).fullText;
 }
 
 export function buildImagePromptCard(
@@ -585,8 +774,8 @@ export function buildShotImagePlan(
       ? " Let the bank-edge water reaction settle while shoreline spacing stays clean."
       : "";
 
-  const continuityLock = `Keep ${predator} and ${prey} identical in anatomy, markings, scale, lighting family, and habitat continuity in ${cleanEnv}, ${cleanWeather}. Preserve the same 9:16 documentary image family, grounded contact, realistic spacing, and clean silhouette separation.`;
-  const atmosphereLock = `Environment stays continuity-safe with ${micro}.`;
+  const continuityLock = `Keep ${predator} and ${prey} identical in anatomy, markings, scale, lighting family, and habitat continuity in ${cleanEnv}, ${cleanWeather}. Preserve the same 9:16 documentary image family, grounded contact, realistic spacing, clean silhouette separation, and dust-free ground contact.`;
+  const atmosphereLock = `Environment stays continuity-safe with ${micro}. ${CLEAN_GROUND_CONTACT_LINE}`;
   const shotWorldContinuityLock = buildShotWorldContinuityLock("image");
   const masterBase =
     "Base image: use the Nano Banana 2 / Gemini master still as the Shot 1 visual-world anchor.";
@@ -630,7 +819,7 @@ export function buildNegativePrompt(
   engine: "KLING" | "RUNWAY" | "SEEDANCE" = "KLING"
 ): string {
   if (engine !== "KLING") {
-    return "";
+    return DUST_FREE_NEGATIVE_TERMS;
   }
 
   const base =
@@ -640,7 +829,8 @@ export function buildNegativePrompt(
     "partial body crop, cut-off paws, cut-off hooves, cut-off tails, hidden subjects, overlapping bodies, " +
     "close-up crop, off-frame subject, face distortion, warping, melting anatomy, inconsistent physics, " +
     "background shifting, changing markings, deformed anatomy, plastic fur, oversharpened HDR, synthetic glow, " +
-    "fire, flame, fantasy breath, glowing mouth, energy effect, light beam, smoke plume, steam, mist, haze, fog wall, dusty blur, bright unnatural colors";
+    "fire, flame, fantasy breath, glowing mouth, energy effect, light beam, smoke plume, steam, mist, haze, fog wall, " +
+    `${DUST_FREE_NEGATIVE_TERMS}, bright unnatural colors`;
 
   const specific: Record<string, string> = {
     Lion: "wrong mane colour, extra mane, mane drift between shots",
@@ -682,7 +872,7 @@ export function buildThumbnailPrompt(
   const cleanEnv = sanitizeImageEnv(env);
   const cleanWeather = sanitizeWeatherPhrase(weatherVariants[weather]);
   const cleanAir =
-    "clear clean air, no visible steam, no smoke plumes, no mist, no airborne haze";
+    "clear clean air, no visible steam, no smoke plumes, no mist, no airborne haze, no dust clouds, no kicked-up soil";
 
   const envLower = env.toLowerCase();
   const isArcticLike =

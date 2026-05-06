@@ -2,8 +2,11 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
+import Link from "next/link";
+
 import type {
   AIProvider,
+  ActionStylePreset,
   Arc,
   CameraAnglePreset,
   DepthMode,
@@ -39,6 +42,16 @@ import {
   KLING_MODELS,
 } from "@/lib/model-specs";
 import { DEFAULT_CAMERA_ANGLE_PRESET } from "@/lib/camera-angle-presets";
+import { buildStoryboardPreviewLinkMetadata } from "@/lib/storyboard-link-metadata";
+import { WORKFLOW_TEST_PRESETS } from "@/lib/workflow-presets";
+import {
+  appendCreatorQaRun,
+  buildCreatorQaRun,
+  buildPinnedGeneratedOutput,
+  type CreatorQaRun,
+  type PinnedGeneratedOutput,
+} from "@/lib/creator-qa-run-history";
+import { getWildlifeScopeDefaultSelection } from "@/lib/wildlife-focus";
 import {
   useBuildPreview,
   type DurationLaneMode,
@@ -84,8 +97,9 @@ type ActivePromotedPublishCopyOverride = PromotedVariantPublishCopyOverride & {
 
 const DEFAULT_PREDATOR = "Mountain Lion";
 const DEFAULT_PREY = "White-tailed Deer";
-const DEFAULT_WILDLIFE_SCOPE_MODE: WildlifeScopeMode = "USA Wildlife";
+const DEFAULT_WILDLIFE_SCOPE_MODE: WildlifeScopeMode = "USA / Canada Wildlife";
 const DEFAULT_CONTENT_LANE: ContentLane = "Auto";
+const DEFAULT_ACTION_STYLE: ActionStylePreset = "Natural tension";
 const DEFAULT_CAMERA_PRESET: CameraAnglePreset = DEFAULT_CAMERA_ANGLE_PRESET;
 const DEFAULT_ARC: Arc = "Ambush attack";
 const DEFAULT_WEATHER: Weather = "Golden Hour";
@@ -104,6 +118,7 @@ export default function Page() {
     DEFAULT_WILDLIFE_SCOPE_MODE
   );
   const [contentLane, setContentLane] = useState<ContentLane>(DEFAULT_CONTENT_LANE);
+  const [actionStyle, setActionStyle] = useState<ActionStylePreset>(DEFAULT_ACTION_STYLE);
   const [cameraAnglePreset, setCameraAnglePreset] = useState<CameraAnglePreset>(
     DEFAULT_CAMERA_PRESET
   );
@@ -134,10 +149,11 @@ export default function Page() {
   const [mediaAnalysis, setMediaAnalysis] = useState<MediaAnalysisResult | null>(null);
 
   // STEP 3
-  const [activeProvider, setActiveProvider] = useState<AIProvider>("none");
+  const [activeProvider, setActiveProvider] = useState<AIProvider>("gemini");
   const [pkg, setPkg] = useState<GeneratedPackage | null>(null);
   const [isGenerating, setIsGenerating] = useState(false);
   const [isRegeneratingUnlocked, setIsRegeneratingUnlocked] = useState(false);
+  const [enhancementNotice, setEnhancementNotice] = useState<string | null>(null);
   const [packageLocks, setPackageLocks] = useState<PackageLockState>(() =>
     createDefaultPackageLockState()
   );
@@ -158,6 +174,10 @@ export default function Page() {
     useState<PromotedVariantPublishCopyOverride | null>(null);
   const [lastGeneratedRestoreNotice, setLastGeneratedRestoreNotice] =
     useState<string | null>(null);
+  const [creatorQaRuns, setCreatorQaRuns] = useState<CreatorQaRun[]>([]);
+  const [pinnedOutput, setPinnedOutput] = useState<PinnedGeneratedOutput | null>(null);
+  const [shouldRecordCreatorQaRun, setShouldRecordCreatorQaRun] = useState(false);
+  const lastRecordedCreatorQaRunIdRef = useRef("");
 
   const applyBuildSnapshot = useCallback(
     (
@@ -168,6 +188,7 @@ export default function Page() {
       setPrey(snapshot.prey);
       setWildlifeScopeMode(snapshot.wildlifeScopeMode);
       setContentLane(snapshot.contentLane);
+      setActionStyle(snapshot.actionStyle ?? DEFAULT_ACTION_STYLE);
       setCameraAnglePreset(snapshot.cameraAnglePreset);
       setArc(snapshot.arc);
       setConceptArcOverride(null);
@@ -196,6 +217,7 @@ export default function Page() {
       setStrictOriginalityGuard(snapshot.strictOriginalityGuard);
       setPromotedPublishCopyOverride(null);
       setLastGeneratedRestoreNotice(null);
+      setShouldRecordCreatorQaRun(false);
       setError("");
 
       if (options.clearGeneratedOutput !== false) {
@@ -213,11 +235,27 @@ export default function Page() {
     [applyBuildSnapshot]
   );
 
+  const handleApplyWorkflowTestPreset = useCallback(
+    (presetId: string) => {
+      const preset = WORKFLOW_TEST_PRESETS.find((candidate) => candidate.id === presetId);
+
+      if (!preset) {
+        return;
+      }
+
+      applyBuildSnapshot(preset.snapshot);
+      setStep(1);
+      setActiveTab("build");
+    },
+    [applyBuildSnapshot]
+  );
+
   function handleResetDefaults() {
     setPredator(DEFAULT_PREDATOR);
     setPrey(DEFAULT_PREY);
     setWildlifeScopeMode(DEFAULT_WILDLIFE_SCOPE_MODE);
     setContentLane(DEFAULT_CONTENT_LANE);
+    setActionStyle(DEFAULT_ACTION_STYLE);
     setCameraAnglePreset(DEFAULT_CAMERA_PRESET);
     setArc(DEFAULT_ARC);
     setConceptArcOverride(null);
@@ -305,14 +343,20 @@ export default function Page() {
   useEffect(() => {
     if (!predatorOptions.length || predatorOptions.includes(predator)) return;
 
-    const fallbackPredator = predatorOptions.includes(DEFAULT_PREDATOR)
-      ? DEFAULT_PREDATOR
-      : predatorOptions[0];
+    const scopeDefault = getWildlifeScopeDefaultSelection(wildlifeScopeMode);
+    const fallbackPredator = predatorOptions.includes(scopeDefault.predator)
+      ? scopeDefault.predator
+      : predatorOptions.includes(DEFAULT_PREDATOR)
+        ? DEFAULT_PREDATOR
+        : predatorOptions[0];
 
     if (fallbackPredator && predator !== fallbackPredator) {
       setPredator(fallbackPredator);
+      if (fallbackPredator === scopeDefault.predator && prey !== scopeDefault.prey) {
+        setPrey(scopeDefault.prey);
+      }
     }
-  }, [predator, predatorOptions]);
+  }, [predator, predatorOptions, prey, wildlifeScopeMode]);
 
   const {
     preset,
@@ -347,6 +391,7 @@ export default function Page() {
     weather,
     depthMode,
     customPredators,
+    wildlifeScopeMode,
     mediaAnalysis,
     sceneDescriptionMode,
     sceneDescriptionTouched,
@@ -380,6 +425,7 @@ export default function Page() {
       prey,
       wildlifeScopeMode,
       contentLane,
+      actionStyle,
       cameraAnglePreset,
       arc: previewArc,
       habitat,
@@ -409,6 +455,7 @@ export default function Page() {
       activeProvider,
       animalVibe,
       autoApplyHighDrift,
+      actionStyle,
       cameraAnglePreset,
       contentLane,
       depthMode,
@@ -436,6 +483,35 @@ export default function Page() {
       wildlifeScopeMode,
     ]
   );
+
+  const currentStoryboardHref = useMemo(() => {
+    const params = new URLSearchParams({
+      source: "build",
+      predator,
+      prey,
+      habitat,
+      weather,
+      arc: previewArc,
+      contentLane,
+      cameraAnglePreset,
+      durationLane,
+      sceneDescription,
+      finalEnvironment,
+    });
+
+    return `/storyboard?${params.toString()}`;
+  }, [
+    cameraAnglePreset,
+    contentLane,
+    durationLane,
+    finalEnvironment,
+    habitat,
+    predator,
+    prey,
+    previewArc,
+    sceneDescription,
+    weather,
+  ]);
 
   const activePromotedPublishCopyOverride = useMemo<ActivePromotedPublishCopyOverride | null>(
     () => {
@@ -609,6 +685,119 @@ export default function Page() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [autoApplyHighDrift, qualityReco.level, predator, prey, arc, preset.driftRisk, runwayModel, klingModel]);
 
+  const handlePinCurrentOutput = useCallback(() => {
+    if (!pkg) {
+      return;
+    }
+
+    const pinned = buildPinnedGeneratedOutput({
+      id: pkg.generationId,
+      createdAt: pkg.generatedAt,
+      predator,
+      prey,
+      arc: previewArc,
+      contentLane,
+      habitat,
+      weather,
+      depthMode,
+      cameraAnglePreset,
+      emotionalTone,
+      animalVibe,
+      finalEnvironment,
+      sceneDescription,
+      pkg,
+    });
+
+    setPinnedOutput(pinned);
+  }, [
+    animalVibe,
+    cameraAnglePreset,
+    contentLane,
+    depthMode,
+    emotionalTone,
+    finalEnvironment,
+    habitat,
+    pkg,
+    predator,
+    prey,
+    previewArc,
+    sceneDescription,
+    weather,
+  ]);
+
+  const handleRestorePinnedOutput = useCallback(() => {
+    if (!pinnedOutput) {
+      return;
+    }
+
+    setPkg(pinnedOutput.package);
+    setPublishFlowSummary(null);
+    setLastGeneratedRestoreNotice(
+      "Restored pinned output as the current generated package. Step 1 and Step 2 setup values stay unchanged."
+    );
+    setEnhancementNotice(null);
+    setError("");
+    setShouldRecordCreatorQaRun(false);
+    setStep(3);
+    setActiveTab("build");
+  }, [pinnedOutput]);
+
+  useEffect(() => {
+    if (!shouldRecordCreatorQaRun || !pkg) {
+      return;
+    }
+
+    const matchedWorkflowTestPreset = WORKFLOW_TEST_PRESETS.find(
+      (presetCandidate) =>
+        presetCandidate.snapshot.predator === predator &&
+        presetCandidate.snapshot.prey === prey
+    );
+    const run = buildCreatorQaRun({
+      id: pkg.generationId,
+      createdAt: pkg.generatedAt,
+      presetName: matchedWorkflowTestPreset?.label,
+      predator,
+      prey,
+      arc: previewArc,
+      contentLane,
+      habitat,
+      weather,
+      depthMode,
+      cameraAnglePreset,
+      emotionalTone,
+      animalVibe,
+      finalEnvironment,
+      sceneDescription,
+      pkg,
+    });
+
+    if (lastRecordedCreatorQaRunIdRef.current === run.id) {
+      setShouldRecordCreatorQaRun(false);
+      return;
+    }
+
+    lastRecordedCreatorQaRunIdRef.current = run.id;
+    setCreatorQaRuns((history) => appendCreatorQaRun(history, run));
+    setShouldRecordCreatorQaRun(false);
+  }, [
+    animalVibe,
+    cameraAnglePreset,
+    contentLane,
+    depthMode,
+    emotionalTone,
+    finalEnvironment,
+    habitat,
+    pkg,
+    predator,
+    prey,
+    previewArc,
+    sceneDescription,
+    shouldRecordCreatorQaRun,
+    weather,
+  ]);
+
+
+
   const {
     handleGenerate,
     handleRegenerateUnlockedSections,
@@ -620,6 +809,7 @@ export default function Page() {
     arc,
     previewArc,
     contentLane,
+    actionStyle,
     cameraAnglePreset,
     weather,
     depthMode,
@@ -664,8 +854,10 @@ export default function Page() {
     setIsGenerating,
     setIsRegeneratingUnlocked,
     setError,
+    setEnhancementNotice,
     onGenerated: () => {
       setLastGeneratedRestoreNotice(null);
+      setShouldRecordCreatorQaRun(true);
       setStep(3);
     },
   });
@@ -685,6 +877,57 @@ export default function Page() {
     setHeroVeo,
   };
 
+  const storyboardHref = useMemo(() => {
+    const params = new URLSearchParams({
+      source: "build",
+      predator,
+      prey,
+      wildlifeScopeMode,
+      contentLane,
+      cameraAnglePreset,
+      arc: previewArc,
+      habitat,
+      weather,
+      durationLane,
+      sceneDescription,
+      sceneDescriptionMode,
+      sceneDescriptionTouched: String(sceneDescriptionTouched),
+    });
+
+    return "/storyboard?" + params.toString();
+  }, [
+    predator,
+    prey,
+    wildlifeScopeMode,
+    contentLane,
+    cameraAnglePreset,
+    previewArc,
+    habitat,
+    weather,
+    durationLane,
+    sceneDescription,
+    sceneDescriptionMode,
+    sceneDescriptionTouched,
+  ]);
+
+  const compactStoryboardLinkMetadata = useMemo(
+    () =>
+      buildStoryboardPreviewLinkMetadata({
+        predator,
+        prey,
+      }),
+    [predator, prey]
+  );
+
+  const detailedStoryboardLinkMetadata = useMemo(
+    () =>
+      buildStoryboardPreviewLinkMetadata({
+        predator,
+        prey,
+        finalEnvironment,
+      }),
+    [finalEnvironment, predator, prey]
+  );
   // ─── RENDER ───────────────────────────────────────────────────────────────
 
   return (
@@ -738,6 +981,24 @@ export default function Page() {
                     {tab.label}
                   </button>
                 ))}
+                <Link
+                  href="/image"
+                  className="group flex items-center gap-2 rounded-xl border border-transparent px-3.5 py-2 text-xs font-semibold tracking-[0.01em] text-white/50 transition-all hover:bg-white/[0.06] hover:text-white/80"
+                >
+                  <span className="grid h-5 w-5 place-items-center rounded-full bg-white/[0.06] text-[11px] text-white/70 transition-all group-hover:bg-white/[0.1] group-hover:text-white">
+                    ▧
+                  </span>
+                  Image
+                </Link>
+                <Link
+                  href="/storyboard"
+                  className="group flex items-center gap-2 rounded-xl border border-transparent px-3.5 py-2 text-xs font-semibold tracking-[0.01em] text-white/50 transition-all hover:bg-white/[0.06] hover:text-white/80"
+                >
+                  <span className="grid h-5 w-5 place-items-center rounded-full bg-white/[0.06] text-[11px] text-white/70 transition-all group-hover:bg-white/[0.1] group-hover:text-white">
+                    ▣
+                  </span>
+                  Storyboard
+                </Link>
               </nav>
             </div>
 
@@ -799,6 +1060,25 @@ export default function Page() {
                     </div>
                   ))}
                 </nav>
+                <div className="border-t border-[color:var(--border)] px-3 py-3">
+                  <div className="flex flex-wrap items-center justify-between gap-3">
+                    <p className="text-xs leading-5 text-[color:var(--muted)]">
+                      Open a read-only storyboard preview generated from the current Build setup.
+                    </p>
+                    <Link
+                      key={compactStoryboardLinkMetadata.key}
+                      href={storyboardHref}
+                      aria-label={compactStoryboardLinkMetadata.ariaLabel}
+                      title={compactStoryboardLinkMetadata.title}
+                      className="inline-flex items-center gap-2 rounded-xl border border-cyan-400/30 bg-cyan-500/10 px-3.5 py-2 text-xs font-semibold text-cyan-200 transition hover:border-cyan-300 hover:bg-cyan-500/15"
+                    >
+                      <span className="grid h-5 w-5 place-items-center rounded-full bg-cyan-400/15 text-[11px] text-cyan-200">
+                        ▣
+                      </span>
+                      Open Storyboard for Current Setup
+                    </Link>
+                  </div>
+                </div>
               </div>
             </div>
           )}
@@ -812,6 +1092,30 @@ export default function Page() {
         <>
           {/* Page content */}
           <div className="mx-auto w-full max-w-[var(--main-max-width)] px-4 py-5 sm:px-6 sm:py-8 lg:px-8">
+            <div className="mb-5 rounded-[24px] border border-[color:var(--border)] bg-[color:var(--surface-elevated)] p-4 shadow-[var(--surface-shadow)]">
+              <div className="flex flex-wrap items-start justify-between gap-4">
+                <div>
+                  <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-cyan-400/80">
+                    Storyboard preview
+                  </p>
+                  <h2 className="mt-2 text-lg font-semibold text-[color:var(--text)]">
+                    Open Storyboard for Current Setup
+                  </h2>
+                  <p className="mt-2 max-w-3xl text-sm leading-6 text-[color:var(--muted)]">
+                    Storyboard will generate Nano Banana 2 master image prompts and GPT Image 2 backup prompts for the current animal setup.
+                  </p>
+                </div>
+                <Link
+                  key={detailedStoryboardLinkMetadata.key}
+                  href={currentStoryboardHref}
+                  aria-label={detailedStoryboardLinkMetadata.ariaLabel}
+                  title={detailedStoryboardLinkMetadata.title}
+                  className="rounded-xl border border-[color:var(--border)] bg-[color:var(--surface)] px-4 py-2 text-sm font-semibold text-[color:var(--text)] transition hover:border-cyan-400/60 hover:text-cyan-200"
+                >
+                  Open Storyboard for Current Setup
+                </Link>
+              </div>
+            </div>
 
             {step === 1 && (
               <Step1Setup
@@ -892,6 +1196,7 @@ export default function Page() {
                 onHabitatChange={setHabitat}
                 onEmotionalToneChange={setEmotionalTone}
                 onAnimalVibeChange={setAnimalVibe}
+                onApplyWorkflowTestPreset={handleApplyWorkflowTestPreset}
                 onResetDefaults={handleResetDefaults}
                 onContinue={() => setStep(2)}
                 onWorkflowPresetNameChange={workflowPresetControls.setPresetName}
@@ -1004,17 +1309,22 @@ export default function Page() {
                 onMediaAnalysisComplete={setMediaAnalysis}
                 onClearMediaAnalysis={() => setMediaAnalysis(null)}
                 sceneDescription={sceneDescription}
+                actionStyle={actionStyle}
                 sceneDescriptionMode={sceneDescriptionMode}
                 sceneDescriptionTouched={sceneDescriptionTouched}
                 sceneMode={sceneMode}
+                onActionStyleChange={setActionStyle}
                 onSceneModeChange={setSceneMode}
                 onAutoFillSceneDescription={() => applyAutoSceneDescription(0)}
                 onRegenerateSceneDescription={handleSceneDescriptionRegenerate}
                 onSceneDescriptionChange={handleSceneDescriptionChange}
                 predator={predator}
                 prey={prey}
-                arc={arc}
+                arc={previewArc}
+                habitat={habitat}
                 weather={weather}
+                finalEnvironment={finalEnvironment}
+                contentLane={contentLane}
                 driftRisk={preset.driftRisk}
                 onDurationLaneChange={setDurationLane}
                 onHookModeChange={setHookMode}
@@ -1033,12 +1343,22 @@ export default function Page() {
                 prey={prey}
                 contentLane={contentLane}
                 activeProvider={activeProvider}
+                arc={arc}
+                habitat={habitat}
+                weather={weather}
+                depthMode={depthMode}
+                cameraAnglePreset={cameraAnglePreset}
+                emotionalTone={emotionalTone}
+                animalVibe={animalVibe}
+                finalEnvironment={finalEnvironment}
+                sceneDescription={sceneDescription}
                 onActiveProviderChange={setActiveProvider}
                 onGenerate={handleGenerate}
                 onRegenerateUnlocked={handleRegenerateUnlockedSections}
                 isGenerating={isGenerating}
                 isRegeneratingUnlocked={isRegeneratingUnlocked}
                 error={error}
+                enhancementNotice={enhancementNotice}
                 pkg={pkg}
                 packageLocks={packageLocks}
                 onTogglePackageLock={handleTogglePackageLock}
@@ -1054,6 +1374,12 @@ export default function Page() {
                 onDismissLastGeneratedRestoreNotice={() =>
                   setLastGeneratedRestoreNotice(null)
                 }
+                creatorQaRuns={creatorQaRuns}
+                pinnedOutput={pinnedOutput}
+                onPinCurrentOutput={handlePinCurrentOutput}
+                onRestorePinnedOutput={handleRestorePinnedOutput}
+                onClearPinnedOutput={() => setPinnedOutput(null)}
+                onClearCreatorQaRuns={() => setCreatorQaRuns([])}
                 onBack={() => setStep(2)}
               />
             )}

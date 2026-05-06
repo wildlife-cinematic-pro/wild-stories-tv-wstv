@@ -1,150 +1,108 @@
 {
-  "project": "wildlife_standoff",
+  "project": "generic_wildlife_standoff",
   "valid": true,
   "summary": {
-    "sceneCount": 4,
-    "promptCount": 16,
-    "validScenes": 4,
-    "validPrompts": 16
+    "requiredCheckCount": 23,
+    "validCheckCount": 23,
+    "maxActiveReferences": 3,
+    "activeReferences": [
+      "@massive_bison",
+      "@grizzly_bear",
+      "@heavy_snow_winter_meadow"
+    ]
   },
-  "sceneChecks": [
+  "checks": [
     {
-      "sceneId": 1,
-      "sceneName": "establishing",
-      "valid": true,
-      "errors": []
+      "name": "predator exists",
+      "valid": true
     },
     {
-      "sceneId": 2,
-      "sceneName": "predator_entry",
-      "valid": true,
-      "errors": []
+      "name": "prey exists",
+      "valid": true
     },
     {
-      "sceneId": 3,
-      "sceneName": "standoff_hold",
-      "valid": true,
-      "errors": []
+      "name": "environment exists",
+      "valid": true
     },
     {
-      "sceneId": 4,
-      "sceneName": "aftermath_exit",
-      "valid": true,
-      "errors": []
-    }
-  ],
-  "promptChecks": [
-    {
-      "sceneId": 1,
-      "sceneName": "establishing",
-      "promptType": "image",
-      "valid": true,
-      "failedChecks": []
+      "name": "finalScene exists",
+      "valid": true
     },
     {
-      "sceneId": 1,
-      "sceneName": "establishing",
-      "promptType": "video",
-      "valid": true,
-      "failedChecks": []
+      "name": "all three runway tags exist",
+      "valid": true
     },
     {
-      "sceneId": 1,
-      "sceneName": "establishing",
-      "promptType": "runway",
-      "valid": true,
-      "failedChecks": []
+      "name": "final scene prompt references all 3 tags",
+      "valid": true
     },
     {
-      "sceneId": 1,
-      "sceneName": "establishing",
-      "promptType": "kling",
-      "valid": true,
-      "failedChecks": []
+      "name": "maxActiveReferences is 3",
+      "valid": true
     },
     {
-      "sceneId": 2,
-      "sceneName": "predator_entry",
-      "promptType": "image",
-      "valid": true,
-      "failedChecks": []
+      "name": "video prompts exist",
+      "valid": true
     },
     {
-      "sceneId": 2,
-      "sceneName": "predator_entry",
-      "promptType": "video",
-      "valid": true,
-      "failedChecks": []
+      "name": "ElevenLabs music prompt exists",
+      "valid": true
     },
     {
-      "sceneId": 2,
-      "sceneName": "predator_entry",
-      "promptType": "runway",
-      "valid": true,
-      "failedChecks": []
+      "name": "legacy scene prompts exist",
+      "valid": true
     },
     {
-      "sceneId": 2,
-      "sceneName": "predator_entry",
-      "promptType": "kling",
-      "valid": true,
-      "failedChecks": []
+      "name": "master image jobs exist",
+      "valid": true
     },
     {
-      "sceneId": 3,
-      "sceneName": "standoff_hold",
-      "promptType": "image",
-      "valid": true,
-      "failedChecks": []
+      "name": "prompts/prey_master.txt",
+      "valid": true
     },
     {
-      "sceneId": 3,
-      "sceneName": "standoff_hold",
-      "promptType": "video",
-      "valid": true,
-      "failedChecks": []
+      "name": "prompts/predator_master.txt",
+      "valid": true
     },
     {
-      "sceneId": 3,
-      "sceneName": "standoff_hold",
-      "promptType": "runway",
-      "valid": true,
-      "failedChecks": []
+      "name": "prompts/environment_master.txt",
+      "valid": true
     },
     {
-      "sceneId": 3,
-      "sceneName": "standoff_hold",
-      "promptType": "kling",
-      "valid": true,
-      "failedChecks": []
+      "name": "prompts/final_scene_master.txt",
+      "valid": true
     },
     {
-      "sceneId": 4,
-      "sceneName": "aftermath_exit",
-      "promptType": "image",
-      "valid": true,
-      "failedChecks": []
+      "name": "prompts/final_scene_video_runway.txt",
+      "valid": true
     },
     {
-      "sceneId": 4,
-      "sceneName": "aftermath_exit",
-      "promptType": "video",
-      "valid": true,
-      "failedChecks": []
+      "name": "prompts/final_scene_video_kling.txt",
+      "valid": true
     },
     {
-      "sceneId": 4,
-      "sceneName": "aftermath_exit",
-      "promptType": "runway",
-      "valid": true,
-      "failedChecks": []
+      "name": "prompts/elevenlabs_action_music.txt",
+      "valid": true
     },
     {
-      "sceneId": 4,
-      "sceneName": "aftermath_exit",
-      "promptType": "kling",
-      "valid": true,
-      "failedChecks": []
+      "name": "images/prey.master-image-job.json",
+      "valid": true
+    },
+    {
+      "name": "images/predator.master-image-job.json",
+      "valid": true
+    },
+    {
+      "name": "images/environment.master-image-job.json",
+      "valid": true
+    },
+    {
+      "name": "images/final-scene.master-image-job.json",
+      "valid": true
+    },
+    {
+      "name": "references/runway_3_reference_manifest.json",
+      "valid": true
     }
   ]
 }

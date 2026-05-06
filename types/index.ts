@@ -59,7 +59,17 @@ export type CameraAnglePreset =
   | "Waterline"
   | "Ground-level tension";
 
-export type WildlifeScopeMode = "USA Wildlife" | "World Wildlife";
+export type WildlifeScopeMode =
+  | "USA Wildlife"
+  | "USA / Canada Wildlife"
+  | "USA Viral Wildlife"
+  | "Europe Wildlife"
+  | "Norway / Scandinavia Wildlife"
+  | "Australia Wildlife"
+  | "Global Viral Wildlife"
+  | "Low Drift First Test"
+  | "World Wildlife"
+  | "World Wide Wildlife";
 
 export type EmotionalTone =
   | "Raw Tension"
@@ -89,7 +99,7 @@ export type Arc =
   | "Giant vs giant clash";
 
 export type Engine = "RUNWAY" | "KLING";
-export type AIProvider = "none" | "claude" | "gemini";
+export type AIProvider = "none" | "gemini" | "claude" | "openai";
 export type RunwayModel = "Gen-4.5" | "Gen-4 Turbo" | "Gen-4";
 export type KlingModel =
   | "Kling 3.0 Pro"
@@ -121,6 +131,12 @@ export type DurationLane = "short" | "medium" | "long";
 export type PipelineStyle = "4-shot" | "long-hybrid-4-shot";
 
 export type HookFamily = "danger" | "curiosity" | "reversal";
+export type ActionStylePreset =
+  | "Natural tension"
+  | "Viral chase"
+  | "Close-contact fight"
+  | "Ambush burst"
+  | "Forced retreat";
 
 export type OpeningFrameScore = {
   total: number;
@@ -155,6 +171,14 @@ export type PerformanceSnapshot = {
 };
 
 export type PerformanceTrackerEntry = {
+  recordId?: string;
+  source?: "manual" | "facebook_csv";
+  generationId?: string;
+  contentId?: string;
+  postUrl?: string;
+  title?: string;
+  conceptLabel?: string;
+  publishedAt?: string;
   postedAtJST: string;
   postedAtEST: string;
   animalPair: string;
@@ -165,13 +189,198 @@ export type PerformanceTrackerEntry = {
   durationLane: DurationLane;
   hookFamily: HookFamily | "";
   contentLane: ContentLane | "";
+  reach?: number | "";
+  views?: number | "";
   firstHourViews: number | "";
+  threeSecondViews?: number | "";
   threeSecondHoldRate: number | "";
+  oneMinuteViews?: number | "";
   averageWatchTimeSeconds: number | "";
+  watchPercentage?: number | "";
   completionRate: number | "";
+  shares?: number | "";
+  comments?: number | "";
+  reactions?: number | "";
+  followsGained?: number | "";
+  profileVisits?: number | "";
+  linkClicks?: number | "";
   usaFollowerPercent: number | "";
   earningsUsd: number | "";
+  estimatedEarnings?: number | "";
+  rpm?: number | "";
+  monetizedPlays?: number | "";
   notes: string;
+};
+
+export type MonetizedFacebookScores = {
+  revenuePotentialScore: number;
+  adSafeConflictScore: number;
+  sponsorFitScore: number;
+  repeatViewerScore: number;
+  followerConversionScore: number;
+  boostWorthyScore: number;
+};
+
+export type MonetizedFacebookVerdict =
+  | "Monetized Winner"
+  | "Viral But Risky"
+  | "Safe Growth Candidate"
+  | "Needs Packaging Fix"
+  | "Do Not Boost";
+
+export type MonetizedFacebookBoostRecommendation = {
+  shouldBoost: boolean;
+  label: "Boost this post" | "Do not boost yet";
+  reason: string;
+};
+
+export type MonetizedFacebookPromptRecommendation = {
+  label: string;
+  packageText: string;
+  reason: string;
+};
+
+export type ActualFacebookPerformanceBand =
+  | "Breakout"
+  | "Strong"
+  | "Average"
+  | "Weak"
+  | "Insufficient data";
+
+export type ActualFacebookPerformanceScores = {
+  actualPerformanceScore: number;
+  actualRevenueScore: number;
+  actualEngagementScore: number;
+  actualRetentionScore: number;
+  actualFollowerConversionScore: number;
+  band: ActualFacebookPerformanceBand;
+};
+
+export type CsvGrowthDoctorFindingId =
+  | "best-performing"
+  | "worst-retention"
+  | "highest-rpm"
+  | "most-shareable"
+  | "best-follower-conversion"
+  | "low-reach-high-rpm"
+  | "high-reach-low-earnings"
+  | "high-retention-low-follows"
+  | "high-comments-low-shares"
+  | "weak-first-three-seconds";
+
+export type CsvGrowthDoctorFinding = {
+  id: CsvGrowthDoctorFindingId;
+  label: string;
+  record: PerformanceTrackerEntry | null;
+  keyMetric: string;
+  diagnosis: string;
+  recommendedAction: string;
+};
+
+export type CsvGrowthDoctorSummary = {
+  importedRecordCount: number;
+  findings: CsvGrowthDoctorFinding[];
+  bestPerformingPost: CsvGrowthDoctorFinding | null;
+  worstRetentionPost: CsvGrowthDoctorFinding | null;
+  highestRpmPost: CsvGrowthDoctorFinding | null;
+  mostShareablePost: CsvGrowthDoctorFinding | null;
+  bestFollowerConversionPost: CsvGrowthDoctorFinding | null;
+  lowReachHighRpmCandidate: CsvGrowthDoctorFinding | null;
+  highReachLowEarningsIssue: CsvGrowthDoctorFinding | null;
+  highRetentionLowFollowersIssue: CsvGrowthDoctorFinding | null;
+  highCommentsLowSharesIssue: CsvGrowthDoctorFinding | null;
+  weakFirstThreeSecondsIssue: CsvGrowthDoctorFinding | null;
+  biggestIssue: CsvGrowthDoctorFinding | null;
+  boostCandidates: CsvGrowthDoctorFinding[];
+  rewriteRecommendations: string[];
+};
+
+export type GrowthDoctorActionPriority = "high" | "medium" | "low";
+
+export type GrowthDoctorActionEngineTarget =
+  | "Runway"
+  | "Kling"
+  | "Seedance"
+  | "Facebook copy"
+  | "Publishing";
+
+export type GrowthDoctorRewriteVariant = {
+  label: string;
+  engineTarget: GrowthDoctorActionEngineTarget;
+  promptRewrite: string;
+  captionRewrite?: string;
+};
+
+export type GrowthDoctorRemixAction = {
+  id: string;
+  sourceFindingId: CsvGrowthDoctorFindingId;
+  sourceFindingLabel: string;
+  title: string;
+  diagnosis: string;
+  whyItMatters: string;
+  recommendedAction: string;
+  priority: GrowthDoctorActionPriority;
+  nextStep: string;
+  variant: GrowthDoctorRewriteVariant;
+};
+
+export type GrowthDoctorActionPlan = {
+  importedRecordCount: number;
+  actionCount: number;
+  generatedLocally: boolean;
+  actions: GrowthDoctorRemixAction[];
+};
+
+export type MonetizedFacebookPerformanceTier =
+  | "Insufficient data"
+  | "Weak"
+  | "Average"
+  | "Strong"
+  | "Breakout";
+
+export type PredictedVsActualStatus =
+  | "overperformed"
+  | "matched"
+  | "underperformed"
+  | "insufficient-data";
+
+export type PredictedVsActualMetricComparison = {
+  label: string;
+  predictedScore: number;
+  actualScore: number;
+  status: PredictedVsActualStatus;
+  likelyReason: string;
+  nextRecommendation: string;
+};
+
+export type WinnerRemixRecommendation = {
+  label: string;
+  reason: string;
+};
+
+export type MonetizedFacebookReport = {
+  scores: MonetizedFacebookScores;
+  actualScores: ActualFacebookPerformanceScores;
+  verdict: MonetizedFacebookVerdict;
+  summary: string;
+  boostRecommendation: MonetizedFacebookBoostRecommendation;
+  actualPerformanceTier: MonetizedFacebookPerformanceTier;
+  predictedVsActual: {
+    overall: PredictedVsActualMetricComparison;
+    shareIntent: PredictedVsActualMetricComparison;
+    commentDepthIntent: PredictedVsActualMetricComparison;
+    monetisationSafety: PredictedVsActualMetricComparison;
+    ownedFunnelConversionIntent: PredictedVsActualMetricComparison;
+    revenuePotential: PredictedVsActualMetricComparison;
+    boostWorthy: PredictedVsActualMetricComparison;
+  };
+  promptRecommendations: {
+    bestViralVersion: MonetizedFacebookPromptRecommendation;
+    bestMonetizedSafeVersion: MonetizedFacebookPromptRecommendation;
+    bestSponsorSafeVersion: MonetizedFacebookPromptRecommendation;
+  };
+  winnerRemixRecommendations: WinnerRemixRecommendation[];
+  improvementNotes: string[];
 };
 
 export type USViewsModeReport = {
@@ -268,6 +477,7 @@ export type BuildWorkflowPresetSnapshot = {
   prey: string;
   wildlifeScopeMode: WildlifeScopeMode;
   contentLane: ContentLane;
+  actionStyle: ActionStylePreset;
   cameraAnglePreset: CameraAnglePreset;
   arc: Arc;
   habitat: HabitatPreset;
@@ -464,6 +674,8 @@ export type QualityOptions = {
   singleActionRule: boolean;
   microMotion: boolean;
   heroVeo: boolean;
+  actionStyle?: ActionStylePreset;
+  intensityMode?: boolean; // Slightly increases action energy and environmental response without sacrificing readability
   seamlessShot?: boolean; // Appends "Continuous, seamless shot" to Runway prompts
 };
 
@@ -493,7 +705,15 @@ export type StructuredPromptMetadata = {
   title?: string;
   motionIntensity?: number;
   durationSeconds?: number;
-  variant?: "single-shot" | "multi-shot" | "hybrid" | "native-10s" | "six-shot";
+  variant?:
+    | "single-shot"
+    | "multi-shot"
+    | "hybrid"
+    | "native-10s"
+    | "direct-15s-multishot"
+    | "kling-frames"
+    | "kling-multishot"
+    | "six-shot";
   workflowRole?: string;
 };
 
@@ -507,12 +727,15 @@ export type StructuredPrompt = {
 
 export type StructuredPromptBundle = {
   imagePrompt?: StructuredPrompt;
+  gptImage2Prompt?: StructuredPrompt;
   runwayShots?: StructuredPrompt[];
   klingShots?: StructuredPrompt[];
   seedanceShots?: StructuredPrompt[];
   seedanceMultiShot?: StructuredPrompt;
   workflowShots?: StructuredPrompt[];
   klingNative15s?: StructuredPrompt;
+  klingFramesPrompt?: StructuredPrompt;
+  klingMultishotShots?: StructuredPrompt[];
   klingSixShot?: StructuredPrompt;
 };
 
@@ -644,9 +867,11 @@ export type PlatformPostCommon = {
 export type FacebookPack = PlatformPostCommon & {
   hook: string;
   caption: string;
+  pinnedComment: string;
   hashtags: string;
   tags?: string;
   cmpNote: string;
+  publishReminders?: string[];
   facebookOverlayPresets?: FacebookOverlayPreset[];
   facebookCoverFramePresets?: FacebookCoverFrameTextPreset[];
   facebookOverlayRecommendation?: FacebookOverlayRecommendation;
@@ -750,6 +975,7 @@ export type RealGenerationEvidenceRecord = {
 export type GeneratedPackage = {
   // ── Core prompts ──
   imagePrompt: string;
+  gptImage2Prompt?: string;
   negativePrompt: string;
   thumbnailPrompt: string;
   voiceoverLine: string;
@@ -769,12 +995,17 @@ export type GeneratedPackage = {
   predatorName?: string;
   preyName?: string;
   arcName?: Arc;
+  wildlifeScopeMode?: WildlifeScopeMode;
+  environmentName?: string;
+  weatherName?: Weather;
   cameraAnglePreset?: CameraAnglePreset;
   generationId?: string;
   generatedAt?: string;
 
   // ── Kling multi-shot (old pro) ──
   klingNative15s?: string;
+  klingFramesPrompt?: string;
+  klingMultishotShots?: string[];
   klingSixShot?: string;
 
   // ── Hooks & copy ──
@@ -783,6 +1014,7 @@ export type GeneratedPackage = {
   recommendedHookIndex?: number;
   caption: string;
   caption2026: string;
+  pinnedComment?: string;
   cta: string;
   hashtags: string;
   tags?: string;

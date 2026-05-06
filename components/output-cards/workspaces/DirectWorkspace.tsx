@@ -1,9 +1,66 @@
 "use client";
 
-import { getKlingNative15sCard, getSeedanceMultiShotCard } from "@/components/output-cards/prompt-utils";
+import {
+  getKlingFramesPromptCard,
+  getKlingMultishotPromptCards,
+  getSeedanceMultiShotCard,
+} from "@/components/output-cards/prompt-utils";
 
-import type { GeneratedPackage } from "@/types";
+import type { GeneratedPackage, StructuredPrompt } from "@/types";
 import type { DirectWorkspaceTab } from "@/components/output-cards/workspaces/types";
+
+function CountPill({ label, count, limit }: { label: string; count: number; limit: number }) {
+  const pass = count <= limit;
+  return (
+    <span
+      className={`rounded-full px-2 py-0.5 text-[11px] font-extrabold ring-1 ${
+        pass
+          ? "bg-green-100 text-green-700 ring-green-200 dark:bg-green-500/15 dark:text-green-100"
+          : "bg-rose-100 text-rose-700 ring-rose-200 dark:bg-rose-500/15 dark:text-rose-100"
+      }`}
+    >
+      {label}: {count}/{limit} {pass ? "pass" : "over"}
+    </span>
+  );
+}
+
+type KlingCombinedPromptInfo = {
+  combinedPrompt: string;
+  totalChars: number;
+  withinLimit: boolean;
+};
+
+function getKlingCombinedPromptInfo(
+  card: StructuredPrompt
+): KlingCombinedPromptInfo | null {
+  const settings = card.settings ?? [];
+  const combinedLine = settings.find((line) =>
+    line.toLowerCase().startsWith("combined prompt chars:")
+  );
+  const withinLimitLine = settings.find((line) =>
+    line.toLowerCase().startsWith("within 2500-char limit:")
+  );
+
+  if (!combinedLine || !withinLimitLine || !card.pasteReady.includes("Negative prompt:")) {
+    return null;
+  }
+
+  const totalChars = Number.parseInt(
+    combinedLine.replace(/^Combined prompt chars:\s*/i, ""),
+    10
+  );
+  const withinLimit = /yes/i.test(withinLimitLine);
+
+  if (!Number.isFinite(totalChars)) {
+    return null;
+  }
+
+  return {
+    combinedPrompt: card.pasteReady,
+    totalChars,
+    withinLimit,
+  };
+}
 
 export function DirectWorkspace({
   data,
@@ -16,16 +73,18 @@ export function DirectWorkspace({
   onDirectWorkspaceChange: (value: DirectWorkspaceTab) => void;
   onCopy: (text: string) => void | Promise<unknown>;
 }) {
-  const hasKling15Direct =
-    data.klingNative15s !== undefined && data.klingNative15s !== null;
+  const hasKlingFrames =
+    data.klingFramesPrompt !== undefined || data.klingNative15s !== undefined;
 
   const resolvedDirectWorkspace: DirectWorkspaceTab =
-    directWorkspace === "kling15" && hasKling15Direct
+    directWorkspace === "kling15" && hasKlingFrames
       ? "kling15"
       : "seedance";
 
   const seedanceMultiShotCard = getSeedanceMultiShotCard(data);
-  const klingNative15sCard = getKlingNative15sCard(data);
+  const klingFramesCard = getKlingFramesPromptCard(data);
+  const klingMultishotCards = getKlingMultishotPromptCards(data);
+  const klingCombinedPromptInfo = getKlingCombinedPromptInfo(klingFramesCard);
 
   return (
     <div className="space-y-6">
@@ -36,18 +95,16 @@ export function DirectWorkspace({
               Direct prompt workspace
             </div>
             <p className="mt-1 max-w-3xl text-xs leading-relaxed text-[color:var(--muted)]">
-              One-click multi-shot prompts live here. Seedance 2.0 stays
-              available as an optional direct 4-shot bundle, while Kling formats
-              remain optional alternate / extended prompt formats.
+              One-click direct prompts live here. Kling now separates the single Frames prompt from the 4-shot Multishot prompts so each field stays inside its own model limit.
             </p>
           </div>
 
-          <div className="flex flex-wrap gap-2">
+          <div className="grid w-full min-w-0 grid-cols-1 gap-2 sm:flex sm:w-auto sm:flex-wrap">
             {data.seedanceMultiShotPrompt && (
               <button
                 type="button"
                 onClick={() => onDirectWorkspaceChange("seedance")}
-                className={`rounded-xl border px-3 py-2 text-xs font-extrabold ${
+                className={`w-full rounded-xl border px-3 py-2 text-xs font-extrabold sm:w-auto ${
                   resolvedDirectWorkspace === "seedance"
                     ? "border-orange-700 bg-orange-700 text-white"
                     : "border-orange-200 bg-[color:var(--surface-elevated)] text-orange-800 hover:bg-orange-500/12 dark:text-orange-100"
@@ -56,20 +113,19 @@ export function DirectWorkspace({
                 Seedance 2.0
               </button>
             )}
-            {data.klingNative15s && (
+            {hasKlingFrames && (
               <button
                 type="button"
                 onClick={() => onDirectWorkspaceChange("kling15")}
-                className={`rounded-xl border px-3 py-2 text-xs font-extrabold ${
+                className={`w-full rounded-xl border px-3 py-2 text-xs font-extrabold sm:w-auto ${
                   resolvedDirectWorkspace === "kling15"
                     ? "border-blue-700 bg-blue-700 text-white"
                     : "border-blue-200 bg-[color:var(--surface-elevated)] text-blue-800 hover:bg-blue-500/12 dark:text-blue-100"
                 }`}
               >
-                Kling 10s Optional
+                Kling Frames + Multishot
               </button>
             )}
-
           </div>
         </div>
       </div>
@@ -78,111 +134,146 @@ export function DirectWorkspace({
         data.seedanceMultiShotPrompt !== undefined &&
         data.seedanceMultiShotPrompt !== null && (
           <div className="rounded-2xl border border-orange-500/30 bg-orange-500/12 p-4 shadow-sm">
-            <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
-              <div className="flex flex-wrap items-center gap-2">
-                <div className="text-sm font-extrabold text-orange-900 dark:text-orange-100">
-                  Seedance 2.0 Direct Multi-Shot
-                </div>
-
-                <span className="rounded-full bg-[color:var(--surface-elevated)] px-2 py-0.5 text-[11px] font-bold text-orange-700 ring-1 ring-orange-200 dark:text-orange-200">
-                  Seedance 2.0
-                </span>
-
-                <span className="rounded-full bg-green-100 px-2 py-0.5 text-[11px] font-extrabold text-green-700 ring-1 ring-green-200 dark:bg-green-500/15 dark:text-green-100">
-                  ✓ 4 shots — 1 prompt
-                </span>
-
-                <span className="rounded-full bg-amber-100 px-2 py-0.5 text-[11px] font-extrabold text-amber-800 ring-1 ring-amber-200 dark:bg-amber-500/15 dark:text-amber-100">
-                  Prompt + First Frame
-                </span>
+            <div className="mb-2 flex flex-wrap items-center gap-2">
+              <div className="text-sm font-extrabold text-orange-900 dark:text-orange-100">
+                Seedance 2.0 Direct Multi-Shot
               </div>
+              <span className="rounded-full bg-green-100 px-2 py-0.5 text-[11px] font-extrabold text-green-700 ring-1 ring-green-200 dark:bg-green-500/15 dark:text-green-100">
+                4 shots - 1 prompt
+              </span>
             </div>
 
-            <p className="mb-3 text-xs leading-relaxed text-orange-800 dark:text-orange-100/90">
-              यो Kling ko direct multi-shot pane जस्तै Seedance 2.0 ko लागि हो.
-              एउटै continuity prompt लाई direct paste गर्न मिल्छ. Current WSTV
-              flow मा 4 linked shots छन्: opening tension → pressure build →
-              peak action → resolved tension. Best result ka lagi `Prompt` +
-              `First Frame` base राख्नुस्, ani चाहियो भने मात्र `Ref Image` /
-              `Ref Video` थप्नुस्.
-            </p>
-
-            <pre className="max-h-[420px] overflow-auto whitespace-pre-wrap rounded-xl border border-orange-200 bg-[color:var(--surface-elevated)] p-3 text-xs leading-relaxed text-[color:var(--text)]">
+            <pre className="max-w-full whitespace-pre-wrap break-words rounded-xl border border-orange-200 bg-[color:var(--surface-elevated)] p-3 text-xs leading-relaxed text-[color:var(--text)] [overflow-wrap:anywhere]">
               {seedanceMultiShotCard.fullText}
             </pre>
 
-            <div className="mt-3 flex flex-wrap gap-2">
+            <div className="mt-3 grid min-w-0 grid-cols-1 gap-2 sm:flex sm:flex-wrap">
               <button
                 type="button"
                 onClick={() => onCopy(seedanceMultiShotCard.fullText)}
-                className="rounded-xl bg-orange-700 px-4 py-2 text-sm font-extrabold text-white hover:bg-orange-800 active:scale-[0.98]"
+                className="w-full rounded-xl bg-orange-700 px-4 py-2 text-sm font-extrabold text-white hover:bg-orange-800 active:scale-[0.98] sm:w-auto"
               >
-                📋 Copy Full Seedance Prompt
+                Copy Full Seedance Prompt
               </button>
               <button
                 type="button"
                 onClick={() => onCopy(seedanceMultiShotCard.pasteReady)}
-                className="rounded-xl border border-orange-300 bg-[color:var(--surface-elevated)] px-4 py-2 text-sm font-extrabold text-orange-700 hover:bg-orange-500/12 active:scale-[0.98] dark:text-orange-100"
+                className="w-full rounded-xl border border-orange-300 bg-[color:var(--surface-elevated)] px-4 py-2 text-sm font-extrabold text-orange-700 hover:bg-orange-500/12 active:scale-[0.98] dark:text-orange-100 sm:w-auto"
               >
-                📋 Copy BODY Only
+                Copy Paste-Ready Seedance Prompt
               </button>
             </div>
           </div>
         )}
 
-      {resolvedDirectWorkspace === "kling15" &&
-        data.klingNative15s !== undefined &&
-        data.klingNative15s !== null && (
-          <div className="rounded-2xl border border-blue-500/30 bg-blue-500/12 p-4 shadow-sm">
-            <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
+      {resolvedDirectWorkspace === "kling15" && hasKlingFrames && (
+        <div className="space-y-4 rounded-2xl border border-blue-500/30 bg-blue-500/12 p-4 shadow-sm">
+          <div className="flex flex-wrap items-center gap-2">
+            <div className="text-sm font-extrabold text-blue-900 dark:text-blue-100">
+              Kling Frames Prompt
+            </div>
+            <CountPill label="Frames" count={klingFramesCard.pasteReady.length} limit={2500} />
+            <span className="rounded-full bg-[color:var(--surface-elevated)] px-2 py-0.5 text-[11px] font-bold text-blue-700 ring-1 ring-blue-200 dark:text-blue-200">
+              single prompt field
+            </span>
+          </div>
+
+          <pre className="max-w-full whitespace-pre-wrap break-words rounded-xl border border-blue-200 bg-[color:var(--surface-elevated)] p-3 text-xs leading-relaxed text-[color:var(--text)] [overflow-wrap:anywhere]">
+            {klingFramesCard.fullText}
+          </pre>
+
+          <div className="grid min-w-0 grid-cols-1 gap-2 sm:flex sm:flex-wrap">
+            <button
+              type="button"
+              onClick={() => onCopy(klingFramesCard.pasteReady)}
+              className="w-full rounded-xl bg-blue-700 px-4 py-2 text-sm font-extrabold text-white hover:bg-blue-800 active:scale-[0.98] sm:w-auto"
+            >
+              Copy Kling Frames Prompt
+            </button>
+            <button
+              type="button"
+              onClick={() => onCopy(klingFramesCard.fullText)}
+              className="w-full rounded-xl border border-blue-300 bg-[color:var(--surface-elevated)] px-4 py-2 text-sm font-extrabold text-blue-700 hover:bg-blue-500/12 active:scale-[0.98] dark:text-blue-100 sm:w-auto"
+            >
+              Copy Frames Card + Notes
+            </button>
+          </div>
+
+          {klingCombinedPromptInfo && (
+            <div className="rounded-xl border border-blue-300/60 bg-[color:var(--surface-elevated)] p-3">
               <div className="flex flex-wrap items-center gap-2">
                 <div className="text-sm font-extrabold text-blue-900 dark:text-blue-100">
-                  Kling 10-Second Native Multi-Shot
+                  Kling 15s Combined Prompt
                 </div>
-
-                <span className="rounded-full bg-[color:var(--surface-elevated)] px-2 py-0.5 text-[11px] font-bold text-blue-700 ring-1 ring-blue-200 dark:text-blue-200">
-                  Kling 3.0 Pro / Standard
+                <CountPill
+                  label="Chars"
+                  count={klingCombinedPromptInfo.totalChars}
+                  limit={2500}
+                />
+                <span
+                  className={`rounded-full px-2 py-0.5 text-[11px] font-extrabold ring-1 ${
+                    klingCombinedPromptInfo.withinLimit
+                      ? "bg-green-100 text-green-700 ring-green-200 dark:bg-green-500/15 dark:text-green-100"
+                      : "bg-rose-100 text-rose-700 ring-rose-200 dark:bg-rose-500/15 dark:text-rose-100"
+                  }`}
+                >
+                  Status: {klingCombinedPromptInfo.withinLimit ? "pass" : "over"}
                 </span>
-
-                <span className="rounded-full bg-green-100 px-2 py-0.5 text-[11px] font-extrabold text-green-700 ring-1 ring-green-200 dark:bg-green-500/15 dark:text-green-100">
-                  ✓ Zero inter-clip drift
-                </span>
-
-                <span className="rounded-full bg-amber-100 px-2 py-0.5 text-[11px] font-extrabold text-amber-800 ring-1 ring-amber-200 dark:bg-amber-500/15 dark:text-amber-100">
-                  Action-ready | Audio-capable
+                <span className="rounded-full bg-[color:var(--surface-muted)] px-2 py-0.5 text-[11px] font-bold text-[color:var(--muted)] ring-1 ring-[color:var(--border)]">
+                  Includes negative prompt
                 </span>
               </div>
+
+              <div className="mt-3 grid min-w-0 grid-cols-1 gap-2 sm:flex sm:flex-wrap sm:items-center sm:justify-between">
+                <div className="text-xs leading-relaxed text-[color:var(--muted)]">
+                  Character count: {klingCombinedPromptInfo.totalChars}/2500
+                </div>
+                <button
+                  type="button"
+                  onClick={() => onCopy(klingCombinedPromptInfo.combinedPrompt)}
+                  className="w-full rounded-xl border border-blue-300 bg-[color:var(--surface-elevated)] px-4 py-2 text-sm font-extrabold text-blue-700 hover:bg-blue-500/12 active:scale-[0.98] dark:text-blue-100 sm:w-auto"
+                >
+                  Copy exact Kling paste-ready prompt
+                </button>
+              </div>
+            </div>
+          )}
+
+          <div className="rounded-2xl border border-blue-300/60 bg-[color:var(--surface-elevated)] p-4">
+            <div className="mb-3 flex flex-wrap items-center gap-2">
+              <div className="text-sm font-extrabold text-blue-900 dark:text-blue-100">
+                Kling Multishot 4-Shot Prompts
+              </div>
+              <span className="rounded-full bg-green-100 px-2 py-0.5 text-[11px] font-extrabold text-green-700 ring-1 ring-green-200 dark:bg-green-500/15 dark:text-green-100">
+                exactly 4 shots
+              </span>
+              {klingMultishotCards.map((card, index) => (
+                <CountPill key={card.metadata?.shotKey ?? index} label={`Shot ${index + 1}`} count={card.pasteReady.length} limit={512} />
+              ))}
             </div>
 
-            <p className="mb-3 text-xs leading-relaxed text-blue-800 dark:text-blue-100/90">
-              यो एउटै prompt Kling 3.0 Pro/Standard मा paste गर्दा 10 seconds
-              को continuous video आउँछ। 3 linked beats generate हुन्छन्, Bind
-              Subject / element references use गर्दा subject continuity
-              reinforce गर्न सकिन्छ।
-            </p>
-
-            <pre className="max-h-[420px] overflow-auto whitespace-pre-wrap rounded-xl border border-blue-200 bg-[color:var(--surface-elevated)] p-3 text-xs leading-relaxed text-[color:var(--text)]">
-              {klingNative15sCard.fullText}
-            </pre>
-
-            <div className="mt-3 flex flex-wrap gap-2">
-              <button
-                type="button"
-                onClick={() => onCopy(klingNative15sCard.fullText)}
-                className="rounded-xl bg-blue-700 px-4 py-2 text-sm font-extrabold text-white hover:bg-blue-800 active:scale-[0.98]"
-              >
-                📋 Copy Full 10s Prompt
-              </button>
-              <button
-                type="button"
-                onClick={() => onCopy(klingNative15sCard.pasteReady)}
-                className="rounded-xl border border-blue-300 bg-[color:var(--surface-elevated)] px-4 py-2 text-sm font-extrabold text-blue-700 hover:bg-blue-500/12 active:scale-[0.98] dark:text-blue-100"
-              >
-                📋 Copy BODY Only
-              </button>
+            <div className="grid gap-3 lg:grid-cols-2">
+              {klingMultishotCards.map((card, index) => (
+                <div key={card.metadata?.shotKey ?? index} className="rounded-xl border border-blue-100 bg-blue-50/50 p-3 dark:border-[color:var(--border)] dark:bg-[color:var(--surface-muted)]">
+                  <div className="mb-2 text-xs font-black text-blue-900 dark:text-blue-100">
+                    Shot {index + 1}: {card.pasteReady.length}/512
+                  </div>
+                  <pre className="max-w-full whitespace-pre-wrap break-words text-xs leading-relaxed text-[color:var(--text)] [overflow-wrap:anywhere]">
+                    {card.pasteReady}
+                  </pre>
+                  <button
+                    type="button"
+                    onClick={() => onCopy(card.pasteReady)}
+                    className="mt-3 w-full rounded-lg border border-blue-300 bg-[color:var(--surface-elevated)] px-3 py-1.5 text-xs font-extrabold text-blue-800 hover:bg-blue-500/12 active:scale-[0.98] dark:text-blue-100 sm:w-auto"
+                  >
+                    Copy Shot {index + 1}
+                  </button>
+                </div>
+              ))}
             </div>
           </div>
-        )}
+        </div>
+      )}
     </div>
   );
 }

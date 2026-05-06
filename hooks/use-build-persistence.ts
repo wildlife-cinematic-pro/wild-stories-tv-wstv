@@ -12,6 +12,7 @@ import {
 import { KLING_MODELS, RUNWAY_MODELS } from "@/lib/model-specs";
 import { isContentLane } from "@/lib/content-lanes";
 import { isWildlifeScopeMode } from "@/lib/predator-data";
+import { normalizeWildlifeScopeMode } from "@/lib/wildlife-focus";
 import { isCameraAnglePreset } from "@/lib/camera-angle-presets";
 import { isDurationLane } from "@/lib/duration-lanes";
 
@@ -91,6 +92,15 @@ function isHookMode(value: unknown): value is HookMode {
   );
 }
 
+function isAIProvider(value: unknown): value is AIProvider {
+  return (
+    value === "none" ||
+    value === "gemini" ||
+    value === "claude" ||
+    value === "openai"
+  );
+}
+
 export function useBuildPersistence({
   predator,
   prey,
@@ -156,7 +166,9 @@ export function useBuildPersistence({
     if (shared.habitat) setHabitat(shared.habitat);
 
     const saved = readSettings();
-    if (saved?.activeProvider) setActiveProvider(saved.activeProvider);
+    if (isAIProvider(saved?.activeProvider)) {
+      setActiveProvider(saved.activeProvider);
+    }
     if (
       saved?.runwayModel &&
       (RUNWAY_MODELS as readonly string[]).includes(saved.runwayModel)
@@ -187,7 +199,7 @@ export function useBuildPersistence({
     }
     if (saved?.habitat) setHabitat(saved.habitat);
     if (saved?.wildlifeScopeMode && isWildlifeScopeMode(saved.wildlifeScopeMode)) {
-      setWildlifeScopeMode(saved.wildlifeScopeMode);
+      setWildlifeScopeMode(normalizeWildlifeScopeMode(saved.wildlifeScopeMode));
     }
     if (saved?.contentLane && isContentLane(saved.contentLane)) {
       setContentLane(saved.contentLane);

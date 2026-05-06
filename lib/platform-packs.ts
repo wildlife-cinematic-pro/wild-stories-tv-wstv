@@ -12,8 +12,10 @@ import { isContentLaneCompatible } from "@/lib/content-lanes";
 import {
   buildFacebookCoverFramePresets,
   buildFacebookFirstFrameOverlayPresets,
+  buildObservationalCTA,
   rankFacebookCoverFramePresets,
   recommendFacebookOverlayPreset,
+  validateCaptionCTA,
 } from "@/lib/platform-packs/facebook";
 import { build2026Hook } from "@/lib/platform-packs/hooks";
 import {
@@ -23,6 +25,7 @@ import {
 import {
   buildHashtags,
   buildLongCaption,
+  buildPinnedComment,
   buildShortCaption,
   buildTags,
 } from "@/lib/platform-packs/publishing";
@@ -65,8 +68,10 @@ export {
 export {
   buildFacebookCoverFramePresets,
   buildFacebookFirstFrameOverlayPresets,
+  buildObservationalCTA,
   rankFacebookCoverFramePresets,
   recommendFacebookOverlayPreset,
+  validateCaptionCTA,
 } from "@/lib/platform-packs/facebook";
 export {
   build2026Caption,
@@ -74,6 +79,7 @@ export {
   buildCaption,
   buildHashtags,
   buildLongCaption,
+  buildPinnedComment,
   buildSEOTitle,
   buildShortCaption,
   buildTags,
@@ -106,15 +112,22 @@ export function buildPlatformPack(
     mode: "us-only",
     contentLane: effectiveContentLane,
   });
-  const longCaption = buildLongCaption(predator, prey, cleanEnv, arc, {
+  const longCaptionDraft = buildLongCaption(predator, prey, cleanEnv, arc, {
     mode: "us-only",
     contentLane: effectiveContentLane,
   });
+  const fallbackCaptionCta = buildObservationalCTA(`${predator} vs ${prey}`, arc);
+  const longCaption = validateCaptionCTA(longCaptionDraft)
+    ? longCaptionDraft
+    : `${longCaptionDraft
+        .replace(/[\r\n]{2,}[^\r\n?]+\?\s*$/, "")
+        .trim()}\n\n${fallbackCaptionCta}`.trim();
   const hashtags = buildHashtags(predator, prey, arc, {
     count: 5,
     contentLane: effectiveContentLane,
   });
   const tags = buildTags(predator, prey, arc);
+  const pinnedComment = buildPinnedComment(arc);
   const overlayGuidance = buildFirstFrameOverlayGuidance();
   const facebookOverlayPresets = buildFacebookFirstFrameOverlayPresets(
     hooks[0],
@@ -131,6 +144,7 @@ export function buildPlatformPack(
   const facebook: FacebookPack = {
     hook: hooks[0],
     caption: longCaption,
+    pinnedComment,
     hashtags,
     tags,
     bestTime:

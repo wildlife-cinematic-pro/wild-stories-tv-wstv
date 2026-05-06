@@ -49,6 +49,7 @@ import type {
   RealGenerationEvidenceRecommendation,
   RealGenerationEvidenceRecord,
   RealGenerationEvidenceScores,
+  PerformanceTrackerEntry,
 } from "@/types";
 import type { PublishFlowSummary } from "@/lib/build-package";
 
@@ -74,6 +75,7 @@ import {
   normalizeWorkflowPresetSnapshot,
   normalizeWorkflowPresets,
 } from "@/lib/workflow-presets";
+import { normalizePerformanceTrackerEntry } from "@/lib/performance-tracker";
 
 // ─────────────────────────────────────────────────────────────
 // KEYS & LIMITS
@@ -90,6 +92,7 @@ const WORKFLOW_PRESET_LIBRARY_SELECTION_KEY =
   "wildlife_workflow_preset_library_selection_v1";
 const LAST_GENERATED_OUTPUT_KEY = "wildlife_last_generated_output_v1";
 const REAL_GENERATION_EVIDENCE_KEY = "wildlife_real_generation_evidence_v1";
+const MONETIZED_PAGE_PERFORMANCE_KEY = "wildlife_monetized_page_performance_v1";
 
 export const MAX_HISTORY = 20;
 export const MAX_FAVORITES = 50;
@@ -592,6 +595,186 @@ export function upsertRealGenerationEvidenceRecord(
   ];
 
   writeRealGenerationEvidenceHistory(next);
+}
+
+type MonetizedPagePerformanceStore = {
+  schema: "wstv.monetized-page-performance";
+  version: 1;
+  records: PerformanceTrackerEntry[];
+};
+
+const MONETIZED_PAGE_PERFORMANCE_SCHEMA = "wstv.monetized-page-performance";
+const MAX_MONETIZED_PAGE_PERFORMANCE_RECORDS = 250;
+
+/** Returns the stable local identity used to upsert and remove performance records. */
+function getMonetizedPagePerformanceIdentity(
+  record: PerformanceTrackerEntry
+): string {
+  return (
+    record.recordId?.trim() ||
+    record.generationId?.trim() ||
+    record.contentId?.trim() ||
+    record.postUrl?.trim() ||
+    [record.title?.trim(), record.publishedAt?.trim()].filter(Boolean).join("|") ||
+    [record.conceptLabel?.trim(), record.animalPair?.trim()].filter(Boolean).join("|")
+  );
+}
+
+/** Normalizes, de-duplicates, and bounds the monetized performance history list. */
+function cleanMonetizedPagePerformanceRecords(
+  records: PerformanceTrackerEntry[]
+): PerformanceTrackerEntry[] {
+  const seen = new Set<string>();
+  const cleaned: PerformanceTrackerEntry[] = [];
+
+  for (const candidate of records) {
+    const normalized = normalizePerformanceTrackerEntry(candidate);
+    const identity = getMonetizedPagePerformanceIdentity(normalized);
+    if (!identity) continue;
+    if (seen.has(identity)) continue;
+    seen.add(identity);
+    cleaned.push(normalized);
+    if (cleaned.length >= MAX_MONETIZED_PAGE_PERFORMANCE_RECORDS) {
+      break;
+    }
+  }
+
+  return cleaned;
+}
+
+/** Normalizes the monetized performance store payload from localStorage. */
+function normalizeMonetizedPagePerformanceStore(
+  value: unknown
+): MonetizedPagePerformanceStore | null {
+  if (!isObjectRecord(value)) return null;
+  if (value.schema !== MONETIZED_PAGE_PERFORMANCE_SCHEMA || value.version !== 1) {
+    return null;
+  }
+  if (!Array.isArray(value.records)) return null;
+
+  return {
+    schema: MONETIZED_PAGE_PERFORMANCE_SCHEMA,
+    version: 1,
+    records: cleanMonetizedPagePerformanceRecords(value.records),
+  };
+}
+
+/** Reads the locally stored monetized Facebook performance records. */
+export function readMonetizedPagePerformanceHistory(): PerformanceTrackerEntry[] {
+  if (typeof window === "undefined") return [];
+  try {
+    const raw = localStorage.getItem(MONETIZED_PAGE_PERFORMANCE_KEY);
+    if (!raw) return [];
+
+    const normalized = normalizeMonetizedPagePerformanceStore(safeJsonParse<unknown>(raw));
+    if (!normalized) {
+      localStorage.removeItem(MONETIZED_PAGE_PERFORMANCE_KEY);
+      return [];
+    }
+
+    return normalized.records;
+  } catch {
+    return [];
+  }
+}
+
+/** Writes the locally stored monetized Facebook performance history. */
+export function writeMonetizedPagePerformanceHistory(
+  records: PerformanceTrackerEntry[]
+): void {
+  if (typeof window === "undefined") return;
+  try {
+    localStorage.setItem(
+      MONETIZED_PAGE_PERFORMANCE_KEY,
+      JSON.stringify({
+        schema: MONETIZED_PAGE_PERFORMANCE_SCHEMA,
+        version: 1,
+        records: cleanMonetizedPagePerformanceRecords(records),
+      } satisfies MonetizedPagePerformanceStore)
+    );
+  } catch {}
+}
+
+/** Reads the locally stored monetized performance record for one generation. */
+export function readMonetizedPagePerformanceForGeneration(
+  generationId: string
+): PerformanceTrackerEntry | undefined {
+  const cleanId = generationId.trim();
+  if (!cleanId) return undefined;
+  return readMonetizedPagePerformanceHistory().find(
+    (record) => record.generationId === cleanId
+  );
+}
+
+/** Upserts one locally stored monetized performance record using its stable local identity. */
+export function upsertMonetizedPagePerformanceRecord(
+  record: PerformanceTrackerEntry
+): void {
+  const cleaned = normalizePerformanceTrackerEntry(record);
+  const identity = getMonetizedPagePerformanceIdentity(cleaned);
+  if (!identity) return;
+
+  const next = [
+    cleaned,
+    ...readMonetizedPagePerformanceHistory().filter(
+      (entry) => getMonetizedPagePerformanceIdentity(entry) !== identity
+    ),
+  ];
+
+  writeMonetizedPagePerformanceHistory(next);
+}
+
+/** Upserts multiple imported performance records in one local write. */
+export function upsertMonetizedPagePerformanceRecords(
+  records: PerformanceTrackerEntry[]
+): void {
+  if (records.length === 0) return;
+
+  const existing = readMonetizedPagePerformanceHistory();
+  const next = [...existing];
+
+  for (const record of records) {
+    const cleaned = normalizePerformanceTrackerEntry(record);
+    const identity = getMonetizedPagePerformanceIdentity(cleaned);
+    if (!identity) continue;
+
+    const filtered = next.filter(
+      (entry) => getMonetizedPagePerformanceIdentity(entry) !== identity
+    );
+    next.length = 0;
+    next.push(cleaned, ...filtered);
+  }
+
+  writeMonetizedPagePerformanceHistory(next);
+}
+
+/** Removes a single locally stored monetized performance record by record id or identity. */
+export function removeMonetizedPagePerformanceRecord(recordId: string): void {
+  const cleanId = recordId.trim();
+  if (!cleanId) return;
+
+  writeMonetizedPagePerformanceHistory(
+    readMonetizedPagePerformanceHistory().filter(
+      (entry) => getMonetizedPagePerformanceIdentity(entry) !== cleanId
+    )
+  );
+}
+
+/** Clears only imported Facebook Insights rows while preserving manual records. */
+export function clearImportedMonetizedPagePerformanceRecords(): void {
+  writeMonetizedPagePerformanceHistory(
+    readMonetizedPagePerformanceHistory().filter(
+      (entry) => entry.source !== "facebook_csv"
+    )
+  );
+}
+
+/** Clears every locally stored monetized page performance record. */
+export function clearMonetizedPagePerformanceHistory(): void {
+  if (typeof window === "undefined") return;
+  try {
+    localStorage.removeItem(MONETIZED_PAGE_PERFORMANCE_KEY);
+  } catch {}
 }
 
 export type LastGeneratedOutputRecord = {
