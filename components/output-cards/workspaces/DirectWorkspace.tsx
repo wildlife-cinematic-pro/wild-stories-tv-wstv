@@ -6,7 +6,7 @@ import {
   getSeedanceMultiShotCard,
 } from "@/components/output-cards/prompt-utils";
 
-import type { GeneratedPackage } from "@/types";
+import type { GeneratedPackage, StructuredPrompt } from "@/types";
 import type { DirectWorkspaceTab } from "@/components/output-cards/workspaces/types";
 
 function CountPill({ label, count, limit }: { label: string; count: number; limit: number }) {
@@ -22,6 +22,44 @@ function CountPill({ label, count, limit }: { label: string; count: number; limi
       {label}: {count}/{limit} {pass ? "pass" : "over"}
     </span>
   );
+}
+
+type KlingCombinedPromptInfo = {
+  combinedPrompt: string;
+  totalChars: number;
+  withinLimit: boolean;
+};
+
+function getKlingCombinedPromptInfo(
+  card: StructuredPrompt
+): KlingCombinedPromptInfo | null {
+  const settings = card.settings ?? [];
+  const combinedLine = settings.find((line) =>
+    line.toLowerCase().startsWith("combined prompt chars:")
+  );
+  const withinLimitLine = settings.find((line) =>
+    line.toLowerCase().startsWith("within 2500-char limit:")
+  );
+
+  if (!combinedLine || !withinLimitLine || !card.pasteReady.includes("Negative prompt:")) {
+    return null;
+  }
+
+  const totalChars = Number.parseInt(
+    combinedLine.replace(/^Combined prompt chars:\s*/i, ""),
+    10
+  );
+  const withinLimit = /yes/i.test(withinLimitLine);
+
+  if (!Number.isFinite(totalChars)) {
+    return null;
+  }
+
+  return {
+    combinedPrompt: card.pasteReady,
+    totalChars,
+    withinLimit,
+  };
 }
 
 export function DirectWorkspace({
@@ -46,6 +84,7 @@ export function DirectWorkspace({
   const seedanceMultiShotCard = getSeedanceMultiShotCard(data);
   const klingFramesCard = getKlingFramesPromptCard(data);
   const klingMultishotCards = getKlingMultishotPromptCards(data);
+  const klingCombinedPromptInfo = getKlingCombinedPromptInfo(klingFramesCard);
 
   return (
     <div className="space-y-6">
@@ -159,6 +198,46 @@ export function DirectWorkspace({
               Copy Frames Card + Notes
             </button>
           </div>
+
+          {klingCombinedPromptInfo && (
+            <div className="rounded-xl border border-blue-300/60 bg-[color:var(--surface-elevated)] p-3">
+              <div className="flex flex-wrap items-center gap-2">
+                <div className="text-sm font-extrabold text-blue-900 dark:text-blue-100">
+                  Kling 15s Combined Prompt
+                </div>
+                <CountPill
+                  label="Chars"
+                  count={klingCombinedPromptInfo.totalChars}
+                  limit={2500}
+                />
+                <span
+                  className={`rounded-full px-2 py-0.5 text-[11px] font-extrabold ring-1 ${
+                    klingCombinedPromptInfo.withinLimit
+                      ? "bg-green-100 text-green-700 ring-green-200 dark:bg-green-500/15 dark:text-green-100"
+                      : "bg-rose-100 text-rose-700 ring-rose-200 dark:bg-rose-500/15 dark:text-rose-100"
+                  }`}
+                >
+                  Status: {klingCombinedPromptInfo.withinLimit ? "pass" : "over"}
+                </span>
+                <span className="rounded-full bg-[color:var(--surface-muted)] px-2 py-0.5 text-[11px] font-bold text-[color:var(--muted)] ring-1 ring-[color:var(--border)]">
+                  Includes negative prompt
+                </span>
+              </div>
+
+              <div className="mt-3 grid min-w-0 grid-cols-1 gap-2 sm:flex sm:flex-wrap sm:items-center sm:justify-between">
+                <div className="text-xs leading-relaxed text-[color:var(--muted)]">
+                  Character count: {klingCombinedPromptInfo.totalChars}/2500
+                </div>
+                <button
+                  type="button"
+                  onClick={() => onCopy(klingCombinedPromptInfo.combinedPrompt)}
+                  className="w-full rounded-xl border border-blue-300 bg-[color:var(--surface-elevated)] px-4 py-2 text-sm font-extrabold text-blue-700 hover:bg-blue-500/12 active:scale-[0.98] dark:text-blue-100 sm:w-auto"
+                >
+                  Copy exact Kling paste-ready prompt
+                </button>
+              </div>
+            </div>
+          )}
 
           <div className="rounded-2xl border border-blue-300/60 bg-[color:var(--surface-elevated)] p-4">
             <div className="mb-3 flex flex-wrap items-center gap-2">
