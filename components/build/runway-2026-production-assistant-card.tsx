@@ -68,8 +68,8 @@ export default function Runway2026ProductionAssistantCard({
         ))}
       </div>
 
-      <div className="mt-5 rounded-xl border border-slate-100 bg-slate-50/80 p-3 sm:p-4">
-        <div className="text-[11px] font-semibold uppercase tracking-[0.12em] text-slate-500">
+      <div className="mt-5 rounded-xl border border-slate-200 bg-slate-50 p-3 sm:p-4">
+        <div className="text-[11px] font-semibold uppercase tracking-[0.12em] text-slate-900">
           Prompt Writer
         </div>
         <div className="mt-1 text-xs leading-relaxed text-slate-600">
