@@ -7,6 +7,7 @@ import StoryModeQACard from "@/components/output-cards/story-mode-qa-card";
 import FacebookReelsOptimizerCard from "@/components/output-cards/facebook-reels-optimizer-card";
 import ReelsPerformanceCard from "@/components/output-cards/reels-performance-card";
 import ReelsPerformanceInsightsCard from "@/components/output-cards/reels-performance-insights-card";
+import AutoRecommendationsCard from "@/components/output-cards/auto-recommendations-card";
 import { EngineSpecsPanel, SectionLabel } from "@/components/output-cards/shared-panels";
 
 import type { GeneratedPackage, PromptVersion } from "@/types";
@@ -63,6 +64,8 @@ export function OverviewWorkspace({
       <ReelsPerformanceCard data={data} />
 
       <ReelsPerformanceInsightsCard />
+
+      <AutoRecommendationsCard data={data} />
 
       <EngineSpecsPanel />
 
