@@ -358,7 +358,8 @@ export function useBuildPersistence({
     if (shared.habitat) setHabitat(shared.habitat);
 
     const saved = readSettings();
-    if (isAIProvider(saved?.activeProvider)) {
+    // Gemini remains the default provider on reload; other providers stay manual/session-only.
+    if (isAIProvider(saved?.activeProvider) && saved.activeProvider === "gemini") {
       setActiveProvider(saved.activeProvider);
     }
     if (

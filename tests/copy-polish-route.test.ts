@@ -52,6 +52,7 @@ const baseRequest = {
 
 describe("Gemini copy polish optional fallback", () => {
   const originalGeminiKey = process.env.GEMINI_API_KEY;
+  const originalGroqKey = process.env.GROQ_API_KEY;
 
   beforeEach(() => {
     vi.clearAllMocks();
@@ -63,6 +64,11 @@ describe("Gemini copy polish optional fallback", () => {
       delete process.env.GEMINI_API_KEY;
     } else {
       process.env.GEMINI_API_KEY = originalGeminiKey;
+    }
+    if (originalGroqKey === undefined) {
+      delete process.env.GROQ_API_KEY;
+    } else {
+      process.env.GROQ_API_KEY = originalGroqKey;
     }
   });
 
@@ -94,6 +100,7 @@ describe("Gemini copy polish optional fallback", () => {
       reason: "invalid_gemini_json",
       message: GEMINI_SKIP_MESSAGE,
     });
+    expect(callGroqText).not.toHaveBeenCalled();
   });
 
   it("returns a skipped response when Gemini returns no usable polish fields", async () => {
@@ -112,6 +119,68 @@ describe("Gemini copy polish optional fallback", () => {
       reason: "no_usable_fields",
       message: GEMINI_SKIP_MESSAGE,
     });
+  });
+
+  it("uses Groq only when Gemini fails and auto fallback is enabled", async () => {
+    process.env.GEMINI_API_KEY = "test-gemini-key";
+    process.env.GROQ_API_KEY = "test-groq-key";
+    vi.mocked(callGeminiText).mockResolvedValue({
+      res: new Response("{}", { status: 200 }),
+      data: {},
+    });
+    vi.mocked(extractGeminiText).mockReturnValue("not json");
+    vi.mocked(callGroqText).mockResolvedValue({
+      res: new Response("{}", { status: 200 }),
+      data: {},
+    });
+    vi.mocked(extractGroqText).mockReturnValue(
+      JSON.stringify({
+        hook: "The escape lane changes before the deer commits.",
+      })
+    );
+
+    const response = await handleCopyPolishRequest({
+      ...baseRequest,
+      autoFallback: true,
+    });
+
+    expect(response.status).toBe(200);
+    await expect(response.json()).resolves.toMatchObject({
+      aiEnhanced: true,
+      hook: "The escape lane changes before the deer commits.",
+      providerUsed: "groq",
+      fallbackUsed: true,
+      fallbackReason: "invalid_gemini_json",
+    });
+    expect(callGeminiText).toHaveBeenCalledTimes(1);
+    expect(callGroqText).toHaveBeenCalledTimes(1);
+  });
+
+  it("does not call Groq when auto fallback is enabled but the Groq key is missing", async () => {
+    process.env.GEMINI_API_KEY = "test-gemini-key";
+    delete process.env.GROQ_API_KEY;
+    vi.mocked(callGeminiText).mockResolvedValue({
+      res: new Response("{}", { status: 200 }),
+      data: {},
+    });
+    vi.mocked(extractGeminiText).mockReturnValue("not json");
+
+    const response = await handleCopyPolishRequest({
+      ...baseRequest,
+      autoFallback: true,
+    });
+
+    expect(response.status).toBe(200);
+    await expect(response.json()).resolves.toEqual({
+      skipped: true,
+      provider: "gemini",
+      reason: "fallback_unavailable_missing_groq_api_key",
+      message: GEMINI_SKIP_MESSAGE,
+      providerUsed: "none",
+      fallbackUsed: false,
+      fallbackReason: "invalid_gemini_json",
+    });
+    expect(callGroqText).not.toHaveBeenCalled();
   });
 
   it("keeps valid Gemini polish behavior unchanged", async () => {
@@ -164,6 +233,8 @@ describe("Groq copy polish optional fallback", () => {
       provider: "groq",
       reason: "missing_groq_api_key",
       message: GROQ_SKIP_MESSAGE,
+      providerUsed: "groq",
+      fallbackUsed: false,
     });
     expect(callGroqText).not.toHaveBeenCalled();
   });

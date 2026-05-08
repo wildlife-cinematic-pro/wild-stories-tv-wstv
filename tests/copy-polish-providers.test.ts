@@ -55,6 +55,25 @@ describe("copy polish provider config", () => {
     });
   });
 
+  it("returns only safe provider metadata without key values", () => {
+    const availability = getCopyPolishProviderAvailability({
+      GEMINI_API_KEY: "test-gemini-secret",
+      GROQ_API_KEY: "test-groq-secret",
+    });
+    const serialized = JSON.stringify(availability);
+
+    expect(serialized).not.toContain("test-gemini-secret");
+    expect(serialized).not.toContain("test-groq-secret");
+    for (const provider of availability) {
+      expect(Object.keys(provider).sort()).toEqual([
+        "enabled",
+        "helperText",
+        "id",
+        "label",
+      ]);
+    }
+  });
+
   it("keeps unimplemented free providers disabled until backend support is wired", () => {
     const availability = getCopyPolishProviderAvailability({
       OPENROUTER_API_KEY: "test-openrouter-key",

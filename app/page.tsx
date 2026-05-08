@@ -201,6 +201,7 @@ export default function Page() {
 
   // STEP 3
   const [activeProvider, setActiveProvider] = useState<AIProvider>("gemini");
+  const [autoFallback, setAutoFallback] = useState(false);
   const [pkg, setPkg] = useState<GeneratedPackage | null>(null);
   const [isGenerating, setIsGenerating] = useState(false);
   const [isRegeneratingUnlocked, setIsRegeneratingUnlocked] = useState(false);
@@ -1109,6 +1110,7 @@ export default function Page() {
     sceneDescription,
     mediaAnalysis,
     activeProvider,
+    autoFallback,
     activePromotedPublishCopyOverride,
     previewHook2026,
     previewPrimaryHook,
@@ -1717,6 +1719,7 @@ export default function Page() {
                 prey={prey}
                 contentLane={contentLane}
                 activeProvider={activeProvider}
+                autoFallback={autoFallback}
                 arc={arc}
                 habitat={habitat}
                 weather={weather}
@@ -1727,6 +1730,7 @@ export default function Page() {
                 finalEnvironment={finalEnvironment}
                 sceneDescription={sceneDescription}
                 onActiveProviderChange={setActiveProvider}
+                onAutoFallbackChange={setAutoFallback}
                 onGenerate={handleGenerate}
                 onRegenerateUnlocked={handleRegenerateUnlockedSections}
                 isGenerating={isGenerating}
