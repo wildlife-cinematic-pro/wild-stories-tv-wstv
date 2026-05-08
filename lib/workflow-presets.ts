@@ -280,7 +280,15 @@ const hookModes: Array<HookFamily | "all"> = [
   "curiosity",
   "reversal",
 ];
-const aiProviders: AIProvider[] = ["gemini", "openai", "claude", "none"];
+const aiProviders: AIProvider[] = [
+  "gemini",
+  "openai",
+  "claude",
+  "groq",
+  "openrouter",
+  "huggingface",
+  "none",
+];
 const actionStylePresets: ActionStylePreset[] = [
   "Natural tension",
   "Viral chase",

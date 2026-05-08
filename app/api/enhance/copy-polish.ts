@@ -5,24 +5,33 @@ import {
   copyPolishResponseSchema,
 } from "@/lib/schemas";
 import { parseProviderJsonObject } from "@/lib/enhance-provider";
+import { getCopyPolishProviderLabel } from "@/lib/copy-polish-providers";
 import { hasUsableGeneratedPackageEnhancements } from "@/lib/generated-package";
 import {
   callClaudeText,
   callGeminiText,
+  callGroqText,
   callOpenAIText,
   extractClaudeText,
   extractGeminiText,
+  extractGroqText,
   extractOpenAIText,
   getGeminiModelFallback,
   getGeminiModelStable,
 } from "./provider-calls";
-import { jsonError, sanitizeString, type Provider } from "./request-utils";
+import { jsonError, sanitizeString } from "./request-utils";
 
 const providerResponseSchema = copyPolishResponseSchema;
 const GEMINI_COPY_POLISH_SKIPPED_MESSAGE =
   "Gemini copy polish skipped — using base generated copy.";
 const OPENAI_COPY_POLISH_SKIPPED_MESSAGE =
   "OpenAI copy polish skipped — using base generated copy.";
+const GROQ_COPY_POLISH_SKIPPED_MESSAGE =
+  "Groq copy polish skipped — using base generated copy.";
+const CLAUDE_COPY_POLISH_SKIPPED_MESSAGE =
+  "Claude copy polish skipped — using base generated copy.";
+
+type CopyPolishProvider = "gemini" | "openai" | "claude" | "groq" | "openrouter" | "huggingface";
 
 function jsonOptionalCopyPolishSkip(reason: string) {
   return NextResponse.json(
@@ -43,6 +52,44 @@ function jsonOpenAICopyPolishSkip(reason: string) {
       provider: "openai",
       reason,
       message: OPENAI_COPY_POLISH_SKIPPED_MESSAGE,
+    },
+    { status: 200 }
+  );
+}
+
+function jsonGroqCopyPolishSkip(reason: string) {
+  return NextResponse.json(
+    {
+      skipped: true,
+      provider: "groq",
+      reason,
+      message: GROQ_COPY_POLISH_SKIPPED_MESSAGE,
+    },
+    { status: 200 }
+  );
+}
+
+function jsonClaudeCopyPolishSkip(reason: string) {
+  return NextResponse.json(
+    {
+      skipped: true,
+      provider: "claude",
+      reason,
+      message: CLAUDE_COPY_POLISH_SKIPPED_MESSAGE,
+    },
+    { status: 200 }
+  );
+}
+
+function jsonFutureCopyPolishSkip(provider: CopyPolishProvider, reason: string) {
+  return NextResponse.json(
+    {
+      skipped: true,
+      provider,
+      reason,
+      message:
+        getCopyPolishProviderLabel(provider) +
+        " copy polish is a future provider slot — using base generated copy.",
     },
     { status: 200 }
   );
@@ -257,10 +304,14 @@ export async function handleCopyPolishRequest(body: unknown) {
     return jsonError("Invalid request", 400, parsedReq.error.flatten());
   }
 
-  const provider = parsedReq.data.provider as Provider;
+  const provider = parsedReq.data.provider;
   const polishPrompt = buildPolishPrompt(parsedReq.data);
 
   try {
+    if (provider === "openrouter" || provider === "huggingface") {
+      return jsonFutureCopyPolishSkip(provider, "future_provider_not_wired");
+    }
+
     if (provider === "gemini") {
       const apiKey = process.env.GEMINI_API_KEY;
       if (!apiKey) return jsonOptionalCopyPolishSkip("missing_gemini_api_key");
@@ -300,6 +351,37 @@ export async function handleCopyPolishRequest(body: unknown) {
       return NextResponse.json({ ...out.data, aiEnhanced: true }, { status: 200 });
     }
 
+    if (provider === "groq") {
+      const apiKey = process.env.GROQ_API_KEY;
+      if (!apiKey) return jsonGroqCopyPolishSkip("missing_groq_api_key");
+
+      const { res, data } = await callGroqText(apiKey, polishPrompt);
+      if (!res.ok) return jsonGroqCopyPolishSkip("provider_error");
+
+      const rawGroqText = sanitizeString(extractGroqText(data), 40_000);
+      let obj: Record<string, unknown>;
+      try {
+        obj = parseProviderJsonObject(rawGroqText, "Groq copy polish");
+      } catch {
+        return jsonGroqCopyPolishSkip("invalid_groq_json");
+      }
+
+      if (!hasUsableGeneratedPackageEnhancements(obj)) {
+        return jsonGroqCopyPolishSkip("no_usable_fields");
+      }
+
+      const out = providerResponseSchema.safeParse(obj);
+      if (!out.success) {
+        return jsonGroqCopyPolishSkip("invalid_groq_response");
+      }
+
+      if (!hasUsableGeneratedPackageEnhancements(out.data)) {
+        return jsonGroqCopyPolishSkip("no_usable_fields");
+      }
+
+      return NextResponse.json({ ...out.data, aiEnhanced: true }, { status: 200 });
+    }
+
     if (provider === "openai") {
       const apiKey = process.env.OPENAI_API_KEY;
       if (!apiKey) return jsonOpenAICopyPolishSkip("missing_openai_api_key");
@@ -332,7 +414,7 @@ export async function handleCopyPolishRequest(body: unknown) {
     }
 
     const apiKey = process.env.ANTHROPIC_API_KEY;
-    if (!apiKey) return jsonError("Missing ANTHROPIC_API_KEY", 500);
+    if (!apiKey) return jsonClaudeCopyPolishSkip("missing_anthropic_api_key");
 
     const { res, data } = await callClaudeText(apiKey, polishPrompt);
     if (!res.ok) return jsonProviderFailure(data);
@@ -355,13 +437,19 @@ export async function handleCopyPolishRequest(body: unknown) {
     }
 
     return NextResponse.json({ ...out.data, aiEnhanced: true }, { status: 200 });
-  } catch (err) {
+  } catch {
     if (provider === "gemini") {
       return jsonOptionalCopyPolishSkip("provider_error");
     }
     if (provider === "openai") {
       return jsonOpenAICopyPolishSkip("provider_error");
     }
-    return jsonError("Copy polish error", 500, String(err));
+    if (provider === "groq") {
+      return jsonGroqCopyPolishSkip("provider_error");
+    }
+    if (provider === "claude") {
+      return jsonClaudeCopyPolishSkip("provider_error");
+    }
+    return jsonFutureCopyPolishSkip(provider, "provider_error");
   }
 }
