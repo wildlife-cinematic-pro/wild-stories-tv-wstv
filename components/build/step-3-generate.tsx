@@ -22,6 +22,7 @@ import type {
 } from "@/lib/creator-qa-run-history";
 import { analyzeOutputReadiness } from "@/lib/output-readiness";
 import { formatPipelineStyleLabel } from "@/lib/page-build-helpers";
+import type { StoryModePreset } from "@/lib/story-mode-presets";
 import { buildRunway2026AssistantPack } from "@/lib/runway-2026-production-assistant";
 import { buildWorkflowQaSummary } from "@/lib/workflow-qa";
 import type {
@@ -67,6 +68,7 @@ type Step3GenerateProps = {
   onPromoteConceptVariant: (variant: ConceptVariant) => void;
   onAutoCleanupConceptVariant: (variant: ConceptVariant) => void;
   onRestoreVersion: (version: PromptVersion) => void;
+  onApplyStoryModePreset?: (preset: StoryModePreset) => void;
   lastGeneratedRestoreNotice?: string | null;
   onDismissLastGeneratedRestoreNotice?: () => void;
   creatorQaRuns: CreatorQaRun[];
@@ -110,6 +112,7 @@ export default function Step3Generate({
   onPromoteConceptVariant,
   onAutoCleanupConceptVariant,
   onRestoreVersion,
+  onApplyStoryModePreset,
   lastGeneratedRestoreNotice,
   onDismissLastGeneratedRestoreNotice,
   creatorQaRuns,
@@ -1016,7 +1019,11 @@ export default function Step3Generate({
               </div>
             </div>
             <div className="overflow-hidden rounded-2xl border border-gray-200 bg-white">
-              <OutputCards data={pkg} onRestoreVersion={onRestoreVersion} />
+              <OutputCards
+                data={pkg}
+                onRestoreVersion={onRestoreVersion}
+                onApplyStoryModePreset={onApplyStoryModePreset}
+              />
             </div>
           </section>
         </GenerationOutputBoundary>

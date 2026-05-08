@@ -2,15 +2,19 @@
 
 import { useEffect, useMemo, useState } from "react";
 
+import { buildABTestPlan, type ABTestPlanVariant } from "@/lib/ab-test-plan";
 import {
   buildAutoRecommendations,
   type AutoRecommendationResult,
 } from "@/lib/auto-recommendations";
+import { buildFacebookCaptionVariants } from "@/lib/facebook-caption-variants";
+import { buildFacebookHookVariants } from "@/lib/facebook-hook-variants";
 import { analyzeFacebookReelsPackage } from "@/lib/facebook-reels-scoring";
 import { analyzeStoryModePackage } from "@/lib/story-mode-qa";
 import {
   formatStoryModePresetLabel,
   USA_STORY_MODE_PRESETS,
+  type StoryModePreset,
 } from "@/lib/story-mode-presets";
 import {
   readReelPerformanceRecords,
@@ -69,7 +73,7 @@ function RecommendationList({
       {items.length ? (
         <ul className="mt-2 space-y-1 text-xs leading-relaxed text-[color:var(--muted)]">
           {items.slice(0, 4).map((item) => (
-            <li key={item}>• {item}</li>
+            <li key={item}>* {item}</li>
           ))}
         </ul>
       ) : (
@@ -81,8 +85,73 @@ function RecommendationList({
   );
 }
 
-export default function AutoRecommendationsCard({ data }: { data: GeneratedPackage }) {
+function buildVariantCopyText(variant: ABTestPlanVariant) {
+  return [
+    "Hook:",
+    variant.hook,
+    "",
+    "Caption:",
+    variant.caption,
+    "",
+    "Hashtags:",
+    variant.hashtags.join(" "),
+  ].join("\n");
+}
+
+function ABVariantCard({
+  variant,
+  copied,
+  onCopy,
+}: {
+  variant: ABTestPlanVariant;
+  copied: boolean;
+  onCopy: (variant: ABTestPlanVariant) => void;
+}) {
+  return (
+    <div className="rounded-xl border border-[color:var(--border)] bg-[color:var(--surface-muted)] p-3">
+      <div className="flex flex-wrap items-center justify-between gap-2">
+        <span className="rounded-full border border-amber-400/30 bg-amber-500/10 px-2.5 py-1 text-[10px] font-black uppercase tracking-[0.12em] text-amber-700 dark:text-amber-200">
+          Variant {variant.label}
+        </span>
+        <button
+          type="button"
+          onClick={() => onCopy(variant)}
+          className="rounded-lg border border-[color:var(--border)] bg-[color:var(--surface-elevated)] px-3 py-1.5 text-[10px] font-bold text-[color:var(--text)] hover:bg-[color:var(--surface-muted)] active:scale-95"
+        >
+          {copied ? "Copied" : `Copy ${variant.label}`}
+        </button>
+      </div>
+      <p className="mt-3 text-xs font-black text-[color:var(--text)]">{variant.hook}</p>
+      <p className="mt-2 text-xs leading-relaxed text-[color:var(--muted)]">
+        {variant.caption}
+      </p>
+      <p className="mt-2 break-words text-[11px] font-semibold text-cyan-700 dark:text-cyan-200">
+        {variant.hashtags.join(" ")}
+      </p>
+      <div className="mt-3 grid gap-2 text-[11px] leading-relaxed text-[color:var(--muted)] sm:grid-cols-2">
+        <p>
+          <span className="font-bold text-[color:var(--text)]">Focus:</span> {variant.testFocus}
+        </p>
+        <p>
+          <span className="font-bold text-[color:var(--text)]">Signal:</span> {variant.expectedSignal}
+        </p>
+      </div>
+    </div>
+  );
+}
+
+export default function AutoRecommendationsCard({
+  data,
+  onCopy,
+  onApplyStoryModePreset,
+}: {
+  data: GeneratedPackage;
+  onCopy?: (text: string) => void | Promise<unknown>;
+  onApplyStoryModePreset?: (preset: StoryModePreset) => void;
+}) {
   const [records, setRecords] = useState<ReelPerformanceRecord[]>([]);
+  const [applyNotice, setApplyNotice] = useState<string | null>(null);
+  const [copiedVariant, setCopiedVariant] = useState<ABTestPlanVariant["label"] | null>(null);
 
   useEffect(() => {
     function loadRecords() {
@@ -98,16 +167,42 @@ export default function AutoRecommendationsCard({ data }: { data: GeneratedPacka
     };
   }, []);
 
+  const facebookScore = useMemo(() => analyzeFacebookReelsPackage(data), [data]);
+  const storyModeQA = useMemo(() => analyzeStoryModePackage(data), [data]);
+  const hookVariants = useMemo(() => buildFacebookHookVariants(data), [data]);
+  const captionVariants = useMemo(() => buildFacebookCaptionVariants(data), [data]);
+
   const recommendation = useMemo(
     () =>
       buildAutoRecommendations({
         savedRecords: records,
         currentPackage: data,
         storyModePresets: USA_STORY_MODE_PRESETS,
-        facebookScore: analyzeFacebookReelsPackage(data),
-        storyModeQA: analyzeStoryModePackage(data),
+        facebookScore,
+        storyModeQA,
       }),
-    [data, records]
+    [data, facebookScore, records, storyModeQA]
+  );
+
+  const recommendedPreset = useMemo(
+    () =>
+      USA_STORY_MODE_PRESETS.find(
+        (preset) => preset.id === recommendation.nextBestPresetId
+      ),
+    [recommendation.nextBestPresetId]
+  );
+
+  const abTestPlan = useMemo(
+    () =>
+      buildABTestPlan({
+        currentPackage: data,
+        recommendation,
+        facebookScore,
+        storyModeQA,
+        hookVariants,
+        captionVariants,
+      }),
+    [captionVariants, data, facebookScore, hookVariants, recommendation, storyModeQA]
   );
 
   const subjects = [
@@ -116,6 +211,20 @@ export default function AutoRecommendationsCard({ data }: { data: GeneratedPacka
   ]
     .filter(Boolean)
     .join(" + ");
+
+  function handleApplyRecommendedPreset() {
+    if (!recommendedPreset || !onApplyStoryModePreset) return;
+    onApplyStoryModePreset(recommendedPreset);
+    setApplyNotice("Recommended preset applied. Review Step 1, then generate.");
+  }
+
+  async function handleCopyVariant(variant: ABTestPlanVariant) {
+    await onCopy?.(buildVariantCopyText(variant));
+    setCopiedVariant(variant.label);
+    window.setTimeout(() => setCopiedVariant(null), 1600);
+  }
+
+  const canApplyRecommendedPreset = Boolean(recommendedPreset && onApplyStoryModePreset);
 
   return (
     <section className="rounded-2xl border border-[color:var(--border)] bg-[color:var(--surface-elevated)] p-4 shadow-sm">
@@ -172,16 +281,38 @@ export default function AutoRecommendationsCard({ data }: { data: GeneratedPacka
             Apply Guidance
           </p>
           <span className="rounded-full border border-cyan-400/30 bg-cyan-500/10 px-2.5 py-1 text-[10px] font-bold uppercase tracking-[0.08em] text-cyan-700 dark:text-cyan-200">
-            Display only
+            {canApplyRecommendedPreset ? "Action available" : "Display only"}
           </span>
         </div>
         <p className="mt-2 text-xs leading-relaxed text-[color:var(--muted)]">
-          Apply manually from USA Story Mode Presets. This Phase 5 panel does not
-          auto-apply, auto-generate, post, scrape, or call any backend/API.
+          {canApplyRecommendedPreset
+            ? "Apply the recommended USA Story Mode Preset with the same Step 1 preset flow. This does not auto-generate, post, scrape, or call any backend/API."
+            : "Apply manually from USA Story Mode Presets. This panel does not auto-apply, auto-generate, post, scrape, or call any backend/API."}
         </p>
         {recommendation.recommendedCaptionStyle && (
           <p className="mt-2 text-xs leading-relaxed text-[color:var(--muted)]">
             Caption style: {recommendation.recommendedCaptionStyle}
+          </p>
+        )}
+        {recommendedPreset && (
+          <div className="mt-3 flex flex-wrap items-center gap-2">
+            {canApplyRecommendedPreset ? (
+              <button
+                type="button"
+                onClick={handleApplyRecommendedPreset}
+                className="rounded-xl border border-emerald-400/30 bg-emerald-500/15 px-4 py-2 text-xs font-black text-emerald-700 hover:bg-emerald-500/20 active:scale-95 dark:text-emerald-200"
+              >
+                Apply Recommended Preset
+              </button>
+            ) : null}
+            <span className="rounded-full border border-[color:var(--border)] bg-[color:var(--surface-muted)] px-3 py-1 text-[10px] font-bold text-[color:var(--muted)]">
+              {recommendedPreset.name}
+            </span>
+          </div>
+        )}
+        {applyNotice && (
+          <p className="mt-3 rounded-lg border border-emerald-400/20 bg-emerald-500/10 p-2 text-xs font-semibold text-emerald-700 dark:text-emerald-200">
+            {applyNotice}
           </p>
         )}
       </div>
@@ -207,6 +338,43 @@ export default function AutoRecommendationsCard({ data }: { data: GeneratedPacka
         />
       </div>
 
+      <div className="mt-4 rounded-xl border border-indigo-400/20 bg-indigo-500/10 p-3">
+        <div className="flex flex-wrap items-start justify-between gap-3">
+          <div>
+            <p className="text-[10px] font-bold uppercase tracking-[0.12em] text-indigo-700 dark:text-indigo-200">
+              Next A/B Test Plan
+            </p>
+            <p className="mt-2 max-w-3xl text-xs leading-relaxed text-[color:var(--muted)]">
+              {abTestPlan.hypothesis}
+            </p>
+          </div>
+          <span className="rounded-full border border-indigo-400/30 bg-indigo-500/10 px-2.5 py-1 text-[10px] font-bold uppercase tracking-[0.08em] text-indigo-700 dark:text-indigo-200">
+            A/B/C
+          </span>
+        </div>
+        <div className="mt-3 grid gap-3 xl:grid-cols-3">
+          {abTestPlan.variants.map((variant) => (
+            <ABVariantCard
+              key={variant.label}
+              variant={variant}
+              copied={copiedVariant === variant.label}
+              onCopy={handleCopyVariant}
+            />
+          ))}
+        </div>
+        <div className="mt-3 rounded-lg border border-[color:var(--border)] bg-[color:var(--surface-muted)] p-3 text-xs leading-relaxed text-[color:var(--muted)]">
+          <p>
+            <span className="font-bold text-[color:var(--text)]">Success metric:</span>{" "}
+            {abTestPlan.successMetric}
+          </p>
+          <ul className="mt-2 space-y-1">
+            {abTestPlan.runNotes.slice(0, 3).map((note) => (
+              <li key={note}>* {note}</li>
+            ))}
+          </ul>
+        </div>
+      </div>
+
       {recommendation.warnings.length > 0 && (
         <div className="mt-4 rounded-xl border border-amber-400/20 bg-amber-500/10 p-3">
           <p className="text-[10px] font-bold uppercase tracking-[0.12em] text-amber-700 dark:text-amber-200">
@@ -214,7 +382,7 @@ export default function AutoRecommendationsCard({ data }: { data: GeneratedPacka
           </p>
           <ul className="mt-2 space-y-1 text-xs leading-relaxed text-[color:var(--muted)]">
             {recommendation.warnings.map((warning) => (
-              <li key={warning}>• {warning}</li>
+              <li key={warning}>* {warning}</li>
             ))}
           </ul>
         </div>

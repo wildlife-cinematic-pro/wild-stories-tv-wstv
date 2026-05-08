@@ -1744,6 +1744,7 @@ export default function Page() {
                 onPromoteConceptVariant={promoteConceptVariant}
                 onAutoCleanupConceptVariant={autoCleanupConceptVariant}
                 onRestoreVersion={handleRestoreVersion}
+                onApplyStoryModePreset={handleApplyStoryModePreset}
                 lastGeneratedRestoreNotice={lastGeneratedRestoreNotice}
                 onDismissLastGeneratedRestoreNotice={() =>
                   setLastGeneratedRestoreNotice(null)
