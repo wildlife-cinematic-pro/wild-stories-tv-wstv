@@ -9,6 +9,8 @@ import ReelsPerformanceCard from "@/components/output-cards/reels-performance-ca
 import ReelsPerformanceInsightsCard from "@/components/output-cards/reels-performance-insights-card";
 import AutoRecommendationsCard from "@/components/output-cards/auto-recommendations-card";
 import ABExperimentTrackerCard from "@/components/output-cards/ab-experiment-tracker-card";
+import LocalCreatorDataCard from "@/components/output-cards/local-creator-data-card";
+import WSTVCreatorGuideCard from "@/components/output-cards/wstv-creator-guide-card";
 import { EngineSpecsPanel, SectionLabel } from "@/components/output-cards/shared-panels";
 
 import type { StoryModePreset } from "@/lib/story-mode-presets";
@@ -61,6 +63,8 @@ export function OverviewWorkspace({
     <div className="space-y-6">
       <StoryModeBadges data={data} />
 
+      <WSTVCreatorGuideCard />
+
       <StoryModeQACard data={data} />
 
       <FacebookReelsOptimizerCard data={data} onCopy={onCopy} />
@@ -68,6 +72,8 @@ export function OverviewWorkspace({
       <ReelsPerformanceCard data={data} />
 
       <ReelsPerformanceInsightsCard />
+
+      <LocalCreatorDataCard onCopy={onCopy} />
 
       <AutoRecommendationsCard
         data={data}
