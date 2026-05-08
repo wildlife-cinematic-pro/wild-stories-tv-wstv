@@ -9,7 +9,7 @@ function buildBasePlatformPack() {
     facebook: {
       hook: "Mountain lion pressure closes before the mule deer clears the break.",
       caption: "Mountain lion pressure closes before the mule deer finds a clean turn.\n\nWhat changed the outcome first?",
-      pinnedComment: "Wild Crew, which moment changed the encounter?",
+      pinnedComment: "Wild Watchers — did you spot the tell before it happened?",
       hashtags: "#MountainLion #MuleDeer #WildlifeReel #PredatorPrey #NatureShorts",
       bestTime: "7:30 PM EST",
       cmpNote: "Documentary tone.",
@@ -62,7 +62,7 @@ function buildBasePlatformPack() {
     instagram: {
       hook: "Mountain lion pressure closes before the mule deer clears the break.",
       caption: "Mountain lion pressure closes before the mule deer finds a clean turn.\n\nWhat changed the outcome first?",
-      pinnedComment: "Wild Crew, which moment changed the encounter?",
+      pinnedComment: "Wild Watchers — did you spot the tell before it happened?",
       hashtags: "#MountainLion #MuleDeer #WildlifeReel #PredatorPrey #NatureShorts",
       bestTime: "7:30 PM EST",
     },

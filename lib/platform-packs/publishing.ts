@@ -55,7 +55,7 @@ const SHORT_CAPTIONS_2026: Partial<Record<Arc, (predator: string, prey: string, 
     `The ${predator.toLowerCase()} moved first. The ${prey.toLowerCase()} had almost no time to turn.`,
 };
 
-const COMMUNITY_NAME = "Wild Crew";
+const COMMUNITY_NAME = "Wild Watchers";
 
 const CAPTIONS_2026: Partial<Record<Arc, (predator: string, prey: string, env: string) => string>> = {
   "Ambush attack": (predator, prey, env) =>
@@ -159,16 +159,13 @@ The ${prey.toLowerCase()} had almost no time to react before the ${predator.toLo
 Would you have spotted the danger in time?`,
 };
 
-const BASE_HASHTAGS: Partial<Record<Arc, string[]>> = {
-  "Ambush attack": ["#wildlife", "#ambush", "#usa"],
-  "Chase and takedown": ["#wildlife", "#wildlifechase", "#usa"],
-  "Defender stands ground": ["#wildlife", "#animalbehavior", "#usa"],
-  "Giant vs giant clash": ["#wildlife", "#animalclash", "#usa"],
-  "Territory dominance battle": ["#wildlife", "#territory", "#usa"],
-  "Pack hunting strategy": ["#wildlife", "#packhunting", "#usa"],
-  "Predator vs predator fight": ["#wildlife", "#predatorclash", "#usa"],
-  "Escape from danger": ["#wildlife", "#survival", "#usa"],
-};
+const FACEBOOK_SAFE_HASHTAGS = [
+  "#WildlifeReels",
+  "#AnimalEncounter",
+  "#NatureDrama",
+  "#WildStoriesTV",
+  "#FacebookReels",
+] as const;
 
 const ARC_TAG_LABEL: Record<Arc, string> = {
   "Ambush attack": "ambush predator",
@@ -182,6 +179,27 @@ const ARC_TAG_LABEL: Record<Arc, string> = {
 };
 
 function finalizeShortCaption(raw: string): string {
+  const structuredLines = raw
+    .split(/\r?\n/)
+    .map((line) => normalizeCopy(line))
+    .filter(Boolean)
+    .slice(0, 3);
+
+  if (structuredLines.length > 1) {
+    const [hook = "", intrigue = "", cta = ""] = structuredLines;
+    const cleanedHook = hook.replace(/\.$/, "");
+    const line1 = trimAtWordBoundary(cleanedHook, 54).replace(/\.$/, "");
+    const line2 = trimAtWordBoundary(intrigue, 62);
+    const line3 = trimAtWordBoundary(cta, 54);
+    const caption = [line1, line2, line3].filter(Boolean).join("\n");
+
+    return caption.length <= 150
+      ? caption
+      : [line1, trimAtWordBoundary(line2, 52), trimAtWordBoundary(line3, 42)]
+          .filter(Boolean)
+          .join("\n");
+  }
+
   const compact = normalizeCopy(raw);
   const sentences = splitSentences(compact);
   const limited = (sentences.length ? sentences : [compact]).slice(0, 2).join(" ");
@@ -197,6 +215,19 @@ function finalizeShortCaption(raw: string): string {
 function prependContentLaneLead(raw: string, lead: string | null): string {
   if (!lead) return raw;
   const compactLead = normalizeCopy(lead);
+  const lines = raw
+    .split(/\r?\n/)
+    .map((line) => normalizeCopy(line))
+    .filter(Boolean);
+
+  if (lines.length > 1) {
+    if (lines.some((line) => line.toLowerCase().includes(compactLead.toLowerCase()))) {
+      return lines.join("\n");
+    }
+
+    return [lines[0], compactLead, lines[2] ?? lines[1]].filter(Boolean).join("\n");
+  }
+
   const compactRaw = normalizeCopy(raw);
   if (compactRaw.toLowerCase().startsWith(compactLead.toLowerCase())) {
     return compactRaw;
@@ -219,23 +250,41 @@ function buildCuriosityShortCaption(
 
   switch (arc) {
     case "Ambush attack":
-      return `The ${preyLower} had one escape lane. The ${predatorLower} noticed it first.`;
+      return `One escape lane stayed open
+The ${predatorLower} noticed before the ${preyLower} turned
+What did you read first? 👀`;
     case "Escape from danger":
       return waterlineCue
-        ? "The water looked calm until the first ripple changed everything."
-        : `The ${predatorLower} moved first. The ${preyLower} had almost no time to turn.`;
+        ? `The water looked calm
+One ripple changed the whole read
+Did the warning show early? 👀`
+        : `The ${predatorLower} moved first
+The ${preyLower} had almost no time to turn
+Did the warning show early? 👀`;
     case "Pack hunting strategy":
-      return `The ${preyLower} looked free for a second. Then the open space started closing.`;
+      return `Open space started shrinking
+The ${predatorLower} shaped the escape lane
+Which angle closed first? 👀`;
     case "Chase and takedown":
-      return `The ${predatorLower} committed early. The ${preyLower} lost clean running room fast.`;
+      return `The chase angle closed fast
+The ${preyLower} lost clean running room
+Which move took away space? 👀`;
     case "Giant vs giant clash":
-      return `${predator} and ${prey} got too close. One body shift changed the whole read.`;
+      return `One body shift changed everything
+The standoff tightened before contact
+Which posture gave it away? 👀`;
     case "Defender stands ground":
-      return `The pressure kept building. This ${predatorLower} never gave ground.`;
+      return `The pressure kept building
+This ${predatorLower} never gave ground
+What made the stand believable? 👀`;
     case "Territory dominance battle":
-      return "The warning was visible early. One step changed the whole encounter.";
+      return `The warning was visible early
+One step crossed the claim line
+Did you spot the tell? 👀`;
     case "Predator vs predator fight":
-      return "Two apex predators met too close. One bad step shifted control fast.";
+      return `Two predators met too close
+One bad step shifted control fast
+Who gave up position first? 👀`;
     default:
       return null;
   }
@@ -244,23 +293,23 @@ function buildCuriosityShortCaption(
 export function buildPinnedComment(arc: Arc): string {
   switch (arc) {
     case "Ambush attack":
-      return `${COMMUNITY_NAME}, where did the ambush give itself away?`;
+      return `${COMMUNITY_NAME} — where did the ambush give itself away?`;
     case "Chase and takedown":
-      return `${COMMUNITY_NAME}, which move closed the escape lane first?`;
+      return `${COMMUNITY_NAME} — which move closed the escape lane first?`;
     case "Escape from danger":
-      return `${COMMUNITY_NAME}, would you have spotted the danger in time?`;
+      return `${COMMUNITY_NAME} — predator read it first or prey almost escaped?`;
     case "Pack hunting strategy":
-      return `${COMMUNITY_NAME}, which angle closed the open space first?`;
+      return `${COMMUNITY_NAME} — which move closed the escape lane first?`;
     case "Defender stands ground":
-      return `${COMMUNITY_NAME}, what told you the stand would hold?`;
+      return `${COMMUNITY_NAME} — did you spot the tell before it happened?`;
     case "Giant vs giant clash":
-      return `${COMMUNITY_NAME}, which body shift made the standoff feel dangerous?`;
+      return `${COMMUNITY_NAME} — which move closed the escape lane first?`;
     case "Territory dominance battle":
-      return `${COMMUNITY_NAME}, would you have noticed the claim earlier?`;
+      return `${COMMUNITY_NAME} — did you spot the tell before it happened?`;
     case "Predator vs predator fight":
-      return `${COMMUNITY_NAME}, which animal gave up position first?`;
+      return `${COMMUNITY_NAME} — predator read it first or prey almost escaped?`;
     default:
-      return `${COMMUNITY_NAME}, which moment changed the encounter?`;
+      return `${COMMUNITY_NAME} — did you spot the tell before it happened?`;
   }
 }
 
@@ -366,8 +415,7 @@ export function buildHashtags(
   arc: Arc,
   options: HashtagOptions = {}
 ): string {
-  const requestedCount = Math.max(1, options.count ?? 5);
-  const baseTags = BASE_HASHTAGS[arc] ?? ["#wildlife", getArcHashtag(arc), "#usa"];
+  const requestedCount = Math.min(5, Math.max(1, options.count ?? 5));
   const laneTag = getContentLaneHashtag(
     options.contentLane ?? "Auto",
     predator,
@@ -375,17 +423,11 @@ export function buildHashtags(
     arc
   );
   const candidates = [
-    baseTags[0] ?? "#wildlife",
+    laneTag,
+    ...FACEBOOK_SAFE_HASHTAGS,
+    getArcHashtag(arc),
     toHashtag(predator),
     toHashtag(prey),
-    laneTag,
-    getArcHashtag(arc),
-    baseTags[1],
-    baseTags[2] ?? "#usa",
-    "#wildlifereels",
-    "#animalbehavior",
-    "#nature",
-    "#usa",
   ].filter((tag): tag is string => Boolean(tag));
   const tags: string[] = [];
 
