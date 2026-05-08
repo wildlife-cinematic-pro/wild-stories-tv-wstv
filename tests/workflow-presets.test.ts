@@ -1,6 +1,14 @@
 import { describe, expect, it } from "vitest";
 
-import type { BuildWorkflowPresetSnapshot } from "@/types";
+import {
+  EncounterMode,
+  EndingMode,
+  HabitatRegion,
+  StoryMode,
+  ViralLane,
+  ViolenceLevel,
+  type BuildWorkflowPresetSnapshot,
+} from "@/types";
 import {
   buildWorkflowPresetExportPayload,
   buildWorkflowPresetPackExportPayload,
@@ -61,6 +69,31 @@ function makeSnapshot(
   };
 }
 
+function expectSnapshotWithPhase1Defaults(
+  actual: BuildWorkflowPresetSnapshot,
+  expected: BuildWorkflowPresetSnapshot
+) {
+  expect(actual).toMatchObject(expected);
+  expect(actual).toMatchObject({
+    storyMode: StoryMode.PREDATOR_VS_PREY,
+    encounterMode: EncounterMode.PEAK_TENSION,
+    endingMode: EndingMode.ESCAPE,
+    viralLane: ViralLane.TENSION,
+    violenceLevel: ViolenceLevel.DISPLAY_ONLY,
+    habitatRegion: HabitatRegion.YELLOWSTONE,
+    subjectA: expected.predator,
+    subjectB: expected.prey,
+    season: "FALL",
+    timeOfDay: "GOLDEN_HOUR",
+    offspringLabel: "cub",
+    strikeMethod: "AMBUSH",
+    escapeDirection: "BRUSH",
+    weatherHazard: "BLIZZARD",
+    rutSeason: false,
+  });
+  expect("groupCount" in actual).toBe(false);
+}
+
 describe("workflow presets", () => {
   it("saves a named preset with the current state snapshot", () => {
     const snapshot = makeSnapshot();
@@ -73,7 +106,7 @@ describe("workflow presets", () => {
     expect(presets).toHaveLength(1);
     expect(presets[0].id).toBe("preset-pack-hunt");
     expect(presets[0].name).toBe("USA Fast Pack Hunt");
-    expect(presets[0].snapshot).toEqual(snapshot);
+    expectSnapshotWithPhase1Defaults(presets[0].snapshot, snapshot);
   });
 
   it("loads a preset snapshot shape compatible with the current build state", () => {
@@ -136,7 +169,7 @@ describe("workflow presets", () => {
     expect(presets[0].name).toBe("Defender Hold Ground");
     expect(presets[0].createdAt).toBe("2026-04-20T00:00:00.000Z");
     expect(presets[0].updatedAt).toBe("2026-04-20T01:00:00.000Z");
-    expect(presets[0].snapshot).toEqual(updatedSnapshot);
+    expectSnapshotWithPhase1Defaults(presets[0].snapshot, updatedSnapshot);
   });
 
   it("deletes a preset and clears unsafe default ids", () => {

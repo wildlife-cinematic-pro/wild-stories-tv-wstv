@@ -2,6 +2,14 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 
 import { createDefaultPackageLockState } from "@/lib/package-section-locks";
 import {
+  EncounterMode,
+  EndingMode,
+  HabitatRegion,
+  StoryMode,
+  ViralLane,
+  ViolenceLevel,
+} from "@/types";
+import {
   clearImportedMonetizedPagePerformanceRecords,
   createLastGeneratedOutputDebouncer,
   readCustomPredators,
@@ -188,7 +196,29 @@ describe("settings storage", () => {
     const record = makeLastGeneratedOutputRecord();
     writeLastGeneratedOutput(record);
 
-    expect(readLastGeneratedOutput()).toEqual(record);
+    const restored = readLastGeneratedOutput();
+    expect(restored).not.toBeNull();
+    if (!restored) throw new Error("Expected last generated output to restore");
+
+    expect(restored).toMatchObject(record);
+    expect(restored.snapshot).toMatchObject({
+      storyMode: StoryMode.PREDATOR_VS_PREY,
+      encounterMode: EncounterMode.PEAK_TENSION,
+      endingMode: EndingMode.ESCAPE,
+      viralLane: ViralLane.TENSION,
+      violenceLevel: ViolenceLevel.DISPLAY_ONLY,
+      habitatRegion: HabitatRegion.YELLOWSTONE,
+      subjectA: record.snapshot.predator,
+      subjectB: record.snapshot.prey,
+      season: "FALL",
+      timeOfDay: "GOLDEN_HOUR",
+      offspringLabel: "cub",
+      strikeMethod: "AMBUSH",
+      escapeDirection: "BRUSH",
+      weatherHazard: "BLIZZARD",
+      rutSeason: false,
+    });
+    expect("groupCount" in restored.snapshot).toBe(false);
   });
 
   it("normalizes invalid custom predator arcs to a safe Arc value", () => {

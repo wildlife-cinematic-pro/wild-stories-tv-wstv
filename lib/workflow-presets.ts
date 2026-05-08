@@ -478,7 +478,7 @@ export function normalizeWorkflowPresetSnapshot(
     ),
     subjectA: cleanOptionalString(value.subjectA) ?? predator,
     subjectB: cleanOptionalString(value.subjectB) ?? prey,
-    groupCount: typeof value.groupCount === "number" ? value.groupCount : undefined,
+    ...(typeof value.groupCount === "number" ? { groupCount: value.groupCount } : {}),
     offspringLabel: pickOption(
       value.offspringLabel,
       ["cub", "fawn", "calf", "pup", "kit"] as const,
