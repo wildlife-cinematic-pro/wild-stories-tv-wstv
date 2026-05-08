@@ -287,6 +287,23 @@ export function useBuildGenerationActions({
       openingFrameInput: previewOpeningFrameInput,
       openingFrameScore: previewOpeningFrameScore,
       performanceSnapshot: previewPerformanceSnapshot,
+      storyMode,
+      encounterMode,
+      endingMode,
+      viralLane,
+      violenceLevel,
+      habitatRegion,
+      season,
+      timeOfDay,
+      subjectA,
+      subjectB,
+      groupCount,
+      offspringLabel,
+      strikeMethod,
+      escapeDirection,
+      weatherHazard,
+      rutSeason,
+      foodItem,
     });
   }
 

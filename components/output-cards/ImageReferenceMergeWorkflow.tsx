@@ -6,6 +6,11 @@ import {
   buildAnimalMasterReferencePrompt,
   buildEnvironmentMasterReferencePrompt,
 } from "@/components/output-cards/reference-image-prompts";
+import {
+  buildStoryModePromptContext,
+  isNonPredatorStoryMode,
+  type StoryModePromptContext,
+} from "@/lib/story-mode-prompt-context";
 
 type WorkflowPrompt = {
   number: number;
@@ -133,12 +138,14 @@ function buildMergeMasterPrompt({
   environmentName,
   lightingName,
   stage,
+  modeContext,
 }: {
   leadAnimalName: string;
   oppositeAnimalName: string;
   environmentName: string;
   lightingName: string;
   stage: MergeStage;
+  modeContext?: StoryModePromptContext;
 }) {
   const leadTag = `@${slugifyReferenceName(leadAnimalName, "mountain_lion")}`;
   const oppositeTag = `@${slugifyReferenceName(oppositeAnimalName, "white_tailed_deer")}`;
@@ -153,6 +160,8 @@ function buildMergeMasterPrompt({
     `Use ${environmentTag} only for background, lighting direction, ground texture, terrain depth, habitat structure, and atmosphere.`,
     "",
     `Final image goal: ${stage.title}. Photorealistic wildlife documentary final scene master image, 9:16 vertical, 4K if available, video-ready source frame for a hybrid wildlife reel.`,
+    modeContext ? `Story mode: ${modeContext.modeLabel}. ${modeContext.sceneGoal} ${modeContext.relationshipLine}` : "",
+    modeContext ? `${modeContext.modeSpecificActionLine} ${modeContext.violenceLine}` : "",
     `Layer the scene from background to foreground: first preserve ${environmentName} as the habitat plate with ${lightingName}, terrain depth, ambush lanes, ground plane, atmospheric depth, and natural color temperature; then place the two identity-locked animals into that environment with believable scale and spacing.`,
     `${stage.composition}`,
     `Keep ${leadAnimalName} and ${oppositeAnimalName} full-body readable from ears/head through legs/feet/tail, with stable anatomy, correct limb count, realistic muscle/bone landmarks, grounded paw and hoof contact, clean silhouettes, no fused bodies, and no duplicated animals.`,
@@ -161,7 +170,7 @@ function buildMergeMasterPrompt({
     "Safety and realism: clean survival tension only, no visible injury, no graphic outcome, no humans, no vehicles, no fences, no zoo enclosure, no text, no watermark.",
     "",
     FINAL_MERGE_NEGATIVE_PROMPT,
-  ].join("\n");
+  ].filter(Boolean).join("\n");
 }
 
 
@@ -176,6 +185,34 @@ function buildReferencePrompts(data: GeneratedPackage) {
     data.weatherName,
     "scene-appropriate natural lighting"
   );
+  const modeContext = isNonPredatorStoryMode(data)
+    ? buildStoryModePromptContext({
+        storyMode: data.storyMode,
+        encounterMode: data.encounterMode,
+        endingMode: data.endingMode,
+        viralLane: data.viralLane,
+        violenceLevel: data.violenceLevel,
+        habitatRegion: data.habitatRegion,
+        season: data.season,
+        timeOfDay: data.timeOfDay,
+        subjectA: data.subjectA ?? leadAnimalName,
+        subjectB: data.subjectB ?? oppositeAnimalName,
+        groupCount: data.groupCount,
+        offspringLabel: data.offspringLabel,
+        strikeMethod: data.strikeMethod,
+        escapeDirection: data.escapeDirection,
+        weatherHazard: data.weatherHazard,
+        rutSeason: data.rutSeason,
+        foodItem: data.foodItem,
+        predator: leadAnimalName,
+        prey: oppositeAnimalName,
+        finalEnvironment: environmentName,
+        weather: data.weatherName,
+      })
+    : undefined;
+  const modeReferenceLine = modeContext
+    ? `\n\nStory-mode reference goal: ${modeContext.modeLabel}. ${modeContext.sceneGoal} ${modeContext.relationshipLine} ${modeContext.safetyLine}`
+    : "";
 
   const leadPrompt = buildAnimalMasterReferencePrompt({
     subjectName: leadAnimalName,
@@ -210,6 +247,7 @@ function buildReferencePrompts(data: GeneratedPackage) {
     oppositeAnimalName,
     environmentName,
     lightingName,
+    modeContext,
     referencePrompts: [
       {
         number: 1,
@@ -217,7 +255,7 @@ function buildReferencePrompts(data: GeneratedPackage) {
         helper: "Create the reusable lead animal reference in Nano Banana 2 first.",
         badge: "Nano Banana 2 Primary · GPT Image 2 Backup",
         prompt: strengthenReferencePrompt(
-          leadPrompt.replace(
+          (leadPrompt + modeReferenceLine).replace(
             /production-ready [^.]+ reference\./,
             "production-ready Nano Banana 2 primary master reference with GPT Image 2 backup support."
           ),
@@ -234,7 +272,7 @@ function buildReferencePrompts(data: GeneratedPackage) {
         helper: "Create the reusable opposite animal reference in Nano Banana 2 first.",
         badge: "Nano Banana 2 Primary · GPT Image 2 Backup",
         prompt: strengthenReferencePrompt(
-          oppositePrompt.replace(
+          (oppositePrompt + modeReferenceLine).replace(
             /production-ready [^.]+ reference\./,
             "production-ready Nano Banana 2 primary master reference with GPT Image 2 backup support."
           ),
@@ -250,7 +288,7 @@ function buildReferencePrompts(data: GeneratedPackage) {
         title: "Environment Master Image",
         helper: "Create the reusable habitat, terrain, and lighting reference in Nano Banana 2 first.",
         badge: "Nano Banana 2 Primary · GPT Image 2 Backup",
-        prompt: strengthenReferencePrompt(environmentPrompt, "environment"),
+        prompt: strengthenReferencePrompt(environmentPrompt + modeReferenceLine, "environment"),
         copyLabel: "Environment Reference",
         tone: "indigo",
         backupNote: OPTIONAL_GPT_IMAGE_2_BACKUP_NOTE,
@@ -388,6 +426,7 @@ export default function ImageReferenceMergeWorkflow({
     oppositeAnimalName,
     environmentName,
     lightingName,
+    modeContext,
     referencePrompts,
   } = buildReferencePrompts(data);
   const structuredSourceNote = structuredPrompts?.imagePrompt?.pasteReady
@@ -406,6 +445,7 @@ export default function ImageReferenceMergeWorkflow({
       environmentName,
       lightingName,
       stage,
+      modeContext,
     }),
     copyLabel: `Merge ${stage.number}`,
     tone: "emerald",

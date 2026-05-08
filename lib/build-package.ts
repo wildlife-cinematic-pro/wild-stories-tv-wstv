@@ -10,16 +10,28 @@ import type {
   GeneratedPackage,
   HookFamily,
   OpeningFrameScore,
+  EncounterMode,
+  EndingMode,
+  EscapeDirection,
+  HabitatRegion,
+  OffspringLabel,
   PerformanceSnapshot,
   PipelineStyle,
   PredatorInfo,
   PublishGuardReport,
   QualityOptions,
   RunwayModel,
+  Season,
+  StoryMode,
+  StrikeMethod,
+  TimeOfDay,
   KlingModel,
   TwoPartViralPreset,
   USAudienceScoreResult,
+  ViralLane,
+  ViolenceLevel,
   Weather,
+  WeatherHazard,
 } from "@/types";
 
 import type { OpeningFrameInput } from "@/lib/openingFrameScore";
@@ -74,6 +86,7 @@ import {
   buildDurationLaneRoutingNote,
   getDurationLaneConfig,
 } from "@/lib/duration-lanes";
+import { buildStoryModePackageOverrides } from "@/lib/story-mode-prompt-context";
 
 type PublishFlowMarketMode = "US_ONLY";
 
@@ -159,6 +172,23 @@ export type GeneratedPackageDraftInput = {
   openingFrameInput: OpeningFrameInput;
   openingFrameScore: OpeningFrameScore;
   performanceSnapshot?: PerformanceSnapshot | null;
+  storyMode?: StoryMode;
+  encounterMode?: EncounterMode;
+  endingMode?: EndingMode;
+  viralLane?: ViralLane;
+  violenceLevel?: ViolenceLevel;
+  habitatRegion?: HabitatRegion;
+  season?: Season;
+  timeOfDay?: TimeOfDay;
+  subjectA?: string;
+  subjectB?: string;
+  groupCount?: number;
+  offspringLabel?: OffspringLabel;
+  strikeMethod?: StrikeMethod;
+  escapeDirection?: EscapeDirection;
+  weatherHazard?: WeatherHazard;
+  rutSeason?: boolean;
+  foodItem?: string;
 };
 
 export type GeneratedPackageDraft = {
@@ -451,6 +481,23 @@ export function buildGeneratedPackageDraft(
     environmentName: input.finalEnvironment,
     weatherName: input.weather,
     cameraAnglePreset: input.cameraAnglePreset,
+    storyMode: input.storyMode,
+    encounterMode: input.encounterMode,
+    endingMode: input.endingMode,
+    viralLane: input.viralLane,
+    violenceLevel: input.violenceLevel,
+    habitatRegion: input.habitatRegion,
+    season: input.season,
+    timeOfDay: input.timeOfDay,
+    subjectA: input.subjectA,
+    subjectB: input.subjectB,
+    groupCount: input.groupCount,
+    offspringLabel: input.offspringLabel,
+    strikeMethod: input.strikeMethod,
+    escapeDirection: input.escapeDirection,
+    weatherHazard: input.weatherHazard,
+    rutSeason: input.rutSeason,
+    foodItem: input.foodItem,
     generationId,
     generatedAt,
     imagePrompt: imagePromptCard.fullText,
@@ -594,6 +641,47 @@ export function buildGeneratedPackageDraft(
     animalBehavior: animalBehaviorResult ?? undefined,
   };
 
+  const storyModeOverrides = buildStoryModePackageOverrides(
+    {
+      storyMode: input.storyMode,
+      encounterMode: input.encounterMode,
+      endingMode: input.endingMode,
+      viralLane: input.viralLane,
+      violenceLevel: input.violenceLevel,
+      habitatRegion: input.habitatRegion,
+      season: input.season,
+      timeOfDay: input.timeOfDay,
+      subjectA: input.subjectA,
+      subjectB: input.subjectB,
+      groupCount: input.groupCount,
+      offspringLabel: input.offspringLabel,
+      strikeMethod: input.strikeMethod,
+      escapeDirection: input.escapeDirection,
+      weatherHazard: input.weatherHazard,
+      rutSeason: input.rutSeason,
+      foodItem: input.foodItem,
+      predator: input.predator,
+      prey: input.prey,
+      finalEnvironment: input.finalEnvironment,
+      weather: input.weather,
+      cameraAnglePreset: input.cameraAnglePreset,
+      runwayModel: input.runwayModel,
+      klingModel: input.klingModel,
+      durationLane: input.durationLane,
+    },
+    basePkg,
+    primaryShotTitles.map((_, index) => ({
+      durationLabel: primaryShotEditLabels[index],
+      generationDurationLabel: primaryShotGenerationLabels[index],
+      editTimelineLabel: primaryShotEditLabels[index],
+      why: primaryShotWhy[index],
+    }))
+  );
+
+  if (storyModeOverrides) {
+    Object.assign(basePkg, storyModeOverrides);
+  }
+
   const capCutScript = buildCapCutScript(
     input.predator,
     input.prey,
@@ -632,7 +720,7 @@ export function buildGeneratedPackageDraft(
     usAudienceScore: input.usAudienceScore,
     openingFrameScore: input.openingFrameScore,
     performanceSnapshot: input.performanceSnapshot ?? undefined,
-    primaryHook,
+    primaryHook: basePkg.hook ?? primaryHook,
   };
 }
 
@@ -664,7 +752,7 @@ export function finalizeGeneratedPackageDraft(
     hookText:
       typeof enhanced.hook === "string" && enhanced.hook.trim().length > 0
         ? enhanced.hook
-        : draft.primaryHook,
+        : draft.basePkg.hook ?? draft.primaryHook,
     ctaText: draft.basePkg.cta,
     caption: finalPublishCaption,
     hashtags: draft.basePkg.hashtags.split(/\s+/).filter(Boolean),
