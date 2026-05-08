@@ -4,6 +4,7 @@ import PromptVersionsPanel from "@/components/PromptVersionsPanel";
 import WSTVWorkflowDiagram from "@/components/WSTVWorkflowDiagram";
 import { WorkflowPromptMap } from "@/components/output-cards/workflow-prompt-map";
 import StoryModeQACard from "@/components/output-cards/story-mode-qa-card";
+import FacebookReelsOptimizerCard from "@/components/output-cards/facebook-reels-optimizer-card";
 import { EngineSpecsPanel, SectionLabel } from "@/components/output-cards/shared-panels";
 
 import type { GeneratedPackage, PromptVersion } from "@/types";
@@ -54,6 +55,8 @@ export function OverviewWorkspace({
       <StoryModeBadges data={data} />
 
       <StoryModeQACard data={data} />
+
+      <FacebookReelsOptimizerCard data={data} onCopy={onCopy} />
 
       <EngineSpecsPanel />
 
