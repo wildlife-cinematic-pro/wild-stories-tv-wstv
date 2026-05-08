@@ -559,6 +559,7 @@ export type BuildWorkflowPresetSnapshot = {
   escapeDirection?: EscapeDirection;
   weatherHazard?: WeatherHazard;
   rutSeason?: boolean;
+  foodItem?: string;
   season?: Season;
   timeOfDay?: TimeOfDay;
   wildlifeScopeMode: WildlifeScopeMode;
@@ -1090,6 +1091,15 @@ export type GeneratedPackage = {
   habitatRegion?: HabitatRegion;
   season?: Season;
   timeOfDay?: TimeOfDay;
+  subjectA?: string;
+  subjectB?: string;
+  groupCount?: number;
+  offspringLabel?: OffspringLabel;
+  strikeMethod?: StrikeMethod;
+  escapeDirection?: EscapeDirection;
+  weatherHazard?: WeatherHazard;
+  rutSeason?: boolean;
+  foodItem?: string;
   environmentName?: string;
   weatherName?: Weather;
   cameraAnglePreset?: CameraAnglePreset;

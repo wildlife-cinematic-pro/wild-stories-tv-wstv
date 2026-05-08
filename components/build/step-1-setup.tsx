@@ -3,9 +3,8 @@
 import { useState } from "react";
 
 import SceneRelationshipCard from "@/components/build/scene-relationship-card";
-import WildlifeStoryModeSelector, {
-  getStoryModeLabel,
-} from "@/components/build/wildlife-story-mode-selector";
+import StoryModeSubjectFields from "@/components/build/story-mode-subject-fields";
+import WildlifeStoryModeSelector from "@/components/build/wildlife-story-mode-selector";
 import WorkflowPresetsPanel from "@/components/build/workflow-presets-panel";
 
 import { WORKFLOW_TEST_PRESETS } from "@/lib/workflow-presets";
@@ -61,16 +60,20 @@ import type {
   EmotionalTone,
   EncounterMode,
   EndingMode,
+  EscapeDirection,
   HabitatPreset,
   HabitatRegion,
+  OffspringLabel,
   PredatorInfo,
   SavedWorkflowPreset,
   SavedWorkflowPresetPack,
   Season,
+  StrikeMethod,
   TimeOfDay,
   ViralLane,
   ViolenceLevel,
   Weather,
+  WeatherHazard,
   WildlifeScopeMode,
   WorkflowPresetAuthSession,
   WorkflowPresetCloudSyncState,
@@ -89,6 +92,15 @@ type Step1SetupProps = {
   habitatRegion: HabitatRegion;
   season: Season;
   timeOfDay: TimeOfDay;
+  subjectA?: string;
+  subjectB?: string;
+  groupCount?: number;
+  offspringLabel?: OffspringLabel;
+  strikeMethod?: StrikeMethod;
+  escapeDirection?: EscapeDirection;
+  weatherHazard?: WeatherHazard;
+  rutSeason?: boolean;
+  foodItem?: string;
   wildlifeScopeMode: WildlifeScopeMode;
   contentLane: ContentLane;
   cameraAnglePreset: CameraAnglePreset;
@@ -141,6 +153,15 @@ type Step1SetupProps = {
   onHabitatRegionChange: (value: HabitatRegion) => void;
   onSeasonChange: (value: Season) => void;
   onTimeOfDayChange: (value: TimeOfDay) => void;
+  onSubjectAChange: (value: string) => void;
+  onSubjectBChange: (value: string) => void;
+  onGroupCountChange: (value: number | undefined) => void;
+  onOffspringLabelChange: (value: OffspringLabel) => void;
+  onStrikeMethodChange: (value: StrikeMethod) => void;
+  onEscapeDirectionChange: (value: EscapeDirection) => void;
+  onWeatherHazardChange: (value: WeatherHazard) => void;
+  onRutSeasonChange: (value: boolean) => void;
+  onFoodItemChange: (value: string) => void;
   onWildlifeScopeModeChange: (value: WildlifeScopeMode) => void;
   onContentLaneChange: (value: ContentLane) => void;
   onCameraAnglePresetChange: (value: CameraAnglePreset) => void;
@@ -207,6 +228,15 @@ export default function Step1Setup({
   habitatRegion,
   season,
   timeOfDay,
+  subjectA,
+  subjectB,
+  groupCount,
+  offspringLabel,
+  strikeMethod,
+  escapeDirection,
+  weatherHazard,
+  rutSeason,
+  foodItem,
   wildlifeScopeMode,
   contentLane,
   cameraAnglePreset,
@@ -259,6 +289,15 @@ export default function Step1Setup({
   onHabitatRegionChange,
   onSeasonChange,
   onTimeOfDayChange,
+  onSubjectAChange,
+  onSubjectBChange,
+  onGroupCountChange,
+  onOffspringLabelChange,
+  onStrikeMethodChange,
+  onEscapeDirectionChange,
+  onWeatherHazardChange,
+  onRutSeasonChange,
+  onFoodItemChange,
   onWildlifeScopeModeChange,
   onContentLaneChange,
   onCameraAnglePresetChange,
@@ -419,7 +458,6 @@ export default function Step1Setup({
           : "border-rose-100 bg-rose-50/80 text-rose-900";
   const isSimpleSceneMode = sceneMode === "simple";
   const isPredatorVsPreyMode = storyMode === StoryMode.PREDATOR_VS_PREY;
-  const selectedStoryModeLabel = getStoryModeLabel(storyMode);
 
   return (
     <div className="grid gap-6 xl:grid-cols-[minmax(0,1fr)_340px]">
@@ -822,27 +860,30 @@ export default function Step1Setup({
             </div>
             </section>
           ) : (
-            <section className="rounded-2xl border border-amber-400/25 bg-zinc-950 p-5 text-zinc-100 shadow-[0_18px_40px_rgba(0,0,0,0.2)] sm:p-6">
-              <div className="flex flex-wrap items-center justify-between gap-3">
-                <div>
-                  <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-amber-300/80">
-                    Subject Setup
-                  </p>
-                  <h3 className="mt-2 text-lg font-semibold text-zinc-50">
-                    {selectedStoryModeLabel} mode
-                  </h3>
-                </div>
-                <span className="rounded-full border border-amber-400/30 bg-amber-500/10 px-3 py-1 text-[10px] font-bold uppercase tracking-[0.1em] text-amber-300">
-                  Phase 2
-                </span>
-              </div>
-              <p className="mt-4 text-sm leading-6 text-zinc-400">
-                {selectedStoryModeLabel} mode - subject fields for this mode are coming in Phase 2.
-              </p>
-              <p className="mt-3 text-xs leading-6 text-zinc-500">
-                The existing predator/prey generator remains unchanged. Switch back to Predator vs Prey to use the current animal selectors and prompt workflow.
-              </p>
-            </section>
+            <StoryModeSubjectFields
+              storyMode={storyMode}
+              subjectA={subjectA}
+              subjectB={subjectB}
+              groupCount={groupCount}
+              offspringLabel={offspringLabel}
+              strikeMethod={strikeMethod}
+              escapeDirection={escapeDirection}
+              weatherHazard={weatherHazard}
+              rutSeason={rutSeason}
+              foodItem={foodItem}
+              habitatRegion={habitatRegion}
+              season={season}
+              timeOfDay={timeOfDay}
+              onSubjectAChange={onSubjectAChange}
+              onSubjectBChange={onSubjectBChange}
+              onGroupCountChange={onGroupCountChange}
+              onOffspringLabelChange={onOffspringLabelChange}
+              onStrikeMethodChange={onStrikeMethodChange}
+              onEscapeDirectionChange={onEscapeDirectionChange}
+              onWeatherHazardChange={onWeatherHazardChange}
+              onRutSeasonChange={onRutSeasonChange}
+              onFoodItemChange={onFoodItemChange}
+            />
           )}
 
           <section className="rounded-2xl border border-gray-200 bg-white p-5 sm:p-6">

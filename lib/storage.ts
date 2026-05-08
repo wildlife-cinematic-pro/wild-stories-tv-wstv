@@ -43,12 +43,16 @@ import type {
   HabitatRegion,
   EncounterMode,
   EndingMode,
+  EscapeDirection,
+  OffspringLabel,
   PipelineStyle,
   Season,
   StoryMode,
+  StrikeMethod,
   TimeOfDay,
   ViralLane,
   ViolenceLevel,
+  WeatherHazard,
   WildlifeScopeMode,
   BuildWorkflowPresetSnapshot,
   GeneratedPackage,
@@ -177,6 +181,15 @@ export type StoredSettings = {
   habitatRegion?: HabitatRegion;
   season?: Season;
   timeOfDay?: TimeOfDay;
+  subjectA?: string;
+  subjectB?: string;
+  groupCount?: number;
+  offspringLabel?: OffspringLabel;
+  strikeMethod?: StrikeMethod;
+  escapeDirection?: EscapeDirection;
+  weatherHazard?: WeatherHazard;
+  rutSeason?: boolean;
+  foodItem?: string;
 };
 
 export function readSettings(): StoredSettings {

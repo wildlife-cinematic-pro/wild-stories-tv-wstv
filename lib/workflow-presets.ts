@@ -500,6 +500,9 @@ export function normalizeWorkflowPresetSnapshot(
       "BLIZZARD"
     ),
     rutSeason: cleanBoolean(value.rutSeason, false),
+    ...(cleanOptionalString(value.foodItem)
+      ? { foodItem: cleanOptionalString(value.foodItem) }
+      : {}),
     season: pickOption(value.season, seasonOptions, "FALL"),
     timeOfDay: pickOption(value.timeOfDay, timeOfDayOptions, "GOLDEN_HOUR"),
     wildlifeScopeMode: normalizeWildlifeScopeMode(

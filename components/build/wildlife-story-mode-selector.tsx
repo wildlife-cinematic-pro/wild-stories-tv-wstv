@@ -35,7 +35,7 @@ const STORY_MODE_OPTIONS: Array<{
   {
     value: StoryMode.NEAR_MISS,
     icon: "NM",
-    label: "Near Miss",
+    label: "Near-Miss Escape",
     example: "Escape at the edge",
   },
   {
@@ -53,7 +53,7 @@ const STORY_MODE_OPTIONS: Array<{
   {
     value: StoryMode.MIGRATION,
     icon: "MG",
-    label: "Migration",
+    label: "Migration Crossing",
     example: "Caribou crossing",
   },
   {
