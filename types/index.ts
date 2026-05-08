@@ -240,6 +240,45 @@ export type PerformanceSnapshot = {
   summary: string;
 };
 
+export type ReelPerformanceRecord = {
+  id: string;
+  generationId: string;
+  createdAt: string;
+  updatedAt: string;
+  postedAt?: string;
+  storyMode?: StoryMode;
+  viralLane?: ViralLane;
+  habitatRegion?: HabitatRegion;
+  subjectA?: string;
+  subjectB?: string;
+  presetId?: string;
+  presetName?: string;
+  hookUsed?: string;
+  captionUsed?: string;
+  hashtagsUsed?: string[];
+  views: number;
+  threeSecondViews?: number;
+  averageWatchTimeSeconds?: number;
+  durationSeconds?: number;
+  likes: number;
+  comments: number;
+  shares: number;
+  saves: number;
+  followsGained?: number;
+  notes?: string;
+};
+
+export type ReelPerformanceInsight = {
+  score: number;
+  retentionRate?: number;
+  engagementRate?: number;
+  shareRate?: number;
+  followRate?: number;
+  status: "winner" | "solid" | "needs-work" | "weak";
+  strengths: string[];
+  fixes: string[];
+};
+
 export type PerformanceTrackerEntry = {
   recordId?: string;
   source?: "manual" | "facebook_csv";
