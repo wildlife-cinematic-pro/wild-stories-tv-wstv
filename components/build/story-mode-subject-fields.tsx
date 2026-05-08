@@ -180,6 +180,7 @@ export function getStoryModeSubjectDefaults(
     case StoryMode.WEATHER_SURVIVAL:
       return {
         subjectA: "American Bison",
+        subjectB: "Blizzard Wind",
         weatherHazard: "BLIZZARD",
         groupCount: 8,
       };
@@ -427,6 +428,11 @@ export default function StoryModeSubjectFields({
         <span className="rounded-full border border-indigo-400/25 bg-indigo-500/10 px-3 py-1 text-[10px] font-bold uppercase tracking-[0.1em] text-indigo-200">
           Subject Setup
         </span>
+      </div>
+
+      <div className="mb-4 rounded-xl border border-cyan-400/15 bg-cyan-500/10 px-3 py-2 text-[11px] leading-relaxed text-cyan-100/80">
+        Smart defaults are applied for each story mode. You can override any subject
+        or production control before generating.
       </div>
 
       <div className="grid gap-4 md:grid-cols-2">

@@ -144,7 +144,7 @@ const DEFAULTS: Record<
   },
   [StoryModeEnum.WEATHER_SURVIVAL]: {
     subjectA: "American Bison",
-    subjectB: "Blizzard",
+    subjectB: "Blizzard Wind",
     groupCount: 8,
     weatherHazard: "BLIZZARD",
   },
@@ -435,6 +435,30 @@ export function buildStoryModePromptContext(
     ...baseContext,
     shotStages: buildShotStages(baseContext),
   };
+}
+
+export function formatStoryModeSubjectPair(input: StoryModePromptContextInput) {
+  const context = buildStoryModePromptContext(input);
+  return `${context.primarySubjectLabel} vs ${context.secondarySubjectLabel}`;
+}
+
+export function formatStoryModeGenerateCtaLabel(input: StoryModePromptContextInput) {
+  const context = buildStoryModePromptContext(input);
+  const primary = context.primarySubjectLabel;
+  const secondary = context.secondarySubjectLabel;
+
+  switch (context.storyMode) {
+    case StoryModeEnum.MOTHER_BABY: {
+      const offspring = titleCaseEnum(input.offspringLabel ?? "cub");
+      return `${context.modeLabel}: ${primary} protects ${offspring}`;
+    }
+    case StoryModeEnum.NEAR_MISS:
+      return `${context.modeLabel}: ${primary} escapes ${secondary}`;
+    case StoryModeEnum.MIGRATION:
+      return `${context.modeLabel}: ${primary} at ${secondary}`;
+    default:
+      return `${context.modeLabel}: ${primary} vs ${secondary}`;
+  }
 }
 
 function makeStructuredPrompt(

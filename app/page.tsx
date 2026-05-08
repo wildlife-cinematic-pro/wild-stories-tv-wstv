@@ -59,6 +59,10 @@ import {
 import { DEFAULT_CAMERA_ANGLE_PRESET } from "@/lib/camera-angle-presets";
 import { buildStoryboardPreviewLinkMetadata } from "@/lib/storyboard-link-metadata";
 import { WORKFLOW_TEST_PRESETS } from "@/lib/workflow-presets";
+import {
+  formatStoryModeGenerateCtaLabel,
+  formatStoryModeSubjectPair,
+} from "@/lib/story-mode-prompt-context";
 import type { StoryModePreset } from "@/lib/story-mode-presets";
 import {
   appendCreatorQaRun,
@@ -622,6 +626,82 @@ export default function Page() {
     subjectB,
     weatherHazard,
   ]);
+
+  const currentGenerateSubjectPairLabel = useMemo(
+    () =>
+      formatStoryModeSubjectPair({
+        predator,
+        prey,
+        storyMode,
+        subjectA: currentStorySubjectSnapshot.subjectA,
+        subjectB: currentStorySubjectSnapshot.subjectB,
+        groupCount: currentStorySubjectSnapshot.groupCount,
+        offspringLabel: currentStorySubjectSnapshot.offspringLabel,
+        strikeMethod: currentStorySubjectSnapshot.strikeMethod,
+        escapeDirection: currentStorySubjectSnapshot.escapeDirection,
+        weatherHazard: currentStorySubjectSnapshot.weatherHazard,
+        rutSeason: currentStorySubjectSnapshot.rutSeason,
+        foodItem: currentStorySubjectSnapshot.foodItem,
+        habitatRegion,
+        season,
+        timeOfDay,
+      }),
+    [
+      currentStorySubjectSnapshot.escapeDirection,
+      currentStorySubjectSnapshot.foodItem,
+      currentStorySubjectSnapshot.groupCount,
+      currentStorySubjectSnapshot.offspringLabel,
+      currentStorySubjectSnapshot.rutSeason,
+      currentStorySubjectSnapshot.strikeMethod,
+      currentStorySubjectSnapshot.subjectA,
+      currentStorySubjectSnapshot.subjectB,
+      currentStorySubjectSnapshot.weatherHazard,
+      habitatRegion,
+      predator,
+      prey,
+      season,
+      storyMode,
+      timeOfDay,
+    ]
+  );
+
+  const currentGenerateCtaLabel = useMemo(
+    () =>
+      formatStoryModeGenerateCtaLabel({
+        predator,
+        prey,
+        storyMode,
+        subjectA: currentStorySubjectSnapshot.subjectA,
+        subjectB: currentStorySubjectSnapshot.subjectB,
+        groupCount: currentStorySubjectSnapshot.groupCount,
+        offspringLabel: currentStorySubjectSnapshot.offspringLabel,
+        strikeMethod: currentStorySubjectSnapshot.strikeMethod,
+        escapeDirection: currentStorySubjectSnapshot.escapeDirection,
+        weatherHazard: currentStorySubjectSnapshot.weatherHazard,
+        rutSeason: currentStorySubjectSnapshot.rutSeason,
+        foodItem: currentStorySubjectSnapshot.foodItem,
+        habitatRegion,
+        season,
+        timeOfDay,
+      }),
+    [
+      currentStorySubjectSnapshot.escapeDirection,
+      currentStorySubjectSnapshot.foodItem,
+      currentStorySubjectSnapshot.groupCount,
+      currentStorySubjectSnapshot.offspringLabel,
+      currentStorySubjectSnapshot.rutSeason,
+      currentStorySubjectSnapshot.strikeMethod,
+      currentStorySubjectSnapshot.subjectA,
+      currentStorySubjectSnapshot.subjectB,
+      currentStorySubjectSnapshot.weatherHazard,
+      habitatRegion,
+      predator,
+      prey,
+      season,
+      storyMode,
+      timeOfDay,
+    ]
+  );
 
   const currentWorkflowPresetSnapshot = useMemo(
     () => ({
@@ -1717,6 +1797,8 @@ export default function Page() {
               <Step3Generate
                 predator={predator}
                 prey={prey}
+                subjectPairLabel={currentGenerateSubjectPairLabel}
+                generateCtaLabel={currentGenerateCtaLabel}
                 contentLane={contentLane}
                 activeProvider={activeProvider}
                 autoFallback={autoFallback}

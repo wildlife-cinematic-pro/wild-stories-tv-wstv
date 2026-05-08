@@ -64,6 +64,8 @@ const DEFAULT_PROVIDER_AVAILABILITY = COPY_POLISH_PROVIDER_CONFIGS.reduce(
 type Step3GenerateProps = {
   predator: string;
   prey: string;
+  subjectPairLabel: string;
+  generateCtaLabel: string;
   contentLane: ContentLane;
   activeProvider: AIProvider;
   autoFallback: boolean;
@@ -110,6 +112,8 @@ type Step3GenerateProps = {
 export default function Step3Generate({
   predator,
   prey,
+  subjectPairLabel,
+  generateCtaLabel,
   contentLane,
   activeProvider,
   autoFallback,
@@ -412,7 +416,7 @@ export default function Step3Generate({
             Generate for Reels
           </h3>
           <div className="rounded-full border border-white/[0.08] bg-white/[0.05] px-2.5 py-1 text-[10px] font-semibold text-white/50">
-            {predator} vs {prey}
+            {subjectPairLabel}
           </div>
         </div>
 
@@ -563,9 +567,13 @@ export default function Step3Generate({
               Generating...
             </span>
           ) : (
-            `⚡ Generate — ${predator} vs ${prey}`
+            `⚡ Generate — ${generateCtaLabel}`
           )}
         </button>
+        <p className="mt-3 text-center text-[11px] leading-relaxed text-white/45">
+          Smart defaults are applied for each story mode. You can override any subject
+          or production control before generating.
+        </p>
 
         {pkg && (
           <SectionLockControls
