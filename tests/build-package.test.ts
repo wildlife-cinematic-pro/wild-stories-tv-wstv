@@ -1,5 +1,7 @@
 import { describe, expect, it } from "vitest";
 
+import { StoryMode, ViolenceLevel } from "@/types";
+
 import {
   buildGeneratedPackageDraft,
   buildOpeningFrameInput,
@@ -260,6 +262,111 @@ describe("build-package refactor seam", () => {
           "⚠️ Reminder: Label this content as AI-generated before publishing to comply with Meta policy and SynthID detection."
       )
     ).toHaveLength(1);
+  });
+
+
+  it("keeps Predator vs Prey on the existing prompt path when story mode is default", () => {
+    const baseline = buildGeneratedPackageDraft(makeDraftInput());
+    const explicit = buildGeneratedPackageDraft(
+      makeDraftInput({ storyMode: StoryMode.PREDATOR_VS_PREY })
+    );
+
+    expect(explicit.basePkg.imagePrompt).toBe(baseline.basePkg.imagePrompt);
+    expect(explicit.basePkg.shotImagePlan).toEqual(baseline.basePkg.shotImagePlan);
+    expect(explicit.basePkg.structuredPrompts?.workflowShots?.map((shot) => shot.fullText)).toEqual(
+      baseline.basePkg.structuredPrompts?.workflowShots?.map((shot) => shot.fullText)
+    );
+  });
+
+  it("generates Mother & Baby prompt language with protection and cub safety", () => {
+    const draft = buildGeneratedPackageDraft(
+      makeDraftInput({
+        storyMode: StoryMode.MOTHER_BABY,
+        subjectA: "Grizzly Mother",
+        subjectB: "Male Grizzly",
+        offspringLabel: "cub",
+        violenceLevel: ViolenceLevel.DISPLAY_ONLY,
+      })
+    );
+    const text = [
+      draft.basePkg.imagePrompt,
+      draft.basePkg.gptImage2Prompt ?? "",
+      ...(draft.basePkg.shotImagePlan ?? []).map((shot) => shot.prompt),
+      ...(draft.basePkg.structuredPrompts?.workflowShots ?? []).map((shot) => shot.fullText),
+    ].join("\n").toLowerCase();
+
+    expect(text).toContain("protective mother");
+    expect(text).toContain("cub");
+    expect(text).toContain("sheltered");
+    expect(text).toContain("no contact");
+    expect(text).toContain("no gore");
+    expect(text).toContain("no blood");
+    expect(text).toContain("no visible injury");
+  });
+
+  it("generates Herd Defense prompt language with herd formation", () => {
+    const draft = buildGeneratedPackageDraft(
+      makeDraftInput({
+        storyMode: StoryMode.HERD_DEFENSE,
+        subjectA: "Bison Herd",
+        subjectB: "Wolf Pack",
+        groupCount: 12,
+        violenceLevel: ViolenceLevel.IMPLIED_PRESSURE,
+      })
+    );
+    const text = [
+      draft.basePkg.imagePrompt,
+      ...(draft.basePkg.shotImagePlan ?? []).map((shot) => shot.prompt),
+    ].join("\n").toLowerCase();
+
+    expect(text).toContain("herd defense");
+    expect(text).toContain("group formation");
+    expect(text).toContain("defensive wall");
+    expect(text).toContain("no gore");
+  });
+
+  it("generates Rival Clash prompt language with rut and standoff cues", () => {
+    const draft = buildGeneratedPackageDraft(
+      makeDraftInput({
+        storyMode: StoryMode.RIVAL_CLASH,
+        subjectA: "Bull Elk A",
+        subjectB: "Bull Elk B",
+        rutSeason: true,
+        violenceLevel: ViolenceLevel.NON_GRAPHIC_STRUGGLE,
+      })
+    );
+    const text = [
+      draft.basePkg.imagePrompt,
+      ...(draft.basePkg.structuredPrompts?.workflowShots ?? []).map((shot) => shot.fullText),
+    ].join("\n").toLowerCase();
+
+    expect(text).toContain("rival clash");
+    expect(text).toContain("rut season");
+    expect(text).toContain("standoff");
+    expect(text).toContain("brief non-graphic physical pressure");
+    expect(text).toContain("no gore");
+    expect(text).toContain("no blood");
+    expect(text).toContain("no visible injury");
+  });
+
+  it("generates Weather Survival prompt language with hazard pressure", () => {
+    const draft = buildGeneratedPackageDraft(
+      makeDraftInput({
+        storyMode: StoryMode.WEATHER_SURVIVAL,
+        subjectA: "American Bison",
+        weatherHazard: "BLIZZARD",
+        groupCount: 8,
+      })
+    );
+    const text = [
+      draft.basePkg.imagePrompt,
+      ...(draft.basePkg.structuredPrompts?.workflowShots ?? []).map((shot) => shot.fullText),
+    ].join("\n").toLowerCase();
+
+    expect(text).toContain("weather survival");
+    expect(text).toContain("blizzard");
+    expect(text).toContain("natural hazard");
+    expect(text).toContain("no animal fight");
   });
 
   it("finalizes the draft with enhancements while preserving generated extras", () => {
