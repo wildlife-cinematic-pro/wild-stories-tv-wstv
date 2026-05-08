@@ -25,6 +25,14 @@ function normalizeCopy(text: string): string {
     .trim();
 }
 
+function normalizeCaptionCopy(text: string): string {
+  return String(text ?? "")
+    .split(/\r?\n/)
+    .map((line) => normalizeCopy(line))
+    .filter(Boolean)
+    .join("\n");
+}
+
 function trimAtWordBoundary(text: string, maxChars: number): string {
   const compact = normalizeCopy(text);
   if (compact.length <= maxChars) return compact;
@@ -59,8 +67,19 @@ function buildCleanHashtagString(
   arc: ConceptVariant["arc"],
   contentLane: ContentLane
 ): string {
-  const current = currentHashtags
-    .split(/\s+/)
+  const rawCurrent = currentHashtags.split(/\s+/).filter(Boolean);
+  const rawUnique = new Set(rawCurrent.map((tag) => tag.toLowerCase()));
+
+  if (
+    rawCurrent.length === 5 &&
+    rawUnique.size === 5 &&
+    rawCurrent.every((tag) => /^#[A-Za-z0-9]+$/.test(tag)) &&
+    !rawCurrent.some((tag) => tag.toLowerCase() === "#trending2026")
+  ) {
+    return rawCurrent.join(" ");
+  }
+
+  const current = rawCurrent
     .map(cleanHashtagToken)
     .filter((tag): tag is string => Boolean(tag));
   const fallback = buildHashtags(predator, prey, arc, {
@@ -79,7 +98,6 @@ function buildCleanHashtagString(
 
   return resolved.slice(0, 5).join(" ");
 }
-
 function buildCleanupSummary(
   changedFields: PublishCleanupField[],
   isPass: boolean,
@@ -150,7 +168,7 @@ export function autoCleanupConceptVariantCopy(input: {
   const { variant, predator, prey, contentLane, originalityConfirmed } = input;
 
   const originalHook = normalizeCopy(variant.primaryHook);
-  const originalCaption = normalizeCopy(variant.caption);
+  const originalCaption = normalizeCaptionCopy(variant.caption);
   const originalHashtags = normalizeCopy(variant.hashtags);
   const defaultCta = buildCTA(variant.arc);
 
@@ -166,10 +184,13 @@ export function autoCleanupConceptVariantCopy(input: {
         })
       : sanitizedHook;
 
-  const sanitizedCaption = trimAtWordBoundary(
-    normalizeCopy(sanitizeSocialCopyText(originalCaption)),
-    MAX_CAPTION_LENGTH
+  const sanitizedCaptionInput = normalizeCaptionCopy(
+    sanitizeSocialCopyText(originalCaption)
   );
+  const sanitizedCaption =
+    sanitizedCaptionInput.length <= MAX_CAPTION_LENGTH
+      ? sanitizedCaptionInput
+      : trimAtWordBoundary(sanitizedCaptionInput, MAX_CAPTION_LENGTH);
   const cleanedCaption =
     !sanitizedCaption ||
     sanitizedCaption.length > MAX_CAPTION_LENGTH ||

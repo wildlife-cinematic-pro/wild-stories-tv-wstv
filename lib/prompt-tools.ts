@@ -148,19 +148,19 @@ export function makeFacebookCaption(input: FacebookCaptionInput): {
   const prey = input.preyName ?? "Prey";
   const env = input.environmentName ?? "the wild";
 
-  // Facebook 2026: Hook first 5 words + emotion + "?" trigger
+  // Facebook: concise hook, animal context, and a clean viewer-read question
   const hooks: Record<string, string> = {
-    mystery:   `Nobody saw this coming in ${env}.`,
-    survival:  `This is pure survival. No rules.`,
-    danger:    `The danger hit before anyone reacted.`,
+    mystery:   `The first warning showed in ${env}.`,
+    survival:  `The survival window got smaller.` ,
+    danger:    `The danger showed before the turn.` ,
     documentary: `This is what nature actually looks like.`,
   };
 
   const questions: Record<string, string> = {
-    mystery:    `Who do you think made it out?`,
-    survival:   `Would you have survived this?`,
-    danger:     `Did you catch what happened at the end?`,
-    documentary:`Who are you rooting for here?`,
+    mystery:    `What detail gave it away first?`,
+    survival:   `Which move kept the escape lane open?`,
+    danger:     `Which moment closed the escape lane?`,
+    documentary:`What did you notice before the turn?`,
   };
 
   const tone = input.tone ?? "documentary";
@@ -171,7 +171,7 @@ export function makeFacebookCaption(input: FacebookCaptionInput): {
   const full = `${hookLine} ${pred} vs ${prey} — ${questionLine}`;
   const caption = wordSafeTrim(full, 150);
 
-  // Facebook 2026 USA viral hashtags — image-specific + trending
+  // Facebook-safe hashtags: five max, niche-specific, no stuffing
   const predTag = `#${pred.replace(/[^A-Za-z0-9]/g, "")}`;
   const envTag  = `#${env.replace(/[^A-Za-z0-9 ]/g, "")
     .split(" ")
@@ -179,11 +179,11 @@ export function makeFacebookCaption(input: FacebookCaptionInput): {
     .join("")}`;
 
   const baseTags = [
-    "#NatureIsWild",       // mega broad — millions of USA posts
-    predTag,               // image-specific
-    "#WildlifeNation",     // community/USA feel
-    envTag,                // environment-specific
-    "#Trending2026",       // time-stamped trend tag
+    "#WildlifeReels",
+    predTag,
+    "#AnimalEncounter",
+    envTag,
+    "#WildStoriesTV"
   ];
 
   return {

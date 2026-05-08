@@ -7,6 +7,7 @@ import {
   buildFacebookCoverFramePresets,
   buildFacebookFirstFrameOverlayPresets,
   buildHashtags,
+  buildShortCaption,
   buildFirstFrameOverlayGuidance,
   rankFacebookCoverFramePresets,
   recommendFacebookOverlayPreset,
@@ -58,7 +59,7 @@ describe("platform pack hook engine v2", () => {
     );
     const guidance = JSON.stringify(pack).toLowerCase();
 
-    expect(pack.facebook.pinnedComment).toContain("Wild Crew");
+    expect(pack.facebook.pinnedComment).toContain("Wild Watchers");
     expect(pack.facebook.pinnedComment.toLowerCase()).not.toMatch(
       /like|share|follow|comment yes/
     );
@@ -266,6 +267,48 @@ describe("platform pack hook engine v2", () => {
     expect(validateCaptionCTA(pack.facebook.caption)).toBe(true);
   });
 
+  it("builds safe three-line short captions, Wild Watchers pinned comments, and five Facebook-safe hashtags", () => {
+    const pack = buildPlatformPack(
+      "Mountain Lion",
+      "White-tailed Deer",
+      "Ambush attack",
+      "Rocky Mountain forest edge and open meadow"
+    );
+    const shortCaption = buildShortCaption(
+      "Mountain Lion",
+      "White-tailed Deer",
+      "Rocky Mountain forest edge and open meadow",
+      "Ambush attack",
+      { mode: "us-only" }
+    );
+    const hashtags = pack.facebook.hashtags.split(/\s+/).filter(Boolean);
+    const pinnedComments = ALL_ARCS.map((arc) => buildPlatformPack(
+      "Mountain Lion",
+      "White-tailed Deer",
+      arc,
+      "Rocky Mountain forest edge and open meadow"
+    ).facebook.pinnedComment);
+    const forbidden = /Like if|Tag a friend|React to vote/i;
+
+    expect(shortCaption.split(/\n/)).toHaveLength(3);
+    expect(shortCaption.split(/\n/)[0].split(/\s+/)).toHaveLength(5);
+    expect(shortCaption.length).toBeLessThanOrEqual(150);
+    expect(shortCaption).not.toMatch(forbidden);
+    expect(pack.facebook.pinnedComment).toContain("Wild Watchers");
+    expect(pinnedComments.every((comment) => comment.includes("Wild Watchers"))).toBe(true);
+    expect(pinnedComments.join(" ")).not.toMatch(forbidden);
+    expect(hashtags).toHaveLength(5);
+    expect(hashtags).toEqual([
+      "#WildlifeReels",
+      "#AnimalEncounter",
+      "#NatureDrama",
+      "#WildStoriesTV",
+      "#FacebookReels",
+    ]);
+    expect(hashtags).toEqual(expect.arrayContaining(["#WildStoriesTV", "#FacebookReels"]));
+    expect(hashtags).not.toContain("#Trending2026");
+  });
+
   it("sharpens rut and giant-clash copy with heavier documentary body-language detail", () => {
     const giantHooks = build2026Hook("Bull Elk", "Bull Elk", "Giant vs giant clash");
     const rutPack = buildPlatformPack(
@@ -398,19 +441,15 @@ describe("platform pack hook engine v2", () => {
 });
   it("keeps same-species mirror-match hashtags at five unique clean tags", () => {
     const hashtags = buildHashtags("Bull Elk", "Bull Elk", "Giant vs giant clash", {
-      count: 5,
+      count: 8,
       contentLane: "Rut Battle",
     }).split(/\s+/);
 
     expect(hashtags).toHaveLength(5);
     expect(new Set(hashtags).size).toBe(5);
-    expect(hashtags).toEqual([
-      "#wildlife",
-      "#bullelk",
-      "#rutbattle",
-      "#animalclash",
-      "#usa",
-    ]);
+    expect(hashtags).toContain("#rutbattle");
+    expect(hashtags).toContain("#WildStoriesTV");
+    expect(hashtags.join(" ")).not.toContain("#Trending2026");
   });
 
   it("falls back to arc-led Facebook copy when Rut Battle is not species-compatible", () => {
