@@ -2,9 +2,12 @@
 
 import { useState } from "react";
 
+import QualityPanel, { type QualityPanelProps } from "@/components/QualityPanel";
 import SceneRelationshipCard from "@/components/build/scene-relationship-card";
 import StoryModePresetsPanel from "@/components/build/story-mode-presets-panel";
-import StoryModeSubjectFields from "@/components/build/story-mode-subject-fields";
+import StoryModeSubjectFields, {
+  buildStoryModeSetupSummary,
+} from "@/components/build/story-mode-subject-fields";
 import WildlifeStoryModeSelector from "@/components/build/wildlife-story-mode-selector";
 import WorkflowPresetsPanel from "@/components/build/workflow-presets-panel";
 
@@ -56,15 +59,18 @@ import { StoryMode } from "@/types";
 import type {
   AnimalVibe,
   Arc,
+  ActionStylePreset,
   CameraAnglePreset,
   ContentLane,
   DepthMode,
+  DurationLane,
   EmotionalTone,
   EncounterMode,
   EndingMode,
   EscapeDirection,
   HabitatPreset,
   HabitatRegion,
+  HookFamily,
   OffspringLabel,
   PredatorInfo,
   SavedWorkflowPreset,
@@ -82,6 +88,14 @@ import type {
   WorkflowPresetLibraryRecord,
   WorkflowPresetLibraryRole,
 } from "@/types";
+
+const ACTION_STYLE_OPTIONS: ActionStylePreset[] = [
+  "Natural tension",
+  "Viral chase",
+  "Close-contact fight",
+  "Ambush burst",
+  "Forced retreat",
+];
 
 type Step1SetupProps = {
   predator: string;
@@ -112,6 +126,12 @@ type Step1SetupProps = {
   habitat: HabitatPreset;
   emotionalTone: EmotionalTone;
   animalVibe: AnimalVibe;
+  durationLane: DurationLane;
+  hookMode: HookFamily | "all";
+  fastPublishMode: boolean;
+  strictOriginalityGuard: boolean;
+  actionStyle: ActionStylePreset;
+  qualityPanelProps: QualityPanelProps;
   predatorOptions: string[];
   preyOptions: string[];
   customPredatorCount: number;
@@ -172,6 +192,11 @@ type Step1SetupProps = {
   onHabitatChange: (value: HabitatPreset) => void;
   onEmotionalToneChange: (value: EmotionalTone) => void;
   onAnimalVibeChange: (value: AnimalVibe) => void;
+  onDurationLaneChange: (value: DurationLane) => void;
+  onHookModeChange: (value: HookFamily | "all") => void;
+  onToggleFastPublishMode: () => void;
+  onToggleStrictOriginalityGuard: () => void;
+  onActionStyleChange: (value: ActionStylePreset) => void;
   onApplyWorkflowTestPreset: (presetId: string) => void;
   onApplyStoryModePreset: (preset: StoryModePreset) => void;
   onResetDefaults: () => void;
@@ -249,6 +274,12 @@ export default function Step1Setup({
   habitat,
   emotionalTone,
   animalVibe,
+  durationLane,
+  hookMode,
+  fastPublishMode,
+  strictOriginalityGuard,
+  actionStyle,
+  qualityPanelProps,
   predatorOptions,
   preyOptions,
   customPredatorCount,
@@ -309,6 +340,11 @@ export default function Step1Setup({
   onHabitatChange,
   onEmotionalToneChange,
   onAnimalVibeChange,
+  onDurationLaneChange,
+  onHookModeChange,
+  onToggleFastPublishMode,
+  onToggleStrictOriginalityGuard,
+  onActionStyleChange,
   onApplyWorkflowTestPreset,
   onApplyStoryModePreset,
   onResetDefaults,
@@ -462,6 +498,23 @@ export default function Step1Setup({
           : "border-rose-100 bg-rose-50/80 text-rose-900";
   const isSimpleSceneMode = sceneMode === "simple";
   const isPredatorVsPreyMode = storyMode === StoryMode.PREDATOR_VS_PREY;
+  const activeStorySetupSummary = isPredatorVsPreyMode
+    ? `Story Setup: ${predator} vs ${prey} · ${habitatRegion} · ${season} · ${timeOfDay}`
+    : buildStoryModeSetupSummary({
+        storyMode,
+        subjectA,
+        subjectB,
+        groupCount,
+        offspringLabel,
+        strikeMethod,
+        escapeDirection,
+        weatherHazard,
+        rutSeason,
+        foodItem,
+        habitatRegion,
+        season,
+        timeOfDay,
+      });
 
   return (
     <div className="grid gap-6 xl:grid-cols-[minmax(0,1fr)_340px]">
@@ -591,24 +644,8 @@ export default function Step1Setup({
           onApplyPreset={onApplyStoryModePreset}
         />
 
-        <SceneRelationshipCard
-          encounterMode={encounterMode}
-          endingMode={endingMode}
-          viralLane={viralLane}
-          violenceLevel={violenceLevel}
-          habitatRegion={habitatRegion}
-          season={season}
-          timeOfDay={timeOfDay}
-          onEncounterModeChange={onEncounterModeChange}
-          onEndingModeChange={onEndingModeChange}
-          onViralLaneChange={onViralLaneChange}
-          onViolenceLevelChange={onViolenceLevelChange}
-          onHabitatRegionChange={onHabitatRegionChange}
-          onSeasonChange={onSeasonChange}
-          onTimeOfDayChange={onTimeOfDayChange}
-        />
 
-        <div className="grid grid-cols-1 gap-6 xl:grid-cols-2">
+        <div className="space-y-6">
           {isPredatorVsPreyMode ? (
             <section className="rounded-2xl border border-gray-200 bg-white p-5 sm:p-6">
             <h3 className="text-[11px] font-semibold uppercase tracking-[0.1em] text-gray-400">
@@ -895,6 +932,165 @@ export default function Step1Setup({
             />
           )}
 
+
+          <SceneRelationshipCard
+            encounterMode={encounterMode}
+            endingMode={endingMode}
+            viralLane={viralLane}
+            violenceLevel={violenceLevel}
+            habitatRegion={habitatRegion}
+            season={season}
+            timeOfDay={timeOfDay}
+            onEncounterModeChange={onEncounterModeChange}
+            onEndingModeChange={onEndingModeChange}
+            onViralLaneChange={onViralLaneChange}
+            onViolenceLevelChange={onViolenceLevelChange}
+            onHabitatRegionChange={onHabitatRegionChange}
+            onSeasonChange={onSeasonChange}
+            onTimeOfDayChange={onTimeOfDayChange}
+          />
+
+          <section className="rounded-2xl border border-gray-200 bg-white p-5 sm:p-6">
+            <div className="mb-4 flex flex-wrap items-start justify-between gap-3">
+              <div>
+                <h3 className="text-[11px] font-semibold uppercase tracking-[0.1em] text-gray-400">
+                  Production Controls
+                </h3>
+                <p className="mt-1 max-w-3xl text-[11px] leading-relaxed text-gray-500">
+                  These controls apply to every story mode and shape the final image/video package.
+                </p>
+              </div>
+              <span className="rounded-full border border-cyan-100 bg-cyan-50 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.08em] text-cyan-700">
+                All modes
+              </span>
+            </div>
+
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3">
+              <div>
+                <label className="mb-1.5 block text-[11px] font-medium text-gray-500">
+                  Wildlife Scope
+                </label>
+                <select
+                  value={wildlifeScopeMode}
+                  onChange={(event) =>
+                    onWildlifeScopeModeChange(
+                      event.target.value as WildlifeScopeMode
+                    )
+                  }
+                  className="w-full rounded-xl border border-gray-200 bg-gray-50 px-3 py-2.5 text-sm font-medium text-gray-900 focus:border-gray-400 focus:outline-none"
+                >
+                  {wildlifeScopeOptions.map((option) => (
+                    <option key={option} value={option}>
+                      {option}
+                    </option>
+                  ))}
+                </select>
+                <p className="mt-1 text-[11px] text-gray-400">
+                  {wildlifeScopeHelperText}
+                </p>
+              </div>
+
+              <div>
+                <label className="mb-1.5 block text-[11px] font-medium text-gray-500">
+                  Duration Lane
+                </label>
+                <select
+                  value={durationLane}
+                  onChange={(event) =>
+                    onDurationLaneChange(event.target.value as DurationLane)
+                  }
+                  className="w-full rounded-xl border border-gray-200 bg-gray-50 px-3 py-2.5 text-sm font-medium text-gray-900 focus:border-gray-400 focus:outline-none"
+                >
+                  <option value="short">Short — 20s final edit</option>
+                  <option value="medium">Medium — 35s final edit</option>
+                  <option value="long">Long — 40s safe generation</option>
+                </select>
+                <p className="mt-1 text-[11px] text-gray-400">
+                  Auto-safe routing stays available; override when a reel needs more room.
+                </p>
+              </div>
+
+              <div>
+                <label className="mb-1.5 block text-[11px] font-medium text-gray-500">
+                  Action Style
+                </label>
+                <select
+                  value={actionStyle}
+                  onChange={(event) =>
+                    onActionStyleChange(event.target.value as ActionStylePreset)
+                  }
+                  className="w-full rounded-xl border border-gray-200 bg-gray-50 px-3 py-2.5 text-sm font-medium text-gray-900 focus:border-gray-400 focus:outline-none"
+                >
+                  {ACTION_STYLE_OPTIONS.map((option) => (
+                    <option key={option} value={option}>
+                      {option}
+                    </option>
+                  ))}
+                </select>
+                <p className="mt-1 text-[11px] text-gray-400">
+                  Shapes movement intensity without changing the selected story mode.
+                </p>
+              </div>
+
+              <div>
+                <label className="mb-1.5 block text-[11px] font-medium text-gray-500">
+                  Hook Mode
+                </label>
+                <select
+                  value={hookMode}
+                  onChange={(event) =>
+                    onHookModeChange(event.target.value as HookFamily | "all")
+                  }
+                  className="w-full rounded-xl border border-gray-200 bg-gray-50 px-3 py-2.5 text-sm font-medium text-gray-900 focus:border-gray-400 focus:outline-none"
+                >
+                  <option value="all">All hook variants</option>
+                  <option value="danger">Danger</option>
+                  <option value="curiosity">Curiosity</option>
+                  <option value="reversal">Reversal</option>
+                </select>
+                <p className="mt-1 text-[11px] text-gray-400">
+                  Auto uses the best fit; manual choice stays available.
+                </p>
+              </div>
+
+              <button
+                type="button"
+                onClick={onToggleFastPublishMode}
+                className={`rounded-2xl border px-3.5 py-3 text-left text-xs font-semibold transition-all active:scale-95 ${
+                  fastPublishMode
+                    ? "border-gray-900 bg-gray-900 text-white shadow-sm shadow-gray-300/60"
+                    : "border-gray-200 bg-white text-gray-600 shadow-sm shadow-gray-100/80 hover:bg-gray-50"
+                }`}
+              >
+                <span className="block">
+                  {fastPublishMode ? "Fast Publish: ON" : "Fast Publish: OFF"}
+                </span>
+                <span className="mt-1 block text-[11px] font-medium opacity-75">
+                  Keeps the package tuned for quick Facebook Reels output.
+                </span>
+              </button>
+
+              <button
+                type="button"
+                onClick={onToggleStrictOriginalityGuard}
+                className={`rounded-2xl border px-3.5 py-3 text-left text-xs font-semibold transition-all active:scale-95 ${
+                  strictOriginalityGuard
+                    ? "border-emerald-200 bg-emerald-50 text-emerald-700 shadow-sm shadow-emerald-100/70"
+                    : "border-gray-200 bg-white text-gray-600 shadow-sm shadow-gray-100/80 hover:bg-gray-50"
+                }`}
+              >
+                <span className="block">
+                  {strictOriginalityGuard
+                    ? "Originality Guard: ON"
+                    : "Originality Guard: OFF"}
+                </span>
+                <span className="mt-1 block text-[11px] font-medium opacity-75">
+                  Preserves non-repost, non-spammy publishing defaults.
+                </span>
+              </button>
+            </div>
+          </section>
+
           <section className="rounded-2xl border border-gray-200 bg-white p-5 sm:p-6">
             <h3 className="text-[11px] font-semibold uppercase tracking-[0.1em] text-gray-400">
               Scene Assistant
@@ -1002,21 +1198,26 @@ export default function Step1Setup({
           </section>
         </div>
 
-        {isPredatorVsPreyMode && !isSimpleSceneMode ? (
-          <section className="rounded-2xl border border-gray-200 bg-white p-5 sm:p-6">
-            <h3 className="text-[11px] font-semibold uppercase tracking-[0.1em] text-gray-400">
-              Advanced Controls
-            </h3>
-            <p className="mb-4 mt-1 text-[11px] leading-relaxed text-gray-500">
-              Fine-tune the current {predator} vs {prey} setup. These controls
-              feed the same scene-fit logic you see in Simple Setup.
-            </p>
-            <div className="mb-4 rounded-2xl border border-gray-200 bg-gray-50/70 p-3 text-[11px] leading-relaxed text-gray-700">
-              <span className="font-semibold">Current pair:</span> {predator} vs
-              {" "}{prey}
-            </div>
-            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+        <section className="rounded-2xl border border-gray-200 bg-white p-5 sm:p-6">
+            <div className="mb-4 flex flex-wrap items-start justify-between gap-3">
               <div>
+                <h3 className="text-[11px] font-semibold uppercase tracking-[0.1em] text-gray-400">
+                  Advanced Controls / Smart Defaults
+                </h3>
+                <p className="mt-1 max-w-3xl text-[11px] leading-relaxed text-gray-500">
+                  Fine-tune the current story setup. Auto and Smart Default guidance stays visible, and manual overrides remain available across every story mode.
+                </p>
+              </div>
+              <span className="rounded-full border border-amber-100 bg-amber-50 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.08em] text-amber-700">
+                {isSimpleSceneMode ? "Smart defaults" : "Manual overrides"}
+              </span>
+            </div>
+            <div className="mb-4 rounded-2xl border border-gray-200 bg-gray-50/70 p-3 text-[11px] leading-relaxed text-gray-700">
+              <span className="font-semibold">Current setup:</span> {activeStorySetupSummary}
+            </div>
+            <QualityPanel {...qualityPanelProps} />
+            <div className="mt-4 grid grid-cols-1 gap-4 sm:grid-cols-2">
+            <div>
                 <label className="mb-1.5 block text-[11px] font-medium text-gray-500">
                   Content Lane
                 </label>
@@ -1039,7 +1240,7 @@ export default function Step1Setup({
               </div>
               <div>
                 <label className="mb-1.5 block text-[11px] font-medium text-gray-500">
-                  Conflict Arc
+                  Conflict Arc {isPredatorVsPreyMode ? "" : "(Predator vs Prey only)"}
                 </label>
                 <select
                   value={arc}
@@ -1049,7 +1250,9 @@ export default function Step1Setup({
                   <option value={arc}>{arc}</option>
                 </select>
                 <p className="mt-1 text-[11px] text-gray-400">
-                  {getArcMicroGuidance(arc)}
+                  {isPredatorVsPreyMode
+                    ? getArcMicroGuidance(arc)
+                    : "Auto-kept from the Predator vs Prey engine so non-predator story modes stay compatible until deeper routing expands."}
                 </p>
               </div>
               <div>
@@ -1214,7 +1417,6 @@ export default function Step1Setup({
               </p>
             </div>
           </section>
-        ) : null}
 
         <div className="flex flex-wrap gap-2.5 border-t border-gray-200/80 pt-5">
           <button
