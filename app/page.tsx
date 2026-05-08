@@ -1471,6 +1471,12 @@ export default function Page() {
                 habitat={habitat}
                 emotionalTone={emotionalTone}
                 animalVibe={animalVibe}
+                durationLane={durationLane}
+                hookMode={hookMode}
+                fastPublishMode={fastPublishMode}
+                strictOriginalityGuard={strictOriginalityGuard}
+                actionStyle={actionStyle}
+                qualityPanelProps={qualityPanelProps}
                 predatorOptions={predatorOptions}
                 preyOptions={previewPreyOptions}
                 customPredatorCount={customPredators.length}
@@ -1556,6 +1562,13 @@ export default function Page() {
                 onHabitatChange={setHabitat}
                 onEmotionalToneChange={setEmotionalTone}
                 onAnimalVibeChange={setAnimalVibe}
+                onDurationLaneChange={setDurationLane}
+                onHookModeChange={setHookMode}
+                onToggleFastPublishMode={() => setFastPublishMode((value) => !value)}
+                onToggleStrictOriginalityGuard={() =>
+                  setStrictOriginalityGuard((value) => !value)
+                }
+                onActionStyleChange={setActionStyle}
                 onApplyWorkflowTestPreset={handleApplyWorkflowTestPreset}
                 onApplyStoryModePreset={handleApplyStoryModePreset}
                 onResetDefaults={handleResetDefaults}
