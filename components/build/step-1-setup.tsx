@@ -968,7 +968,7 @@ export default function Step1Setup({
             <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3">
               <div>
                 <label className="mb-1.5 block text-[11px] font-medium text-gray-500">
-                  Wildlife Focus
+                  Wildlife Scope
                 </label>
                 <select
                   value={wildlifeScopeMode}
