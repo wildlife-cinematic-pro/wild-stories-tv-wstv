@@ -220,7 +220,7 @@ export default function FourShotProductionWorkflow({
           <StepBadge step={1} label="Generate Master Image" />
 
           <p className="text-[10px] text-zinc-500 mb-2.5 leading-relaxed">
-            Use this prompt in your image generator (Midjourney, Flux, etc.) to create a
+            Use this prompt in Nano Banana 2 first, with GPT Image 2 as backup, to create a
             single canonical master reference. This anchors identity across all 4 shots.
           </p>
 

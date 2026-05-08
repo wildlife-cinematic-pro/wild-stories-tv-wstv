@@ -860,7 +860,7 @@ function buildFailureRecovery(
     why: "If the selected video prompt drifts or fails, reset identity and scene spacing with the master still before spending more motion credits.",
     fallbackPrompt: {
       label: "FALLBACK PROMPT (Recovery)",
-      engine: "Nano Banana 2 / Gemini master still",
+      engine: "Nano Banana 2 primary master still",
       reason: "Use this to rebuild subject identity, spacing, and light continuity before retrying motion.",
       prompt: imagePromptText,
     },
@@ -877,7 +877,7 @@ function buildCandidateDefinitions(
       key: "image-master",
       source: "image",
       label: "PRIMARY PROMPT (Paste this first)",
-      engine: "Nano Banana 2 / Gemini master still",
+      engine: "Nano Banana 2 primary master still",
       reason:
         "Best first-paste candidate when you want to lock subject identity, spacing, and lighting before motion generation.",
       prompt: imagePrompt.pasteReady,

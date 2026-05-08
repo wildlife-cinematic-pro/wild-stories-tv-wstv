@@ -1195,7 +1195,7 @@ describe("Step 12 — export cleanup guards", () => {
 
     const exportText = shots.map((shot) => shot.prompt).join("\n");
     expect(exportText).not.toMatch(/surface ripples|suspended particles|water ripples/i);
-    expect(exportText).toContain("Nano Banana 2 / Gemini master still");
+    expect(exportText).toContain("Nano Banana 2 primary master still");
     expect(exportText).not.toContain("Keep everything else in the image exactly the same");
   });
 

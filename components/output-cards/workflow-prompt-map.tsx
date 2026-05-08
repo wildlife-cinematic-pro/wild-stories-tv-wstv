@@ -222,17 +222,18 @@ function slugifyReference(
 function buildHybridRoutingGuide() {
   return [
     "PRIMARY HYBRID 4-SHOT ROUTING",
-    "Gemini/Nano Banana 2 improves prompt quality and can draft optional concepts; it is not the whole production path.",
-    "1. Build the lead animal / predator master reference in Runway Gen-4 Image.",
-    "2. Build the opposite animal / prey-defender master reference in Runway Gen-4 Image.",
-    "3. Build the environment/background master reference in Runway Gen-4 Image.",
-    "4. Build the final scene master image in Runway Gen-4 References using exactly 3 active references.",
-    "5. Use the final scene master image as the source image for video generation.",
-    "6. Shot 1 uses Runway Gen-4/Gen-4.5 image-to-video for clean opening tension.",
-    "7. Shot 2 uses Kling for pressure/action physics.",
-    "8. Shot 3 uses Kling for peak action physics.",
-    "9. Shot 4 returns to Runway Gen-4/Gen-4.5 for resolved tension and final settle.",
-    "10. Add ElevenLabs 20s action music under the 4-shot edit.",
+    "Nano Banana 2 is the primary image workflow; GPT Image 2 is the backup image workflow.",
+    "1. Build the lead animal / predator master reference as a clean wildlife master image.",
+    "2. Build the opposite animal / prey-defender master reference as a clean wildlife master image.",
+    "3. Build the environment/background master reference as a clean habitat image.",
+    "4. Build the final scene master image from the three prepared references.",
+    "5. Optional Runway Gen-4 References: save the three references with @ tags only when using that separate reference workflow.",
+    "6. Use the final scene master image as the source image for video generation.",
+    "7. Shot 1 uses Runway Gen-4/Gen-4.5 image-to-video for clean opening tension.",
+    "8. Shot 2 uses Kling for pressure/action physics.",
+    "9. Shot 3 uses Kling for peak action physics.",
+    "10. Shot 4 returns to Runway Gen-4/Gen-4.5 for resolved tension and final settle.",
+    "11. Add ElevenLabs 20s action music under the 4-shot edit.",
   ].join("\n");
 }
 
@@ -400,7 +401,7 @@ export function WorkflowPromptMap({
     const imageStep: WorkflowItem = {
       step: 1,
       title: "Image Prompt",
-      badge: "Nano Banana 2 / Gemini",
+      badge: "Nano Banana 2 Primary",
       color: imageCardColor,
       help: "Generate the master hero still first with the Nano Banana image prompt, then use that image or a continuity-safe edited frame as the visual base for the next engine.",
       value: imagePrompt,
@@ -738,28 +739,28 @@ export function WorkflowPromptMap({
       },
       hybrid: {
         pipeline:
-          "Gemini prompt enhancement → Runway Gen-4 lead animal reference → Runway Gen-4 opposite animal reference → Runway Gen-4 environment reference → Runway Gen-4 final merge master image → Runway Shot 1 → Kling Shot 2 → Kling Shot 3 → Runway Shot 4 → Music: ElevenLabs 20s action music",
+          "Nano Banana 2 lead animal reference → Nano Banana 2 opposite animal reference → Nano Banana 2 environment reference → Nano Banana 2 final merge master image → optional Runway reference helper → Runway Shot 1 → Kling Shot 2 → Kling Shot 3 → Runway Shot 4 → Music: ElevenLabs 20s action music",
         bannerTitle: "Primary hybrid 4-shot route",
         bannerBody:
-          "First build 3 Runway references and one final merge master image, then use Runway for the clean opening/final settle, Kling for Shot 2–3 pressure/action physics, and ElevenLabs for 20s action music.",
-        workflowLabel: "Gemini enhances prompts. Runway Gen-4 builds production references.",
+          "First build 3 Nano Banana 2 primary image references and one final merge master image, then use Runway for the clean opening/final settle, Kling for Shot 2–3 pressure/action physics, and ElevenLabs for 20s action music.",
+        workflowLabel: "Nano Banana 2 builds primary image references. GPT Image 2 is backup.",
         topNote:
-          "Do not try to do the entire workflow inside Nano Banana 2 only. Nano Banana/Gemini improves prompt quality, but Runway Gen-4 References is the production step for reusable references, final scene master image, and Runway image-to-video continuity.",
+          "Keep image generation prompts clean and image-focused. Use Runway wording only for image-to-video motion prompts or for the optional Runway @reference helper workflow.",
         referenceBuildPrompts,
         steps: [
           {
             step: 1,
             title: "Lead Animal Master Image",
-            badge: "Gemini-enhanced prompt → Runway Gen-4 Image",
+            badge: "Nano Banana 2 Primary · GPT Image 2 Backup",
             color: imageCardColor,
-            help: `Build the reusable production reference for ${leadAnimalName}. Gemini can improve wording; Runway Gen-4 Image creates the actual reference.`,
+            help: `Build the reusable production reference for ${leadAnimalName}. Keep the copyable prompt image-focused; Runway reference tags stay in optional helper notes.`,
             value: leadMasterPrompt,
             actions: [{ label: "Copy Lead Animal Master Prompt", value: leadMasterPrompt }],
           },
           {
             step: 2,
             title: "Opposite Animal Master Image",
-            badge: "Gemini-enhanced prompt → Runway Gen-4 Image",
+            badge: "Nano Banana 2 Primary · GPT Image 2 Backup",
             color: imageCardColor,
             help: `Build the reusable production reference for ${oppositeAnimalName}. Keep identity, anatomy, and contact readable.`,
             value: oppositeMasterPrompt,
@@ -768,7 +769,7 @@ export function WorkflowPromptMap({
           {
             step: 3,
             title: "Environment Master Image",
-            badge: "Gemini-enhanced prompt → Runway Gen-4 Image",
+            badge: "Nano Banana 2 Primary · GPT Image 2 Backup",
             color: guideColor,
             help: `Build the reusable background reference for ${environmentName}; environment-only composition with open central subject-ready space.`,
             value: environmentMasterPrompt,
@@ -777,9 +778,9 @@ export function WorkflowPromptMap({
           {
             step: 4,
             title: "Final Merge Master Image",
-            badge: "Runway Gen-4 References · exactly 3 active references",
+            badge: "Nano Banana 2 Primary · GPT Image 2 Backup",
             color: runwayColor,
-            help: `Merge ${leadReferenceTag}, ${oppositeReferenceTag}, and ${environmentReferenceTag} into one final scene master image for video source continuity.`,
+            help: `Merge the three prepared image references into one final scene master image for video source continuity. Optional Runway tags: ${leadReferenceTag}, ${oppositeReferenceTag}, ${environmentReferenceTag}.`,
             value: finalMergeMasterPrompt,
             actions: [{ label: "Copy Final Merge Master Prompt", value: finalMergeMasterPrompt }],
             checklist: runwayReferenceChecklist,
@@ -857,7 +858,7 @@ export function WorkflowPromptMap({
             title: "Hybrid Routing Rules",
             badge: "Hybrid guide",
             color: hybridColor,
-            help: "Recommended engine handoff for the WSTV hybrid route, with Runway references as the production-critical reference layer.",
+            help: "Recommended engine handoff for the WSTV hybrid route. Runway reference tags are optional helper workflow details, not part of Nano Banana copy prompts.",
             value: hybridGuide,
             actions: [{ label: "Copy Hybrid Rules", value: hybridGuide }],
           },

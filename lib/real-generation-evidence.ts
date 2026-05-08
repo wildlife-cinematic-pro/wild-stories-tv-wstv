@@ -36,7 +36,7 @@ export const REAL_GENERATION_EVIDENCE_ATTACHMENT_SLOT_META: readonly RealGenerat
   {
     slot: "master-still",
     label: "Master Still",
-    engineLabel: "NB2 / Gemini still",
+    engineLabel: "Nano Banana 2 still",
     detail: "Attach the anchor still that defines the world plate for the full package.",
     accept: "image/*",
   },

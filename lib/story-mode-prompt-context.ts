@@ -586,7 +586,7 @@ export function buildStoryModePackageOverrides(
       imagePrompt: makeStructuredPrompt(
         imagePrompt,
         "image",
-        `Nano Banana 2 / Gemini ${context.modeLabel} master still`,
+        `Nano Banana 2 primary ${context.modeLabel} master still`,
         "single-shot"
       ),
       gptImage2Prompt: makeStructuredPrompt(

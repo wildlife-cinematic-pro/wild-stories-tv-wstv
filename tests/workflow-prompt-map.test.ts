@@ -21,7 +21,9 @@ describe("hybrid reference image prompts", () => {
     expect(prompt).toContain("species-specific identity");
     expect(prompt).toContain("grounded paw/hoof/foot contact");
     expect(prompt).toContain("stable anatomy");
-    expect(prompt).toContain("production-ready Runway Gen-4 Image / Gemini-enhanced reference");
+    expect(prompt).toContain("production-ready wildlife master reference image");
+    expect(prompt).not.toContain("Runway Gen-4 Image");
+    expect(prompt).not.toContain("Gemini-enhanced");
     expect(prompt).toContain("No blood");
     expect(prompt).toContain("no gore");
     expect(prompt).toContain("no visible wounds");
@@ -93,7 +95,7 @@ describe("hybrid reference image prompts", () => {
     expect(prompt).toMatch(/low|narrow|zigzag escape/i);
   });
 
-  it("keeps the final merge prompt on exactly three active references", () => {
+  it("keeps the final merge prompt image-focused and separates Runway reference tags", () => {
     const prompt = buildFinalMergeMasterPrompt({
       leadAnimalName: "Crocodile",
       oppositeAnimalName: "Warthog",
@@ -103,7 +105,9 @@ describe("hybrid reference image prompts", () => {
       environmentTag: "ENV_REF",
     });
 
-    expect(prompt).toContain("Use exactly 3 active Runway references: LEAD_REF, OPPOSITE_REF, ENV_REF.");
+    expect(prompt).toContain("Use the 3 prepared reference images:");
+    expect(prompt).not.toContain("Use exactly 3 active Runway references");
+    expect(prompt).not.toContain("LEAD_REF");
     expect(prompt).toContain("readable pressure-ready posture");
     expect(prompt).toContain("readable survival-reaction posture");
     expect(prompt).toContain("one clear open attack/escape corridor");

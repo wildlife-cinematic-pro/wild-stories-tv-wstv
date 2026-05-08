@@ -135,7 +135,7 @@ export function buildAnimalMasterReferencePrompt({
     `Photorealistic wildlife documentary master reference image, 9:16 vertical.`,
     `${subjectName} only.`,
     postureLine,
-    `${stanceLabel}, ${identityMarkers}, realistic scale, ${contactLabel}, stable anatomy, clean silhouette, natural expression, clean subject separation, simple uncluttered natural background, production-ready Runway Gen-4 Image / Gemini-enhanced reference.`,
+    `${stanceLabel}, ${identityMarkers}, realistic scale, ${contactLabel}, stable anatomy, clean silhouette, natural expression, clean subject separation, simple uncluttered natural background, production-ready wildlife master reference image.`,
     PRODUCTION_REFERENCE_SAFETY_LINE,
   ].join(" ");
 }
@@ -180,12 +180,16 @@ export function buildFinalMergeMasterPrompt({
   oppositeTag: string;
   environmentTag: string;
 }) {
+  void leadTag;
+  void oppositeTag;
+  void environmentTag;
+
   return [
-    `Use exactly 3 active Runway references: ${leadTag}, ${oppositeTag}, ${environmentTag}.`,
+    `Use the 3 prepared reference images:`,
     ``,
-    `Use ${leadTag} only for ${leadAnimalName} identity: coat, head profile, body scale, and grounded paw/hoof/foot contact.`,
-    `Use ${oppositeTag} only for ${oppositeAnimalName} identity: coat, body scale, legs, and grounded paw/hoof/foot contact.`,
-    `Use ${environmentTag} only for background, lighting, ground texture, and atmosphere.`,
+    `1. Lead animal reference image for ${leadAnimalName} identity: coat, head profile, body scale, and grounded paw/hoof/foot contact.`,
+    `2. Opposite animal reference image for ${oppositeAnimalName} identity: coat, body scale, legs, and grounded paw/hoof/foot contact.`,
+    `3. Environment reference image for background, lighting, ground texture, and atmosphere.`,
     ``,
     `Photorealistic wildlife documentary final scene master image, 9:16 vertical. ${leadAnimalName} on the left in a readable pressure-ready posture, ${oppositeAnimalName} on the right in a readable survival-reaction posture, both full-body visible with stable anatomy, grounded contact, clean subject separation, and one clear open attack/escape corridor between them. ${environmentName} provides the background, light, ground plane, and atmospheric depth only. Cinematic telephoto documentary framing, video-ready source frame. No blood, no gore, no visible wounds, no graphic injury, no duplicate animals, no humans, no text or watermark.`,
   ].join("\n");
