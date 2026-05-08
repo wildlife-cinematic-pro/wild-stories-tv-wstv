@@ -1,5 +1,6 @@
 "use client";
 
+import FourShotProductionWorkflow from "@/components/FourShotProductionWorkflow";
 import { Card, SectionLabel, ShotImagePlanPanel } from "@/components/output-cards/shared-panels";
 import {
   getGptImage2PromptCard,
@@ -81,6 +82,11 @@ export function PromptsWorkspace({
       {data.shotImagePlan && data.shotImagePlan.length > 0 && (
         <ShotImagePlanPanel plans={data.shotImagePlan} onCopy={onCopy} />
       )}
+
+      <FourShotProductionWorkflow
+        data={data}
+        structuredPrompts={data.structuredPrompts}
+      />
 
       {data.negativePrompt && (
         <Card
