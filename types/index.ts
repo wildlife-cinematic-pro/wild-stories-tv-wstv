@@ -279,6 +279,45 @@ export type ReelPerformanceInsight = {
   fixes: string[];
 };
 
+
+export type ABExperimentVariantRecord = {
+  label: "A" | "B" | "C";
+  hook: string;
+  caption: string;
+  hashtags: string[];
+  testFocus: string;
+  expectedSignal: string;
+  views?: number;
+  threeSecondViews?: number;
+  averageWatchTimeSeconds?: number;
+  durationSeconds?: number;
+  likes?: number;
+  comments?: number;
+  shares?: number;
+  saves?: number;
+  followsGained?: number;
+  notes?: string;
+};
+
+export type ABExperimentRecord = {
+  id: string;
+  generationId: string;
+  createdAt: string;
+  updatedAt: string;
+  title: string;
+  hypothesis: string;
+  storyMode?: StoryMode;
+  viralLane?: ViralLane;
+  habitatRegion?: HabitatRegion;
+  subjectA?: string;
+  subjectB?: string;
+  presetId?: string;
+  presetName?: string;
+  variants: ABExperimentVariantRecord[];
+  winnerLabel?: "A" | "B" | "C";
+  status: "planned" | "running" | "completed";
+};
+
 export type PerformanceTrackerEntry = {
   recordId?: string;
   source?: "manual" | "facebook_csv";

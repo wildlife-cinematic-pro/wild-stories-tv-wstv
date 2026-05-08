@@ -8,6 +8,7 @@ import FacebookReelsOptimizerCard from "@/components/output-cards/facebook-reels
 import ReelsPerformanceCard from "@/components/output-cards/reels-performance-card";
 import ReelsPerformanceInsightsCard from "@/components/output-cards/reels-performance-insights-card";
 import AutoRecommendationsCard from "@/components/output-cards/auto-recommendations-card";
+import ABExperimentTrackerCard from "@/components/output-cards/ab-experiment-tracker-card";
 import { EngineSpecsPanel, SectionLabel } from "@/components/output-cards/shared-panels";
 
 import type { StoryModePreset } from "@/lib/story-mode-presets";
@@ -73,6 +74,8 @@ export function OverviewWorkspace({
         onCopy={onCopy}
         onApplyStoryModePreset={onApplyStoryModePreset}
       />
+
+      <ABExperimentTrackerCard data={data} />
 
       <EngineSpecsPanel />
 
