@@ -8,6 +8,11 @@ import {
 } from "@/lib/ab-experiment-storage";
 import { serializeLocalCreatorDataExport } from "@/lib/local-creator-data-export";
 import {
+  restoreLocalCreatorDataFromJson,
+  type LocalCreatorDataRestoreOptions,
+  type LocalCreatorDataRestoreResult,
+} from "@/lib/local-creator-data-import";
+import {
   readReelPerformanceRecords,
   REELS_PERFORMANCE_STORAGE_EVENT,
 } from "@/lib/reels-performance-storage";
@@ -24,6 +29,11 @@ export default function LocalCreatorDataCard({
   >([]);
   const [abExperiments, setABExperiments] = useState<ABExperimentRecord[]>([]);
   const [copyStatus, setCopyStatus] = useState("");
+  const [importJson, setImportJson] = useState("");
+  const [restoreStatus, setRestoreStatus] = useState("");
+  const [restoreErrors, setRestoreErrors] = useState<string[]>([]);
+  const [restoreWarnings, setRestoreWarnings] = useState<string[]>([]);
+  const [replaceConfirmed, setReplaceConfirmed] = useState(false);
 
   useEffect(() => {
     function loadLocalData() {
@@ -59,6 +69,44 @@ export default function LocalCreatorDataCard({
     }
     setCopyStatus("Local data JSON copied");
     window.setTimeout(() => setCopyStatus(""), 1800);
+  }
+
+  function setRestoreResult(result: LocalCreatorDataRestoreResult) {
+    setRestoreWarnings(result.warnings);
+    setRestoreErrors(result.errors);
+
+    if (!result.ok) {
+      setRestoreStatus("Restore blocked. Fix the JSON and try again.");
+      return;
+    }
+
+    setRestoreStatus(
+      result.mode === "replace"
+        ? "Backup restored and replaced local tracking data."
+        : "Backup restored and merged with local tracking data."
+    );
+    setImportJson("");
+    setReplaceConfirmed(false);
+  }
+
+  function handleRestore(mode: LocalCreatorDataRestoreOptions["mode"]) {
+    if (mode === "replace" && !replaceConfirmed) {
+      setRestoreErrors(["Confirm replace restore before overwriting local tracker data."]);
+      setRestoreWarnings([]);
+      setRestoreStatus("Replace restore blocked.");
+      return;
+    }
+
+    setRestoreErrors([]);
+    setRestoreWarnings([]);
+    setRestoreStatus("");
+
+    try {
+      setRestoreResult(restoreLocalCreatorDataFromJson(importJson, { mode }));
+    } catch (error) {
+      setRestoreErrors([error instanceof Error ? error.message : "Restore failed."]);
+      setRestoreStatus("Restore blocked. Fix the JSON and try again.");
+    }
   }
 
   return (
@@ -104,11 +152,62 @@ export default function LocalCreatorDataCard({
         </div>
         <div className="rounded-xl border border-[color:var(--border)] bg-[color:var(--surface-elevated)] p-3">
           <p className="text-[10px] font-bold uppercase tracking-[0.12em] text-[color:var(--muted)]">
-            Export
+            Export / Restore
           </p>
           <p className="mt-1 text-xs leading-relaxed text-[color:var(--muted)]">
-            Copies a readable JSON snapshot for backup or review.
+            Copy a readable JSON snapshot, or paste one below to restore it into this browser.
           </p>
+        </div>
+      </div>
+
+      <div className="mt-4 rounded-xl border border-cyan-400/20 bg-[color:var(--surface-elevated)] p-3">
+        <div className="flex flex-wrap items-center justify-between gap-2">
+          <div>
+            <p className="text-[10px] font-black uppercase tracking-[0.12em] text-cyan-700 dark:text-cyan-200">
+              Restore Local Data JSON
+            </p>
+            <p className="mt-1 text-xs leading-relaxed text-[color:var(--muted)]">
+              Paste a previous WSTV local export. Merge keeps existing records and updates matching IDs; replace overwrites local tracking data.
+            </p>
+          </div>
+        </div>
+        <textarea
+          value={importJson}
+          onChange={(event) => setImportJson(event.target.value)}
+          placeholder="Paste WSTV Local Data JSON here"
+          className="mt-3 min-h-32 w-full resize-y rounded-xl border border-[color:var(--border)] bg-black/20 p-3 font-mono text-xs leading-relaxed text-[color:var(--text)] outline-none ring-0 placeholder:text-[color:var(--muted)] focus:border-cyan-400/50"
+        />
+        <label className="mt-3 flex items-start gap-2 rounded-xl border border-amber-400/20 bg-amber-500/10 p-3 text-xs font-semibold leading-relaxed text-amber-800 dark:text-amber-100">
+          <input
+            type="checkbox"
+            checked={replaceConfirmed}
+            onChange={(event) => setReplaceConfirmed(event.target.checked)}
+            className="mt-0.5 h-4 w-4 rounded border-amber-400/40 bg-black/30 accent-amber-500"
+          />
+          <span>I understand this will replace current local tracker data in this browser.</span>
+        </label>
+        <div className="mt-3 flex flex-wrap gap-2">
+          <button
+            type="button"
+            onClick={() => handleRestore("merge")}
+            disabled={!importJson.trim()}
+            className="rounded-xl border border-emerald-400/30 bg-emerald-500/10 px-4 py-2 text-xs font-black uppercase tracking-[0.08em] text-emerald-700 hover:bg-emerald-500/15 disabled:cursor-not-allowed disabled:opacity-40 dark:text-emerald-200"
+          >
+            Merge Restore
+          </button>
+          <button
+            type="button"
+            onClick={() => handleRestore("replace")}
+            disabled={!importJson.trim() || !replaceConfirmed}
+            title={
+              replaceConfirmed
+                ? "Replace local performance and A/B experiment records."
+                : "Confirm replace restore before overwriting local tracker data."
+            }
+            className="rounded-xl border border-amber-400/30 bg-amber-500/10 px-4 py-2 text-xs font-black uppercase tracking-[0.08em] text-amber-700 hover:bg-amber-500/15 disabled:cursor-not-allowed disabled:opacity-40 dark:text-amber-200"
+          >
+            Replace Restore
+          </button>
         </div>
       </div>
 
@@ -116,6 +215,25 @@ export default function LocalCreatorDataCard({
         <p className="mt-3 text-xs font-semibold text-cyan-700 dark:text-cyan-200">
           {copyStatus}
         </p>
+      )}
+      {restoreStatus && (
+        <p className="mt-3 text-xs font-semibold text-cyan-700 dark:text-cyan-200">
+          {restoreStatus}
+        </p>
+      )}
+      {restoreWarnings.length > 0 && (
+        <ul className="mt-2 space-y-1 text-xs font-semibold text-amber-700 dark:text-amber-200">
+          {restoreWarnings.map((warning) => (
+            <li key={warning}>{warning}</li>
+          ))}
+        </ul>
+      )}
+      {restoreErrors.length > 0 && (
+        <ul className="mt-2 space-y-1 text-xs font-semibold text-red-700 dark:text-red-200">
+          {restoreErrors.map((error) => (
+            <li key={error}>{error}</li>
+          ))}
+        </ul>
       )}
     </section>
   );
