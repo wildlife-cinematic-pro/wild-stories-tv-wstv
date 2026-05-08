@@ -15,11 +15,13 @@ import type {
   EmotionalTone,
   EncounterMode,
   EndingMode,
+  EscapeDirection,
   GeneratedPackage,
   HabitatRegion,
   HookFamily,
   KlingModel,
   MediaAnalysisResult,
+  OffspringLabel,
   PackageLockKey,
   PackageLockState,
   PipelineStyle,
@@ -29,10 +31,12 @@ import type {
   RunwayModel,
   Season,
   StoryMode,
+  StrikeMethod,
   TimeOfDay,
   ViralLane,
   ViolenceLevel,
   Weather,
+  WeatherHazard,
 } from "@/types";
 import { copyPolishEndpointResponseSchema } from "@/lib/schemas";
 import {
@@ -70,6 +74,15 @@ interface UseBuildGenerationActionsInput {
   habitatRegion: HabitatRegion;
   season: Season;
   timeOfDay: TimeOfDay;
+  subjectA?: string;
+  subjectB?: string;
+  groupCount?: number;
+  offspringLabel?: OffspringLabel;
+  strikeMethod?: StrikeMethod;
+  escapeDirection?: EscapeDirection;
+  weatherHazard?: WeatherHazard;
+  rutSeason?: boolean;
+  foodItem?: string;
   arc: Arc;
   previewArc: Arc;
   contentLane: ContentLane;
@@ -133,6 +146,15 @@ export function useBuildGenerationActions({
   habitatRegion,
   season,
   timeOfDay,
+  subjectA,
+  subjectB,
+  groupCount,
+  offspringLabel,
+  strikeMethod,
+  escapeDirection,
+  weatherHazard,
+  rutSeason,
+  foodItem,
   arc,
   previewArc,
   contentLane,
@@ -407,6 +429,15 @@ export function useBuildGenerationActions({
         habitatRegion,
         season,
         timeOfDay,
+        subjectA,
+        subjectB,
+        groupCount,
+        offspringLabel,
+        strikeMethod,
+        escapeDirection,
+        weatherHazard,
+        rutSeason,
+        foodItem,
       };
 
       setPkg(finalPkgWithStoryState);
@@ -458,6 +489,15 @@ export function useBuildGenerationActions({
         habitatRegion,
         season,
         timeOfDay,
+        subjectA,
+        subjectB,
+        groupCount,
+        offspringLabel,
+        strikeMethod,
+        escapeDirection,
+        weatherHazard,
+        rutSeason,
+        foodItem,
       };
 
       setPkg(finalPkgWithStoryState);

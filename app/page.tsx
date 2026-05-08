@@ -23,6 +23,7 @@ import type {
   EmotionalTone,
   AnimalVibe,
   Weather,
+  WeatherHazard,
   RealismMode,
   BuildWorkflowPresetSnapshot,
   GeneratedPackage,
@@ -30,7 +31,10 @@ import type {
   PackageLockState,
   RunwayModel,
   KlingModel,
+  EscapeDirection,
+  OffspringLabel,
   Season,
+  StrikeMethod,
   TimeOfDay,
   HabitatPreset,
   HookFamily,
@@ -84,6 +88,10 @@ import WSTVWorkflowDiagram from "@/components/WSTVWorkflowDiagram";
 import RunwayOfficialWorkflowDiagram from "@/components/RunwayOfficialWorkflowDiagram";
 import CustomAnimalModal from "@/components/build/custom-animal-modal";
 import Step1Setup from "@/components/build/step-1-setup";
+import {
+  getStoryModeSubjectDefaults,
+  type StoryModeSubjectValues,
+} from "@/components/build/story-mode-subject-fields";
 import Step2EngineQuality from "@/components/build/step-2-engine-quality";
 import Step3Generate from "@/components/build/step-3-generate";
 
@@ -128,6 +136,10 @@ const DEFAULT_VIOLENCE_LEVEL = ViolenceLevel.DISPLAY_ONLY;
 const DEFAULT_HABITAT_REGION = HabitatRegion.YELLOWSTONE;
 const DEFAULT_SEASON: Season = "FALL";
 const DEFAULT_TIME_OF_DAY: TimeOfDay = "GOLDEN_HOUR";
+const DEFAULT_OFFSPRING_LABEL: OffspringLabel = "cub";
+const DEFAULT_STRIKE_METHOD: StrikeMethod = "AMBUSH";
+const DEFAULT_ESCAPE_DIRECTION: EscapeDirection = "BRUSH";
+const DEFAULT_WEATHER_HAZARD: WeatherHazard = "BLIZZARD";
 
 // ─── MAIN PAGE ────────────────────────────────────────────────────────────────
 
@@ -158,6 +170,15 @@ export default function Page() {
   const [habitatRegion, setHabitatRegion] = useState(DEFAULT_HABITAT_REGION);
   const [season, setSeason] = useState<Season>(DEFAULT_SEASON);
   const [timeOfDay, setTimeOfDay] = useState<TimeOfDay>(DEFAULT_TIME_OF_DAY);
+  const [subjectA, setSubjectA] = useState<string | undefined>();
+  const [subjectB, setSubjectB] = useState<string | undefined>();
+  const [groupCount, setGroupCount] = useState<number | undefined>();
+  const [offspringLabel, setOffspringLabel] = useState<OffspringLabel>(DEFAULT_OFFSPRING_LABEL);
+  const [strikeMethod, setStrikeMethod] = useState<StrikeMethod>(DEFAULT_STRIKE_METHOD);
+  const [escapeDirection, setEscapeDirection] = useState<EscapeDirection>(DEFAULT_ESCAPE_DIRECTION);
+  const [weatherHazard, setWeatherHazard] = useState<WeatherHazard>(DEFAULT_WEATHER_HAZARD);
+  const [rutSeason, setRutSeason] = useState(false);
+  const [foodItem, setFoodItem] = useState<string | undefined>();
 
   // STEP 2
   const [runwayModel, setRunwayModel] = useState<RunwayModel>(RUNWAY_MODELS[0]);
@@ -234,6 +255,15 @@ export default function Page() {
       setHabitatRegion(snapshot.habitatRegion ?? DEFAULT_HABITAT_REGION);
       setSeason(snapshot.season ?? DEFAULT_SEASON);
       setTimeOfDay(snapshot.timeOfDay ?? DEFAULT_TIME_OF_DAY);
+      setSubjectA(snapshot.subjectA);
+      setSubjectB(snapshot.subjectB);
+      setGroupCount(snapshot.groupCount);
+      setOffspringLabel(snapshot.offspringLabel ?? DEFAULT_OFFSPRING_LABEL);
+      setStrikeMethod(snapshot.strikeMethod ?? DEFAULT_STRIKE_METHOD);
+      setEscapeDirection(snapshot.escapeDirection ?? DEFAULT_ESCAPE_DIRECTION);
+      setWeatherHazard(snapshot.weatherHazard ?? DEFAULT_WEATHER_HAZARD);
+      setRutSeason(snapshot.rutSeason ?? false);
+      setFoodItem(snapshot.foodItem);
       setRunwayModel(snapshot.runwayModel);
       setKlingModel(snapshot.klingModel);
       setRealismMode(snapshot.realismMode);
@@ -309,8 +339,34 @@ export default function Page() {
     setHabitatRegion(DEFAULT_HABITAT_REGION);
     setSeason(DEFAULT_SEASON);
     setTimeOfDay(DEFAULT_TIME_OF_DAY);
+    setSubjectA(undefined);
+    setSubjectB(undefined);
+    setGroupCount(undefined);
+    setOffspringLabel(DEFAULT_OFFSPRING_LABEL);
+    setStrikeMethod(DEFAULT_STRIKE_METHOD);
+    setEscapeDirection(DEFAULT_ESCAPE_DIRECTION);
+    setWeatherHazard(DEFAULT_WEATHER_HAZARD);
+    setRutSeason(false);
+    setFoodItem(undefined);
     setPromotedPublishCopyOverride(null);
   }
+
+  const handleStoryModeChange = useCallback(
+    (value: StoryMode) => {
+      const defaults = getStoryModeSubjectDefaults(value, predator, prey);
+      setStoryMode(value);
+      setSubjectA(defaults.subjectA);
+      setSubjectB(defaults.subjectB);
+      setGroupCount(defaults.groupCount);
+      setOffspringLabel(defaults.offspringLabel ?? DEFAULT_OFFSPRING_LABEL);
+      setStrikeMethod(defaults.strikeMethod ?? DEFAULT_STRIKE_METHOD);
+      setEscapeDirection(defaults.escapeDirection ?? DEFAULT_ESCAPE_DIRECTION);
+      setWeatherHazard(defaults.weatherHazard ?? DEFAULT_WEATHER_HAZARD);
+      setRutSeason(defaults.rutSeason ?? false);
+      setFoodItem(defaults.foodItem);
+    },
+    [predator, prey]
+  );
 
   useBuildPersistence({
     predator,
@@ -323,6 +379,15 @@ export default function Page() {
     habitatRegion,
     season,
     timeOfDay,
+    subjectA,
+    subjectB,
+    groupCount,
+    offspringLabel,
+    strikeMethod,
+    escapeDirection,
+    weatherHazard,
+    rutSeason,
+    foodItem,
     arc,
     wildlifeScopeMode,
     contentLane,
@@ -354,6 +419,15 @@ export default function Page() {
     setHabitatRegion,
     setSeason,
     setTimeOfDay,
+    setSubjectA,
+    setSubjectB,
+    setGroupCount,
+    setOffspringLabel,
+    setStrikeMethod,
+    setEscapeDirection,
+    setWeatherHazard,
+    setRutSeason,
+    setFoodItem,
     setArc,
     setWildlifeScopeMode,
     setContentLane,
@@ -480,6 +554,48 @@ export default function Page() {
     setSceneDescriptionVariant,
   });
 
+  const currentStorySubjectSnapshot = useMemo<StoryModeSubjectValues>(() => {
+    const defaults = getStoryModeSubjectDefaults(storyMode, predator, prey);
+    const resolvedSubjectA =
+      storyMode === StoryMode.PREDATOR_VS_PREY
+        ? predator
+        : subjectA?.trim() || defaults.subjectA;
+    const resolvedSubjectB =
+      storyMode === StoryMode.PREDATOR_VS_PREY
+        ? prey
+        : subjectB?.trim() || defaults.subjectB;
+
+    return {
+      ...(resolvedSubjectA ? { subjectA: resolvedSubjectA } : {}),
+      ...(resolvedSubjectB ? { subjectB: resolvedSubjectB } : {}),
+      ...(groupCount ?? defaults.groupCount
+        ? { groupCount: groupCount ?? defaults.groupCount }
+        : {}),
+      offspringLabel: offspringLabel ?? defaults.offspringLabel ?? DEFAULT_OFFSPRING_LABEL,
+      strikeMethod: strikeMethod ?? defaults.strikeMethod ?? DEFAULT_STRIKE_METHOD,
+      escapeDirection:
+        escapeDirection ?? defaults.escapeDirection ?? DEFAULT_ESCAPE_DIRECTION,
+      weatherHazard: weatherHazard ?? defaults.weatherHazard ?? DEFAULT_WEATHER_HAZARD,
+      rutSeason: rutSeason ?? defaults.rutSeason ?? false,
+      ...((foodItem?.trim() || defaults.foodItem)
+        ? { foodItem: foodItem?.trim() || defaults.foodItem }
+        : {}),
+    };
+  }, [
+    escapeDirection,
+    foodItem,
+    groupCount,
+    offspringLabel,
+    predator,
+    prey,
+    rutSeason,
+    storyMode,
+    strikeMethod,
+    subjectA,
+    subjectB,
+    weatherHazard,
+  ]);
+
   const currentWorkflowPresetSnapshot = useMemo(
     () => ({
       predator,
@@ -490,8 +606,7 @@ export default function Page() {
       viralLane,
       violenceLevel,
       habitatRegion,
-      subjectA: predator,
-      subjectB: prey,
+      ...currentStorySubjectSnapshot,
       season,
       timeOfDay,
       wildlifeScopeMode,
@@ -537,6 +652,7 @@ export default function Page() {
       actionStyle,
       cameraAnglePreset,
       contentLane,
+      currentStorySubjectSnapshot,
       depthMode,
       durationLane,
       emotionalTone,
@@ -576,6 +692,33 @@ export default function Page() {
       habitatRegion,
       season,
       timeOfDay,
+      ...(currentStorySubjectSnapshot.subjectA
+        ? { subjectA: currentStorySubjectSnapshot.subjectA }
+        : {}),
+      ...(currentStorySubjectSnapshot.subjectB
+        ? { subjectB: currentStorySubjectSnapshot.subjectB }
+        : {}),
+      ...(currentStorySubjectSnapshot.groupCount
+        ? { groupCount: String(currentStorySubjectSnapshot.groupCount) }
+        : {}),
+      ...(currentStorySubjectSnapshot.offspringLabel
+        ? { offspringLabel: currentStorySubjectSnapshot.offspringLabel }
+        : {}),
+      ...(currentStorySubjectSnapshot.strikeMethod
+        ? { strikeMethod: currentStorySubjectSnapshot.strikeMethod }
+        : {}),
+      ...(currentStorySubjectSnapshot.escapeDirection
+        ? { escapeDirection: currentStorySubjectSnapshot.escapeDirection }
+        : {}),
+      ...(currentStorySubjectSnapshot.weatherHazard
+        ? { weatherHazard: currentStorySubjectSnapshot.weatherHazard }
+        : {}),
+      ...(currentStorySubjectSnapshot.rutSeason !== undefined
+        ? { rutSeason: String(currentStorySubjectSnapshot.rutSeason) }
+        : {}),
+      ...(currentStorySubjectSnapshot.foodItem
+        ? { foodItem: currentStorySubjectSnapshot.foodItem }
+        : {}),
       habitat,
       weather,
       arc: previewArc,
@@ -591,6 +734,7 @@ export default function Page() {
     cameraAnglePreset,
     contentLane,
     durationLane,
+    currentStorySubjectSnapshot,
     finalEnvironment,
     habitat,
     predator,
@@ -909,6 +1053,15 @@ export default function Page() {
     habitatRegion,
     season,
     timeOfDay,
+    subjectA: currentStorySubjectSnapshot.subjectA,
+    subjectB: currentStorySubjectSnapshot.subjectB,
+    groupCount: currentStorySubjectSnapshot.groupCount,
+    offspringLabel: currentStorySubjectSnapshot.offspringLabel,
+    strikeMethod: currentStorySubjectSnapshot.strikeMethod,
+    escapeDirection: currentStorySubjectSnapshot.escapeDirection,
+    weatherHazard: currentStorySubjectSnapshot.weatherHazard,
+    rutSeason: currentStorySubjectSnapshot.rutSeason,
+    foodItem: currentStorySubjectSnapshot.foodItem,
     arc,
     previewArc,
     contentLane,
@@ -1012,6 +1165,15 @@ export default function Page() {
       habitatRegion,
       season,
       timeOfDay,
+      subjectA: currentStorySubjectSnapshot.subjectA,
+      subjectB: currentStorySubjectSnapshot.subjectB,
+      groupCount: currentStorySubjectSnapshot.groupCount,
+      offspringLabel: currentStorySubjectSnapshot.offspringLabel,
+      strikeMethod: currentStorySubjectSnapshot.strikeMethod,
+      escapeDirection: currentStorySubjectSnapshot.escapeDirection,
+      weatherHazard: currentStorySubjectSnapshot.weatherHazard,
+      rutSeason: currentStorySubjectSnapshot.rutSeason,
+      foodItem: currentStorySubjectSnapshot.foodItem,
       environment: finalEnvironment,
       lighting: weather,
       visualStyle: [
@@ -1034,6 +1196,7 @@ export default function Page() {
       depthMode,
       durationLane,
       emotionalTone,
+      currentStorySubjectSnapshot,
       finalEnvironment,
       storyMode,
       encounterMode,
@@ -1264,6 +1427,15 @@ export default function Page() {
                 habitatRegion={habitatRegion}
                 season={season}
                 timeOfDay={timeOfDay}
+                subjectA={subjectA}
+                subjectB={subjectB}
+                groupCount={groupCount}
+                offspringLabel={offspringLabel}
+                strikeMethod={strikeMethod}
+                escapeDirection={escapeDirection}
+                weatherHazard={weatherHazard}
+                rutSeason={rutSeason}
+                foodItem={foodItem}
                 wildlifeScopeMode={wildlifeScopeMode}
                 contentLane={contentLane}
                 cameraAnglePreset={cameraAnglePreset}
@@ -1333,7 +1505,7 @@ export default function Page() {
                 }
                 onPredatorChange={setPredator}
                 onPreyChange={setPrey}
-                onStoryModeChange={setStoryMode}
+                onStoryModeChange={handleStoryModeChange}
                 onEncounterModeChange={setEncounterMode}
                 onEndingModeChange={setEndingMode}
                 onViralLaneChange={setViralLane}
@@ -1341,6 +1513,15 @@ export default function Page() {
                 onHabitatRegionChange={setHabitatRegion}
                 onSeasonChange={setSeason}
                 onTimeOfDayChange={setTimeOfDay}
+                onSubjectAChange={setSubjectA}
+                onSubjectBChange={setSubjectB}
+                onGroupCountChange={setGroupCount}
+                onOffspringLabelChange={setOffspringLabel}
+                onStrikeMethodChange={setStrikeMethod}
+                onEscapeDirectionChange={setEscapeDirection}
+                onWeatherHazardChange={setWeatherHazard}
+                onRutSeasonChange={setRutSeason}
+                onFoodItemChange={setFoodItem}
                 onWildlifeScopeModeChange={setWildlifeScopeMode}
                 onContentLaneChange={setContentLane}
                 onCameraAnglePresetChange={setCameraAnglePreset}

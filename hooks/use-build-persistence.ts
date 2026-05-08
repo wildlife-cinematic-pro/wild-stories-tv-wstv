@@ -21,6 +21,7 @@ import type {
   Arc,
   EncounterMode,
   EndingMode,
+  EscapeDirection,
   CameraAnglePreset,
   ContentLane,
   DurationLane,
@@ -29,15 +30,18 @@ import type {
   HabitatPreset,
   HabitatRegion,
   KlingModel,
+  OffspringLabel,
   WildlifeScopeMode,
   RealismMode,
   RunwayModel,
   Season,
   StoryMode,
+  StrikeMethod,
   TimeOfDay,
   ViralLane,
   ViolenceLevel,
   Weather,
+  WeatherHazard,
 } from "@/types";
 
 type HookMode = HookFamily | "all";
@@ -53,6 +57,15 @@ type UseBuildPersistenceInput = {
   habitatRegion: HabitatRegion;
   season: Season;
   timeOfDay: TimeOfDay;
+  subjectA?: string;
+  subjectB?: string;
+  groupCount?: number;
+  offspringLabel?: OffspringLabel;
+  strikeMethod?: StrikeMethod;
+  escapeDirection?: EscapeDirection;
+  weatherHazard?: WeatherHazard;
+  rutSeason?: boolean;
+  foodItem?: string;
   arc: Arc;
   wildlifeScopeMode: WildlifeScopeMode;
   contentLane: ContentLane;
@@ -84,6 +97,15 @@ type UseBuildPersistenceInput = {
   setHabitatRegion: Dispatch<SetStateAction<HabitatRegion>>;
   setSeason: Dispatch<SetStateAction<Season>>;
   setTimeOfDay: Dispatch<SetStateAction<TimeOfDay>>;
+  setSubjectA: Dispatch<SetStateAction<string | undefined>>;
+  setSubjectB: Dispatch<SetStateAction<string | undefined>>;
+  setGroupCount: Dispatch<SetStateAction<number | undefined>>;
+  setOffspringLabel: Dispatch<SetStateAction<OffspringLabel>>;
+  setStrikeMethod: Dispatch<SetStateAction<StrikeMethod>>;
+  setEscapeDirection: Dispatch<SetStateAction<EscapeDirection>>;
+  setWeatherHazard: Dispatch<SetStateAction<WeatherHazard>>;
+  setRutSeason: Dispatch<SetStateAction<boolean>>;
+  setFoodItem: Dispatch<SetStateAction<string | undefined>>;
   setArc: Dispatch<SetStateAction<Arc>>;
   setWildlifeScopeMode: Dispatch<SetStateAction<WildlifeScopeMode>>;
   setContentLane: Dispatch<SetStateAction<ContentLane>>;
@@ -211,6 +233,29 @@ function isViolenceLevel(value: unknown): value is ViolenceLevel {
   return value === 1 || value === 2 || value === 3;
 }
 
+
+function isOffspringLabel(value: unknown): value is OffspringLabel {
+  return typeof value === "string" && ["cub", "fawn", "calf", "pup", "kit"].includes(value);
+}
+
+function isStrikeMethod(value: unknown): value is StrikeMethod {
+  return typeof value === "string" && ["POUNCE", "DIVE", "SWIPE", "CHASE", "AMBUSH"].includes(value);
+}
+
+function isEscapeDirection(value: unknown): value is EscapeDirection {
+  return typeof value === "string" && ["WATER", "UPHILL", "BRUSH", "OPEN_FIELD"].includes(value);
+}
+
+function isWeatherHazard(value: unknown): value is WeatherHazard {
+  return typeof value === "string" && ["BLIZZARD", "ICE", "FLOOD", "DROUGHT", "HEAT"].includes(value);
+}
+
+function cleanOptionalText(value: unknown): string | undefined {
+  return typeof value === "string" && value.trim().length > 0
+    ? value.trim()
+    : undefined;
+}
+
 export function useBuildPersistence({
   predator,
   prey,
@@ -222,6 +267,15 @@ export function useBuildPersistence({
   habitatRegion,
   season,
   timeOfDay,
+  subjectA,
+  subjectB,
+  groupCount,
+  offspringLabel,
+  strikeMethod,
+  escapeDirection,
+  weatherHazard,
+  rutSeason,
+  foodItem,
   arc,
   wildlifeScopeMode,
   contentLane,
@@ -253,6 +307,15 @@ export function useBuildPersistence({
   setHabitatRegion,
   setSeason,
   setTimeOfDay,
+  setSubjectA,
+  setSubjectB,
+  setGroupCount,
+  setOffspringLabel,
+  setStrikeMethod,
+  setEscapeDirection,
+  setWeatherHazard,
+  setRutSeason,
+  setFoodItem,
   setArc,
   setWildlifeScopeMode,
   setContentLane,
@@ -346,6 +409,24 @@ export function useBuildPersistence({
     }
     if (isSeason(saved?.season)) setSeason(saved.season);
     if (isTimeOfDay(saved?.timeOfDay)) setTimeOfDay(saved.timeOfDay);
+    const savedSubjectA = cleanOptionalText(saved?.subjectA);
+    if (savedSubjectA) setSubjectA(savedSubjectA);
+    const savedSubjectB = cleanOptionalText(saved?.subjectB);
+    if (savedSubjectB) setSubjectB(savedSubjectB);
+    if (typeof saved?.groupCount === "number") setGroupCount(saved.groupCount);
+    if (isOffspringLabel(saved?.offspringLabel)) {
+      setOffspringLabel(saved.offspringLabel);
+    }
+    if (isStrikeMethod(saved?.strikeMethod)) setStrikeMethod(saved.strikeMethod);
+    if (isEscapeDirection(saved?.escapeDirection)) {
+      setEscapeDirection(saved.escapeDirection);
+    }
+    if (isWeatherHazard(saved?.weatherHazard)) {
+      setWeatherHazard(saved.weatherHazard);
+    }
+    if (typeof saved?.rutSeason === "boolean") setRutSeason(saved.rutSeason);
+    const savedFoodItem = cleanOptionalText(saved?.foodItem);
+    if (savedFoodItem) setFoodItem(savedFoodItem);
 
     const autoApply = (saved as Record<string, unknown>)?.autoApplyHighDrift;
     if (typeof autoApply === "boolean") setAutoApplyHighDrift(autoApply);
@@ -360,6 +441,15 @@ export function useBuildPersistence({
     setHabitatRegion,
     setSeason,
     setTimeOfDay,
+    setSubjectA,
+    setSubjectB,
+    setGroupCount,
+    setOffspringLabel,
+    setStrikeMethod,
+    setEscapeDirection,
+    setWeatherHazard,
+    setRutSeason,
+    setFoodItem,
     setArc,
     setWildlifeScopeMode,
     setContentLane,
@@ -403,6 +493,23 @@ export function useBuildPersistence({
       wildlifeScopeMode,
       contentLane,
       cameraAnglePreset,
+      storyMode,
+      encounterMode,
+      endingMode,
+      viralLane,
+      violenceLevel,
+      habitatRegion,
+      season,
+      timeOfDay,
+      subjectA: subjectA?.trim() || undefined,
+      subjectB: subjectB?.trim() || undefined,
+      ...(groupCount === undefined ? {} : { groupCount }),
+      offspringLabel,
+      strikeMethod,
+      escapeDirection,
+      weatherHazard,
+      rutSeason,
+      foodItem: foodItem?.trim() || undefined,
     });
   }, [
     storyMode,
@@ -413,6 +520,15 @@ export function useBuildPersistence({
     habitatRegion,
     season,
     timeOfDay,
+    subjectA,
+    subjectB,
+    groupCount,
+    offspringLabel,
+    strikeMethod,
+    escapeDirection,
+    weatherHazard,
+    rutSeason,
+    foodItem,
     activeProvider,
     runwayModel,
     klingModel,
