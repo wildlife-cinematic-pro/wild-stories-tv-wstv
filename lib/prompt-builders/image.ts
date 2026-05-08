@@ -503,7 +503,7 @@ function buildGptImage2ImagePrompt(
     : `Clean composition for a backup still, thumbnail, cover frame, or strict layout alternate with ${cleanTexture}. ${anatomyLine}`;
 
   const constraintLine =
-    "No text unless explicitly requested. Avoid text, watermark, logo, extra limbs, distorted anatomy, duplicate animals, overlapping subjects, dust clouds, debris spray, smoke-like particles, muddy blur, low-detail faces, cropped bodies.";
+    "No text unless explicitly requested. No blood, no gore, no visible injury. Avoid text, watermark, logo, extra limbs, distorted anatomy, duplicate animals, overlapping subjects, dust clouds, debris spray, smoke-like particles, muddy blur, low-detail faces, cropped bodies.";
 
   return `${subjectLine} ${blockingLine} ${actionLine} ${atmosphereLine} ${compositionLine} ${detailLine} ${CLEAN_GROUND_CONTACT_LINE} ${constraintLine}`;
 }
