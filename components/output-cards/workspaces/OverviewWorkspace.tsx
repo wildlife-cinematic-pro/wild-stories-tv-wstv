@@ -3,6 +3,7 @@
 import PromptVersionsPanel from "@/components/PromptVersionsPanel";
 import WSTVWorkflowDiagram from "@/components/WSTVWorkflowDiagram";
 import { WorkflowPromptMap } from "@/components/output-cards/workflow-prompt-map";
+import StoryModeQACard from "@/components/output-cards/story-mode-qa-card";
 import { EngineSpecsPanel, SectionLabel } from "@/components/output-cards/shared-panels";
 
 import type { GeneratedPackage, PromptVersion } from "@/types";
@@ -51,6 +52,8 @@ export function OverviewWorkspace({
   return (
     <div className="space-y-6">
       <StoryModeBadges data={data} />
+
+      <StoryModeQACard data={data} />
 
       <EngineSpecsPanel />
 
