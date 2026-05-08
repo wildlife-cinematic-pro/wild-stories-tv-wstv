@@ -7,6 +7,32 @@ import { EngineSpecsPanel, SectionLabel } from "@/components/output-cards/shared
 
 import type { GeneratedPackage, PromptVersion } from "@/types";
 
+function formatBadgeValue(value: unknown, fallback: string) {
+  if (typeof value !== "string" && typeof value !== "number") return fallback;
+  return String(value)
+    .toLowerCase()
+    .split("_")
+    .filter(Boolean)
+    .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
+    .join(" ");
+}
+
+function StoryModeBadges({ data }: { data: GeneratedPackage }) {
+  return (
+    <div className="flex flex-wrap gap-2 rounded-xl border border-[color:var(--border)] bg-[color:var(--surface-elevated)] p-3">
+      <span className="rounded-full border border-amber-400/30 bg-amber-500/10 px-3 py-1 text-[10px] font-bold uppercase tracking-[0.1em] text-amber-700 dark:text-amber-200">
+        Story Mode: {formatBadgeValue(data.storyMode, "Predator Vs Prey")}
+      </span>
+      <span className="rounded-full border border-indigo-400/30 bg-indigo-500/10 px-3 py-1 text-[10px] font-bold uppercase tracking-[0.1em] text-indigo-700 dark:text-indigo-200">
+        Viral Lane: {formatBadgeValue(data.viralLane, "Tension")}
+      </span>
+      <span className="rounded-full border border-emerald-400/30 bg-emerald-500/10 px-3 py-1 text-[10px] font-bold uppercase tracking-[0.1em] text-emerald-700 dark:text-emerald-200">
+        Safety: Level {Number(data.violenceLevel ?? 1)}/3
+      </span>
+    </div>
+  );
+}
+
 export function OverviewWorkspace({
   data,
   versionKey,
@@ -24,6 +50,8 @@ export function OverviewWorkspace({
 }) {
   return (
     <div className="space-y-6">
+      <StoryModeBadges data={data} />
+
       <EngineSpecsPanel />
 
       <div className="rounded-lg border border-sky-500/30 bg-sky-500/12 p-3 text-xs text-sky-800 dark:text-sky-200">

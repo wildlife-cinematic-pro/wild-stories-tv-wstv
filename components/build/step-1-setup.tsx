@@ -2,6 +2,10 @@
 
 import { useState } from "react";
 
+import SceneRelationshipCard from "@/components/build/scene-relationship-card";
+import WildlifeStoryModeSelector, {
+  getStoryModeLabel,
+} from "@/components/build/wildlife-story-mode-selector";
 import WorkflowPresetsPanel from "@/components/build/workflow-presets-panel";
 
 import { WORKFLOW_TEST_PRESETS } from "@/lib/workflow-presets";
@@ -46,6 +50,8 @@ import {
   isAttackFocusedWildlifeScope,
 } from "@/lib/wildlife-focus";
 
+import { StoryMode } from "@/types";
+
 import type {
   AnimalVibe,
   Arc,
@@ -53,10 +59,17 @@ import type {
   ContentLane,
   DepthMode,
   EmotionalTone,
+  EncounterMode,
+  EndingMode,
   HabitatPreset,
+  HabitatRegion,
   PredatorInfo,
   SavedWorkflowPreset,
   SavedWorkflowPresetPack,
+  Season,
+  TimeOfDay,
+  ViralLane,
+  ViolenceLevel,
   Weather,
   WildlifeScopeMode,
   WorkflowPresetAuthSession,
@@ -68,6 +81,14 @@ import type {
 type Step1SetupProps = {
   predator: string;
   prey: string;
+  storyMode: StoryMode;
+  encounterMode: EncounterMode;
+  endingMode: EndingMode;
+  viralLane: ViralLane;
+  violenceLevel: ViolenceLevel;
+  habitatRegion: HabitatRegion;
+  season: Season;
+  timeOfDay: TimeOfDay;
   wildlifeScopeMode: WildlifeScopeMode;
   contentLane: ContentLane;
   cameraAnglePreset: CameraAnglePreset;
@@ -112,6 +133,14 @@ type Step1SetupProps = {
   canManageWorkflowPresetLibrary: boolean;
   onPredatorChange: (value: string) => void;
   onPreyChange: (value: string) => void;
+  onStoryModeChange: (value: StoryMode) => void;
+  onEncounterModeChange: (value: EncounterMode) => void;
+  onEndingModeChange: (value: EndingMode) => void;
+  onViralLaneChange: (value: ViralLane) => void;
+  onViolenceLevelChange: (value: ViolenceLevel) => void;
+  onHabitatRegionChange: (value: HabitatRegion) => void;
+  onSeasonChange: (value: Season) => void;
+  onTimeOfDayChange: (value: TimeOfDay) => void;
   onWildlifeScopeModeChange: (value: WildlifeScopeMode) => void;
   onContentLaneChange: (value: ContentLane) => void;
   onCameraAnglePresetChange: (value: CameraAnglePreset) => void;
@@ -170,6 +199,14 @@ type Step1SetupProps = {
 export default function Step1Setup({
   predator,
   prey,
+  storyMode,
+  encounterMode,
+  endingMode,
+  viralLane,
+  violenceLevel,
+  habitatRegion,
+  season,
+  timeOfDay,
   wildlifeScopeMode,
   contentLane,
   cameraAnglePreset,
@@ -214,6 +251,14 @@ export default function Step1Setup({
   canManageWorkflowPresetLibrary,
   onPredatorChange,
   onPreyChange,
+  onStoryModeChange,
+  onEncounterModeChange,
+  onEndingModeChange,
+  onViralLaneChange,
+  onViolenceLevelChange,
+  onHabitatRegionChange,
+  onSeasonChange,
+  onTimeOfDayChange,
   onWildlifeScopeModeChange,
   onContentLaneChange,
   onCameraAnglePresetChange,
@@ -373,6 +418,8 @@ export default function Step1Setup({
           ? "border-amber-100 bg-amber-50/80 text-amber-900"
           : "border-rose-100 bg-rose-50/80 text-rose-900";
   const isSimpleSceneMode = sceneMode === "simple";
+  const isPredatorVsPreyMode = storyMode === StoryMode.PREDATOR_VS_PREY;
+  const selectedStoryModeLabel = getStoryModeLabel(storyMode);
 
   return (
     <div className="grid gap-6 xl:grid-cols-[minmax(0,1fr)_340px]">
@@ -492,8 +539,31 @@ export default function Step1Setup({
           ) : null}
         </section>
 
+        <WildlifeStoryModeSelector
+          value={storyMode}
+          onChange={onStoryModeChange}
+        />
+
+        <SceneRelationshipCard
+          encounterMode={encounterMode}
+          endingMode={endingMode}
+          viralLane={viralLane}
+          violenceLevel={violenceLevel}
+          habitatRegion={habitatRegion}
+          season={season}
+          timeOfDay={timeOfDay}
+          onEncounterModeChange={onEncounterModeChange}
+          onEndingModeChange={onEndingModeChange}
+          onViralLaneChange={onViralLaneChange}
+          onViolenceLevelChange={onViolenceLevelChange}
+          onHabitatRegionChange={onHabitatRegionChange}
+          onSeasonChange={onSeasonChange}
+          onTimeOfDayChange={onTimeOfDayChange}
+        />
+
         <div className="grid grid-cols-1 gap-6 xl:grid-cols-2">
-          <section className="rounded-2xl border border-gray-200 bg-white p-5 sm:p-6">
+          {isPredatorVsPreyMode ? (
+            <section className="rounded-2xl border border-gray-200 bg-white p-5 sm:p-6">
             <h3 className="text-[11px] font-semibold uppercase tracking-[0.1em] text-gray-400">
               Setup Essentials
             </h3>
@@ -750,7 +820,30 @@ export default function Step1Setup({
                 Controls to fine-tune the same animal pair.
               </p>
             </div>
-          </section>
+            </section>
+          ) : (
+            <section className="rounded-2xl border border-amber-400/25 bg-zinc-950 p-5 text-zinc-100 shadow-[0_18px_40px_rgba(0,0,0,0.2)] sm:p-6">
+              <div className="flex flex-wrap items-center justify-between gap-3">
+                <div>
+                  <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-amber-300/80">
+                    Subject Setup
+                  </p>
+                  <h3 className="mt-2 text-lg font-semibold text-zinc-50">
+                    {selectedStoryModeLabel} mode
+                  </h3>
+                </div>
+                <span className="rounded-full border border-amber-400/30 bg-amber-500/10 px-3 py-1 text-[10px] font-bold uppercase tracking-[0.1em] text-amber-300">
+                  Phase 2
+                </span>
+              </div>
+              <p className="mt-4 text-sm leading-6 text-zinc-400">
+                {selectedStoryModeLabel} mode - subject fields for this mode are coming in Phase 2.
+              </p>
+              <p className="mt-3 text-xs leading-6 text-zinc-500">
+                The existing predator/prey generator remains unchanged. Switch back to Predator vs Prey to use the current animal selectors and prompt workflow.
+              </p>
+            </section>
+          )}
 
           <section className="rounded-2xl border border-gray-200 bg-white p-5 sm:p-6">
             <h3 className="text-[11px] font-semibold uppercase tracking-[0.1em] text-gray-400">
@@ -859,7 +952,7 @@ export default function Step1Setup({
           </section>
         </div>
 
-        {isSimpleSceneMode ? null : (
+        {isPredatorVsPreyMode && !isSimpleSceneMode ? (
           <section className="rounded-2xl border border-gray-200 bg-white p-5 sm:p-6">
             <h3 className="text-[11px] font-semibold uppercase tracking-[0.1em] text-gray-400">
               Advanced Controls
@@ -1071,7 +1164,7 @@ export default function Step1Setup({
               </p>
             </div>
           </section>
-        )}
+        ) : null}
 
         <div className="flex flex-wrap gap-2.5 border-t border-gray-200/80 pt-5">
           <button

@@ -4,6 +4,15 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 import Link from "next/link";
 
+import {
+  EncounterMode,
+  EndingMode,
+  HabitatRegion,
+  StoryMode,
+  ViralLane,
+  ViolenceLevel,
+} from "@/types";
+
 import type {
   AIProvider,
   ActionStylePreset,
@@ -21,6 +30,8 @@ import type {
   PackageLockState,
   RunwayModel,
   KlingModel,
+  Season,
+  TimeOfDay,
   HabitatPreset,
   HookFamily,
   WildlifeScopeMode,
@@ -109,6 +120,14 @@ const DEFAULT_HABITAT: HabitatPreset = "Auto";
 const DEFAULT_DEPTH_MODE: DepthMode = "Balanced Depth";
 const DEFAULT_EMOTIONAL_TONE: EmotionalTone = "Raw Tension";
 const DEFAULT_ANIMAL_VIBE: AnimalVibe = "National Geographic Wild";
+const DEFAULT_STORY_MODE = StoryMode.PREDATOR_VS_PREY;
+const DEFAULT_ENCOUNTER_MODE = EncounterMode.PEAK_TENSION;
+const DEFAULT_ENDING_MODE = EndingMode.ESCAPE;
+const DEFAULT_VIRAL_LANE = ViralLane.TENSION;
+const DEFAULT_VIOLENCE_LEVEL = ViolenceLevel.DISPLAY_ONLY;
+const DEFAULT_HABITAT_REGION = HabitatRegion.YELLOWSTONE;
+const DEFAULT_SEASON: Season = "FALL";
+const DEFAULT_TIME_OF_DAY: TimeOfDay = "GOLDEN_HOUR";
 
 // ─── MAIN PAGE ────────────────────────────────────────────────────────────────
 
@@ -131,6 +150,14 @@ export default function Page() {
   const [depthMode, setDepthMode] = useState<DepthMode>(DEFAULT_DEPTH_MODE);
   const [emotionalTone, setEmotionalTone] = useState<EmotionalTone>(DEFAULT_EMOTIONAL_TONE);
   const [animalVibe, setAnimalVibe] = useState<AnimalVibe>(DEFAULT_ANIMAL_VIBE);
+  const [storyMode, setStoryMode] = useState(DEFAULT_STORY_MODE);
+  const [encounterMode, setEncounterMode] = useState(DEFAULT_ENCOUNTER_MODE);
+  const [endingMode, setEndingMode] = useState(DEFAULT_ENDING_MODE);
+  const [viralLane, setViralLane] = useState(DEFAULT_VIRAL_LANE);
+  const [violenceLevel, setViolenceLevel] = useState(DEFAULT_VIOLENCE_LEVEL);
+  const [habitatRegion, setHabitatRegion] = useState(DEFAULT_HABITAT_REGION);
+  const [season, setSeason] = useState<Season>(DEFAULT_SEASON);
+  const [timeOfDay, setTimeOfDay] = useState<TimeOfDay>(DEFAULT_TIME_OF_DAY);
 
   // STEP 2
   const [runwayModel, setRunwayModel] = useState<RunwayModel>(RUNWAY_MODELS[0]);
@@ -199,6 +226,14 @@ export default function Page() {
       setDepthMode(snapshot.depthMode);
       setEmotionalTone(snapshot.emotionalTone);
       setAnimalVibe(snapshot.animalVibe);
+      setStoryMode(snapshot.storyMode ?? DEFAULT_STORY_MODE);
+      setEncounterMode(snapshot.encounterMode ?? DEFAULT_ENCOUNTER_MODE);
+      setEndingMode(snapshot.endingMode ?? DEFAULT_ENDING_MODE);
+      setViralLane(snapshot.viralLane ?? DEFAULT_VIRAL_LANE);
+      setViolenceLevel(snapshot.violenceLevel ?? DEFAULT_VIOLENCE_LEVEL);
+      setHabitatRegion(snapshot.habitatRegion ?? DEFAULT_HABITAT_REGION);
+      setSeason(snapshot.season ?? DEFAULT_SEASON);
+      setTimeOfDay(snapshot.timeOfDay ?? DEFAULT_TIME_OF_DAY);
       setRunwayModel(snapshot.runwayModel);
       setKlingModel(snapshot.klingModel);
       setRealismMode(snapshot.realismMode);
@@ -266,12 +301,28 @@ export default function Page() {
     setDepthMode(DEFAULT_DEPTH_MODE);
     setEmotionalTone(DEFAULT_EMOTIONAL_TONE);
     setAnimalVibe(DEFAULT_ANIMAL_VIBE);
+    setStoryMode(DEFAULT_STORY_MODE);
+    setEncounterMode(DEFAULT_ENCOUNTER_MODE);
+    setEndingMode(DEFAULT_ENDING_MODE);
+    setViralLane(DEFAULT_VIRAL_LANE);
+    setViolenceLevel(DEFAULT_VIOLENCE_LEVEL);
+    setHabitatRegion(DEFAULT_HABITAT_REGION);
+    setSeason(DEFAULT_SEASON);
+    setTimeOfDay(DEFAULT_TIME_OF_DAY);
     setPromotedPublishCopyOverride(null);
   }
 
   useBuildPersistence({
     predator,
     prey,
+    storyMode,
+    encounterMode,
+    endingMode,
+    viralLane,
+    violenceLevel,
+    habitatRegion,
+    season,
+    timeOfDay,
     arc,
     wildlifeScopeMode,
     contentLane,
@@ -295,6 +346,14 @@ export default function Page() {
     autoApplyHighDrift,
     setPredator,
     setPrey,
+    setStoryMode,
+    setEncounterMode,
+    setEndingMode,
+    setViralLane,
+    setViolenceLevel,
+    setHabitatRegion,
+    setSeason,
+    setTimeOfDay,
     setArc,
     setWildlifeScopeMode,
     setContentLane,
@@ -425,6 +484,16 @@ export default function Page() {
     () => ({
       predator,
       prey,
+      storyMode,
+      encounterMode,
+      endingMode,
+      viralLane,
+      violenceLevel,
+      habitatRegion,
+      subjectA: predator,
+      subjectB: prey,
+      season,
+      timeOfDay,
       wildlifeScopeMode,
       contentLane,
       actionStyle,
@@ -457,6 +526,14 @@ export default function Page() {
       activeProvider,
       animalVibe,
       autoApplyHighDrift,
+      storyMode,
+      encounterMode,
+      endingMode,
+      viralLane,
+      violenceLevel,
+      habitatRegion,
+      season,
+      timeOfDay,
       actionStyle,
       cameraAnglePreset,
       contentLane,
@@ -491,6 +568,14 @@ export default function Page() {
       source: "build",
       predator,
       prey,
+      storyMode,
+      encounterMode,
+      endingMode,
+      viralLane,
+      violenceLevel: String(violenceLevel),
+      habitatRegion,
+      season,
+      timeOfDay,
       habitat,
       weather,
       arc: previewArc,
@@ -510,6 +595,14 @@ export default function Page() {
     habitat,
     predator,
     prey,
+    storyMode,
+    encounterMode,
+    endingMode,
+    viralLane,
+    violenceLevel,
+    habitatRegion,
+    season,
+    timeOfDay,
     previewArc,
     sceneDescription,
     weather,
@@ -808,6 +901,14 @@ export default function Page() {
   } = useBuildGenerationActions({
     predator,
     prey,
+    storyMode,
+    encounterMode,
+    endingMode,
+    viralLane,
+    violenceLevel,
+    habitatRegion,
+    season,
+    timeOfDay,
     arc,
     previewArc,
     contentLane,
@@ -879,39 +980,6 @@ export default function Page() {
     setHeroVeo,
   };
 
-  const storyboardHref = useMemo(() => {
-    const params = new URLSearchParams({
-      source: "build",
-      predator,
-      prey,
-      wildlifeScopeMode,
-      contentLane,
-      cameraAnglePreset,
-      arc: previewArc,
-      habitat,
-      weather,
-      durationLane,
-      sceneDescription,
-      sceneDescriptionMode,
-      sceneDescriptionTouched: String(sceneDescriptionTouched),
-    });
-
-    return "/storyboard?" + params.toString();
-  }, [
-    predator,
-    prey,
-    wildlifeScopeMode,
-    contentLane,
-    cameraAnglePreset,
-    previewArc,
-    habitat,
-    weather,
-    durationLane,
-    sceneDescription,
-    sceneDescriptionMode,
-    sceneDescriptionTouched,
-  ]);
-
   const compactStoryboardLinkMetadata = useMemo(
     () =>
       buildStoryboardPreviewLinkMetadata({
@@ -936,6 +1004,14 @@ export default function Page() {
       source: "build",
       leadAnimal: predator,
       opposingAnimal: prey,
+      storyMode,
+      encounterMode,
+      endingMode,
+      viralLane,
+      violenceLevel,
+      habitatRegion,
+      season,
+      timeOfDay,
       environment: finalEnvironment,
       lighting: weather,
       visualStyle: [
@@ -959,6 +1035,14 @@ export default function Page() {
       durationLane,
       emotionalTone,
       finalEnvironment,
+      storyMode,
+      encounterMode,
+      endingMode,
+      viralLane,
+      violenceLevel,
+      habitatRegion,
+      season,
+      timeOfDay,
       predator,
       prey,
       previewArc,
@@ -1116,7 +1200,7 @@ export default function Page() {
                     </p>
                     <Link
                       key={compactStoryboardLinkMetadata.key}
-                      href={storyboardHref}
+                      href={currentStoryboardHref}
                       onClick={saveStoryboardHandoff}
                       aria-label={compactStoryboardLinkMetadata.ariaLabel}
                       title={compactStoryboardLinkMetadata.title}
@@ -1172,6 +1256,14 @@ export default function Page() {
               <Step1Setup
                 predator={predator}
                 prey={prey}
+                storyMode={storyMode}
+                encounterMode={encounterMode}
+                endingMode={endingMode}
+                viralLane={viralLane}
+                violenceLevel={violenceLevel}
+                habitatRegion={habitatRegion}
+                season={season}
+                timeOfDay={timeOfDay}
                 wildlifeScopeMode={wildlifeScopeMode}
                 contentLane={contentLane}
                 cameraAnglePreset={cameraAnglePreset}
@@ -1241,6 +1333,14 @@ export default function Page() {
                 }
                 onPredatorChange={setPredator}
                 onPreyChange={setPrey}
+                onStoryModeChange={setStoryMode}
+                onEncounterModeChange={setEncounterMode}
+                onEndingModeChange={setEndingMode}
+                onViralLaneChange={setViralLane}
+                onViolenceLevelChange={setViolenceLevel}
+                onHabitatRegionChange={setHabitatRegion}
+                onSeasonChange={setSeason}
+                onTimeOfDayChange={setTimeOfDay}
                 onWildlifeScopeModeChange={setWildlifeScopeMode}
                 onContentLaneChange={setContentLane}
                 onCameraAnglePresetChange={setCameraAnglePreset}

@@ -127,6 +127,76 @@ export type PlatformTarget =
 export type RealismMode = "Balanced" | "High Naturalism" | "Reference Locked";
 export type FiveShotStyle = "cinematic" | "viral";
 
+export enum StoryMode {
+  PREDATOR_VS_PREY = "PREDATOR_VS_PREY",
+  HERD_DEFENSE = "HERD_DEFENSE",
+  MOTHER_BABY = "MOTHER_BABY",
+  RIVAL_CLASH = "RIVAL_CLASH",
+  NEAR_MISS = "NEAR_MISS",
+  FISHING_STRIKE = "FISHING_STRIKE",
+  WEATHER_SURVIVAL = "WEATHER_SURVIVAL",
+  MIGRATION = "MIGRATION",
+  SCAVENGER_CONFLICT = "SCAVENGER_CONFLICT",
+}
+
+export enum EncounterMode {
+  FIRST_CONTACT = "FIRST_CONTACT",
+  PEAK_TENSION = "PEAK_TENSION",
+  ESCALATION = "ESCALATION",
+  RESOLUTION = "RESOLUTION",
+  AFTERMATH = "AFTERMATH",
+}
+
+export enum EndingMode {
+  ESCAPE = "ESCAPE",
+  STANDOFF = "STANDOFF",
+  DOMINANT_WIN = "DOMINANT_WIN",
+  UNRESOLVED = "UNRESOLVED",
+  PROTECTED_EXIT = "PROTECTED_EXIT",
+  SEASONAL_DEPARTURE = "SEASONAL_DEPARTURE",
+}
+
+export enum ViralLane {
+  TENSION = "TENSION",
+  TENDERNESS = "TENDERNESS",
+  AWE = "AWE",
+  POWER = "POWER",
+  UNDERDOG = "UNDERDOG",
+  SURVIVAL = "SURVIVAL",
+  SPECTACLE = "SPECTACLE",
+}
+
+export enum HabitatRegion {
+  YELLOWSTONE = "YELLOWSTONE",
+  ALASKA = "ALASKA",
+  GREAT_PLAINS = "GREAT_PLAINS",
+  PACIFIC_NORTHWEST = "PACIFIC_NORTHWEST",
+  EVERGLADES = "EVERGLADES",
+  ROCKY_MOUNTAINS = "ROCKY_MOUNTAINS",
+  APPALACHIA = "APPALACHIA",
+  SOUTHWEST_DESERT = "SOUTHWEST_DESERT",
+  COASTAL_WETLANDS = "COASTAL_WETLANDS",
+}
+
+export enum ViolenceLevel {
+  DISPLAY_ONLY = 1,
+  IMPLIED_PRESSURE = 2,
+  NON_GRAPHIC_STRUGGLE = 3,
+}
+
+export type OffspringLabel = "cub" | "fawn" | "calf" | "pup" | "kit";
+export type StrikeMethod = "POUNCE" | "DIVE" | "SWIPE" | "CHASE" | "AMBUSH";
+export type EscapeDirection = "WATER" | "UPHILL" | "BRUSH" | "OPEN_FIELD";
+export type WeatherHazard = "BLIZZARD" | "ICE" | "FLOOD" | "DROUGHT" | "HEAT";
+export type Season = "SPRING" | "SUMMER" | "FALL" | "WINTER" | "MIGRATION_SEASON";
+export type TimeOfDay =
+  | "DAWN"
+  | "GOLDEN_HOUR"
+  | "MIDDAY"
+  | "DUSK"
+  | "BLUE_HOUR"
+  | "NIGHT";
+
 export type DurationLane = "short" | "medium" | "long";
 export type PipelineStyle = "4-shot" | "long-hybrid-4-shot";
 
@@ -475,6 +545,22 @@ export type PackageLockState = Record<PackageLockKey, boolean>;
 export type BuildWorkflowPresetSnapshot = {
   predator: string;
   prey: string;
+  storyMode?: StoryMode;
+  encounterMode?: EncounterMode;
+  endingMode?: EndingMode;
+  viralLane?: ViralLane;
+  violenceLevel?: ViolenceLevel;
+  habitatRegion?: HabitatRegion;
+  subjectA?: string;
+  subjectB?: string;
+  groupCount?: number;
+  offspringLabel?: OffspringLabel;
+  strikeMethod?: StrikeMethod;
+  escapeDirection?: EscapeDirection;
+  weatherHazard?: WeatherHazard;
+  rutSeason?: boolean;
+  season?: Season;
+  timeOfDay?: TimeOfDay;
   wildlifeScopeMode: WildlifeScopeMode;
   contentLane: ContentLane;
   actionStyle: ActionStylePreset;
@@ -996,6 +1082,14 @@ export type GeneratedPackage = {
   preyName?: string;
   arcName?: Arc;
   wildlifeScopeMode?: WildlifeScopeMode;
+  storyMode?: StoryMode;
+  encounterMode?: EncounterMode;
+  endingMode?: EndingMode;
+  viralLane?: ViralLane;
+  violenceLevel?: ViolenceLevel;
+  habitatRegion?: HabitatRegion;
+  season?: Season;
+  timeOfDay?: TimeOfDay;
   environmentName?: string;
   weatherName?: Weather;
   cameraAnglePreset?: CameraAnglePreset;

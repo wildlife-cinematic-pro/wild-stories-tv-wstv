@@ -40,7 +40,15 @@ import type {
   PredatorInfo,
   CustomPredatorForm,
   HabitatPreset,
+  HabitatRegion,
+  EncounterMode,
+  EndingMode,
   PipelineStyle,
+  Season,
+  StoryMode,
+  TimeOfDay,
+  ViralLane,
+  ViolenceLevel,
   WildlifeScopeMode,
   BuildWorkflowPresetSnapshot,
   GeneratedPackage,
@@ -161,6 +169,14 @@ export type StoredSettings = {
   contentLane?: ContentLane;
   cameraAnglePreset?: CameraAnglePreset;
   wildlifeScopeMode?: WildlifeScopeMode;
+  storyMode?: StoryMode;
+  encounterMode?: EncounterMode;
+  endingMode?: EndingMode;
+  viralLane?: ViralLane;
+  violenceLevel?: ViolenceLevel;
+  habitatRegion?: HabitatRegion;
+  season?: Season;
+  timeOfDay?: TimeOfDay;
 };
 
 export function readSettings(): StoredSettings {

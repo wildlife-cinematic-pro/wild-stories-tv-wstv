@@ -1,3 +1,12 @@
+import {
+  EncounterMode,
+  EndingMode,
+  HabitatRegion,
+  StoryMode,
+  ViralLane,
+  ViolenceLevel,
+} from "@/types";
+
 import type {
   AIProvider,
   ActionStylePreset,
@@ -15,10 +24,12 @@ import type {
   RealismMode,
   RunwayModel,
   SavedWorkflowPresetPack,
+  Season,
   SavedWorkflowPreset,
   WorkflowPresetExportPayload,
   WorkflowPresetImportReport,
   WorkflowPresetPackExportPayload,
+  TimeOfDay,
   WorkflowPresetPackImportReport,
 } from "@/types";
 
@@ -46,6 +57,27 @@ export const WORKFLOW_PRESET_EXPORT_SCHEMA = "wstv.workflow-presets";
 export const WORKFLOW_PRESET_EXPORT_VERSION = 1;
 export const WORKFLOW_PRESET_PACK_EXPORT_SCHEMA = "wstv.workflow-preset-pack";
 export const WORKFLOW_PRESET_PACK_EXPORT_VERSION = 1;
+
+const storyModeOptions = Object.values(StoryMode);
+const encounterModeOptions = Object.values(EncounterMode);
+const endingModeOptions = Object.values(EndingMode);
+const viralLaneOptions = Object.values(ViralLane);
+const habitatRegionOptions = Object.values(HabitatRegion);
+const seasonOptions: Season[] = [
+  "SPRING",
+  "SUMMER",
+  "FALL",
+  "WINTER",
+  "MIGRATION_SEASON",
+];
+const timeOfDayOptions: TimeOfDay[] = [
+  "DAWN",
+  "GOLDEN_HOUR",
+  "MIDDAY",
+  "DUSK",
+  "BLUE_HOUR",
+  "NIGHT",
+];
 
 export type WorkflowTestPreset = {
   id: string;
@@ -279,6 +311,17 @@ function pickOption<T extends string>(
     : fallback;
 }
 
+function pickViolenceLevel(value: unknown): ViolenceLevel {
+  return value === 2 || value === 3
+    ? (value as ViolenceLevel)
+    : ViolenceLevel.DISPLAY_ONLY;
+}
+
+function cleanOptionalString(value: unknown): string | undefined {
+  const text = cleanString(value);
+  return text || undefined;
+}
+
 function makePresetId(now = Date.now()): string {
   return `preset_${now.toString(36)}_${Math.random().toString(36).slice(2, 9)}`;
 }
@@ -419,6 +462,46 @@ export function normalizeWorkflowPresetSnapshot(
   return {
     predator,
     prey,
+    storyMode: pickOption(value.storyMode, storyModeOptions, StoryMode.PREDATOR_VS_PREY),
+    encounterMode: pickOption(
+      value.encounterMode,
+      encounterModeOptions,
+      EncounterMode.PEAK_TENSION
+    ),
+    endingMode: pickOption(value.endingMode, endingModeOptions, EndingMode.ESCAPE),
+    viralLane: pickOption(value.viralLane, viralLaneOptions, ViralLane.TENSION),
+    violenceLevel: pickViolenceLevel(value.violenceLevel),
+    habitatRegion: pickOption(
+      value.habitatRegion,
+      habitatRegionOptions,
+      HabitatRegion.YELLOWSTONE
+    ),
+    subjectA: cleanOptionalString(value.subjectA) ?? predator,
+    subjectB: cleanOptionalString(value.subjectB) ?? prey,
+    groupCount: typeof value.groupCount === "number" ? value.groupCount : undefined,
+    offspringLabel: pickOption(
+      value.offspringLabel,
+      ["cub", "fawn", "calf", "pup", "kit"] as const,
+      "cub"
+    ),
+    strikeMethod: pickOption(
+      value.strikeMethod,
+      ["POUNCE", "DIVE", "SWIPE", "CHASE", "AMBUSH"] as const,
+      "AMBUSH"
+    ),
+    escapeDirection: pickOption(
+      value.escapeDirection,
+      ["WATER", "UPHILL", "BRUSH", "OPEN_FIELD"] as const,
+      "BRUSH"
+    ),
+    weatherHazard: pickOption(
+      value.weatherHazard,
+      ["BLIZZARD", "ICE", "FLOOD", "DROUGHT", "HEAT"] as const,
+      "BLIZZARD"
+    ),
+    rutSeason: cleanBoolean(value.rutSeason, false),
+    season: pickOption(value.season, seasonOptions, "FALL"),
+    timeOfDay: pickOption(value.timeOfDay, timeOfDayOptions, "GOLDEN_HOUR"),
     wildlifeScopeMode: normalizeWildlifeScopeMode(
       value.wildlifeScopeMode,
       defaultWildlifeScopeMode

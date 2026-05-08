@@ -19,16 +19,24 @@ import { isDurationLane } from "@/lib/duration-lanes";
 import type {
   AIProvider,
   Arc,
+  EncounterMode,
+  EndingMode,
   CameraAnglePreset,
   ContentLane,
   DurationLane,
   HookFamily,
   DepthMode,
   HabitatPreset,
+  HabitatRegion,
   KlingModel,
   WildlifeScopeMode,
   RealismMode,
   RunwayModel,
+  Season,
+  StoryMode,
+  TimeOfDay,
+  ViralLane,
+  ViolenceLevel,
   Weather,
 } from "@/types";
 
@@ -37,6 +45,14 @@ type HookMode = HookFamily | "all";
 type UseBuildPersistenceInput = {
   predator: string;
   prey: string;
+  storyMode: StoryMode;
+  encounterMode: EncounterMode;
+  endingMode: EndingMode;
+  viralLane: ViralLane;
+  violenceLevel: ViolenceLevel;
+  habitatRegion: HabitatRegion;
+  season: Season;
+  timeOfDay: TimeOfDay;
   arc: Arc;
   wildlifeScopeMode: WildlifeScopeMode;
   contentLane: ContentLane;
@@ -60,6 +76,14 @@ type UseBuildPersistenceInput = {
   autoApplyHighDrift: boolean;
   setPredator: Dispatch<SetStateAction<string>>;
   setPrey: Dispatch<SetStateAction<string>>;
+  setStoryMode: Dispatch<SetStateAction<StoryMode>>;
+  setEncounterMode: Dispatch<SetStateAction<EncounterMode>>;
+  setEndingMode: Dispatch<SetStateAction<EndingMode>>;
+  setViralLane: Dispatch<SetStateAction<ViralLane>>;
+  setViolenceLevel: Dispatch<SetStateAction<ViolenceLevel>>;
+  setHabitatRegion: Dispatch<SetStateAction<HabitatRegion>>;
+  setSeason: Dispatch<SetStateAction<Season>>;
+  setTimeOfDay: Dispatch<SetStateAction<TimeOfDay>>;
   setArc: Dispatch<SetStateAction<Arc>>;
   setWildlifeScopeMode: Dispatch<SetStateAction<WildlifeScopeMode>>;
   setContentLane: Dispatch<SetStateAction<ContentLane>>;
@@ -101,9 +125,103 @@ function isAIProvider(value: unknown): value is AIProvider {
   );
 }
 
+function isStoryMode(value: unknown): value is StoryMode {
+  return typeof value === "string" && [
+    "PREDATOR_VS_PREY",
+    "HERD_DEFENSE",
+    "MOTHER_BABY",
+    "RIVAL_CLASH",
+    "NEAR_MISS",
+    "FISHING_STRIKE",
+    "WEATHER_SURVIVAL",
+    "MIGRATION",
+    "SCAVENGER_CONFLICT",
+  ].includes(value);
+}
+
+function isEncounterMode(value: unknown): value is EncounterMode {
+  return typeof value === "string" && [
+    "FIRST_CONTACT",
+    "PEAK_TENSION",
+    "ESCALATION",
+    "RESOLUTION",
+    "AFTERMATH",
+  ].includes(value);
+}
+
+function isEndingMode(value: unknown): value is EndingMode {
+  return typeof value === "string" && [
+    "ESCAPE",
+    "STANDOFF",
+    "DOMINANT_WIN",
+    "UNRESOLVED",
+    "PROTECTED_EXIT",
+    "SEASONAL_DEPARTURE",
+  ].includes(value);
+}
+
+function isViralLane(value: unknown): value is ViralLane {
+  return typeof value === "string" && [
+    "TENSION",
+    "TENDERNESS",
+    "AWE",
+    "POWER",
+    "UNDERDOG",
+    "SURVIVAL",
+    "SPECTACLE",
+  ].includes(value);
+}
+
+function isHabitatRegion(value: unknown): value is HabitatRegion {
+  return typeof value === "string" && [
+    "YELLOWSTONE",
+    "ALASKA",
+    "GREAT_PLAINS",
+    "PACIFIC_NORTHWEST",
+    "EVERGLADES",
+    "ROCKY_MOUNTAINS",
+    "APPALACHIA",
+    "SOUTHWEST_DESERT",
+    "COASTAL_WETLANDS",
+  ].includes(value);
+}
+
+function isSeason(value: unknown): value is Season {
+  return typeof value === "string" && [
+    "SPRING",
+    "SUMMER",
+    "FALL",
+    "WINTER",
+    "MIGRATION_SEASON",
+  ].includes(value);
+}
+
+function isTimeOfDay(value: unknown): value is TimeOfDay {
+  return typeof value === "string" && [
+    "DAWN",
+    "GOLDEN_HOUR",
+    "MIDDAY",
+    "DUSK",
+    "BLUE_HOUR",
+    "NIGHT",
+  ].includes(value);
+}
+
+function isViolenceLevel(value: unknown): value is ViolenceLevel {
+  return value === 1 || value === 2 || value === 3;
+}
+
 export function useBuildPersistence({
   predator,
   prey,
+  storyMode,
+  encounterMode,
+  endingMode,
+  viralLane,
+  violenceLevel,
+  habitatRegion,
+  season,
+  timeOfDay,
   arc,
   wildlifeScopeMode,
   contentLane,
@@ -127,6 +245,14 @@ export function useBuildPersistence({
   autoApplyHighDrift,
   setPredator,
   setPrey,
+  setStoryMode,
+  setEncounterMode,
+  setEndingMode,
+  setViralLane,
+  setViolenceLevel,
+  setHabitatRegion,
+  setSeason,
+  setTimeOfDay,
   setArc,
   setWildlifeScopeMode,
   setContentLane,
@@ -208,11 +334,32 @@ export function useBuildPersistence({
       setCameraAnglePreset(saved.cameraAnglePreset);
     }
 
+    if (isStoryMode(saved?.storyMode)) setStoryMode(saved.storyMode);
+    if (isEncounterMode(saved?.encounterMode)) setEncounterMode(saved.encounterMode);
+    if (isEndingMode(saved?.endingMode)) setEndingMode(saved.endingMode);
+    if (isViralLane(saved?.viralLane)) setViralLane(saved.viralLane);
+    if (isViolenceLevel(saved?.violenceLevel)) {
+      setViolenceLevel(saved.violenceLevel);
+    }
+    if (isHabitatRegion(saved?.habitatRegion)) {
+      setHabitatRegion(saved.habitatRegion);
+    }
+    if (isSeason(saved?.season)) setSeason(saved.season);
+    if (isTimeOfDay(saved?.timeOfDay)) setTimeOfDay(saved.timeOfDay);
+
     const autoApply = (saved as Record<string, unknown>)?.autoApplyHighDrift;
     if (typeof autoApply === "boolean") setAutoApplyHighDrift(autoApply);
   }, [
     setPredator,
     setPrey,
+    setStoryMode,
+    setEncounterMode,
+    setEndingMode,
+    setViralLane,
+    setViolenceLevel,
+    setHabitatRegion,
+    setSeason,
+    setTimeOfDay,
     setArc,
     setWildlifeScopeMode,
     setContentLane,
@@ -258,6 +405,14 @@ export function useBuildPersistence({
       cameraAnglePreset,
     });
   }, [
+    storyMode,
+    encounterMode,
+    endingMode,
+    viralLane,
+    violenceLevel,
+    habitatRegion,
+    season,
+    timeOfDay,
     activeProvider,
     runwayModel,
     klingModel,

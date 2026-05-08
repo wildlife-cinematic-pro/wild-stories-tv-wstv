@@ -13,7 +13,10 @@ import type {
   ContentLane,
   DepthMode,
   EmotionalTone,
+  EncounterMode,
+  EndingMode,
   GeneratedPackage,
+  HabitatRegion,
   HookFamily,
   KlingModel,
   MediaAnalysisResult,
@@ -24,6 +27,11 @@ import type {
   PromptVersion,
   RealismMode,
   RunwayModel,
+  Season,
+  StoryMode,
+  TimeOfDay,
+  ViralLane,
+  ViolenceLevel,
   Weather,
 } from "@/types";
 import { copyPolishEndpointResponseSchema } from "@/lib/schemas";
@@ -54,6 +62,14 @@ type ActivePromotedPublishCopyOverride =
 interface UseBuildGenerationActionsInput {
   predator: string;
   prey: string;
+  storyMode: StoryMode;
+  encounterMode: EncounterMode;
+  endingMode: EndingMode;
+  viralLane: ViralLane;
+  violenceLevel: ViolenceLevel;
+  habitatRegion: HabitatRegion;
+  season: Season;
+  timeOfDay: TimeOfDay;
   arc: Arc;
   previewArc: Arc;
   contentLane: ContentLane;
@@ -109,6 +125,14 @@ interface UseBuildGenerationActionsInput {
 export function useBuildGenerationActions({
   predator,
   prey,
+  storyMode,
+  encounterMode,
+  endingMode,
+  viralLane,
+  violenceLevel,
+  habitatRegion,
+  season,
+  timeOfDay,
   arc,
   previewArc,
   contentLane,
@@ -373,9 +397,21 @@ export function useBuildGenerationActions({
 
       if (activeGenerationIdRef.current !== requestId) return;
 
-      setPkg(finalPkg);
+      const finalPkgWithStoryState = {
+        ...finalPkg,
+        storyMode,
+        encounterMode,
+        endingMode,
+        viralLane,
+        violenceLevel,
+        habitatRegion,
+        season,
+        timeOfDay,
+      };
+
+      setPkg(finalPkgWithStoryState);
       setPublishFlowSummary(publishFlowSummary);
-      appendGenerationVersion(finalPkg, "GENERATE");
+      appendGenerationVersion(finalPkgWithStoryState, "GENERATE");
       onGenerated();
     } catch (e) {
       console.error("[generate error]", e);
@@ -412,11 +448,23 @@ export function useBuildGenerationActions({
 
       if (activeGenerationIdRef.current !== requestId) return;
 
-      setPkg(finalPkg);
+      const finalPkgWithStoryState = {
+        ...finalPkg,
+        storyMode,
+        encounterMode,
+        endingMode,
+        viralLane,
+        violenceLevel,
+        habitatRegion,
+        season,
+        timeOfDay,
+      };
+
+      setPkg(finalPkgWithStoryState);
       setPublishFlowSummary(
-        syncPublishSummaryWithPackage(finalPkg, publishFlowSummary)
+        syncPublishSummaryWithPackage(finalPkgWithStoryState, publishFlowSummary)
       );
-      appendGenerationVersion(finalPkg, "REGENERATE UNLOCKED");
+      appendGenerationVersion(finalPkgWithStoryState, "REGENERATE UNLOCKED");
       onGenerated();
     } catch (e) {
       console.error("[regenerate unlocked error]", e);
