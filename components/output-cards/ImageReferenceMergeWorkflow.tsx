@@ -25,6 +25,7 @@ type MergeStage = {
   title: string;
   subStage: string;
   stageDirection: string;
+  composition: string;
 };
 
 const OPTIONAL_GPT_IMAGE_2_BACKUP_NOTE =
@@ -33,6 +34,9 @@ const OPTIONAL_GPT_IMAGE_2_BACKUP_NOTE =
 const OPTIONAL_RUNWAY_REFERENCE_NOTE =
   "If using Runway Gen-4 References later, save references as @lead_animal, @opposite_animal, and @environment, then use exactly 3 active references.";
 
+const FINAL_MERGE_NEGATIVE_PROMPT =
+  "Negative prompt: blood, gore, visible wounds, torn flesh, exposed injury, broken bones, dead animal, graphic injury, extra limbs, duplicate animals, fused bodies, melted anatomy, distorted face, floating animals, wrong scale, wrong habitat, humans, vehicles, fences, zoo enclosure, text, subtitles, watermark, logo, cartoon, CGI, plastic texture, excessive blur, excessive camera shake.";
+
 const MERGE_STAGES: MergeStage[] = [
   {
     number: 1,
@@ -40,6 +44,8 @@ const MERGE_STAGES: MergeStage[] = [
     subStage: "First-frame hook",
     stageDirection:
       "opening tension with both animals visible, a readable attack or escape lane, and the first clear survival pressure beat.",
+    composition:
+      "Lead animal on the left in a readable pressure-ready posture, opposite animal on the right in a readable survival-reaction posture, both full-body visible with no contact, one clear open attack/escape corridor between them, strong first-frame hook, quiet tension before movement.",
   },
   {
     number: 2,
@@ -47,6 +53,8 @@ const MERGE_STAGES: MergeStage[] = [
     subStage: "Spacing tightens",
     stageDirection:
       "pressure build as spacing tightens, body angles become more committed, and the terrain still leaves clean full-body readability.",
+    composition:
+      "Lead animal lower and more forward, opposite animal braced and turning into escape, spacing tighter but still clean, full bodies readable, pressure lane narrowing through terrain, no collision, no injury, rising survival tension.",
   },
   {
     number: 3,
@@ -54,6 +62,8 @@ const MERGE_STAGES: MergeStage[] = [
     subStage: "Strongest non-graphic action beat",
     stageDirection:
       "peak action with the strongest non-graphic motion implication, near-clash pressure, grounded anatomy, and no visible injury.",
+    composition:
+      "Highest intensity near-clash frame, lead animal surging through the lane, opposite animal dodging or pivoting away, powerful body mechanics, clean separation, no bite, no blood, no visible injury, realistic scale and grounded contact.",
   },
   {
     number: 4,
@@ -61,6 +71,8 @@ const MERGE_STAGES: MergeStage[] = [
     subStage: "Unresolved tension",
     stageDirection:
       "resolve or aftermath with unresolved survival tension, stable spacing, and a replay-worthy final composition.",
+    composition:
+      "Aftermath or unresolved exit frame, both animals still readable in the same environment, lead animal holding pressure or slowing, opposite animal partially escaped but still threatened, clean final source frame, unresolved tension that invites replay.",
   },
 ];
 
@@ -76,6 +88,45 @@ function cleanText(value: unknown, fallback: string) {
   return text || fallback;
 }
 
+function slugifyReferenceName(value: string, fallback: string, suffix?: string) {
+  const normalized = String(value || fallback)
+    .trim()
+    .toLowerCase()
+    .replace(/white[-\s]+tailed/g, "white tailed");
+
+  if (normalized.includes("mountain lion")) return "mountain_lion";
+  if (normalized.includes("white tailed deer")) return "white_tailed_deer";
+  if (
+    suffix === "env" &&
+    normalized.includes("forest") &&
+    normalized.includes("brush") &&
+    normalized.includes("opening")
+  ) {
+    return "forest_edge_brush_opening_env";
+  }
+
+  const slug =
+    normalized
+      .replace(/[^a-z0-9]+/g, "_")
+      .replace(/^_+|_+$/g, "") || fallback;
+
+  return suffix && !slug.endsWith(`_${suffix}`) ? `${slug}_${suffix}` : slug;
+}
+
+function strengthenReferencePrompt(prompt: string, role: "lead" | "opposite" | "environment") {
+  const roleLine =
+    role === "environment"
+      ? "Nano Banana 2 primary reference target: empty habitat plate, 9:16 vertical, 4K if available, strong terrain readability, natural lighting direction, foreground/midground/background depth, open central action lane, no animals."
+      : "Nano Banana 2 primary reference target: single animal only, 9:16 vertical, 4K if available, clean full-body silhouette, accurate species anatomy, readable face profile, natural coat/skin texture, grounded contact, uncluttered habitat-compatible ground, no action clash.";
+
+  return [
+    prompt,
+    "",
+    roleLine,
+    "Write as a clear natural-language visual brief, not a keyword pile. Prioritize identity fidelity, anatomy, clean spacing, realistic scale, and a reusable production reference frame. Optional GPT Image 2 backup: use the same prompt if Nano Banana 2 output drifts or anatomy fails.",
+  ].join("\n");
+}
+
 function buildMergeMasterPrompt({
   leadAnimalName,
   oppositeAnimalName,
@@ -89,17 +140,27 @@ function buildMergeMasterPrompt({
   lightingName: string;
   stage: MergeStage;
 }) {
+  const leadTag = `@${slugifyReferenceName(leadAnimalName, "mountain_lion")}`;
+  const oppositeTag = `@${slugifyReferenceName(oppositeAnimalName, "white_tailed_deer")}`;
+  const environmentTag = `@${slugifyReferenceName(environmentName, "forest_edge_brush_opening", "env")}`;
+
   return [
-    "Use the 3 reference images:",
+    "Nano Banana 2 primary final merge master-image prompt. Use a natural-language cinematic brief with clear reference roles, layered scene construction, and photographic direction.",
     "",
-    "1. Lead animal reference image",
-    "2. Opposite animal reference image",
-    "3. Environment reference image",
+    `Use exactly 3 active Runway references: ${leadTag}, ${oppositeTag}, ${environmentTag}.`,
+    `Use ${leadTag} only for ${leadAnimalName} identity: coat/skin pattern, head profile, body scale, species markers, natural anatomy, and grounded paw/foot contact.`,
+    `Use ${oppositeTag} only for ${oppositeAnimalName} identity: coat pattern, body scale, legs, hoof/paw shape, head angle, natural anatomy, and grounded hoof/foot contact.`,
+    `Use ${environmentTag} only for background, lighting direction, ground texture, terrain depth, habitat structure, and atmosphere.`,
     "",
-    `Merge these into one continuity-safe 9:16 wildlife documentary master image for ${stage.title}.`,
-    `Preserve ${leadAnimalName} identity from the lead animal reference, ${oppositeAnimalName} identity from the opposite animal reference, and habitat / lighting / terrain from the environment reference: ${environmentName}, ${lightingName}.`,
-    `Stage direction: ${stage.stageDirection}`,
-    "Keep photorealistic wildlife documentary realism, grounded contact, full-body readability, clean spacing, realistic animal scale, no text, no watermark, no gore, no blood, no visible injury.",
+    `Final image goal: ${stage.title}. Photorealistic wildlife documentary final scene master image, 9:16 vertical, 4K if available, video-ready source frame for a hybrid wildlife reel.`,
+    `Layer the scene from background to foreground: first preserve ${environmentName} as the habitat plate with ${lightingName}, terrain depth, ambush lanes, ground plane, atmospheric depth, and natural color temperature; then place the two identity-locked animals into that environment with believable scale and spacing.`,
+    `${stage.composition}`,
+    `Keep ${leadAnimalName} and ${oppositeAnimalName} full-body readable from ears/head through legs/feet/tail, with stable anatomy, correct limb count, realistic muscle/bone landmarks, grounded paw and hoof contact, clean silhouettes, no fused bodies, and no duplicated animals.`,
+    "Cinematic telephoto documentary framing, low natural camera height, strong subject separation, clear attack/escape corridor, realistic body mass, habitat-accurate terrain contact, natural depth of field, sharp animal detail, controlled background detail, no over-stylized CGI look.",
+    `Purpose: ${stage.stageDirection}`,
+    "Safety and realism: clean survival tension only, no visible injury, no graphic outcome, no humans, no vehicles, no fences, no zoo enclosure, no text, no watermark.",
+    "",
+    FINAL_MERGE_NEGATIVE_PROMPT,
   ].join("\n");
 }
 
@@ -155,9 +216,12 @@ function buildReferencePrompts(data: GeneratedPackage) {
         title: "Lead Animal Master Image",
         helper: "Create the reusable lead animal reference in Nano Banana 2 first.",
         badge: "Nano Banana 2 Primary · GPT Image 2 Backup",
-        prompt: leadPrompt.replace(
-          /production-ready [^.]+ reference\./,
-          "production-ready Nano Banana 2 primary master reference with GPT Image 2 backup support."
+        prompt: strengthenReferencePrompt(
+          leadPrompt.replace(
+            /production-ready [^.]+ reference\./,
+            "production-ready Nano Banana 2 primary master reference with GPT Image 2 backup support."
+          ),
+          "lead"
         ),
         copyLabel: "Lead Reference",
         tone: "amber",
@@ -169,9 +233,12 @@ function buildReferencePrompts(data: GeneratedPackage) {
         title: "Opposite Animal Master Image",
         helper: "Create the reusable opposite animal reference in Nano Banana 2 first.",
         badge: "Nano Banana 2 Primary · GPT Image 2 Backup",
-        prompt: oppositePrompt.replace(
-          /production-ready [^.]+ reference\./,
-          "production-ready Nano Banana 2 primary master reference with GPT Image 2 backup support."
+        prompt: strengthenReferencePrompt(
+          oppositePrompt.replace(
+            /production-ready [^.]+ reference\./,
+            "production-ready Nano Banana 2 primary master reference with GPT Image 2 backup support."
+          ),
+          "opposite"
         ),
         copyLabel: "Opposite Reference",
         tone: "amber",
@@ -183,7 +250,7 @@ function buildReferencePrompts(data: GeneratedPackage) {
         title: "Environment Master Image",
         helper: "Create the reusable habitat, terrain, and lighting reference in Nano Banana 2 first.",
         badge: "Nano Banana 2 Primary · GPT Image 2 Backup",
-        prompt: environmentPrompt,
+        prompt: strengthenReferencePrompt(environmentPrompt, "environment"),
         copyLabel: "Environment Reference",
         tone: "indigo",
         backupNote: OPTIONAL_GPT_IMAGE_2_BACKUP_NOTE,
@@ -343,7 +410,6 @@ export default function ImageReferenceMergeWorkflow({
     copyLabel: `Merge ${stage.number}`,
     tone: "emerald",
     backupNote: OPTIONAL_GPT_IMAGE_2_BACKUP_NOTE,
-    runwayNote: OPTIONAL_RUNWAY_REFERENCE_NOTE,
   }));
 
   const allPrompts = [
