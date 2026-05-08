@@ -3,11 +3,13 @@
 import { useState } from "react";
 
 import SceneRelationshipCard from "@/components/build/scene-relationship-card";
+import StoryModePresetsPanel from "@/components/build/story-mode-presets-panel";
 import StoryModeSubjectFields from "@/components/build/story-mode-subject-fields";
 import WildlifeStoryModeSelector from "@/components/build/wildlife-story-mode-selector";
 import WorkflowPresetsPanel from "@/components/build/workflow-presets-panel";
 
 import { WORKFLOW_TEST_PRESETS } from "@/lib/workflow-presets";
+import type { StoryModePreset } from "@/lib/story-mode-presets";
 import { contentLaneOptions } from "@/lib/content-lanes";
 import {
   cameraAnglePresetOptions,
@@ -171,6 +173,7 @@ type Step1SetupProps = {
   onEmotionalToneChange: (value: EmotionalTone) => void;
   onAnimalVibeChange: (value: AnimalVibe) => void;
   onApplyWorkflowTestPreset: (presetId: string) => void;
+  onApplyStoryModePreset: (preset: StoryModePreset) => void;
   onResetDefaults: () => void;
   onContinue: () => void;
   onOpenCustomAnimal: () => void;
@@ -307,6 +310,7 @@ export default function Step1Setup({
   onEmotionalToneChange,
   onAnimalVibeChange,
   onApplyWorkflowTestPreset,
+  onApplyStoryModePreset,
   onResetDefaults,
   onContinue,
   onOpenCustomAnimal,
@@ -580,6 +584,11 @@ export default function Step1Setup({
         <WildlifeStoryModeSelector
           value={storyMode}
           onChange={onStoryModeChange}
+        />
+
+        <StoryModePresetsPanel
+          activeStoryMode={storyMode}
+          onApplyPreset={onApplyStoryModePreset}
         />
 
         <SceneRelationshipCard

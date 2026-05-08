@@ -59,6 +59,7 @@ import {
 import { DEFAULT_CAMERA_ANGLE_PRESET } from "@/lib/camera-angle-presets";
 import { buildStoryboardPreviewLinkMetadata } from "@/lib/storyboard-link-metadata";
 import { WORKFLOW_TEST_PRESETS } from "@/lib/workflow-presets";
+import type { StoryModePreset } from "@/lib/story-mode-presets";
 import {
   appendCreatorQaRun,
   buildCreatorQaRun,
@@ -367,6 +368,31 @@ export default function Page() {
     },
     [predator, prey]
   );
+
+  const handleApplyStoryModePreset = useCallback((preset: StoryModePreset) => {
+    setStoryMode(preset.storyMode);
+    setEncounterMode(preset.encounterMode);
+    setEndingMode(preset.endingMode);
+    setViralLane(preset.viralLane);
+    setViolenceLevel(preset.violenceLevel);
+    setHabitatRegion(preset.habitatRegion);
+    setSeason(preset.season);
+    setTimeOfDay(preset.timeOfDay);
+    setSubjectA(preset.subjectA);
+    setSubjectB(preset.subjectB);
+    setGroupCount(preset.groupCount);
+    setOffspringLabel(preset.offspringLabel ?? DEFAULT_OFFSPRING_LABEL);
+    setStrikeMethod(preset.strikeMethod ?? DEFAULT_STRIKE_METHOD);
+    setEscapeDirection(preset.escapeDirection ?? DEFAULT_ESCAPE_DIRECTION);
+    setWeatherHazard(preset.weatherHazard ?? DEFAULT_WEATHER_HAZARD);
+    setRutSeason(preset.rutSeason ?? false);
+    setFoodItem(preset.foodItem);
+    setSceneDescription(preset.sceneDescription);
+    setSceneDescriptionMode("manual");
+    setSceneDescriptionTouched(true);
+    setSceneDescriptionVariant((current) => current + 1);
+    setPromotedPublishCopyOverride(null);
+  }, []);
 
   useBuildPersistence({
     predator,
@@ -1531,6 +1557,7 @@ export default function Page() {
                 onEmotionalToneChange={setEmotionalTone}
                 onAnimalVibeChange={setAnimalVibe}
                 onApplyWorkflowTestPreset={handleApplyWorkflowTestPreset}
+                onApplyStoryModePreset={handleApplyStoryModePreset}
                 onResetDefaults={handleResetDefaults}
                 onContinue={() => setStep(2)}
                 onWorkflowPresetNameChange={workflowPresetControls.setPresetName}
