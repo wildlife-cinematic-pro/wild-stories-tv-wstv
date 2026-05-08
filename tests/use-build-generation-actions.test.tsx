@@ -87,6 +87,7 @@ describe("useBuildGenerationActions", () => {
         sceneDescription: "Readable mountain standoff with clean spacing and first-frame tension.",
         mediaAnalysis: null,
         activeProvider: "none",
+        autoFallback: false,
         activePromotedPublishCopyOverride: null,
         previewHook2026: ["The deer turns too late."],
         previewPrimaryHook: "The deer turns too late.",

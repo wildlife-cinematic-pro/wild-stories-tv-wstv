@@ -66,6 +66,7 @@ type Step3GenerateProps = {
   prey: string;
   contentLane: ContentLane;
   activeProvider: AIProvider;
+  autoFallback: boolean;
   arc: string;
   habitat: string;
   weather: string;
@@ -76,6 +77,7 @@ type Step3GenerateProps = {
   finalEnvironment: string;
   sceneDescription: string;
   onActiveProviderChange: (provider: AIProvider) => void;
+  onAutoFallbackChange: (enabled: boolean) => void;
   onGenerate: () => void;
   onRegenerateUnlocked: () => void;
   isGenerating: boolean;
@@ -110,6 +112,7 @@ export default function Step3Generate({
   prey,
   contentLane,
   activeProvider,
+  autoFallback,
   arc,
   habitat,
   weather,
@@ -120,6 +123,7 @@ export default function Step3Generate({
   finalEnvironment,
   sceneDescription,
   onActiveProviderChange,
+  onAutoFallbackChange,
   onGenerate,
   onRegenerateUnlocked,
   isGenerating,
@@ -451,7 +455,11 @@ export default function Step3Generate({
                   <span className="block">
                     {provider.id === "none" ? provider.label : "✦ " + provider.label}
                   </span>
-                  {provider.id !== "gemini" && provider.id !== "none" ? (
+                  {isActive ? (
+                    <span className="mt-0.5 block text-[9px] font-semibold uppercase tracking-[0.08em] text-emerald-200">
+                      Selected
+                    </span>
+                  ) : provider.id !== "gemini" && provider.id !== "none" ? (
                     <span className="mt-0.5 block text-[9px] font-medium uppercase tracking-[0.08em] text-white/25">
                       {provider.kind === "fallback" ? "Fallback slot" : "Future slot"}
                     </span>
@@ -460,6 +468,70 @@ export default function Step3Generate({
               );
             })}
           </div>
+          <div className="mt-3 rounded-2xl border border-white/[0.08] bg-black/20 p-3">
+            <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
+              <div className="text-[10px] font-semibold uppercase tracking-[0.12em] text-white/35">
+                Provider Health
+              </div>
+              <div className="text-[10px] text-white/30">Safe metadata only from /api/enhance/provider-status</div>
+            </div>
+            <div className="flex flex-wrap gap-1.5">
+              {COPY_POLISH_PROVIDER_CONFIGS.map((provider) => {
+                const availability =
+                  providerAvailability[provider.id] ?? DEFAULT_PROVIDER_AVAILABILITY[provider.id];
+                const isReady = availability.enabled;
+
+                return (
+                  <span
+                    key={`health-${provider.id}`}
+                    title={availability.helperText}
+                    className={[
+                      "inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-[10px] font-semibold",
+                      isReady
+                        ? provider.id === "gemini"
+                          ? "border-emerald-400/25 bg-emerald-400/10 text-emerald-100"
+                          : provider.id === "groq"
+                            ? "border-cyan-400/25 bg-cyan-400/10 text-cyan-100"
+                            : "border-white/15 bg-white/[0.05] text-white/55"
+                        : "border-white/[0.08] bg-white/[0.02] text-white/25",
+                    ].join(" ")}
+                  >
+                    <span className={isReady ? "text-emerald-300" : "text-white/25"}>
+                      {isReady ? "Ready" : "Off"}
+                    </span>
+                    {provider.label}
+                  </span>
+                );
+              })}
+            </div>
+          </div>
+
+          <label
+            className={[
+              "mt-3 flex flex-col gap-2 rounded-xl border px-3 py-2.5 text-[11px] leading-relaxed sm:flex-row sm:items-center sm:justify-between",
+              activeProvider === "gemini"
+                ? "border-white/[0.1] bg-black/15 text-white/55"
+                : "border-white/[0.07] bg-black/10 text-white/30",
+            ].join(" ")}
+          >
+            <span>
+              <span className="block font-semibold text-white/70">Auto fallback if Gemini fails</span>
+              <span className="block text-[10px] text-white/35">
+                Default off. When enabled with Gemini selected, WSTV tries Groq only after Gemini returns no usable polish. Session-only.
+              </span>
+            </span>
+            <span className="inline-flex items-center gap-2 text-[10px] font-semibold uppercase tracking-[0.08em] text-white/45">
+              <input
+                type="checkbox"
+                checked={autoFallback}
+                disabled={activeProvider !== "gemini"}
+                onChange={(event) => onAutoFallbackChange(event.target.checked)}
+                className="h-4 w-4 rounded border-white/20 bg-black accent-cyan-300 disabled:opacity-40"
+              />
+              {autoFallback && activeProvider === "gemini" ? "On" : "Off"}
+            </span>
+          </label>
+
           <div className="mt-3 rounded-xl border border-white/[0.08] bg-black/15 px-3 py-2 text-[10px] leading-relaxed text-white/35">
             Fallback plan for future: {formatCopyPolishFallbackPlan()}. Disabled providers never receive API calls.
           </div>

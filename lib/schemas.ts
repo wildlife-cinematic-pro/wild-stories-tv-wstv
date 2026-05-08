@@ -42,6 +42,7 @@ const copyPolishBaseSchema = z
 export const copyPolishRequestSchema = z
   .object({
     provider: z.enum(["claude", "gemini", "openai", "groq", "openrouter", "huggingface"]),
+    autoFallback: z.boolean().optional().default(false),
     predator: z.string().min(1).max(64),
     prey: z.string().min(1).max(64),
     env: z.string().min(1).max(300),
@@ -55,6 +56,14 @@ export const copyPolishRequestSchema = z
 
 export type CopyPolishRequest = z.infer<typeof copyPolishRequestSchema>;
 
+const copyPolishProviderMetadataSchema = {
+  providerUsed: z
+    .enum(["claude", "gemini", "openai", "groq", "openrouter", "huggingface", "none"])
+    .optional(),
+  fallbackUsed: z.boolean().optional(),
+  fallbackReason: z.string().min(1).optional(),
+};
+
 export const copyPolishResponseSchema = z
   .object({
     aiEnhanced: z.boolean().optional(),
@@ -63,6 +72,7 @@ export const copyPolishResponseSchema = z
     caption: copyPolishFieldSchema.max(1200).optional(),
     voiceoverLine: copyPolishFieldSchema.max(800).optional(),
     improvements: copyPolishImprovementsSchema.optional(),
+    ...copyPolishProviderMetadataSchema,
   })
   .strict()
   .superRefine((value, ctx) => {
@@ -90,6 +100,7 @@ export const copyPolishSkippedResponseSchema = z
     provider: z.enum(["claude", "gemini", "openai", "groq", "openrouter", "huggingface"]),
     reason: z.string().min(1),
     message: z.string().min(1),
+    ...copyPolishProviderMetadataSchema,
   })
   .strict();
 

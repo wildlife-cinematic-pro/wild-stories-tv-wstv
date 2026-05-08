@@ -32,65 +32,97 @@ const CLAUDE_COPY_POLISH_SKIPPED_MESSAGE =
   "Claude copy polish skipped — using base generated copy.";
 
 type CopyPolishProvider = "gemini" | "openai" | "claude" | "groq" | "openrouter" | "huggingface";
+type CopyPolishProviderUsed = CopyPolishProvider | "none";
+type CopyPolishProviderMetadata = {
+  providerUsed?: CopyPolishProviderUsed;
+  fallbackUsed?: boolean;
+  fallbackReason?: string;
+};
 
-function jsonOptionalCopyPolishSkip(reason: string) {
+function withProviderMetadata<T extends Record<string, unknown>>(
+  payload: T,
+  metadata?: CopyPolishProviderMetadata
+): T & CopyPolishProviderMetadata {
+  return metadata ? { ...payload, ...metadata } : payload;
+}
+
+function jsonOptionalCopyPolishSkip(reason: string, metadata?: CopyPolishProviderMetadata) {
   return NextResponse.json(
-    {
-      skipped: true,
-      provider: "gemini",
-      reason,
-      message: GEMINI_COPY_POLISH_SKIPPED_MESSAGE,
-    },
+    withProviderMetadata(
+      {
+        skipped: true,
+        provider: "gemini",
+        reason,
+        message: GEMINI_COPY_POLISH_SKIPPED_MESSAGE,
+      },
+      metadata
+    ),
     { status: 200 }
   );
 }
 
-function jsonOpenAICopyPolishSkip(reason: string) {
+function jsonOpenAICopyPolishSkip(reason: string, metadata?: CopyPolishProviderMetadata) {
   return NextResponse.json(
-    {
-      skipped: true,
-      provider: "openai",
-      reason,
-      message: OPENAI_COPY_POLISH_SKIPPED_MESSAGE,
-    },
+    withProviderMetadata(
+      {
+        skipped: true,
+        provider: "openai",
+        reason,
+        message: OPENAI_COPY_POLISH_SKIPPED_MESSAGE,
+      },
+      metadata
+    ),
     { status: 200 }
   );
 }
 
-function jsonGroqCopyPolishSkip(reason: string) {
+function jsonGroqCopyPolishSkip(reason: string, metadata?: CopyPolishProviderMetadata) {
   return NextResponse.json(
-    {
-      skipped: true,
-      provider: "groq",
-      reason,
-      message: GROQ_COPY_POLISH_SKIPPED_MESSAGE,
-    },
+    withProviderMetadata(
+      {
+        skipped: true,
+        provider: "groq",
+        reason,
+        message: GROQ_COPY_POLISH_SKIPPED_MESSAGE,
+      },
+      metadata
+    ),
     { status: 200 }
   );
 }
 
-function jsonClaudeCopyPolishSkip(reason: string) {
+function jsonClaudeCopyPolishSkip(reason: string, metadata?: CopyPolishProviderMetadata) {
   return NextResponse.json(
-    {
-      skipped: true,
-      provider: "claude",
-      reason,
-      message: CLAUDE_COPY_POLISH_SKIPPED_MESSAGE,
-    },
+    withProviderMetadata(
+      {
+        skipped: true,
+        provider: "claude",
+        reason,
+        message: CLAUDE_COPY_POLISH_SKIPPED_MESSAGE,
+      },
+      metadata
+    ),
     { status: 200 }
   );
 }
 
-function jsonFutureCopyPolishSkip(provider: CopyPolishProvider, reason: string) {
+function jsonFutureCopyPolishSkip(
+  provider: CopyPolishProvider,
+  reason: string,
+  metadata?: CopyPolishProviderMetadata
+) {
   return NextResponse.json(
-    {
-      skipped: true,
-      provider,
-      reason,
-      message:
-        getCopyPolishProviderLabel(provider) +
-        " copy polish is a future provider slot — using base generated copy.",
-    },
+    withProviderMetadata(
+      {
+        skipped: true,
+        provider,
+        reason,
+        message:
+          getCopyPolishProviderLabel(provider) +
+          " copy polish is a future provider slot — using base generated copy.",
+      },
+      metadata
+    ),
     { status: 200 }
   );
 }
@@ -298,6 +330,48 @@ function buildPolishPrompt(parsedReq: ReturnType<typeof copyPolishRequestSchema.
   ].join("\n");
 }
 
+async function runGroqCopyPolish(
+  polishPrompt: string,
+  metadata?: CopyPolishProviderMetadata
+) {
+  const apiKey = process.env.GROQ_API_KEY;
+  if (!apiKey) return jsonGroqCopyPolishSkip("missing_groq_api_key", metadata);
+
+  const { res, data } = await callGroqText(apiKey, polishPrompt);
+  if (!res.ok) return jsonGroqCopyPolishSkip("provider_error", metadata);
+
+  const rawGroqText = sanitizeString(extractGroqText(data), 40_000);
+  let obj: Record<string, unknown>;
+  try {
+    obj = parseProviderJsonObject(rawGroqText, "Groq copy polish");
+  } catch {
+    return jsonGroqCopyPolishSkip("invalid_groq_json", metadata);
+  }
+
+  const normalizedGroq = normalizeGeminiCopyPolishObject(obj);
+  if (!hasUsableGeneratedPackageEnhancements(normalizedGroq)) {
+    return jsonGroqCopyPolishSkip("no_usable_fields", metadata);
+  }
+
+  const out = providerResponseSchema.safeParse(normalizedGroq);
+  if (!out.success) {
+    return jsonGroqCopyPolishSkip("invalid_groq_response", metadata);
+  }
+
+  if (!hasUsableGeneratedPackageEnhancements(out.data)) {
+    return jsonGroqCopyPolishSkip("no_usable_fields", metadata);
+  }
+
+  return NextResponse.json(
+    withProviderMetadata({ ...out.data, aiEnhanced: true }, metadata),
+    { status: 200 }
+  );
+}
+
+function hasConfiguredGroqFallback() {
+  return Boolean(process.env.GROQ_API_KEY);
+}
+
 export async function handleCopyPolishRequest(body: unknown) {
   const parsedReq = copyPolishRequestSchema.safeParse(body);
   if (!parsedReq.success) {
@@ -313,8 +387,29 @@ export async function handleCopyPolishRequest(body: unknown) {
     }
 
     if (provider === "gemini") {
+      const autoFallback = parsedReq.data.autoFallback === true;
+      const fallbackToGroq = (reason: string) => {
+        if (!autoFallback) return jsonOptionalCopyPolishSkip(reason);
+        if (!hasConfiguredGroqFallback()) {
+          return jsonOptionalCopyPolishSkip(
+            "fallback_unavailable_missing_groq_api_key",
+            {
+              providerUsed: "none",
+              fallbackUsed: false,
+              fallbackReason: reason,
+            }
+          );
+        }
+
+        return runGroqCopyPolish(polishPrompt, {
+          providerUsed: "groq",
+          fallbackUsed: true,
+          fallbackReason: reason,
+        });
+      };
+
       const apiKey = process.env.GEMINI_API_KEY;
-      if (!apiKey) return jsonOptionalCopyPolishSkip("missing_gemini_api_key");
+      if (!apiKey) return fallbackToGroq("missing_gemini_api_key");
 
       const stable = getGeminiModelStable();
       let { res, data } = await callGeminiText(stable, apiKey, polishPrompt);
@@ -328,58 +423,40 @@ export async function handleCopyPolishRequest(body: unknown) {
         }
       }
 
-      if (!res.ok) return jsonOptionalCopyPolishSkip("provider_error");
+      if (!res.ok) return fallbackToGroq("provider_error");
 
       const rawGeminiText = sanitizeString(extractGeminiText(data), 40_000);
       let obj: Record<string, unknown>;
       try {
         obj = parseProviderJsonObject(rawGeminiText, "Gemini copy polish");
       } catch {
-        return jsonOptionalCopyPolishSkip("invalid_gemini_json");
+        return fallbackToGroq("invalid_gemini_json");
       }
 
       const normalizedGemini = normalizeGeminiCopyPolishObject(obj);
       if (!hasUsableGeneratedPackageEnhancements(normalizedGemini)) {
-        return jsonOptionalCopyPolishSkip("no_usable_fields");
+        return fallbackToGroq("no_usable_fields");
       }
 
       const out = providerResponseSchema.safeParse(normalizedGemini);
       if (!out.success) {
-        return jsonOptionalCopyPolishSkip("invalid_gemini_response");
+        return fallbackToGroq("invalid_gemini_response");
       }
 
-      return NextResponse.json({ ...out.data, aiEnhanced: true }, { status: 200 });
+      return NextResponse.json(
+        withProviderMetadata(
+          { ...out.data, aiEnhanced: true },
+          { providerUsed: "gemini", fallbackUsed: false }
+        ),
+        { status: 200 }
+      );
     }
 
     if (provider === "groq") {
-      const apiKey = process.env.GROQ_API_KEY;
-      if (!apiKey) return jsonGroqCopyPolishSkip("missing_groq_api_key");
-
-      const { res, data } = await callGroqText(apiKey, polishPrompt);
-      if (!res.ok) return jsonGroqCopyPolishSkip("provider_error");
-
-      const rawGroqText = sanitizeString(extractGroqText(data), 40_000);
-      let obj: Record<string, unknown>;
-      try {
-        obj = parseProviderJsonObject(rawGroqText, "Groq copy polish");
-      } catch {
-        return jsonGroqCopyPolishSkip("invalid_groq_json");
-      }
-
-      if (!hasUsableGeneratedPackageEnhancements(obj)) {
-        return jsonGroqCopyPolishSkip("no_usable_fields");
-      }
-
-      const out = providerResponseSchema.safeParse(obj);
-      if (!out.success) {
-        return jsonGroqCopyPolishSkip("invalid_groq_response");
-      }
-
-      if (!hasUsableGeneratedPackageEnhancements(out.data)) {
-        return jsonGroqCopyPolishSkip("no_usable_fields");
-      }
-
-      return NextResponse.json({ ...out.data, aiEnhanced: true }, { status: 200 });
+      return runGroqCopyPolish(polishPrompt, {
+        providerUsed: "groq",
+        fallbackUsed: false,
+      });
     }
 
     if (provider === "openai") {
@@ -439,6 +516,23 @@ export async function handleCopyPolishRequest(body: unknown) {
     return NextResponse.json({ ...out.data, aiEnhanced: true }, { status: 200 });
   } catch {
     if (provider === "gemini") {
+      if (parsedReq.data.autoFallback === true && hasConfiguredGroqFallback()) {
+        return runGroqCopyPolish(polishPrompt, {
+          providerUsed: "groq",
+          fallbackUsed: true,
+          fallbackReason: "provider_error",
+        });
+      }
+      if (parsedReq.data.autoFallback === true) {
+        return jsonOptionalCopyPolishSkip(
+          "fallback_unavailable_missing_groq_api_key",
+          {
+            providerUsed: "none",
+            fallbackUsed: false,
+            fallbackReason: "provider_error",
+          }
+        );
+      }
       return jsonOptionalCopyPolishSkip("provider_error");
     }
     if (provider === "openai") {

@@ -104,6 +104,7 @@ interface UseBuildGenerationActionsInput {
   sceneDescription: string;
   mediaAnalysis: MediaAnalysisResult | null;
   activeProvider: AIProvider;
+  autoFallback: boolean;
   activePromotedPublishCopyOverride: ActivePromotedPublishCopyOverride;
   previewHook2026: string[];
   previewPrimaryHook: string;
@@ -176,6 +177,7 @@ export function useBuildGenerationActions({
   sceneDescription,
   mediaAnalysis,
   activeProvider,
+  autoFallback,
   activePromotedPublishCopyOverride,
   previewHook2026,
   previewPrimaryHook,
@@ -317,6 +319,7 @@ export function useBuildGenerationActions({
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
         provider: activeProvider,
+        autoFallback,
         predator,
         prey,
         env: finalEnvironment,
