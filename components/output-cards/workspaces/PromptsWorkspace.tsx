@@ -11,6 +11,16 @@ import { buildCreatorQaPack } from "@/lib/creator-qa-pack";
 
 import type { GeneratedPackage } from "@/types";
 
+function formatPromptBadgeValue(value: unknown, fallback: string) {
+  if (typeof value !== "string" && typeof value !== "number") return fallback;
+  return String(value)
+    .toLowerCase()
+    .split("_")
+    .filter(Boolean)
+    .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
+    .join(" ");
+}
+
 export function PromptsWorkspace({
   data,
   onCopy,
@@ -24,6 +34,18 @@ export function PromptsWorkspace({
 
   return (
     <div className="space-y-6">
+      <div className="flex flex-wrap gap-2 rounded-xl border border-[color:var(--border)] bg-[color:var(--surface-elevated)] p-3">
+        <span className="rounded-full border border-amber-400/30 bg-amber-500/10 px-3 py-1 text-[10px] font-bold uppercase tracking-[0.1em] text-amber-700 dark:text-amber-200">
+          Story Mode: {formatPromptBadgeValue(data.storyMode, "Predator Vs Prey")}
+        </span>
+        <span className="rounded-full border border-indigo-400/30 bg-indigo-500/10 px-3 py-1 text-[10px] font-bold uppercase tracking-[0.1em] text-indigo-700 dark:text-indigo-200">
+          Viral Lane: {formatPromptBadgeValue(data.viralLane, "Tension")}
+        </span>
+        <span className="rounded-full border border-emerald-400/30 bg-emerald-500/10 px-3 py-1 text-[10px] font-bold uppercase tracking-[0.1em] text-emerald-700 dark:text-emerald-200">
+          Safety: Level {Number(data.violenceLevel ?? 1)}/3
+        </span>
+      </div>
+
       <div className="min-w-0 max-w-full overflow-hidden rounded-2xl border border-amber-500/30 bg-amber-500/12 p-4 text-sm text-amber-900 shadow-sm dark:text-amber-100">
         Core prompt workspace मा primary master image prompt, GPT Image 2 backup prompt,
         thumbnail prompt, negative prompt, continuity image plan, अनि Creator QA Pack
