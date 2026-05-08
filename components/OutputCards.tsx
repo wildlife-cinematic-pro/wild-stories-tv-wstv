@@ -29,14 +29,17 @@ import { getDecision } from "@/lib/decision-engine";
 import { downloadJson, downloadText } from "@/lib/storage";
 import { buildUsagePayload, trackUsage } from "@/lib/usage-tracker";
 
+import type { StoryModePreset } from "@/lib/story-mode-presets";
 import type { GeneratedPackage, PromptVersion } from "@/types";
 
 export default function OutputCards({
   data,
   onRestoreVersion,
+  onApplyStoryModePreset,
 }: {
   data: GeneratedPackage;
   onRestoreVersion?: (version: PromptVersion) => void;
+  onApplyStoryModePreset?: (preset: StoryModePreset) => void;
 }) {
   const [showWSTVWorkflowDiagram, setShowWSTVWorkflowDiagram] = useState(false);
   const [activeWorkspace, setActiveWorkspace] =
@@ -426,6 +429,7 @@ export default function OutputCards({
                 setShowWSTVWorkflowDiagram((previous) => !previous)
               }
               onCopy={onCopy}
+              onApplyStoryModePreset={onApplyStoryModePreset}
             />
           </div>
         )}

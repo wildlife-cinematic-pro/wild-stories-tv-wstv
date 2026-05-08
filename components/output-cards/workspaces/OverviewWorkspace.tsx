@@ -10,6 +10,7 @@ import ReelsPerformanceInsightsCard from "@/components/output-cards/reels-perfor
 import AutoRecommendationsCard from "@/components/output-cards/auto-recommendations-card";
 import { EngineSpecsPanel, SectionLabel } from "@/components/output-cards/shared-panels";
 
+import type { StoryModePreset } from "@/lib/story-mode-presets";
 import type { GeneratedPackage, PromptVersion } from "@/types";
 
 function formatBadgeValue(value: unknown, fallback: string) {
@@ -45,6 +46,7 @@ export function OverviewWorkspace({
   showWorkflowDiagram,
   onToggleWorkflowDiagram,
   onCopy,
+  onApplyStoryModePreset,
 }: {
   data: GeneratedPackage;
   versionKey: string;
@@ -52,6 +54,7 @@ export function OverviewWorkspace({
   showWorkflowDiagram: boolean;
   onToggleWorkflowDiagram: () => void;
   onCopy: (text: string) => void | Promise<unknown>;
+  onApplyStoryModePreset?: (preset: StoryModePreset) => void;
 }) {
   return (
     <div className="space-y-6">
@@ -65,7 +68,11 @@ export function OverviewWorkspace({
 
       <ReelsPerformanceInsightsCard />
 
-      <AutoRecommendationsCard data={data} />
+      <AutoRecommendationsCard
+        data={data}
+        onCopy={onCopy}
+        onApplyStoryModePreset={onApplyStoryModePreset}
+      />
 
       <EngineSpecsPanel />
 
