@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 
 import ConceptVariantLab from "@/components/build/concept-variant-lab";
 import GenerationOutputBoundary from "@/components/build/generation-output-boundary";
@@ -25,6 +25,11 @@ import { formatPipelineStyleLabel } from "@/lib/page-build-helpers";
 import type { StoryModePreset } from "@/lib/story-mode-presets";
 import { buildRunway2026AssistantPack } from "@/lib/runway-2026-production-assistant";
 import { buildWorkflowQaSummary } from "@/lib/workflow-qa";
+import {
+  COPY_POLISH_PROVIDER_CONFIGS,
+  formatCopyPolishFallbackPlan,
+  type CopyPolishProviderAvailability,
+} from "@/lib/copy-polish-providers";
 import type {
   AIProvider,
   ConceptVariant,
@@ -35,6 +40,26 @@ import type {
   PackageLockState,
   PromptVersion,
 } from "@/types";
+
+type ProviderAvailabilityMap = Record<AIProvider, CopyPolishProviderAvailability>;
+
+const DEFAULT_PROVIDER_AVAILABILITY = COPY_POLISH_PROVIDER_CONFIGS.reduce(
+  (acc, provider) => {
+    acc[provider.id] = {
+      id: provider.id,
+      enabled: provider.id === "gemini" || provider.id === "none",
+      label: provider.label,
+      helperText:
+        provider.id === "gemini"
+          ? "Current default provider."
+          : provider.id === "none"
+            ? "Local mode — no API polish will be called."
+            : "Future provider — add API key to enable.",
+    };
+    return acc;
+  },
+  {} as ProviderAvailabilityMap
+);
 
 type Step3GenerateProps = {
   predator: string;
@@ -126,7 +151,47 @@ export default function Step3Generate({
   const [isQaDetailsOpen, setIsQaDetailsOpen] = useState(false);
   const [isRecentRunsOpen, setIsRecentRunsOpen] = useState(false);
   const [copyFeedback, setCopyFeedback] = useState<string | null>(null);
+  const [providerAvailability, setProviderAvailability] = useState<ProviderAvailabilityMap>(
+    DEFAULT_PROVIDER_AVAILABILITY
+  );
   const generatedOutputTopRef = useRef<HTMLElement | null>(null);
+
+  useEffect(() => {
+    let isMounted = true;
+
+    async function loadProviderAvailability() {
+      try {
+        const res = await fetch("/api/enhance/provider-status", { cache: "no-store" });
+        if (!res.ok) return;
+        const data = (await res.json()) as { providers?: CopyPolishProviderAvailability[] };
+        const providers = data.providers;
+        if (!isMounted || !Array.isArray(providers)) return;
+
+        setProviderAvailability((current) => {
+          const next = { ...current };
+          for (const provider of providers) {
+            next[provider.id] = provider;
+          }
+          return next;
+        });
+      } catch {
+        // Keep the conservative local defaults if provider status cannot load.
+      }
+    }
+
+    void loadProviderAvailability();
+
+    return () => {
+      isMounted = false;
+    };
+  }, []);
+
+  useEffect(() => {
+    const current = providerAvailability[activeProvider];
+    if (activeProvider !== "gemini" && activeProvider !== "none" && current && !current.enabled) {
+      onActiveProviderChange("gemini");
+    }
+  }, [activeProvider, onActiveProviderChange, providerAvailability]);
 
   const outputReadiness = pkg
     ? analyzeOutputReadiness({
@@ -357,26 +422,46 @@ export default function Step3Generate({
             still included as optional outputs.
           </div>
           <div className="flex flex-wrap gap-2">
-            {(["gemini", "openai", "claude", "none"] as AIProvider[]).map((provider) => (
-              <button
-                key={provider}
-                type="button"
-                onClick={() => onActiveProviderChange(provider)}
-                className={`rounded-2xl border px-4 py-2 text-xs font-semibold transition-all active:scale-95 ${
-                  activeProvider === provider
-                    ? "border-white/25 bg-white/10 text-white shadow-sm shadow-black/20"
-                    : "border-white/[0.12] text-white/35 hover:bg-white/[0.06] hover:text-white/60"
-                }`}
-              >
-                {provider === "none"
-                  ? "Off (Local)"
-                  : provider === "gemini"
-                    ? "✦ Gemini Default"
-                    : provider === "openai"
-                      ? "✦ ChatGPT / OpenAI"
-                      : "✦ Claude"}
-              </button>
-            ))}
+            {COPY_POLISH_PROVIDER_CONFIGS.map((provider) => {
+              const availability =
+                providerAvailability[provider.id] ?? DEFAULT_PROVIDER_AVAILABILITY[provider.id];
+              const isActive = activeProvider === provider.id;
+              const isDisabled = !availability.enabled;
+              const buttonClassName = [
+                "rounded-2xl border px-4 py-2 text-left text-xs font-semibold transition-all active:scale-95 disabled:cursor-not-allowed disabled:active:scale-100",
+                isActive
+                  ? "border-white/25 bg-white/10 text-white shadow-sm shadow-black/20"
+                  : isDisabled
+                    ? "border-white/[0.08] bg-white/[0.02] text-white/25"
+                    : "border-white/[0.12] text-white/45 hover:bg-white/[0.06] hover:text-white/70",
+              ].join(" ");
+
+              return (
+                <button
+                  key={provider.id}
+                  type="button"
+                  onClick={() => {
+                    if (!isDisabled) onActiveProviderChange(provider.id);
+                  }}
+                  disabled={isDisabled}
+                  title={availability.helperText}
+                  aria-label={provider.label + ": " + availability.helperText}
+                  className={buttonClassName}
+                >
+                  <span className="block">
+                    {provider.id === "none" ? provider.label : "✦ " + provider.label}
+                  </span>
+                  {provider.id !== "gemini" && provider.id !== "none" ? (
+                    <span className="mt-0.5 block text-[9px] font-medium uppercase tracking-[0.08em] text-white/25">
+                      {provider.kind === "fallback" ? "Fallback slot" : "Future slot"}
+                    </span>
+                  ) : null}
+                </button>
+              );
+            })}
+          </div>
+          <div className="mt-3 rounded-xl border border-white/[0.08] bg-black/15 px-3 py-2 text-[10px] leading-relaxed text-white/35">
+            Fallback plan for future: {formatCopyPolishFallbackPlan()}. Disabled providers never receive API calls.
           </div>
         </div>
 

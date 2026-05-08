@@ -143,7 +143,10 @@ function isAIProvider(value: unknown): value is AIProvider {
     value === "none" ||
     value === "gemini" ||
     value === "claude" ||
-    value === "openai"
+    value === "openai" ||
+    value === "groq" ||
+    value === "openrouter" ||
+    value === "huggingface"
   );
 }
 

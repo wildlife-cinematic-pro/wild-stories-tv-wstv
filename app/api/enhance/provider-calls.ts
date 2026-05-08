@@ -1,3 +1,5 @@
+import { GROQ_COPY_POLISH_MODEL } from "@/lib/copy-polish-providers";
+
 async function fetchWithProviderTimeout(
   url: string,
   init: RequestInit
@@ -125,6 +127,25 @@ export async function callOpenAIText(apiKey: string, prompt: string) {
   return { res, data };
 }
 
+export async function callGroqText(apiKey: string, prompt: string) {
+  const res = await fetchWithProviderTimeout("https://api.groq.com/openai/v1/chat/completions", {
+    method: "POST",
+    headers: {
+      "content-type": "application/json",
+      authorization: `Bearer ${apiKey}`,
+    },
+    body: JSON.stringify({
+      model: GROQ_COPY_POLISH_MODEL,
+      messages: [{ role: "user", content: prompt }],
+      temperature: 0.3,
+      max_completion_tokens: 800,
+    }),
+  });
+
+  const data = await res.json().catch(() => ({}));
+  return { res, data };
+}
+
 export async function callClaudeVision(
   apiKey: string,
   args: { prompt: string; mimeType: string; base64Data: string }
@@ -191,4 +212,11 @@ export function extractClaudeText(data: Record<string, unknown>): string {
   const content = data?.content as { text?: string }[] | undefined;
   const joined = (content ?? []).map((c) => c?.text ?? "").join("");
   return joined || content?.[0]?.text || "";
+}
+
+export function extractGroqText(data: Record<string, unknown>): string {
+  const choices = data?.choices as
+    | { message?: { content?: string }; delta?: { content?: string } }[]
+    | undefined;
+  return choices?.[0]?.message?.content || choices?.[0]?.delta?.content || "";
 }
