@@ -1,6 +1,7 @@
 "use client";
 
 import FourShotProductionWorkflow from "@/components/FourShotProductionWorkflow";
+import ImageReferenceMergeWorkflow from "@/components/output-cards/ImageReferenceMergeWorkflow";
 import { Card, SectionLabel, ShotImagePlanPanel } from "@/components/output-cards/shared-panels";
 import {
   getGptImage2PromptCard,
@@ -30,7 +31,15 @@ export function PromptsWorkspace({
         creator-side fixes यही tab बाट manage हुन्छ.
       </div>
 
-      <SectionLabel label="Core Prompts" />
+      <SectionLabel label="IMAGE PROMPTS" />
+
+      <ImageReferenceMergeWorkflow
+        data={data}
+        structuredPrompts={data.structuredPrompts}
+        onCopy={onCopy}
+      />
+
+      <SectionLabel label="Generator Prompt Outputs" />
 
       <Card
         title="📸 Image Prompt"
