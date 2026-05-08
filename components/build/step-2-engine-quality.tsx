@@ -484,7 +484,7 @@ export default function Step2EngineQuality({
               Image Prompt Engine
             </label>
             <div className="rounded-xl border border-gray-200 bg-gray-50 px-3 py-2.5 text-sm font-medium text-gray-900">
-              Nano Banana 2 — Gemini image master prompt
+              Nano Banana 2 primary image master prompt
             </div>
             <div className="mt-2 text-xs leading-relaxed text-gray-500">
               Image prompt generation is fixed to the Nano Banana path. Runway and

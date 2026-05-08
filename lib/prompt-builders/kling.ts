@@ -1715,7 +1715,7 @@ ${buildKlingAudioPrompt(predator, prey, env, weather, arc, "aftermath")}
 
 ──────────────────────────────────────────────────────
 HOW TO USE (Kling 3.0 WSTV 6-Shot Workflow):
-1. Generate the master image first with the Nano Banana / Gemini image prompt.
+1. Generate the master image first with the Nano Banana 2 primary image prompt.
 2. Upload master image as reference.
 3. Enable "Bind Subject" (Elements 3.0) for identity lock.
 4. Paste ONLY the block above the FULL BREAKDOWN line into Kling.

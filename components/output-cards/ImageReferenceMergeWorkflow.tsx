@@ -118,17 +118,33 @@ function slugifyReferenceName(value: string, fallback: string, suffix?: string) 
   return suffix && !slug.endsWith(`_${suffix}`) ? `${slug}_${suffix}` : slug;
 }
 
+function buildRunwayReferenceHelperNote({
+  leadAnimalName,
+  oppositeAnimalName,
+  environmentName,
+}: {
+  leadAnimalName: string;
+  oppositeAnimalName: string;
+  environmentName: string;
+}) {
+  const leadTag = `@${slugifyReferenceName(leadAnimalName, "mountain_lion")}`;
+  const oppositeTag = `@${slugifyReferenceName(oppositeAnimalName, "white_tailed_deer")}`;
+  const environmentTag = `@${slugifyReferenceName(environmentName, "forest_edge_brush_opening", "env")}`;
+
+  return `Optional Runway Gen-4 References note: save references as ${leadTag}, ${oppositeTag}, and ${environmentTag}; use exactly 3 active references only inside the separate Runway reference workflow.`;
+}
+
 function strengthenReferencePrompt(prompt: string, role: "lead" | "opposite" | "environment") {
   const roleLine =
     role === "environment"
-      ? "Nano Banana 2 primary reference target: empty habitat plate, 9:16 vertical, 4K if available, strong terrain readability, natural lighting direction, foreground/midground/background depth, open central action lane, no animals."
-      : "Nano Banana 2 primary reference target: single animal only, 9:16 vertical, 4K if available, clean full-body silhouette, accurate species anatomy, readable face profile, natural coat/skin texture, grounded contact, uncluttered habitat-compatible ground, no action clash.";
+      ? "Master reference target: empty habitat plate, 9:16 vertical, 4K if available, strong terrain readability, natural lighting direction, foreground/midground/background depth, open central action lane, no animals."
+      : "Master reference target: single animal only, 9:16 vertical, 4K if available, clean full-body silhouette, accurate species anatomy, readable face profile, natural coat/skin texture, grounded contact, uncluttered habitat-compatible ground, no action clash.";
 
   return [
     prompt,
     "",
     roleLine,
-    "Write as a clear natural-language visual brief, not a keyword pile. Prioritize identity fidelity, anatomy, clean spacing, realistic scale, and a reusable production reference frame. Optional GPT Image 2 backup: use the same prompt if Nano Banana 2 output drifts or anatomy fails.",
+    "Write as a clear natural-language visual brief, not a keyword pile. Prioritize identity fidelity, anatomy, clean spacing, realistic scale, and a reusable production reference frame.",
   ].join("\n");
 }
 
@@ -147,17 +163,13 @@ function buildMergeMasterPrompt({
   stage: MergeStage;
   modeContext?: StoryModePromptContext;
 }) {
-  const leadTag = `@${slugifyReferenceName(leadAnimalName, "mountain_lion")}`;
-  const oppositeTag = `@${slugifyReferenceName(oppositeAnimalName, "white_tailed_deer")}`;
-  const environmentTag = `@${slugifyReferenceName(environmentName, "forest_edge_brush_opening", "env")}`;
-
   return [
-    "Nano Banana 2 primary final merge master-image prompt. Use a natural-language cinematic brief with clear reference roles, layered scene construction, and photographic direction.",
+    "Final merge master-image prompt. Use a natural-language cinematic brief with clear reference roles, layered scene construction, and photographic direction.",
     "",
-    `Use exactly 3 active Runway references: ${leadTag}, ${oppositeTag}, ${environmentTag}.`,
-    `Use ${leadTag} only for ${leadAnimalName} identity: coat/skin pattern, head profile, body scale, species markers, natural anatomy, and grounded paw/foot contact.`,
-    `Use ${oppositeTag} only for ${oppositeAnimalName} identity: coat pattern, body scale, legs, hoof/paw shape, head angle, natural anatomy, and grounded hoof/foot contact.`,
-    `Use ${environmentTag} only for background, lighting direction, ground texture, terrain depth, habitat structure, and atmosphere.`,
+    "Use the 3 prepared reference images:",
+    `1. Lead animal reference image for ${leadAnimalName} identity: coat/skin pattern, head profile, body scale, species markers, natural anatomy, and grounded paw/foot contact.`,
+    `2. Opposite animal reference image for ${oppositeAnimalName} identity: coat pattern, body scale, legs, hoof/paw shape, head angle, natural anatomy, and grounded hoof/foot contact.`,
+    `3. Environment reference image for ${environmentName}: background, lighting direction, ground texture, terrain depth, habitat structure, and atmosphere.`,
     "",
     `Final image goal: ${stage.title}. Photorealistic wildlife documentary final scene master image, 9:16 vertical, 4K if available, video-ready source frame for a hybrid wildlife reel.`,
     modeContext ? `Story mode: ${modeContext.modeLabel}. ${modeContext.sceneGoal} ${modeContext.relationshipLine}` : "",
@@ -257,7 +269,7 @@ function buildReferencePrompts(data: GeneratedPackage) {
         prompt: strengthenReferencePrompt(
           (leadPrompt + modeReferenceLine).replace(
             /production-ready [^.]+ reference\./,
-            "production-ready Nano Banana 2 primary master reference with GPT Image 2 backup support."
+            "production-ready wildlife master reference image."
           ),
           "lead"
         ),
@@ -274,7 +286,7 @@ function buildReferencePrompts(data: GeneratedPackage) {
         prompt: strengthenReferencePrompt(
           (oppositePrompt + modeReferenceLine).replace(
             /production-ready [^.]+ reference\./,
-            "production-ready Nano Banana 2 primary master reference with GPT Image 2 backup support."
+            "production-ready wildlife master reference image."
           ),
           "opposite"
         ),
@@ -450,6 +462,11 @@ export default function ImageReferenceMergeWorkflow({
     copyLabel: `Merge ${stage.number}`,
     tone: "emerald",
     backupNote: OPTIONAL_GPT_IMAGE_2_BACKUP_NOTE,
+    runwayNote: buildRunwayReferenceHelperNote({
+      leadAnimalName,
+      oppositeAnimalName,
+      environmentName,
+    }),
   }));
 
   const allPrompts = [

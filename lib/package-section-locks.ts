@@ -54,7 +54,7 @@ export const PACKAGE_LOCK_GROUPS: PackageLockGroup[] = [
       {
         key: "masterImagePrompt",
         label: "Master image prompt",
-        description: "Nano Banana / Gemini master image prompt.",
+        description: "Nano Banana 2 primary master image prompt.",
       },
       {
         key: "thumbnailPrompt",

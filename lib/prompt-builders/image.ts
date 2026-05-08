@@ -648,7 +648,7 @@ export function buildImagePromptCard(
     pasteReady: prompt,
     metadata: {
       engine: "image",
-      title: "Nano Banana 2 / Gemini master still",
+      title: "Nano Banana 2 primary master still",
       variant: "single-shot",
     },
   });
@@ -778,9 +778,9 @@ export function buildShotImagePlan(
   const atmosphereLock = `Environment stays continuity-safe with ${micro}. ${CLEAN_GROUND_CONTACT_LINE}`;
   const shotWorldContinuityLock = buildShotWorldContinuityLock("image");
   const masterBase =
-    "Base image: use the Nano Banana 2 / Gemini master still as the Shot 1 visual-world anchor.";
+    "Base image: use the Nano Banana 2 primary master still as the Shot 1 visual-world anchor.";
   const continuityBase =
-    "Base image: use the previous continuity image derived from the Nano Banana master still.";
+    "Base image: use the previous continuity image derived from the Nano Banana 2 primary master still.";
 
   return [
     {
