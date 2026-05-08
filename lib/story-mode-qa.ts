@@ -63,7 +63,6 @@ function collectPackageText(data: GeneratedPackage) {
   const chunks = [
     data.imagePrompt,
     data.gptImage2Prompt,
-    data.negativePrompt,
     data.thumbnailPrompt,
     data.voiceoverLine,
     data.hook,
@@ -91,7 +90,7 @@ function collectPackageText(data: GeneratedPackage) {
 function removeSafetyNegations(text: string) {
   return text
     .replace(/negative prompt:[\s\S]*/gi, "")
-    .replace(/\b(no|without|avoid|avoids|forbid|forbids|forbidden)\s+(gore|blood|visible injury|visible injuries|visible wounds|wounds|injury|injuries|graphic injury|torn flesh|exposed injury|broken bones|contact|clash|bite|strike impact|impact|struggle)\b/gi, "")
+    .replace(/\b(no|without|avoid|avoids|forbid|forbids|forbidden)\s+[^.\n]*(gore|blood|visible injur(?:y|ies)|visible wounds?|wounds?|injur(?:y|ies)|graphic injury|torn flesh|exposed injury|broken bones?|contact|clash|bite|strike impact|impact|struggle)[^.\n]*/gi, "")
     .replace(/\bgrounded (paw|hoof|foot)?\s*contact\b/gi, "")
     .replace(/\bnear[- ]contact\b/gi, "")
     .replace(/\bnear[- ]clash\b/gi, "");
