@@ -120,4 +120,67 @@ describe("story mode image reference roles", () => {
     expect(prompt).toContain("do not turn it into an animal character");
     expect(prompt).not.toMatch(/9:16|vertical aspect ratio|Runway|Kling|Seedance|@lead_animal|@opposite_animal|@environment/i);
   });
+
+  it("provides mode-specific merge guidance without predator/prey leakage", () => {
+    const nonPredatorModes = [
+      StoryMode.HERD_DEFENSE,
+      StoryMode.MOTHER_BABY,
+      StoryMode.RIVAL_CLASH,
+      StoryMode.NEAR_MISS,
+      StoryMode.FISHING_STRIKE,
+      StoryMode.WEATHER_SURVIVAL,
+      StoryMode.MIGRATION,
+      StoryMode.SCAVENGER_CONFLICT,
+    ];
+
+    for (const storyMode of nonPredatorModes) {
+      const roles = getStoryModeImageReferenceRoles(packageFor({ storyMode }));
+      const guidance = [
+        roles.mergeCompositionLine,
+        roles.mergeStageSubjectLine,
+        ...Object.values(roles.mergeStageDirections),
+      ].join(" ");
+
+      expect(guidance).not.toMatch(/predator\/prey|attack\/escape corridor|both animals/i);
+    }
+
+    const weather = getStoryModeImageReferenceRoles(
+      packageFor({
+        storyMode: StoryMode.WEATHER_SURVIVAL,
+        subjectA: "American Bison",
+        subjectB: "Blizzard Wind",
+      })
+    );
+    expect(weather.mergeCompositionLine).toContain("environmental scene pressure");
+    expect(weather.mergeStageDirections[1]).toContain("no animal opponent required");
+
+    const migration = getStoryModeImageReferenceRoles(
+      packageFor({
+        storyMode: StoryMode.MIGRATION,
+        subjectA: "Caribou Herd",
+        subjectB: "River Crossing",
+      })
+    );
+    expect(migration.mergeStageDirections[1]).toContain("route");
+
+    const fishing = getStoryModeImageReferenceRoles(
+      packageFor({
+        storyMode: StoryMode.FISHING_STRIKE,
+        subjectA: "Grizzly Bear",
+        subjectB: "Sockeye Salmon",
+      })
+    );
+    expect(fishing.mergeStageDirections[1]).toContain("food-source");
+
+    const scavenger = getStoryModeImageReferenceRoles(
+      packageFor({
+        storyMode: StoryMode.SCAVENGER_CONFLICT,
+        subjectA: "Bald Eagle",
+        subjectB: "Coyote",
+        foodItem: "Deer carcass zone",
+      })
+    );
+    expect(scavenger.mergeCompositionLine).toContain("non-graphic food zone");
+  });
+
 });
