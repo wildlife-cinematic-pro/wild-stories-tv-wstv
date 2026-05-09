@@ -113,112 +113,6 @@ function TextBox({ value }: { value: string }) {
   );
 }
 
-type SlugifyReferenceOptions = {
-  maxWords?: number;
-  maxLength?: number;
-  suffix?: string;
-};
-
-const ENVIRONMENT_SLUG_STOP_WORDS = new Set([
-  "a",
-  "an",
-  "and",
-  "the",
-  "of",
-  "with",
-  "in",
-  "on",
-  "at",
-  "near",
-  "heavy",
-  "deep",
-  "dense",
-  "clean",
-  "clear",
-  "natural",
-  "realistic",
-  "north",
-  "american",
-]);
-
-const ENVIRONMENT_HABITAT_WORDS = new Set([
-  "forest",
-  "clearing",
-  "meadow",
-  "snow",
-  "winter",
-  "pine",
-  "hardwood",
-  "grassland",
-  "prairie",
-  "river",
-  "riverbank",
-  "marsh",
-  "wetland",
-  "tundra",
-  "mountain",
-  "valley",
-  "savanna",
-  "desert",
-  "coastal",
-  "coast",
-  "jungle",
-  "swamp",
-  "woodland",
-  "plain",
-  "field",
-  "ridge",
-  "yellowstone",
-]);
-
-function slugifyReference(
-  value: string,
-  fallback: string,
-  options: SlugifyReferenceOptions = {}
-) {
-  const rawWords = String(value || fallback)
-    .trim()
-    .toLowerCase()
-    .replace(/[^a-z0-9]+/g, " ")
-    .split(/\s+/)
-    .filter(Boolean);
-  const suffix = options.suffix?.trim().toLowerCase();
-  let wordsForSlug = rawWords;
-
-  if (suffix === "env") {
-    if (rawWords.includes("forest") && rawWords.includes("clearing")) {
-      wordsForSlug = ["forest", "clearing"];
-    } else if (rawWords.includes("winter") && rawWords.includes("meadow")) {
-      wordsForSlug = ["winter", "meadow"];
-    } else if (rawWords.includes("yellowstone") && rawWords.includes("snow")) {
-      wordsForSlug = ["yellowstone", "snow"];
-    } else {
-      wordsForSlug = rawWords.filter((word) =>
-        ENVIRONMENT_HABITAT_WORDS.has(word) || !ENVIRONMENT_SLUG_STOP_WORDS.has(word)
-      );
-    }
-  }
-  const maxWords = options.maxWords && options.maxWords > 0 ? options.maxWords : wordsForSlug.length;
-  const trimmedWords = wordsForSlug.slice(0, maxWords);
-  const fallbackWords = String(fallback)
-    .trim()
-    .toLowerCase()
-    .replace(/[^a-z0-9]+/g, " ")
-    .split(/\s+/)
-    .filter(Boolean);
-  let slug = (trimmedWords.length ? trimmedWords : fallbackWords).join("_");
-
-  if (options.maxLength && options.maxLength > 0 && slug.length > options.maxLength) {
-    slug = slug.slice(0, options.maxLength).replace(/_+$/g, "");
-  }
-
-  if (suffix && slug && !slug.endsWith(`_${suffix}`) && slug !== suffix) {
-    slug = `${slug}_${suffix}`;
-  }
-
-  return slug || fallback;
-}
-
 function buildHybridRoutingGuide() {
   return [
     "PRIMARY HYBRID 4-SHOT ROUTING",
@@ -307,9 +201,9 @@ export function WorkflowPromptMap({
   const leadAnimalName = safeText(data.predatorName) || "lead animal";
   const oppositeAnimalName = safeText(data.preyName) || "opposite animal";
   const environmentName = safeText(data.environmentName) || "natural wildlife environment";
-  const leadReferenceTag = `@${slugifyReference(leadAnimalName, "lead_animal")}`;
-  const oppositeReferenceTag = `@${slugifyReference(oppositeAnimalName, "opposite_animal")}`;
-  const environmentReferenceTag = `@${slugifyReference(environmentName, "environment", { maxWords: 4, maxLength: 40, suffix: "env" })}`;
+  const leadReferenceTag = "@lead_animal";
+  const oppositeReferenceTag = "@opposite_animal";
+  const environmentReferenceTag = "@environment";
 
   const drift = deriveDriftLabel(data.clipChaining);
 
