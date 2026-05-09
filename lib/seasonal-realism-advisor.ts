@@ -1,6 +1,13 @@
 import { HabitatRegion, StoryMode, ViralLane } from "@/types";
 
-import type { Season, Weather, WeatherHazard } from "@/types";
+import type {
+  EscapeDirection,
+  OffspringLabel,
+  Season,
+  StrikeMethod,
+  Weather,
+  WeatherHazard,
+} from "@/types";
 
 export const EASTERN_TIME_ZONE = "America/New_York";
 
@@ -39,6 +46,23 @@ export type SeasonalRealismAdvice = {
   warnings: string[];
   passes: string[];
   suggestedSeason?: Season;
+};
+
+export type RecommendedSeasonalSetup = {
+  storyMode: StoryMode;
+  habitatRegion?: HabitatRegion;
+  season?: Season;
+  subjectA?: string;
+  subjectB?: string;
+  groupCount?: number;
+  offspringLabel?: OffspringLabel;
+  rutSeason?: boolean;
+  strikeMethod?: StrikeMethod;
+  escapeDirection?: EscapeDirection;
+  weatherHazard?: WeatherHazard;
+  foodItem?: string;
+  label: string;
+  reason: string;
 };
 
 const SEASON_LABELS: Record<Season, string> = {
@@ -162,6 +186,155 @@ export function getRecommendedWildlifeSetup(input: SeasonalRealismAdviceInput) {
   }
 
   return "Use the selected story mode with habitat-specific wildlife, clean spacing, and non-graphic survival pressure.";
+}
+
+
+function buildSetup({
+  storyMode,
+  habitatRegion,
+  season,
+  subjectA,
+  subjectB,
+  groupCount,
+  offspringLabel,
+  rutSeason,
+  strikeMethod,
+  escapeDirection,
+  weatherHazard,
+  foodItem,
+  label,
+  reason,
+}: RecommendedSeasonalSetup): RecommendedSeasonalSetup {
+  return {
+    storyMode,
+    ...(habitatRegion ? { habitatRegion } : {}),
+    ...(season ? { season } : {}),
+    ...(subjectA ? { subjectA } : {}),
+    ...(subjectB ? { subjectB } : {}),
+    ...(groupCount !== undefined ? { groupCount } : {}),
+    ...(offspringLabel ? { offspringLabel } : {}),
+    ...(rutSeason !== undefined ? { rutSeason } : {}),
+    ...(strikeMethod ? { strikeMethod } : {}),
+    ...(escapeDirection ? { escapeDirection } : {}),
+    ...(weatherHazard ? { weatherHazard } : {}),
+    ...(foodItem ? { foodItem } : {}),
+    label,
+    reason,
+  };
+}
+
+export function getRecommendedSeasonalSetup(
+  input: SeasonalRealismAdviceInput
+): RecommendedSeasonalSetup | null {
+  const isFallOrWinter = ["FALL", "WINTER"].includes(input.season);
+  const isSummerOrFall = ["SUMMER", "FALL"].includes(input.season);
+  const isSpringOrEarlySummer = ["SPRING", "SUMMER"].includes(input.season);
+
+  if (input.habitatRegion === HabitatRegion.YELLOWSTONE && input.season === "FALL") {
+    return buildSetup({
+      storyMode: StoryMode.RIVAL_CLASH,
+      habitatRegion: HabitatRegion.YELLOWSTONE,
+      season: "FALL",
+      subjectA: "Bull Elk A",
+      subjectB: "Bull Elk B",
+      rutSeason: true,
+      label: "Yellowstone Fall Rival Clash",
+      reason: "Bull elk rut standoffs are a strong fall Yellowstone setup for U.S. wildlife viewers.",
+    });
+  }
+
+  if (input.habitatRegion === HabitatRegion.YELLOWSTONE && input.season === "SPRING") {
+    return buildSetup({
+      storyMode: StoryMode.MOTHER_BABY,
+      habitatRegion: HabitatRegion.YELLOWSTONE,
+      season: "SPRING",
+      subjectA: "Grizzly Mother",
+      subjectB: "Male Grizzly",
+      offspringLabel: "cub",
+      label: "Yellowstone Spring Mother & Baby",
+      reason: "Spring supports protective mother-and-cub tension without needing graphic conflict.",
+    });
+  }
+
+  if (input.habitatRegion === HabitatRegion.YELLOWSTONE && input.season === "WINTER") {
+    return buildSetup({
+      storyMode: StoryMode.WEATHER_SURVIVAL,
+      habitatRegion: HabitatRegion.YELLOWSTONE,
+      season: "WINTER",
+      subjectA: "American Bison",
+      subjectB: "Blizzard Wind",
+      groupCount: 8,
+      weatherHazard: "BLIZZARD",
+      label: "Yellowstone Winter Weather Survival",
+      reason: "Bison moving through blizzard pressure is a realistic winter survival lane.",
+    });
+  }
+
+  if (input.habitatRegion === HabitatRegion.EVERGLADES && input.season === "SUMMER") {
+    return buildSetup({
+      storyMode: StoryMode.PREDATOR_VS_PREY,
+      habitatRegion: HabitatRegion.EVERGLADES,
+      season: "SUMMER",
+      subjectA: "Alligator",
+      subjectB: "Wild Boar",
+      label: "Everglades Summer Alligator Tension",
+      reason: "Summer Everglades waterline tension works well with alligator pressure and a clear escape lane.",
+    });
+  }
+
+  if (input.habitatRegion === HabitatRegion.ALASKA && isSummerOrFall) {
+    return buildSetup({
+      storyMode: StoryMode.FISHING_STRIKE,
+      habitatRegion: HabitatRegion.ALASKA,
+      season: input.season,
+      subjectA: "Grizzly Bear",
+      subjectB: "Sockeye Salmon",
+      strikeMethod: "SWIPE",
+      label: "Alaska Salmon Fishing Strike",
+      reason: "Alaska summer/fall salmon runs make a clean, readable fishing-strike setup.",
+    });
+  }
+
+  if (input.habitatRegion === HabitatRegion.GREAT_PLAINS && isSummerOrFall) {
+    return buildSetup({
+      storyMode: StoryMode.HERD_DEFENSE,
+      habitatRegion: HabitatRegion.GREAT_PLAINS,
+      season: input.season,
+      subjectA: "Bison Herd",
+      subjectB: "Wolf Pack",
+      groupCount: 12,
+      label: "Great Plains Bison Herd Defense",
+      reason: "Bison herd formation against outside pressure is readable and regionally grounded.",
+    });
+  }
+
+  if (input.habitatRegion === HabitatRegion.ROCKY_MOUNTAINS && isFallOrWinter) {
+    return buildSetup({
+      storyMode: StoryMode.RIVAL_CLASH,
+      habitatRegion: HabitatRegion.ROCKY_MOUNTAINS,
+      season: input.season,
+      subjectA: "Bull Elk A",
+      subjectB: "Bull Elk B",
+      rutSeason: input.season === "FALL",
+      label: "Rocky Mountains Elk Standoff",
+      reason: "Elk dominance tension fits Rocky Mountain fall/winter wildlife storytelling.",
+    });
+  }
+
+  if (input.habitatRegion === HabitatRegion.PACIFIC_NORTHWEST && isSpringOrEarlySummer) {
+    return buildSetup({
+      storyMode: StoryMode.MOTHER_BABY,
+      habitatRegion: HabitatRegion.PACIFIC_NORTHWEST,
+      season: input.season,
+      subjectA: "Black Bear Mother",
+      subjectB: "Coyote",
+      offspringLabel: "cub",
+      label: "Pacific Northwest Protective Bear Family",
+      reason: "Spring and early summer support protective family tension in forest habitat.",
+    });
+  }
+
+  return null;
 }
 
 export function getSeasonalRealismAdvice(
