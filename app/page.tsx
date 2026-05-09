@@ -998,9 +998,12 @@ export default function Page() {
     lastGeneratedOutputDebouncer.cancel();
   }, [lastGeneratedOutputDebouncer]);
 
+  const currentPromptSubjectA = currentStorySubjectSnapshot.subjectA ?? predator;
+  const currentPromptSubjectB = currentStorySubjectSnapshot.subjectB ?? prey;
+
   useEffect(() => {
     setConceptArcOverride(null);
-  }, [predator, prey, contentLane]);
+  }, [currentPromptSubjectA, currentPromptSubjectB, contentLane]);
 
   const {
     variants: conceptVariants,
@@ -1009,13 +1012,13 @@ export default function Page() {
     promoteVariant: promoteConceptVariant,
     autoCleanupVariant: autoCleanupConceptVariant,
   } = useConceptVariantLab({
-    predator,
-    prey,
+    predator: currentPromptSubjectA,
+    prey: currentPromptSubjectB,
     contentLane,
     currentArc: previewArc,
     currentHabitat: habitat,
-    presetEnvironment: preset.environment,
-    presetPrey: preset.prey,
+    presetEnvironment: finalEnvironment,
+    presetPrey: [currentPromptSubjectB],
     driftRisk: preset.driftRisk,
     weather,
     depthMode,

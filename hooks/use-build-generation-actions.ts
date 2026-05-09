@@ -320,8 +320,8 @@ export function useBuildGenerationActions({
       body: JSON.stringify({
         provider: activeProvider,
         autoFallback,
-        predator,
-        prey,
+        predator: draft.basePkg.predatorName ?? predator,
+        prey: draft.basePkg.preyName ?? prey,
         env: finalEnvironment,
         arc: previewArc,
         weather,
