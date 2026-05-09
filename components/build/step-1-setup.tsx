@@ -4,6 +4,7 @@ import { useState } from "react";
 
 import QualityPanel, { type QualityPanelProps } from "@/components/QualityPanel";
 import SceneRelationshipCard from "@/components/build/scene-relationship-card";
+import SeasonalRealismAdvisorCard from "@/components/build/seasonal-realism-advisor-card";
 import StoryModePresetsPanel from "@/components/build/story-mode-presets-panel";
 import StoryModeSubjectFields, {
   buildStoryModeSetupSummary,
@@ -953,6 +954,20 @@ export default function Step1Setup({
             onHabitatRegionChange={onHabitatRegionChange}
             onSeasonChange={onSeasonChange}
             onTimeOfDayChange={onTimeOfDayChange}
+          />
+
+          <SeasonalRealismAdvisorCard
+            storyMode={storyMode}
+            habitatRegion={habitatRegion}
+            season={season}
+            weather={weather}
+            weatherHazard={weatherHazard}
+            subjectA={subjectA}
+            subjectB={subjectB}
+            predator={predator}
+            prey={prey}
+            viralLane={viralLane}
+            onSeasonChange={onSeasonChange}
           />
 
           <section className="rounded-2xl border border-gray-200 bg-white p-5 sm:p-6">
