@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, type ReactNode } from "react";
 
 import QualityPanel, { type QualityPanelProps } from "@/components/QualityPanel";
 import SceneRelationshipCard from "@/components/build/scene-relationship-card";
@@ -97,6 +97,95 @@ const ACTION_STYLE_OPTIONS: ActionStylePreset[] = [
   "Ambush burst",
   "Forced retreat",
 ];
+
+type SummaryChipProps = {
+  label: string;
+  value: string;
+  tone?: "neutral" | "cyan" | "amber" | "emerald" | "violet";
+};
+
+function SummaryChip({ label, value, tone = "neutral" }: SummaryChipProps) {
+  const toneClass =
+    tone === "cyan"
+      ? "border-cyan-100 bg-cyan-50 text-cyan-800"
+      : tone === "amber"
+        ? "border-amber-100 bg-amber-50 text-amber-800"
+        : tone === "emerald"
+          ? "border-emerald-100 bg-emerald-50 text-emerald-800"
+          : tone === "violet"
+            ? "border-violet-100 bg-violet-50 text-violet-800"
+            : "border-gray-200 bg-gray-50 text-gray-700";
+
+  return (
+    <span
+      className={`inline-flex max-w-full items-center gap-1.5 rounded-full border px-2.5 py-1 text-[10px] font-semibold leading-none ${toneClass}`}
+    >
+      <span className="shrink-0 uppercase tracking-[0.08em] opacity-60">
+        {label}
+      </span>
+      <span className="truncate">{value}</span>
+    </span>
+  );
+}
+
+type CollapsibleControlSectionProps = {
+  title: string;
+  eyebrow: string;
+  helper: string;
+  badge: string;
+  isOpen: boolean;
+  onToggle: () => void;
+  summary: ReactNode;
+  children: ReactNode;
+};
+
+function CollapsibleControlSection({
+  title,
+  eyebrow,
+  helper,
+  badge,
+  isOpen,
+  onToggle,
+  summary,
+  children,
+}: CollapsibleControlSectionProps) {
+  return (
+    <section className="rounded-2xl border border-gray-200 bg-white p-4 shadow-sm shadow-gray-100/80 sm:p-6">
+      <button
+        type="button"
+        aria-expanded={isOpen}
+        onClick={onToggle}
+        className="flex w-full flex-wrap items-start justify-between gap-3 text-left"
+      >
+        <div className="min-w-0">
+          <p className="text-[11px] font-semibold uppercase tracking-[0.1em] text-gray-400">
+            {eyebrow}
+          </p>
+          <h3 className="mt-1 text-base font-bold tracking-tight text-gray-900">
+            {title}
+          </h3>
+          <p className="mt-1 max-w-3xl text-[11px] leading-relaxed text-gray-500">
+            {helper}
+          </p>
+        </div>
+        <div className="flex shrink-0 items-center gap-2">
+          <span className="rounded-full border border-cyan-100 bg-cyan-50 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.08em] text-cyan-700">
+            {badge}
+          </span>
+          <span className="rounded-full border border-gray-200 bg-gray-50 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.08em] text-gray-600">
+            {isOpen ? "Collapse" : "Expand"}
+          </span>
+        </div>
+      </button>
+
+      <div className="mt-4 rounded-2xl border border-gray-200 bg-gray-50/70 p-3">
+        <div className="flex flex-wrap gap-2">{summary}</div>
+      </div>
+
+      {isOpen ? <div className="mt-5">{children}</div> : null}
+    </section>
+  );
+}
 
 type Step1SetupProps = {
   predator: string;
@@ -434,6 +523,11 @@ export default function Step1Setup({
   const [leadAnimalSearch, setLeadAnimalSearch] = useState("");
   const [sceneMode, setSceneMode] = useState<"simple" | "advanced">("simple");
   const [isCreatorQaPresetsOpen, setIsCreatorQaPresetsOpen] = useState(false);
+  const [isWorkflowPresetLibraryOpen, setIsWorkflowPresetLibraryOpen] =
+    useState(false);
+  const [isProductionControlsOpen, setIsProductionControlsOpen] =
+    useState(false);
+  const [isAdvancedControlsOpen, setIsAdvancedControlsOpen] = useState(false);
 
   const leadAnimalQuery = leadAnimalSearch.trim().toLowerCase();
   const leadAnimalMatches = leadAnimalQuery
@@ -501,7 +595,6 @@ export default function Step1Setup({
         : sceneReport.severity === "warning"
           ? "border-amber-100 bg-amber-50/80 text-amber-900"
           : "border-rose-100 bg-rose-50/80 text-rose-900";
-  const isSimpleSceneMode = sceneMode === "simple";
   const isPredatorVsPreyMode = storyMode === StoryMode.PREDATOR_VS_PREY;
   const activeStorySetupSummary = isPredatorVsPreyMode
     ? `Story Setup: ${predator} vs ${prey} · ${habitatRegion} · ${season} · ${timeOfDay}`
@@ -524,6 +617,39 @@ export default function Step1Setup({
   return (
     <div className="grid gap-6 xl:grid-cols-[minmax(0,1fr)_340px]">
       <div className="space-y-6">
+        <CollapsibleControlSection
+          title="Saved workflow presets"
+          eyebrow="Workflow Preset Library"
+          helper="Saved setups stay available, but the library starts compact so daily Step 1 work begins with story choices."
+          badge={isWorkflowPresetLibraryOpen ? "Library open" : "Library hidden"}
+          isOpen={isWorkflowPresetLibraryOpen}
+          onToggle={() =>
+            setIsWorkflowPresetLibraryOpen((current) => !current)
+          }
+          summary={
+            <>
+              <SummaryChip
+                label="Saved"
+                value={`${workflowPresets.length} presets`}
+                tone="violet"
+              />
+              <SummaryChip
+                label="Packs"
+                value={`${workflowPresetPacks.length} packs`}
+              />
+              <SummaryChip
+                label="Library"
+                value={activeWorkflowPresetLibrary.name}
+                tone="cyan"
+              />
+              <SummaryChip
+                label="Default"
+                value={defaultWorkflowPresetId ? "set" : "none"}
+                tone={defaultWorkflowPresetId ? "emerald" : "neutral"}
+              />
+            </>
+          }
+        >
         <WorkflowPresetsPanel
           presets={workflowPresets}
           presetPacks={workflowPresetPacks}
@@ -600,6 +726,7 @@ export default function Step1Setup({
           importStatus={workflowPresetImportStatus}
           packStatus={workflowPresetPackStatus}
         />
+        </CollapsibleControlSection>
 
         <section className="rounded-2xl border border-slate-700 bg-slate-900 p-4 text-white shadow-[0_18px_40px_rgba(15,23,42,0.18)]">
           <button
@@ -970,21 +1097,33 @@ export default function Step1Setup({
             onSeasonChange={onSeasonChange}
           />
 
-          <section className="rounded-2xl border border-gray-200 bg-white p-5 sm:p-6">
-            <div className="mb-4 flex flex-wrap items-start justify-between gap-3">
-              <div>
-                <h3 className="text-[11px] font-semibold uppercase tracking-[0.1em] text-gray-400">
-                  Production Controls
-                </h3>
-                <p className="mt-1 max-w-3xl text-[11px] leading-relaxed text-gray-500">
-                  These controls apply to every story mode and shape the final image/video package.
-                </p>
-              </div>
-              <span className="rounded-full border border-cyan-100 bg-cyan-50 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.08em] text-cyan-700">
-                All modes
-              </span>
-            </div>
-
+          <CollapsibleControlSection
+            title="Production Controls"
+            eyebrow="Production Controls"
+            helper="These controls apply to every story mode and shape the final image/video package."
+            badge={isProductionControlsOpen ? "All modes" : "Compact"}
+            isOpen={isProductionControlsOpen}
+            onToggle={() =>
+              setIsProductionControlsOpen((current) => !current)
+            }
+            summary={
+              <>
+                <SummaryChip label="Scope" value={wildlifeScopeMode} tone="violet" />
+                <SummaryChip label="Lane" value={contentLane} tone="cyan" />
+                <SummaryChip
+                  label="Camera"
+                  value={cameraPresetDefinition.label}
+                />
+                <SummaryChip label="Season" value={season} tone="amber" />
+                <SummaryChip label="Time" value={timeOfDay} />
+                <SummaryChip
+                  label="Safety"
+                  value={`Level ${Number(violenceLevel)}/3`}
+                  tone="emerald"
+                />
+              </>
+            }
+          >
             <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3">
               <div>
                 <label className="mb-1.5 block text-[11px] font-medium text-gray-500">
@@ -1109,7 +1248,7 @@ export default function Step1Setup({
                 </span>
               </button>
             </div>
-          </section>
+          </CollapsibleControlSection>
 
           <section className="rounded-2xl border border-gray-200 bg-white p-5 sm:p-6">
             <h3 className="text-[11px] font-semibold uppercase tracking-[0.1em] text-gray-400">
@@ -1218,20 +1357,31 @@ export default function Step1Setup({
           </section>
         </div>
 
-        <section className="rounded-2xl border border-gray-200 bg-white p-5 sm:p-6">
-            <div className="mb-4 flex flex-wrap items-start justify-between gap-3">
-              <div>
-                <h3 className="text-[11px] font-semibold uppercase tracking-[0.1em] text-gray-400">
-                  Advanced Controls / Smart Defaults
-                </h3>
-                <p className="mt-1 max-w-3xl text-[11px] leading-relaxed text-gray-500">
-                  Fine-tune the current story setup. Auto and Smart Default guidance stays visible, and manual overrides remain available across every story mode.
-                </p>
-              </div>
-              <span className="rounded-full border border-amber-100 bg-amber-50 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.08em] text-amber-700">
-                {isSimpleSceneMode ? "Smart defaults" : "Manual overrides"}
-              </span>
-            </div>
+        <CollapsibleControlSection
+          title="Advanced Controls / Smart Defaults"
+          eyebrow="Advanced Controls"
+          helper="Fine-tune the current story setup. Auto and Smart Default guidance stays available, and manual overrides remain available across every story mode."
+          badge={isAdvancedControlsOpen ? "Manual open" : "Defaults active"}
+          isOpen={isAdvancedControlsOpen}
+          onToggle={() => setIsAdvancedControlsOpen((current) => !current)}
+          summary={
+            <>
+              <SummaryChip
+                label="Setup"
+                value={currentSetupLabel}
+                tone="violet"
+              />
+              <SummaryChip label="Lane" value={contentLane} tone="cyan" />
+              <SummaryChip label="Weather" value={weather} />
+              <SummaryChip label="Depth" value={depthMode} />
+              <SummaryChip
+                label="Expert"
+                value="hidden · defaults active"
+                tone="amber"
+              />
+            </>
+          }
+        >
             <div className="mb-4 rounded-2xl border border-gray-200 bg-gray-50/70 p-3 text-[11px] leading-relaxed text-gray-700">
               <span className="font-semibold">Current setup:</span> {activeStorySetupSummary}
             </div>
@@ -1436,7 +1586,7 @@ export default function Step1Setup({
                 {safetyDefaults.join(" • ")}
               </p>
             </div>
-          </section>
+        </CollapsibleControlSection>
 
         <div className="flex flex-wrap gap-2.5 border-t border-gray-200/80 pt-5">
           <button
