@@ -325,6 +325,41 @@ describe("build-package refactor seam", () => {
     expect(text).toContain("no gore");
   });
 
+  it("keeps Herd Defense subjects in direct Kling and Seedance outputs", () => {
+    const draft = buildGeneratedPackageDraft(
+      makeDraftInput({
+        storyMode: StoryMode.HERD_DEFENSE,
+        subjectA: "Bison Herd",
+        subjectB: "Wolf Pack",
+        groupCount: 12,
+        violenceLevel: ViolenceLevel.IMPLIED_PRESSURE,
+      })
+    );
+    const pkg = draft.basePkg;
+    const directText = [
+      pkg.klingNative15s ?? "",
+      pkg.klingFramesPrompt ?? "",
+      ...(pkg.klingShots ?? []),
+      ...(pkg.klingMultishotShots ?? []),
+      pkg.klingSixShot ?? "",
+      pkg.seedanceMultiShotPrompt ?? "",
+      ...(pkg.seedanceShots ?? []),
+      ...(pkg.runwayShots ?? []),
+    ].join("\n");
+
+    expect(pkg.predatorName).toBe("Bison Herd");
+    expect(pkg.preyName).toBe("Wolf Pack");
+    expect(directText).toContain("Herd Defense");
+    expect(directText).toContain("Bison Herd");
+    expect(directText).toContain("Wolf Pack");
+    expect(directText).not.toContain("Mountain Lion");
+    expect(directText).not.toContain("Mule Deer");
+    expect(pkg.structuredPrompts?.klingFramesPrompt?.pasteReady).toContain("Negative prompt:");
+    expect(pkg.structuredPrompts?.klingFramesPrompt?.pasteReady.length).toBeLessThanOrEqual(2500);
+    expect(pkg.structuredPrompts?.seedanceMultiShot?.pasteReady).toContain("Bison Herd");
+    expect(pkg.structuredPrompts?.seedanceMultiShot?.pasteReady).toContain("Wolf Pack");
+  });
+
   it("generates Rival Clash prompt language with rut and standoff cues", () => {
     const draft = buildGeneratedPackageDraft(
       makeDraftInput({

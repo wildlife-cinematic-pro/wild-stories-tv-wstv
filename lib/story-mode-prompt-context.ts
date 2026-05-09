@@ -463,7 +463,7 @@ export function formatStoryModeGenerateCtaLabel(input: StoryModePromptContextInp
 
 function makeStructuredPrompt(
   fullText: string,
-  engine: "image" | "runway" | "kling",
+  engine: "image" | "runway" | "kling" | "seedance",
   title: string,
   variant: StructuredPromptMetadata["variant"] = "hybrid"
 ): StructuredPrompt {
@@ -476,6 +476,193 @@ function makeStructuredPrompt(
       variant,
     },
   };
+}
+
+
+const STORY_MODE_KLING_NEGATIVE_PROMPT =
+  "blood, gore, visible wounds, visible injury, torn flesh, exposed injury, broken bones, dead animal, duplicate animals, fused bodies, warped anatomy, extra limbs, humans, vehicles, fences, zoo enclosure, text, subtitles, watermark, excessive blur, chaotic camera shake";
+
+function buildStoryModeEngineShotPrompts(
+  context: StoryModePromptContext,
+  input: StoryModePromptContextInput,
+  engine: "runway" | "kling" | "seedance"
+): StructuredPrompt[] {
+  const model =
+    engine === "runway"
+      ? cleanText(input.runwayModel, "Runway Gen-4.5")
+      : engine === "kling"
+        ? cleanText(input.klingModel, "Kling 3.0 Pro")
+        : "Seedance 2.0";
+  const engineLabel =
+    engine === "runway"
+      ? "Runway image-to-video"
+      : engine === "kling"
+        ? "Kling video"
+        : "Seedance video";
+
+  return context.shotStages.map((stage, index) => {
+    const pasteReady = [
+      `Image-to-video from the ${context.modeLabel} continuity frame.`,
+      `Shot ${index + 1}: ${stage.stage}.`,
+      `Preserve ${context.primarySubjectLabel} and ${context.secondarySubjectLabel} identities, habitat, lighting, scale, spacing, grounded contact, and first-frame composition.`,
+      stage.motionDirection,
+      engine === "runway"
+        ? "Runway motion focus: keep the camera controlled, describe only movement, and preserve the first-frame composition."
+        : engine === "kling"
+          ? "Kling motion focus: one readable motion beat, stable anatomy, clean spacing, no overlap confusion."
+          : 'Seedance motion focus: simple subject movement, background movement, and camera movement; use "Cut to" only in the multi-shot prompt.',
+      context.violenceLine,
+      `${context.safetyLine} Clean survival tension, no visible injury shown.`,
+    ].join(" ");
+    const fullText = [
+      `${engineLabel.toUpperCase()} SHOT ${index + 1} — ${stage.stage.toUpperCase()} [${model}]`,
+      "Motion-first prompt. Use the generated continuity image as the visual source; do not re-invent subject identity or habitat.",
+      "",
+      engine === "runway"
+        ? "═══ PASTE-READY I2V PROMPT (copy this block into Runway) ═══"
+        : engine === "kling"
+          ? "═══ PASTE-READY KLING PROMPT (copy this block into Kling) ═══"
+          : "═══ PASTE-READY SEEDANCE PROMPT (copy this block into Seedance) ═══",
+      pasteReady,
+    ].join("\n");
+
+    return {
+      fullText,
+      pasteReady,
+      metadata: {
+        engine,
+        title: `${context.modeLabel} ${engineLabel} Shot ${index + 1} - ${stage.stage}`,
+        variant: "single-shot",
+      },
+    };
+  });
+}
+
+function buildStoryModeSeedanceMultiShotPrompt(
+  context: StoryModePromptContext,
+  seedanceShots: StructuredPrompt[]
+): StructuredPrompt {
+  const pasteReady = seedanceShots
+    .map((shot, index) =>
+      index === 0 ? shot.pasteReady : `Cut to ${shot.pasteReady}`
+    )
+    .join("\n");
+
+  const fullText = [
+    `SEEDANCE 4-SHOT CONTINUITY PROMPT — ${context.modeLabel}`,
+    "Conservative WSTV Seedance rule — keep the prompt simple, movement-led, reference-aware, and easy to paste cleanly.",
+    "",
+    "═══ PASTE-READY SEEDANCE MULTI-SHOT PROMPT (copy this block into Seedance) ═══",
+    pasteReady,
+    "",
+    "─── BREAKDOWN (reference only) ───",
+    `Subjects: ${context.primarySubjectLabel}; ${context.secondarySubjectLabel}.`,
+    `Relationship: ${context.relationshipLine}`,
+    "Generate separate 5-second shots when cleaner continuity is needed.",
+  ].join("\n");
+
+  return makeStructuredPrompt(
+    fullText,
+    "seedance",
+    `${context.modeLabel} Seedance 4-shot continuity prompt`,
+    "multi-shot"
+  );
+}
+
+function buildStoryModeKlingFramesPrompt(
+  context: StoryModePromptContext,
+  input: StoryModePromptContextInput
+): StructuredPrompt {
+  const model = cleanText(input.klingModel, "Kling 3.0 Pro");
+  const environment = context.environmentLine.replace(/\s+/g, " ").trim();
+  const beats = context.shotStages.map((stage, index) => {
+    const timeRanges = ["0:00-0:03", "0:03-0:06", "0:06-0:10", "0:10-0:13"];
+    return `Shot ${index + 1}, ${timeRanges[index]}: ${stage.motionDirection}`;
+  });
+  const finish = `Shot 5, 0:13-0:15: ${context.endingLine} Hold a replay-worthy final frame with ${context.primarySubjectLabel} and ${context.secondarySubjectLabel} still readable.`;
+  const multishotPrompt = [
+    `Image-to-video from master image. Preserve ${context.primarySubjectLabel} and ${context.secondarySubjectLabel} in ${environment}. Same identity, scale, spacing, lighting direction, grounded contact, and first-frame composition. Photorealistic wildlife documentary, motion-first, both subjects readable.`,
+    context.relationshipLine,
+    context.modeSpecificActionLine,
+    ...beats,
+    finish,
+    context.violenceLine,
+    "Clean survival tension, no visible injury shown.",
+  ].join("\n\n");
+  const combinedPrompt = `${multishotPrompt}\n\nNegative prompt: ${STORY_MODE_KLING_NEGATIVE_PROMPT}`;
+  const totalChars = combinedPrompt.length;
+  const withinLimit = totalChars <= 2500;
+  const lengthLine = withinLimit
+    ? `Kling Frames Prompt: ${totalChars} / 2500 chars`
+    : `PROMPT TOO LONG: ${totalChars} / 2500`;
+  const fullText = [
+    `KLING FRAMES PROMPT [${model}]`,
+    "─────────────────────────────────────────────────────────",
+    "Mode-aware WSTV direct 15s prompt. Use the selected story-mode subject setup as the source of truth.",
+    lengthLine,
+    "═══ PASTE INTO KLING FRAMES — max 2500 chars (copy this block only) ═══",
+    combinedPrompt,
+    "",
+    "─── OPTIONAL NOTES — reference only, do NOT paste into Kling ───",
+    `Mode: ${context.modeLabel}. Subjects: ${context.primarySubjectLabel}; ${context.secondarySubjectLabel}.`,
+  ].join("\n");
+
+  return {
+    fullText,
+    pasteReady: combinedPrompt,
+    settings: [
+      lengthLine,
+      `Combined prompt chars: ${totalChars}`,
+      `Within 2500-char limit: ${withinLimit ? "yes" : "no"}`,
+      "Mode-aware direct 15s prompt",
+    ],
+    metadata: {
+      engine: "kling",
+      title: `${context.modeLabel} Kling Frames Prompt`,
+      variant: "kling-frames",
+    },
+  };
+}
+
+function buildStoryModeKlingMultishotPromptCards(
+  context: StoryModePromptContext
+): StructuredPrompt[] {
+  return context.shotStages.map((stage, index) => {
+    const pasteReady = [
+      `Shot ${index + 1}: ${stage.stage}.`,
+      `${context.primarySubjectLabel} and ${context.secondarySubjectLabel} stay readable with the same identity, habitat, spacing, lighting, and grounded contact.`,
+      stage.motionDirection,
+      "Camera holds wide with controlled motion and clean continuity.",
+      "No blood, no gore, no visible injury.",
+    ].join(" ");
+
+    return makeStructuredPrompt(
+      pasteReady,
+      "kling",
+      `${context.modeLabel} Kling Multishot Shot ${index + 1}`,
+      "kling-multishot"
+    );
+  });
+}
+
+function buildStoryModeKlingSixShotCard(context: StoryModePromptContext): StructuredPrompt {
+  const pasteReady = [
+    `Six-shot Kling safety version for ${context.modeLabel}.`,
+    `Subjects: ${context.primarySubjectLabel}; ${context.secondarySubjectLabel}.`,
+    `Relationship: ${context.relationshipLine}`,
+    ...context.shotStages.map(
+      (stage, index) => `Shot ${index + 1}: ${stage.stage}. ${stage.motionDirection}`
+    ),
+    "Shot 5: hold unresolved survival pressure with both subjects readable.",
+    "Shot 6: settle into a clean final frame; no blood, no gore, no visible injury.",
+  ].join("\n");
+
+  return makeStructuredPrompt(
+    pasteReady,
+    "kling",
+    `${context.modeLabel} Kling Six-Shot`,
+    "six-shot"
+  );
 }
 
 export function buildStoryModeImagePrompt(context: StoryModePromptContext) {
@@ -575,6 +762,16 @@ export function buildStoryModePackageOverrides(
   const shotImagePlan = buildStoryModeShotImagePlan(context);
   const workflowShots = buildStoryModeWorkflowPrompts(context, input);
   const workflowTexts = workflowShots.map((shot) => shot.fullText);
+  const runwayShots = buildStoryModeEngineShotPrompts(context, input, "runway");
+  const klingShots = buildStoryModeEngineShotPrompts(context, input, "kling");
+  const seedanceShots = buildStoryModeEngineShotPrompts(context, input, "seedance");
+  const seedanceMultiShot = buildStoryModeSeedanceMultiShotPrompt(
+    context,
+    seedanceShots
+  );
+  const klingFramesPrompt = buildStoryModeKlingFramesPrompt(context, input);
+  const klingMultishotShots = buildStoryModeKlingMultishotPromptCards(context);
+  const klingSixShot = buildStoryModeKlingSixShotCard(context);
   const shotPlan = workflowShots.map((shot, index) => {
     const labels = shotLabels[index] ?? {};
     return {
@@ -619,8 +816,24 @@ export function buildStoryModePackageOverrides(
         `GPT Image 2 ${context.modeLabel} backup`,
         "single-shot"
       ),
+      runwayShots,
+      klingShots,
+      seedanceShots,
+      seedanceMultiShot,
       workflowShots,
+      klingNative15s: klingFramesPrompt,
+      klingFramesPrompt,
+      klingMultishotShots,
+      klingSixShot,
     },
+    runwayShots: runwayShots.map((shot) => shot.fullText),
+    klingShots: klingShots.map((shot) => shot.fullText),
+    seedanceShots: seedanceShots.map((shot) => shot.fullText),
+    seedanceMultiShotPrompt: seedanceMultiShot.fullText,
+    klingNative15s: klingFramesPrompt.fullText,
+    klingFramesPrompt: klingFramesPrompt.fullText,
+    klingMultishotShots: klingMultishotShots.map((shot) => shot.fullText),
+    klingSixShot: klingSixShot.fullText,
     shotPlan,
     hook: context.facebookHookAngle,
     caption: context.caption,
