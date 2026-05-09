@@ -172,9 +172,6 @@ function normalizeAnimalName(value: string): string {
   return value.trim() || "wild animal";
 }
 
-function getLaneLabel(contentLane: ContentLane): string {
-  return contentLane === "Auto" ? "wildlife tension" : contentLane.toLowerCase();
-}
 
 function getWeatherLighting(weather: Weather): string {
   switch (weather) {
@@ -695,8 +692,6 @@ function buildStoryboardSourceScenes(input: BuildStoryboardInput): StoryboardSou
     });
   }
 
-  let startTime = 0;
-
   return scenes.map((scene, index) => {
     const duration = durations[index] ?? 4;
     const sourceScene: StoryboardSourceScene = {
@@ -704,7 +699,6 @@ function buildStoryboardSourceScenes(input: BuildStoryboardInput): StoryboardSou
       duration,
       ...scene,
     };
-    startTime += duration;
     return sourceScene;
   });
 }
