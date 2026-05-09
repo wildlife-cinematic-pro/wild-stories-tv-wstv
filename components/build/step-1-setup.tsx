@@ -137,6 +137,7 @@ type Step1SetupProps = {
   customPredatorCount: number;
   finalEnvironment: string;
   storyboardHref: string;
+  currentSetupLabel: string;
   driftRisk: PredatorInfo["driftRisk"];
   workflowPresets: SavedWorkflowPreset[];
   workflowPresetPacks: SavedWorkflowPresetPack[];
@@ -285,6 +286,7 @@ export default function Step1Setup({
   customPredatorCount,
   finalEnvironment,
   storyboardHref,
+  currentSetupLabel,
   driftRisk,
   workflowPresets,
   workflowPresetPacks,
@@ -1453,8 +1455,12 @@ export default function Step1Setup({
           </div>
           <div className="mt-4 rounded-2xl border border-gray-200/80 bg-gradient-to-br from-gray-50 to-white p-4">
             <div className="text-base font-bold tracking-tight text-gray-900">
-              {predator} vs {prey}
+              {currentSetupLabel}
             </div>
+            <p className="mt-2 text-[11px] leading-relaxed text-gray-500">
+              Smart defaults are applied for each story mode. You can override
+              any subject or production control before generating.
+            </p>
             <div className="mt-1.5 flex flex-wrap gap-2">
               <span className="rounded-full bg-violet-50 px-2.5 py-1 text-[10px] font-semibold text-violet-700 shadow-sm shadow-violet-100">
                 {contentLane}
