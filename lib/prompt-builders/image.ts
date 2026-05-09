@@ -401,7 +401,7 @@ function buildNanoBananaImagePrompt(
     `Lead Animal Prompt: ${predator} and ${prey} in ${cleanEnv}; ${leadPosture}. Put the lead animal in the same pair-compatible habitat and make the danger readable instantly. Emphasize species-specific markers, body scale, head shape, coat, feather, shell, skin, or fin detail, muscle tension, eye-line, weight transfer, and realistic contact with the terrain or water surface.`,
     opposingLine,
     `Environment Prompt: ${sceneLock.habitatLocation} on ${sceneLock.groundState}; ${attackLane}. Use pair-compatible cinematic habitat detail from ${cleanEnv}, foreground texture, readable midground distance, natural geography, and no long travel-corridor lists. ${sceneContext}`,
-    `Composition / Framing Prompt: Wide 9:16 documentary framing, 9:16 vertical, full-body visibility for both animals, clean spacing, one clear pressure/escape corridor, thumbnail-safe negative space, readable first-frame silhouettes, no crop through heads or feet, no overlap-heavy chaos. ${isRutMirrorMatch ? `Keep ${rutCue.room}, frontal antler line, claim-space pressure, and planted footing readable.` : ""} ${cameraPresetLine}`,
+    `Composition / Framing Prompt: Wide documentary framing, full-body visibility for both animals, clean spacing, one clear pressure/escape corridor, thumbnail-safe negative space, readable first-frame silhouettes, no crop through heads or feet, no overlap-heavy chaos. ${isRutMirrorMatch ? `Keep ${rutCue.room}, frontal antler line, claim-space pressure, and planted footing readable.` : ""} ${cameraPresetLine}`,
     `Style / Lighting Prompt: raw wildlife documentary, natural light, ${sceneLock.lightingFamily} in ${sceneLock.atmosphereFamily}. ${depthLine}. ${lightingAccentLine} ${cameraLightingLine} No CGI look, no plastic skin, no fantasy monster styling, no staged studio lighting.`,
     `Safety / Continuity Prompt: ${anatomyLine} Preserve identity, scale, spacing, habitat continuity, first-frame readability, stable outlines, and grounded contact. No blood, no gore, no visible wounds, no death close-up, no torn flesh, no exposed injury, no duplicate animals unless requested, no extra limbs, no distorted faces, no text, no watermark. Documentary survival pressure only; outcome unresolved. Texture detail: ${textureLine}. ${CLEAN_GROUND_CONTACT_LINE} Avoid: ${DUST_FREE_NEGATIVE_TERMS}.`,
   ];
@@ -437,8 +437,8 @@ function buildGptImage2ImagePrompt(
   );
 
   const subjectLine = isRutMirrorMatch
-    ? `Photorealistic wildlife documentary cover-safe still image, 9:16 vertical. Two ${predator} rivals share one frame ${sceneLock.habitatLocation} during a rut standoff on ${sceneLock.groundState}.`
-    : `Photorealistic wildlife documentary cover-safe still image, 9:16 vertical. ${predator} and ${prey} share one frame ${sceneLock.habitatLocation} during a high-tension ${getSafeArcLabel(arc)} beat on ${sceneLock.groundState}.`;
+    ? `Photorealistic wildlife documentary cover-safe still image. Two ${predator} rivals share one frame ${sceneLock.habitatLocation} during a rut standoff on ${sceneLock.groundState}.`
+    : `Photorealistic wildlife documentary cover-safe still image. ${predator} and ${prey} share one frame ${sceneLock.habitatLocation} during a high-tension ${getSafeArcLabel(arc)} beat on ${sceneLock.groundState}.`;
 
   const baseBlockingLine = isRutMirrorMatch
     ? `Keep one ${predator} on the left and the other on the right with ${rutCue.room}, a clean frontal antler line, and no overlap.`
@@ -462,8 +462,8 @@ function buildGptImage2ImagePrompt(
   const blockingLine = sceneNoteCue ? `${baseBlockingLine} ${sceneNoteCue}` : baseBlockingLine;
 
   const compositionBase = isRutMirrorMatch
-    ? `Thumbnail-safe 9:16 framing keeps both rivals fully visible, clash geometry clean, and ${rutCue.room} preserved.`
-    : `Thumbnail-safe 9:16 framing keeps both animals fully visible with clean first-frame spacing.`;
+    ? `Thumbnail-safe framing keeps both rivals fully visible, clash geometry clean, and ${rutCue.room} preserved.`
+    : `Thumbnail-safe framing keeps both animals fully visible with clean first-frame spacing.`;
   const depthLine =
     depth.lensNote === "cinematic telephoto depth separation"
       ? "Telephoto compression keeps the subjects separated with strong silhouettes."
@@ -774,7 +774,7 @@ export function buildShotImagePlan(
       ? " Let the bank-edge water reaction settle while shoreline spacing stays clean."
       : "";
 
-  const continuityLock = `Keep ${predator} and ${prey} identical in anatomy, markings, scale, lighting family, and habitat continuity in ${cleanEnv}, ${cleanWeather}. Preserve the same 9:16 documentary image family, grounded contact, realistic spacing, clean silhouette separation, and dust-free ground contact.`;
+  const continuityLock = `Keep ${predator} and ${prey} identical in anatomy, markings, scale, lighting family, and habitat continuity in ${cleanEnv}, ${cleanWeather}. Preserve the same documentary image family, grounded contact, realistic spacing, clean silhouette separation, and dust-free ground contact.`;
   const atmosphereLock = `Environment stays continuity-safe with ${micro}. ${CLEAN_GROUND_CONTACT_LINE}`;
   const shotWorldContinuityLock = buildShotWorldContinuityLock("image");
   const masterBase =
@@ -890,7 +890,7 @@ export function buildThumbnailPrompt(
       : "";
 
   return finalizePrompt(
-    `Ultra dramatic wildlife documentary thumbnail with ${predator} and ${prey} both clearly readable in the same frame, immediate visible tension, strong subject separation, no empty setup, mobile-first composition, in ${cleanEnv}, ${cleanWeather}, ${cleanAir}. ${tone.image}. Intense mutual awareness, raw animal instinct, ${winterThumbDetail}${vibe.style}. Photorealistic documentary realism, 9:16 vertical frame.`
+    `Ultra dramatic wildlife documentary thumbnail with ${predator} and ${prey} both clearly readable in the same frame, immediate visible tension, strong subject separation, no empty setup, mobile-first composition, in ${cleanEnv}, ${cleanWeather}, ${cleanAir}. ${tone.image}. Intense mutual awareness, raw animal instinct, ${winterThumbDetail}${vibe.style}. Photorealistic documentary realism.`
   );
 }
 

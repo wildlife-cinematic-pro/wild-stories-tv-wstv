@@ -9,7 +9,7 @@ describe("master image quality gate", () => {
   it("passes a strong reference prompt", () => {
     const report = evaluateMasterImagePrompt({
       prompt:
-        "Photorealistic wildlife documentary master image, 9:16 vertical. Full-body readable grizzly and bison with grounded paw and hoof contact, clean spacing, thumbnail-safe first-frame composition, stable anatomy, Yellowstone habitat continuity, and no blood, no gore, no visible wounds.",
+        "Photorealistic wildlife documentary master image. Full-body readable grizzly and bison with grounded paw and hoof contact, clean spacing, thumbnail-safe first-frame composition, stable anatomy, Yellowstone habitat continuity, and no blood, no gore, no visible wounds.",
       predatorName: "Grizzly Bear",
       preyName: "Bison",
       environmentName: "Yellowstone meadow",
@@ -31,8 +31,8 @@ describe("master image quality gate", () => {
     const fix = getMasterImageFixPrompt(report);
 
     expect(report.passed).toBe(false);
-    expect(report.checks.find((check) => check.id === "vertical-framing")?.passed).toBe(false);
-    expect(fix).toContain("Add 9:16 vertical framing language.");
+    expect(report.checks.find((check) => check.id === "composition-framing")?.passed).toBe(false);
+    expect(fix).toContain("Add clear composition and framing language.");
     expect(fix).toContain("Add grounded paw, hoof, or foot contact.");
   });
 });

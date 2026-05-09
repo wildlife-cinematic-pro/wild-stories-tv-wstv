@@ -19,11 +19,11 @@ import type { RunwayModel, KlingModel, Arc, Engine, DepthMode, Weather, HabitatP
 // ─────────────────────────────────────────────────────────────
 export const BRAND_NAME      = "WILD STORIES TV";
 export const WORKFLOW_PREFIX = "WSTV";
-// Reference tags (standardized for Runway/Kling workflows)
+// Reference tags (standardized for Runway reference workflows)
 export const REF_TAGS = {
-  heroPredator: "@hero_predator",
-  heroPrey: "@hero_prey",
-  envPlate: "@env_plate",
+  leadAnimal: "@lead_animal",
+  oppositeAnimal: "@opposite_animal",
+  environment: "@environment",
 } as const;
 
 // ─────────────────────────────────────────────────────────────

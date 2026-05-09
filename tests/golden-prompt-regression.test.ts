@@ -32,7 +32,7 @@ function expectCleanImagePrompt(prompt: string) {
     expect(prompt).not.toMatch(pattern);
   }
   expect(prompt).not.toMatch(IMAGE_ENGINE_POLLUTION);
-  expect(prompt).toMatch(/9:16/);
+  expect(prompt).not.toMatch(/\b9:16\b|vertical aspect|vertical frame/i);
   expect(prompt).toMatch(/photorealistic|raw wildlife documentary|documentary/i);
   expect(lower(prompt)).toContain("wildlife");
   expect(lower(prompt)).toContain("no blood");
@@ -97,7 +97,7 @@ describe("golden prompt regression guard", () => {
     const pkg = buildGoldenPackage(input);
 
     expect(pkg.shotImagePlan).toBeTruthy();
-    expect(pkg.shotImagePlan?.[0]?.prompt).toMatch(/9:16/);
+    expect(pkg.shotImagePlan?.[0]?.prompt).not.toMatch(/\b9:16\b|vertical aspect|vertical frame/i);
     for (const shot of pkg.shotImagePlan ?? []) {
       expectImagePlanPrompt(shot.prompt);
       expect(shot.prompt).not.toMatch(/@lead_animal|@opposite_animal|@environment/i);

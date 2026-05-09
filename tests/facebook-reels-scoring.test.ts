@@ -13,7 +13,7 @@ import type { GeneratedPackage } from "@/types";
 function makePackage(overrides: Partial<GeneratedPackage> = {}): GeneratedPackage {
   const baseText = [
     "Original WSTV produced wildlife documentary scene, not a repost or compilation.",
-    "Nano Banana 2 primary master still with GPT Image 2 backup, 9:16 vertical Facebook Reels format.",
+    "Nano Banana 2 primary master still with GPT Image 2 backup, Facebook Reels format.",
     "First-frame hook: Grizzly Mother shields a cub while Male Grizzly stays at the Yellowstone treeline.",
     "Opening establish beat, pressure build, peak protection beat, and unresolved protected exit final frame.",
     "Motion-first Runway Kling Kling Runway workflow with replay value and a hidden body-language tell.",

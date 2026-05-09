@@ -612,12 +612,12 @@ function cleanList(items: string[]): string[] {
 function aspectLine(aspectRatio: ScenicImageAspectRatio): string {
   switch (aspectRatio) {
     case "4:5":
-      return "4:5 vertical social feed framing, strong center composition for Facebook and Instagram";
+      return "social feed framing, strong center composition for Facebook and Instagram";
     case "1:1":
-      return "1:1 square social post framing with balanced scenic layers";
+      return "balanced scenic social post framing with layered composition";
     case "9:16":
     default:
-      return "9:16 vertical mobile-first framing, wallpaper-safe and reel-cover safe";
+      return "mobile-first framing, wallpaper-safe and reel-cover safe";
   }
 }
 

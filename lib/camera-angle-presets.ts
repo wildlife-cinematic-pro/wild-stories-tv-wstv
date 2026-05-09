@@ -52,7 +52,7 @@ export const cameraAnglePresetDefinitions: Record<
     helper:
       "Safest Facebook first test when both species need instant recognition, clean scale, and readable footing.",
     imageFraming:
-      "Front full-body wildlife framing, subjects squared cleanly to camera, full legs visible, clean 9:16 spacing.",
+      "Front full-body wildlife framing, subjects squared cleanly to camera, full legs visible, clean subject spacing.",
     runwayFraming:
       "Frontal full-body framing with both subjects visible through the move.",
     klingFraming:

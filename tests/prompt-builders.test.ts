@@ -235,7 +235,7 @@ it("builds a GPT Image 2 backup prompt with cover-safe layout and inline artifac
       "The elk holds right near the river edge while the wolf approaches from the left with readable spacing."
     ).fullText;
 
-    expect(prompt).toContain("Photorealistic wildlife documentary cover-safe still image, 9:16 vertical.");
+    expect(prompt).toContain("Photorealistic wildlife documentary cover-safe still image.");
     expect(prompt).toContain("Keep Grey Wolf on the left and Bull Elk on the right");
     expect(prompt).toContain("No text unless explicitly requested.");
     expect(prompt).toContain("Avoid text, watermark, logo, extra limbs, distorted anatomy, duplicate animals, overlapping subjects");
@@ -1124,7 +1124,7 @@ describe("Step 7C — supporting prompt helpers keep readability language", () =
     expect(card.pasteReady).toContain("Composition / Framing Prompt");
     expect(card.pasteReady).toContain("Style / Lighting Prompt");
     expect(card.pasteReady).toContain("Safety / Continuity Prompt");
-    expect(card.pasteReady).toMatch(/9:16 vertical/i);
+    expect(card.pasteReady).not.toMatch(/\b9:16\b|vertical aspect|vertical frame/i);
     expect(card.pasteReady).toMatch(/full-body visibility/i);
     expect(card.pasteReady).toMatch(/notices danger too late|escape lane/i);
   });
@@ -1375,8 +1375,8 @@ describe("Step 12 — export cleanup guards", () => {
       "National Geographic Wild"
     );
 
-    expect(prompt).toContain("Wide 9:16 documentary framing");
-    expect(prompt).not.toContain("Use a wide 9:16 vertical frame");
+    expect(prompt).toContain("Wide documentary framing");
+    expect(prompt).not.toContain("Use a wide vertical frame");
     expect(prompt).toContain("Telephoto framing keeps the midground readable.");
     expect(prompt).toContain("in clear open air.");
   });

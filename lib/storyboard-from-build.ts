@@ -406,7 +406,7 @@ function buildBasePromptCore(args: {
     `${args.description} in ${args.environment}`,
     `${args.subject}, ${args.action}`,
     `${args.lighting}, ${args.styleGuide ?? STORYBOARD_STYLE_GUIDE}`,
-    "9:16 vertical framing",
+    "full-frame wildlife reel framing",
     `Continuity rules: ${args.continuityRules.join(", ")}`,
   ]);
 }
@@ -428,7 +428,7 @@ export function buildNanoBananaPrompt(args: {
   const negativePrompt = args.negativePrompt ?? STORYBOARD_NEGATIVE_PROMPT;
 
   return joinSentenceParts([
-    "Photorealistic wildlife documentary master still, 9:16 vertical",
+    "Photorealistic wildlife documentary master still",
     `A ${predatorName} on the left and a ${preyName} on the right, clear readable spacing, no overlap`,
     `${args.description}; ${args.action}`,
     args.environment,
@@ -457,7 +457,7 @@ export function buildGptImagePrompt(args: {
   const negativePrompt = args.negativePrompt ?? STORYBOARD_NEGATIVE_PROMPT;
 
   return joinSentenceParts([
-    "Clean wildlife cover still, 9:16 vertical, strict composition backup for GPT Image 2",
+    "Clean wildlife cover still, strict composition backup for GPT Image 2",
     `A ${predatorName} and a ${preyName} with high subject readability, clean left-right blocking, thumbnail-safe framing, and optional cover-safe negative space`,
     `${args.description}; ${args.action}`,
     args.environment,

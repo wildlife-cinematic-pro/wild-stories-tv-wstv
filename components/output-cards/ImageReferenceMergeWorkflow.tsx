@@ -137,8 +137,8 @@ function buildRunwayReferenceHelperNote({
 function strengthenReferencePrompt(prompt: string, role: "lead" | "opposite" | "environment") {
   const roleLine =
     role === "environment"
-      ? "Master reference target: empty habitat plate, 9:16 vertical, 4K if available, strong terrain readability, natural lighting direction, foreground/midground/background depth, open central action lane, no animals."
-      : "Master reference target: single animal only, 9:16 vertical, 4K if available, clean full-body silhouette, accurate species anatomy, readable face profile, natural coat/skin texture, grounded contact, uncluttered habitat-compatible ground, no action clash.";
+      ? "Master reference target: empty habitat plate, strong terrain readability, natural lighting direction, foreground/midground/background depth, open central action lane, no animals."
+      : "Master reference target: single animal only, clean full-body silhouette, accurate species anatomy, readable face profile, natural coat/skin texture, grounded contact, uncluttered habitat-compatible ground, no action clash.";
 
   return [
     prompt,
@@ -171,7 +171,7 @@ function buildMergeMasterPrompt({
     `2. Opposite animal reference image for ${oppositeAnimalName} identity: coat pattern, body scale, legs, hoof/paw shape, head angle, natural anatomy, and grounded hoof/foot contact.`,
     `3. Environment reference image for ${environmentName}: background, lighting direction, ground texture, terrain depth, habitat structure, and atmosphere.`,
     "",
-    `Final image goal: ${stage.title}. Photorealistic wildlife documentary final scene master image, 9:16 vertical, 4K if available, video-ready source frame for a hybrid wildlife reel.`,
+    `Final image goal: ${stage.title}. Photorealistic wildlife documentary final scene master image, video-ready source frame for a hybrid wildlife reel.`,
     modeContext ? `Story mode: ${modeContext.modeLabel}. ${modeContext.sceneGoal} ${modeContext.relationshipLine}` : "",
     modeContext ? `${modeContext.modeSpecificActionLine} ${modeContext.violenceLine}` : "",
     `Layer the scene from background to foreground: first preserve ${environmentName} as the habitat plate with ${lightingName}, terrain depth, ambush lanes, ground plane, atmospheric depth, and natural color temperature; then place the two identity-locked animals into that environment with believable scale and spacing.`,

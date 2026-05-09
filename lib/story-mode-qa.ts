@@ -162,8 +162,8 @@ export function analyzeStoryModePackage(data: GeneratedPackage): StoryModeQAResu
     score -= 8;
   }
 
-  if (/nano banana 2/.test(text) && /gpt image 2/.test(text) && /9:16/.test(text) && /documentary/.test(text)) {
-    passes.push("Image workflow mentions Nano Banana 2, GPT Image 2, 9:16, and documentary realism.");
+  if (/nano banana 2/.test(text) && /gpt image 2/.test(text) && /documentary/.test(text)) {
+    passes.push("Image workflow mentions Nano Banana 2, GPT Image 2, and documentary realism.");
   } else {
     flags.push("Image workflow readiness language is incomplete.");
     score -= 10;
