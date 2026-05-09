@@ -1145,17 +1145,19 @@ export default function Page() {
       return;
     }
 
+    const qaPredator = pkg.predatorName ?? predator;
+    const qaPrey = pkg.preyName ?? prey;
     const matchedWorkflowTestPreset = WORKFLOW_TEST_PRESETS.find(
       (presetCandidate) =>
-        presetCandidate.snapshot.predator === predator &&
-        presetCandidate.snapshot.prey === prey
+        presetCandidate.snapshot.predator === qaPredator &&
+        presetCandidate.snapshot.prey === qaPrey
     );
     const run = buildCreatorQaRun({
       id: pkg.generationId,
       createdAt: pkg.generatedAt,
       presetName: matchedWorkflowTestPreset?.label,
-      predator,
-      prey,
+      predator: qaPredator,
+      prey: qaPrey,
       arc: previewArc,
       contentLane,
       habitat,

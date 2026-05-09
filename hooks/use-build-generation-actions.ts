@@ -376,9 +376,11 @@ export function useBuildGenerationActions({
 
   function appendGenerationVersion(finalPkg: GeneratedPackage, labelPrefix: string) {
     try {
+      const versionPredator = finalPkg.predatorName ?? predator;
+      const versionPrey = finalPkg.preyName ?? prey;
       const key = makePromptVersionKey(
-        finalPkg.predatorName ?? predator,
-        finalPkg.preyName ?? prey,
+        versionPredator,
+        versionPrey,
         String(finalPkg.arcName ?? arc)
       );
       const v: PromptVersion = {
@@ -390,7 +392,7 @@ export function useBuildGenerationActions({
         voiceoverLine: finalPkg.voiceoverLine ?? "",
         label: `${labelPrefix} • ${
           activeProvider === "none" ? "Local" : activeProvider
-        } • ${predator} vs ${prey} • ${String(previewArc ?? arc)}`,
+        } • ${versionPredator} vs ${versionPrey} • ${String(previewArc ?? arc)}`,
         performanceNote: "",
       };
       appendPromptVersion(key, v);
