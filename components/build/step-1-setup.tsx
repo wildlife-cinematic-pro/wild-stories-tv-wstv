@@ -185,6 +185,7 @@ type Step1SetupProps = {
   onWeatherHazardChange: (value: WeatherHazard) => void;
   onRutSeasonChange: (value: boolean) => void;
   onFoodItemChange: (value: string) => void;
+  onResetStoryModeSubjectDefaults: () => void;
   onWildlifeScopeModeChange: (value: WildlifeScopeMode) => void;
   onContentLaneChange: (value: ContentLane) => void;
   onCameraAnglePresetChange: (value: CameraAnglePreset) => void;
@@ -334,6 +335,7 @@ export default function Step1Setup({
   onWeatherHazardChange,
   onRutSeasonChange,
   onFoodItemChange,
+  onResetStoryModeSubjectDefaults,
   onWildlifeScopeModeChange,
   onContentLaneChange,
   onCameraAnglePresetChange,
@@ -931,6 +933,7 @@ export default function Step1Setup({
               onWeatherHazardChange={onWeatherHazardChange}
               onRutSeasonChange={onRutSeasonChange}
               onFoodItemChange={onFoodItemChange}
+              onResetSmartDefaults={onResetStoryModeSubjectDefaults}
             />
           )}
 

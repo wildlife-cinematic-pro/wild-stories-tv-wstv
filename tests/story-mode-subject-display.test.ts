@@ -4,6 +4,11 @@ import {
   formatStoryModeGenerateCtaLabel,
   formatStoryModeSubjectPair,
 } from "@/lib/story-mode-prompt-context";
+import {
+  getStoryModeSubjectDefaults,
+  getStoryModeSubjectOverrideFlags,
+  hasStoryModeSubjectOverride,
+} from "@/lib/story-mode-subject-defaults";
 import { StoryMode } from "@/types";
 
 describe("formatStoryModeSubjectPair", () => {
@@ -129,4 +134,50 @@ describe("formatStoryModeSubjectPair", () => {
       expect(formatStoryModeGenerateCtaLabel(testCase)).toBe(testCase.expected);
     }
   });
+
+  it("does not mark smart defaults as manual overrides", () => {
+    const herdDefaults = getStoryModeSubjectDefaults(StoryMode.HERD_DEFENSE);
+
+    expect(hasStoryModeSubjectOverride(StoryMode.HERD_DEFENSE, herdDefaults)).toBe(
+      false
+    );
+    expect(getStoryModeSubjectOverrideFlags(StoryMode.HERD_DEFENSE, herdDefaults)).toMatchObject({
+      subjectA: false,
+      subjectB: false,
+      groupCount: false,
+    });
+  });
+
+  it("marks changed mode-specific subject values as manual overrides", () => {
+    const flags = getStoryModeSubjectOverrideFlags(StoryMode.HERD_DEFENSE, {
+      subjectA: "Musk Ox Herd",
+      subjectB: "Wolf Pack",
+      groupCount: 12,
+    });
+
+    expect(flags.subjectA).toBe(true);
+    expect(flags.subjectB).toBe(false);
+    expect(flags.groupCount).toBe(false);
+    expect(hasStoryModeSubjectOverride(StoryMode.HERD_DEFENSE, {
+      subjectA: "Musk Ox Herd",
+      subjectB: "Wolf Pack",
+      groupCount: 12,
+    })).toBe(true);
+  });
+
+  it("returns smart defaults that reset weather survival display labels", () => {
+    const defaults = getStoryModeSubjectDefaults(StoryMode.WEATHER_SURVIVAL);
+
+    expect(defaults).toMatchObject({
+      subjectA: "American Bison",
+      subjectB: "Blizzard Wind",
+      groupCount: 8,
+      weatherHazard: "BLIZZARD",
+    });
+    expect(formatStoryModeGenerateCtaLabel({
+      storyMode: StoryMode.WEATHER_SURVIVAL,
+      ...defaults,
+    })).toBe("Weather Survival: American Bison vs Blizzard Wind");
+  });
+
 });
