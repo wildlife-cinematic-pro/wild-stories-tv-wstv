@@ -12,6 +12,7 @@ test("main build flow generates output, keeps workspace tabs reachable, and show
   }
 
   await page.goto("/");
+  await page.getByRole("button", { name: /Workflow Preset Library/i }).click();
 
   await expect(
     page.locator("button[aria-current=\"step\"]").filter({ hasText: "Wildlife Setup" })

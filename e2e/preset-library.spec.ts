@@ -1,9 +1,14 @@
 import { expect, test } from "@playwright/test";
 
+async function openWorkflowPresetLibrary(page: import("@playwright/test").Page) {
+  await page.getByRole("button", { name: /Workflow Preset Library/i }).click();
+}
+
 test("preset panel local workflow saves, updates, defaults, exports, and creates a pack", async ({
   page,
 }) => {
   await page.goto("/");
+  await openWorkflowPresetLibrary(page);
 
   await expect(page.getByText("Saved Workflow Templates")).toBeVisible();
   await expect(
@@ -159,6 +164,7 @@ test("signed-in preset panel shows cloud controls and can create a shared librar
   });
 
   await page.goto("/");
+  await openWorkflowPresetLibrary(page);
 
   await expect(page.getByText("owner@example.com", { exact: true })).toBeVisible();
   await expect(page.getByRole("button", { name: "Sync Now" })).toBeVisible();
