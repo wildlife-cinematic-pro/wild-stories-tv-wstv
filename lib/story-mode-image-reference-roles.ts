@@ -39,6 +39,7 @@ export type StoryModeImageReferenceRoles = {
   environmentPreserveLine: string;
   mergeCompositionLine: string;
   mergeStageSubjectLine: string;
+  mergeStageDirections: Record<number, string>;
 };
 
 function cleanText(value: unknown, fallback: string) {
@@ -98,6 +99,14 @@ function nonAnimalPreserveLine(subject: string, kind: ImageReferenceKind) {
   return `${subject} habitat, lighting, terrain, atmosphere, ground texture, scale cues, and open subject-ready space.`;
 }
 
+
+const PREDATOR_VS_PREY_MERGE_STAGE_DIRECTIONS: Record<number, string> = {
+  1: "opening tension with both animals visible, a readable attack or escape lane, and the first clear survival pressure beat.",
+  2: "pressure build as spacing tightens, body angles become more committed, and the terrain still leaves clean full-body readability.",
+  3: "peak action with the strongest non-graphic motion implication, near-clash pressure, grounded anatomy, and no visible injury.",
+  4: "resolve or aftermath with unresolved survival tension, stable spacing, and a replay-worthy final composition.",
+};
+
 function buildBaseRoles(data: GeneratedPackage): StoryModeImageReferenceRoles {
   const primary = cleanText(data.predatorName, "lead animal");
   const secondary = cleanText(data.preyName, "opposite animal");
@@ -128,6 +137,7 @@ function buildBaseRoles(data: GeneratedPackage): StoryModeImageReferenceRoles {
     mergeCompositionLine:
       "Place the lead animal and opposite animal in one clean wildlife documentary frame with full-body readability, stable anatomy, grounded contact, clean subject separation, and a clear attack/escape corridor.",
     mergeStageSubjectLine: `${primary} and ${secondary}`,
+    mergeStageDirections: PREDATOR_VS_PREY_MERGE_STAGE_DIRECTIONS,
   };
 }
 
@@ -172,7 +182,13 @@ export function getStoryModeImageReferenceRoles(data: GeneratedPackage): StoryMo
         secondaryPreserveLine: groupPreserveLine(secondary),
         environmentPreserveLine: nonAnimalPreserveLine(cleanText(data.environmentName, "open defensive habitat"), "environment"),
         mergeCompositionLine: `${primary} forms a readable defensive wall or circle while ${secondary} applies pressure outside the formation, with group spacing, edge tension, full-body readability, and no graphic contact.`,
-        mergeStageSubjectLine: `${primary} and ${secondary}`,
+        mergeStageSubjectLine: `${primary} herd formation, ${secondary} outside pressure, and ${cleanText(data.environmentName, "open defensive habitat")}`,
+        mergeStageDirections: {
+          1: `${primary} is visible as a defensive wall or circle while ${secondary} stays outside the formation at the habitat edge.`,
+          2: `${secondary} pressure tightens at the outer edge while ${primary} closes spacing and protects the center of the formation.`,
+          3: `Strongest non-graphic herd defense beat: ${primary} holds formation, ${secondary} is checked outside the group, no injury or direct takedown.`,
+          4: `Standoff or retreat frame with ${primary} still organized and ${secondary} outside the formation, unresolved but safe.`,
+        },
       };
     case StoryMode.MOTHER_BABY:
       return {
@@ -192,7 +208,13 @@ export function getStoryModeImageReferenceRoles(data: GeneratedPackage): StoryMo
         secondaryPreserveLine: animalPreserveLine(secondary),
         environmentPreserveLine: nonAnimalPreserveLine(cleanText(data.environmentName, "protective wildlife habitat"), "environment"),
         mergeCompositionLine: `${primary} shields the ${offspring} in a protected pocket while ${secondary} remains at a readable distance; keep the offspring visible, sheltered, correctly scaled, and safe with no contact or injury.`,
-        mergeStageSubjectLine: `${primary}, ${offspring}, and ${secondary}`,
+        mergeStageSubjectLine: `${primary}, sheltered ${offspring}, distant ${secondary}, and ${cleanText(data.environmentName, "protective wildlife habitat")}`,
+        mergeStageDirections: {
+          1: `${primary} and the ${offspring} are visible together, with ${secondary} distant enough to read as pressure without contact.`,
+          2: `${secondary} presence grows while ${primary} blocks the line of approach and keeps the ${offspring} sheltered close.`,
+          3: `Strongest protective beat: ${primary} shields the ${offspring}, ${secondary} remains separated, no contact, no injury.`,
+          4: `Protected exit or unresolved safety frame with ${primary} and the ${offspring} readable and ${secondary} held at distance.`,
+        },
       };
     case StoryMode.RIVAL_CLASH:
       return {
@@ -212,7 +234,13 @@ export function getStoryModeImageReferenceRoles(data: GeneratedPackage): StoryMo
         secondaryPreserveLine: animalPreserveLine(secondary),
         environmentPreserveLine: nonAnimalPreserveLine(cleanText(data.environmentName, "rival standoff habitat"), "environment"),
         mergeCompositionLine: `${primary} and ${secondary} face off in a same-species dominance standoff, posture-led and grounded, with antler/horn/body-display readability, clean spacing, no gore, and no visible injury.`,
-        mergeStageSubjectLine: `${primary} and ${secondary}`,
+        mergeStageSubjectLine: `${primary} and ${secondary} in a same-species dominance standoff`,
+        mergeStageDirections: {
+          1: `${primary} and ${secondary} face off as same-species rivals with readable posture and clean separation.`,
+          2: `Dominance pressure builds through antler, horn, or body-display posture while both rivals stay grounded and readable.`,
+          3: `Strongest non-graphic rival clash beat: display or near-contact dominance pressure, no gore, no visible injury.`,
+          4: `Dominance standoff or separation frame with both rivals readable and the winner unresolved or implied without graphic outcome.`,
+        },
       };
     case StoryMode.NEAR_MISS:
       return {
@@ -232,7 +260,13 @@ export function getStoryModeImageReferenceRoles(data: GeneratedPackage): StoryMo
         secondaryPreserveLine: animalPreserveLine(secondary),
         environmentPreserveLine: nonAnimalPreserveLine(cleanText(data.environmentName, "near-miss escape habitat"), "environment"),
         mergeCompositionLine: `${primary} is already cutting into the escape lane while ${secondary} closes pressure without contact; make the last-second gap readable, fast, grounded, and non-graphic.`,
-        mergeStageSubjectLine: `${primary} and ${secondary}`,
+        mergeStageSubjectLine: `${primary}, ${secondary}, and the last-second escape lane`,
+        mergeStageDirections: {
+          1: `${primary} is already oriented toward a clear escape lane while ${secondary} closes pressure from behind or the side.`,
+          2: `The last-second gap narrows, ${primary} turns or cuts toward cover, and ${secondary} pressures without contact.`,
+          3: `Peak near-miss beat: ${primary} clears the gap at the final moment while ${secondary} misses cleanly, no collision, no injury.`,
+          4: `Escape or unresolved aftermath frame with ${primary} still readable beyond the pressure lane and ${secondary} separated.`,
+        },
       };
     case StoryMode.FISHING_STRIKE:
       return {
@@ -252,7 +286,13 @@ export function getStoryModeImageReferenceRoles(data: GeneratedPackage): StoryMo
         secondaryPreserveLine: nonAnimalPreserveLine(secondary, "food-source"),
         environmentPreserveLine: nonAnimalPreserveLine(cleanText(data.environmentName, "waterline habitat"), "environment"),
         mergeCompositionLine: `${primary} prepares a clean waterline strike toward ${secondary}; show readable splash timing, grounded riverbank contact, natural feeding behavior, and no graphic food detail.`,
-        mergeStageSubjectLine: `${primary} and ${secondary}`,
+        mergeStageSubjectLine: `${primary}, ${secondary}, and the waterline strike zone`,
+        mergeStageDirections: {
+          1: `${primary} is positioned at the waterline with ${secondary} readable as a clean fish or food-source target.`,
+          2: `Strike timing builds through posture, paw/beak/body angle, water tension, and readable splash setup.`,
+          3: `Peak non-graphic fishing strike beat with splash timing and natural feeding motion, no blood, no gore, no graphic food detail.`,
+          4: `After-splash or unresolved waterline frame with ${primary}, water motion, and ${secondary} handled as a clean food-source reference.`,
+        },
       };
     case StoryMode.WEATHER_SURVIVAL:
       return {
@@ -271,8 +311,14 @@ export function getStoryModeImageReferenceRoles(data: GeneratedPackage): StoryMo
         primaryPreserveLine: groupPreserveLine(primary),
         secondaryPreserveLine: nonAnimalPreserveLine(secondary, "hazard"),
         environmentPreserveLine: nonAnimalPreserveLine(cleanText(data.environmentName, "weather survival habitat"), "environment"),
-        mergeCompositionLine: `${primary} pushes through ${secondary} as the main antagonist; show survival movement, weather pressure, readable bodies, stable footing, natural atmosphere, and no animal fight.`,
-        mergeStageSubjectLine: `${primary} and ${secondary}`,
+        mergeCompositionLine: `${primary} pushes through ${secondary} as environmental scene pressure; show survival movement, weather force, readable bodies, stable footing, natural atmosphere, and no animal opponent.`,
+        mergeStageSubjectLine: `${primary} moving through ${secondary} environmental pressure`,
+        mergeStageDirections: {
+          1: `${primary} enters the ${secondary} hazard with no animal opponent required; the weather is the scene pressure.`,
+          2: `${secondary} intensifies through atmosphere, visibility, ground texture, and body posture while ${primary} keeps moving.`,
+          3: `Strongest survival beat: ${primary} pushes through the hazard with stable footing and readable bodies, no fight, no injury.`,
+          4: `Endurance or safe-movement frame with ${primary} still moving through ${secondary}, unresolved but non-graphic.`,
+        },
       };
     case StoryMode.MIGRATION:
       return {
@@ -292,7 +338,13 @@ export function getStoryModeImageReferenceRoles(data: GeneratedPackage): StoryMo
         secondaryPreserveLine: nonAnimalPreserveLine(secondary, "route"),
         environmentPreserveLine: nonAnimalPreserveLine(cleanText(data.environmentName, "migration route habitat"), "environment"),
         mergeCompositionLine: `${primary} approaches or enters ${secondary} with migration pressure rising; show herd scale, route readability, lead animals, safe spacing, and natural crossing tension.`,
-        mergeStageSubjectLine: `${primary} and ${secondary}`,
+        mergeStageSubjectLine: `${primary} moving through the ${secondary} route or obstacle`,
+        mergeStageDirections: {
+          1: `${primary} approaches the ${secondary} route with herd scale, entry path, exit path, and terrain readability.`,
+          2: `Migration pressure rises as lead animals enter or commit to the crossing while the route remains readable.`,
+          3: `Peak crossing beat with herd movement, route tension, water or terrain pressure, safe spacing, and no graphic outcome.`,
+          4: `After-crossing or unresolved route frame with herd direction, scale, and migration path still clear.`,
+        },
       };
     case StoryMode.SCAVENGER_CONFLICT:
       return {
@@ -313,7 +365,13 @@ export function getStoryModeImageReferenceRoles(data: GeneratedPackage): StoryMo
         secondaryPreserveLine: animalPreserveLine(secondary),
         environmentPreserveLine: nonAnimalPreserveLine(foodItem, "food-zone"),
         mergeCompositionLine: `${primary} guards the non-graphic food zone while ${secondary} circles at the edge; show claim-line tension, clean spacing, habitat context, and no visible carcass gore.`,
-        mergeStageSubjectLine: `${primary}, ${secondary}, and ${foodItem}`,
+        mergeStageSubjectLine: `${primary}, ${secondary}, and a non-graphic ${foodItem} claim zone`,
+        mergeStageDirections: {
+          1: `${primary} holds the non-graphic claim zone while ${secondary} appears at the edge of the habitat lane.`,
+          2: `${secondary} circles closer while ${primary} guards the food zone; tension comes from spacing and ownership, not gore.`,
+          3: `Peak non-graphic claim-line tension with ${primary} and ${secondary} separated around the food zone, no visible carcass gore.`,
+          4: `Standoff, retreat, or unresolved claim frame with the food zone clean and the ownership line readable.`,
+        },
       };
     default:
       return buildBaseRoles(data);

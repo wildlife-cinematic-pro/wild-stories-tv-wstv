@@ -180,9 +180,12 @@ function buildMergeMasterPrompt({
     ? `3. Environment reference image for ${environmentName}: background, lighting direction, ground texture, terrain depth, habitat structure, and atmosphere.`
     : `3. ${roles.environmentReferenceLabel} for ${environmentName}: ${roles.environmentPreserveLine}`;
   const compositionLine = roles.isPredatorVsPrey ? stage.composition : roles.mergeCompositionLine;
+  const secondaryIsAnimal = roles.secondaryKind === "animal" || roles.secondaryKind === "group";
   const readabilityLine = roles.isPredatorVsPrey
     ? `Keep ${leadAnimalName} and ${oppositeAnimalName} full-body readable from ears/head through legs/feet/tail, with stable anatomy, correct limb count, realistic muscle/bone landmarks, grounded paw and hoof contact, clean silhouettes, no fused bodies, and no duplicated animals.`
-    : `Keep ${roles.mergeStageSubjectLine} readable and correctly scaled, with stable anatomy where animals are present, grounded contact, clean silhouettes, no fused bodies, no duplicated animals, and no graphic outcome.`;
+    : secondaryIsAnimal
+      ? `Keep ${roles.mergeStageSubjectLine} readable and correctly scaled, with stable anatomy where animals are present, grounded contact, clean silhouettes, no fused bodies, no duplicated animals, and no graphic outcome.`
+      : `Keep ${leadAnimalName} readable and correctly scaled with stable anatomy and grounded contact. Treat ${oppositeAnimalName} as ${roles.secondaryReferenceLabel.toLowerCase()}, not as an animal opponent; preserve natural scale, terrain interaction, clean spacing, and no graphic outcome.`;
 
   return [
     "Final merge master-image prompt. Use a natural-language cinematic brief with clear reference roles, layered scene construction, and photographic direction.",
@@ -203,7 +206,7 @@ function buildMergeMasterPrompt({
     roles.isPredatorVsPrey
       ? "Cinematic telephoto documentary framing, low natural camera height, strong subject separation, clear attack/escape corridor, realistic body mass, habitat-accurate terrain contact, natural depth of field, sharp animal detail, controlled background detail, no over-stylized CGI look."
       : "Cinematic telephoto documentary framing, low natural camera height, strong subject separation, clear action/escape/pressure corridor, realistic body mass, habitat-accurate terrain contact, natural depth of field, sharp subject detail, controlled background detail, no over-stylized CGI look.",
-    `Purpose: ${stage.stageDirection}`,
+    `Purpose: ${roles.mergeStageDirections[stage.number] ?? stage.stageDirection}`,
     "Safety and realism: clean survival tension only, no visible injury, no graphic outcome, no humans, no vehicles, no fences, no zoo enclosure, no text, no watermark.",
     "",
     FINAL_MERGE_NEGATIVE_PROMPT,
