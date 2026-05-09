@@ -11,6 +11,11 @@ import {
   isNonPredatorStoryMode,
   type StoryModePromptContext,
 } from "@/lib/story-mode-prompt-context";
+import {
+  buildModeAwareImageReferencePrompt,
+  getStoryModeImageReferenceRoles,
+  type StoryModeImageReferenceRoles,
+} from "@/lib/story-mode-image-reference-roles";
 
 type WorkflowPrompt = {
   number: number;
@@ -155,6 +160,7 @@ function buildMergeMasterPrompt({
   lightingName,
   stage,
   modeContext,
+  roles,
 }: {
   leadAnimalName: string;
   oppositeAnimalName: string;
@@ -162,29 +168,47 @@ function buildMergeMasterPrompt({
   lightingName: string;
   stage: MergeStage;
   modeContext?: StoryModePromptContext;
+  roles: StoryModeImageReferenceRoles;
 }) {
+  const primaryReferenceLine = roles.isPredatorVsPrey
+    ? `1. Lead animal reference image for ${leadAnimalName} identity: coat/skin pattern, head profile, body scale, species markers, natural anatomy, and grounded paw/foot contact.`
+    : `1. ${roles.primaryReferenceLabel} for ${leadAnimalName}: ${roles.primaryPreserveLine}`;
+  const secondaryReferenceLine = roles.isPredatorVsPrey
+    ? `2. Opposite animal reference image for ${oppositeAnimalName} identity: coat pattern, body scale, legs, hoof/paw shape, head angle, natural anatomy, and grounded hoof/foot contact.`
+    : `2. ${roles.secondaryReferenceLabel} for ${oppositeAnimalName}: ${roles.secondaryPreserveLine}`;
+  const environmentReferenceLine = roles.isPredatorVsPrey
+    ? `3. Environment reference image for ${environmentName}: background, lighting direction, ground texture, terrain depth, habitat structure, and atmosphere.`
+    : `3. ${roles.environmentReferenceLabel} for ${environmentName}: ${roles.environmentPreserveLine}`;
+  const compositionLine = roles.isPredatorVsPrey ? stage.composition : roles.mergeCompositionLine;
+  const readabilityLine = roles.isPredatorVsPrey
+    ? `Keep ${leadAnimalName} and ${oppositeAnimalName} full-body readable from ears/head through legs/feet/tail, with stable anatomy, correct limb count, realistic muscle/bone landmarks, grounded paw and hoof contact, clean silhouettes, no fused bodies, and no duplicated animals.`
+    : `Keep ${roles.mergeStageSubjectLine} readable and correctly scaled, with stable anatomy where animals are present, grounded contact, clean silhouettes, no fused bodies, no duplicated animals, and no graphic outcome.`;
+
   return [
     "Final merge master-image prompt. Use a natural-language cinematic brief with clear reference roles, layered scene construction, and photographic direction.",
     "",
     "Use the 3 prepared reference images:",
-    `1. Lead animal reference image for ${leadAnimalName} identity: coat/skin pattern, head profile, body scale, species markers, natural anatomy, and grounded paw/foot contact.`,
-    `2. Opposite animal reference image for ${oppositeAnimalName} identity: coat pattern, body scale, legs, hoof/paw shape, head angle, natural anatomy, and grounded hoof/foot contact.`,
-    `3. Environment reference image for ${environmentName}: background, lighting direction, ground texture, terrain depth, habitat structure, and atmosphere.`,
+    primaryReferenceLine,
+    secondaryReferenceLine,
+    environmentReferenceLine,
     "",
     `Final image goal: ${stage.title}. Photorealistic wildlife documentary final scene master image, video-ready source frame for a hybrid wildlife reel.`,
     modeContext ? `Story mode: ${modeContext.modeLabel}. ${modeContext.sceneGoal} ${modeContext.relationshipLine}` : "",
     modeContext ? `${modeContext.modeSpecificActionLine} ${modeContext.violenceLine}` : "",
-    `Layer the scene from background to foreground: first preserve ${environmentName} as the habitat plate with ${lightingName}, terrain depth, ambush lanes, ground plane, atmospheric depth, and natural color temperature; then place the two identity-locked animals into that environment with believable scale and spacing.`,
-    `${stage.composition}`,
-    `Keep ${leadAnimalName} and ${oppositeAnimalName} full-body readable from ears/head through legs/feet/tail, with stable anatomy, correct limb count, realistic muscle/bone landmarks, grounded paw and hoof contact, clean silhouettes, no fused bodies, and no duplicated animals.`,
-    "Cinematic telephoto documentary framing, low natural camera height, strong subject separation, clear attack/escape corridor, realistic body mass, habitat-accurate terrain contact, natural depth of field, sharp animal detail, controlled background detail, no over-stylized CGI look.",
+    roles.isPredatorVsPrey
+      ? `Layer the scene from background to foreground: first preserve ${environmentName} as the habitat plate with ${lightingName}, terrain depth, ambush lanes, ground plane, atmospheric depth, and natural color temperature; then place the two identity-locked animals into that environment with believable scale and spacing.`
+      : `Layer the scene from background to foreground: first preserve ${environmentName} as the habitat or scene-pressure reference with ${lightingName}, terrain depth, ground plane, atmospheric depth, and natural color temperature; then place the mode-specific subjects into that environment with believable scale and spacing.`,
+    compositionLine,
+    readabilityLine,
+    roles.isPredatorVsPrey
+      ? "Cinematic telephoto documentary framing, low natural camera height, strong subject separation, clear attack/escape corridor, realistic body mass, habitat-accurate terrain contact, natural depth of field, sharp animal detail, controlled background detail, no over-stylized CGI look."
+      : "Cinematic telephoto documentary framing, low natural camera height, strong subject separation, clear action/escape/pressure corridor, realistic body mass, habitat-accurate terrain contact, natural depth of field, sharp subject detail, controlled background detail, no over-stylized CGI look.",
     `Purpose: ${stage.stageDirection}`,
     "Safety and realism: clean survival tension only, no visible injury, no graphic outcome, no humans, no vehicles, no fences, no zoo enclosure, no text, no watermark.",
     "",
     FINAL_MERGE_NEGATIVE_PROMPT,
   ].filter(Boolean).join("\n");
 }
-
 
 function buildReferencePrompts(data: GeneratedPackage) {
   const leadAnimalName = cleanText(data.predatorName, "lead animal");
@@ -225,6 +249,7 @@ function buildReferencePrompts(data: GeneratedPackage) {
   const modeReferenceLine = modeContext
     ? `\n\nStory-mode reference goal: ${modeContext.modeLabel}. ${modeContext.sceneGoal} ${modeContext.relationshipLine} ${modeContext.safetyLine}`
     : "";
+  const roles = getStoryModeImageReferenceRoles(data);
 
   const leadPrompt = buildAnimalMasterReferencePrompt({
     subjectName: leadAnimalName,
@@ -254,57 +279,100 @@ function buildReferencePrompts(data: GeneratedPackage) {
     cameraAnglePreset: data.cameraAnglePreset,
   });
 
+  const primaryPrompt = roles.isPredatorVsPrey
+    ? strengthenReferencePrompt(
+        (leadPrompt + modeReferenceLine).replace(
+          /production-ready [^.]+ reference\./,
+          "production-ready wildlife master reference image."
+        ),
+        "lead"
+      )
+    : buildModeAwareImageReferencePrompt({
+        subjectName: leadAnimalName,
+        roleTitle: roles.primaryTitle,
+        kind: roles.primaryKind,
+        preserveLine: roles.primaryPreserveLine,
+        modeLabel: roles.modeLabel,
+        relationshipLine: modeContext?.relationshipLine ?? roles.mergeCompositionLine,
+        sceneGoal: modeContext?.sceneGoal ?? roles.mergeCompositionLine,
+      });
+
+  const secondaryPrompt = roles.isPredatorVsPrey
+    ? strengthenReferencePrompt(
+        (oppositePrompt + modeReferenceLine).replace(
+          /production-ready [^.]+ reference\./,
+          "production-ready wildlife master reference image."
+        ),
+        "opposite"
+      )
+    : buildModeAwareImageReferencePrompt({
+        subjectName: oppositeAnimalName,
+        roleTitle: roles.secondaryTitle,
+        kind: roles.secondaryKind,
+        preserveLine: roles.secondaryPreserveLine,
+        modeLabel: roles.modeLabel,
+        relationshipLine: modeContext?.relationshipLine ?? roles.mergeCompositionLine,
+        sceneGoal: modeContext?.sceneGoal ?? roles.mergeCompositionLine,
+      });
+
+  const environmentSubjectName = roles.environmentKind === "food-zone"
+    ? cleanText(data.foodItem, "non-graphic food zone")
+    : environmentName;
+  const habitatPrompt = roles.isPredatorVsPrey
+    ? strengthenReferencePrompt(environmentPrompt + modeReferenceLine, "environment")
+    : buildModeAwareImageReferencePrompt({
+        subjectName: environmentSubjectName,
+        roleTitle: roles.environmentTitle,
+        kind: roles.environmentKind,
+        preserveLine: roles.environmentPreserveLine,
+        modeLabel: roles.modeLabel,
+        relationshipLine: modeContext?.relationshipLine ?? roles.mergeCompositionLine,
+        sceneGoal: modeContext?.sceneGoal ?? roles.mergeCompositionLine,
+      });
+  const nanoBadge = roles.isPredatorVsPrey
+    ? "Nano Banana 2 Primary · GPT Image 2 Backup"
+    : "Nano Banana 2 Primary";
+
   return {
     leadAnimalName,
     oppositeAnimalName,
     environmentName,
     lightingName,
     modeContext,
+    roles,
     referencePrompts: [
       {
         number: 1,
-        title: "Lead Animal Master Image",
-        helper: "Create the reusable lead animal reference in Nano Banana 2 first.",
-        badge: "Nano Banana 2 Primary · GPT Image 2 Backup",
-        prompt: strengthenReferencePrompt(
-          (leadPrompt + modeReferenceLine).replace(
-            /production-ready [^.]+ reference\./,
-            "production-ready wildlife master reference image."
-          ),
-          "lead"
-        ),
-        copyLabel: "Lead Reference",
+        title: roles.primaryTitle,
+        helper: roles.primaryHelper,
+        badge: nanoBadge,
+        prompt: primaryPrompt,
+        copyLabel: roles.primaryCopyLabel,
         tone: "amber",
-        backupNote: OPTIONAL_GPT_IMAGE_2_BACKUP_NOTE,
-        runwayNote: OPTIONAL_RUNWAY_REFERENCE_NOTE,
+        backupNote: roles.isPredatorVsPrey ? OPTIONAL_GPT_IMAGE_2_BACKUP_NOTE : undefined,
+        runwayNote: roles.isPredatorVsPrey ? OPTIONAL_RUNWAY_REFERENCE_NOTE : undefined,
       },
       {
         number: 2,
-        title: "Opposite Animal Master Image",
-        helper: "Create the reusable opposite animal reference in Nano Banana 2 first.",
-        badge: "Nano Banana 2 Primary · GPT Image 2 Backup",
-        prompt: strengthenReferencePrompt(
-          (oppositePrompt + modeReferenceLine).replace(
-            /production-ready [^.]+ reference\./,
-            "production-ready wildlife master reference image."
-          ),
-          "opposite"
-        ),
-        copyLabel: "Opposite Reference",
+        title: roles.secondaryTitle,
+        helper: roles.secondaryHelper,
+        badge: nanoBadge,
+        prompt: secondaryPrompt,
+        copyLabel: roles.secondaryCopyLabel,
         tone: "amber",
-        backupNote: OPTIONAL_GPT_IMAGE_2_BACKUP_NOTE,
-        runwayNote: OPTIONAL_RUNWAY_REFERENCE_NOTE,
+        backupNote: roles.isPredatorVsPrey ? OPTIONAL_GPT_IMAGE_2_BACKUP_NOTE : undefined,
+        runwayNote: roles.isPredatorVsPrey ? OPTIONAL_RUNWAY_REFERENCE_NOTE : undefined,
       },
       {
         number: 3,
-        title: "Environment Master Image",
-        helper: "Create the reusable habitat, terrain, and lighting reference in Nano Banana 2 first.",
-        badge: "Nano Banana 2 Primary · GPT Image 2 Backup",
-        prompt: strengthenReferencePrompt(environmentPrompt + modeReferenceLine, "environment"),
-        copyLabel: "Environment Reference",
+        title: roles.environmentTitle,
+        helper: roles.environmentHelper,
+        badge: nanoBadge,
+        prompt: habitatPrompt,
+        copyLabel: roles.environmentCopyLabel,
         tone: "indigo",
-        backupNote: OPTIONAL_GPT_IMAGE_2_BACKUP_NOTE,
-        runwayNote: OPTIONAL_RUNWAY_REFERENCE_NOTE,
+        backupNote: roles.isPredatorVsPrey ? OPTIONAL_GPT_IMAGE_2_BACKUP_NOTE : undefined,
+        runwayNote: roles.isPredatorVsPrey ? OPTIONAL_RUNWAY_REFERENCE_NOTE : undefined,
       },
     ] satisfies WorkflowPrompt[],
   };
@@ -439,18 +507,25 @@ export default function ImageReferenceMergeWorkflow({
     environmentName,
     lightingName,
     modeContext,
+    roles,
     referencePrompts,
   } = buildReferencePrompts(data);
   const structuredSourceNote = structuredPrompts?.imagePrompt?.pasteReady
     ? "The existing full-scene image prompt stays available below; this workflow splits it into Nano Banana 2 primary references first."
-    : "Reference prompts are derived from the current package animals and environment.";
+    : "Reference prompts are derived from the current package story mode, subjects, and environment.";
 
   const mergePrompts: WorkflowPrompt[] = MERGE_STAGES.map((stage) => ({
     number: stage.number,
-    title: stage.title,
+    title: roles.isPredatorVsPrey
+      ? stage.title
+      : roles.modeLabel + " Merge Master Image " + stage.number + " — " + (stage.title.split(" — ")[1] ?? stage.subStage),
     subStage: stage.subStage,
-    helper: `Merge the 3 reference images with ${stage.subStage.toLowerCase()} composition.`,
-    badge: "Nano Banana 2 Primary · GPT Image 2 Backup",
+    helper: roles.isPredatorVsPrey
+      ? "Merge the 3 reference images with " + stage.subStage.toLowerCase() + " composition."
+      : "Merge the mode-aware Nano Banana 2 references for " + roles.modeLabel.toLowerCase() + " with " + stage.subStage.toLowerCase() + " composition.",
+    badge: roles.isPredatorVsPrey
+      ? "Nano Banana 2 Primary · GPT Image 2 Backup"
+      : "Nano Banana 2 Primary",
     prompt: buildMergeMasterPrompt({
       leadAnimalName,
       oppositeAnimalName,
@@ -458,15 +533,18 @@ export default function ImageReferenceMergeWorkflow({
       lightingName,
       stage,
       modeContext,
+      roles,
     }),
-    copyLabel: `Merge ${stage.number}`,
+    copyLabel: "Merge " + stage.number,
     tone: "emerald",
-    backupNote: OPTIONAL_GPT_IMAGE_2_BACKUP_NOTE,
-    runwayNote: buildRunwayReferenceHelperNote({
-      leadAnimalName,
-      oppositeAnimalName,
-      environmentName,
-    }),
+    backupNote: roles.isPredatorVsPrey ? OPTIONAL_GPT_IMAGE_2_BACKUP_NOTE : undefined,
+    runwayNote: roles.isPredatorVsPrey
+      ? buildRunwayReferenceHelperNote({
+          leadAnimalName,
+          oppositeAnimalName,
+          environmentName,
+        })
+      : undefined,
   }));
 
   const allPrompts = [
@@ -506,8 +584,8 @@ export default function ImageReferenceMergeWorkflow({
               Nano Banana 2 Reference Merge Workflow
             </h2>
             <p className="mt-1 max-w-3xl text-xs leading-relaxed text-zinc-400">
-              Build three Nano Banana 2 primary references first, then generate four merge master
-              images for the hybrid video handoff. {structuredSourceNote}
+              Build three Nano Banana 2 primary references first, then generate four mode-aware merge
+              master images for the hybrid video handoff. {structuredSourceNote}
             </p>
           </div>
           <CopyAction label="All Image Workflow" prompt={allPrompts} onCopy={onCopy} />
@@ -519,7 +597,7 @@ export default function ImageReferenceMergeWorkflow({
           <StepHeader
             step="STEP 1"
             title="MASTER REFERENCE IMAGES"
-            note="Create the separate Nano Banana 2 primary references before merging scenes."
+            note={roles.isPredatorVsPrey ? "Create the separate Nano Banana 2 primary references before merging scenes." : "Create the separate Nano Banana 2 primary references for " + roles.modeLabel.toLowerCase() + " before merging scenes."}
           />
           <div className="grid gap-4 lg:grid-cols-3">
             {referencePrompts.map((item) => (
@@ -528,13 +606,13 @@ export default function ImageReferenceMergeWorkflow({
           </div>
         </div>
 
-        <FlowDivider label="Use the 3 reference images in Nano Banana 2, then merge" />
+        <FlowDivider label={roles.isPredatorVsPrey ? "Use the 3 reference images in Nano Banana 2, then merge" : "Use the 3 " + roles.modeLabel + " references in Nano Banana 2, then merge"} />
 
         <div>
           <StepHeader
             step="STEP 2"
             title="FINAL MERGE MASTER IMAGES"
-            note="Each merge prompt uses the lead animal, opposite animal, and environment reference images."
+            note={roles.isPredatorVsPrey ? "Each merge prompt uses the lead animal, opposite animal, and environment reference images." : "Each merge prompt uses the mode-specific subject, pressure, and environment references."}
           />
           <div className="grid gap-4 xl:grid-cols-2">
             {mergePrompts.map((item) => (
