@@ -2,6 +2,12 @@
 
 import { HabitatRegion, StoryMode } from "@/types";
 
+import {
+  getStoryModeSubjectDefaults,
+  getStoryModeSubjectOverrideFlags,
+  type StoryModeSubjectValues,
+} from "@/lib/story-mode-subject-defaults";
+
 import type {
   EscapeDirection,
   OffspringLabel,
@@ -11,17 +17,7 @@ import type {
   WeatherHazard,
 } from "@/types";
 
-export type StoryModeSubjectValues = {
-  subjectA?: string;
-  subjectB?: string;
-  groupCount?: number;
-  offspringLabel?: OffspringLabel;
-  strikeMethod?: StrikeMethod;
-  escapeDirection?: EscapeDirection;
-  weatherHazard?: WeatherHazard;
-  rutSeason?: boolean;
-  foodItem?: string;
-};
+export type { StoryModeSubjectValues } from "@/lib/story-mode-subject-defaults";
 
 type StoryModeSubjectFieldsProps = StoryModeSubjectValues & {
   storyMode: StoryMode;
@@ -37,6 +33,7 @@ type StoryModeSubjectFieldsProps = StoryModeSubjectValues & {
   onWeatherHazardChange: (value: WeatherHazard) => void;
   onRutSeasonChange: (value: boolean) => void;
   onFoodItemChange: (value: string) => void;
+  onResetSmartDefaults: () => void;
 };
 
 type SubjectFieldConfig = {
@@ -149,59 +146,6 @@ const modeConfig: Partial<Record<StoryMode, SubjectFieldConfig>> = {
   },
 };
 
-export function getStoryModeSubjectDefaults(
-  storyMode: StoryMode,
-  predator = "Mountain Lion",
-  prey = "White-tailed Deer"
-): StoryModeSubjectValues {
-  switch (storyMode) {
-    case StoryMode.HERD_DEFENSE:
-      return { subjectA: "Bison Herd", subjectB: "Wolf Pack", groupCount: 12 };
-    case StoryMode.MOTHER_BABY:
-      return {
-        subjectA: "Grizzly Mother",
-        subjectB: "Male Grizzly",
-        offspringLabel: "cub",
-      };
-    case StoryMode.RIVAL_CLASH:
-      return { subjectA: "Bull Elk A", subjectB: "Bull Elk B", rutSeason: true };
-    case StoryMode.NEAR_MISS:
-      return {
-        subjectA: "White-tailed Deer",
-        subjectB: "Mountain Lion",
-        escapeDirection: "BRUSH",
-      };
-    case StoryMode.FISHING_STRIKE:
-      return {
-        subjectA: "Grizzly Bear",
-        subjectB: "Sockeye Salmon",
-        strikeMethod: "SWIPE",
-      };
-    case StoryMode.WEATHER_SURVIVAL:
-      return {
-        subjectA: "American Bison",
-        subjectB: "Blizzard Wind",
-        weatherHazard: "BLIZZARD",
-        groupCount: 8,
-      };
-    case StoryMode.MIGRATION:
-      return {
-        subjectA: "Caribou Herd",
-        subjectB: "River Crossing",
-        groupCount: 250,
-      };
-    case StoryMode.SCAVENGER_CONFLICT:
-      return {
-        subjectA: "Bald Eagle",
-        subjectB: "Coyote",
-        foodItem: "Deer carcass zone",
-      };
-    case StoryMode.PREDATOR_VS_PREY:
-    default:
-      return { subjectA: predator, subjectB: prey };
-  }
-}
-
 function formatEnumLabel(value: string) {
   return value
     .toLowerCase()
@@ -268,23 +212,36 @@ export function buildStoryModeSetupSummary({
   }
 }
 
+function ManualOverrideBadge({ show }: { show?: boolean }) {
+  if (!show) return null;
+
+  return (
+    <span className="rounded-full border border-amber-400/30 bg-amber-400/10 px-2 py-0.5 text-[9px] font-black uppercase tracking-[0.1em] text-amber-200">
+      Manual override
+    </span>
+  );
+}
+
 function TextInput({
   label,
   value,
   onChange,
   placeholder,
   helper,
+  manualOverride,
 }: {
   label: string;
   value: string;
   onChange: (value: string) => void;
   placeholder: string;
   helper?: string;
+  manualOverride?: boolean;
 }) {
   return (
     <label className="block">
-      <span className="mb-1.5 block text-[10px] font-semibold uppercase tracking-[0.12em] text-zinc-500">
-        {label}
+      <span className="mb-1.5 flex min-h-[20px] flex-wrap items-center gap-2 text-[10px] font-semibold uppercase tracking-[0.12em] text-zinc-500">
+        <span>{label}</span>
+        <ManualOverrideBadge show={manualOverride} />
       </span>
       <input
         value={value}
@@ -306,16 +263,19 @@ function SelectInput<T extends string>({
   value,
   options,
   onChange,
+  manualOverride,
 }: {
   label: string;
   value: T;
   options: T[];
   onChange: (value: T) => void;
+  manualOverride?: boolean;
 }) {
   return (
     <label className="block">
-      <span className="mb-1.5 block text-[10px] font-semibold uppercase tracking-[0.12em] text-zinc-500">
-        {label}
+      <span className="mb-1.5 flex min-h-[20px] flex-wrap items-center gap-2 text-[10px] font-semibold uppercase tracking-[0.12em] text-zinc-500">
+        <span>{label}</span>
+        <ManualOverrideBadge show={manualOverride} />
       </span>
       <select
         value={value}
@@ -338,18 +298,21 @@ function GroupCountSlider({
   min,
   max,
   onChange,
+  manualOverride,
 }: {
   label: string;
   value: number;
   min: number;
   max: number;
   onChange: (value: number) => void;
+  manualOverride?: boolean;
 }) {
   return (
     <label className="block rounded-xl border border-cyan-400/15 bg-cyan-500/10 p-3">
       <span className="flex items-center justify-between gap-3">
-        <span className="text-[10px] font-semibold uppercase tracking-[0.12em] text-cyan-200">
-          {label}
+        <span className="flex flex-wrap items-center gap-2 text-[10px] font-semibold uppercase tracking-[0.12em] text-cyan-200">
+          <span>{label}</span>
+          <ManualOverrideBadge show={manualOverride} />
         </span>
         <span className="rounded-full bg-cyan-400/15 px-2.5 py-1 text-xs font-black text-cyan-100">
           {value}
@@ -395,6 +358,7 @@ export default function StoryModeSubjectFields({
   onWeatherHazardChange,
   onRutSeasonChange,
   onFoodItemChange,
+  onResetSmartDefaults,
 }: StoryModeSubjectFieldsProps) {
   const config = modeConfig[storyMode];
   const values = getEffectiveValues(storyMode, {
@@ -408,6 +372,18 @@ export default function StoryModeSubjectFields({
     rutSeason,
     foodItem,
   });
+  const overrideFlags = getStoryModeSubjectOverrideFlags(storyMode, {
+    subjectA,
+    subjectB,
+    groupCount,
+    offspringLabel,
+    strikeMethod,
+    escapeDirection,
+    weatherHazard,
+    rutSeason,
+    foodItem,
+  });
+  const hasOverrides = Object.values(overrideFlags).some(Boolean);
 
   if (!config) return null;
 
@@ -425,9 +401,19 @@ export default function StoryModeSubjectFields({
             {config.helper}
           </p>
         </div>
-        <span className="rounded-full border border-indigo-400/25 bg-indigo-500/10 px-3 py-1 text-[10px] font-bold uppercase tracking-[0.1em] text-indigo-200">
-          Subject Setup
-        </span>
+        <div className="flex flex-wrap items-center justify-end gap-2">
+          {hasOverrides ? <ManualOverrideBadge show /> : null}
+          <button
+            type="button"
+            onClick={onResetSmartDefaults}
+            className="rounded-full border border-amber-400/30 bg-amber-400/10 px-3 py-1 text-[10px] font-bold uppercase tracking-[0.1em] text-amber-100 transition hover:border-amber-300/70 hover:bg-amber-400/15"
+          >
+            Reset to Smart Defaults
+          </button>
+          <span className="rounded-full border border-indigo-400/25 bg-indigo-500/10 px-3 py-1 text-[10px] font-bold uppercase tracking-[0.1em] text-indigo-200">
+            Subject Setup
+          </span>
+        </div>
       </div>
 
       <div className="mb-4 rounded-xl border border-cyan-400/15 bg-cyan-500/10 px-3 py-2 text-[11px] leading-relaxed text-cyan-100/80">
@@ -441,6 +427,7 @@ export default function StoryModeSubjectFields({
           value={values.subjectA}
           onChange={onSubjectAChange}
           placeholder={values.subjectA}
+          manualOverride={overrideFlags.subjectA}
         />
 
         {config.subjectBLabel ? (
@@ -453,6 +440,7 @@ export default function StoryModeSubjectFields({
             value={values.subjectB}
             onChange={onSubjectBChange}
             placeholder={values.subjectB}
+            manualOverride={overrideFlags.subjectB}
           />
         ) : null}
 
@@ -462,14 +450,16 @@ export default function StoryModeSubjectFields({
             value={values.offspringLabel}
             options={offspringOptions}
             onChange={onOffspringLabelChange}
+            manualOverride={overrideFlags.offspringLabel}
           />
         ) : null}
 
         {storyMode === StoryMode.RIVAL_CLASH ? (
           <label className="flex min-h-[72px] items-center justify-between gap-4 rounded-xl border border-amber-400/20 bg-amber-500/10 p-3">
             <span>
-              <span className="block text-[10px] font-semibold uppercase tracking-[0.12em] text-amber-200">
-                Rut Season
+              <span className="flex flex-wrap items-center gap-2 text-[10px] font-semibold uppercase tracking-[0.12em] text-amber-200">
+                <span>Rut Season</span>
+                <ManualOverrideBadge show={overrideFlags.rutSeason} />
               </span>
               <span className="mt-1 block text-xs leading-relaxed text-zinc-500">
                 Adds seasonal pressure as metadata only.
@@ -490,6 +480,7 @@ export default function StoryModeSubjectFields({
             value={values.escapeDirection}
             options={escapeDirectionOptions}
             onChange={onEscapeDirectionChange}
+            manualOverride={overrideFlags.escapeDirection}
           />
         ) : null}
 
@@ -499,6 +490,7 @@ export default function StoryModeSubjectFields({
             value={values.strikeMethod}
             options={strikeMethodOptions}
             onChange={onStrikeMethodChange}
+            manualOverride={overrideFlags.strikeMethod}
           />
         ) : null}
 
@@ -508,6 +500,7 @@ export default function StoryModeSubjectFields({
             value={values.weatherHazard}
             options={weatherHazardOptions}
             onChange={onWeatherHazardChange}
+            manualOverride={overrideFlags.weatherHazard}
           />
         ) : null}
 
@@ -518,6 +511,7 @@ export default function StoryModeSubjectFields({
             onChange={onFoodItemChange}
             placeholder={values.foodItem}
             helper="Keep this non-graphic: describe the food zone, not visible injury."
+            manualOverride={overrideFlags.foodItem}
           />
         ) : null}
 
@@ -529,6 +523,7 @@ export default function StoryModeSubjectFields({
               min={config.groupMin}
               max={config.groupMax}
               onChange={onGroupCountChange}
+              manualOverride={overrideFlags.groupCount}
             />
           </div>
         ) : null}

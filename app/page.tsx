@@ -96,7 +96,7 @@ import Step1Setup from "@/components/build/step-1-setup";
 import {
   getStoryModeSubjectDefaults,
   type StoryModeSubjectValues,
-} from "@/components/build/story-mode-subject-fields";
+} from "@/lib/story-mode-subject-defaults";
 import Step2EngineQuality from "@/components/build/step-2-engine-quality";
 import Step3Generate from "@/components/build/step-3-generate";
 
@@ -373,6 +373,19 @@ export default function Page() {
     },
     [predator, prey]
   );
+
+  const handleResetStoryModeSubjectDefaults = useCallback(() => {
+    const defaults = getStoryModeSubjectDefaults(storyMode, predator, prey);
+    setSubjectA(defaults.subjectA);
+    setSubjectB(defaults.subjectB);
+    setGroupCount(defaults.groupCount);
+    setOffspringLabel(defaults.offspringLabel ?? DEFAULT_OFFSPRING_LABEL);
+    setStrikeMethod(defaults.strikeMethod ?? DEFAULT_STRIKE_METHOD);
+    setEscapeDirection(defaults.escapeDirection ?? DEFAULT_ESCAPE_DIRECTION);
+    setWeatherHazard(defaults.weatherHazard ?? DEFAULT_WEATHER_HAZARD);
+    setRutSeason(defaults.rutSeason ?? false);
+    setFoodItem(defaults.foodItem);
+  }, [predator, prey, storyMode]);
 
   const handleApplyStoryModePreset = useCallback((preset: StoryModePreset) => {
     setStoryMode(preset.storyMode);
@@ -1637,6 +1650,7 @@ export default function Page() {
                 onWeatherHazardChange={setWeatherHazard}
                 onRutSeasonChange={setRutSeason}
                 onFoodItemChange={setFoodItem}
+                onResetStoryModeSubjectDefaults={handleResetStoryModeSubjectDefaults}
                 onWildlifeScopeModeChange={setWildlifeScopeMode}
                 onContentLaneChange={setContentLane}
                 onCameraAnglePresetChange={setCameraAnglePreset}
