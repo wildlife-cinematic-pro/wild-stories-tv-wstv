@@ -63,6 +63,7 @@ import {
   formatStoryModeGenerateCtaLabel,
   formatStoryModeSubjectPair,
 } from "@/lib/story-mode-prompt-context";
+import type { RecommendedSeasonalSetup } from "@/lib/seasonal-realism-advisor";
 import type { StoryModePreset } from "@/lib/story-mode-presets";
 import {
   appendCreatorQaRun,
@@ -411,6 +412,41 @@ export default function Page() {
     setSceneDescriptionVariant((current) => current + 1);
     setPromotedPublishCopyOverride(null);
   }, []);
+
+  const handleApplyRecommendedSeasonalSetup = useCallback(
+    (setup: RecommendedSeasonalSetup) => {
+      setStoryMode(setup.storyMode);
+
+      if (setup.storyMode === StoryMode.PREDATOR_VS_PREY) {
+        if (setup.subjectA) setPredator(setup.subjectA);
+        if (setup.subjectB) setPrey(setup.subjectB);
+      }
+
+      setSubjectA(setup.subjectA);
+      setSubjectB(setup.subjectB);
+      setGroupCount(setup.groupCount);
+      setOffspringLabel(setup.offspringLabel ?? DEFAULT_OFFSPRING_LABEL);
+      setStrikeMethod(setup.strikeMethod ?? DEFAULT_STRIKE_METHOD);
+      setEscapeDirection(setup.escapeDirection ?? DEFAULT_ESCAPE_DIRECTION);
+      setWeatherHazard(setup.weatherHazard ?? DEFAULT_WEATHER_HAZARD);
+      setRutSeason(setup.rutSeason ?? false);
+      setFoodItem(setup.foodItem);
+
+      if (setup.habitatRegion) {
+        setHabitatRegion(setup.habitatRegion);
+      }
+
+      if (setup.season) {
+        setSeason(setup.season);
+      }
+
+      setPromotedPublishCopyOverride(null);
+      setError("");
+      setStep(1);
+      setActiveTab("build");
+    },
+    []
+  );
 
   useBuildPersistence({
     predator,
@@ -1651,6 +1687,7 @@ export default function Page() {
                 onRutSeasonChange={setRutSeason}
                 onFoodItemChange={setFoodItem}
                 onResetStoryModeSubjectDefaults={handleResetStoryModeSubjectDefaults}
+                onApplyRecommendedSeasonalSetup={handleApplyRecommendedSeasonalSetup}
                 onWildlifeScopeModeChange={setWildlifeScopeMode}
                 onContentLaneChange={setContentLane}
                 onCameraAnglePresetChange={setCameraAnglePreset}

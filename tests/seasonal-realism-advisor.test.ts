@@ -4,6 +4,7 @@ import {
   EASTERN_TIME_ZONE,
   getEasternCreatorContext,
   getNorthernHemisphereSeason,
+  getRecommendedSeasonalSetup,
   getSeasonalRealismAdvice,
 } from "@/lib/seasonal-realism-advisor";
 import { HabitatRegion, StoryMode, ViralLane } from "@/types";
@@ -127,4 +128,112 @@ describe("seasonal realism advisor", () => {
     expect(next.subjectA).toBe(input.subjectA);
     expect(next.subjectB).toBe(input.subjectB);
   });
+  it("recommends Yellowstone fall rival clash setup", () => {
+    const setup = getRecommendedSeasonalSetup({
+      storyMode: StoryMode.PREDATOR_VS_PREY,
+      habitatRegion: HabitatRegion.YELLOWSTONE,
+      season: "FALL",
+      weather: "Golden Hour",
+      predator: "Wolf Pack",
+      prey: "Elk",
+      viralLane: ViralLane.POWER,
+    });
+
+    expect(setup).toMatchObject({
+      storyMode: StoryMode.RIVAL_CLASH,
+      habitatRegion: HabitatRegion.YELLOWSTONE,
+      season: "FALL",
+      subjectA: "Bull Elk A",
+      subjectB: "Bull Elk B",
+      rutSeason: true,
+    });
+  });
+
+  it("recommends Everglades summer alligator and wild boar setup", () => {
+    const setup = getRecommendedSeasonalSetup({
+      storyMode: StoryMode.HERD_DEFENSE,
+      habitatRegion: HabitatRegion.EVERGLADES,
+      season: "SUMMER",
+      weather: "Midday Heat",
+      subjectA: "Bison Herd",
+      subjectB: "Wolf Pack",
+      viralLane: ViralLane.TENSION,
+    });
+
+    expect(setup).toMatchObject({
+      storyMode: StoryMode.PREDATOR_VS_PREY,
+      habitatRegion: HabitatRegion.EVERGLADES,
+      season: "SUMMER",
+      subjectA: "Alligator",
+      subjectB: "Wild Boar",
+    });
+  });
+
+  it("recommends Alaska summer and fall fishing strike salmon setup", () => {
+    for (const season of ["SUMMER", "FALL"] as const) {
+      const setup = getRecommendedSeasonalSetup({
+        storyMode: StoryMode.PREDATOR_VS_PREY,
+        habitatRegion: HabitatRegion.ALASKA,
+        season,
+        weather: "Golden Hour",
+        predator: "Wolf Pack",
+        prey: "Elk",
+        viralLane: ViralLane.SURVIVAL,
+      });
+
+      expect(setup).toMatchObject({
+        storyMode: StoryMode.FISHING_STRIKE,
+        habitatRegion: HabitatRegion.ALASKA,
+        season,
+        subjectA: "Grizzly Bear",
+        subjectB: "Sockeye Salmon",
+        strikeMethod: "SWIPE",
+      });
+    }
+  });
+
+  it("recommends Yellowstone winter weather survival setup", () => {
+    const setup = getRecommendedSeasonalSetup({
+      storyMode: StoryMode.RIVAL_CLASH,
+      habitatRegion: HabitatRegion.YELLOWSTONE,
+      season: "WINTER",
+      weather: "Winter Blizzard",
+      subjectA: "Bull Elk A",
+      subjectB: "Bull Elk B",
+      viralLane: ViralLane.SURVIVAL,
+    });
+
+    expect(setup).toMatchObject({
+      storyMode: StoryMode.WEATHER_SURVIVAL,
+      habitatRegion: HabitatRegion.YELLOWSTONE,
+      season: "WINTER",
+      subjectA: "American Bison",
+      subjectB: "Blizzard Wind",
+      groupCount: 8,
+      weatherHazard: "BLIZZARD",
+    });
+  });
+
+  it("keeps recommendations limited to setup fields and manual apply data", () => {
+    const setup = getRecommendedSeasonalSetup({
+      storyMode: StoryMode.PREDATOR_VS_PREY,
+      habitatRegion: HabitatRegion.GREAT_PLAINS,
+      season: "SUMMER",
+      weather: "Golden Hour",
+      predator: "Mountain Lion",
+      prey: "White-tailed Deer",
+      viralLane: ViralLane.POWER,
+    });
+
+    expect(setup).toMatchObject({
+      storyMode: StoryMode.HERD_DEFENSE,
+      subjectA: "Bison Herd",
+      subjectB: "Wolf Pack",
+      groupCount: 12,
+    });
+    expect(setup).not.toHaveProperty("activeProvider");
+    expect(setup).not.toHaveProperty("runwayModel");
+    expect(setup).not.toHaveProperty("klingModel");
+  });
+
 });

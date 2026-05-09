@@ -13,6 +13,7 @@ import WildlifeStoryModeSelector from "@/components/build/wildlife-story-mode-se
 import WorkflowPresetsPanel from "@/components/build/workflow-presets-panel";
 
 import { WORKFLOW_TEST_PRESETS } from "@/lib/workflow-presets";
+import type { RecommendedSeasonalSetup } from "@/lib/seasonal-realism-advisor";
 import type { StoryModePreset } from "@/lib/story-mode-presets";
 import { contentLaneOptions } from "@/lib/content-lanes";
 import {
@@ -276,6 +277,7 @@ type Step1SetupProps = {
   onRutSeasonChange: (value: boolean) => void;
   onFoodItemChange: (value: string) => void;
   onResetStoryModeSubjectDefaults: () => void;
+  onApplyRecommendedSeasonalSetup: (setup: RecommendedSeasonalSetup) => void;
   onWildlifeScopeModeChange: (value: WildlifeScopeMode) => void;
   onContentLaneChange: (value: ContentLane) => void;
   onCameraAnglePresetChange: (value: CameraAnglePreset) => void;
@@ -426,6 +428,7 @@ export default function Step1Setup({
   onRutSeasonChange,
   onFoodItemChange,
   onResetStoryModeSubjectDefaults,
+  onApplyRecommendedSeasonalSetup,
   onWildlifeScopeModeChange,
   onContentLaneChange,
   onCameraAnglePresetChange,
@@ -1095,6 +1098,7 @@ export default function Step1Setup({
             prey={prey}
             viralLane={viralLane}
             onSeasonChange={onSeasonChange}
+            onApplyRecommendedSetup={onApplyRecommendedSeasonalSetup}
           />
 
           <CollapsibleControlSection

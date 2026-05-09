@@ -4,8 +4,10 @@ import { useEffect, useMemo, useState } from "react";
 
 import {
   getEasternCreatorContext,
+  getRecommendedSeasonalSetup,
   getRecommendedWildlifeSetup,
   getSeasonalRealismAdvice,
+  type RecommendedSeasonalSetup,
   type SeasonalRealismStatus,
 } from "@/lib/seasonal-realism-advisor";
 import { HabitatRegion, StoryMode, ViralLane } from "@/types";
@@ -24,6 +26,7 @@ type SeasonalRealismAdvisorCardProps = {
   prey: string;
   viralLane: ViralLane;
   onSeasonChange: (value: Season) => void;
+  onApplyRecommendedSetup: (setup: RecommendedSeasonalSetup) => void;
 };
 
 const statusStyles: Record<SeasonalRealismStatus, string> = {
@@ -39,6 +42,18 @@ const labelText: Record<Season, string> = {
   FALL: "Fall",
   WINTER: "Winter",
   MIGRATION_SEASON: "Migration Season",
+};
+
+const storyModeText: Record<StoryMode, string> = {
+  [StoryMode.PREDATOR_VS_PREY]: "Predator vs Prey",
+  [StoryMode.HERD_DEFENSE]: "Herd Defense",
+  [StoryMode.MOTHER_BABY]: "Mother & Baby",
+  [StoryMode.RIVAL_CLASH]: "Rival Clash",
+  [StoryMode.NEAR_MISS]: "Near-Miss Escape",
+  [StoryMode.FISHING_STRIKE]: "Fishing Strike",
+  [StoryMode.WEATHER_SURVIVAL]: "Weather Survival",
+  [StoryMode.MIGRATION]: "Migration Crossing",
+  [StoryMode.SCAVENGER_CONFLICT]: "Scavenger Conflict",
 };
 
 const habitatText: Record<HabitatRegion, string> = {
@@ -65,6 +80,7 @@ export default function SeasonalRealismAdvisorCard({
   prey,
   viralLane,
   onSeasonChange,
+  onApplyRecommendedSetup,
 }: SeasonalRealismAdvisorCardProps) {
   const [now, setNow] = useState(() => new Date());
   const [creativeOverride, setCreativeOverride] = useState(false);
@@ -123,6 +139,33 @@ export default function SeasonalRealismAdvisorCard({
         viralLane,
       }),
     [habitatRegion, predator, prey, season, storyMode, subjectA, subjectB, viralLane, weather, weatherHazard]
+  );
+  const recommendedSetup = useMemo(
+    () =>
+      getRecommendedSeasonalSetup({
+        storyMode,
+        habitatRegion,
+        season,
+        weather,
+        weatherHazard,
+        subjectA,
+        subjectB,
+        predator,
+        prey,
+        viralLane,
+      }),
+    [habitatRegion, predator, prey, season, storyMode, subjectA, subjectB, viralLane, weather, weatherHazard]
+  );
+  const recommendedSetupActive = Boolean(
+    recommendedSetup &&
+      recommendedSetup.storyMode === storyMode &&
+      (!recommendedSetup.habitatRegion || recommendedSetup.habitatRegion === habitatRegion) &&
+      (!recommendedSetup.season || recommendedSetup.season === season) &&
+      (storyMode === StoryMode.PREDATOR_VS_PREY
+        ? (!recommendedSetup.subjectA || recommendedSetup.subjectA === predator) &&
+          (!recommendedSetup.subjectB || recommendedSetup.subjectB === prey)
+        : (!recommendedSetup.subjectA || recommendedSetup.subjectA === subjectA) &&
+          (!recommendedSetup.subjectB || recommendedSetup.subjectB === subjectB))
   );
   const canApplySeason = Boolean(
     advice.suggestedSeason && advice.suggestedSeason !== season
@@ -214,6 +257,69 @@ export default function SeasonalRealismAdvisorCard({
               {pass}
             </span>
           ))}
+        </div>
+      ) : null}
+
+      {recommendedSetup ? (
+        <div className="mt-4 rounded-xl border border-cyan-400/20 bg-cyan-400/10 p-3">
+          <div className="flex flex-wrap items-start justify-between gap-3">
+            <div className="min-w-0">
+              <p className="text-[10px] font-semibold uppercase tracking-[0.12em] text-cyan-200">
+                Recommended Wildlife Setup
+              </p>
+              <h4 className="mt-1 text-sm font-bold text-cyan-50">
+                {recommendedSetup.label}
+              </h4>
+              <p className="mt-1 text-xs leading-relaxed text-cyan-50/80">
+                {recommendedSetup.reason}
+              </p>
+            </div>
+            <span className="rounded-full border border-cyan-300/30 bg-cyan-300/10 px-2.5 py-1 text-[10px] font-black uppercase tracking-[0.1em] text-cyan-100">
+              Manual apply
+            </span>
+          </div>
+          <div className="mt-3 grid gap-2 text-[11px] sm:grid-cols-2 xl:grid-cols-4">
+            <div className="rounded-lg border border-white/10 bg-white/[0.03] p-2">
+              <span className="block uppercase tracking-[0.1em] text-zinc-500">Story Mode</span>
+              <span className="mt-1 block font-semibold text-zinc-100">
+                {storyModeText[recommendedSetup.storyMode]}
+              </span>
+            </div>
+            <div className="rounded-lg border border-white/10 bg-white/[0.03] p-2">
+              <span className="block uppercase tracking-[0.1em] text-zinc-500">Subjects</span>
+              <span className="mt-1 block font-semibold text-zinc-100">
+                {recommendedSetup.subjectA ?? "Current subject"}
+                {recommendedSetup.subjectB ? ` vs ${recommendedSetup.subjectB}` : ""}
+              </span>
+            </div>
+            <div className="rounded-lg border border-white/10 bg-white/[0.03] p-2">
+              <span className="block uppercase tracking-[0.1em] text-zinc-500">Habitat</span>
+              <span className="mt-1 block font-semibold text-zinc-100">
+                {recommendedSetup.habitatRegion
+                  ? habitatText[recommendedSetup.habitatRegion]
+                  : habitatText[habitatRegion]}
+              </span>
+            </div>
+            <div className="rounded-lg border border-white/10 bg-white/[0.03] p-2">
+              <span className="block uppercase tracking-[0.1em] text-zinc-500">Season</span>
+              <span className="mt-1 block font-semibold text-zinc-100">
+                {recommendedSetup.season
+                  ? labelText[recommendedSetup.season]
+                  : labelText[season]}
+              </span>
+            </div>
+          </div>
+          <p className="mt-3 text-[11px] leading-relaxed text-zinc-500">
+            Manual apply only. This replaces current subject setup and may update story mode, habitat, and season; it will not generate automatically.
+          </p>
+          <button
+            type="button"
+            disabled={recommendedSetupActive}
+            onClick={() => onApplyRecommendedSetup(recommendedSetup)}
+            className="mt-3 rounded-xl border border-cyan-300/40 bg-cyan-400/15 px-3.5 py-2 text-xs font-bold text-cyan-50 transition hover:bg-cyan-400/20 disabled:cursor-not-allowed disabled:border-white/10 disabled:bg-white/[0.03] disabled:text-zinc-500"
+          >
+            {recommendedSetupActive ? "Recommended setup active" : "Apply Recommended Setup"}
+          </button>
         </div>
       ) : null}
 
