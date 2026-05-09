@@ -1564,6 +1564,7 @@ export default function Page() {
                 customPredatorCount={customPredators.length}
                 finalEnvironment={finalEnvironment}
                 storyboardHref={currentStoryboardHref}
+                currentSetupLabel={currentGenerateCtaLabel}
                 onOpenStoryboardWorkflow={openStoryboardWorkflow}
                 driftRisk={preset.driftRisk}
                 workflowPresets={workflowPresetControls.presets}

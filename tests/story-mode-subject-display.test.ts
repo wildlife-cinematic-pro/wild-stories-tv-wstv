@@ -66,4 +66,67 @@ describe("formatStoryModeSubjectPair", () => {
     ).toBe("Migration Crossing: Caribou Herd at River Crossing");
   });
 
+
+  it("formats stable current setup labels for every story mode", () => {
+    const cases = [
+      {
+        storyMode: StoryMode.PREDATOR_VS_PREY,
+        predator: "Mountain Lion",
+        prey: "White-tailed Deer",
+        expected: "Predator vs Prey: Mountain Lion vs White-tailed Deer",
+      },
+      {
+        storyMode: StoryMode.HERD_DEFENSE,
+        subjectA: "Bison Herd",
+        subjectB: "Wolf Pack",
+        expected: "Herd Defense: Bison Herd vs Wolf Pack",
+      },
+      {
+        storyMode: StoryMode.MOTHER_BABY,
+        subjectA: "Grizzly Mother",
+        subjectB: "Male Grizzly",
+        offspringLabel: "cub" as const,
+        expected: "Mother & Baby: Grizzly Mother protects Cub",
+      },
+      {
+        storyMode: StoryMode.RIVAL_CLASH,
+        subjectA: "Bull Elk A",
+        subjectB: "Bull Elk B",
+        expected: "Rival Clash: Bull Elk A vs Bull Elk B",
+      },
+      {
+        storyMode: StoryMode.NEAR_MISS,
+        subjectA: "White-tailed Deer",
+        subjectB: "Mountain Lion",
+        expected: "Near-Miss Escape: White-tailed Deer escapes Mountain Lion",
+      },
+      {
+        storyMode: StoryMode.FISHING_STRIKE,
+        subjectA: "Grizzly Bear",
+        subjectB: "Sockeye Salmon",
+        expected: "Fishing Strike: Grizzly Bear vs Sockeye Salmon",
+      },
+      {
+        storyMode: StoryMode.WEATHER_SURVIVAL,
+        subjectA: "American Bison",
+        expected: "Weather Survival: American Bison vs Blizzard Wind",
+      },
+      {
+        storyMode: StoryMode.MIGRATION,
+        subjectA: "Caribou Herd",
+        subjectB: "River Crossing",
+        expected: "Migration Crossing: Caribou Herd at River Crossing",
+      },
+      {
+        storyMode: StoryMode.SCAVENGER_CONFLICT,
+        subjectA: "Bald Eagle",
+        subjectB: "Coyote",
+        expected: "Scavenger Conflict: Bald Eagle vs Coyote",
+      },
+    ];
+
+    for (const testCase of cases) {
+      expect(formatStoryModeGenerateCtaLabel(testCase)).toBe(testCase.expected);
+    }
+  });
 });
