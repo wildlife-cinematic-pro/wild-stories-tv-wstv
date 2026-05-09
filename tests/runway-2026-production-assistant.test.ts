@@ -19,7 +19,7 @@ const sampleInput: Runway2026AssistantInput = {
   imagePrompt:
     "Wild Boar on the left and Black Bear on the right, both full-body visible in a marsh waterline corridor with stable anatomy, grounded contact, and clean silhouette separation.",
   runwayShots: [
-    "Motion-first opening shot with Wild Boar pressing from the left and Black Bear holding the right bank, both full-body readable, wide 9:16 framing, grounded contact, and clean muddy splash.",
+    "Motion-first opening shot with Wild Boar pressing from the left and Black Bear holding the right bank, both full-body readable, wide framing, grounded contact, and clean muddy splash.",
     "Runway settle shot with readable spacing and stable footing.",
   ],
   klingShots: [
@@ -77,7 +77,7 @@ describe("Runway 2026 production assistant", () => {
 
     expect(writerPack.runwayI2VPrompt).toContain(sampleInput.runwayShots?.[0] ?? "");
     expect(writerPack.runwayI2VPrompt).toContain("Upload the final scene master image or a clean continuity frame");
-    expect(writerPack.runwayI2VPrompt).toContain("9:16 vertical");
+    expect(writerPack.runwayI2VPrompt).not.toMatch(/\b9:16\b|vertical aspect|vertical frame/i);
   });
 
   it("builds a paste-ready Runway reference image prompt", () => {
@@ -92,11 +92,11 @@ describe("Runway 2026 production assistant", () => {
     const writerPack = buildRunwayPromptWriterPack(sampleInput);
 
     expect(writerPack.finalMergePrompt).toContain(
-      "Use exactly 3 active Runway references: @hero_predator, @hero_prey, @env_plate."
+      "Use exactly 3 active Runway references: @lead_animal, @opposite_animal, @environment."
     );
-    expect(writerPack.finalMergePrompt).toContain("@hero_predator");
-    expect(writerPack.finalMergePrompt).toContain("@hero_prey");
-    expect(writerPack.finalMergePrompt).toContain("@env_plate");
+    expect(writerPack.finalMergePrompt).toContain("@lead_animal");
+    expect(writerPack.finalMergePrompt).toContain("@opposite_animal");
+    expect(writerPack.finalMergePrompt).toContain("@environment");
   });
 
   it("builds an Aleph repair prompt that treats Aleph as a 5-second repair pass with action verbs", () => {

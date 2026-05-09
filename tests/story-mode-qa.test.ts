@@ -9,7 +9,7 @@ function makePackage(overrides: Partial<GeneratedPackage> = {}): GeneratedPackag
   const baseText = [
     "Nano Banana 2 primary master still for WSTV Mother & Baby.",
     "GPT Image 2 backup prompt available.",
-    "Photorealistic wildlife documentary master image, 9:16 vertical.",
+    "Photorealistic wildlife documentary master image, ",
     "A Grizzly Mother protects two cubs while a Male Grizzly stays at a readable distance.",
     "Facebook Reels first-frame hook with replay value.",
     "Safety: no gore, no blood, no visible injury.",

@@ -9,7 +9,7 @@ const data: GeneratedPackage = {
   arcName: "Defender stands ground",
   environmentName: "Yellowstone valley",
   imagePrompt:
-    "Photorealistic wildlife documentary master image, 9:16 vertical. Full-body readable grizzly and bison with grounded paw and hoof contact, clean spacing, thumbnail-safe first-frame composition, stable anatomy, Yellowstone habitat continuity, and no blood, no gore, no visible wounds.",
+    "Photorealistic wildlife documentary master image,  Full-body readable grizzly and bison with grounded paw and hoof contact, clean spacing, thumbnail-safe first-frame composition, stable anatomy, Yellowstone habitat continuity, and no blood, no gore, no visible wounds.",
   gptImage2Prompt: "backup",
   negativePrompt:
     "blood, gore, visible wounds, extra limbs, duplicate animals, humans, fences, text, watermark, cartoon, wrong habitat, duplicate animals",

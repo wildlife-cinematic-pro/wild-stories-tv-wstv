@@ -375,7 +375,7 @@ function buildShotStages(context: Omit<StoryModePromptContext, "shotStages">) {
     {
       title: "Shot 1 Image - Establish / First-Frame Hook",
       stage: "Establish / first-frame hook",
-      imageDirection: `${context.sceneGoal} Show ${context.primarySubjectLabel} and ${context.secondarySubjectLabel} clearly in the same 9:16 frame, full-body readable, with the main route or pressure lane visible.`,
+      imageDirection: `${context.sceneGoal} Show ${context.primarySubjectLabel} and ${context.secondarySubjectLabel} clearly in the same frame, full-body readable, with the main route or pressure lane visible.`,
       motionDirection: `Establish the scene with controlled documentary motion: ${context.relationshipLine}`,
     },
     {
@@ -481,7 +481,7 @@ function makeStructuredPrompt(
 export function buildStoryModeImagePrompt(context: StoryModePromptContext) {
   return [
     `Nano Banana 2 primary master still for WSTV ${context.modeLabel}.`,
-    "Photorealistic wildlife documentary master image, 9:16 vertical, video-ready source frame.",
+    "Photorealistic wildlife documentary master image, video-ready source frame.",
     `Main subjects: ${context.primarySubjectLabel}; ${context.secondarySubjectLabel}.`,
     `Scene goal: ${context.sceneGoal}`,
     `Relationship: ${context.relationshipLine}`,

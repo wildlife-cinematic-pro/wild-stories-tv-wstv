@@ -149,12 +149,12 @@ export function buildKlingPromptPack(
   const locationLine = buildKlingLocationLine(env, weather, quality?.motionOnlyI2V);
 
   const baseExtra1 = isAquatic
-    ? `${micro}. Photorealistic wildlife documentary. 9:16 vertical.`
+    ? `${micro}. Photorealistic wildlife documentary.`
     : isShoreline
       ? isWaterForwardStrike
-        ? `shoreline spray, surface break, bank-edge reaction, ${micro}. Photorealistic wildlife documentary. 9:16 vertical.`
-        : `shoreline spray, disturbed shallows, muddy bank reaction, ${micro}. Photorealistic wildlife documentary. 9:16 vertical.`
-      : `${micro}. Photorealistic wildlife documentary. 9:16 vertical.`;
+        ? `shoreline spray, surface break, bank-edge reaction, ${micro}. Photorealistic wildlife documentary.`
+        : `shoreline spray, disturbed shallows, muddy bank reaction, ${micro}. Photorealistic wildlife documentary.`
+      : `${micro}. Photorealistic wildlife documentary.`;
 
   const extra1 =
     quality?.motionOnlyI2V || quality?.referenceLock
@@ -1625,8 +1625,8 @@ Selected: ${model}. Switch model to activate.`,
 
   const pasteReadySixShotCore = [
     quality?.motionOnlyI2V
-      ? `Keep the same ${predator} and ${prey} identities from the input image with matching terrain and light continuity, ${cleanWeather}. Photorealistic wildlife documentary in 9:16 vertical.`
-      : `${predator} and ${prey} remain consistent across all six beats in ${cleanEnv}, ${cleanWeather}. Photorealistic wildlife documentary in 9:16 vertical.`,
+      ? `Keep the same ${predator} and ${prey} identities from the input image with matching terrain and light continuity, ${cleanWeather}. Photorealistic wildlife documentary.`
+      : `${predator} and ${prey} remain consistent across all six beats in ${cleanEnv}, ${cleanWeather}. Photorealistic wildlife documentary.`,
     ``,
     `0–2s: Wide opening hold. ${predator} stays on the left and ${prey} stays on the right, both fully visible in the same frame with locked eye-line, clear spacing, and immediate tension from frame one.`,
     sixShotAudio1,
@@ -1671,7 +1671,7 @@ ${pasteReadySixShotCore}
 ${sixShotSceneLine}
 ${sixShotCharacterLine}
 
-Style: ${vibe.style}. ${tone.image}. Photorealistic wildlife documentary. 9:16 vertical frame.
+Style: ${vibe.style}. ${tone.image}. Photorealistic wildlife documentary.
 Story arc: ${getSafeArcPrint(arc)}.
 
 Shot 1 — OPENING TENSION (0–2s) | Motion: 0.25:

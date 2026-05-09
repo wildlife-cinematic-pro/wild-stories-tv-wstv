@@ -45,11 +45,11 @@ export function evaluateMasterImagePrompt(
 
   const checks: CheckDefinition[] = [
     {
-      id: "vertical-framing",
-      label: "9:16 vertical framing",
-      passed: promptHas(lower, /\b9:16\b.*\bvertical\b|\bvertical\b.*\b9:16\b/),
+      id: "composition-framing",
+      label: "Clear composition framing",
+      passed: promptHas(lower, /\b(frame|framing|composition|thumbnail-safe|cover-safe|full[- ]body|full body|fully readable)\b/),
       severity: "danger",
-      fix: "Add 9:16 vertical framing language.",
+      fix: "Add clear composition and framing language.",
       penalty: 18,
     },
     {
@@ -172,7 +172,7 @@ export function getMasterImageFixPrompt(
     .map((check) => check.fix);
 
   if (!fixes.length) {
-    return "Keep 9:16 framing, full-body readability, grounded contact, habitat continuity, and no-gore safety.";
+    return "Keep full-body readability, grounded contact, habitat continuity, clean composition, and no-gore safety.";
   }
 
   return `Revise the master image prompt: ${fixes.join(" ")}`;

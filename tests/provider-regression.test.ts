@@ -39,7 +39,7 @@ const baseRequest = {
   animalVibe: "BBC Earth Documentary",
   base: {
     imagePrompt:
-      "Photorealistic wildlife documentary image prompt, 9:16, no blood, no gore.",
+      "Photorealistic wildlife documentary image prompt, no blood, no gore.",
     hook: "The escape lane closes fast.",
     caption: "The escape lane closes fast.",
     voiceoverLine: "The first move changes the whole frame.",

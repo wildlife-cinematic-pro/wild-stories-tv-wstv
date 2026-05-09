@@ -132,7 +132,7 @@ export function buildAnimalMasterReferencePrompt({
       : "Full body visible in an alert survival-reaction stance, readable side profile, head turned toward danger, species-specific identity, readable scale, body angled for later compositing, limbs fully visible, not cropped, documentary realism.";
 
   return [
-    `Photorealistic wildlife documentary master reference image, 9:16 vertical.`,
+    `Photorealistic wildlife documentary master reference image.`,
     `${subjectName} only.`,
     postureLine,
     `${stanceLabel}, ${identityMarkers}, realistic scale, ${contactLabel}, stable anatomy, clean silhouette, natural expression, clean subject separation, simple uncluttered natural background, production-ready wildlife master reference image.`,
@@ -145,7 +145,7 @@ export function buildEnvironmentMasterReferencePrompt(
 ) {
   if (typeof input === "string") {
     return [
-      `Photorealistic ${input} environment/background reference, 9:16 vertical.`,
+      `Photorealistic ${input} environment/background reference.`,
       `Environment only, no animals, no humans.`,
       `Open central attack/escape corridor, clear subject-ready space, readable ground plane, foreground texture, midground action lane, layered background depth, simple side framing that does not block future silhouettes, natural lighting, cinematic documentary realism, environment-only video-ready master background reference.`,
       `No text, no watermark, no fantasy elements, no clutter blocking the future animal lane.`,
@@ -157,7 +157,7 @@ export function buildEnvironmentMasterReferencePrompt(
   const futureSceneLine = buildFutureSceneLabel(input);
 
   return [
-    `Photorealistic ${environmentName} environment/background reference, 9:16 vertical.`,
+    `Photorealistic ${environmentName} environment/background reference.`,
     `Environment only, no animals, no humans.`,
     futureSceneLine,
     `${geometryLine} Natural lighting, cinematic documentary realism, environment-only video-ready master background reference.`,
@@ -180,17 +180,13 @@ export function buildFinalMergeMasterPrompt({
   oppositeTag: string;
   environmentTag: string;
 }) {
-  void leadTag;
-  void oppositeTag;
-  void environmentTag;
-
   return [
-    `Use the 3 prepared reference images:`,
+    `Use exactly 3 active Runway references: ${leadTag}, ${oppositeTag}, ${environmentTag}.`,
     ``,
-    `1. Lead animal reference image for ${leadAnimalName} identity: coat, head profile, body scale, and grounded paw/hoof/foot contact.`,
-    `2. Opposite animal reference image for ${oppositeAnimalName} identity: coat, body scale, legs, and grounded paw/hoof/foot contact.`,
-    `3. Environment reference image for background, lighting, ground texture, and atmosphere.`,
+    `Preserve ${leadAnimalName} identity from ${leadTag}: coat, head profile, body scale, natural anatomy, and grounded paw/hoof/foot contact.`,
+    `Preserve ${oppositeAnimalName} identity from ${oppositeTag}: coat, body scale, legs, hoof/paw shape, head angle, natural anatomy, and grounded paw/hoof/foot contact.`,
+    `Preserve habitat, lighting, ground texture, terrain depth, and atmosphere from ${environmentTag}.`,
     ``,
-    `Photorealistic wildlife documentary final scene master image, 9:16 vertical. ${leadAnimalName} on the left in a readable pressure-ready posture, ${oppositeAnimalName} on the right in a readable survival-reaction posture, both full-body visible with stable anatomy, grounded contact, clean subject separation, and one clear open attack/escape corridor between them. ${environmentName} provides the background, light, ground plane, and atmospheric depth only. Cinematic telephoto documentary framing, video-ready source frame. No blood, no gore, no visible wounds, no graphic injury, no duplicate animals, no humans, no text or watermark.`,
+    `Create a photorealistic wildlife documentary final scene master image. ${leadAnimalName} on the left in a readable pressure-ready posture, ${oppositeAnimalName} on the right in a readable survival-reaction posture, both full-body visible with stable anatomy, grounded contact, clean subject separation, and one clear open attack/escape corridor between them. ${environmentName} provides the background, light, ground plane, and atmospheric depth only. Cinematic telephoto documentary framing, video-ready source frame. No blood, no gore, no visible wounds, no graphic injury, no duplicate animals, no humans, no text or watermark.`,
   ].join("\n");
 }

@@ -94,7 +94,7 @@ const wildlifePresets: [WildlifePreset, ...WildlifePreset[]] = [
       {
         label: "Hook",
         frameDescription:
-          "Both animals are visible in a vertical documentary frame: the alligator lies half-submerged near the reeds while the deer steps close to the muddy bank, with a clear open escape lane behind the deer.",
+          "Both animals are visible in a documentary frame: the alligator lies half-submerged near the reeds while the deer steps close to the muddy bank, with a clear open escape lane behind the deer.",
         masterFrame:
           "American alligator half-hidden at the left waterline, white-tailed deer fully visible on the right muddy bank, open escape lane between reeds and exposed roots, tense eye-line, full-body readability for both animals",
         motion:
@@ -459,7 +459,7 @@ function buildPresetSettings(preset: WildlifePreset): ReelSettings {
 function buildNanoBananaPrompt(preset: WildlifePreset, shot: PresetShotTemplate): string {
   return [
     "Nano Banana master frame prompt:",
-    "9:16 vertical photorealistic wildlife documentary frame.",
+    "Photorealistic wildlife documentary frame.",
     shot.masterFrame + ".",
     "Main subject: " + preset.subject + "; opponent: " + preset.opponent + "; habitat: " + preset.environment + ".",
     preset.lighting + ". Cinematic realism, clear full-body readability, realistic animal anatomy, grounded paw/hoof/contact, clear habitat detail, strong depth and subject separation, no text, no watermark, no gore, no blood, no visible injury.",
@@ -469,7 +469,7 @@ function buildNanoBananaPrompt(preset: WildlifePreset, shot: PresetShotTemplate)
 function buildGptImage2Prompt(preset: WildlifePreset, shot: PresetShotTemplate): string {
   return [
     "GPT Image 2 master frame prompt:",
-    "Create a 9:16 vertical photorealistic wildlife documentary master frame of " + preset.subject + " and " + preset.opponent + ".",
+    "Create a photorealistic wildlife documentary master frame of " + preset.subject + " and " + preset.opponent + ".",
     shot.masterFrame + ".",
     "Preserve believable animal scale, natural anatomy, grounded contact with " + preset.terrainContinuity + ", clear full-body readability, strong foreground-background separation, " + preset.lighting + ", no text, no watermark, no gore, no blood, no visible injury.",
   ].join(" ");
@@ -514,7 +514,7 @@ function buildCustomPreset(settings: ReelSettings): WildlifePreset {
       {
         label: "Hook",
         frameDescription:
-          subject + " and " + opponent + " are both visible in a 9:16 cinematic wildlife documentary frame, with readable full-body spacing, a clear attack/escape lane, and immediate survival tension in " + environment + ".",
+          subject + " and " + opponent + " are both visible in a cinematic wildlife documentary frame, with readable full-body spacing, a clear attack/escape lane, and immediate survival tension in " + environment + ".",
         masterFrame:
           subject + " and " + opponent + " both fully readable in " + environment + ", open attack and escape lane, tense eye-line, grounded contact, strong subject separation",
         motion:

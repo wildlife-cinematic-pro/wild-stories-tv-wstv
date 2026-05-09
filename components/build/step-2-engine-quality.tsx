@@ -498,19 +498,19 @@ export default function Step2EngineQuality({
               <div>
                 Lead animal →{" "}
                 <code className="rounded bg-white px-1 py-0.5 text-violet-800">
-                  @hero_predator
+                  @lead_animal
                 </code>
               </div>
               <div>
                 Opposing animal →{" "}
                 <code className="rounded bg-white px-1 py-0.5 text-violet-800">
-                  @hero_prey
+                  @opposite_animal
                 </code>
               </div>
               <div>
                 Environment plate →{" "}
                 <code className="rounded bg-white px-1 py-0.5 text-violet-800">
-                  @env_plate
+                  @environment
                 </code>
               </div>
             </div>

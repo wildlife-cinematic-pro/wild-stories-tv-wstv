@@ -181,7 +181,7 @@ export function buildRunwayGen45I2VGuidePrompt(input: Runway2026AssistantInput) 
   return [
     `${runwayModel} Image-to-Video production plan.`,
     "Upload the final scene master image or a clean continuity frame before prompting motion.",
-    "Format: 9:16 vertical, 24/25fps, WSTV default 5s. Runway supports 2-10s per shot.",
+    "Format settings: 24/25fps, WSTV default 5s. Runway supports 2-10s per shot.",
     "Runway has no negative prompt. Let identity, composition, lighting, and style come from the image; use text for motion, camera, physics, spacing, and temporal progression only.",
     `Motion brief: ${motionPrompt}`,
     "Keep both animals full-body readable, preserve stable anatomy and grounded contact, and hold one clear attack or escape lane through the shot.",
@@ -191,7 +191,7 @@ export function buildRunwayGen45I2VGuidePrompt(input: Runway2026AssistantInput) 
 
 export function buildRunwayReferenceImagePrompt(input: Runway2026AssistantInput) {
   return [
-    "Runway Gen-4 reference image, 9:16 vertical, full-body readable, stable anatomy, grounded contact, clean silhouette.",
+    "Runway Gen-4 reference image, full-body readable, stable anatomy, grounded contact, clean silhouette.",
     getReferenceBasePrompt(input),
     RUNWAY_REFERENCE_SAFETY_LINE,
   ].join("\n");
@@ -203,12 +203,12 @@ export function buildRunwayFinalMergePrompt(input: Runway2026AssistantInput) {
   const environment = getEnvironmentName(input);
 
   return [
-    "Use exactly 3 active Runway references: @hero_predator, @hero_prey, @env_plate.",
-    "Use @hero_predator only for predator identity.",
-    "Use @hero_prey only for prey/opposite animal identity.",
-    "Use @env_plate only for background, lighting, ground texture, and atmosphere.",
+    "Use exactly 3 active Runway references: @lead_animal, @opposite_animal, @environment.",
+    "Use @lead_animal only for lead animal identity.",
+    "Use @opposite_animal only for opposite animal identity.",
+    "Use @environment only for habitat, lighting, ground texture, terrain depth, and atmosphere.",
     `Final scene: ${predator} left, ${prey} right, both full-body visible with one clear open attack/escape corridor in ${environment}.`,
-    "Photorealistic wildlife documentary, 9:16 vertical, stable anatomy, grounded contact, clean silhouette separation, readable terrain, and video-ready source framing.",
+    "Photorealistic wildlife documentary, stable anatomy, grounded contact, clean silhouette separation, readable terrain, and video-ready source framing.",
     RUNWAY_FINAL_MERGE_SAFETY_LINE,
   ].join("\n");
 }
@@ -287,7 +287,7 @@ export function buildRunwayGen45I2VPrompt(input: Runway2026AssistantInput) {
   const motionPrompt = getPrimaryMotionPrompt(input);
 
   return [
-    `${runwayModel} image-to-video, 9:16 vertical, 24/25fps, 5-second shot. Runway supports 2-10s per shot.`,
+    `${runwayModel} image-to-video, 24/25fps, 5-second shot. Runway supports 2-10s per shot.`,
     "Upload the final scene master image or a clean continuity frame. Identity, composition, lighting, and style come from the image; prompt only motion, camera, physics, spacing, and temporal progression.",
     motionPrompt,
     "Keep both animals full-body readable, stable anatomy, grounded contact, readable spacing, clean silhouette separation, and one clear action lane.",
