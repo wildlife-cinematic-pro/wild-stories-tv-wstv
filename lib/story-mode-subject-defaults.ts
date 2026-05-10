@@ -50,7 +50,7 @@ export function getStoryModeSubjectDefaults(
     case StoryMode.WEATHER_SURVIVAL:
       return {
         subjectA: "American Bison",
-        subjectB: "Blizzard",
+        subjectB: "Blizzard Wind",
         weatherHazard: "BLIZZARD",
         groupCount: 8,
       };

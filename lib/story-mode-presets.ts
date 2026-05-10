@@ -216,7 +216,7 @@ export const USA_STORY_MODE_PRESETS: StoryModePreset[] = [
     storyMode: StoryMode.WEATHER_SURVIVAL,
     summary: "Weather becomes the antagonist on open plains.",
     subjectA: "American Bison",
-    subjectB: "Blizzard",
+    subjectB: "Blizzard Wind",
     groupCount: 8,
     weatherHazard: "BLIZZARD",
     habitatRegion: HabitatRegion.YELLOWSTONE,

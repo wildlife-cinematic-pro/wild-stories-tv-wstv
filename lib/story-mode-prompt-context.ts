@@ -144,7 +144,7 @@ const DEFAULTS: Record<
   },
   [StoryModeEnum.WEATHER_SURVIVAL]: {
     subjectA: "American Bison",
-    subjectB: "Blizzard",
+    subjectB: "Blizzard Wind",
     groupCount: 8,
     weatherHazard: "BLIZZARD",
   },
