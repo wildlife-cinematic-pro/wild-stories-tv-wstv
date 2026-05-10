@@ -138,25 +138,25 @@ const DEFAULTS: Record<
     escapeDirection: "BRUSH",
   },
   [StoryModeEnum.FISHING_STRIKE]: {
-    subjectA: "Grizzly Bear",
-    subjectB: "Sockeye Salmon",
-    strikeMethod: "SWIPE",
+    subjectA: "Bald Eagle",
+    subjectB: "Trout",
+    strikeMethod: "DIVE",
   },
   [StoryModeEnum.WEATHER_SURVIVAL]: {
     subjectA: "American Bison",
-    subjectB: "Blizzard Wind",
+    subjectB: "Blizzard",
     groupCount: 8,
     weatherHazard: "BLIZZARD",
   },
   [StoryModeEnum.MIGRATION]: {
-    subjectA: "Caribou Herd",
-    subjectB: "River Crossing",
-    groupCount: 250,
+    subjectA: "Elk Herd",
+    subjectB: "Mountain Meadow Lane",
+    groupCount: 80,
   },
   [StoryModeEnum.SCAVENGER_CONFLICT]: {
     subjectA: "Bald Eagle",
     subjectB: "Coyote",
-    foodItem: "Deer carcass zone",
+    foodItem: "non-graphic deer carcass zone",
   },
 };
 
