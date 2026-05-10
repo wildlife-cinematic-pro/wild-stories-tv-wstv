@@ -1055,6 +1055,7 @@ export default function Step1Setup({
               habitatRegion={habitatRegion}
               season={season}
               timeOfDay={timeOfDay}
+              animalOptions={predatorOptions}
               onSubjectAChange={onSubjectAChange}
               onSubjectBChange={onSubjectBChange}
               onGroupCountChange={onGroupCountChange}

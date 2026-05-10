@@ -185,6 +185,9 @@ export default function Page() {
   const [weatherHazard, setWeatherHazard] = useState<WeatherHazard>(DEFAULT_WEATHER_HAZARD);
   const [rutSeason, setRutSeason] = useState(false);
   const [foodItem, setFoodItem] = useState<string | undefined>();
+  const [storyModeSubjectDrafts, setStoryModeSubjectDrafts] = useState<
+    Partial<Record<StoryMode, StoryModeSubjectValues>>
+  >({});
 
   // STEP 2
   const [runwayModel, setRunwayModel] = useState<RunwayModel>(RUNWAY_MODELS[0]);
@@ -271,6 +274,7 @@ export default function Page() {
       setWeatherHazard(snapshot.weatherHazard ?? DEFAULT_WEATHER_HAZARD);
       setRutSeason(snapshot.rutSeason ?? false);
       setFoodItem(snapshot.foodItem);
+      setStoryModeSubjectDrafts({});
       setRunwayModel(snapshot.runwayModel);
       setKlingModel(snapshot.klingModel);
       setRealismMode(snapshot.realismMode);
@@ -355,24 +359,73 @@ export default function Page() {
     setWeatherHazard(DEFAULT_WEATHER_HAZARD);
     setRutSeason(false);
     setFoodItem(undefined);
+    setStoryModeSubjectDrafts({});
     setPromotedPublishCopyOverride(null);
   }
 
+  const getCurrentStoryModeSubjectDraft = useCallback<() => StoryModeSubjectValues>(
+    () => ({
+      subjectA,
+      subjectB,
+      groupCount,
+      offspringLabel,
+      strikeMethod,
+      escapeDirection,
+      weatherHazard,
+      rutSeason,
+      foodItem,
+    }),
+    [
+      escapeDirection,
+      foodItem,
+      groupCount,
+      offspringLabel,
+      rutSeason,
+      strikeMethod,
+      subjectA,
+      subjectB,
+      weatherHazard,
+    ]
+  );
+
+  const applyStoryModeSubjectValues = useCallback(
+    (values: StoryModeSubjectValues) => {
+      setSubjectA(values.subjectA);
+      setSubjectB(values.subjectB);
+      setGroupCount(values.groupCount);
+      setOffspringLabel(values.offspringLabel ?? DEFAULT_OFFSPRING_LABEL);
+      setStrikeMethod(values.strikeMethod ?? DEFAULT_STRIKE_METHOD);
+      setEscapeDirection(values.escapeDirection ?? DEFAULT_ESCAPE_DIRECTION);
+      setWeatherHazard(values.weatherHazard ?? DEFAULT_WEATHER_HAZARD);
+      setRutSeason(values.rutSeason ?? false);
+      setFoodItem(values.foodItem);
+    },
+    []
+  );
+
   const handleStoryModeChange = useCallback(
     (value: StoryMode) => {
+      if (value === storyMode) return;
+
+      const currentDraft = getCurrentStoryModeSubjectDraft();
       const defaults = getStoryModeSubjectDefaults(value, predator, prey);
+      const nextValues = storyModeSubjectDrafts[value] ?? defaults;
+
+      setStoryModeSubjectDrafts((current) => ({
+        ...current,
+        [storyMode]: currentDraft,
+      }));
       setStoryMode(value);
-      setSubjectA(defaults.subjectA);
-      setSubjectB(defaults.subjectB);
-      setGroupCount(defaults.groupCount);
-      setOffspringLabel(defaults.offspringLabel ?? DEFAULT_OFFSPRING_LABEL);
-      setStrikeMethod(defaults.strikeMethod ?? DEFAULT_STRIKE_METHOD);
-      setEscapeDirection(defaults.escapeDirection ?? DEFAULT_ESCAPE_DIRECTION);
-      setWeatherHazard(defaults.weatherHazard ?? DEFAULT_WEATHER_HAZARD);
-      setRutSeason(defaults.rutSeason ?? false);
-      setFoodItem(defaults.foodItem);
+      applyStoryModeSubjectValues(nextValues);
     },
-    [predator, prey]
+    [
+      applyStoryModeSubjectValues,
+      getCurrentStoryModeSubjectDraft,
+      predator,
+      prey,
+      storyMode,
+      storyModeSubjectDrafts,
+    ]
   );
 
   const handleResetStoryModeSubjectDefaults = useCallback(() => {
@@ -386,9 +439,28 @@ export default function Page() {
     setWeatherHazard(defaults.weatherHazard ?? DEFAULT_WEATHER_HAZARD);
     setRutSeason(defaults.rutSeason ?? false);
     setFoodItem(defaults.foodItem);
+    setStoryModeSubjectDrafts((current) => ({
+      ...current,
+      [storyMode]: defaults,
+    }));
   }, [predator, prey, storyMode]);
 
   const handleApplyStoryModePreset = useCallback((preset: StoryModePreset) => {
+    setStoryModeSubjectDrafts((current) => ({
+      ...current,
+      [storyMode]: getCurrentStoryModeSubjectDraft(),
+      [preset.storyMode]: {
+        subjectA: preset.subjectA,
+        subjectB: preset.subjectB,
+        groupCount: preset.groupCount,
+        offspringLabel: preset.offspringLabel,
+        strikeMethod: preset.strikeMethod,
+        escapeDirection: preset.escapeDirection,
+        weatherHazard: preset.weatherHazard,
+        rutSeason: preset.rutSeason,
+        foodItem: preset.foodItem,
+      },
+    }));
     setStoryMode(preset.storyMode);
     setEncounterMode(preset.encounterMode);
     setEndingMode(preset.endingMode);
@@ -411,7 +483,7 @@ export default function Page() {
     setSceneDescriptionTouched(true);
     setSceneDescriptionVariant((current) => current + 1);
     setPromotedPublishCopyOverride(null);
-  }, []);
+  }, [getCurrentStoryModeSubjectDraft, storyMode]);
 
   const handleApplyRecommendedSeasonalSetup = useCallback(
     (setup: RecommendedSeasonalSetup) => {

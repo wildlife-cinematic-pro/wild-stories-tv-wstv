@@ -2,11 +2,16 @@
 
 import { HabitatRegion, StoryMode } from "@/types";
 
+import AnimalSearchSelect from "@/components/build/animal-search-select";
 import {
   getStoryModeSubjectDefaults,
   getStoryModeSubjectOverrideFlags,
   type StoryModeSubjectValues,
 } from "@/lib/story-mode-subject-defaults";
+import {
+  getFishingFoodSourceOptions,
+  getStoryModeAnimalOptions,
+} from "@/lib/story-mode-subject-options";
 
 import type {
   EscapeDirection,
@@ -24,6 +29,7 @@ type StoryModeSubjectFieldsProps = StoryModeSubjectValues & {
   habitatRegion: HabitatRegion;
   season: Season;
   timeOfDay: TimeOfDay;
+  animalOptions: string[];
   onSubjectAChange: (value: string) => void;
   onSubjectBChange: (value: string) => void;
   onGroupCountChange: (value: number | undefined) => void;
@@ -172,6 +178,17 @@ function getEffectiveValues(
     rutSeason: values.rutSeason ?? defaults.rutSeason ?? false,
     foodItem: values.foodItem?.trim() || defaults.foodItem || "",
   };
+}
+
+
+function hasAnimalSubjectB(storyMode: StoryMode) {
+  return (
+    storyMode === StoryMode.HERD_DEFENSE ||
+    storyMode === StoryMode.MOTHER_BABY ||
+    storyMode === StoryMode.RIVAL_CLASH ||
+    storyMode === StoryMode.NEAR_MISS ||
+    storyMode === StoryMode.SCAVENGER_CONFLICT
+  );
 }
 
 export function buildStoryModeSetupSummary({
@@ -349,6 +366,7 @@ export default function StoryModeSubjectFields({
   weatherHazard,
   rutSeason,
   foodItem,
+  animalOptions,
   onSubjectAChange,
   onSubjectBChange,
   onGroupCountChange,
@@ -384,6 +402,22 @@ export default function StoryModeSubjectFields({
     foodItem,
   });
   const hasOverrides = Object.values(overrideFlags).some(Boolean);
+  const subjectAOptions = getStoryModeAnimalOptions({
+    storyMode,
+    field: "subjectA",
+    animalOptions,
+    currentValue: values.subjectA,
+  });
+  const subjectBOptions = getStoryModeAnimalOptions({
+    storyMode,
+    field: "subjectB",
+    animalOptions,
+    currentValue: values.subjectB,
+  });
+  const fishingFoodSourceOptions = getFishingFoodSourceOptions({
+    animalOptions,
+    currentValue: values.subjectB,
+  });
 
   if (!config) return null;
 
@@ -422,15 +456,39 @@ export default function StoryModeSubjectFields({
       </div>
 
       <div className="grid gap-4 md:grid-cols-2">
-        <TextInput
+        <AnimalSearchSelect
           label={config.subjectALabel}
           value={values.subjectA}
           onChange={onSubjectAChange}
-          placeholder={values.subjectA}
+          options={subjectAOptions}
+          placeholder={`Search ${config.subjectALabel.toLowerCase()}...`}
           manualOverride={overrideFlags.subjectA}
         />
 
-        {config.subjectBLabel ? (
+        {config.subjectBLabel && hasAnimalSubjectB(storyMode) ? (
+          <AnimalSearchSelect
+            label={
+              config.subjectBOptional
+                ? `${config.subjectBLabel} (optional)`
+                : config.subjectBLabel
+            }
+            value={values.subjectB}
+            onChange={onSubjectBChange}
+            options={subjectBOptions}
+            placeholder={`Search ${config.subjectBLabel.toLowerCase()}...`}
+            manualOverride={overrideFlags.subjectB}
+          />
+        ) : storyMode === StoryMode.FISHING_STRIKE && config.subjectBLabel ? (
+          <AnimalSearchSelect
+            label={config.subjectBLabel}
+            value={values.subjectB}
+            onChange={onSubjectBChange}
+            options={fishingFoodSourceOptions}
+            placeholder="Search food or fish source..."
+            helper="Use a clean food source label for readable waterline action."
+            manualOverride={overrideFlags.subjectB}
+          />
+        ) : config.subjectBLabel ? (
           <TextInput
             label={
               config.subjectBOptional

@@ -43,9 +43,9 @@ export function getStoryModeSubjectDefaults(
       };
     case StoryMode.FISHING_STRIKE:
       return {
-        subjectA: "Grizzly Bear",
-        subjectB: "Sockeye Salmon",
-        strikeMethod: "SWIPE",
+        subjectA: "Bald Eagle",
+        subjectB: "Trout",
+        strikeMethod: "DIVE",
       };
     case StoryMode.WEATHER_SURVIVAL:
       return {
@@ -56,15 +56,15 @@ export function getStoryModeSubjectDefaults(
       };
     case StoryMode.MIGRATION:
       return {
-        subjectA: "Caribou Herd",
-        subjectB: "River Crossing",
-        groupCount: 250,
+        subjectA: "Elk Herd",
+        subjectB: "Mountain Meadow Lane",
+        groupCount: 80,
       };
     case StoryMode.SCAVENGER_CONFLICT:
       return {
         subjectA: "Bald Eagle",
         subjectB: "Coyote",
-        foodItem: "Deer carcass zone",
+        foodItem: "non-graphic deer carcass zone",
       };
     case StoryMode.PREDATOR_VS_PREY:
     default:
