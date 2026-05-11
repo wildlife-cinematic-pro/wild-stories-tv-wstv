@@ -381,23 +381,21 @@ export default function SettingsDrawer() {
           onPointerCancel={onPanelPointerCancel}
           className={[
             "fixed inset-y-0 left-0 z-[60] flex h-dvh w-[360px] max-w-[92vw] flex-col overflow-hidden",
-            "border-r border-black/10 bg-white text-slate-900 shadow-2xl",
-            "dark:border-white/10 dark:bg-slate-950 dark:text-slate-50",
+            "border-r border-[color:var(--border)] bg-[color:var(--surface-elevated)] text-[color:var(--text)] shadow-2xl",
             reduceMotion ? "" : "transition-transform duration-300 ease-out",
             "motion-reduce:transition-none",
             open ? "translate-x-0" : "-translate-x-full",
             "touch-pan-y",
           ].join(" ")}
         >
-          <div className="flex items-center justify-between border-b border-black/10 px-4 py-3 dark:border-white/10">
+          <div className="flex items-center justify-between border-b border-[color:var(--border)] px-4 py-3">
             <div className="text-base font-semibold">UI Settings</div>
             <button
               type="button"
               onClick={close}
               className={[
-                "rounded-md px-2 py-1 text-sm",
-                "hover:bg-black/5 focus:outline-none focus:ring-2 focus:ring-[rgb(var(--accent-rgb))]",
-                "dark:hover:bg-white/10",
+                "rounded-md px-2 py-1 text-sm text-[color:var(--text)]",
+                "hover:bg-[color:var(--surface-muted)] focus:outline-none focus:ring-2 focus:ring-[rgb(var(--accent-rgb))]",
               ].join(" ")}
             >
               Close
@@ -414,8 +412,8 @@ export default function SettingsDrawer() {
                   className={[
                     "flex-1 rounded-lg border px-3 py-2 text-sm",
                     settings.theme === "light"
-                      ? "border-[rgb(var(--accent-rgb))] bg-[rgb(var(--accent-rgb)/0.12)]"
-                      : "border-black/10 hover:bg-black/5 dark:border-white/10 dark:hover:bg-white/10",
+                      ? "border-[rgb(var(--accent-rgb))] bg-[rgb(var(--accent-rgb)/0.16)] text-[color:var(--text)] shadow-sm"
+                      : "border-[color:var(--border)] bg-[color:var(--surface)] text-[color:var(--text)] hover:bg-[color:var(--surface-muted)]",
                   ].join(" ")}
                 >
                   Light
@@ -426,8 +424,8 @@ export default function SettingsDrawer() {
                   className={[
                     "flex-1 rounded-lg border px-3 py-2 text-sm",
                     settings.theme === "dark"
-                      ? "border-[rgb(var(--accent-rgb))] bg-[rgb(var(--accent-rgb)/0.12)]"
-                      : "border-black/10 hover:bg-black/5 dark:border-white/10 dark:hover:bg-white/10",
+                      ? "border-[rgb(var(--accent-rgb))] bg-[rgb(var(--accent-rgb)/0.16)] text-[color:var(--text)] shadow-sm"
+                      : "border-[color:var(--border)] bg-[color:var(--surface)] text-[color:var(--text)] hover:bg-[color:var(--surface-muted)]",
                   ].join(" ")}
                 >
                   Dark
@@ -448,8 +446,8 @@ export default function SettingsDrawer() {
                       className={[
                         "rounded-lg border px-3 py-2 text-left text-xs",
                         selected
-                          ? "border-[rgb(var(--accent-rgb))] bg-[rgb(var(--accent-rgb)/0.12)]"
-                          : "border-black/10 hover:bg-black/5 dark:border-white/10 dark:hover:bg-white/10",
+                          ? "border-[rgb(var(--accent-rgb))] bg-[rgb(var(--accent-rgb)/0.16)] text-[color:var(--text)] shadow-sm"
+                          : "border-[color:var(--border)] bg-[color:var(--surface)] text-[color:var(--text)] hover:bg-[color:var(--surface-muted)]",
                       ].join(" ")}
                     >
                       <div className="flex items-center gap-2">
@@ -465,7 +463,7 @@ export default function SettingsDrawer() {
                 })}
               </div>
 
-              <div className="text-xs opacity-70">
+              <div className="text-xs text-[color:var(--muted)]">
                 Active: <span className="font-mono">{settings.accent}</span>{" "}
                 <span className="font-mono">({accentRgbText})</span>
               </div>
@@ -482,8 +480,8 @@ export default function SettingsDrawer() {
                     className={[
                       "flex-1 rounded-lg border px-3 py-2 text-sm",
                       settings.fontSize === v
-                        ? "border-[rgb(var(--accent-rgb))] bg-[rgb(var(--accent-rgb)/0.12)]"
-                        : "border-black/10 hover:bg-black/5 dark:border-white/10 dark:hover:bg-white/10",
+                        ? "border-[rgb(var(--accent-rgb))] bg-[rgb(var(--accent-rgb)/0.16)] text-[color:var(--text)] shadow-sm"
+                        : "border-[color:var(--border)] bg-[color:var(--surface)] text-[color:var(--text)] hover:bg-[color:var(--surface-muted)]",
                     ].join(" ")}
                   >
                     {v === "sm" ? "Small" : v === "lg" ? "Large" : "Medium"}
@@ -501,8 +499,8 @@ export default function SettingsDrawer() {
                   className={[
                     "flex-1 rounded-lg border px-3 py-2 text-sm",
                     settings.density === "compact"
-                      ? "border-[rgb(var(--accent-rgb))] bg-[rgb(var(--accent-rgb)/0.12)]"
-                      : "border-black/10 hover:bg-black/5 dark:border-white/10 dark:hover:bg-white/10",
+                      ? "border-[rgb(var(--accent-rgb))] bg-[rgb(var(--accent-rgb)/0.16)] text-[color:var(--text)] shadow-sm"
+                      : "border-[color:var(--border)] bg-[color:var(--surface)] text-[color:var(--text)] hover:bg-[color:var(--surface-muted)]",
                   ].join(" ")}
                 >
                   Compact
@@ -513,14 +511,14 @@ export default function SettingsDrawer() {
                   className={[
                     "flex-1 rounded-lg border px-3 py-2 text-sm",
                     settings.density === "comfortable"
-                      ? "border-[rgb(var(--accent-rgb))] bg-[rgb(var(--accent-rgb)/0.12)]"
-                      : "border-black/10 hover:bg-black/5 dark:border-white/10 dark:hover:bg-white/10",
+                      ? "border-[rgb(var(--accent-rgb))] bg-[rgb(var(--accent-rgb)/0.16)] text-[color:var(--text)] shadow-sm"
+                      : "border-[color:var(--border)] bg-[color:var(--surface)] text-[color:var(--text)] hover:bg-[color:var(--surface-muted)]",
                   ].join(" ")}
                 >
                   Comfortable
                 </button>
               </div>
-              <div className="text-xs opacity-70">
+              <div className="text-xs text-[color:var(--muted)]">
                 Compact mode also tightens <span className="font-mono">space-y-*</span> and{" "}
                 <span className="font-mono">gap-*</span> via CSS vars.
               </div>
@@ -541,15 +539,15 @@ export default function SettingsDrawer() {
                     className={[
                       "rounded-lg border px-3 py-2 text-sm",
                       settings.motion === value
-                        ? "border-[rgb(var(--accent-rgb))] bg-[rgb(var(--accent-rgb)/0.12)]"
-                        : "border-black/10 hover:bg-black/5 dark:border-white/10 dark:hover:bg-white/10",
+                        ? "border-[rgb(var(--accent-rgb))] bg-[rgb(var(--accent-rgb)/0.16)] text-[color:var(--text)] shadow-sm"
+                        : "border-[color:var(--border)] bg-[color:var(--surface)] text-[color:var(--text)] hover:bg-[color:var(--surface-muted)]",
                     ].join(" ")}
                   >
                     {label}
                   </button>
                 ))}
               </div>
-              <div className="text-xs opacity-70">{effectiveMotionLabel}</div>
+              <div className="text-xs text-[color:var(--muted)]">{effectiveMotionLabel}</div>
             </section>
 
             <section className="space-y-2">
@@ -566,8 +564,8 @@ export default function SettingsDrawer() {
                     className={[
                       "flex-1 rounded-lg border px-3 py-2 text-sm",
                       settings.contrast === value
-                        ? "border-[rgb(var(--accent-rgb))] bg-[rgb(var(--accent-rgb)/0.12)]"
-                        : "border-black/10 hover:bg-black/5 dark:border-white/10 dark:hover:bg-white/10",
+                        ? "border-[rgb(var(--accent-rgb))] bg-[rgb(var(--accent-rgb)/0.16)] text-[color:var(--text)] shadow-sm"
+                        : "border-[color:var(--border)] bg-[color:var(--surface)] text-[color:var(--text)] hover:bg-[color:var(--surface-muted)]",
                     ].join(" ")}
                   >
                     {label}
@@ -591,8 +589,8 @@ export default function SettingsDrawer() {
                     className={[
                       "rounded-lg border px-3 py-2 text-sm",
                       settings.radius === value
-                        ? "border-[rgb(var(--accent-rgb))] bg-[rgb(var(--accent-rgb)/0.12)]"
-                        : "border-black/10 hover:bg-black/5 dark:border-white/10 dark:hover:bg-white/10",
+                        ? "border-[rgb(var(--accent-rgb))] bg-[rgb(var(--accent-rgb)/0.16)] text-[color:var(--text)] shadow-sm"
+                        : "border-[color:var(--border)] bg-[color:var(--surface)] text-[color:var(--text)] hover:bg-[color:var(--surface-muted)]",
                     ].join(" ")}
                   >
                     {label}
@@ -616,15 +614,15 @@ export default function SettingsDrawer() {
                     className={[
                       "rounded-lg border px-3 py-2 text-sm",
                       settings.pageWidth === value
-                        ? "border-[rgb(var(--accent-rgb))] bg-[rgb(var(--accent-rgb)/0.12)]"
-                        : "border-black/10 hover:bg-black/5 dark:border-white/10 dark:hover:bg-white/10",
+                        ? "border-[rgb(var(--accent-rgb))] bg-[rgb(var(--accent-rgb)/0.16)] text-[color:var(--text)] shadow-sm"
+                        : "border-[color:var(--border)] bg-[color:var(--surface)] text-[color:var(--text)] hover:bg-[color:var(--surface-muted)]",
                     ].join(" ")}
                   >
                     {label}
                   </button>
                 ))}
               </div>
-              <div className="text-xs opacity-70">
+              <div className="text-xs text-[color:var(--muted)]">
                 Wide and Full make the localhost page use more horizontal space.
               </div>
             </section>
@@ -635,19 +633,19 @@ export default function SettingsDrawer() {
                 <button
                   type="button"
                   onClick={resetSettings}
-                  className="rounded-lg border border-black/10 px-3 py-2 text-sm hover:bg-black/5 dark:border-white/10 dark:hover:bg-white/10"
+                  className="rounded-lg border border-[color:var(--border)] bg-[color:var(--surface)] px-3 py-2 text-sm text-[color:var(--text)] hover:bg-[color:var(--surface-muted)]"
                 >
                   Reset UI
                 </button>
                 <button
                   type="button"
                   onClick={close}
-                  className="rounded-lg border border-black/10 px-3 py-2 text-sm hover:bg-black/5 dark:border-white/10 dark:hover:bg-white/10"
+                  className="rounded-lg border border-[color:var(--border)] bg-[color:var(--surface)] px-3 py-2 text-sm text-[color:var(--text)] hover:bg-[color:var(--surface-muted)]"
                 >
                   Close Drawer
                 </button>
               </div>
-              <div className="rounded-xl border border-black/10 bg-black/[0.03] p-3 text-xs opacity-80 dark:border-white/10 dark:bg-white/[0.04]">
+              <div className="rounded-xl border border-[color:var(--border)] bg-[color:var(--surface-muted)] p-3 text-xs text-[color:var(--muted)]">
                 Active profile: {settings.theme}, {settings.fontSize}, {settings.density}, {settings.motion}, {settings.contrast}, {settings.radius}, {settings.pageWidth}
               </div>
             </section>
