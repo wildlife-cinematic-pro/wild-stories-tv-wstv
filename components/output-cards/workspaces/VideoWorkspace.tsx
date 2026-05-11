@@ -14,6 +14,8 @@ function safeStr(value: unknown) {
   return String(value ?? "").trim();
 }
 
+const PASTE_READY_SEPARATOR = "\n\n---\n\n";
+
 export function VideoWorkspace({
   data,
   videoWorkspace,
@@ -69,6 +71,10 @@ export function VideoWorkspace({
         : "border-blue-500/30 bg-blue-500/12 text-blue-900 dark:text-blue-100",
     };
   });
+  const hybridPastePack = primaryShotPlan
+    .map((item) => item.promptCard.pasteReady)
+    .filter(Boolean)
+    .join(PASTE_READY_SEPARATOR);
 
   return (
     <div className="space-y-6">
@@ -146,6 +152,20 @@ export function VideoWorkspace({
               </div>
             )}
 
+            <div className="mt-3 flex flex-col items-start gap-1">
+              <button
+                type="button"
+                onClick={() => onCopy(hybridPastePack)}
+                disabled={!hybridPastePack}
+                className="rounded-lg bg-violet-700 px-3 py-1.5 text-xs font-extrabold text-white hover:bg-violet-800 active:scale-95 disabled:cursor-not-allowed disabled:bg-[color:var(--surface-muted)] disabled:text-[color:var(--disabled-text)]"
+              >
+                Copy Hybrid 4-Shot Paste Pack
+              </button>
+              <p className="text-[11px] font-semibold text-violet-700 dark:text-violet-200">
+                Copies paste-ready prompt bodies only, in shot order.
+              </p>
+            </div>
+
             <p className="mt-3 text-[11px] font-semibold uppercase tracking-wide text-violet-500 dark:text-violet-200/80">
               {resolvedLane === "long"
                 ? "Continuity-safe long hybrid route preserved"
@@ -215,20 +235,25 @@ export function VideoWorkspace({
           </p>
 
           <div className="mb-3 grid min-w-0 grid-cols-1 gap-2 sm:flex sm:flex-wrap">
-            <button
-              type="button"
-              onClick={() =>
-                onCopy(
-                  seedancePromptCards
-                    .map((card) => card.pasteReady)
-                    .filter(Boolean)
-                    .join("\n\n---\n\n")
-                )
-              }
-              className="w-full rounded-lg border border-orange-200 bg-orange-100 px-3 py-1.5 text-xs font-extrabold text-orange-900 hover:bg-orange-200 active:scale-95 dark:bg-orange-500/15 dark:text-orange-100 dark:hover:bg-orange-500/25 sm:w-auto"
-            >
-              Copy Seedance Bodies
-            </button>
+            <div className="flex flex-col items-start gap-1">
+              <button
+                type="button"
+                onClick={() =>
+                  onCopy(
+                    seedancePromptCards
+                      .map((card) => card.pasteReady)
+                      .filter(Boolean)
+                      .join(PASTE_READY_SEPARATOR)
+                  )
+                }
+                className="w-full rounded-lg border border-orange-200 bg-orange-100 px-3 py-1.5 text-xs font-extrabold text-orange-900 hover:bg-orange-200 active:scale-95 dark:bg-orange-500/15 dark:text-orange-100 dark:hover:bg-orange-500/25 sm:w-auto"
+              >
+                Copy All Seedance Prompts
+              </button>
+              <span className="text-[11px] font-semibold text-orange-800 dark:text-orange-100/90">
+                Copies paste-ready prompt bodies only.
+              </span>
+            </div>
 
             {data.seedanceMultiShotPrompt && (
               <button
@@ -283,20 +308,25 @@ export function VideoWorkspace({
           </p>
 
           <div className="mb-3 grid min-w-0 grid-cols-1 gap-2 sm:flex sm:flex-wrap">
-            <button
-              type="button"
-              onClick={() =>
-                onCopy(
-                  runwayPromptCards
-                    .map((card) => card.pasteReady)
-                    .filter(Boolean)
-                    .join("\n\n---\n\n")
-                )
-              }
-              className="w-full rounded-lg border border-green-200 bg-green-100 px-3 py-1.5 text-xs font-extrabold text-green-900 hover:bg-green-200 active:scale-95 dark:bg-green-500/15 dark:text-green-100 dark:hover:bg-green-500/25 sm:w-auto"
-            >
-              Copy Runway Bodies
-            </button>
+            <div className="flex flex-col items-start gap-1">
+              <button
+                type="button"
+                onClick={() =>
+                  onCopy(
+                    runwayPromptCards
+                      .map((card) => card.pasteReady)
+                      .filter(Boolean)
+                      .join(PASTE_READY_SEPARATOR)
+                  )
+                }
+                className="w-full rounded-lg border border-green-200 bg-green-100 px-3 py-1.5 text-xs font-extrabold text-green-900 hover:bg-green-200 active:scale-95 dark:bg-green-500/15 dark:text-green-100 dark:hover:bg-green-500/25 sm:w-auto"
+              >
+                Copy All Runway I2V
+              </button>
+              <span className="text-[11px] font-semibold text-green-800 dark:text-green-100/90">
+                Copies paste-ready prompt bodies only.
+              </span>
+            </div>
           </div>
 
           <div className="space-y-3">
@@ -337,20 +367,25 @@ export function VideoWorkspace({
           </p>
 
           <div className="mb-3 grid min-w-0 grid-cols-1 gap-2 sm:flex sm:flex-wrap">
-            <button
-              type="button"
-              onClick={() =>
-                onCopy(
-                  klingPromptCards
-                    .map((card) => card.pasteReady)
-                    .filter(Boolean)
-                    .join("\n\n---\n\n")
-                )
-              }
-              className="w-full rounded-lg border border-blue-200 bg-blue-100 px-3 py-1.5 text-xs font-extrabold text-blue-900 hover:bg-blue-200 active:scale-95 dark:bg-blue-500/15 dark:text-blue-100 dark:hover:bg-blue-500/25 sm:w-auto"
-            >
-              Copy Kling Bodies
-            </button>
+            <div className="flex flex-col items-start gap-1">
+              <button
+                type="button"
+                onClick={() =>
+                  onCopy(
+                    klingPromptCards
+                      .map((card) => card.pasteReady)
+                      .filter(Boolean)
+                      .join(PASTE_READY_SEPARATOR)
+                  )
+                }
+                className="w-full rounded-lg border border-blue-200 bg-blue-100 px-3 py-1.5 text-xs font-extrabold text-blue-900 hover:bg-blue-200 active:scale-95 dark:bg-blue-500/15 dark:text-blue-100 dark:hover:bg-blue-500/25 sm:w-auto"
+              >
+                Copy All Kling Prompts
+              </button>
+              <span className="text-[11px] font-semibold text-blue-800 dark:text-blue-100/90">
+                Copies paste-ready prompt bodies only.
+              </span>
+            </div>
             {data.klingNative15s && (
               <button
                 type="button"
