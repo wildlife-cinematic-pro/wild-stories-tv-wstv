@@ -17,6 +17,11 @@ import { WORKFLOW_TEST_PRESETS } from "@/lib/workflow-presets";
 import type { RecommendedSeasonalSetup } from "@/lib/seasonal-realism-advisor";
 import type { StoryModePreset } from "@/lib/story-mode-presets";
 import type { RankedStoryModeSetup } from "@/lib/story-mode-setup-ranking";
+import {
+  STORY_SETUP_TUNER_IDS,
+  buildStorySetupTunerPatch,
+  type StorySetupTunerId,
+} from "@/lib/story-setup-tuners";
 import { contentLaneOptions } from "@/lib/content-lanes";
 import {
   cameraAnglePresetOptions,
@@ -296,6 +301,7 @@ type Step1SetupProps = {
   onApplyWorkflowTestPreset: (presetId: string) => void;
   onApplyStoryModePreset: (preset: StoryModePreset) => void;
   onApplyRankedStoryModeSetup: (setup: RankedStoryModeSetup) => void;
+  onApplyStorySetupTuner: (id: StorySetupTunerId) => void;
   onResetDefaults: () => void;
   onContinue: () => void;
   onOpenCustomAnimal: () => void;
@@ -448,6 +454,7 @@ export default function Step1Setup({
   onApplyWorkflowTestPreset,
   onApplyStoryModePreset,
   onApplyRankedStoryModeSetup,
+  onApplyStorySetupTuner,
   onResetDefaults,
   onContinue,
   onOpenCustomAnimal,
@@ -535,6 +542,9 @@ export default function Step1Setup({
   const [isProductionControlsOpen, setIsProductionControlsOpen] =
     useState(false);
   const [isAdvancedControlsOpen, setIsAdvancedControlsOpen] = useState(false);
+  const storySetupTuners = STORY_SETUP_TUNER_IDS.map((id) =>
+    buildStorySetupTunerPatch({ id, storyMode })
+  );
 
   const leadAnimalQuery = leadAnimalSearch.trim().toLowerCase();
   const leadAnimalMatches = leadAnimalQuery
@@ -786,6 +796,47 @@ export default function Step1Setup({
           animalOptions={predatorOptions}
           onApplySetup={onApplyRankedStoryModeSetup}
         />
+
+        <section className="rounded-2xl border border-[color:var(--border)] bg-[color:var(--panel)] p-5 text-[color:var(--text)] shadow-[0_18px_40px_rgba(2,6,23,0.16)]">
+          <div className="mb-4 flex flex-wrap items-start justify-between gap-3">
+            <div>
+              <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-[rgb(var(--accent-rgb))]">
+                Story Setup Tuners
+              </p>
+              <h3 className="mt-1 text-base font-semibold text-[color:var(--text)]">
+                One-click control tuning
+              </h3>
+              <p className="mt-1 max-w-2xl text-xs leading-relaxed text-[color:var(--muted)]">
+                Adjusts existing setup controls only. Animals, habitat, and
+                custom manual values stay untouched.
+              </p>
+            </div>
+            <span className="rounded-full border border-[color:var(--border)] bg-[color:var(--surface-muted)] px-3 py-1 text-[10px] font-bold uppercase tracking-[0.1em] text-[color:var(--muted)]">
+              Setup only
+            </span>
+          </div>
+
+          <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-4">
+            {storySetupTuners.map((tuner) => (
+              <button
+                key={tuner.id}
+                type="button"
+                onClick={() => onApplyStorySetupTuner(tuner.id)}
+                className="rounded-2xl border border-[color:var(--border-soft)] bg-[color:var(--surface)] p-3 text-left transition hover:border-[rgb(var(--accent-rgb)/0.45)] hover:bg-[color:var(--surface-elevated)] active:scale-[0.99]"
+              >
+                <span className="block text-sm font-black text-[color:var(--text)]">
+                  {tuner.label}
+                </span>
+                <span className="mt-1 block text-[11px] leading-relaxed text-[color:var(--muted)]">
+                  {tuner.helper}
+                </span>
+                <span className="mt-3 block text-[10px] font-bold uppercase tracking-[0.08em] text-[rgb(var(--accent-rgb))]">
+                  {tuner.adjustedControls.slice(0, 3).join(" · ")}
+                </span>
+              </button>
+            ))}
+          </div>
+        </section>
 
         <StoryModePresetsPanel
           activeStoryMode={storyMode}
