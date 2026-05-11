@@ -410,21 +410,21 @@ export default function Step3Generate({
 
   return (
     <div className="space-y-6">
-      <section className="rounded-[24px] bg-gray-900 p-5 shadow-[0_18px_40px_rgba(15,23,42,0.18)] sm:p-6">
+      <section className="rounded-[24px] border border-[color:var(--border)] bg-[color:var(--surface-elevated)] p-5 text-[color:var(--text)] shadow-[var(--surface-shadow)] sm:p-6">
         <div className="mb-5 flex flex-wrap items-center justify-between gap-2">
-          <h3 className="text-[11px] font-semibold uppercase tracking-[0.1em] text-white/40">
+          <h3 className="text-[11px] font-semibold uppercase tracking-[0.1em] text-[color:var(--muted)]">
             Generate for Reels
           </h3>
-          <div className="rounded-full border border-white/[0.08] bg-white/[0.05] px-2.5 py-1 text-[10px] font-semibold text-white/50">
+          <div className="rounded-full border border-[color:var(--border)] bg-[color:var(--surface-muted)] px-2.5 py-1 text-[10px] font-semibold text-[color:var(--muted)]">
             {subjectPairLabel}
           </div>
         </div>
 
-        <div className="mb-5 rounded-2xl border border-white/10 bg-white/[0.06] p-3.5">
-          <div className="mb-1 text-[11px] font-semibold uppercase tracking-wide text-white/40">
+        <div className="mb-5 rounded-2xl border border-[color:var(--border)] bg-[color:var(--surface)] p-3.5">
+          <div className="mb-1 text-[11px] font-semibold uppercase tracking-wide text-[color:var(--muted)]">
             AI Copy &amp; Prompt Polish
           </div>
-          <div className="mb-3 text-[11px] text-white/30">
+          <div className="mb-3 text-[11px] text-[color:var(--muted)]">
             Optional polish only. Main cinematic 4-shot packs now come from the
             hybrid dispatcher, with Seedance, full Runway, and full Kling bundles
             still included as optional outputs.
@@ -438,10 +438,10 @@ export default function Step3Generate({
               const buttonClassName = [
                 "rounded-2xl border px-4 py-2 text-left text-xs font-semibold transition-all active:scale-95 disabled:cursor-not-allowed disabled:active:scale-100",
                 isActive
-                  ? "border-white/25 bg-white/10 text-white shadow-sm shadow-black/20"
+                  ? "border-[rgb(var(--accent-rgb))] bg-[rgb(var(--accent-rgb)/0.16)] text-[color:var(--text)] shadow-sm"
                   : isDisabled
-                    ? "border-white/[0.08] bg-white/[0.02] text-white/25"
-                    : "border-white/[0.12] text-white/45 hover:bg-white/[0.06] hover:text-white/70",
+                    ? "border-[color:var(--border)] bg-[color:var(--disabled-bg)] text-[color:var(--disabled-text)]"
+                    : "border-[color:var(--border)] bg-[color:var(--surface-muted)] text-[color:var(--muted)] hover:bg-[rgb(var(--accent-rgb)/0.1)] hover:text-[color:var(--text)]",
               ].join(" ");
 
               return (
@@ -460,11 +460,11 @@ export default function Step3Generate({
                     {provider.id === "none" ? provider.label : "✦ " + provider.label}
                   </span>
                   {isActive ? (
-                    <span className="mt-0.5 block text-[9px] font-semibold uppercase tracking-[0.08em] text-emerald-200">
+                    <span className="mt-0.5 block text-[9px] font-semibold uppercase tracking-[0.08em] text-[color:var(--success-text)]">
                       Selected
                     </span>
                   ) : provider.id !== "gemini" && provider.id !== "none" ? (
-                    <span className="mt-0.5 block text-[9px] font-medium uppercase tracking-[0.08em] text-white/25">
+                    <span className="mt-0.5 block text-[9px] font-medium uppercase tracking-[0.08em] text-[color:var(--disabled-text)]">
                       {provider.kind === "fallback" ? "Fallback slot" : "Future slot"}
                     </span>
                   ) : null}
@@ -472,12 +472,12 @@ export default function Step3Generate({
               );
             })}
           </div>
-          <div className="mt-3 rounded-2xl border border-white/[0.08] bg-black/20 p-3">
+          <div className="mt-3 rounded-2xl border border-[color:var(--border)] bg-[color:var(--surface-muted)] p-3">
             <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
-              <div className="text-[10px] font-semibold uppercase tracking-[0.12em] text-white/35">
+              <div className="text-[10px] font-semibold uppercase tracking-[0.12em] text-[color:var(--muted)]">
                 Provider Health
               </div>
-              <div className="text-[10px] text-white/30">Safe metadata only from /api/enhance/provider-status</div>
+              <div className="text-[10px] text-[color:var(--muted)]">Safe metadata only from /api/enhance/provider-status</div>
             </div>
             <div className="flex flex-wrap gap-1.5">
               {COPY_POLISH_PROVIDER_CONFIGS.map((provider) => {
@@ -493,14 +493,14 @@ export default function Step3Generate({
                       "inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-[10px] font-semibold",
                       isReady
                         ? provider.id === "gemini"
-                          ? "border-emerald-400/25 bg-emerald-400/10 text-emerald-100"
+                          ? "border-emerald-400/35 bg-[color:var(--success-bg)] text-[color:var(--success-text)]"
                           : provider.id === "groq"
-                            ? "border-cyan-400/25 bg-cyan-400/10 text-cyan-100"
-                            : "border-white/15 bg-white/[0.05] text-white/55"
-                        : "border-white/[0.08] bg-white/[0.02] text-white/25",
+                            ? "border-cyan-400/35 bg-[color:var(--info-bg)] text-[color:var(--info-text)]"
+                            : "border-[color:var(--border)] bg-[color:var(--surface)] text-[color:var(--muted)]"
+                        : "border-[color:var(--border)] bg-[color:var(--disabled-bg)] text-[color:var(--disabled-text)]",
                     ].join(" ")}
                   >
-                    <span className={isReady ? "text-emerald-300" : "text-white/25"}>
+                    <span className={isReady ? "text-[color:var(--success-text)]" : "text-[color:var(--disabled-text)]"}>
                       {isReady ? "Ready" : "Off"}
                     </span>
                     {provider.label}
@@ -514,34 +514,34 @@ export default function Step3Generate({
             className={[
               "mt-3 flex flex-col gap-2 rounded-xl border px-3 py-2.5 text-[11px] leading-relaxed sm:flex-row sm:items-center sm:justify-between",
               activeProvider === "gemini"
-                ? "border-white/[0.1] bg-black/15 text-white/55"
-                : "border-white/[0.07] bg-black/10 text-white/30",
+                ? "border-[color:var(--border)] bg-[color:var(--surface-muted)] text-[color:var(--muted)]"
+                : "border-[color:var(--border)] bg-[color:var(--disabled-bg)] text-[color:var(--disabled-text)]",
             ].join(" ")}
           >
             <span>
-              <span className="block font-semibold text-white/70">Auto fallback if Gemini fails</span>
-              <span className="block text-[10px] text-white/35">
+              <span className="block font-semibold text-[color:var(--text)]">Auto fallback if Gemini fails</span>
+              <span className="block text-[10px] text-[color:var(--muted)]">
                 Default off. When enabled with Gemini selected, WSTV tries Groq only after Gemini returns no usable polish. Session-only.
               </span>
             </span>
-            <span className="inline-flex items-center gap-2 text-[10px] font-semibold uppercase tracking-[0.08em] text-white/45">
+            <span className="inline-flex items-center gap-2 text-[10px] font-semibold uppercase tracking-[0.08em] text-[color:var(--muted)]">
               <input
                 type="checkbox"
                 checked={autoFallback}
                 disabled={activeProvider !== "gemini"}
                 onChange={(event) => onAutoFallbackChange(event.target.checked)}
-                className="h-4 w-4 rounded border-white/20 bg-black accent-cyan-300 disabled:opacity-40"
+                className="h-4 w-4 rounded border-[color:var(--border)] bg-[color:var(--surface)] accent-cyan-500 disabled:opacity-70"
               />
               {autoFallback && activeProvider === "gemini" ? "On" : "Off"}
             </span>
           </label>
 
-          <div className="mt-3 rounded-xl border border-white/[0.08] bg-black/15 px-3 py-2 text-[10px] leading-relaxed text-white/35">
+          <div className="mt-3 rounded-xl border border-[color:var(--border)] bg-[color:var(--surface-muted)] px-3 py-2 text-[10px] leading-relaxed text-[color:var(--muted)]">
             Fallback plan for future: {formatCopyPolishFallbackPlan()}. Disabled providers never receive API calls.
           </div>
         </div>
 
-        <div className="mb-5 rounded-2xl border border-white/10 bg-white/[0.04] px-3.5 py-3 text-[11px] text-white/55">
+        <div className="mb-5 rounded-2xl border border-[color:var(--border)] bg-[color:var(--surface-muted)] px-3.5 py-3 text-[11px] text-[color:var(--muted)]">
           Flow: 1. Inputs → 2. U.S. score → 3. Opening score → 4. Publish guard →
           5. Final output
         </div>
@@ -559,18 +559,18 @@ export default function Step3Generate({
           type="button"
           onClick={onGenerate}
           disabled={isGenerating || isRegeneratingUnlocked}
-          className="w-full rounded-2xl bg-white py-4 text-sm font-bold text-gray-900 shadow-sm shadow-black/20 transition-all hover:bg-gray-100 disabled:opacity-50 active:scale-[0.98]"
+          className="w-full rounded-2xl bg-[color:var(--surface-inverse)] py-4 text-sm font-bold text-[color:var(--inverse-text)] shadow-sm shadow-black/20 transition-all hover:opacity-90 disabled:opacity-70 active:scale-[0.98]"
         >
           {isGenerating ? (
             <span className="flex items-center justify-center gap-2">
-              <span className="h-4 w-4 animate-spin rounded-full border-2 border-gray-900/20 border-t-gray-900" />
+              <span className="h-4 w-4 animate-spin rounded-full border-2 border-[color:color-mix(in_oklab,var(--inverse-text)_25%,transparent)] border-t-[color:var(--inverse-text)]" />
               Generating...
             </span>
           ) : (
             `⚡ Generate — ${generateCtaLabel}`
           )}
         </button>
-        <p className="mt-3 text-center text-[11px] leading-relaxed text-white/45">
+        <p className="mt-3 text-center text-[11px] leading-relaxed text-[color:var(--muted)]">
           Smart defaults are applied for each story mode. You can override any subject
           or production control before generating.
         </p>
