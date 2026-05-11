@@ -23,6 +23,11 @@ import type {
 import { analyzeOutputReadiness } from "@/lib/output-readiness";
 import { formatPipelineStyleLabel } from "@/lib/page-build-helpers";
 import type { StoryModePreset } from "@/lib/story-mode-presets";
+import {
+  buildSetupReadinessChecklist,
+  type SetupReadinessItemStatus,
+  type SetupReadinessOverall,
+} from "@/lib/setup-readiness-checklist";
 import { buildRunway2026AssistantPack } from "@/lib/runway-2026-production-assistant";
 import { buildWorkflowQaSummary } from "@/lib/workflow-qa";
 import {
@@ -32,16 +37,72 @@ import {
 } from "@/lib/copy-polish-providers";
 import type {
   AIProvider,
+  ActionStylePreset,
   ConceptVariant,
   ConceptVariantLabWinners,
   ContentLane,
   GeneratedPackage,
+  HabitatRegion,
+  KlingModel,
   PackageLockKey,
   PackageLockState,
   PromptVersion,
+  RunwayModel,
+  Season,
+  StoryMode,
+  TimeOfDay,
+  ViolenceLevel,
 } from "@/types";
 
 type ProviderAvailabilityMap = Record<AIProvider, CopyPolishProviderAvailability>;
+
+const READINESS_OVERALL_TONE: Record<
+  SetupReadinessOverall,
+  { label: string; className: string; dotClassName: string }
+> = {
+  ready: {
+    label: "Ready",
+    className:
+      "border-emerald-400/35 bg-[color:var(--success-bg)] text-[color:var(--success-text)]",
+    dotClassName: "bg-[color:var(--success-text)]",
+  },
+  caution: {
+    label: "Caution",
+    className:
+      "border-amber-400/35 bg-[color:var(--warning-bg)] text-[color:var(--warning-text)]",
+    dotClassName: "bg-[color:var(--warning-text)]",
+  },
+  "needs-review": {
+    label: "Needs Review",
+    className:
+      "border-rose-400/35 bg-[color:var(--danger-bg)] text-[color:var(--danger-text)]",
+    dotClassName: "bg-[color:var(--danger-text)]",
+  },
+};
+
+const READINESS_ITEM_TONE: Record<
+  SetupReadinessItemStatus,
+  { label: string; className: string; dotClassName: string }
+> = {
+  pass: {
+    label: "Pass",
+    className:
+      "border-emerald-400/35 bg-[color:var(--success-bg)] text-[color:var(--success-text)]",
+    dotClassName: "bg-[color:var(--success-text)]",
+  },
+  caution: {
+    label: "Check",
+    className:
+      "border-amber-400/35 bg-[color:var(--warning-bg)] text-[color:var(--warning-text)]",
+    dotClassName: "bg-[color:var(--warning-text)]",
+  },
+  fail: {
+    label: "Fix",
+    className:
+      "border-rose-400/35 bg-[color:var(--danger-bg)] text-[color:var(--danger-text)]",
+    dotClassName: "bg-[color:var(--danger-text)]",
+  },
+};
 
 const DEFAULT_PROVIDER_AVAILABILITY = COPY_POLISH_PROVIDER_CONFIGS.reduce(
   (acc, provider) => {
@@ -64,9 +125,20 @@ const DEFAULT_PROVIDER_AVAILABILITY = COPY_POLISH_PROVIDER_CONFIGS.reduce(
 type Step3GenerateProps = {
   predator: string;
   prey: string;
+  storyMode: StoryMode;
+  subjectA?: string;
+  subjectB?: string;
   subjectPairLabel: string;
   generateCtaLabel: string;
   contentLane: ContentLane;
+  habitatRegion: HabitatRegion;
+  season: Season;
+  timeOfDay: TimeOfDay;
+  animalOptions: string[];
+  violenceLevel: ViolenceLevel;
+  actionStyle: ActionStylePreset;
+  runwayModel: RunwayModel;
+  klingModel: KlingModel;
   activeProvider: AIProvider;
   autoFallback: boolean;
   arc: string;
@@ -112,9 +184,20 @@ type Step3GenerateProps = {
 export default function Step3Generate({
   predator,
   prey,
+  storyMode,
+  subjectA,
+  subjectB,
   subjectPairLabel,
   generateCtaLabel,
   contentLane,
+  habitatRegion,
+  season,
+  timeOfDay,
+  animalOptions,
+  violenceLevel,
+  actionStyle,
+  runwayModel,
+  klingModel,
   activeProvider,
   autoFallback,
   arc,
@@ -215,6 +298,39 @@ export default function Step3Generate({
         routingNote: pkg.routingNote,
       })
     : null;
+  const setupReadiness = useMemo(
+    () =>
+      buildSetupReadinessChecklist({
+        storyMode,
+        subjectA: subjectA ?? predator,
+        subjectB: subjectB ?? prey,
+        habitatRegion,
+        season,
+        timeOfDay,
+        animalOptions,
+        violenceLevel,
+        actionStyle,
+        activeProvider,
+        runwayModel,
+        klingModel,
+      }),
+    [
+      actionStyle,
+      activeProvider,
+      animalOptions,
+      habitatRegion,
+      klingModel,
+      predator,
+      prey,
+      runwayModel,
+      season,
+      storyMode,
+      subjectA,
+      subjectB,
+      timeOfDay,
+      violenceLevel,
+    ]
+  );
   const mainEnginePath = publishFlowSummary?.pipelineStyle
     ? formatPipelineStyleLabel(publishFlowSummary.pipelineStyle)
     : "Hybrid / selected workflow";
@@ -389,6 +505,10 @@ export default function Step3Generate({
       .join("\n\n");
   };
 
+  const readinessSuggestion = setupReadiness.items.find(
+    (item) => item.status === "fail" || item.status === "caution"
+  );
+
   const handleCopy = async (label: string, text: string | undefined) => {
     if (!text?.trim()) {
       return;
@@ -554,6 +674,79 @@ export default function Step3Generate({
           onPromoteVariant={onPromoteConceptVariant}
           onAutoCleanupVariant={onAutoCleanupConceptVariant}
         />
+
+        <section className="mb-5 rounded-2xl border border-[color:var(--border)] bg-[color:var(--surface)] p-4 text-[color:var(--text)]">
+          <div className="mb-3 flex flex-wrap items-center justify-between gap-3">
+            <div>
+              <div className="text-[11px] font-semibold uppercase tracking-[0.12em] text-[color:var(--muted)]">
+                Pre-Generate Readiness
+              </div>
+              <div className="mt-1 text-xs text-[color:var(--muted)]">
+                Setup-only guidance. Generation stays available.
+              </div>
+            </div>
+            <div className="flex items-center gap-2">
+              <span
+                className={[
+                  "inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-[10px] font-bold uppercase tracking-[0.08em]",
+                  READINESS_OVERALL_TONE[setupReadiness.overall].className,
+                ].join(" ")}
+              >
+                <span
+                  className={[
+                    "h-1.5 w-1.5 rounded-full",
+                    READINESS_OVERALL_TONE[setupReadiness.overall].dotClassName,
+                  ].join(" ")}
+                />
+                {READINESS_OVERALL_TONE[setupReadiness.overall].label}
+              </span>
+              <span className="rounded-full border border-[color:var(--border)] bg-[color:var(--surface-muted)] px-2.5 py-1 text-[10px] font-bold text-[color:var(--text)]">
+                {setupReadiness.score}/100
+              </span>
+            </div>
+          </div>
+
+          <div className="grid gap-2 md:grid-cols-2 xl:grid-cols-3">
+            {setupReadiness.items.map((item) => {
+              const tone = READINESS_ITEM_TONE[item.status];
+
+              return (
+                <div
+                  key={item.id}
+                  className="rounded-xl border border-[color:var(--border-soft)] bg-[color:var(--surface-muted)] px-3 py-2.5"
+                >
+                  <div className="mb-1 flex items-center justify-between gap-2">
+                    <span className="text-[11px] font-semibold text-[color:var(--text)]">
+                      {item.label}
+                    </span>
+                    <span
+                      className={[
+                        "inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-[9px] font-bold uppercase tracking-[0.08em]",
+                        tone.className,
+                      ].join(" ")}
+                    >
+                      <span
+                        className={["h-1.5 w-1.5 rounded-full", tone.dotClassName].join(
+                          " "
+                        )}
+                      />
+                      {tone.label}
+                    </span>
+                  </div>
+                  <p className="line-clamp-2 text-[10px] leading-relaxed text-[color:var(--muted)]">
+                    {item.detail}
+                  </p>
+                </div>
+              );
+            })}
+          </div>
+
+          {readinessSuggestion && (
+            <div className="mt-3 rounded-xl border border-[color:var(--border)] bg-[color:var(--surface-muted)] px-3 py-2 text-[10px] leading-relaxed text-[color:var(--muted)]">
+              Check before generating: {readinessSuggestion.detail}
+            </div>
+          )}
+        </section>
 
         <button
           type="button"

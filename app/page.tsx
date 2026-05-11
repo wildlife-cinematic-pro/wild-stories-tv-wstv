@@ -1997,9 +1997,20 @@ export default function Page() {
               <Step3Generate
                 predator={predator}
                 prey={prey}
+                storyMode={storyMode}
+                subjectA={currentStorySubjectSnapshot.subjectA}
+                subjectB={currentStorySubjectSnapshot.subjectB}
                 subjectPairLabel={currentGenerateSubjectPairLabel}
                 generateCtaLabel={currentGenerateCtaLabel}
                 contentLane={contentLane}
+                habitatRegion={habitatRegion}
+                season={season}
+                timeOfDay={timeOfDay}
+                animalOptions={predatorOptions}
+                violenceLevel={violenceLevel}
+                actionStyle={actionStyle}
+                runwayModel={runwayModel}
+                klingModel={klingModel}
                 activeProvider={activeProvider}
                 autoFallback={autoFallback}
                 arc={arc}
