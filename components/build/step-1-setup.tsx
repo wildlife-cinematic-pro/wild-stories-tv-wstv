@@ -5,6 +5,7 @@ import { useState, type ReactNode } from "react";
 import QualityPanel, { type QualityPanelProps } from "@/components/QualityPanel";
 import BestUsaViralSetupsPanel from "@/components/build/best-usa-viral-setups-panel";
 import SceneRelationshipCard from "@/components/build/scene-relationship-card";
+import MyWorkflowPresetsPanel from "@/components/build/my-workflow-presets-panel";
 import SeasonalRealismAdvisorCard from "@/components/build/seasonal-realism-advisor-card";
 import StoryModePresetsPanel from "@/components/build/story-mode-presets-panel";
 import StoryModeSubjectFields, {
@@ -15,6 +16,7 @@ import WorkflowPresetsPanel from "@/components/build/workflow-presets-panel";
 
 import { WORKFLOW_TEST_PRESETS } from "@/lib/workflow-presets";
 import type { RecommendedSeasonalSetup } from "@/lib/seasonal-realism-advisor";
+import type { MyWorkflowPreset } from "@/lib/my-workflow-presets";
 import type { StoryModePreset } from "@/lib/story-mode-presets";
 import type { RankedStoryModeSetup } from "@/lib/story-mode-setup-ranking";
 import {
@@ -346,6 +348,14 @@ type Step1SetupProps = {
   onRemoveSharedWorkflowPresetLibraryMember: (userId: string) => void;
   workflowPresetImportStatus: string;
   workflowPresetPackStatus: string;
+  myWorkflowPresets: MyWorkflowPreset[];
+  suggestedMyWorkflowPresetName: string;
+  myWorkflowPresetStatus?: string;
+  myWorkflowPresetStorageWarning?: string;
+  onSaveMyWorkflowPreset: (name: string) => void;
+  onApplyMyWorkflowPreset: (id: string) => void;
+  onRenameMyWorkflowPreset: (id: string, name: string) => void;
+  onDeleteMyWorkflowPreset: (id: string) => void;
 };
 
 export default function Step1Setup({
@@ -494,6 +504,14 @@ export default function Step1Setup({
   onRemoveSharedWorkflowPresetLibraryMember,
   workflowPresetImportStatus,
   workflowPresetPackStatus,
+  myWorkflowPresets,
+  suggestedMyWorkflowPresetName,
+  myWorkflowPresetStatus,
+  myWorkflowPresetStorageWarning,
+  onSaveMyWorkflowPreset,
+  onApplyMyWorkflowPreset,
+  onRenameMyWorkflowPreset,
+  onDeleteMyWorkflowPreset,
 }: Step1SetupProps) {
   const facebookRecommendation = buildStep1FacebookRecommendation({
     predator,
@@ -795,6 +813,17 @@ export default function Step1Setup({
           timeOfDay={timeOfDay}
           animalOptions={predatorOptions}
           onApplySetup={onApplyRankedStoryModeSetup}
+        />
+
+        <MyWorkflowPresetsPanel
+          presets={myWorkflowPresets}
+          suggestedName={suggestedMyWorkflowPresetName}
+          status={myWorkflowPresetStatus}
+          storageWarning={myWorkflowPresetStorageWarning}
+          onSave={onSaveMyWorkflowPreset}
+          onApply={onApplyMyWorkflowPreset}
+          onRename={onRenameMyWorkflowPreset}
+          onDelete={onDeleteMyWorkflowPreset}
         />
 
         <section className="rounded-2xl border border-[color:var(--border)] bg-[color:var(--panel)] p-5 text-[color:var(--text)] shadow-[0_18px_40px_rgba(2,6,23,0.16)]">

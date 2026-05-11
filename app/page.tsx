@@ -77,6 +77,19 @@ import {
   type StorySetupTunerId,
 } from "@/lib/story-setup-tuners";
 import {
+  applyMyWorkflowPreset,
+  buildMyWorkflowPresetName,
+  canUseMyWorkflowPresetStorage,
+  createMyWorkflowPreset,
+  deleteMyWorkflowPresetFromList,
+  loadMyWorkflowPresets,
+  renameMyWorkflowPresetInList,
+  saveMyWorkflowPresets,
+  upsertMyWorkflowPresetInList,
+  type MyWorkflowPreset,
+  type MyWorkflowPresetSnapshot,
+} from "@/lib/my-workflow-presets";
+import {
   appendCreatorQaRun,
   buildCreatorQaRun,
   buildPinnedGeneratedOutput,
@@ -230,6 +243,10 @@ export default function Page() {
   );
   const [error, setError] = useState("");
   const [setupFixFeedback, setSetupFixFeedback] = useState<string | null>(null);
+  const [myWorkflowPresets, setMyWorkflowPresets] = useState<MyWorkflowPreset[]>([]);
+  const [myWorkflowPresetStatus, setMyWorkflowPresetStatus] = useState("");
+  const [myWorkflowPresetStorageWarning, setMyWorkflowPresetStorageWarning] =
+    useState("");
 
   // Navigation
   const [step, setStep] = useState<Step>(1);
@@ -1233,6 +1250,213 @@ export default function Page() {
     ]
   );
 
+  const currentMyWorkflowPresetSnapshot = useMemo<MyWorkflowPresetSnapshot>(
+    () => ({
+      storyMode,
+      subjectA: currentStorySubjectSnapshot.subjectA,
+      subjectB: currentStorySubjectSnapshot.subjectB,
+      predator,
+      prey,
+      habitatRegion,
+      season,
+      timeOfDay,
+      actionStyle,
+      animalVibe,
+      arc: previewArc,
+      cameraAnglePreset,
+      contentLane,
+      depthMode,
+      emotionalTone,
+      encounterMode,
+      endingMode,
+      hookMode,
+      strictOriginalityGuard,
+      viralLane,
+      violenceLevel,
+      weather,
+      runwayModel,
+      klingModel,
+      activeProvider,
+      autoFallback,
+      habitat,
+      durationLane,
+      fastPublishMode,
+      realismMode,
+      motionOnlyI2V,
+      referenceLock,
+      singleActionRule,
+      microMotion,
+      heroVeo,
+    }),
+    [
+      activeProvider,
+      actionStyle,
+      animalVibe,
+      autoFallback,
+      cameraAnglePreset,
+      contentLane,
+      currentStorySubjectSnapshot.subjectA,
+      currentStorySubjectSnapshot.subjectB,
+      depthMode,
+      durationLane,
+      emotionalTone,
+      encounterMode,
+      endingMode,
+      fastPublishMode,
+      habitat,
+      habitatRegion,
+      heroVeo,
+      hookMode,
+      klingModel,
+      microMotion,
+      motionOnlyI2V,
+      predator,
+      prey,
+      previewArc,
+      realismMode,
+      referenceLock,
+      runwayModel,
+      season,
+      singleActionRule,
+      storyMode,
+      strictOriginalityGuard,
+      timeOfDay,
+      viralLane,
+      violenceLevel,
+      weather,
+    ]
+  );
+
+  const suggestedMyWorkflowPresetName = useMemo(
+    () => buildMyWorkflowPresetName(currentMyWorkflowPresetSnapshot),
+    [currentMyWorkflowPresetSnapshot]
+  );
+
+  useEffect(() => {
+    setMyWorkflowPresets(loadMyWorkflowPresets());
+    setMyWorkflowPresetStorageWarning(
+      canUseMyWorkflowPresetStorage()
+        ? ""
+        : "LocalStorage is unavailable, so presets may not persist after refresh."
+    );
+  }, []);
+
+  const persistMyWorkflowPresets = useCallback(
+    (nextPresets: MyWorkflowPreset[], status: string) => {
+      const saved = saveMyWorkflowPresets(nextPresets);
+      setMyWorkflowPresets(nextPresets);
+      setMyWorkflowPresetStatus(
+        saved
+          ? status
+          : status + " LocalStorage is unavailable, so this may be session-only."
+      );
+    },
+    []
+  );
+
+  const handleSaveMyWorkflowPreset = useCallback(
+    (name: string) => {
+      const preset = createMyWorkflowPreset(currentMyWorkflowPresetSnapshot, name);
+      const nextPresets = upsertMyWorkflowPresetInList(myWorkflowPresets, preset);
+      persistMyWorkflowPresets(nextPresets, "Saved workflow preset: " + preset.name + ".");
+    },
+    [currentMyWorkflowPresetSnapshot, myWorkflowPresets, persistMyWorkflowPresets]
+  );
+
+  const handleRenameMyWorkflowPreset = useCallback(
+    (id: string, name: string) => {
+      const nextPresets = renameMyWorkflowPresetInList(myWorkflowPresets, id, name);
+      const renamedPreset = nextPresets.find((preset) => preset.id === id);
+      persistMyWorkflowPresets(
+        nextPresets,
+        renamedPreset ? "Renamed workflow preset: " + renamedPreset.name + "." : "Preset renamed."
+      );
+    },
+    [myWorkflowPresets, persistMyWorkflowPresets]
+  );
+
+  const handleDeleteMyWorkflowPreset = useCallback(
+    (id: string) => {
+      const deletedPreset = myWorkflowPresets.find((preset) => preset.id === id);
+      const nextPresets = deleteMyWorkflowPresetFromList(myWorkflowPresets, id);
+      persistMyWorkflowPresets(
+        nextPresets,
+        deletedPreset ? "Deleted workflow preset: " + deletedPreset.name + "." : "Preset deleted."
+      );
+    },
+    [myWorkflowPresets, persistMyWorkflowPresets]
+  );
+
+  const handleApplyMyWorkflowPreset = useCallback(
+    (id: string) => {
+      const preset = myWorkflowPresets.find((candidate) => candidate.id === id);
+      if (!preset) return;
+
+      const snapshot = applyMyWorkflowPreset(preset);
+      const nextSubjectValues = {
+        subjectA: snapshot.subjectA,
+        subjectB: snapshot.subjectB,
+      };
+
+      setStoryModeSubjectDrafts((current) => ({
+        ...current,
+        [storyMode]: getCurrentStoryModeSubjectDraft(),
+        [snapshot.storyMode]: nextSubjectValues,
+      }));
+      setPredator(snapshot.predator);
+      setPrey(snapshot.prey);
+      setStoryMode(snapshot.storyMode);
+      applyStoryModeSubjectValues(nextSubjectValues);
+      setHabitatRegion(snapshot.habitatRegion);
+      setSeason(snapshot.season);
+      setTimeOfDay(snapshot.timeOfDay);
+      setActionStyle(snapshot.actionStyle);
+      setAnimalVibe(snapshot.animalVibe);
+      setArc(snapshot.arc);
+      setConceptArcOverride(null);
+      setCameraAnglePreset(snapshot.cameraAnglePreset);
+      setContentLane(snapshot.contentLane);
+      setDepthMode(snapshot.depthMode);
+      setEmotionalTone(snapshot.emotionalTone);
+      setEncounterMode(snapshot.encounterMode);
+      setEndingMode(snapshot.endingMode);
+      setHookMode(snapshot.hookMode);
+      setStrictOriginalityGuard(snapshot.strictOriginalityGuard);
+      setViralLane(snapshot.viralLane);
+      setViolenceLevel(snapshot.violenceLevel);
+      setWeather(snapshot.weather);
+      setRunwayModel(snapshot.runwayModel);
+      setKlingModel(snapshot.klingModel);
+      setActiveProvider(snapshot.activeProvider);
+      setAutoFallback(snapshot.autoFallback);
+      if (snapshot.habitat) setHabitat(snapshot.habitat);
+      if (snapshot.durationLane) setDurationLane(snapshot.durationLane);
+      if (snapshot.fastPublishMode !== undefined) {
+        setFastPublishMode(snapshot.fastPublishMode);
+      }
+      if (snapshot.realismMode) setRealismMode(snapshot.realismMode);
+      if (snapshot.motionOnlyI2V !== undefined) setMotionOnlyI2V(snapshot.motionOnlyI2V);
+      if (snapshot.referenceLock !== undefined) setReferenceLock(snapshot.referenceLock);
+      if (snapshot.singleActionRule !== undefined) {
+        setSingleActionRule(snapshot.singleActionRule);
+      }
+      if (snapshot.microMotion !== undefined) setMicroMotion(snapshot.microMotion);
+      if (snapshot.heroVeo !== undefined) setHeroVeo(snapshot.heroVeo);
+      setPromotedPublishCopyOverride(null);
+      setSetupFixFeedback(null);
+      setError("");
+      setMyWorkflowPresetStatus("Applied workflow preset: " + preset.name + ".");
+      setStep(1);
+      setActiveTab("build");
+    },
+    [
+      applyStoryModeSubjectValues,
+      getCurrentStoryModeSubjectDraft,
+      myWorkflowPresets,
+      storyMode,
+    ]
+  );
+
   const workflowPresetControls = useWorkflowPresets({
     currentSnapshot: currentWorkflowPresetSnapshot,
     onLoadPreset: applyWorkflowPreset,
@@ -2085,6 +2309,14 @@ export default function Page() {
                 }}
                 workflowPresetImportStatus={workflowPresetControls.importStatus}
                 workflowPresetPackStatus={workflowPresetControls.packStatus}
+                myWorkflowPresets={myWorkflowPresets}
+                suggestedMyWorkflowPresetName={suggestedMyWorkflowPresetName}
+                myWorkflowPresetStatus={myWorkflowPresetStatus}
+                myWorkflowPresetStorageWarning={myWorkflowPresetStorageWarning}
+                onSaveMyWorkflowPreset={handleSaveMyWorkflowPreset}
+                onApplyMyWorkflowPreset={handleApplyMyWorkflowPreset}
+                onRenameMyWorkflowPreset={handleRenameMyWorkflowPreset}
+                onDeleteMyWorkflowPreset={handleDeleteMyWorkflowPreset}
                 onOpenCustomAnimal={() =>
                   openCustomAnimalModal({
                     defaultArc: arc,
