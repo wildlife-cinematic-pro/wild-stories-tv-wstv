@@ -9,6 +9,10 @@ import {
   type StoryModeSubjectValues,
 } from "@/lib/story-mode-subject-defaults";
 import {
+  evaluateStoryModePairQuality,
+  type StoryModePairQuality,
+} from "@/lib/story-mode-pair-quality";
+import {
   getFishingFoodSourceOptions,
   getStoryModeAnimalOptions,
   hasStoryModePairedAnimalOptions,
@@ -310,6 +314,40 @@ function SelectInput<T extends string>({
   );
 }
 
+function StoryModePairQualityCard({ quality }: { quality: StoryModePairQuality }) {
+  const toneClass = {
+    strong:
+      "border-emerald-400/35 bg-[color:var(--success-bg)] text-[color:var(--success-text)]",
+    good: "border-cyan-400/35 bg-[color:var(--info-bg)] text-[color:var(--info-text)]",
+    caution:
+      "border-amber-400/35 bg-[color:var(--warning-bg)] text-[color:var(--warning-text)]",
+    weak: "border-rose-400/35 bg-[color:var(--danger-bg)] text-[color:var(--danger-text)]",
+  }[quality.level];
+  const suggestion = quality.suggestions[0];
+
+  return (
+    <div
+      className={`rounded-xl border p-3 ${toneClass}`}
+      data-testid="story-mode-pair-quality-card"
+    >
+      <div className="flex flex-wrap items-center justify-between gap-2">
+        <span className="text-[10px] font-black uppercase tracking-[0.14em]">
+          {quality.label}
+        </span>
+        <span className="rounded-full bg-[color:var(--surface-elevated)] px-2 py-0.5 text-[10px] font-black text-[color:var(--text)] ring-1 ring-[color:var(--border)]">
+          {quality.score}/100
+        </span>
+      </div>
+      <div className="mt-1 space-y-1 text-[11px] font-semibold leading-relaxed">
+        {quality.reasons.map((reason) => (
+          <p key={reason}>{reason}</p>
+        ))}
+        {suggestion ? <p>{suggestion}</p> : null}
+      </div>
+    </div>
+  );
+}
+
 function GroupCountSlider({
   label,
   value,
@@ -431,6 +469,14 @@ export default function StoryModeSubjectFields({
   const subjectBPairingHelper = showSubjectBPairingHelper
     ? "Showing likely matches for this story mode."
     : undefined;
+  const pairQuality = evaluateStoryModePairQuality({
+    storyMode,
+    subjectA: values.subjectA,
+    subjectB: values.subjectB,
+    habitatRegion,
+    season,
+    animalOptions,
+  });
 
   if (!config) return null;
 
@@ -602,6 +648,10 @@ export default function StoryModeSubjectFields({
             />
           </div>
         ) : null}
+      </div>
+
+      <div className="mt-4">
+        <StoryModePairQualityCard quality={pairQuality} />
       </div>
 
       <div className="mt-4 rounded-xl border border-amber-400/20 bg-amber-500/10 p-3">

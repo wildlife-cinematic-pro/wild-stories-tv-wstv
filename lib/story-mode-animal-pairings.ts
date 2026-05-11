@@ -237,9 +237,16 @@ export function normalizeAnimalName(value: string) {
   return ALIAS_TO_CANONICAL[normalized] ?? normalized;
 }
 
-function matchesAnimal(value: string | undefined, candidate: string) {
-  if (!value?.trim()) return false;
+export function areAnimalNamesEquivalent(
+  value: string | undefined,
+  candidate: string | undefined
+) {
+  if (!value?.trim() || !candidate?.trim()) return false;
   return normalizeAnimalName(value) === normalizeAnimalName(candidate);
+}
+
+function matchesAnimal(value: string | undefined, candidate: string) {
+  return areAnimalNamesEquivalent(value, candidate);
 }
 
 function uniqueOptions(options: Array<string | undefined>) {
@@ -283,6 +290,42 @@ function getCuratedSubjectAOptions(storyMode: StoryMode, subjectB?: string) {
         ? pairing.subjectA
         : []
     )
+  );
+}
+
+export function isCuratedStoryModePair({
+  storyMode,
+  subjectA,
+  subjectB,
+}: {
+  storyMode: StoryMode;
+  subjectA?: string;
+  subjectB?: string;
+}) {
+  if (!subjectA?.trim() || !subjectB?.trim()) return false;
+
+  return (CURATED_PAIRINGS[storyMode] ?? []).some(
+    (pairing) =>
+      pairing.subjectA.some((candidate) => matchesAnimal(subjectA, candidate)) &&
+      pairing.subjectB.some((candidate) => matchesAnimal(subjectB, candidate))
+  );
+}
+
+export function hasPredatorDataRelationship({
+  subjectA,
+  subjectB,
+}: {
+  subjectA?: string;
+  subjectB?: string;
+}) {
+  if (!subjectA?.trim() || !subjectB?.trim()) return false;
+
+  return Object.entries(predatorData).some(
+    ([predator, info]) =>
+      (matchesAnimal(subjectA, predator) &&
+        info.prey.some((prey) => matchesAnimal(subjectB, prey))) ||
+      (matchesAnimal(subjectB, predator) &&
+        info.prey.some((prey) => matchesAnimal(subjectA, prey)))
   );
 }
 
