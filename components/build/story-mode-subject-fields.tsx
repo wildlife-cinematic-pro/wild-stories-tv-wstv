@@ -13,6 +13,10 @@ import {
   type StoryModePairQuality,
 } from "@/lib/story-mode-pair-quality";
 import {
+  evaluateHabitatCompatibility,
+  type HabitatCompatibility,
+} from "@/lib/story-mode-habitat-quality";
+import {
   getFishingFoodSourceOptions,
   getStoryModeAnimalOptions,
   hasStoryModePairedAnimalOptions,
@@ -348,6 +352,47 @@ function StoryModePairQualityCard({ quality }: { quality: StoryModePairQuality }
   );
 }
 
+function HabitatCompatibilityCard({
+  quality,
+}: {
+  quality: HabitatCompatibility;
+}) {
+  const toneClass = {
+    strong:
+      "border-emerald-400/35 bg-[color:var(--success-bg)] text-[color:var(--success-text)]",
+    good: "border-cyan-400/35 bg-[color:var(--info-bg)] text-[color:var(--info-text)]",
+    caution:
+      "border-amber-400/35 bg-[color:var(--warning-bg)] text-[color:var(--warning-text)]",
+    weak: "border-rose-400/35 bg-[color:var(--danger-bg)] text-[color:var(--danger-text)]",
+  }[quality.level];
+  const suggestion =
+    quality.level === "caution" || quality.level === "weak"
+      ? quality.suggestions[0]
+      : undefined;
+
+  return (
+    <div
+      className={`rounded-xl border p-3 ${toneClass}`}
+      data-testid="story-mode-habitat-quality-card"
+    >
+      <div className="flex flex-wrap items-center justify-between gap-2">
+        <span className="text-[10px] font-black uppercase tracking-[0.14em]">
+          {quality.label}
+        </span>
+        <span className="rounded-full bg-[color:var(--surface-elevated)] px-2 py-0.5 text-[10px] font-black text-[color:var(--text)] ring-1 ring-[color:var(--border)]">
+          {quality.score}/100
+        </span>
+      </div>
+      <div className="mt-1 space-y-1 text-[11px] font-semibold leading-relaxed">
+        {quality.reasons.slice(0, 2).map((reason) => (
+          <p key={reason}>{reason}</p>
+        ))}
+        {suggestion ? <p>{suggestion}</p> : null}
+      </div>
+    </div>
+  );
+}
+
 function GroupCountSlider({
   label,
   value,
@@ -475,6 +520,15 @@ export default function StoryModeSubjectFields({
     subjectB: values.subjectB,
     habitatRegion,
     season,
+    animalOptions,
+  });
+  const habitatQuality = evaluateHabitatCompatibility({
+    storyMode,
+    subjectA: values.subjectA,
+    subjectB: values.subjectB,
+    habitatRegion,
+    season,
+    timeOfDay,
     animalOptions,
   });
 
@@ -650,8 +704,9 @@ export default function StoryModeSubjectFields({
         ) : null}
       </div>
 
-      <div className="mt-4">
+      <div className="mt-4 grid gap-3 md:grid-cols-2">
         <StoryModePairQualityCard quality={pairQuality} />
+        <HabitatCompatibilityCard quality={habitatQuality} />
       </div>
 
       <div className="mt-4 rounded-xl border border-amber-400/20 bg-amber-500/10 p-3">
