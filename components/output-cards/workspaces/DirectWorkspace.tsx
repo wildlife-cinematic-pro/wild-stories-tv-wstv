@@ -143,26 +143,45 @@ export function DirectWorkspace({
               </span>
             </div>
 
-            <pre className="max-w-full whitespace-pre-wrap break-words rounded-xl border border-orange-200 bg-[color:var(--surface-elevated)] p-3 text-xs leading-relaxed text-[color:var(--text)] [overflow-wrap:anywhere]">
-              {seedanceMultiShotCard.fullText}
-            </pre>
+            <div className="rounded-xl border border-orange-200 bg-[color:var(--surface-elevated)] p-3">
+              <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
+                <span className="rounded-full bg-orange-100 px-2 py-0.5 text-[10px] font-black uppercase tracking-wide text-orange-800 ring-1 ring-orange-200 dark:bg-orange-500/15 dark:text-orange-100">
+                  PASTE THIS INTO SEEDANCE
+                </span>
+                <span className="text-[10px] font-bold uppercase tracking-wide text-orange-800 dark:text-orange-100/90">
+                  Paste-ready prompt only
+                </span>
+              </div>
+              <pre className="max-w-full whitespace-pre-wrap break-words text-xs leading-relaxed text-[color:var(--text)] [overflow-wrap:anywhere]">
+                {seedanceMultiShotCard.pasteReady}
+              </pre>
+            </div>
 
             <div className="mt-3 grid min-w-0 grid-cols-1 gap-2 sm:flex sm:flex-wrap">
               <button
                 type="button"
-                onClick={() => onCopy(seedanceMultiShotCard.fullText)}
+                onClick={() => onCopy(seedanceMultiShotCard.pasteReady)}
                 className="w-full rounded-xl bg-orange-700 px-4 py-2 text-sm font-extrabold text-white hover:bg-orange-800 active:scale-[0.98] sm:w-auto"
               >
-                Copy Full Seedance Prompt
+                Copy Seedance Direct Prompt
               </button>
               <button
                 type="button"
-                onClick={() => onCopy(seedanceMultiShotCard.pasteReady)}
+                onClick={() => onCopy(seedanceMultiShotCard.fullText)}
                 className="w-full rounded-xl border border-orange-300 bg-[color:var(--surface-elevated)] px-4 py-2 text-sm font-extrabold text-orange-700 hover:bg-orange-500/12 active:scale-[0.98] dark:text-orange-100 sm:w-auto"
               >
-                Copy Paste-Ready Seedance Prompt
+                Copy Full Reference
               </button>
             </div>
+
+            <details className="mt-3 rounded-xl border border-orange-200 bg-[color:var(--surface-elevated)] p-3">
+              <summary className="cursor-pointer text-xs font-extrabold uppercase tracking-wide text-orange-800 dark:text-orange-100">
+                REFERENCE / FULL CARD
+              </summary>
+              <pre className="mt-2 max-w-full whitespace-pre-wrap break-words border-t border-orange-200 pt-2 text-xs leading-relaxed text-[color:var(--text)] [overflow-wrap:anywhere]">
+                {seedanceMultiShotCard.fullText}
+              </pre>
+            </details>
           </div>
         )}
 
@@ -178,9 +197,19 @@ export function DirectWorkspace({
             </span>
           </div>
 
-          <pre className="max-w-full whitespace-pre-wrap break-words rounded-xl border border-blue-200 bg-[color:var(--surface-elevated)] p-3 text-xs leading-relaxed text-[color:var(--text)] [overflow-wrap:anywhere]">
-            {klingFramesCard.fullText}
-          </pre>
+          <div className="rounded-xl border border-blue-200 bg-[color:var(--surface-elevated)] p-3">
+            <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
+              <span className="rounded-full bg-blue-100 px-2 py-0.5 text-[10px] font-black uppercase tracking-wide text-blue-800 ring-1 ring-blue-200 dark:bg-blue-500/15 dark:text-blue-100">
+                PASTE THIS INTO KLING FRAMES
+              </span>
+              <span className="text-[10px] font-bold uppercase tracking-wide text-blue-800 dark:text-blue-100/90">
+                Single prompt field
+              </span>
+            </div>
+            <pre className="max-w-full whitespace-pre-wrap break-words text-xs leading-relaxed text-[color:var(--text)] [overflow-wrap:anywhere]">
+              {klingFramesCard.pasteReady}
+            </pre>
+          </div>
 
           <div className="grid min-w-0 grid-cols-1 gap-2 sm:flex sm:flex-wrap">
             <button
@@ -195,9 +224,18 @@ export function DirectWorkspace({
               onClick={() => onCopy(klingFramesCard.fullText)}
               className="w-full rounded-xl border border-blue-300 bg-[color:var(--surface-elevated)] px-4 py-2 text-sm font-extrabold text-blue-700 hover:bg-blue-500/12 active:scale-[0.98] dark:text-blue-100 sm:w-auto"
             >
-              Copy Frames Card + Notes
+              Copy Full Reference
             </button>
           </div>
+
+          <details className="rounded-xl border border-blue-200 bg-[color:var(--surface-elevated)] p-3">
+            <summary className="cursor-pointer text-xs font-extrabold uppercase tracking-wide text-blue-800 dark:text-blue-100">
+              REFERENCE / FULL CARD
+            </summary>
+            <pre className="mt-2 max-w-full whitespace-pre-wrap break-words border-t border-blue-200 pt-2 text-xs leading-relaxed text-[color:var(--text)] [overflow-wrap:anywhere]">
+              {klingFramesCard.fullText}
+            </pre>
+          </details>
 
           {klingCombinedPromptInfo && (
             <div className="rounded-xl border border-blue-300/60 bg-[color:var(--surface-elevated)] p-3">

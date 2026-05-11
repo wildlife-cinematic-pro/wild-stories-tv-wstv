@@ -141,6 +141,21 @@ export function ProShotCard({
       ? "bg-orange-700 hover:bg-orange-800"
       : "bg-blue-700 hover:bg-blue-800";
   const engineLabel = isRunway ? "Runway" : isSeedance ? "Seedance" : "Kling";
+  const primaryCopyLabel = isRunway
+    ? "Copy Runway I2V"
+    : isSeedance
+      ? "Copy Seedance Prompt"
+      : "Copy Kling Prompt";
+  const copyConfidenceLabel = isRunway
+    ? "Motion only • no negative prompt"
+    : isSeedance
+      ? "Simple motion • refs optional"
+      : "Director prompt • negative allowed";
+  const fullCardText = promptCard.fullText || shot || "";
+  const showReferenceText = Boolean(
+    fullCardText.trim() && fullCardText.trim() !== pasteReady.trim()
+  );
+  const [showFullCard, setShowFullCard] = useState(false);
 
   return (
     <div className={`min-w-0 max-w-full overflow-hidden rounded-xl border ${borderColor} bg-[color:var(--surface-elevated)] p-3`}>
@@ -154,42 +169,67 @@ export function ProShotCard({
               MI: {motionIntensity.toFixed(2)}
             </span>
           )}
-          {isRunway && (
-            <span className="rounded-full bg-yellow-100 px-1.5 py-0.5 text-[10px] font-bold text-yellow-700">
-              No negative prompt
-            </span>
-          )}
-          {isSeedance && (
-            <span className="rounded-full bg-orange-100 px-1.5 py-0.5 text-[10px] font-bold text-orange-700">
-              Simple motion-first prompt
-            </span>
-          )}
+          <span className="rounded-full bg-[color:var(--surface-muted)] px-1.5 py-0.5 text-[10px] font-bold text-[color:var(--muted)] ring-1 ring-[color:var(--border)]">
+            {copyConfidenceLabel}
+          </span>
         </div>
 
         <div className="grid w-full min-w-0 grid-cols-1 gap-1 sm:flex sm:w-auto sm:flex-wrap sm:justify-end">
-          <button
-            type="button"
-            onClick={() => onCopy(shot)}
-            className="w-full rounded border border-[color:var(--border)] bg-[color:var(--surface-elevated)] px-2 py-1 text-[11px] font-bold text-[color:var(--muted)] hover:bg-[color:var(--surface-muted)] active:scale-95 sm:w-auto"
-            title="Copy full shot with instructions"
-          >
-            Copy Full Card
-          </button>
-
           <button
             type="button"
             onClick={() => onCopy(pasteReady)}
             className={`w-full rounded px-2 py-1 text-[11px] font-bold text-white active:scale-95 sm:w-auto ${btnColor}`}
             title="Copy paste-ready prompt only"
           >
-            Copy {engineLabel} Prompt
+            {primaryCopyLabel}
+          </button>
+
+          <button
+            type="button"
+            onClick={() => onCopy(fullCardText)}
+            className="w-full rounded border border-[color:var(--border)] bg-[color:var(--surface-elevated)] px-2 py-1 text-[11px] font-bold text-[color:var(--muted)] hover:bg-[color:var(--surface-muted)] active:scale-95 sm:w-auto"
+            title="Copy full card with reference notes"
+          >
+            Copy Full Card
           </button>
         </div>
       </div>
 
-      <pre className="max-w-full whitespace-pre-wrap break-words text-xs leading-relaxed text-[color:var(--text)] [overflow-wrap:anywhere]">
-        {promptCard.fullText || shot || "—"}
-      </pre>
+      <div className="rounded-lg border border-[color:var(--border)] bg-[color:var(--surface-muted)] p-2">
+        <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
+          <span className="rounded-full bg-[color:var(--surface-elevated)] px-2 py-0.5 text-[10px] font-black uppercase tracking-wide text-[color:var(--text)] ring-1 ring-[color:var(--border)]">
+            PASTE THIS ONLY
+          </span>
+          <span className="text-[10px] font-bold uppercase tracking-wide text-[color:var(--muted)]">
+            {primaryCopyLabel}
+          </span>
+        </div>
+        <pre className="max-w-full whitespace-pre-wrap break-words text-xs leading-relaxed text-[color:var(--text)] [overflow-wrap:anywhere]">
+          {pasteReady || "—"}
+        </pre>
+      </div>
+
+      {showReferenceText && (
+        <div className="mt-2 rounded-lg border border-[color:var(--border)] bg-[color:var(--surface-elevated)]">
+          <button
+            type="button"
+            onClick={() => setShowFullCard((value) => !value)}
+            className="flex w-full min-w-0 items-center justify-between gap-2 px-2 py-1.5 text-left"
+          >
+            <span className="rounded-full bg-[color:var(--surface-muted)] px-2 py-0.5 text-[10px] font-black uppercase tracking-wide text-[color:var(--muted)] ring-1 ring-[color:var(--border)]">
+              REFERENCE / FULL CARD
+            </span>
+            <span className="shrink-0 text-[10px] font-bold text-[color:var(--muted)]">
+              {showFullCard ? "Hide" : "Show"}
+            </span>
+          </button>
+          {showFullCard && (
+            <pre className="max-w-full whitespace-pre-wrap break-words border-t border-[color:var(--border)] px-2 py-2 text-xs leading-relaxed text-[color:var(--text)] [overflow-wrap:anywhere]">
+              {fullCardText}
+            </pre>
+          )}
+        </div>
+      )}
 
       {audioPrompt && (
         <div className="mt-2 min-w-0 max-w-full overflow-hidden rounded-lg border border-indigo-200 bg-indigo-50 p-2">
