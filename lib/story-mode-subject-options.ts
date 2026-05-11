@@ -1,5 +1,9 @@
 import { StoryMode } from "@/types";
 
+import {
+  getPairedSubjectAOptions,
+  getPairedSubjectBOptions,
+} from "@/lib/story-mode-animal-pairings";
 import { USA_STORY_MODE_PRESETS } from "@/lib/story-mode-presets";
 import { getStoryModeSubjectDefaults } from "@/lib/story-mode-subject-defaults";
 
@@ -94,16 +98,33 @@ export function getStoryModeAnimalOptions({
   field,
   animalOptions,
   currentValue,
+  subjectA,
+  subjectB,
 }: {
   storyMode: StoryMode;
   field: SubjectOptionField;
   animalOptions: string[];
   currentValue?: string;
+  subjectA?: string;
+  subjectB?: string;
 }) {
   const defaults = getStoryModeSubjectDefaults(storyMode);
+  const pairedOptions =
+    field === "subjectB"
+      ? getPairedSubjectBOptions({
+          storyMode,
+          subjectA,
+          animalOptions,
+        })
+      : getPairedSubjectAOptions({
+          storyMode,
+          subjectB,
+          animalOptions,
+        });
 
   return uniqueOptions([
     currentValue,
+    ...pairedOptions,
     ...(MODE_SUBJECT_PRIORITY[storyMode]?.[field] ?? []),
     defaults[field],
     ...getPresetSubjects(storyMode, field),
@@ -115,13 +136,43 @@ export function getStoryModeAnimalOptions({
 export function getFishingFoodSourceOptions({
   animalOptions,
   currentValue,
+  subjectA,
 }: {
   animalOptions: string[];
   currentValue?: string;
+  subjectA?: string;
 }) {
+  const pairedOptions = getPairedSubjectBOptions({
+    storyMode: StoryMode.FISHING_STRIKE,
+    subjectA,
+    animalOptions,
+  });
+
   return uniqueOptions([
     currentValue,
+    ...pairedOptions,
     ...FISHING_FOOD_SOURCE_PRIORITY,
     ...animalOptions,
   ]);
+}
+
+export function hasStoryModePairedAnimalOptions({
+  storyMode,
+  field,
+  animalOptions,
+  subjectA,
+  subjectB,
+}: {
+  storyMode: StoryMode;
+  field: SubjectOptionField;
+  animalOptions: string[];
+  subjectA?: string;
+  subjectB?: string;
+}) {
+  const pairedOptions =
+    field === "subjectB"
+      ? getPairedSubjectBOptions({ storyMode, subjectA, animalOptions })
+      : getPairedSubjectAOptions({ storyMode, subjectB, animalOptions });
+
+  return pairedOptions.length > 0;
 }

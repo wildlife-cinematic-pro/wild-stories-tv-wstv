@@ -11,6 +11,7 @@ import {
 import {
   getFishingFoodSourceOptions,
   getStoryModeAnimalOptions,
+  hasStoryModePairedAnimalOptions,
 } from "@/lib/story-mode-subject-options";
 
 import type {
@@ -407,17 +408,29 @@ export default function StoryModeSubjectFields({
     field: "subjectA",
     animalOptions,
     currentValue: values.subjectA,
+    subjectB: values.subjectB,
   });
   const subjectBOptions = getStoryModeAnimalOptions({
     storyMode,
     field: "subjectB",
     animalOptions,
     currentValue: values.subjectB,
+    subjectA: values.subjectA,
   });
   const fishingFoodSourceOptions = getFishingFoodSourceOptions({
     animalOptions,
     currentValue: values.subjectB,
+    subjectA: values.subjectA,
   });
+  const showSubjectBPairingHelper = hasStoryModePairedAnimalOptions({
+    storyMode,
+    field: "subjectB",
+    animalOptions,
+    subjectA: values.subjectA,
+  });
+  const subjectBPairingHelper = showSubjectBPairingHelper
+    ? "Showing likely matches for this story mode."
+    : undefined;
 
   if (!config) return null;
 
@@ -476,6 +489,7 @@ export default function StoryModeSubjectFields({
             onChange={onSubjectBChange}
             options={subjectBOptions}
             placeholder={`Search ${config.subjectBLabel.toLowerCase()}...`}
+            helper={subjectBPairingHelper}
             manualOverride={overrideFlags.subjectB}
           />
         ) : storyMode === StoryMode.FISHING_STRIKE && config.subjectBLabel ? (
@@ -485,7 +499,10 @@ export default function StoryModeSubjectFields({
             onChange={onSubjectBChange}
             options={fishingFoodSourceOptions}
             placeholder="Search food or fish source..."
-            helper="Use a clean food source label for readable waterline action."
+            helper={
+              subjectBPairingHelper ??
+              "Use a clean food source label for readable waterline action."
+            }
             manualOverride={overrideFlags.subjectB}
           />
         ) : config.subjectBLabel ? (
