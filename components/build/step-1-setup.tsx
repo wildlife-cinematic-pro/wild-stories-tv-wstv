@@ -3,6 +3,7 @@
 import { useState, type ReactNode } from "react";
 
 import QualityPanel, { type QualityPanelProps } from "@/components/QualityPanel";
+import BestUsaViralSetupsPanel from "@/components/build/best-usa-viral-setups-panel";
 import SceneRelationshipCard from "@/components/build/scene-relationship-card";
 import SeasonalRealismAdvisorCard from "@/components/build/seasonal-realism-advisor-card";
 import StoryModePresetsPanel from "@/components/build/story-mode-presets-panel";
@@ -15,6 +16,7 @@ import WorkflowPresetsPanel from "@/components/build/workflow-presets-panel";
 import { WORKFLOW_TEST_PRESETS } from "@/lib/workflow-presets";
 import type { RecommendedSeasonalSetup } from "@/lib/seasonal-realism-advisor";
 import type { StoryModePreset } from "@/lib/story-mode-presets";
+import type { RankedStoryModeSetup } from "@/lib/story-mode-setup-ranking";
 import { contentLaneOptions } from "@/lib/content-lanes";
 import {
   cameraAnglePresetOptions,
@@ -293,6 +295,7 @@ type Step1SetupProps = {
   onActionStyleChange: (value: ActionStylePreset) => void;
   onApplyWorkflowTestPreset: (presetId: string) => void;
   onApplyStoryModePreset: (preset: StoryModePreset) => void;
+  onApplyRankedStoryModeSetup: (setup: RankedStoryModeSetup) => void;
   onResetDefaults: () => void;
   onContinue: () => void;
   onOpenCustomAnimal: () => void;
@@ -444,6 +447,7 @@ export default function Step1Setup({
   onActionStyleChange,
   onApplyWorkflowTestPreset,
   onApplyStoryModePreset,
+  onApplyRankedStoryModeSetup,
   onResetDefaults,
   onContinue,
   onOpenCustomAnimal,
@@ -772,6 +776,15 @@ export default function Step1Setup({
         <WildlifeStoryModeSelector
           value={storyMode}
           onChange={onStoryModeChange}
+        />
+
+        <BestUsaViralSetupsPanel
+          storyMode={storyMode}
+          habitatRegion={habitatRegion}
+          season={season}
+          timeOfDay={timeOfDay}
+          animalOptions={predatorOptions}
+          onApplySetup={onApplyRankedStoryModeSetup}
         />
 
         <StoryModePresetsPanel

@@ -65,6 +65,7 @@ import {
 } from "@/lib/story-mode-prompt-context";
 import type { RecommendedSeasonalSetup } from "@/lib/seasonal-realism-advisor";
 import type { StoryModePreset } from "@/lib/story-mode-presets";
+import type { RankedStoryModeSetup } from "@/lib/story-mode-setup-ranking";
 import {
   appendCreatorQaRun,
   buildCreatorQaRun,
@@ -444,6 +445,39 @@ export default function Page() {
       [storyMode]: defaults,
     }));
   }, [predator, prey, storyMode]);
+
+  const handleApplyRankedStoryModeSetup = useCallback(
+    (setup: RankedStoryModeSetup) => {
+      const defaults = getStoryModeSubjectDefaults(setup.storyMode, predator, prey);
+      const nextValues: StoryModeSubjectValues = {
+        ...defaults,
+        subjectA: setup.subjectA,
+        subjectB: setup.subjectB,
+      };
+
+      setStoryModeSubjectDrafts((current) => ({
+        ...current,
+        [storyMode]: getCurrentStoryModeSubjectDraft(),
+        [setup.storyMode]: nextValues,
+      }));
+      setStoryMode(setup.storyMode);
+      setHabitatRegion(setup.habitatRegion);
+      setSeason(setup.season);
+      setTimeOfDay(setup.timeOfDay);
+      applyStoryModeSubjectValues(nextValues);
+      setPromotedPublishCopyOverride(null);
+      setError("");
+      setStep(1);
+      setActiveTab("build");
+    },
+    [
+      applyStoryModeSubjectValues,
+      getCurrentStoryModeSubjectDraft,
+      predator,
+      prey,
+      storyMode,
+    ]
+  );
 
   const handleApplyStoryModePreset = useCallback((preset: StoryModePreset) => {
     setStoryModeSubjectDrafts((current) => ({
@@ -1782,6 +1816,7 @@ export default function Page() {
                 onActionStyleChange={setActionStyle}
                 onApplyWorkflowTestPreset={handleApplyWorkflowTestPreset}
                 onApplyStoryModePreset={handleApplyStoryModePreset}
+                onApplyRankedStoryModeSetup={handleApplyRankedStoryModeSetup}
                 onResetDefaults={handleResetDefaults}
                 onContinue={() => setStep(2)}
                 onWorkflowPresetNameChange={workflowPresetControls.setPresetName}
