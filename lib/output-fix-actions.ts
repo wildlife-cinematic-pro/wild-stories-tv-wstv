@@ -1,4 +1,5 @@
 import type { FixActionDescriptor } from "@/lib/setup-fix-actions";
+import type { EngineOutputQaReport } from "@/lib/engine-output-qa";
 import type { GeneratedOutputQualityReport } from "@/lib/generated-output-quality";
 
 export type OutputFixActionId =
@@ -6,7 +7,10 @@ export type OutputFixActionId =
   | "fix-to-5-hashtags"
   | "make-output-non-graphic"
   | "open-video-copy-workspace"
-  | "open-copy-workspace";
+  | "open-copy-workspace"
+  | "open-runway-copy"
+  | "open-kling-copy"
+  | "open-seedance-copy";
 
 const OUTPUT_FIX_ACTIONS: Record<
   OutputFixActionId,
@@ -48,6 +52,24 @@ const OUTPUT_FIX_ACTIONS: Record<
     target: "navigation",
     severity: "suggested",
   },
+  "open-runway-copy": {
+    label: "Open Runway Copy",
+    helper: "Jumps to the Runway paste-ready I2V blocks. No rewrite is triggered.",
+    target: "navigation",
+    severity: "recommended",
+  },
+  "open-kling-copy": {
+    label: "Open Kling Copy",
+    helper: "Jumps to the Kling paste-ready prompt blocks. No rewrite is triggered.",
+    target: "navigation",
+    severity: "recommended",
+  },
+  "open-seedance-copy": {
+    label: "Open Seedance Copy",
+    helper: "Jumps to the Seedance paste-ready motion prompts. No rewrite is triggered.",
+    target: "navigation",
+    severity: "recommended",
+  },
 };
 
 function action(id: OutputFixActionId, sourceItemId: string): FixActionDescriptor {
@@ -87,4 +109,20 @@ export function buildOutputFixActions(
   }
 
   return actions;
+}
+
+export function buildEngineOutputFixActions(
+  report: EngineOutputQaReport
+): FixActionDescriptor[] {
+  return report.engines
+    .filter((engine) => engine.status !== "pass")
+    .map((engine) => {
+      if (engine.engine === "runway") {
+        return action("open-runway-copy", "engine-qa-runway");
+      }
+      if (engine.engine === "kling") {
+        return action("open-kling-copy", "engine-qa-kling");
+      }
+      return action("open-seedance-copy", "engine-qa-seedance");
+    });
 }

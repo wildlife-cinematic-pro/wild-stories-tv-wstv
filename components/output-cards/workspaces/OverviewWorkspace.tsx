@@ -18,7 +18,8 @@ import {
   type GeneratedOutputQualityItemStatus,
   type GeneratedOutputQualityOverall,
 } from "@/lib/generated-output-quality";
-import { buildOutputFixActions } from "@/lib/output-fix-actions";
+import { analyzeEngineOutputQa, type EngineOutputQaEngine, type EngineOutputQaStatus } from "@/lib/engine-output-qa";
+import { buildEngineOutputFixActions, buildOutputFixActions } from "@/lib/output-fix-actions";
 import type { FixActionDescriptor } from "@/lib/setup-fix-actions";
 import type { StoryModePreset } from "@/lib/story-mode-presets";
 import type { GeneratedPackage, PromptVersion } from "@/types";
@@ -247,6 +248,157 @@ function OutputQualityScorePanel({
   );
 }
 
+
+const ENGINE_QA_STATUS_TONE: Record<
+  EngineOutputQaStatus,
+  { label: string; className: string; dotClassName: string }
+> = OUTPUT_QUALITY_ITEM_TONE;
+
+function engineQaSuggestion(engine: EngineOutputQaEngine) {
+  return engine.checks.find(
+    (check) => check.status === "fail" || check.status === "caution"
+  );
+}
+
+function EngineQaPanel({
+  data,
+  onFixAction,
+  fixFeedback,
+}: {
+  data: GeneratedPackage;
+  onFixAction?: (id: string) => void;
+  fixFeedback?: string | null;
+}) {
+  const report = analyzeEngineOutputQa(data);
+  const fixActions = buildEngineOutputFixActions(report);
+
+  return (
+    <section className="rounded-2xl border border-[color:var(--border)] bg-[color:var(--surface)] p-4 text-[color:var(--text)] shadow-[var(--surface-shadow)]">
+      <div className="mb-3 flex flex-wrap items-center justify-between gap-3">
+        <div>
+          <div className="text-[11px] font-semibold uppercase tracking-[0.12em] text-[color:var(--muted)]">
+            Engine QA
+          </div>
+          <p className="mt-1 max-w-2xl text-xs leading-relaxed text-[color:var(--muted)]">
+            Engine-specific paste checks for Runway, Kling, and Seedance. These
+            warnings are advisory and never rewrite generated prompts.
+          </p>
+        </div>
+        <span
+          className={[
+            "inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-[10px] font-bold uppercase tracking-[0.08em]",
+            OUTPUT_QUALITY_OVERALL_TONE[report.overall].className,
+          ].join(" ")}
+        >
+          <span
+            className={[
+              "h-1.5 w-1.5 rounded-full",
+              OUTPUT_QUALITY_OVERALL_TONE[report.overall].dotClassName,
+            ].join(" ")}
+          />
+          {OUTPUT_QUALITY_OVERALL_TONE[report.overall].label}
+        </span>
+      </div>
+
+      <div className="grid gap-3 xl:grid-cols-3">
+        {report.engines.map((engine) => {
+          const tone = ENGINE_QA_STATUS_TONE[engine.status];
+          const suggestion = engineQaSuggestion(engine);
+          const fixAction = fixActions.find(
+            (action) => action.sourceItemId === `engine-qa-${engine.engine}`
+          );
+
+          return (
+            <div
+              key={engine.engine}
+              className="rounded-2xl border border-[color:var(--border-soft)] bg-[color:var(--surface-muted)] p-3"
+            >
+              <div className="mb-3 flex flex-wrap items-start justify-between gap-2">
+                <div>
+                  <div className="text-sm font-extrabold text-[color:var(--text)]">
+                    {engine.label}
+                  </div>
+                  <div className="mt-1 text-[10px] font-bold uppercase tracking-[0.08em] text-[color:var(--muted)]">
+                    {engine.score}/100
+                  </div>
+                </div>
+                <span
+                  className={[
+                    "inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-[9px] font-bold uppercase tracking-[0.08em]",
+                    tone.className,
+                  ].join(" ")}
+                >
+                  <span
+                    className={[
+                      "h-1.5 w-1.5 rounded-full",
+                      tone.dotClassName,
+                    ].join(" ")}
+                  />
+                  {tone.label}
+                </span>
+              </div>
+
+              <div className="space-y-2">
+                {engine.checks.slice(0, 5).map((check) => {
+                  const checkTone = ENGINE_QA_STATUS_TONE[check.status];
+
+                  return (
+                    <div
+                      key={check.id}
+                      className="rounded-xl border border-[color:var(--border)] bg-[color:var(--surface)] px-2.5 py-2"
+                    >
+                      <div className="flex items-center justify-between gap-2">
+                        <span className="text-[10px] font-bold text-[color:var(--text)]">
+                          {check.label}
+                        </span>
+                        <span
+                          className={[
+                            "h-2 w-2 rounded-full",
+                            checkTone.dotClassName,
+                          ].join(" ")}
+                          aria-label={checkTone.label}
+                        />
+                      </div>
+                      <p className="mt-1 line-clamp-2 text-[10px] leading-relaxed text-[color:var(--muted)]">
+                        {check.detail}
+                      </p>
+                    </div>
+                  );
+                })}
+              </div>
+
+              {suggestion ? (
+                <div className="mt-3 rounded-xl border border-[color:var(--border)] bg-[color:var(--surface)] px-3 py-2 text-[10px] leading-relaxed text-[color:var(--muted)]">
+                  Suggestion: {suggestion.detail}
+                </div>
+              ) : null}
+
+              {fixAction ? (
+                <button
+                  type="button"
+                  onClick={() => onFixAction?.(fixAction.id)}
+                  disabled={!onFixAction}
+                  className="mt-3 w-full rounded-xl border border-[rgb(var(--accent-rgb)/0.45)] bg-[rgb(var(--accent-rgb)/0.12)] px-3 py-2 text-left text-[11px] font-extrabold text-[color:var(--text)] transition hover:bg-[rgb(var(--accent-rgb)/0.18)] active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-70"
+                >
+                  {fixAction.label}
+                  <span className="mt-1 block text-[10px] font-semibold leading-relaxed text-[color:var(--muted)]">
+                    {fixAction.helper}
+                  </span>
+                </button>
+              ) : null}
+            </div>
+          );
+        })}
+      </div>
+
+      {fixFeedback ? (
+        <div className="mt-3 rounded-xl border border-emerald-400/25 bg-[color:var(--success-bg)] px-3 py-2 text-[10px] leading-relaxed text-[color:var(--success-text)]">
+          {fixFeedback}
+        </div>
+      ) : null}
+    </section>
+  );
+}
 function StoryModeBadges({ data }: { data: GeneratedPackage }) {
   return (
     <div className="flex flex-wrap gap-2 rounded-xl border border-[color:var(--border)] bg-[color:var(--surface-elevated)] p-3">
@@ -289,6 +441,12 @@ export function OverviewWorkspace({
       <StoryModeBadges data={data} />
 
       <OutputQualityScorePanel
+        data={data}
+        onFixAction={onOutputFixAction}
+        fixFeedback={outputFixFeedback}
+      />
+
+      <EngineQaPanel
         data={data}
         onFixAction={onOutputFixAction}
         fixFeedback={outputFixFeedback}

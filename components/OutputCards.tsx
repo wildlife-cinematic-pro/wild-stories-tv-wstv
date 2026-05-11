@@ -99,6 +99,27 @@ export default function OutputCards({
   }
 
   function handleOutputFixAction(id: string) {
+    if (id === "open-runway-copy") {
+      setActiveWorkspace("video");
+      setVideoWorkspace("runway");
+      setOutputFixFeedback("Opened Runway copy blocks for I2V paste-ready review.");
+      return;
+    }
+
+    if (id === "open-kling-copy") {
+      setActiveWorkspace("video");
+      setVideoWorkspace("kling");
+      setOutputFixFeedback("Opened Kling copy blocks for prompt length and structure review.");
+      return;
+    }
+
+    if (id === "open-seedance-copy") {
+      setActiveWorkspace("video");
+      setVideoWorkspace("seedance");
+      setOutputFixFeedback("Opened Seedance copy blocks for compact motion review.");
+      return;
+    }
+
     if (id === "open-video-copy-workspace" || id === "open-copy-workspace") {
       setActiveWorkspace("video");
       setVideoWorkspace("hybrid");
