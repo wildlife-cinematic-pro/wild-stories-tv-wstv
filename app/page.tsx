@@ -67,6 +67,10 @@ import type { RecommendedSeasonalSetup } from "@/lib/seasonal-realism-advisor";
 import type { StoryModePreset } from "@/lib/story-mode-presets";
 import type { RankedStoryModeSetup } from "@/lib/story-mode-setup-ranking";
 import {
+  buildStorySetupTunerPatch,
+  type StorySetupTunerId,
+} from "@/lib/story-setup-tuners";
+import {
   appendCreatorQaRun,
   buildCreatorQaRun,
   buildPinnedGeneratedOutput,
@@ -477,6 +481,37 @@ export default function Page() {
       prey,
       storyMode,
     ]
+  );
+
+  const handleApplyStorySetupTuner = useCallback(
+    (id: StorySetupTunerId) => {
+      const { patch } = buildStorySetupTunerPatch({ id, storyMode });
+
+      if (patch.actionStyle) setActionStyle(patch.actionStyle);
+      if (patch.animalVibe) setAnimalVibe(patch.animalVibe);
+      if (patch.arc) {
+        setArc(patch.arc);
+        setConceptArcOverride(null);
+      }
+      if (patch.cameraAnglePreset) setCameraAnglePreset(patch.cameraAnglePreset);
+      if (patch.contentLane) setContentLane(patch.contentLane);
+      if (patch.depthMode) setDepthMode(patch.depthMode);
+      if (patch.emotionalTone) setEmotionalTone(patch.emotionalTone);
+      if (patch.encounterMode) setEncounterMode(patch.encounterMode);
+      if (patch.endingMode) setEndingMode(patch.endingMode);
+      if (patch.hookMode) setHookMode(patch.hookMode);
+      if (patch.strictOriginalityGuard !== undefined) {
+        setStrictOriginalityGuard(patch.strictOriginalityGuard);
+      }
+      if (patch.timeOfDay) setTimeOfDay(patch.timeOfDay);
+      if (patch.viralLane) setViralLane(patch.viralLane);
+      if (patch.violenceLevel) setViolenceLevel(patch.violenceLevel);
+      if (patch.weather) setWeather(patch.weather);
+
+      setPromotedPublishCopyOverride(null);
+      setError("");
+    },
+    [storyMode]
   );
 
   const handleApplyStoryModePreset = useCallback((preset: StoryModePreset) => {
@@ -1817,6 +1852,7 @@ export default function Page() {
                 onApplyWorkflowTestPreset={handleApplyWorkflowTestPreset}
                 onApplyStoryModePreset={handleApplyStoryModePreset}
                 onApplyRankedStoryModeSetup={handleApplyRankedStoryModeSetup}
+                onApplyStorySetupTuner={handleApplyStorySetupTuner}
                 onResetDefaults={handleResetDefaults}
                 onContinue={() => setStep(2)}
                 onWorkflowPresetNameChange={workflowPresetControls.setPresetName}
