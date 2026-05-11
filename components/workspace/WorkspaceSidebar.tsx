@@ -49,15 +49,15 @@ function SidebarButton({
         collapsed ? "justify-center" : ""
       } ${
         active
-          ? "border-cyan-400/40 bg-cyan-500/10 text-cyan-100 shadow-[inset_0_1px_0_rgba(255,255,255,0.05)]"
-          : "border-transparent bg-transparent text-[color:var(--muted)] hover:border-white/[0.08] hover:bg-white/[0.04] hover:text-[color:var(--text)]"
+          ? "border-cyan-400/45 bg-[color:var(--info-bg)] text-[color:var(--info-text)] shadow-[inset_0_1px_0_rgba(255,255,255,0.05)]"
+          : "border-transparent bg-transparent text-[color:var(--muted)] hover:border-[color:var(--border)] hover:bg-[color:var(--surface-muted)] hover:text-[color:var(--text)]"
       }`}
     >
       <span
         className={`grid h-8 w-8 shrink-0 place-items-center rounded-xl border text-xs font-semibold transition ${
           active
-            ? "border-cyan-300/30 bg-cyan-400/15 text-cyan-100"
-            : "border-white/[0.08] bg-white/[0.04] text-white/70 group-hover:border-white/[0.12] group-hover:text-white"
+            ? "border-cyan-400/45 bg-[color:var(--info-bg)] text-[color:var(--info-text)]"
+            : "border-[color:var(--border)] bg-[color:var(--surface-muted)] text-[color:var(--muted)] group-hover:border-[color:var(--border)] group-hover:text-[color:var(--text)]"
         }`}
       >
         {item.icon ?? "•"}
@@ -70,8 +70,8 @@ function SidebarButton({
               <span
                 className={`rounded-full px-2 py-0.5 text-[10px] font-bold ${
                   active
-                    ? "bg-cyan-300/15 text-cyan-100"
-                    : "bg-white/[0.06] text-white/55"
+                    ? "bg-[color:var(--info-bg)] text-[color:var(--info-text)]"
+                    : "bg-[color:var(--surface-muted)] text-[color:var(--muted)]"
                 }`}
               >
                 {item.badge}
@@ -138,8 +138,8 @@ export default function WorkspaceSidebar({
                     id={`workspace-tab-${item.id}`}
                     className={`shrink-0 whitespace-nowrap rounded-2xl border px-3 py-1.5 text-[13px] font-semibold transition ${
                       active
-                        ? "border-cyan-400/40 bg-cyan-500/10 text-cyan-100"
-                        : "border-[color:var(--border)] bg-[color:var(--surface)] text-[color:var(--muted)] hover:border-cyan-400/50 hover:text-cyan-200"
+                        ? "border-cyan-400/45 bg-[color:var(--info-bg)] text-[color:var(--info-text)]"
+                        : "border-[color:var(--border)] bg-[color:var(--surface)] text-[color:var(--muted)] hover:border-cyan-400/50 hover:bg-[color:var(--surface-muted)] hover:text-[color:var(--text)]"
                     }`}
                   >
                     <span className="inline-flex items-center gap-2 whitespace-nowrap">
@@ -167,7 +167,7 @@ export default function WorkspaceSidebar({
                 {!collapsed ? (
                   <div className="min-w-0 flex-1">
                     {title ? (
-                      <div className="text-[11px] font-semibold uppercase tracking-[0.18em] text-cyan-300/80">
+                      <div className="text-[11px] font-semibold uppercase tracking-[0.18em] text-[color:var(--info-text)]">
                         {title}
                       </div>
                     ) : null}
@@ -176,7 +176,7 @@ export default function WorkspaceSidebar({
                     ) : null}
                   </div>
                 ) : title ? (
-                  <div className="text-[11px] font-semibold uppercase tracking-[0.18em] text-cyan-300/80">
+                  <div className="text-[11px] font-semibold uppercase tracking-[0.18em] text-[color:var(--info-text)]">
                     Nav
                   </div>
                 ) : <div /> }
@@ -186,7 +186,7 @@ export default function WorkspaceSidebar({
                     onClick={onToggleCollapsed}
                     aria-label={collapsed ? "Open workspace sidebar" : "Collapse workspace sidebar"}
                     aria-expanded={!collapsed}
-                    className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-xl border border-[color:var(--border)] bg-[color:var(--surface)] text-sm font-semibold text-[color:var(--text)] transition hover:border-cyan-400/60 hover:text-cyan-200"
+                    className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-xl border border-[color:var(--border)] bg-[color:var(--surface)] text-sm font-semibold text-[color:var(--text)] transition hover:border-cyan-400/60 hover:bg-[color:var(--surface-muted)] hover:text-[color:var(--text)]"
                   >
                     {collapsed ? "→" : "←"}
                   </button>
