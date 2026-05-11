@@ -48,6 +48,7 @@ export default function OutputCards({
     useState<VideoWorkspaceTab>("hybrid");
   const [directWorkspace, setDirectWorkspace] =
     useState<DirectWorkspaceTab>("seedance");
+  const [outputFixFeedback, setOutputFixFeedback] = useState<string | null>(null);
   const onCopy = useOutputCopy();
 
   useEffect(() => {
@@ -95,6 +96,26 @@ export default function OutputCards({
     const arc = safeStr(data.arcName || "arc").replace(/\s+/g, "_");
     downloadText(`wstv-export-${predator}-vs-${prey}-${arc}.txt`, text);
     trackUsage("export_txt", buildUsagePayload(data));
+  }
+
+  function handleOutputFixAction(id: string) {
+    if (id === "open-video-copy-workspace" || id === "open-copy-workspace") {
+      setActiveWorkspace("video");
+      setVideoWorkspace("hybrid");
+      setOutputFixFeedback("Opened the video copy workspace for paste-ready review.");
+      return;
+    }
+
+    if (
+      id === "trim-caption" ||
+      id === "fix-to-5-hashtags" ||
+      id === "make-output-non-graphic"
+    ) {
+      setActiveWorkspace("publishing");
+      setOutputFixFeedback(
+        "Opened Publishing. This output needs manual edit because no safe override field exists yet."
+      );
+    }
   }
 
   function exportJson() {
@@ -430,6 +451,8 @@ export default function OutputCards({
               }
               onCopy={onCopy}
               onApplyStoryModePreset={onApplyStoryModePreset}
+              onOutputFixAction={handleOutputFixAction}
+              outputFixFeedback={outputFixFeedback}
             />
           </div>
         )}

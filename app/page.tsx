@@ -65,7 +65,13 @@ import {
 } from "@/lib/story-mode-prompt-context";
 import type { RecommendedSeasonalSetup } from "@/lib/seasonal-realism-advisor";
 import type { StoryModePreset } from "@/lib/story-mode-presets";
-import type { RankedStoryModeSetup } from "@/lib/story-mode-setup-ranking";
+import {
+  rankStoryModeSetups,
+  type RankedStoryModeSetup,
+} from "@/lib/story-mode-setup-ranking";
+import { getStoryModeAnimalOptions } from "@/lib/story-mode-subject-options";
+import { evaluateHabitatCompatibility } from "@/lib/story-mode-habitat-quality";
+import { areAnimalNamesEquivalent } from "@/lib/story-mode-animal-pairings";
 import {
   buildStorySetupTunerPatch,
   type StorySetupTunerId,
@@ -223,6 +229,7 @@ export default function Page() {
     createDefaultPackageLockState()
   );
   const [error, setError] = useState("");
+  const [setupFixFeedback, setSetupFixFeedback] = useState<string | null>(null);
 
   // Navigation
   const [step, setStep] = useState<Step>(1);
@@ -509,6 +516,7 @@ export default function Page() {
       if (patch.weather) setWeather(patch.weather);
 
       setPromotedPublishCopyOverride(null);
+      setSetupFixFeedback(null);
       setError("");
     },
     [storyMode]
@@ -893,6 +901,155 @@ export default function Page() {
     ]
   );
 
+  const handleApplySetupFixAction = useCallback(
+    (id: string) => {
+      const currentSubjectA = currentStorySubjectSnapshot.subjectA ?? predator;
+      const currentSubjectB = currentStorySubjectSnapshot.subjectB ?? prey;
+
+      if (id === "suggest-better-pair") {
+        const options = getStoryModeAnimalOptions({
+          storyMode,
+          field: "subjectB",
+          animalOptions: predatorOptions,
+          subjectA: currentSubjectA,
+          subjectB: currentSubjectB,
+        });
+        const nextSubjectB = options.find(
+          (option) => !areAnimalNamesEquivalent(option, currentSubjectB)
+        );
+
+        if (!nextSubjectB) {
+          setSetupFixFeedback("No stronger matched pair was available for this setup.");
+          return;
+        }
+
+        if (storyMode === StoryMode.PREDATOR_VS_PREY) {
+          setPrey(nextSubjectB);
+        } else {
+          setSubjectB(nextSubjectB);
+          setStoryModeSubjectDrafts((current) => ({
+            ...current,
+            [storyMode]: {
+              ...getCurrentStoryModeSubjectDraft(),
+              subjectB: nextSubjectB,
+            },
+          }));
+        }
+
+        setSetupFixFeedback(
+          `Applied better pair: ${currentSubjectA} vs ${nextSubjectB}.`
+        );
+        setError("");
+        return;
+      }
+
+      if (id === "suggest-better-habitat") {
+        const rankedHabitats = Object.values(HabitatRegion)
+          .map((candidate) => ({
+            habitatRegion: candidate,
+            quality: evaluateHabitatCompatibility({
+              storyMode,
+              subjectA: currentSubjectA,
+              subjectB: currentSubjectB,
+              habitatRegion: candidate,
+              season,
+              timeOfDay,
+              animalOptions: predatorOptions,
+            }),
+          }))
+          .sort((a, b) => b.quality.score - a.quality.score);
+        const currentScore =
+          rankedHabitats.find((item) => item.habitatRegion === habitatRegion)
+            ?.quality.score ?? 0;
+        const betterHabitat = rankedHabitats.find(
+          (item) =>
+            item.habitatRegion !== habitatRegion && item.quality.score > currentScore
+        );
+
+        if (!betterHabitat) {
+          setSetupFixFeedback("No stronger habitat suggestion was available for this pair.");
+          return;
+        }
+
+        setHabitatRegion(betterHabitat.habitatRegion);
+        setSetupFixFeedback(
+          `Applied better habitat: ${betterHabitat.habitatRegion.replace(/_/g, " ")}.`
+        );
+        setError("");
+        return;
+      }
+
+      if (id === "make-non-graphic") {
+        handleApplyStorySetupTuner("safer-non-graphic");
+        setSetupFixFeedback("Applied safer non-graphic setup controls.");
+        return;
+      }
+
+      if (id === "apply-best-viral-setup") {
+        const topSetup = rankStoryModeSetups({
+          storyMode,
+          habitatRegion,
+          season,
+          timeOfDay,
+          animalOptions: predatorOptions,
+        })[0];
+
+        if (!topSetup) {
+          setSetupFixFeedback("No ranked viral setup was available.");
+          return;
+        }
+
+        const defaults = getStoryModeSubjectDefaults(
+          topSetup.storyMode,
+          predator,
+          prey
+        );
+        const nextValues: StoryModeSubjectValues = {
+          ...defaults,
+          subjectA: topSetup.subjectA,
+          subjectB: topSetup.subjectB,
+        };
+
+        setStoryModeSubjectDrafts((current) => ({
+          ...current,
+          [storyMode]: getCurrentStoryModeSubjectDraft(),
+          [topSetup.storyMode]: nextValues,
+        }));
+        setStoryMode(topSetup.storyMode);
+        setHabitatRegion(topSetup.habitatRegion);
+        setSeason(topSetup.season);
+        setTimeOfDay(topSetup.timeOfDay);
+        applyStoryModeSubjectValues(nextValues);
+        setPromotedPublishCopyOverride(null);
+        setSetupFixFeedback(
+          `Applied best viral setup: ${topSetup.subjectA} vs ${topSetup.subjectB}.`
+        );
+        setError("");
+        return;
+      }
+
+      if (id === "reset-smart-defaults") {
+        handleResetStoryModeSubjectDefaults();
+        setSetupFixFeedback("Reset smart defaults for the current story mode.");
+        setError("");
+      }
+    },
+    [
+      applyStoryModeSubjectValues,
+      currentStorySubjectSnapshot.subjectA,
+      currentStorySubjectSnapshot.subjectB,
+      getCurrentStoryModeSubjectDraft,
+      handleApplyStorySetupTuner,
+      handleResetStoryModeSubjectDefaults,
+      habitatRegion,
+      predator,
+      predatorOptions,
+      prey,
+      season,
+      storyMode,
+      timeOfDay,
+    ]
+  );
   const currentWorkflowPresetSnapshot = useMemo(
     () => ({
       predator,
@@ -2042,6 +2199,8 @@ export default function Page() {
                 onAutoCleanupConceptVariant={autoCleanupConceptVariant}
                 onRestoreVersion={handleRestoreVersion}
                 onApplyStoryModePreset={handleApplyStoryModePreset}
+                onApplySetupFixAction={handleApplySetupFixAction}
+                setupFixFeedback={setupFixFeedback}
                 lastGeneratedRestoreNotice={lastGeneratedRestoreNotice}
                 onDismissLastGeneratedRestoreNotice={() =>
                   setLastGeneratedRestoreNotice(null)

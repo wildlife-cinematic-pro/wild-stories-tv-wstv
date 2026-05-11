@@ -24,6 +24,10 @@ import { analyzeOutputReadiness } from "@/lib/output-readiness";
 import { formatPipelineStyleLabel } from "@/lib/page-build-helpers";
 import type { StoryModePreset } from "@/lib/story-mode-presets";
 import {
+  buildSetupFixActions,
+  type FixActionDescriptor,
+} from "@/lib/setup-fix-actions";
+import {
   buildSetupReadinessChecklist,
   type SetupReadinessItemStatus,
   type SetupReadinessOverall,
@@ -104,6 +108,73 @@ const READINESS_ITEM_TONE: Record<
   },
 };
 
+
+function FixIssuesPanel({
+  actions,
+  feedback,
+  onApply,
+}: {
+  actions: FixActionDescriptor[];
+  feedback?: string | null;
+  onApply?: (id: string) => void;
+}) {
+  return (
+    <div className="mt-3 rounded-2xl border border-[color:var(--border)] bg-[color:var(--surface-muted)] p-3">
+      <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
+        <div>
+          <div className="text-[10px] font-bold uppercase tracking-[0.12em] text-[color:var(--muted)]">
+            Fix Issues
+          </div>
+          <p className="mt-0.5 text-[10px] leading-relaxed text-[color:var(--muted)]">
+            One-click setup fixes only. Nothing changes until you click.
+          </p>
+        </div>
+        {feedback ? (
+          <span className="rounded-full border border-emerald-400/35 bg-[color:var(--success-bg)] px-2 py-1 text-[9px] font-bold uppercase tracking-[0.08em] text-[color:var(--success-text)]">
+            Applied
+          </span>
+        ) : null}
+      </div>
+
+      {actions.length ? (
+        <div className="grid gap-2 md:grid-cols-2 xl:grid-cols-3">
+          {actions.map((action) => (
+            <button
+              key={action.id}
+              type="button"
+              onClick={() => onApply?.(action.id)}
+              disabled={!onApply || action.disabled}
+              className={[
+                "rounded-xl border px-3 py-2 text-left transition active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-70",
+                action.severity === "recommended"
+                  ? "border-[rgb(var(--accent-rgb)/0.45)] bg-[rgb(var(--accent-rgb)/0.12)] text-[color:var(--text)] hover:bg-[rgb(var(--accent-rgb)/0.18)]"
+                  : "border-[color:var(--border)] bg-[color:var(--surface)] text-[color:var(--text)] hover:bg-[color:var(--surface-elevated)]",
+              ].join(" ")}
+            >
+              <span className="block text-[11px] font-extrabold">
+                {action.label}
+              </span>
+              <span className="mt-1 block text-[10px] leading-relaxed text-[color:var(--muted)]">
+                {action.helper}
+              </span>
+            </button>
+          ))}
+        </div>
+      ) : (
+        <div className="rounded-xl border border-[color:var(--border)] bg-[color:var(--surface)] px-3 py-2 text-[10px] font-semibold text-[color:var(--muted)]">
+          No quick fixes needed.
+        </div>
+      )}
+
+      {feedback ? (
+        <div className="mt-2 rounded-xl border border-emerald-400/25 bg-[color:var(--success-bg)] px-3 py-2 text-[10px] leading-relaxed text-[color:var(--success-text)]">
+          {feedback}
+        </div>
+      ) : null}
+    </div>
+  );
+}
+
 const DEFAULT_PROVIDER_AVAILABILITY = COPY_POLISH_PROVIDER_CONFIGS.reduce(
   (acc, provider) => {
     acc[provider.id] = {
@@ -170,6 +241,8 @@ type Step3GenerateProps = {
   onAutoCleanupConceptVariant: (variant: ConceptVariant) => void;
   onRestoreVersion: (version: PromptVersion) => void;
   onApplyStoryModePreset?: (preset: StoryModePreset) => void;
+  onApplySetupFixAction?: (id: string) => void;
+  setupFixFeedback?: string | null;
   lastGeneratedRestoreNotice?: string | null;
   onDismissLastGeneratedRestoreNotice?: () => void;
   creatorQaRuns: CreatorQaRun[];
@@ -229,6 +302,8 @@ export default function Step3Generate({
   onAutoCleanupConceptVariant,
   onRestoreVersion,
   onApplyStoryModePreset,
+  onApplySetupFixAction,
+  setupFixFeedback,
   lastGeneratedRestoreNotice,
   onDismissLastGeneratedRestoreNotice,
   creatorQaRuns,
@@ -508,6 +583,10 @@ export default function Step3Generate({
   const readinessSuggestion = setupReadiness.items.find(
     (item) => item.status === "fail" || item.status === "caution"
   );
+  const setupFixActions = useMemo(
+    () => buildSetupFixActions(setupReadiness),
+    [setupReadiness]
+  );
 
   const handleCopy = async (label: string, text: string | undefined) => {
     if (!text?.trim()) {
@@ -746,6 +825,12 @@ export default function Step3Generate({
               Check before generating: {readinessSuggestion.detail}
             </div>
           )}
+
+          <FixIssuesPanel
+            actions={setupFixActions}
+            feedback={setupFixFeedback}
+            onApply={onApplySetupFixAction}
+          />
         </section>
 
         <button
