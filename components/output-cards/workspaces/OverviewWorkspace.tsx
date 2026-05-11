@@ -13,6 +13,11 @@ import LocalCreatorDataCard from "@/components/output-cards/local-creator-data-c
 import WSTVCreatorGuideCard from "@/components/output-cards/wstv-creator-guide-card";
 import { EngineSpecsPanel, SectionLabel } from "@/components/output-cards/shared-panels";
 
+import {
+  analyzeGeneratedOutputQuality,
+  type GeneratedOutputQualityItemStatus,
+  type GeneratedOutputQualityOverall,
+} from "@/lib/generated-output-quality";
 import type { StoryModePreset } from "@/lib/story-mode-presets";
 import type { GeneratedPackage, PromptVersion } from "@/types";
 
@@ -24,6 +29,138 @@ function formatBadgeValue(value: unknown, fallback: string) {
     .filter(Boolean)
     .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
     .join(" ");
+}
+
+
+const OUTPUT_QUALITY_OVERALL_TONE: Record<
+  GeneratedOutputQualityOverall,
+  { label: string; className: string; dotClassName: string }
+> = {
+  ready: {
+    label: "Ready",
+    className:
+      "border-emerald-400/35 bg-[color:var(--success-bg)] text-[color:var(--success-text)]",
+    dotClassName: "bg-[color:var(--success-text)]",
+  },
+  caution: {
+    label: "Caution",
+    className:
+      "border-amber-400/35 bg-[color:var(--warning-bg)] text-[color:var(--warning-text)]",
+    dotClassName: "bg-[color:var(--warning-text)]",
+  },
+  "needs-review": {
+    label: "Needs Review",
+    className:
+      "border-rose-400/35 bg-[color:var(--danger-bg)] text-[color:var(--danger-text)]",
+    dotClassName: "bg-[color:var(--danger-text)]",
+  },
+};
+
+const OUTPUT_QUALITY_ITEM_TONE: Record<
+  GeneratedOutputQualityItemStatus,
+  { label: string; className: string; dotClassName: string }
+> = {
+  pass: {
+    label: "Pass",
+    className:
+      "border-emerald-400/35 bg-[color:var(--success-bg)] text-[color:var(--success-text)]",
+    dotClassName: "bg-[color:var(--success-text)]",
+  },
+  caution: {
+    label: "Check",
+    className:
+      "border-amber-400/35 bg-[color:var(--warning-bg)] text-[color:var(--warning-text)]",
+    dotClassName: "bg-[color:var(--warning-text)]",
+  },
+  fail: {
+    label: "Fix",
+    className:
+      "border-rose-400/35 bg-[color:var(--danger-bg)] text-[color:var(--danger-text)]",
+    dotClassName: "bg-[color:var(--danger-text)]",
+  },
+};
+
+function OutputQualityScorePanel({ data }: { data: GeneratedPackage }) {
+  const report = analyzeGeneratedOutputQuality(data);
+  const suggestion = report.items.find(
+    (item) => item.status === "fail" || item.status === "caution"
+  );
+
+  return (
+    <section className="rounded-2xl border border-[color:var(--border)] bg-[color:var(--surface)] p-4 text-[color:var(--text)] shadow-[var(--surface-shadow)]">
+      <div className="mb-3 flex flex-wrap items-center justify-between gap-3">
+        <div>
+          <div className="text-[11px] font-semibold uppercase tracking-[0.12em] text-[color:var(--muted)]">
+            Output Quality Score
+          </div>
+          <p className="mt-1 max-w-2xl text-xs leading-relaxed text-[color:var(--muted)]">
+            Post-generation copy, packaging, and paste-readiness check. Copy and
+            publishing actions stay available.
+          </p>
+        </div>
+        <div className="flex items-center gap-2">
+          <span
+            className={[
+              "inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-[10px] font-bold uppercase tracking-[0.08em]",
+              OUTPUT_QUALITY_OVERALL_TONE[report.overall].className,
+            ].join(" ")}
+          >
+            <span
+              className={[
+                "h-1.5 w-1.5 rounded-full",
+                OUTPUT_QUALITY_OVERALL_TONE[report.overall].dotClassName,
+              ].join(" ")}
+            />
+            {OUTPUT_QUALITY_OVERALL_TONE[report.overall].label}
+          </span>
+          <span className="rounded-full border border-[color:var(--border)] bg-[color:var(--surface-muted)] px-2.5 py-1 text-[10px] font-bold text-[color:var(--text)]">
+            {report.score}/100
+          </span>
+        </div>
+      </div>
+
+      <div className="grid gap-2 md:grid-cols-2 xl:grid-cols-3">
+        {report.items.map((item) => {
+          const tone = OUTPUT_QUALITY_ITEM_TONE[item.status];
+
+          return (
+            <div
+              key={item.id}
+              className="rounded-xl border border-[color:var(--border-soft)] bg-[color:var(--surface-muted)] px-3 py-2.5"
+            >
+              <div className="mb-1 flex items-center justify-between gap-2">
+                <span className="text-[11px] font-semibold text-[color:var(--text)]">
+                  {item.label}
+                </span>
+                <span
+                  className={[
+                    "inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-[9px] font-bold uppercase tracking-[0.08em]",
+                    tone.className,
+                  ].join(" ")}
+                >
+                  <span
+                    className={["h-1.5 w-1.5 rounded-full", tone.dotClassName].join(
+                      " "
+                    )}
+                  />
+                  {tone.label}
+                </span>
+              </div>
+              <p className="line-clamp-2 text-[10px] leading-relaxed text-[color:var(--muted)]">
+                {item.detail}
+              </p>
+            </div>
+          );
+        })}
+      </div>
+
+      {suggestion && (
+        <div className="mt-3 rounded-xl border border-[color:var(--border)] bg-[color:var(--surface-muted)] px-3 py-2 text-[10px] leading-relaxed text-[color:var(--muted)]">
+          Check before publishing: {suggestion.detail}
+        </div>
+      )}
+    </section>
+  );
 }
 
 function StoryModeBadges({ data }: { data: GeneratedPackage }) {
@@ -62,6 +199,8 @@ export function OverviewWorkspace({
   return (
     <div className="space-y-6">
       <StoryModeBadges data={data} />
+
+      <OutputQualityScorePanel data={data} />
 
       <WSTVCreatorGuideCard />
 
