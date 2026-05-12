@@ -1163,6 +1163,12 @@ export default function Page() {
       habitatRegion,
       season,
       timeOfDay,
+      actionStyle,
+      animalVibe,
+      depthMode,
+      emotionalTone,
+      hookMode,
+      strictOriginalityGuard: String(strictOriginalityGuard),
       ...(currentStorySubjectSnapshot.subjectA
         ? { subjectA: currentStorySubjectSnapshot.subjectA }
         : {}),
@@ -1202,9 +1208,14 @@ export default function Page() {
 
     return `/storyboard?${params.toString()}`;
   }, [
+    actionStyle,
+    animalVibe,
     cameraAnglePreset,
     contentLane,
+    depthMode,
     durationLane,
+    emotionalTone,
+    hookMode,
     currentStorySubjectSnapshot,
     finalEnvironment,
     habitat,
@@ -1220,6 +1231,7 @@ export default function Page() {
     timeOfDay,
     previewArc,
     sceneDescription,
+    strictOriginalityGuard,
     weather,
   ]);
 
@@ -1841,6 +1853,8 @@ export default function Page() {
       source: "build",
       leadAnimal: predator,
       opposingAnimal: prey,
+      predator,
+      prey,
       storyMode,
       encounterMode,
       endingMode,
@@ -1858,7 +1872,18 @@ export default function Page() {
       weatherHazard: currentStorySubjectSnapshot.weatherHazard,
       rutSeason: currentStorySubjectSnapshot.rutSeason,
       foodItem: currentStorySubjectSnapshot.foodItem,
+      actionStyle,
+      animalVibe,
+      arc: previewArc,
+      cameraAnglePreset,
+      contentLane,
+      depthMode,
+      emotionalTone,
+      hookMode,
+      strictOriginalityGuard,
+      weather,
       environment: finalEnvironment,
+      finalEnvironment,
       lighting: weather,
       visualStyle: [
         "photorealistic wildlife documentary",
@@ -1876,10 +1901,12 @@ export default function Page() {
     [
       animalVibe,
       cameraAnglePreset,
+      actionStyle,
       contentLane,
       depthMode,
       durationLane,
       emotionalTone,
+      hookMode,
       currentStorySubjectSnapshot,
       finalEnvironment,
       storyMode,
@@ -1893,6 +1920,7 @@ export default function Page() {
       predator,
       prey,
       previewArc,
+      strictOriginalityGuard,
       weather,
     ]
   );
@@ -2083,7 +2111,7 @@ export default function Page() {
                     Open Storyboard for Current Setup
                   </h2>
                   <p className="mt-2 max-w-3xl text-sm leading-6 text-[color:var(--muted)]">
-                    Storyboard will generate Nano Banana 2 master image prompts and GPT Image 2 backup prompts for the current animal setup.
+                    Storyboard will generate four Nano Banana 2, GPT Image 2, Grok Imagine image prompts and four Kling motion prompts for the current setup.
                   </p>
                 </div>
                 <Link

@@ -1056,7 +1056,7 @@ export default function Step1Setup({
                     title={storyboardHref}
                     className="rounded-xl border border-cyan-300 bg-cyan-600 px-3.5 py-2 text-xs font-semibold text-white shadow-sm transition hover:bg-cyan-500 active:scale-[0.98]"
                   >
-                    Build 5-Shot Storyboard
+                    Build 4-Shot Storyboard
                   </button>
                 </div>
               </div>
