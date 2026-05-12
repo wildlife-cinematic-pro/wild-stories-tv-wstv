@@ -115,7 +115,7 @@ export function getPrimaryVideoRoute(input: {
       kind: "hybrid",
       label: "Primary Route: Hybrid 4-shot",
       detail: selectedVideoModel
-        ? `Hybrid output remains primary. ${selectedVideoModel.label} is saved as the selected model preference without replacing the Runway + Kling hybrid route.`
+        ? `Hybrid output remains primary. ${selectedVideoModel.label} is saved as the selected model preference without replacing the Runway + Kling hybrid route.${selectedVideoModel.id === "runway-aleph" ? " Source footage required if you use Aleph as the optional edit route." : ""}`
         : "Hybrid output remains primary with the existing Runway + Kling route.",
       workspaceTab: "hybrid",
       hybridProtected: true,

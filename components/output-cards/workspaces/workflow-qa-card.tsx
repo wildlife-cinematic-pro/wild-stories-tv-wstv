@@ -18,7 +18,10 @@ export function WorkflowQACard({
   const workflowQA = getWorkflowQAForRoute({ route, guidance });
 
   return (
-    <div className="mt-3 rounded-xl border border-[color:var(--border-soft)] bg-[color:var(--surface-muted)] p-3">
+    <div
+      data-testid="workflow-qa-card"
+      className="mt-3 rounded-xl border border-[color:var(--border-soft)] bg-[color:var(--surface-muted)] p-3"
+    >
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
           <div className="text-[10px] font-black uppercase tracking-[0.1em] text-[color:var(--muted)]">

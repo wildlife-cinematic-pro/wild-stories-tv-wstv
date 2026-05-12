@@ -84,6 +84,7 @@ function CapabilityInfoCard({
   return (
     <button
       type="button"
+      data-testid={`video-model-card-${capability.id}`}
       onClick={onSelect}
       aria-pressed={selected}
       className={`w-full rounded-2xl border px-3.5 py-3.5 text-left shadow-sm transition-all active:scale-[0.99] ${
