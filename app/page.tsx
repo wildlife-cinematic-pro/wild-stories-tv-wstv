@@ -39,6 +39,7 @@ import type {
   HabitatPreset,
   HookFamily,
   WildlifeScopeMode,
+  VideoModelProviderGroup,
 } from "@/types";
 
 import type { PublishFlowSummary } from "@/lib/build-package";
@@ -56,6 +57,11 @@ import {
   RUNWAY_MODELS,
   KLING_MODELS,
 } from "@/lib/model-specs";
+import {
+  getDefaultSelectedVideoModelId,
+  getVideoModelCapabilityById,
+  getVideoModelSelectionPatch,
+} from "@/lib/video-model-capabilities";
 import { DEFAULT_CAMERA_ANGLE_PRESET } from "@/lib/camera-angle-presets";
 import { buildStoryboardPreviewLinkMetadata } from "@/lib/storyboard-link-metadata";
 import { WORKFLOW_TEST_PRESETS } from "@/lib/workflow-presets";
@@ -216,6 +222,18 @@ export default function Page() {
   // STEP 2
   const [runwayModel, setRunwayModel] = useState<RunwayModel>(RUNWAY_MODELS[0]);
   const [klingModel, setKlingModel] = useState<KlingModel>(KLING_MODELS[0]);
+  const defaultSelectedVideoModelId = getDefaultSelectedVideoModelId({
+    runwayModel: RUNWAY_MODELS[0],
+    klingModel: KLING_MODELS[0],
+  });
+  const [selectedVideoModelId, setSelectedVideoModelId] = useState(defaultSelectedVideoModelId);
+  const [selectedVideoProviderGroup, setSelectedVideoProviderGroup] =
+    useState<VideoModelProviderGroup>(
+      getVideoModelCapabilityById(defaultSelectedVideoModelId)?.providerGroup ??
+        "RUNWAY_NATIVE"
+    );
+  const [autoSelectRecommendedVideoModel, setAutoSelectRecommendedVideoModel] =
+    useState(false);
   const [realismMode, setRealismMode] = useState<RealismMode>("Reference Locked");
   const [motionOnlyI2V, setMotionOnlyI2V] = useState(true);
   const [referenceLock, setReferenceLock] = useState(true);
@@ -306,6 +324,23 @@ export default function Page() {
       setStoryModeSubjectDrafts({});
       setRunwayModel(snapshot.runwayModel);
       setKlingModel(snapshot.klingModel);
+      {
+        const nextVideoModelId = getDefaultSelectedVideoModelId({
+          selectedVideoModelId: snapshot.selectedVideoModelId,
+          runwayModel: snapshot.runwayModel,
+          klingModel: snapshot.klingModel,
+        });
+        const nextVideoModel = getVideoModelCapabilityById(nextVideoModelId);
+        setSelectedVideoModelId(nextVideoModelId);
+        setSelectedVideoProviderGroup(
+          snapshot.selectedVideoProviderGroup ??
+            nextVideoModel?.providerGroup ??
+            "RUNWAY_NATIVE"
+        );
+      }
+      setAutoSelectRecommendedVideoModel(
+        snapshot.autoSelectRecommendedVideoModel === true
+      );
       setRealismMode(snapshot.realismMode);
       setMotionOnlyI2V(snapshot.motionOnlyI2V);
       setReferenceLock(snapshot.referenceLock);
@@ -648,6 +683,9 @@ export default function Page() {
     activeProvider,
     runwayModel,
     klingModel,
+    selectedVideoModelId,
+    selectedVideoProviderGroup,
+    autoSelectRecommendedVideoModel,
     realismMode,
     motionOnlyI2V,
     referenceLock,
@@ -688,6 +726,9 @@ export default function Page() {
     setActiveProvider,
     setRunwayModel,
     setKlingModel,
+    setSelectedVideoModelId,
+    setSelectedVideoProviderGroup,
+    setAutoSelectRecommendedVideoModel,
     setRealismMode,
     setMotionOnlyI2V,
     setReferenceLock,
@@ -696,6 +737,20 @@ export default function Page() {
     setHeroVeo,
     setAutoApplyHighDrift,
   });
+
+  const handleVideoModelSelectionChange = useCallback((videoModelId: string) => {
+    const patch = getVideoModelSelectionPatch(videoModelId);
+    if (!patch) return;
+
+    setSelectedVideoModelId(patch.selectedVideoModelId);
+    setSelectedVideoProviderGroup(patch.selectedVideoProviderGroup);
+    if (patch.runwayModel) {
+      setRunwayModel(patch.runwayModel);
+    }
+    if (patch.klingModel) {
+      setKlingModel(patch.klingModel);
+    }
+  }, []);
 
   const {
     customPredators,
@@ -1103,6 +1158,9 @@ export default function Page() {
       autoApplyHighDrift,
       runwayModel,
       klingModel,
+      selectedVideoModelId,
+      selectedVideoProviderGroup,
+      autoSelectRecommendedVideoModel,
       activeProvider,
       sceneDescriptionMode,
       sceneDescription,
@@ -1132,6 +1190,9 @@ export default function Page() {
       heroVeo,
       hookMode,
       klingModel,
+      selectedVideoModelId,
+      selectedVideoProviderGroup,
+      autoSelectRecommendedVideoModel,
       microMotion,
       motionOnlyI2V,
       predator,
@@ -1288,6 +1349,9 @@ export default function Page() {
       weather,
       runwayModel,
       klingModel,
+      selectedVideoModelId,
+      selectedVideoProviderGroup,
+      autoSelectRecommendedVideoModel,
       activeProvider,
       autoFallback,
       habitat,
@@ -1320,6 +1384,9 @@ export default function Page() {
       heroVeo,
       hookMode,
       klingModel,
+      selectedVideoModelId,
+      selectedVideoProviderGroup,
+      autoSelectRecommendedVideoModel,
       microMotion,
       motionOnlyI2V,
       predator,
@@ -1439,6 +1506,23 @@ export default function Page() {
       setWeather(snapshot.weather);
       setRunwayModel(snapshot.runwayModel);
       setKlingModel(snapshot.klingModel);
+      {
+        const nextVideoModelId = getDefaultSelectedVideoModelId({
+          selectedVideoModelId: snapshot.selectedVideoModelId,
+          runwayModel: snapshot.runwayModel,
+          klingModel: snapshot.klingModel,
+        });
+        const nextVideoModel = getVideoModelCapabilityById(nextVideoModelId);
+        setSelectedVideoModelId(nextVideoModelId);
+        setSelectedVideoProviderGroup(
+          snapshot.selectedVideoProviderGroup ??
+            nextVideoModel?.providerGroup ??
+            "RUNWAY_NATIVE"
+        );
+      }
+      setAutoSelectRecommendedVideoModel(
+        snapshot.autoSelectRecommendedVideoModel === true
+      );
       setActiveProvider(snapshot.activeProvider);
       setAutoFallback(snapshot.autoFallback);
       if (snapshot.habitat) setHabitat(snapshot.habitat);
@@ -1768,6 +1852,8 @@ export default function Page() {
     animalVibe,
     runwayModel,
     klingModel,
+    selectedVideoModelId,
+    selectedVideoProviderGroup,
     durationLane,
     marketMode,
     fastPublishMode,
@@ -2374,8 +2460,13 @@ export default function Page() {
                 previewPublishGuardReport={previewPublishGuardReport}
                 runwayModel={runwayModel}
                 klingModel={klingModel}
-                onRunwayModelChange={setRunwayModel}
-                onKlingModelChange={setKlingModel}
+                selectedVideoModelId={selectedVideoModelId}
+                selectedVideoProviderGroup={selectedVideoProviderGroup}
+                autoSelectRecommendedVideoModel={autoSelectRecommendedVideoModel}
+                onVideoModelSelectionChange={handleVideoModelSelectionChange}
+                onAutoSelectRecommendedVideoModelChange={
+                  setAutoSelectRecommendedVideoModel
+                }
                 qualityPanelProps={qualityPanelProps}
                 activeProvider={activeProvider}
                 mediaAnalysis={mediaAnalysis}

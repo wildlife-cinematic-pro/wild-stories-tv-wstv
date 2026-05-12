@@ -240,6 +240,39 @@ describe("workflow presets", () => {
     });
   });
 
+  it("hydrates expanded video model fields from old and new workflow presets", () => {
+    const oldPreset = normalizeWorkflowPresetSnapshot({
+      predator: "Wolf Pack",
+      prey: "Bull Elk",
+      runwayModel: "Gen-4 Turbo",
+      klingModel: "Kling 3.0 Pro",
+    });
+    expect(oldPreset).toMatchObject({
+      runwayModel: "Gen-4 Turbo",
+      klingModel: "Kling 3.0 Pro",
+      selectedVideoModelId: "runway-gen-4-turbo",
+      selectedVideoProviderGroup: "RUNWAY_NATIVE",
+      autoSelectRecommendedVideoModel: false,
+    });
+
+    const expandedPreset = normalizeWorkflowPresetSnapshot({
+      predator: "Wolf Pack",
+      prey: "Bull Elk",
+      runwayModel: "Gen-4.5",
+      klingModel: "Kling 3.0 Pro",
+      selectedVideoModelId: "seedance-2",
+      selectedVideoProviderGroup: "SEEDANCE_DIRECT",
+      autoSelectRecommendedVideoModel: true,
+    });
+    expect(expandedPreset).toMatchObject({
+      runwayModel: "Gen-4.5",
+      klingModel: "Kling 3.0 Pro",
+      selectedVideoModelId: "seedance-2",
+      selectedVideoProviderGroup: "SEEDANCE_DIRECT",
+      autoSelectRecommendedVideoModel: true,
+    });
+  });
+
   it("keeps legacy world-animal presets loadable by defaulting them to World Wide Wildlife", () => {
     const normalized = normalizeWorkflowPresetSnapshot({
       predator: "Lion",

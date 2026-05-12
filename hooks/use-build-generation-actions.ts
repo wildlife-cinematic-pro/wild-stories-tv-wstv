@@ -21,6 +21,7 @@ import type {
   HookFamily,
   KlingModel,
   MediaAnalysisResult,
+  VideoModelProviderGroup,
   OffspringLabel,
   PackageLockKey,
   PackageLockState,
@@ -94,6 +95,8 @@ interface UseBuildGenerationActionsInput {
   animalVibe: AnimalVibe;
   runwayModel: RunwayModel;
   klingModel: KlingModel;
+  selectedVideoModelId: string;
+  selectedVideoProviderGroup: VideoModelProviderGroup;
   durationLane: DurationLaneMode;
   marketMode: MarketMode;
   fastPublishMode: boolean;
@@ -167,6 +170,8 @@ export function useBuildGenerationActions({
   animalVibe,
   runwayModel,
   klingModel,
+  selectedVideoModelId,
+  selectedVideoProviderGroup,
   durationLane,
   marketMode,
   fastPublishMode,
@@ -257,6 +262,8 @@ export function useBuildGenerationActions({
       animalVibe,
       runwayModel,
       klingModel,
+      selectedVideoModelId,
+      selectedVideoProviderGroup,
       durationLane,
       marketMode,
       fastPublishMode,

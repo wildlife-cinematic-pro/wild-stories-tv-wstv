@@ -65,6 +65,9 @@ function snapshot(
     weather: "Golden Hour",
     runwayModel: "Gen-4.5",
     klingModel: "Kling 3.0 Pro",
+    selectedVideoModelId: "seedance-2",
+    selectedVideoProviderGroup: "SEEDANCE_DIRECT",
+    autoSelectRecommendedVideoModel: true,
     activeProvider: "gemini",
     autoFallback: true,
     habitat: "Rocky Mountain Meadow",
@@ -97,6 +100,9 @@ describe("my workflow presets", () => {
         storyMode: StoryMode.HERD_DEFENSE,
         subjectA: "Bison Herd",
         subjectB: "Wolf Pack",
+        selectedVideoModelId: "seedance-2",
+        selectedVideoProviderGroup: "SEEDANCE_DIRECT",
+        autoSelectRecommendedVideoModel: true,
       },
     });
   });

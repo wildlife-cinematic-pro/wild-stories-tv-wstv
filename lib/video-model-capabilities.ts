@@ -4,11 +4,16 @@ import type {
   ContentLane,
   KlingModel,
   RunwayModel,
+  SelectedVideoModelInfo,
   VideoModelCapability,
   VideoModelProviderGroup,
 } from "@/types";
 
-export type { VideoModelCapability, VideoModelProviderGroup } from "@/types";
+export type {
+  SelectedVideoModelInfo,
+  VideoModelCapability,
+  VideoModelProviderGroup,
+} from "@/types";
 
 export type VideoModelSceneRecommendationInput = {
   runwayModel?: RunwayModel;
@@ -18,9 +23,11 @@ export type VideoModelSceneRecommendationInput = {
   contentLane?: ContentLane;
 };
 
-export type VideoModelSelectableTarget =
+export type VideoModelLegacyTarget =
   | { engine: "runway"; model: RunwayModel }
   | { engine: "kling"; model: KlingModel };
+
+export type VideoModelSelectionMode = "legacy-sync" | "expanded-only";
 
 export type VideoModelSceneRecommendation = {
   id: string;
@@ -28,8 +35,15 @@ export type VideoModelSceneRecommendation = {
   reason: string;
   bestFor: string;
   priority: number;
-  guidanceOnly: boolean;
-  selectableTarget?: VideoModelSelectableTarget;
+  selectionMode: VideoModelSelectionMode;
+  legacyTarget?: VideoModelLegacyTarget;
+};
+
+export type VideoModelSelectionPatch = {
+  selectedVideoModelId: string;
+  selectedVideoProviderGroup: VideoModelProviderGroup;
+  runwayModel?: RunwayModel;
+  klingModel?: KlingModel;
 };
 
 const COMMON_VIDEO_GUARDRAILS = [
@@ -337,16 +351,117 @@ const SELECTABLE_KLING_MODELS: readonly KlingModel[] = [
   "Kling 2.5 Turbo",
 ];
 
-function getSelectableTarget(label: string): VideoModelSelectableTarget | undefined {
-  if ((SELECTABLE_RUNWAY_MODELS as readonly string[]).includes(label)) {
-    return { engine: "runway", model: label as RunwayModel };
+function getLegacyTargetForCapability(
+  capability: VideoModelCapability
+): VideoModelLegacyTarget | undefined {
+  if (
+    capability.providerGroup === "RUNWAY_NATIVE" &&
+    (SELECTABLE_RUNWAY_MODELS as readonly string[]).includes(capability.label)
+  ) {
+    return { engine: "runway", model: capability.label as RunwayModel };
   }
 
-  if ((SELECTABLE_KLING_MODELS as readonly string[]).includes(label)) {
-    return { engine: "kling", model: label as KlingModel };
+  if (
+    capability.providerGroup === "KLING_DIRECT" &&
+    (SELECTABLE_KLING_MODELS as readonly string[]).includes(capability.label)
+  ) {
+    return { engine: "kling", model: capability.label as KlingModel };
   }
 
   return undefined;
+}
+
+export function getVideoModelCapabilityById(
+  id: string | undefined
+): VideoModelCapability | undefined {
+  if (!id) return undefined;
+  return VIDEO_MODEL_CAPABILITIES.find((capability) => capability.id === id);
+}
+
+export function isVideoModelId(value: unknown): value is string {
+  return (
+    typeof value === "string" &&
+    VIDEO_MODEL_CAPABILITIES.some((capability) => capability.id === value)
+  );
+}
+
+export function getDefaultSelectedVideoModelId(input: {
+  selectedVideoModelId?: string;
+  runwayModel?: RunwayModel;
+  klingModel?: KlingModel;
+}): string {
+  if (isVideoModelId(input.selectedVideoModelId)) {
+    return input.selectedVideoModelId;
+  }
+
+  const runwayMatch = VIDEO_MODEL_CAPABILITIES.find(
+    (capability) =>
+      capability.providerGroup === "RUNWAY_NATIVE" &&
+      capability.label === input.runwayModel
+  );
+  if (runwayMatch) return runwayMatch.id;
+
+  const klingMatch = VIDEO_MODEL_CAPABILITIES.find(
+    (capability) =>
+      capability.providerGroup === "KLING_DIRECT" && capability.label === input.klingModel
+  );
+  if (klingMatch) return klingMatch.id;
+
+  return "runway-gen-4-5";
+}
+
+export function getVideoModelSelectionPatch(
+  selectedVideoModelId: string
+): VideoModelSelectionPatch | null {
+  const capability = getVideoModelCapabilityById(selectedVideoModelId);
+  if (!capability) return null;
+
+  const legacyTarget = getLegacyTargetForCapability(capability);
+
+  return {
+    selectedVideoModelId: capability.id,
+    selectedVideoProviderGroup: capability.providerGroup,
+    ...(legacyTarget?.engine === "runway"
+      ? { runwayModel: legacyTarget.model }
+      : {}),
+    ...(legacyTarget?.engine === "kling" ? { klingModel: legacyTarget.model } : {}),
+  };
+}
+
+export function buildSelectedVideoModelInfo(
+  selectedVideoModelId: string | undefined
+): SelectedVideoModelInfo | undefined {
+  const capability = getVideoModelCapabilityById(selectedVideoModelId);
+  if (!capability) return undefined;
+
+  const routeLabel =
+    capability.providerGroup === "RUNWAY_NATIVE"
+      ? "Runway native motion-focused route"
+      : capability.providerGroup === "RUNWAY_THIRD_PARTY"
+        ? "Runway third-party workflow route"
+        : capability.providerGroup === "KLING_DIRECT"
+          ? "Direct Kling video route"
+          : "Direct Seedance video route";
+
+  return {
+    id: capability.id,
+    label: capability.label,
+    providerGroup: capability.providerGroup,
+    provider: capability.provider,
+    workflowRole: capability.workflowRole,
+    routeLabel,
+    recommendedUse: capability.recommendedUse,
+    needsVerification: capability.needsVerification,
+  };
+}
+
+export function resolveAutoSelectedVideoModel(input: {
+  autoSelectRecommendedVideoModel: boolean;
+  currentSelectedVideoModelId: string;
+  recommendations: VideoModelSceneRecommendation[];
+}): string {
+  if (!input.autoSelectRecommendedVideoModel) return input.currentSelectedVideoModelId;
+  return input.recommendations[0]?.id ?? input.currentSelectedVideoModelId;
 }
 
 function buildRecommendation(input: {
@@ -356,12 +471,13 @@ function buildRecommendation(input: {
   bestFor: string;
   priority: number;
 }): VideoModelSceneRecommendation {
-  const selectableTarget = getSelectableTarget(input.label);
+  const capability = getVideoModelCapabilityById(input.id);
+  const legacyTarget = capability ? getLegacyTargetForCapability(capability) : undefined;
 
   return {
     ...input,
-    guidanceOnly: !selectableTarget,
-    selectableTarget,
+    selectionMode: legacyTarget ? "legacy-sync" : "expanded-only",
+    legacyTarget,
   };
 }
 
@@ -408,7 +524,7 @@ export function getSceneBasedVideoModelRecommendations(
       id: "runway-aleph",
       label: "Aleph",
       reason: "Use when editing or manipulating existing footage rather than generating a new shot.",
-      bestFor: "Existing-footage edits; guidance only in the current saved model system.",
+      bestFor: "Existing-footage edits; expanded existing-footage edit route.",
       priority: 30,
     }),
   ];
@@ -419,14 +535,14 @@ export function getSceneBasedVideoModelRecommendations(
         id: "kling-03-4k",
         label: "Kling 03 4K",
         reason: "Final-quality grounded animal pressure and body mechanics when verified/available.",
-        bestFor: "Verified high-resolution action route planning; guidance only for now.",
+        bestFor: "Verified high-resolution action route planning; third-party route selection.",
         priority: 95,
       }),
       buildRecommendation({
         id: "kling-3-0-motion-control",
         label: "Kling 3.0 Motion Control",
         reason: "Controlled identity-locked action, realistic spacing, and pressure beats.",
-        bestFor: "Motion-control action planning; guidance only for current saved selectors.",
+        bestFor: "Motion-control action planning; third-party motion-control route selection.",
         priority: 92,
       })
     );
@@ -445,7 +561,7 @@ export function getSceneBasedVideoModelRecommendations(
       id: "seedance-2",
       label: "Seedance 2",
       reason: "Fast chase/action and high-retention motion experiments with compact prompts.",
-      bestFor: "Optional Seedance action route; guidance only because saved selectors remain Runway/Kling.",
+      bestFor: "Optional Seedance action route; direct Seedance route selection.",
       priority: 90,
     }));
   } else {
@@ -453,7 +569,7 @@ export function getSceneBasedVideoModelRecommendations(
       id: "seedance-2",
       label: "Seedance 2",
       reason: "Optional fast direct route for compact social-motion tests.",
-      bestFor: "Optional compact motion experiments; guidance only in saved presets.",
+      bestFor: "Optional compact motion experiments; direct Seedance route selection.",
       priority: 50,
     }));
   }

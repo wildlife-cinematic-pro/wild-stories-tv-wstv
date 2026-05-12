@@ -1,17 +1,18 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
 import MediaAnalyzer from "@/components/MediaAnalyzer";
 import QualityPanel, { type QualityPanelProps } from "@/components/QualityPanel";
-import { FeaturedModelCard, ModelCard } from "@/components/build/model-cards";
+import { FeaturedModelCard } from "@/components/build/model-cards";
 
-import { KLING_MODELS, RUNWAY_MODELS } from "@/lib/model-specs";
 import {
   VIDEO_MODEL_GROUP_LABELS,
   VIDEO_MODEL_GROUP_ORDER,
   getSceneBasedVideoModelRecommendations,
   getVideoModelCapabilitiesByGroup,
+  getVideoModelSelectionPatch,
+  resolveAutoSelectedVideoModel,
   type VideoModelCapability,
   type VideoModelSceneRecommendation,
 } from "@/lib/video-model-capabilities";
@@ -37,6 +38,7 @@ import type {
   RunwayModel,
   USAudienceScoreResult,
   Weather,
+  VideoModelProviderGroup,
 } from "@/types";
 
 const ACTION_STYLE_OPTIONS: ActionStylePreset[] = [
@@ -53,21 +55,64 @@ function tierLabel(value: VideoModelCapability["realismTier"]): string {
 
 function CapabilityInfoCard({
   capability,
-  badge = "Guide",
+  badge = "Route",
+  selected = false,
+  recommended = false,
+  bestForScene = false,
+  autoSelected = false,
+  onSelect,
 }: {
   capability: VideoModelCapability;
   badge?: string;
+  selected?: boolean;
+  recommended?: boolean;
+  bestForScene?: boolean;
+  autoSelected?: boolean;
+  onSelect?: () => void;
 }) {
   const verificationLabel = capability.needsVerification
     ? "Needs verification"
     : "Verified in app";
+  const patch = getVideoModelSelectionPatch(capability.id);
+  const routeLabel =
+    capability.providerGroup === "RUNWAY_THIRD_PARTY"
+      ? "Third-party workflow"
+      : capability.providerGroup === "SEEDANCE_DIRECT"
+        ? "Optional route"
+        : "Direct selectable";
 
   return (
-    <div className="rounded-2xl border border-gray-200 bg-white px-3.5 py-3.5 shadow-sm shadow-gray-100/70">
+    <button
+      type="button"
+      onClick={onSelect}
+      aria-pressed={selected}
+      className={`w-full rounded-2xl border px-3.5 py-3.5 text-left shadow-sm transition-all active:scale-[0.99] ${
+        selected
+          ? "border-indigo-300 bg-indigo-50 shadow-indigo-100/80"
+          : "border-gray-200 bg-white shadow-gray-100/70 hover:border-indigo-200 hover:bg-indigo-50/40"
+      }`}
+    >
       <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
-        <span className="rounded-full bg-gray-100 px-2 py-1 text-[10px] font-semibold uppercase tracking-[0.08em] text-gray-600">
-          {badge}
-        </span>
+        <div className="flex flex-wrap items-center gap-1.5">
+          <span className="rounded-full bg-gray-100 px-2 py-1 text-[10px] font-semibold uppercase tracking-[0.08em] text-gray-600">
+            {badge}
+          </span>
+          {selected && (
+            <span className="rounded-full bg-indigo-600 px-2 py-1 text-[10px] font-semibold text-white">
+              {autoSelected ? "Auto-selected" : "✓ Selected"}
+            </span>
+          )}
+          {recommended && (
+            <span className="rounded-full bg-sky-100 px-2 py-1 text-[10px] font-semibold text-sky-700">
+              Recommended
+            </span>
+          )}
+          {bestForScene && (
+            <span className="rounded-full bg-violet-100 px-2 py-1 text-[10px] font-semibold text-violet-700">
+              Best for this scene
+            </span>
+          )}
+        </div>
         <span
           className={`rounded-full px-2 py-1 text-[10px] font-semibold ${
             capability.needsVerification
@@ -94,11 +139,21 @@ function CapabilityInfoCard({
         <span className="rounded-full bg-slate-100 px-2 py-1 text-slate-700">
           {capability.provider}
         </span>
+        <span className="rounded-full bg-indigo-50 px-2 py-1 text-indigo-700">
+          {routeLabel}
+        </span>
       </div>
       <p className="mt-2 text-[11px] leading-relaxed text-gray-500">
         {capability.wildlifeUseCase}
       </p>
-    </div>
+      <p className="mt-2 text-[10px] font-semibold uppercase tracking-[0.08em] text-gray-500">
+        {patch?.runwayModel
+          ? "Syncs legacy Runway model"
+          : patch?.klingModel
+            ? "Syncs legacy Kling model"
+            : "Expanded model only"}
+      </p>
+    </button>
   );
 }
 
@@ -119,8 +174,11 @@ type Step2EngineQualityProps = {
   previewPublishGuardReport: PublishGuardReport;
   runwayModel: RunwayModel;
   klingModel: KlingModel;
-  onRunwayModelChange: (model: RunwayModel) => void;
-  onKlingModelChange: (model: KlingModel) => void;
+  selectedVideoModelId: string;
+  selectedVideoProviderGroup: VideoModelProviderGroup;
+  autoSelectRecommendedVideoModel: boolean;
+  onVideoModelSelectionChange: (modelId: string) => void;
+  onAutoSelectRecommendedVideoModelChange: (value: boolean) => void;
   qualityPanelProps: QualityPanelProps;
   activeProvider: AIProvider;
   mediaAnalysis: MediaAnalysisResult | null;
@@ -169,8 +227,11 @@ export default function Step2EngineQuality({
   previewPublishGuardReport,
   runwayModel,
   klingModel,
-  onRunwayModelChange,
-  onKlingModelChange,
+  selectedVideoModelId,
+  selectedVideoProviderGroup,
+  autoSelectRecommendedVideoModel,
+  onVideoModelSelectionChange,
+  onAutoSelectRecommendedVideoModelChange,
   qualityPanelProps,
   activeProvider,
   mediaAnalysis,
@@ -261,19 +322,34 @@ export default function Step2EngineQuality({
     contentLane,
   }).slice(0, 4);
 
+  const bestSceneRecommendation = sceneModelRecommendations[0];
+
+  const handleSelectVideoModel = (modelId: string) => {
+    onVideoModelSelectionChange(modelId);
+  };
+
   const handleApplySceneRecommendation = (
     recommendation: VideoModelSceneRecommendation
   ) => {
-    const target = recommendation.selectableTarget;
-    if (!target) return;
-
-    if (target.engine === "runway") {
-      onRunwayModelChange(target.model);
-      return;
-    }
-
-    onKlingModelChange(target.model);
+    handleSelectVideoModel(recommendation.id);
   };
+
+  useEffect(() => {
+    const nextModelId = resolveAutoSelectedVideoModel({
+      autoSelectRecommendedVideoModel,
+      currentSelectedVideoModelId: selectedVideoModelId,
+      recommendations: sceneModelRecommendations,
+    });
+
+    if (nextModelId !== selectedVideoModelId) {
+      onVideoModelSelectionChange(nextModelId);
+    }
+  }, [
+    autoSelectRecommendedVideoModel,
+    onVideoModelSelectionChange,
+    sceneModelRecommendations,
+    selectedVideoModelId,
+  ]);
 
   return (
     <div className="grid gap-6 xl:grid-cols-[minmax(0,1fr)_380px]">
@@ -482,10 +558,9 @@ export default function Step2EngineQuality({
           </div>
 
           <div className="mb-4 rounded-2xl border border-gray-100 bg-gray-50 px-3.5 py-2.5 text-[11px] font-medium leading-relaxed text-gray-600">
-            Video models are now organized by workflow role. Runway and Kling
-            selectors still drive the existing generated package, while
-            third-party and Seedance cards document future routing guidance
-            without changing saved preset or export payload shape.
+            Video models are now organized by workflow role. Every card can be
+            selected through the new expanded video model field, while legacy
+            Runway/Kling fields stay intact for old presets and prompt generation.
           </div>
 
           <div className="mb-4 rounded-2xl border border-indigo-100 bg-indigo-50 p-3.5">
@@ -495,45 +570,81 @@ export default function Step2EngineQuality({
                   Recommended for this scene
                 </div>
                 <p className="mt-1 text-[11px] leading-relaxed text-indigo-800">
-                  Uses current action style, arc, and content lane. Nothing changes
-                  automatically; saved Runway/Kling selections update only when you
-                  click an apply button on a selectable recommendation.
+                  Uses current action style, arc, and content lane. Auto-select is
+                  off by default; when enabled it updates the expanded selected model,
+                  and legacy Runway/Kling fields only sync for matching legacy models.
                 </p>
               </div>
-              <span className="rounded-full bg-white px-2.5 py-1 text-[10px] font-semibold text-indigo-700">
-                {sceneModelRecommendations.length} picks
-              </span>
+              <div className="flex flex-wrap items-center gap-2">
+                <span className="rounded-full bg-white px-2.5 py-1 text-[10px] font-semibold text-indigo-700">
+                  {sceneModelRecommendations.length} picks
+                </span>
+                <span className="rounded-full bg-white px-2.5 py-1 text-[10px] font-semibold text-gray-600">
+                  {VIDEO_MODEL_GROUP_LABELS[selectedVideoProviderGroup]}
+                </span>
+                <button
+                  type="button"
+                  onClick={() =>
+                    onAutoSelectRecommendedVideoModelChange(
+                      !autoSelectRecommendedVideoModel
+                    )
+                  }
+                  className={`rounded-full border px-3 py-1.5 text-[10px] font-semibold transition-all active:scale-[0.98] ${
+                    autoSelectRecommendedVideoModel
+                      ? "border-indigo-600 bg-indigo-600 text-white"
+                      : "border-indigo-200 bg-white text-indigo-700 hover:bg-indigo-100"
+                  }`}
+                >
+                  Auto-select best model for scene: {autoSelectRecommendedVideoModel ? "ON" : "OFF"}
+                </button>
+              </div>
             </div>
             <div className="mt-3 grid gap-2 md:grid-cols-2">
               {sceneModelRecommendations.map((recommendation) => {
-                const target = recommendation.selectableTarget;
-                const isCurrentRunway =
-                  target?.engine === "runway" && target.model === runwayModel;
-                const isCurrentKling =
-                  target?.engine === "kling" && target.model === klingModel;
-                const isCurrentModel = isCurrentRunway || isCurrentKling;
+                const patch = getVideoModelSelectionPatch(recommendation.id);
+                const isSelected = selectedVideoModelId === recommendation.id;
+                const isAutoSelected =
+                  autoSelectRecommendedVideoModel &&
+                  bestSceneRecommendation?.id === recommendation.id &&
+                  isSelected;
 
                 return (
                   <div
                     key={recommendation.id}
-                    className="rounded-xl border border-indigo-100 bg-white/85 px-3 py-2.5"
+                    className={`rounded-xl border px-3 py-2.5 ${
+                      isSelected
+                        ? "border-indigo-300 bg-white shadow-sm shadow-indigo-100"
+                        : "border-indigo-100 bg-white/85"
+                    }`}
                   >
                     <div className="flex flex-wrap items-center justify-between gap-2">
                       <span className="text-xs font-semibold text-gray-900">
                         {recommendation.label}
                       </span>
                       <div className="flex flex-wrap items-center gap-1.5">
+                        {isSelected && (
+                          <span className="rounded-full bg-indigo-600 px-2 py-0.5 text-[10px] font-semibold text-white">
+                            {isAutoSelected ? "Auto-selected" : "✓ Selected"}
+                          </span>
+                        )}
+                        {bestSceneRecommendation?.id === recommendation.id && (
+                          <span className="rounded-full bg-sky-100 px-2 py-0.5 text-[10px] font-semibold text-sky-700">
+                            Best for this scene
+                          </span>
+                        )}
+                        <span className="rounded-full bg-indigo-100 px-2 py-0.5 text-[10px] font-semibold text-indigo-700">
+                          Recommended
+                        </span>
                         <span
                           className={`rounded-full px-2 py-0.5 text-[10px] font-semibold ${
-                            target
+                            recommendation.selectionMode === "legacy-sync"
                               ? "bg-emerald-100 text-emerald-700"
                               : "bg-amber-100 text-amber-800"
                           }`}
                         >
-                          {target ? "Selectable now" : "Guidance only"}
-                        </span>
-                        <span className="rounded-full bg-indigo-100 px-2 py-0.5 text-[10px] font-semibold text-indigo-700">
-                          {recommendation.priority}
+                          {recommendation.selectionMode === "legacy-sync"
+                            ? "Direct selectable"
+                            : "Third-party route"}
                         </span>
                       </div>
                     </div>
@@ -546,20 +657,20 @@ export default function Step2EngineQuality({
                       {recommendation.bestFor}
                     </p>
                     <p className="mt-1 text-[10px] font-semibold uppercase tracking-[0.08em] text-gray-500">
-                      {target
-                        ? `Applies saved ${target.engine === "runway" ? "Runway" : "Kling"} model only`
-                        : "No saved-state mutation available for this guidance card"}
+                      {patch?.runwayModel
+                        ? "Updates selected model and legacy Runway model"
+                        : patch?.klingModel
+                          ? "Updates selected model and legacy Kling model"
+                          : "Updates expanded selected model only"}
                     </p>
-                    {target && (
-                      <button
-                        type="button"
-                        disabled={isCurrentModel}
-                        onClick={() => handleApplySceneRecommendation(recommendation)}
-                        className="mt-2 rounded-xl border border-indigo-200 bg-indigo-600 px-3 py-1.5 text-[11px] font-semibold text-white shadow-sm shadow-indigo-100 transition-all hover:bg-indigo-700 disabled:border-gray-200 disabled:bg-gray-100 disabled:text-gray-500 disabled:shadow-none active:scale-[0.98]"
-                      >
-                        {isCurrentModel ? "Recommended model selected" : "Apply Recommended Model"}
-                      </button>
-                    )}
+                    <button
+                      type="button"
+                      disabled={isSelected}
+                      onClick={() => handleApplySceneRecommendation(recommendation)}
+                      className="mt-2 rounded-xl border border-indigo-200 bg-indigo-600 px-3 py-1.5 text-[11px] font-semibold text-white shadow-sm shadow-indigo-100 transition-all hover:bg-indigo-700 disabled:border-gray-200 disabled:bg-gray-100 disabled:text-gray-500 disabled:shadow-none active:scale-[0.98]"
+                    >
+                      {isSelected ? "Recommended model selected" : "Apply Recommended Model"}
+                    </button>
                   </div>
                 );
               })}
@@ -602,43 +713,30 @@ export default function Step2EngineQuality({
                   </div>
 
                   {capabilities.map((capability) => {
-                    if ((RUNWAY_MODELS as readonly string[]).includes(capability.label)) {
-                      const model = capability.label as RunwayModel;
-                      return (
-                        <ModelCard
-                          key={capability.id}
-                          tone="green"
-                          tag="RUNWAY"
-                          active={runwayModel === model}
-                          title={capability.label}
-                          subtitle={capability.recommendedUse}
-                          activeLabel="✓ Used in hybrid"
-                          onClick={() => onRunwayModelChange(model)}
-                        />
-                      );
-                    }
-
-                    if ((KLING_MODELS as readonly string[]).includes(capability.label)) {
-                      const model = capability.label as KlingModel;
-                      return (
-                        <ModelCard
-                          key={capability.id}
-                          tone="blue"
-                          tag="KLING"
-                          active={klingModel === model}
-                          title={capability.label}
-                          subtitle={capability.recommendedUse}
-                          activeLabel="✓ Used in hybrid"
-                          onClick={() => onKlingModelChange(model)}
-                        />
-                      );
-                    }
+                    const isRecommended = sceneModelRecommendations.some(
+                      (recommendation) => recommendation.id === capability.id
+                    );
+                    const isBestForScene = bestSceneRecommendation?.id === capability.id;
+                    const isSelected = selectedVideoModelId === capability.id;
+                    const isAutoSelected =
+                      autoSelectRecommendedVideoModel && isBestForScene && isSelected;
 
                     return (
                       <CapabilityInfoCard
                         key={capability.id}
                         capability={capability}
-                        badge={group === "SEEDANCE_DIRECT" ? "Optional route" : "Planning route"}
+                        badge={
+                          group === "RUNWAY_THIRD_PARTY"
+                            ? "Third-party workflow"
+                            : group === "SEEDANCE_DIRECT"
+                              ? "Optional route"
+                              : "Direct selectable"
+                        }
+                        selected={isSelected}
+                        recommended={isRecommended}
+                        bestForScene={isBestForScene}
+                        autoSelected={isAutoSelected}
+                        onSelect={() => handleSelectVideoModel(capability.id)}
                       />
                     );
                   })}

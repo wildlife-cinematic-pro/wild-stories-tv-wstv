@@ -62,6 +62,7 @@ import type {
   RealGenerationEvidenceRecord,
   RealGenerationEvidenceScores,
   PerformanceTrackerEntry,
+  VideoModelProviderGroup,
 } from "@/types";
 import type { PublishFlowSummary } from "@/lib/build-package";
 
@@ -156,6 +157,9 @@ export type StoredSettings = {
   activeProvider?: AIProvider;
   runwayModel?: RunwayModel;
   klingModel?: KlingModel;
+  selectedVideoModelId?: string;
+  selectedVideoProviderGroup?: VideoModelProviderGroup;
+  autoSelectRecommendedVideoModel?: boolean;
 
   // Quality toggles — optional, persist if you want them sticky
   realismMode?: RealismMode;

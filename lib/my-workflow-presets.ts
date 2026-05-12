@@ -19,6 +19,7 @@ import type {
   RunwayModel,
   Season,
   TimeOfDay,
+  VideoModelProviderGroup,
   ViralLane,
   ViolenceLevel,
   Weather,
@@ -52,6 +53,9 @@ export type MyWorkflowPresetSnapshot = {
   weather: Weather;
   runwayModel: RunwayModel;
   klingModel: KlingModel;
+  selectedVideoModelId?: string;
+  selectedVideoProviderGroup?: VideoModelProviderGroup;
+  autoSelectRecommendedVideoModel?: boolean;
   activeProvider: AIProvider;
   autoFallback: boolean;
   habitat?: HabitatPreset;
@@ -181,6 +185,14 @@ function normalizeSnapshot(value: unknown): MyWorkflowPresetSnapshot | null {
     weather: value.weather as Weather,
     runwayModel: value.runwayModel as RunwayModel,
     klingModel: value.klingModel as KlingModel,
+    selectedVideoModelId: safeString(value.selectedVideoModelId) || undefined,
+    selectedVideoProviderGroup: safeString(value.selectedVideoProviderGroup)
+      ? (value.selectedVideoProviderGroup as VideoModelProviderGroup)
+      : undefined,
+    autoSelectRecommendedVideoModel:
+      typeof value.autoSelectRecommendedVideoModel === "boolean"
+        ? value.autoSelectRecommendedVideoModel
+        : undefined,
     activeProvider: value.activeProvider as AIProvider,
     autoFallback: value.autoFallback,
     habitat: safeString(value.habitat) ? (value.habitat as HabitatPreset) : undefined,

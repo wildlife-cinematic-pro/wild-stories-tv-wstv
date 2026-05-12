@@ -32,6 +32,7 @@ import type {
   ViolenceLevel,
   Weather,
   WeatherHazard,
+  VideoModelProviderGroup,
 } from "@/types";
 
 import type { OpeningFrameInput } from "@/lib/openingFrameScore";
@@ -77,6 +78,7 @@ import {
   buildAltTextPrompt,
 } from "@/lib/platform-packs";
 import { arcMotionStrength } from "@/lib/model-specs";
+import { buildSelectedVideoModelInfo } from "@/lib/video-model-capabilities";
 import {
   mergeGeneratedPackage,
   type GeneratedPackageEnhancements,
@@ -153,6 +155,8 @@ export type GeneratedPackageDraftInput = {
   animalVibe: AnimalVibe;
   runwayModel: RunwayModel;
   klingModel: KlingModel;
+  selectedVideoModelId?: string;
+  selectedVideoProviderGroup?: VideoModelProviderGroup;
   durationLane: DurationLane;
   marketMode: PublishFlowMarketMode;
   fastPublishMode: boolean;
@@ -474,6 +478,8 @@ export function buildGeneratedPackageDraft(
     (shot) => `Edit timeline: ${shot.editTimeline}`
   );
 
+  const selectedVideoModel = buildSelectedVideoModelInfo(input.selectedVideoModelId);
+
   const basePkg: GeneratedPackage = {
     predatorName: input.predator,
     preyName: input.prey,
@@ -636,6 +642,7 @@ export function buildGeneratedPackageDraft(
     referenceWorkflow,
     naturalismChecklist,
     modelsUsed: { runway: input.runwayModel, kling: input.klingModel },
+    selectedVideoModel,
     sceneDesc: input.sceneInject,
     soundDesignPack,
     animalBehavior: animalBehaviorResult ?? undefined,
