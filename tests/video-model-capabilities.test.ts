@@ -4,8 +4,11 @@ import { KLING_MODELS, RUNWAY_MODELS } from "@/lib/model-specs";
 import {
   VIDEO_MODEL_CAPABILITIES,
   VIDEO_MODEL_GROUP_ORDER,
+  getDefaultSelectedVideoModelId,
   getSceneBasedVideoModelRecommendations,
   getVideoModelCapabilitiesByGroup,
+  getVideoModelSelectionPatch,
+  resolveAutoSelectedVideoModel,
 } from "@/lib/video-model-capabilities";
 
 describe("video model capabilities", () => {
@@ -78,41 +81,91 @@ describe("video model capabilities", () => {
   });
 
 
-  it("distinguishes saved selectable models from guidance-only recommendations", () => {
-    const standard = getSceneBasedVideoModelRecommendations({
-      actionStyle: "Natural tension",
-      arc: "Pack hunting strategy",
-      contentLane: "Pack Hunt",
-    });
+  it("maps old presets to a safe default selected video model", () => {
+    expect(
+      getDefaultSelectedVideoModelId({
+        runwayModel: "Gen-4.5",
+        klingModel: "Kling 3.0 Pro",
+      })
+    ).toBe("runway-gen-4-5");
 
-    const runwayHero = standard.find((entry) => entry.label === "Gen-4.5");
-    const klingDirect = standard.find((entry) => entry.label === "Kling 3.0 Pro");
-    const seedance = standard.find((entry) => entry.label === "Seedance 2");
-    const aleph = standard.find((entry) => entry.label === "Aleph");
-
-    expect(runwayHero?.guidanceOnly).toBe(false);
-    expect(runwayHero?.selectableTarget).toEqual({ engine: "runway", model: "Gen-4.5" });
-    expect(klingDirect?.guidanceOnly).toBe(false);
-    expect(klingDirect?.selectableTarget).toEqual({ engine: "kling", model: "Kling 3.0 Pro" });
-    expect(seedance?.guidanceOnly).toBe(true);
-    expect(seedance?.selectableTarget).toBeUndefined();
-    expect(aleph?.guidanceOnly).toBe(true);
-    expect(aleph?.selectableTarget).toBeUndefined();
+    expect(
+      getDefaultSelectedVideoModelId({
+        selectedVideoModelId: "seedance-2",
+        runwayModel: "Gen-4",
+      })
+    ).toBe("seedance-2");
   });
 
-  it("keeps Runway third-party recommendations guidance-only", () => {
+  it("maps expanded selections without corrupting legacy model fields", () => {
+    expect(getVideoModelSelectionPatch("runway-gen-4-turbo")).toMatchObject({
+      selectedVideoModelId: "runway-gen-4-turbo",
+      selectedVideoProviderGroup: "RUNWAY_NATIVE",
+      runwayModel: "Gen-4 Turbo",
+    });
+
+    expect(getVideoModelSelectionPatch("kling-3-0-pro")).toMatchObject({
+      selectedVideoModelId: "kling-3-0-pro",
+      selectedVideoProviderGroup: "KLING_DIRECT",
+      klingModel: "Kling 3.0 Pro",
+    });
+
+    for (const id of ["seedance-2", "runway-aleph", "kling-03-4k", "kling-3-0-motion-control"]) {
+      const patch = getVideoModelSelectionPatch(id);
+      expect(patch?.selectedVideoModelId).toBe(id);
+      expect(patch).not.toHaveProperty("runwayModel");
+      expect(patch).not.toHaveProperty("klingModel");
+    }
+  });
+
+  it("marks recommendations as legacy-sync or expanded-only", () => {
     const pressure = getSceneBasedVideoModelRecommendations({
       actionStyle: "Close-contact fight",
       arc: "Territory dominance battle",
       contentLane: "Defender",
     });
 
+    expect(
+      getSceneBasedVideoModelRecommendations({
+        actionStyle: "Natural tension",
+        arc: "Pack hunting strategy",
+        contentLane: "Pack Hunt",
+      }).find((entry) => entry.label === "Kling 3.0 Pro")
+    ).toMatchObject({
+      selectionMode: "legacy-sync",
+      legacyTarget: { engine: "kling", model: "Kling 3.0 Pro" },
+    });
+
     for (const label of ["Kling 03 4K", "Kling 3.0 Motion Control"]) {
-      const recommendation = pressure.find((entry) => entry.label === label);
-      expect(recommendation?.guidanceOnly).toBe(true);
-      expect(recommendation?.selectableTarget).toBeUndefined();
-      expect(recommendation?.bestFor).toMatch(/guidance only|planning/i);
+      expect(pressure.find((entry) => entry.label === label)).toMatchObject({
+        selectionMode: "expanded-only",
+        bestFor: expect.stringMatching(/route|selection/i),
+      });
     }
+  });
+
+  it("keeps auto-select off from mutating selected model and applies top recommendation when on", () => {
+    const recommendations = getSceneBasedVideoModelRecommendations({
+      actionStyle: "Viral chase",
+      arc: "Escape from danger",
+      contentLane: "Escape",
+    });
+
+    expect(
+      resolveAutoSelectedVideoModel({
+        autoSelectRecommendedVideoModel: false,
+        currentSelectedVideoModelId: "runway-gen-4-5",
+        recommendations,
+      })
+    ).toBe("runway-gen-4-5");
+
+    expect(
+      resolveAutoSelectedVideoModel({
+        autoSelectRecommendedVideoModel: true,
+        currentSelectedVideoModelId: "runway-gen-4-5",
+        recommendations,
+      })
+    ).toBe("seedance-2");
   });
 
   it("keeps recommendations deterministic", () => {

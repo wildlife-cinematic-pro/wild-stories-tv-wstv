@@ -157,6 +157,17 @@ export type VideoModelCapability = {
   actionTier: VideoModelTier;
   promptGuidance: string[];
 };
+
+export type SelectedVideoModelInfo = {
+  id: string;
+  label: string;
+  providerGroup: VideoModelProviderGroup;
+  provider: VideoModelProvider;
+  workflowRole: VideoModelWorkflowRole;
+  routeLabel: string;
+  recommendedUse: string;
+  needsVerification: boolean;
+};
 // types/index.ts (ADD near other shared types)
 // Legacy values are preserved for compatibility, but runtime image prompting
 // is now centered on the Nano Banana / Gemini path.
@@ -711,6 +722,9 @@ export type BuildWorkflowPresetSnapshot = {
   microMotion: boolean;
   heroVeo: boolean;
   autoApplyHighDrift: boolean;
+  selectedVideoModelId?: string;
+  selectedVideoProviderGroup?: VideoModelProviderGroup;
+  autoSelectRecommendedVideoModel?: boolean;
   runwayModel: RunwayModel;
   klingModel: KlingModel;
   activeProvider: AIProvider;
@@ -1279,6 +1293,7 @@ export type GeneratedPackage = {
   // ── AI & model info ──
   aiEnhanced?: boolean;
   modelsUsed?: { runway: RunwayModel; kling: KlingModel };
+  selectedVideoModel?: SelectedVideoModelInfo;
   sceneDesc?: string;
 
   // ── Pro features ──
@@ -1339,6 +1354,9 @@ export type HistoryEntry = {
   timestamp: string;
   runwayModel?: RunwayModel;
   klingModel?: KlingModel;
+  selectedVideoModelId?: string;
+  selectedVideoProviderGroup?: VideoModelProviderGroup;
+  autoSelectRecommendedVideoModel?: boolean;
   realismMode?: RealismMode;
   pkg?: GeneratedPackage;
 };

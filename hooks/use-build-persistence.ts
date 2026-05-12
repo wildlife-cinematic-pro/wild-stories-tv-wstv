@@ -15,6 +15,10 @@ import { isWildlifeScopeMode } from "@/lib/predator-data";
 import { normalizeWildlifeScopeMode } from "@/lib/wildlife-focus";
 import { isCameraAnglePreset } from "@/lib/camera-angle-presets";
 import { isDurationLane } from "@/lib/duration-lanes";
+import {
+  getDefaultSelectedVideoModelId,
+  getVideoModelCapabilityById,
+} from "@/lib/video-model-capabilities";
 
 import type {
   AIProvider,
@@ -42,6 +46,7 @@ import type {
   ViolenceLevel,
   Weather,
   WeatherHazard,
+  VideoModelProviderGroup,
 } from "@/types";
 
 type HookMode = HookFamily | "all";
@@ -80,6 +85,9 @@ type UseBuildPersistenceInput = {
   activeProvider: AIProvider;
   runwayModel: RunwayModel;
   klingModel: KlingModel;
+  selectedVideoModelId: string;
+  selectedVideoProviderGroup: VideoModelProviderGroup;
+  autoSelectRecommendedVideoModel: boolean;
   realismMode: RealismMode;
   motionOnlyI2V: boolean;
   referenceLock: boolean;
@@ -120,6 +128,9 @@ type UseBuildPersistenceInput = {
   setActiveProvider: Dispatch<SetStateAction<AIProvider>>;
   setRunwayModel: Dispatch<SetStateAction<RunwayModel>>;
   setKlingModel: Dispatch<SetStateAction<KlingModel>>;
+  setSelectedVideoModelId: Dispatch<SetStateAction<string>>;
+  setSelectedVideoProviderGroup: Dispatch<SetStateAction<VideoModelProviderGroup>>;
+  setAutoSelectRecommendedVideoModel: Dispatch<SetStateAction<boolean>>;
   setRealismMode: Dispatch<SetStateAction<RealismMode>>;
   setMotionOnlyI2V: Dispatch<SetStateAction<boolean>>;
   setReferenceLock: Dispatch<SetStateAction<boolean>>;
@@ -293,6 +304,9 @@ export function useBuildPersistence({
   activeProvider,
   runwayModel,
   klingModel,
+  selectedVideoModelId,
+  selectedVideoProviderGroup,
+  autoSelectRecommendedVideoModel,
   realismMode,
   motionOnlyI2V,
   referenceLock,
@@ -333,6 +347,9 @@ export function useBuildPersistence({
   setActiveProvider,
   setRunwayModel,
   setKlingModel,
+  setSelectedVideoModelId,
+  setSelectedVideoProviderGroup,
+  setAutoSelectRecommendedVideoModel,
   setRealismMode,
   setMotionOnlyI2V,
   setReferenceLock,
@@ -362,18 +379,38 @@ export function useBuildPersistence({
     if (isAIProvider(saved?.activeProvider) && saved.activeProvider === "gemini") {
       setActiveProvider(saved.activeProvider);
     }
-    if (
+    const savedRunwayModel =
       saved?.runwayModel &&
       (RUNWAY_MODELS as readonly string[]).includes(saved.runwayModel)
-    ) {
-      setRunwayModel(saved.runwayModel);
-    }
-    if (
+        ? saved.runwayModel
+        : undefined;
+    const savedKlingModel =
       saved?.klingModel &&
       (KLING_MODELS as readonly string[]).includes(saved.klingModel)
-    ) {
-      setKlingModel(saved.klingModel);
+        ? saved.klingModel
+        : undefined;
+
+    if (savedRunwayModel) {
+      setRunwayModel(savedRunwayModel);
     }
+    if (savedKlingModel) {
+      setKlingModel(savedKlingModel);
+    }
+
+    const hydratedVideoModelId = getDefaultSelectedVideoModelId({
+      selectedVideoModelId: saved?.selectedVideoModelId,
+      runwayModel: savedRunwayModel,
+      klingModel: savedKlingModel,
+    });
+    const hydratedVideoModel = getVideoModelCapabilityById(hydratedVideoModelId);
+    setSelectedVideoModelId(hydratedVideoModelId);
+    if (hydratedVideoModel) {
+      setSelectedVideoProviderGroup(hydratedVideoModel.providerGroup);
+    }
+    setAutoSelectRecommendedVideoModel(
+      saved?.autoSelectRecommendedVideoModel === true
+    );
+
     if (saved?.realismMode) setRealismMode(saved.realismMode);
     if (saved?.motionOnlyI2V !== undefined) setMotionOnlyI2V(saved.motionOnlyI2V);
     if (saved?.referenceLock !== undefined) setReferenceLock(saved.referenceLock);
@@ -468,6 +505,9 @@ export function useBuildPersistence({
     setActiveProvider,
     setRunwayModel,
     setKlingModel,
+    setSelectedVideoModelId,
+    setSelectedVideoProviderGroup,
+    setAutoSelectRecommendedVideoModel,
     setRealismMode,
     setMotionOnlyI2V,
     setReferenceLock,
@@ -482,6 +522,9 @@ export function useBuildPersistence({
       activeProvider,
       runwayModel,
       klingModel,
+      selectedVideoModelId,
+      selectedVideoProviderGroup,
+      autoSelectRecommendedVideoModel,
       realismMode,
       motionOnlyI2V,
       referenceLock,
@@ -536,6 +579,9 @@ export function useBuildPersistence({
     activeProvider,
     runwayModel,
     klingModel,
+    selectedVideoModelId,
+    selectedVideoProviderGroup,
+    autoSelectRecommendedVideoModel,
     realismMode,
     motionOnlyI2V,
     referenceLock,

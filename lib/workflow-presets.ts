@@ -30,6 +30,7 @@ import type {
   WorkflowPresetImportReport,
   WorkflowPresetPackExportPayload,
   TimeOfDay,
+  VideoModelProviderGroup,
   WorkflowPresetPackImportReport,
 } from "@/types";
 
@@ -49,6 +50,10 @@ import {
   emotionalTones,
   isUSAWildlifeAnimal,
 } from "@/lib/predator-data";
+import {
+  getDefaultSelectedVideoModelId,
+  getVideoModelCapabilityById,
+} from "@/lib/video-model-capabilities";
 import { normalizeWildlifeScopeMode } from "@/lib/wildlife-focus";
 
 export const MAX_WORKFLOW_PRESETS = 40;
@@ -466,6 +471,26 @@ export function normalizeWorkflowPresetSnapshot(
     ["auto", "manual"] as const,
     sceneDescription ? "manual" : "auto"
   );
+  const runwayModel = pickOption<RunwayModel>(
+    value.runwayModel,
+    RUNWAY_MODELS,
+    RUNWAY_MODELS[0]
+  );
+  const klingModel = pickOption<KlingModel>(
+    value.klingModel,
+    KLING_MODELS,
+    KLING_MODELS[0]
+  );
+  const selectedVideoModelId = getDefaultSelectedVideoModelId({
+    selectedVideoModelId: cleanString(value.selectedVideoModelId) || undefined,
+    runwayModel,
+    klingModel,
+  });
+  const selectedVideoModel = getVideoModelCapabilityById(selectedVideoModelId);
+  const selectedVideoProviderGroup =
+    selectedVideoModel?.providerGroup ??
+    (cleanString(value.selectedVideoProviderGroup) as VideoModelProviderGroup) ??
+    "RUNWAY_NATIVE";
 
   return {
     predator,
@@ -567,15 +592,13 @@ export function normalizeWorkflowPresetSnapshot(
     microMotion: cleanBoolean(value.microMotion, true),
     heroVeo: cleanBoolean(value.heroVeo, false),
     autoApplyHighDrift: cleanBoolean(value.autoApplyHighDrift, false),
-    runwayModel: pickOption<RunwayModel>(
-      value.runwayModel,
-      RUNWAY_MODELS,
-      RUNWAY_MODELS[0]
-    ),
-    klingModel: pickOption<KlingModel>(
-      value.klingModel,
-      KLING_MODELS,
-      KLING_MODELS[0]
+    runwayModel,
+    klingModel,
+    selectedVideoModelId,
+    selectedVideoProviderGroup,
+    autoSelectRecommendedVideoModel: cleanBoolean(
+      value.autoSelectRecommendedVideoModel,
+      false
     ),
     activeProvider: pickOption<AIProvider>(
       value.activeProvider,

@@ -114,6 +114,35 @@ describe("build-package refactor seam", () => {
     expect(draft.basePkg.routingNote).not.toContain("Kling Kling");
   });
 
+  it("records the expanded selected video model without changing legacy outputs", () => {
+    const draft = buildGeneratedPackageDraft(
+      makeDraftInput({
+        selectedVideoModelId: "seedance-2",
+        selectedVideoProviderGroup: "SEEDANCE_DIRECT",
+        runwayModel: "Gen-4.5",
+        klingModel: "Kling 3.0 Pro",
+      })
+    );
+
+    expect(draft.basePkg.selectedVideoModel).toMatchObject({
+      id: "seedance-2",
+      label: "Seedance 2",
+      providerGroup: "SEEDANCE_DIRECT",
+      routeLabel: "Direct Seedance video route",
+      needsVerification: true,
+    });
+    expect(draft.basePkg.modelsUsed).toMatchObject({
+      runway: "Gen-4.5",
+      kling: "Kling 3.0 Pro",
+    });
+    expect(draft.basePkg.shotPlan.map((shot) => shot.engine)).toEqual([
+      "RUNWAY",
+      "KLING",
+      "KLING",
+      "RUNWAY",
+    ]);
+  });
+
   it("keeps short, medium, and long lane generation durations inside the WSTV plan", () => {
     const shortDraft = buildGeneratedPackageDraft(
       makeDraftInput({ durationLane: "short", selectedPipelineStyle: "4-shot" })
