@@ -1351,6 +1351,25 @@ export type CapCutBeat = {
   musicNote: string;
 };
 
+export type CapCutGuideSection = {
+  title: string;
+  description?: string;
+  uiPath?: string;
+  items: string[];
+};
+
+export type CapCutEditGuide = {
+  projectSetup: CapCutGuideSection;
+  timelineEditing: CapCutGuideSection;
+  keyframeZoom: CapCutGuideSection;
+  colorAdjustment: CapCutGuideSection;
+  audioMix: CapCutGuideSection;
+  textOverlaySafeZone: CapCutGuideSection;
+  coverThumbnail: CapCutGuideSection;
+  exportSettings: CapCutGuideSection;
+  uploadChecklist: CapCutGuideSection;
+};
+
 export type CapCutScript = {
   totalDuration: string;
   aspectRatio: string;
@@ -1358,6 +1377,7 @@ export type CapCutScript = {
   beats: CapCutBeat[];
   exportSettings: string;
   musicMood: string;
+  editGuide?: CapCutEditGuide;
 };
 
 export type BulkItem = {

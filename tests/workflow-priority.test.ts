@@ -37,6 +37,28 @@ describe("workflow priority cleanup", () => {
     expect(script.exportSettings).toContain("optional 30fps platform export");
   });
 
+  it("adds a practical Facebook Reels CapCut edit guide", () => {
+    const script = buildCapCutScript(
+      "Bison",
+      "Grizzly Bear",
+      "Defender stands ground",
+      "Golden Hour",
+      pkg,
+      "4-shot"
+    );
+
+    expect(script.editGuide?.projectSetup.items).toContain("Canvas/aspect: 9:16 for Reels.");
+    expect(script.editGuide?.keyframeZoom.uiPath).toBe("Video > Basic > Scale / 動画 > ベーシック > スケール");
+    expect(script.editGuide?.keyframeZoom.items).toContain("Set Scale 105%.");
+    expect(script.editGuide?.keyframeZoom.items).toContain("Set Scale 112%.");
+    expect(script.editGuide?.colorAdjustment.items).toContain("Sharpen +10 to +25.");
+    expect(script.editGuide?.audioMix.uiPath).toBe("Audio > Basic > Volume / オーディオ > ベーシック > 音量");
+    expect(script.editGuide?.audioMix.items).toContain("Music bed: -18dB to -25dB.");
+    expect(script.editGuide?.exportSettings.items).toContain("Bitrate: High/Recommended, never Low.");
+    expect(script.editGuide?.exportSettings.items).toContain("Watermark: OFF.");
+    expect(script.editGuide?.uploadChecklist.items).toContain("Exactly 5 relevant hashtags.");
+  });
+
   it("reports 4-shot retention language in viral/watch-time helpers", () => {
     const score = calculateViralScore(
       pkg,

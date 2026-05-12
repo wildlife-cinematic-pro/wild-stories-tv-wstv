@@ -1,4 +1,4 @@
-import type { GeneratedPackage } from "@/types";
+import type { CapCutGuideSection, GeneratedPackage } from "@/types";
 
 import { buildCreatorQaPack } from "@/lib/creator-qa-pack";
 
@@ -68,6 +68,37 @@ function buildTwoPartText(data: GeneratedPackage) {
     .join("\n\n");
 }
 
+
+function buildCapCutGuideSectionText(section: CapCutGuideSection) {
+  return [
+    section.title.toUpperCase(),
+    section.description ?? "",
+    section.uiPath ? `CapCut UI: ${section.uiPath}` : "",
+    ...section.items.map((item) => `- ${item}`),
+  ]
+    .filter(Boolean)
+    .join("\n");
+}
+
+function buildCapCutGuideExportText(data: GeneratedPackage) {
+  const guide = data.capCutScript?.editGuide;
+  if (!guide) return "";
+
+  return [
+    "",
+    "=== CAPCUT FACEBOOK REELS EDIT GUIDE ===",
+    buildCapCutGuideSectionText(guide.projectSetup),
+    buildCapCutGuideSectionText(guide.timelineEditing),
+    buildCapCutGuideSectionText(guide.keyframeZoom),
+    buildCapCutGuideSectionText(guide.colorAdjustment),
+    buildCapCutGuideSectionText(guide.audioMix),
+    buildCapCutGuideSectionText(guide.textOverlaySafeZone),
+    buildCapCutGuideSectionText(guide.coverThumbnail),
+    buildCapCutGuideSectionText(guide.exportSettings),
+    buildCapCutGuideSectionText(guide.uploadChecklist),
+  ].join("\n\n");
+}
+
 function buildCapCutScriptText(data: GeneratedPackage) {
   if (!data.capCutScript) return "";
 
@@ -88,7 +119,10 @@ function buildCapCutScriptText(data: GeneratedPackage) {
     ),
     "",
     `Export: ${data.capCutScript.exportSettings}`,
-  ].join("\n");
+    buildCapCutGuideExportText(data),
+  ]
+    .filter(Boolean)
+    .join("\n");
 }
 
 function buildAnimalBehaviorText(data: GeneratedPackage) {
