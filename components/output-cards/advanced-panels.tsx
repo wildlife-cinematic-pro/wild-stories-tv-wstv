@@ -4,6 +4,7 @@ import { useState } from "react";
 
 import type {
   AnimalBehavior,
+  CapCutGuideSection,
   CapCutScript,
   FiveShotPlan,
   SoundDesignPack,
@@ -289,6 +290,35 @@ export function WatchTimePanel({ report }: { report: WatchTimeReport }) {
   );
 }
 
+function capCutGuideSectionToText(section: CapCutGuideSection) {
+  return [
+    section.title.toUpperCase(),
+    section.description ?? "",
+    section.uiPath ? `CapCut UI: ${section.uiPath}` : "",
+    ...section.items.map((item) => `- ${item}`),
+  ]
+    .filter(Boolean)
+    .join("\n");
+}
+
+function buildCapCutEditGuideText(script: CapCutScript) {
+  if (!script.editGuide) return "";
+
+  return [
+    "",
+    "CAPCUT FACEBOOK REELS EDIT GUIDE",
+    capCutGuideSectionToText(script.editGuide.projectSetup),
+    capCutGuideSectionToText(script.editGuide.timelineEditing),
+    capCutGuideSectionToText(script.editGuide.keyframeZoom),
+    capCutGuideSectionToText(script.editGuide.colorAdjustment),
+    capCutGuideSectionToText(script.editGuide.audioMix),
+    capCutGuideSectionToText(script.editGuide.textOverlaySafeZone),
+    capCutGuideSectionToText(script.editGuide.coverThumbnail),
+    capCutGuideSectionToText(script.editGuide.exportSettings),
+    capCutGuideSectionToText(script.editGuide.uploadChecklist),
+  ].join("\n\n");
+}
+
 export function CapCutScriptPanel({
   script,
   onCopy,
@@ -310,7 +340,7 @@ ${script.beats
   )
   .join("\n\n")}
 
-EXPORT: ${script.exportSettings}`;
+EXPORT: ${script.exportSettings}${buildCapCutEditGuideText(script)}`;
 
   return (
     <div className="rounded-xl border border-purple-200 bg-purple-50 p-4 shadow-sm">
@@ -384,9 +414,69 @@ EXPORT: ${script.exportSettings}`;
           </div>
         ))}
       </div>
-      <p className="mt-2 text-xs text-purple-600">
-        Export: {script.exportSettings}
+      <p className="mt-3 rounded-lg border border-[color:var(--border)] bg-[color:var(--surface-elevated)] p-3 text-xs leading-5 text-[color:var(--text)]">
+        <span className="font-bold text-[color:var(--text)]">Export:</span> {script.exportSettings}
       </p>
+
+      {script.editGuide ? (
+        <div className="mt-4 space-y-3">
+          <div className="flex flex-wrap items-center justify-between gap-2">
+            <div>
+              <p className="text-xs font-bold uppercase tracking-[0.18em] text-[color:var(--muted)]">
+                Facebook Reels CapCut Guide
+              </p>
+              <p className="mt-1 text-xs text-[color:var(--muted)]">
+                CapCut Desktop locations, export settings, and pre-upload checks.
+              </p>
+            </div>
+            <button
+              onClick={() => onCopy(buildCapCutEditGuideText(script).trim())}
+              className="rounded-lg border border-[color:var(--border)] bg-[color:var(--surface-elevated)] px-3 py-1.5 text-xs font-bold text-[color:var(--text)] hover:bg-[color:var(--surface-muted)] active:scale-95"
+              type="button"
+            >
+              Copy Edit Guide
+            </button>
+          </div>
+
+          {[
+            script.editGuide.projectSetup,
+            script.editGuide.timelineEditing,
+            script.editGuide.keyframeZoom,
+            script.editGuide.colorAdjustment,
+            script.editGuide.audioMix,
+            script.editGuide.textOverlaySafeZone,
+            script.editGuide.coverThumbnail,
+            script.editGuide.exportSettings,
+            script.editGuide.uploadChecklist,
+          ].map((section) => (
+            <div
+              key={section.title}
+              className="rounded-lg border border-[color:var(--border)] bg-[color:var(--surface-elevated)] p-3"
+            >
+              <div className="flex flex-wrap items-start justify-between gap-2">
+                <div>
+                  <p className="text-sm font-bold text-[color:var(--text)]">{section.title}</p>
+                  {section.description ? (
+                    <p className="mt-1 text-xs leading-5 text-[color:var(--muted)]">
+                      {section.description}
+                    </p>
+                  ) : null}
+                </div>
+                {section.uiPath ? (
+                  <span className="rounded border border-[color:var(--border)] bg-[color:var(--surface)] px-2 py-1 text-[11px] font-semibold text-[color:var(--text)]">
+                    {section.uiPath}
+                  </span>
+                ) : null}
+              </div>
+              <ul className="mt-3 space-y-1 text-xs leading-5 text-[color:var(--text)]">
+                {section.items.map((item) => (
+                  <li key={item}>- {item}</li>
+                ))}
+              </ul>
+            </div>
+          ))}
+        </div>
+      ) : null}
     </div>
   );
 }

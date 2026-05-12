@@ -19,6 +19,7 @@ import type {
   PipelineStyle,
   CapCutScript,
   CapCutBeat,
+  CapCutEditGuide,
   SoundDesignPack,
   AnimalBehavior,
   TwoPartViralPreset,
@@ -528,6 +529,117 @@ export function buildSoundDesignPack(
 // ─────────────────────────────────────────────────────────────
 // 3. CAPCUT SCRIPT
 // ─────────────────────────────────────────────────────────────
+
+function buildCapCutEditGuide(): CapCutEditGuide {
+  return {
+    projectSetup: {
+      title: "Project setup",
+      description: "Set the edit up for clean Facebook Reels delivery without changing the AI source cadence.",
+      items: [
+        "Canvas/aspect: 9:16 for Reels.",
+        "Edit timeline: keep source fps/native where possible; for Runway footage use the 24/25fps project base expected by the current WSTV workflow.",
+        "Use clean original exports only; avoid reposted or watermarked source files because Meta can reduce low-quality or reused content distribution.",
+        "Keep black borders off and fill the canvas with the intended wildlife frame.",
+      ],
+    },
+    timelineEditing: {
+      title: "Timeline editing",
+      description: "Keep the story readable in the first seconds and cut only on clear animal motion beats.",
+      items: [
+        "Place the strongest visible animal/action hook in the first 1-3 seconds.",
+        "Keep existing WSTV beats intact; trim only dead air before or after the readable action.",
+        "Use hard cuts or very short dissolves; avoid flashy transitions that make wildlife motion look fake.",
+        "Optical Flow: OFF by default for AI wildlife because interpolation can create mushy or fake animal motion.",
+      ],
+    },
+    keyframeZoom: {
+      title: "Keyframe zoom",
+      description: "Very slow documentary push-in.",
+      uiPath: "Video > Basic > Scale / 動画 > ベーシック > スケール",
+      items: [
+        "Select clip.",
+        "Move playhead to start.",
+        "Add diamond keyframe beside Scale.",
+        "Set Scale 105%.",
+        "Move playhead to end.",
+        "Add keyframe.",
+        "Set Scale 112%.",
+        "Label this move: Very slow documentary push-in.",
+      ],
+    },
+    colorAdjustment: {
+      title: "Color adjustment",
+      description: "Natural wildlife clarity without a heavy filter look.",
+      uiPath: "Adjust / 調整",
+      items: [
+        "Sharpen +10 to +25.",
+        "Contrast +5 to +15.",
+        "Saturation +5 to +12.",
+        "Highlights -5 to -15.",
+        "Shadows +5 to +10.",
+        "Avoid heavy filters; keep documentary Rec.709 SDR color and natural animal texture.",
+      ],
+    },
+    audioMix: {
+      title: "Audio mix",
+      description: "Let animal and nature audio lead, with music low enough for realism.",
+      uiPath: "Audio > Basic > Volume / オーディオ > ベーシック > 音量",
+      items: [
+        "Main animal/nature audio: -2dB to -5dB.",
+        "Music bed: -18dB to -25dB.",
+        "Fade in/out: 0.2s.",
+        "Normalize loudness: OFF by default.",
+        "Recommended SFX: wind, branch crack, leaf movement, distant bird, low cinematic boom.",
+      ],
+    },
+    textOverlaySafeZone: {
+      title: "Text overlay safe zone",
+      description: "Keep captions readable without covering the animal hook.",
+      items: [
+        "Keep main animal faces, eyes, antlers, wings, paws, and the action lane clear of text.",
+        "Place short text away from Reels UI controls and avoid the lower-right interaction zone.",
+        "Use one short hook line at a time; remove text before the peak animal motion if it blocks readability.",
+      ],
+    },
+    coverThumbnail: {
+      title: "Cover/thumbnail",
+      description: "Choose a clean frame that sells the wildlife conflict instantly.",
+      items: [
+        "Select a cover frame where both animals are readable when the story needs both.",
+        "Prefer strong subject separation, open action lane, and no UI-zone text over animal faces.",
+        "Avoid blurry frames, black borders, watermarks, and frames where the animal is hidden by motion smear.",
+      ],
+    },
+    exportSettings: {
+      title: "Export settings",
+      description: "Highest-quality Facebook/Instagram Reels upload guidance.",
+      uiPath: "Export / エクスポート",
+      items: [
+        "Facebook export fps: 30fps minimum for platform delivery.",
+        "Resolution: 4K when source is clean and CapCut Desktop/source/system supports it; use 1080p fallback for weak or AI-soft footage.",
+        "Codec: HEVC/H.265 when available; H.264 fallback for compatibility.",
+        "Format: MP4 preferred; MOV acceptable but less preferred for Facebook.",
+        "Bitrate: High/Recommended, never Low.",
+        "Color: Rec.709 SDR.",
+        "Watermark: OFF.",
+      ],
+    },
+    uploadChecklist: {
+      title: "Upload checklist",
+      description: "Final Facebook Reels checks before posting.",
+      items: [
+        "No TikTok/CapCut watermark.",
+        "No black borders.",
+        "First 1-3 seconds has visible animal/action hook.",
+        "Main animal is not hidden by UI-safe-zone text.",
+        "Cover frame selected with both animals readable when applicable.",
+        "Caption under 150 chars.",
+        "Exactly 5 relevant hashtags.",
+      ],
+    },
+  };
+}
+
 export function buildCapCutScript(
   predator: string,
   prey: string,
@@ -644,8 +756,9 @@ export function buildCapCutScript(
     fps: 24,
     beats: isLongHybrid ? beatsLongHybrid : beats4,
     exportSettings:
-      "H.264 | 1080×1920 | 24fps edit timeline | optional 30fps platform export if required | 20–25 Mbps | AAC 320kbps",
+      "Canvas 9:16 | 24fps edit timeline / 25fps source-native base for Runway where needed | Facebook export 30fps, optional 30fps platform export if required | 4K when source is clean, 1080p fallback for AI-soft footage | HEVC/H.265 preferred, H.264 fallback | MP4 preferred | High/Recommended bitrate, never Low | Rec.709 SDR | Optical Flow OFF | Watermark OFF",
     musicMood,
+    editGuide: buildCapCutEditGuide(),
   };
 }
 
