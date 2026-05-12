@@ -5,6 +5,7 @@ import { TimelineModePanel } from "@/components/output-cards/prompt-guidance-pan
 import { getPromptCardForEngine, getWorkflowPromptCard } from "@/components/output-cards/prompt-utils";
 import { getDurationLaneConfig } from "@/lib/duration-lanes";
 import { getOrderedOutputTabs } from "@/lib/video-output-routing";
+import { getRouteAwareCopyActions } from "@/lib/video-route-copy-actions";
 
 import type { GeneratedPackage } from "@/types";
 import type { DirectWorkspaceTab, VideoWorkspaceTab } from "@/components/output-cards/workspaces/types";
@@ -37,6 +38,7 @@ export function VideoWorkspace({
   const routeLabel = data.primaryVideoRoute?.label ?? "Primary Route: Hybrid 4-shot";
   const routeDetail = data.primaryVideoRoute?.detail;
   const modelGuidance = data.modelPromptGuidance;
+  const routeCopyActions = getRouteAwareCopyActions(data);
   const runwayShots = (data.runwayShots ?? []).map((shot) => String(shot ?? ""));
   const klingShots = (data.klingShots ?? []).map((shot) => String(shot ?? ""));
   const seedanceShots = (data.seedanceShots ?? []).map((shot) => String(shot ?? ""));
@@ -190,6 +192,38 @@ export function VideoWorkspace({
               </p>
             </div>
           </div>
+
+          {routeCopyActions.length ? (
+            <div className="mt-3 rounded-xl border border-[color:var(--border-soft)] bg-[color:var(--surface-muted)] p-3">
+              <div className="flex flex-wrap items-center justify-between gap-2">
+                <div>
+                  <div className="text-[10px] font-black uppercase tracking-[0.1em] text-[color:var(--muted)]">
+                    Route quick copy
+                  </div>
+                  <p className="mt-1 text-[11px] font-semibold leading-relaxed text-[color:var(--muted)]">
+                    Shows only the copy helpers for the current primary video route.
+                  </p>
+                </div>
+              </div>
+              <div className="mt-3 flex flex-wrap gap-2">
+                {routeCopyActions.map((action) => (
+                  <button
+                    key={action.id}
+                    type="button"
+                    onClick={() => onCopy(action.text)}
+                    title={action.helper}
+                    className={`rounded-lg px-3 py-1.5 text-xs font-extrabold active:scale-95 ${
+                      action.primary
+                        ? "bg-gray-900 text-white hover:bg-black dark:bg-white dark:text-gray-950 dark:hover:bg-gray-200"
+                        : "border border-[color:var(--border)] bg-[color:var(--surface-elevated)] text-[color:var(--text)] hover:bg-[color:var(--surface)]"
+                    }`}
+                  >
+                    {action.label}
+                  </button>
+                ))}
+              </div>
+            </div>
+          ) : null}
         </div>
       ) : null}
 
