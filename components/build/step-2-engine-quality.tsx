@@ -8,6 +8,13 @@ import { FeaturedModelCard, ModelCard } from "@/components/build/model-cards";
 
 import { KLING_MODELS, RUNWAY_MODELS } from "@/lib/model-specs";
 import {
+  VIDEO_MODEL_GROUP_LABELS,
+  VIDEO_MODEL_GROUP_ORDER,
+  getSceneBasedVideoModelRecommendations,
+  getVideoModelCapabilitiesByGroup,
+  type VideoModelCapability,
+} from "@/lib/video-model-capabilities";
+import {
   analyzePromptHealth,
   buildEnginePromptRecommendation,
   type EnginePromptMode,
@@ -38,6 +45,61 @@ const ACTION_STYLE_OPTIONS: ActionStylePreset[] = [
   "Ambush burst",
   "Forced retreat",
 ];
+
+function tierLabel(value: VideoModelCapability["realismTier"]): string {
+  return value.charAt(0).toUpperCase() + value.slice(1);
+}
+
+function CapabilityInfoCard({
+  capability,
+  badge = "Guide",
+}: {
+  capability: VideoModelCapability;
+  badge?: string;
+}) {
+  const verificationLabel = capability.needsVerification
+    ? "Needs verification"
+    : "Verified in app";
+
+  return (
+    <div className="rounded-2xl border border-gray-200 bg-white px-3.5 py-3.5 shadow-sm shadow-gray-100/70">
+      <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
+        <span className="rounded-full bg-gray-100 px-2 py-1 text-[10px] font-semibold uppercase tracking-[0.08em] text-gray-600">
+          {badge}
+        </span>
+        <span
+          className={`rounded-full px-2 py-1 text-[10px] font-semibold ${
+            capability.needsVerification
+              ? "bg-amber-100 text-amber-800"
+              : "bg-emerald-100 text-emerald-700"
+          }`}
+        >
+          {verificationLabel}
+        </span>
+      </div>
+      <div className="text-sm font-semibold tracking-tight text-gray-900">
+        {capability.label}
+      </div>
+      <p className="mt-1 text-xs leading-relaxed text-gray-600">
+        {capability.recommendedUse}
+      </p>
+      <div className="mt-3 flex flex-wrap gap-1.5 text-[10px] font-semibold">
+        <span className="rounded-full bg-blue-50 px-2 py-1 text-blue-700">
+          Realism {tierLabel(capability.realismTier)}
+        </span>
+        <span className="rounded-full bg-rose-50 px-2 py-1 text-rose-700">
+          Action {tierLabel(capability.actionTier)}
+        </span>
+        <span className="rounded-full bg-slate-100 px-2 py-1 text-slate-700">
+          {capability.provider}
+        </span>
+      </div>
+      <p className="mt-2 text-[11px] leading-relaxed text-gray-500">
+        {capability.wildlifeUseCase}
+      </p>
+    </div>
+  );
+}
 
 type Step2EngineQualityProps = {
   qualityReco: QualityRecommendations;
@@ -189,6 +251,14 @@ export default function Step2EngineQuality({
       // Fail gracefully when clipboard access is unavailable.
     }
   };
+
+  const sceneModelRecommendations = getSceneBasedVideoModelRecommendations({
+    runwayModel,
+    klingModel,
+    actionStyle,
+    arc,
+    contentLane,
+  }).slice(0, 4);
 
   return (
     <div className="grid gap-6 xl:grid-cols-[minmax(0,1fr)_380px]">
@@ -380,7 +450,7 @@ export default function Step2EngineQuality({
               Model Profile
             </h3>
             <span className="rounded-full bg-gray-100 px-2.5 py-1 text-[10px] font-medium text-gray-500">
-              prompts auto-adapt per model
+              grouped by workflow
             </span>
           </div>
 
@@ -396,80 +466,153 @@ export default function Step2EngineQuality({
             />
           </div>
 
-          <div className="mb-4 rounded-2xl border border-gray-100 bg-gray-50 px-3.5 py-2.5 text-[11px] font-medium leading-relaxed text-gray-500">
-            Hybrid uses both engines below: choose the Runway model for Shot 1 and
-            Shot 4, and the Kling model for Shot 2 and Shot 3. Seedance remains
-            available in the generated package as an optional full-bundle route.
+          <div className="mb-4 rounded-2xl border border-gray-100 bg-gray-50 px-3.5 py-2.5 text-[11px] font-medium leading-relaxed text-gray-600">
+            Video models are now organized by workflow role. Runway and Kling
+            selectors still drive the existing generated package, while
+            third-party and Seedance cards document future routing guidance
+            without changing saved preset or export payload shape.
           </div>
 
-          <div className="grid gap-4 md:grid-cols-2">
-            <div className="space-y-2">
-              <div className="mb-1 flex items-center gap-2">
-                <div className="h-[2px] w-8 rounded-full bg-green-400" />
-                <span className="rounded-full bg-green-100 px-2.5 py-1 text-[10px] font-semibold text-green-700">
-                  RUNWAY · HYBRID
-                </span>
-              </div>
-              {RUNWAY_MODELS.map((model) => (
-                <ModelCard
-                  key={model}
-                  tone="green"
-                  tag="RUNWAY"
-                  active={runwayModel === model}
-                  title={model}
-                  subtitle={
-                    model === "Gen-4.5"
-                      ? "Best realism, strongest first-frame readability"
-                      : model === "Gen-4 Turbo"
-                        ? "Fast draft for quick readable opening tests"
-                        : "Stable cinematic shots with clear openings"
-                  }
-                  activeLabel="✓ Used in hybrid"
-                  onClick={() => onRunwayModelChange(model)}
-                />
-              ))}
-
-              <div className="rounded-xl border border-green-100 bg-green-50 px-3.5 py-3 text-xs leading-relaxed text-green-900">
-                <div className="text-[10px] font-semibold uppercase tracking-[0.08em] text-green-600">
-                  Runway model use
+          <div className="mb-4 rounded-2xl border border-indigo-100 bg-indigo-50 p-3.5">
+            <div className="flex flex-wrap items-center justify-between gap-2">
+              <div>
+                <div className="text-[10px] font-semibold uppercase tracking-[0.08em] text-indigo-700">
+                  Scene-based recommendation
                 </div>
-                <ul className="mt-2 space-y-1 text-[11px] text-green-800">
-                  <li>• Gen-4.5: final hero / clean wildlife I2V</li>
-                  <li>• Gen-4 Turbo: fast structure test</li>
-                  <li>• I2V prompts: motion/camera/physics only</li>
-                  <li>• Runway: no negative prompt</li>
-                </ul>
+                <p className="mt-1 text-[11px] leading-relaxed text-indigo-800">
+                  Uses current action style, arc, and content lane. This is WSTV
+                  house routing guidance only; it does not rewrite prompts.
+                </p>
               </div>
+              <span className="rounded-full bg-white px-2.5 py-1 text-[10px] font-semibold text-indigo-700">
+                {sceneModelRecommendations.length} picks
+              </span>
             </div>
-            <div className="space-y-2">
-              <div className="mb-1 flex items-center gap-2">
-                <div className="h-[2px] w-8 rounded-full bg-blue-400" />
-                <span className="rounded-full bg-blue-100 px-2.5 py-1 text-[10px] font-semibold text-blue-700">
-                  KLING · HYBRID
-                </span>
-              </div>
-              {KLING_MODELS.map((model) => (
-                <ModelCard
-                  key={model}
-                  tone="blue"
-                  tag="KLING"
-                  active={klingModel === model}
-                  title={model}
-                  subtitle={
-                    model === "Kling 3.0 Pro"
-                      ? "Strong action workflow, best readable openings"
-                      : model === "Kling 3.0 Standard"
-                        ? "Balanced action with clear subject spacing"
-                        : model === "Kling 2.6 Pro"
-                          ? "Earlier option for simpler readable action"
-                          : model === "Kling 2.5 Turbo Pro"
-                            ? "Fast draft for one clean action beat"
-                            : "Fast I2V draft option for rough motion tests"
-                  }
-                  activeLabel="✓ Used in hybrid"
-                  onClick={() => onKlingModelChange(model)}
-                />
+            <div className="mt-3 grid gap-2 md:grid-cols-2">
+              {sceneModelRecommendations.map((recommendation) => (
+                <div
+                  key={recommendation.id}
+                  className="rounded-xl border border-indigo-100 bg-white/85 px-3 py-2.5"
+                >
+                  <div className="flex items-center justify-between gap-2">
+                    <span className="text-xs font-semibold text-gray-900">
+                      {recommendation.label}
+                    </span>
+                    <span className="rounded-full bg-indigo-100 px-2 py-0.5 text-[10px] font-semibold text-indigo-700">
+                      {recommendation.priority}
+                    </span>
+                  </div>
+                  <p className="mt-1 text-[11px] leading-relaxed text-gray-600">
+                    {recommendation.reason}
+                  </p>
+                </div>
               ))}
+            </div>
+          </div>
+
+          <div className="grid gap-4 xl:grid-cols-2">
+            {VIDEO_MODEL_GROUP_ORDER.map((group) => {
+              const capabilities = getVideoModelCapabilitiesByGroup(group);
+              const isRunwayNative = group === "RUNWAY_NATIVE";
+              const isDirectKling = group === "KLING_DIRECT";
+
+              return (
+                <div key={group} className="space-y-2">
+                  <div className="mb-1 flex items-center gap-2">
+                    <div
+                      className={`h-[2px] w-8 rounded-full ${
+                        isRunwayNative
+                          ? "bg-green-400"
+                          : isDirectKling
+                            ? "bg-blue-400"
+                            : group === "RUNWAY_THIRD_PARTY"
+                              ? "bg-amber-400"
+                              : "bg-purple-400"
+                      }`}
+                    />
+                    <span
+                      className={`rounded-full px-2.5 py-1 text-[10px] font-semibold ${
+                        isRunwayNative
+                          ? "bg-green-100 text-green-700"
+                          : isDirectKling
+                            ? "bg-blue-100 text-blue-700"
+                            : group === "RUNWAY_THIRD_PARTY"
+                              ? "bg-amber-100 text-amber-800"
+                              : "bg-purple-100 text-purple-700"
+                      }`}
+                    >
+                      {VIDEO_MODEL_GROUP_LABELS[group]}
+                    </span>
+                  </div>
+
+                  {capabilities.map((capability) => {
+                    if ((RUNWAY_MODELS as readonly string[]).includes(capability.label)) {
+                      const model = capability.label as RunwayModel;
+                      return (
+                        <ModelCard
+                          key={capability.id}
+                          tone="green"
+                          tag="RUNWAY"
+                          active={runwayModel === model}
+                          title={capability.label}
+                          subtitle={capability.recommendedUse}
+                          activeLabel="✓ Used in hybrid"
+                          onClick={() => onRunwayModelChange(model)}
+                        />
+                      );
+                    }
+
+                    if ((KLING_MODELS as readonly string[]).includes(capability.label)) {
+                      const model = capability.label as KlingModel;
+                      return (
+                        <ModelCard
+                          key={capability.id}
+                          tone="blue"
+                          tag="KLING"
+                          active={klingModel === model}
+                          title={capability.label}
+                          subtitle={capability.recommendedUse}
+                          activeLabel="✓ Used in hybrid"
+                          onClick={() => onKlingModelChange(model)}
+                        />
+                      );
+                    }
+
+                    return (
+                      <CapabilityInfoCard
+                        key={capability.id}
+                        capability={capability}
+                        badge={group === "SEEDANCE_DIRECT" ? "Optional route" : "Planning route"}
+                      />
+                    );
+                  })}
+                </div>
+              );
+            })}
+          </div>
+
+          <div className="mt-4 grid gap-3 md:grid-cols-2">
+            <div className="rounded-xl border border-green-100 bg-green-50 px-3.5 py-3 text-xs leading-relaxed text-green-900">
+              <div className="text-[10px] font-semibold uppercase tracking-[0.08em] text-green-700">
+                Runway I2V rule
+              </div>
+              <ul className="mt-2 space-y-1 text-[11px] text-green-800">
+                <li>• Gen-4 Turbo: cheap first structure tests</li>
+                <li>• Gen-4.5: final cinematic wildlife hero shots</li>
+                <li>• Motion/camera/physics only; reference images carry identity</li>
+                <li>• Preserve @lead_animal, @opposite_animal, @environment</li>
+              </ul>
+            </div>
+            <div className="rounded-xl border border-blue-100 bg-blue-50 px-3.5 py-3 text-xs leading-relaxed text-blue-900">
+              <div className="text-[10px] font-semibold uppercase tracking-[0.08em] text-blue-700">
+                Action routing rule
+              </div>
+              <ul className="mt-2 space-y-1 text-[11px] text-blue-800">
+                <li>• Kling: grounded animal pressure and body mechanics</li>
+                <li>• Seedance 2: fast chase/action and retention pacing</li>
+                <li>• Aleph: edit/manipulate existing footage only</li>
+                <li>• Never add gore, blood, visible injury, or kill-result wording</li>
+              </ul>
             </div>
           </div>
         </section>

@@ -14,6 +14,14 @@
 
 import type { RunwayModel, KlingModel, Arc, Engine, DepthMode, Weather, HabitatPreset } from "@/types";
 
+export {
+  VIDEO_MODEL_CAPABILITIES,
+  VIDEO_MODEL_GROUP_LABELS,
+  VIDEO_MODEL_GROUP_ORDER,
+  getSceneBasedVideoModelRecommendations,
+  getVideoModelCapabilitiesByGroup,
+} from "@/lib/video-model-capabilities";
+
 // ─────────────────────────────────────────────────────────────
 // BRAND
 // ─────────────────────────────────────────────────────────────
