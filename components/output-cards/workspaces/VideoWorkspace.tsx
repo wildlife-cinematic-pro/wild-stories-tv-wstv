@@ -141,7 +141,10 @@ export function VideoWorkspace({
         </div>
       </div>
 
-      <div className="rounded-2xl border border-[color:var(--border)] bg-[color:var(--surface-elevated)] p-4 shadow-[var(--surface-shadow)]">
+      <div
+        data-testid="video-primary-route-panel"
+        className="rounded-2xl border border-[color:var(--border)] bg-[color:var(--surface-elevated)] p-4 shadow-[var(--surface-shadow)]"
+      >
         <div className="text-[11px] font-extrabold uppercase tracking-[0.12em] text-[color:var(--muted)]">
           Primary video route
         </div>
