@@ -57,15 +57,38 @@ describe("cinematic USA viral storyboard builder", () => {
 
     for (const shot of storyboard.shots) {
       expect(Object.keys(shot.imagePrompts)).toEqual(["nanoBanana2", "gptImage2", "grokImagine"]);
-      expect(shot.imagePrompts.nanoBanana2).toContain("Nano Banana 2");
-      expect(shot.imagePrompts.gptImage2).toContain("GPT Image 2");
-      expect(shot.imagePrompts.grokImagine).toContain("Grok Imagine");
+      expect(shot.imagePrompts.nanoBanana2).toMatch(/^Shot \d — /);
+      expect(shot.imagePrompts.gptImage2).toMatch(/^Shot \d — /);
+      expect(shot.imagePrompts.grokImagine).toMatch(/^Shot \d — /);
       expect(Object.keys(shot.motionPrompts)).toEqual(["kling"]);
-      expect(shot.motionPrompts.kling).toContain("Kling motion prompt");
-      expect(shot.motionPrompts.kling).toContain("Duration: 5 seconds");
+      expect(shot.motionPrompts.kling).toContain("Kling image-to-video, 5 seconds");
       expect("runway" in shot.motionPrompts).toBe(false);
       expect("seedance" in shot.motionPrompts).toBe(false);
     }
+  });
+
+
+  it("keeps storyboard image prompt bodies free of engine-heading labels and comma fragments", () => {
+    const storyboard = buildCinematicStoryboard(baseInput);
+    const imagePrompts = storyboard.shots.flatMap((shot) => [
+      shot.imagePrompts.nanoBanana2,
+      shot.imagePrompts.gptImage2,
+      shot.imagePrompts.grokImagine,
+    ]);
+
+    for (const prompt of imagePrompts) {
+      expect(prompt).not.toMatch(/^Nano Banana 2 reference-stable cinematic master image prompt/i);
+      expect(prompt).not.toMatch(/^GPT Image 2 cinematic master image prompt/i);
+      expect(prompt).not.toMatch(/^Grok Imagine cinematic master image prompt/i);
+      expect(prompt).not.toMatch(/^(Nano Banana 2|GPT Image 2|Grok Imagine) prompt\./i);
+      expect(prompt).not.toMatch(/Shot [1-4],/);
+      expect(prompt).toMatch(/^Shot [1-4] — /);
+      expect(prompt).toContain("Create a cinematic wildlife documentary master image");
+    }
+
+    expect(storyboard.shots[3].imagePrompts.nanoBanana2).toContain(
+      "Shot 4 — Resolve / Unresolved Replay Ending"
+    );
   });
 
   it("keeps copyable storyboard prompts free of aspect-ratio and non-storyboard engine wording", () => {
