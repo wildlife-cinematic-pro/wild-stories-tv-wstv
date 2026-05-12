@@ -473,14 +473,50 @@ export default function Step3Generate({
     ? {
         predator: currentOutputPredator,
         prey: currentOutputPrey,
+        subjectPairLabel,
+        storyMode: pkg.storyMode ?? storyMode,
+        habitatRegion: pkg.habitatRegion ?? habitatRegion,
+        season: pkg.season ?? season,
+        timeOfDay: pkg.timeOfDay ?? timeOfDay,
+        environmentName: pkg.environmentName ?? finalEnvironment ?? habitat,
         sceneDescription,
         workflowLabel: `${mainEnginePath} • ${durationLaneLabel}`,
         qaScore: workflowQa.score,
         qaStatus: workflowQa.status,
         qaTopFixes: workflowQa.topFixes,
         imagePrompt: pkg.imagePrompt,
+        gptImage2Prompt: pkg.gptImage2Prompt,
+        thumbnailPrompt: pkg.thumbnailPrompt,
+        negativePrompt: pkg.negativePrompt,
         videoPrompt: mainVideoPrompt,
+        runwayPrompts: pkg.runwayShots,
+        klingPrompts: [
+          ...pkg.klingShots,
+          ...(pkg.klingNative15s ? [pkg.klingNative15s] : []),
+          ...(pkg.klingFramesPrompt ? [pkg.klingFramesPrompt] : []),
+        ],
+        seedancePrompts: [
+          ...(pkg.seedanceShots ?? []),
+          ...(pkg.seedanceMultiShotPrompt ? [pkg.seedanceMultiShotPrompt] : []),
+        ],
+        hybridShots: [
+          ...pkg.shotPlan.map((shot) => `${shot.title}: ${shot.prompt}`),
+          ...(pkg.viralFourShot
+            ? [
+                pkg.viralFourShot.shot1_closeup,
+                pkg.viralFourShot.shot2_standoff,
+                pkg.viralFourShot.shot3_clash,
+                pkg.viralFourShot.shot4_winner,
+              ]
+            : []),
+        ],
+        shotLabels: pkg.shotPlan.map((shot) =>
+          `${shot.engine}: ${shot.title}${shot.durationLabel ? ` • ${shot.durationLabel}` : ""}`
+        ),
+        hook: pkg.hook,
+        hook2026: pkg.hook2026,
         caption: pkg.caption,
+        cta: pkg.cta,
         hashtags: pkg.hashtags,
       }
     : null;
