@@ -6,6 +6,7 @@ import { getPromptCardForEngine, getWorkflowPromptCard } from "@/components/outp
 import { getDurationLaneConfig } from "@/lib/duration-lanes";
 import { getOrderedOutputTabs } from "@/lib/video-output-routing";
 import { getRouteAwareCopyActions } from "@/lib/video-route-copy-actions";
+import { getProductionChecklistForRoute } from "@/lib/video-production-checklist";
 
 import type { GeneratedPackage } from "@/types";
 import type { DirectWorkspaceTab, VideoWorkspaceTab } from "@/components/output-cards/workspaces/types";
@@ -39,6 +40,10 @@ export function VideoWorkspace({
   const routeDetail = data.primaryVideoRoute?.detail;
   const modelGuidance = data.modelPromptGuidance;
   const routeCopyActions = getRouteAwareCopyActions(data);
+  const productionChecklist = getProductionChecklistForRoute({
+    route: data.primaryVideoRoute,
+    guidance: data.modelPromptGuidance,
+  });
   const runwayShots = (data.runwayShots ?? []).map((shot) => String(shot ?? ""));
   const klingShots = (data.klingShots ?? []).map((shot) => String(shot ?? ""));
   const seedanceShots = (data.seedanceShots ?? []).map((shot) => String(shot ?? ""));
@@ -191,6 +196,48 @@ export function VideoWorkspace({
                 {modelGuidance.copyTip}
               </p>
             </div>
+          </div>
+
+          <div className="mt-3 rounded-xl border border-[color:var(--border-soft)] bg-[color:var(--surface-muted)] p-3">
+            <div className="flex flex-wrap items-start justify-between gap-3">
+              <div>
+                <div className="text-[10px] font-black uppercase tracking-[0.1em] text-[color:var(--muted)]">
+                  Production Checklist
+                </div>
+                <div className="mt-1 text-xs font-extrabold text-[color:var(--text)]">
+                  {productionChecklist.title}
+                </div>
+              </div>
+              <div className="flex flex-wrap gap-1.5">
+                {productionChecklist.badges.map((badge) => (
+                  <span
+                    key={badge}
+                    className={`rounded-full border px-2 py-0.5 text-[10px] font-extrabold ${
+                      badge === "Source footage required" || badge === "Needs verification"
+                        ? "border-amber-500/40 bg-amber-500/12 text-amber-800 dark:text-amber-100"
+                        : "border-[color:var(--border)] bg-[color:var(--surface-elevated)] text-[color:var(--muted)]"
+                    }`}
+                  >
+                    {badge}
+                  </span>
+                ))}
+              </div>
+            </div>
+            <ul className="mt-3 grid gap-1.5 text-xs font-semibold leading-relaxed text-[color:var(--text)] md:grid-cols-2">
+              {productionChecklist.steps.map((step) => (
+                <li key={step} className="flex gap-2">
+                  <span className="mt-1 h-1.5 w-1.5 shrink-0 rounded-full bg-[color:var(--accent)]" />
+                  <span>{step}</span>
+                </li>
+              ))}
+            </ul>
+            <button
+              type="button"
+              onClick={() => onCopy(productionChecklist.copyText)}
+              className="mt-3 rounded-lg border border-[color:var(--border)] bg-[color:var(--surface-elevated)] px-3 py-1.5 text-xs font-extrabold text-[color:var(--text)] hover:bg-[color:var(--surface)] active:scale-95"
+            >
+              Copy Production Checklist
+            </button>
           </div>
 
           {routeCopyActions.length ? (
