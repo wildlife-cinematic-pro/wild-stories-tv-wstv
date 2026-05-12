@@ -64,7 +64,7 @@ export function getStoryModeSubjectDefaults(
       return {
         subjectA: "Bald Eagle",
         subjectB: "Coyote",
-        foodItem: "non-graphic deer carcass zone",
+        foodItem: "non-graphic deer food claim zone",
       };
     case StoryMode.PREDATOR_VS_PREY:
     default:

@@ -70,10 +70,10 @@ export const USA_STORY_MODE_PRESETS: StoryModePreset[] = [
     id: "bald-eagle-vs-coyote-food-zone",
     name: "Bald Eagle vs Coyote Food Zone",
     storyMode: StoryMode.SCAVENGER_CONFLICT,
-    summary: "Ownership tension around a non-graphic food zone.",
+    summary: "Ownership tension around an obscured non-graphic food claim zone.",
     subjectA: "Bald Eagle",
     subjectB: "Coyote",
-    foodItem: "non-graphic deer carcass zone",
+    foodItem: "non-graphic deer food claim zone",
     habitatRegion: HabitatRegion.GREAT_PLAINS,
     season: "WINTER",
     timeOfDay: "GOLDEN_HOUR",
@@ -82,7 +82,7 @@ export const USA_STORY_MODE_PRESETS: StoryModePreset[] = [
     viralLane: ViralLane.TENSION,
     violenceLevel: ViolenceLevel.DISPLAY_ONLY,
     sceneDescription:
-      "A bald eagle guards a partially obscured non-graphic food zone while a coyote circles outside the claim line.",
+      "A bald eagle holds a guarded claim line near an obscured non-graphic deer food claim zone while a coyote circles outside the boundary.",
   },
   {
     id: "bison-herd-wall-vs-wolves",

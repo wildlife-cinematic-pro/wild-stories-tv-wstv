@@ -1,4 +1,5 @@
 import { StoryMode, type GeneratedPackage } from "@/types";
+import { normalizeScavengerFoodZone } from "@/lib/scavenger-food-zone";
 import {
   buildStoryModePromptContext,
   isNonPredatorStoryMode,
@@ -94,7 +95,7 @@ function nonAnimalPreserveLine(subject: string, kind: ImageReferenceKind) {
     return `${subject} as a clean food-source reference: readable fish/food shape, waterline placement, splash scale, natural texture, and no graphic feeding detail.`;
   }
   if (kind === "food-zone") {
-    return `${subject} as a non-graphic food-zone/environment reference: ownership focal area, terrain, cover, spacing lanes, and no visible gore.`;
+    return `${subject} as an animal-free non-graphic food-zone/environment reference: ownership focal area, obscured food source, grass and terrain cover, spacing lanes, one clean open claim lane, no visible carcass detail, no blood, no gore, no wounds.`;
   }
   return `${subject} habitat, lighting, terrain, atmosphere, ground texture, scale cues, and open subject-ready space.`;
 }
@@ -148,7 +149,9 @@ export function getStoryModeImageReferenceRoles(data: GeneratedPackage): StoryMo
   const primary = context.primarySubjectLabel;
   const secondary = context.secondarySubjectLabel;
   const offspring = cleanText(data.offspringLabel, "cub");
-  const foodItem = cleanText(data.foodItem, "non-graphic food zone");
+  const foodItem = context.storyMode === StoryMode.SCAVENGER_CONFLICT
+    ? normalizeScavengerFoodZone(data.foodItem)
+    : cleanText(data.foodItem, "non-graphic food zone");
 
   const common = {
     storyMode: context.storyMode,
@@ -364,13 +367,13 @@ export function getStoryModeImageReferenceRoles(data: GeneratedPackage): StoryMo
         primaryPreserveLine: animalPreserveLine(primary),
         secondaryPreserveLine: animalPreserveLine(secondary),
         environmentPreserveLine: nonAnimalPreserveLine(foodItem, "food-zone"),
-        mergeCompositionLine: `${primary} guards the non-graphic food zone while ${secondary} circles at the edge; show claim-line tension, clean spacing, habitat context, and no visible carcass gore.`,
-        mergeStageSubjectLine: `${primary}, ${secondary}, and a non-graphic ${foodItem} claim zone`,
+        mergeCompositionLine: `${primary} holds a guarded claim posture near ${foodItem} while ${secondary} circles at the edge; show claim-line pressure, clean spacing, one open lane, golden-hour habitat context, and no contact.`,
+        mergeStageSubjectLine: `${primary}, ${secondary}, and ${foodItem}`,
         mergeStageDirections: {
-          1: `${primary} holds the non-graphic claim zone while ${secondary} appears at the edge of the habitat lane.`,
-          2: `${secondary} circles closer while ${primary} guards the food zone; tension comes from spacing and ownership, not gore.`,
-          3: `Peak non-graphic claim-line tension with ${primary} and ${secondary} separated around the food zone, no visible carcass gore.`,
-          4: `Standoff, retreat, or unresolved claim frame with the food zone clean and the ownership line readable.`,
+          1: `${primary} holds a guarded claim posture near ${foodItem} while ${secondary} watches from the edge; clean claim-line tension, no visible carcass detail.`,
+          2: `${secondary} circles closer along the edge of the claim zone while ${primary} stays planted and alert; spacing tightens, eye-lines lock, golden-hour rim light, no contact.`,
+          3: `${primary} opens its wings slightly in a defensive display as ${secondary} pauses mid-step at the boundary; strongest non-graphic action beat, cinematic survival pressure, no bite, no strike, no visible injury.`,
+          4: `${secondary} holds back while ${primary} keeps the claim line; unresolved wildlife standoff, food source still obscured, clean documentary ending, no graphic feeding.`,
         },
       };
     default:

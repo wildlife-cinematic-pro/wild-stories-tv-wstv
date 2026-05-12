@@ -21,6 +21,7 @@ import type {
   Weather,
   WeatherHazard,
 } from "@/types";
+import { normalizeScavengerFoodZone } from "@/lib/scavenger-food-zone";
 import {
   EndingMode as EndingModeEnum,
   HabitatRegion as HabitatRegionEnum,
@@ -156,12 +157,12 @@ const DEFAULTS: Record<
   [StoryModeEnum.SCAVENGER_CONFLICT]: {
     subjectA: "Bald Eagle",
     subjectB: "Coyote",
-    foodItem: "non-graphic deer carcass zone",
+    foodItem: "non-graphic deer food claim zone",
   },
 };
 
 const SAFETY_LINE =
-  "Safety: clean survival tension only, no gore, no blood, no visible injury, no torn flesh, no exposed injury, no broken bones, no dead animal, no humans, no vehicles, no fences, no zoo enclosure.";
+  "Safety: clean survival tension only, no blood, no gore, no visible wounds, no visible injury, no graphic feeding, no exposed flesh, no graphic carcass detail, no humans, no vehicles, no fences, no zoo enclosure.";
 
 const REALISM_LOCK =
   "Photorealistic wildlife documentary realism, stable animal anatomy, grounded paw/hoof/foot contact, full-body readability, believable scale, clean subject separation, natural habitat detail, no text, no watermark.";
@@ -246,7 +247,10 @@ function buildModeLines(input: StoryModePromptContextInput) {
   const escapeDirection = input.escapeDirection ?? defaults?.escapeDirection ?? "BRUSH";
   const weatherHazard = input.weatherHazard ?? defaults?.weatherHazard ?? "BLIZZARD";
   const rutSeason = input.rutSeason ?? defaults?.rutSeason ?? false;
-  const foodItem = cleanText(input.foodItem, defaults?.foodItem ?? "non-graphic food zone");
+  const rawFoodItem = cleanText(input.foodItem, defaults?.foodItem ?? "non-graphic food claim zone");
+  const foodItem = storyMode === StoryModeEnum.SCAVENGER_CONFLICT
+    ? normalizeScavengerFoodZone(rawFoodItem)
+    : rawFoodItem;
 
   switch (storyMode) {
     case StoryModeEnum.HERD_DEFENSE:
@@ -343,12 +347,12 @@ function buildModeLines(input: StoryModePromptContextInput) {
       return {
         subjectA,
         subjectB,
-        groupLine: `Food zone: ${foodItem}; keep it non-graphic and partially obscured if visible.`,
-        relationshipLine: `${subjectA} guards ${foodItem} while ${subjectB} circles the edge in a non-graphic ownership conflict.`,
+        groupLine: `Food zone: ${foodItem}. Keep the food source obscured and animal-free as an environment reference.`,
+        relationshipLine: `${subjectA} holds the claim line near ${foodItem} while ${subjectB} circles or tests the edge without contact.`,
         sceneGoal:
-          "Scavenger conflict sequence with ownership tension around a non-graphic food zone and no visible carcass gore.",
+          "Scavenger conflict sequence with ownership tension, cinematic claim-line pressure, an obscured food source, and a clean open lane between animals.",
         modeSpecificActionLine:
-          "Use guarding posture, circling pressure, spacing, claim-line tension, and clean wildlife behavior instead of graphic feeding.",
+          "Use guarded posture, circling challenger pressure, tightening spacing, golden-hour documentary tension, and an unresolved non-graphic standoff; no contact, no bite, no strike impact, no graphic feeding.",
         facebookHookAngle: "The claim line is already drawn",
       };
     case StoryModeEnum.PREDATOR_VS_PREY:
@@ -480,7 +484,7 @@ function makeStructuredPrompt(
 
 
 const STORY_MODE_KLING_NEGATIVE_PROMPT =
-  "blood, gore, visible wounds, visible injury, torn flesh, exposed injury, broken bones, dead animal, duplicate animals, fused bodies, warped anatomy, extra limbs, humans, vehicles, fences, zoo enclosure, text, subtitles, watermark, excessive blur, chaotic camera shake";
+  "no blood, no gore, no visible wounds, no visible injury, no graphic feeding, no exposed flesh, no graphic carcass detail, no duplicate animals, no fused bodies, no warped anatomy, no extra limbs, no humans, no vehicles, no fences, no zoo enclosure, no text, no subtitles, no watermark, no excessive blur, no chaotic camera shake";
 
 function buildStoryModeEngineShotPrompts(
   context: StoryModePromptContext,
