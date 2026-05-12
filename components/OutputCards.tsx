@@ -28,6 +28,7 @@ import {
 import { getDecision } from "@/lib/decision-engine";
 import { downloadJson, downloadText } from "@/lib/storage";
 import { buildUsagePayload, trackUsage } from "@/lib/usage-tracker";
+import { getOrderedOutputTabs } from "@/lib/video-output-routing";
 
 import type { StoryModePreset } from "@/lib/story-mode-presets";
 import type { GeneratedPackage, PromptVersion } from "@/types";
@@ -44,8 +45,9 @@ export default function OutputCards({
   const [showWSTVWorkflowDiagram, setShowWSTVWorkflowDiagram] = useState(false);
   const [activeWorkspace, setActiveWorkspace] =
     useState<OutputWorkspaceTab>("overview");
+  const primaryVideoWorkspace = getOrderedOutputTabs(data.primaryVideoRoute)[0];
   const [videoWorkspace, setVideoWorkspace] =
-    useState<VideoWorkspaceTab>("hybrid");
+    useState<VideoWorkspaceTab>(primaryVideoWorkspace);
   const [directWorkspace, setDirectWorkspace] =
     useState<DirectWorkspaceTab>("seedance");
   const [outputFixFeedback, setOutputFixFeedback] = useState<string | null>(null);
@@ -61,6 +63,10 @@ export default function OutputCards({
       tab: activeWorkspace,
     });
   }, [activeWorkspace, data]);
+
+  useEffect(() => {
+    setVideoWorkspace(primaryVideoWorkspace);
+  }, [data.generationId, primaryVideoWorkspace]);
 
   const versionKey = useMemo(() => {
     const predator = data.predatorName ?? "";

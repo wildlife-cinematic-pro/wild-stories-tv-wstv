@@ -27,31 +27,44 @@ import type { GeneratedPackage, PromptVersion } from "@/types";
 
 function SelectedVideoModelCard({ data }: { data: GeneratedPackage }) {
   const selected = data.selectedVideoModel;
-  if (!selected) return null;
+  const route = data.primaryVideoRoute;
+  if (!selected && !route) return null;
 
+  const providerGroup = selected?.providerGroup ?? route?.selectedVideoModel?.providerGroup;
   const tone =
-    selected.providerGroup === "RUNWAY_NATIVE"
+    providerGroup === "RUNWAY_NATIVE"
       ? "border-green-300/40 bg-green-500/10 text-green-900 dark:text-green-100"
-      : selected.providerGroup === "RUNWAY_THIRD_PARTY"
+      : providerGroup === "RUNWAY_THIRD_PARTY"
         ? "border-amber-300/40 bg-amber-500/10 text-amber-900 dark:text-amber-100"
-        : selected.providerGroup === "KLING_DIRECT"
+        : providerGroup === "KLING_DIRECT"
           ? "border-blue-300/40 bg-blue-500/10 text-blue-900 dark:text-blue-100"
-          : "border-purple-300/40 bg-purple-500/10 text-purple-900 dark:text-purple-100";
+          : providerGroup === "SEEDANCE_DIRECT"
+            ? "border-purple-300/40 bg-purple-500/10 text-purple-900 dark:text-purple-100"
+            : "border-violet-300/40 bg-violet-500/10 text-violet-900 dark:text-violet-100";
 
   return (
     <div className={`rounded-xl border p-4 shadow-sm ${tone}`}>
       <div className="flex flex-wrap items-center justify-between gap-2">
         <div>
           <div className="text-[11px] font-extrabold uppercase tracking-[0.12em] opacity-75">
-            Selected Video Model
+            Video Routing
           </div>
-          <div className="mt-1 text-base font-extrabold">{selected.label}</div>
+          <div className="mt-1 text-base font-extrabold">
+            {route?.label ?? `Selected Video Model: ${selected?.label ?? "Default"}`}
+          </div>
         </div>
         <div className="flex flex-wrap gap-1.5 text-[10px] font-bold uppercase tracking-wide">
-          <span className="rounded-full bg-white/80 px-2.5 py-1 text-slate-800">
-            {selected.routeLabel}
-          </span>
-          {selected.needsVerification && (
+          {selected && (
+            <span className="rounded-full bg-white/80 px-2.5 py-1 text-slate-800">
+              Selected: {selected.label}
+            </span>
+          )}
+          {route?.hybridProtected && (
+            <span className="rounded-full bg-violet-100 px-2.5 py-1 text-violet-800">
+              Hybrid protected
+            </span>
+          )}
+          {selected?.needsVerification && (
             <span className="rounded-full bg-amber-100 px-2.5 py-1 text-amber-800">
               Needs verification
             </span>
@@ -59,7 +72,7 @@ function SelectedVideoModelCard({ data }: { data: GeneratedPackage }) {
         </div>
       </div>
       <p className="mt-2 text-xs leading-relaxed opacity-90">
-        {selected.recommendedUse}
+        {route?.detail ?? selected?.recommendedUse}
       </p>
       <p className="mt-2 text-[11px] leading-relaxed opacity-80">
         Legacy fallback remains available: Runway {data.modelsUsed?.runway ?? "Gen-4.5"} / Kling {data.modelsUsed?.kling ?? "Kling 3.0 Pro"}.
@@ -67,6 +80,7 @@ function SelectedVideoModelCard({ data }: { data: GeneratedPackage }) {
     </div>
   );
 }
+
 
 function formatBadgeValue(value: unknown, fallback: string) {
   if (typeof value !== "string" && typeof value !== "number") return fallback;
