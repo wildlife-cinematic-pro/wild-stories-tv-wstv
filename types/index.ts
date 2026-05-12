@@ -114,6 +114,49 @@ export type KlingModel =
   | "Kling 2.6 Pro"
   | "Kling 2.5 Turbo Pro"
   | "Kling 2.5 Turbo";
+
+export type VideoModelProviderGroup =
+  | "RUNWAY_NATIVE"
+  | "RUNWAY_THIRD_PARTY"
+  | "KLING_DIRECT"
+  | "SEEDANCE_DIRECT";
+
+export type VideoModelProvider = "Runway" | "Kling" | "Seedance";
+
+export type VideoModelWorkflowRole =
+  | "hybrid-runway"
+  | "third-party-runway"
+  | "direct-kling"
+  | "direct-seedance";
+
+export type VideoModelInputMode =
+  | "text-to-video"
+  | "image-to-video"
+  | "first-last-frame"
+  | "reference-image"
+  | "video-editing"
+  | "motion-control";
+
+export type VideoModelTier = "low" | "medium" | "high" | "premium";
+
+export type VideoModelCapability = {
+  id: string;
+  label: string;
+  providerGroup: VideoModelProviderGroup;
+  provider: VideoModelProvider;
+  workflowRole: VideoModelWorkflowRole;
+  supportedInputModes: VideoModelInputMode[];
+  recommendedUse: string;
+  wildlifeUseCase: string;
+  official: string[];
+  house: string[];
+  needsVerification: boolean;
+  costTier: VideoModelTier;
+  speedTier: VideoModelTier;
+  realismTier: VideoModelTier;
+  actionTier: VideoModelTier;
+  promptGuidance: string[];
+};
 // types/index.ts (ADD near other shared types)
 // Legacy values are preserved for compatibility, but runtime image prompting
 // is now centered on the Nano Banana / Gemini path.
