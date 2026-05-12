@@ -124,6 +124,7 @@ const IMAGE_ENGINES = ["Nano Banana 2", "GPT Image 2", "Grok Imagine"] as const;
 
 const FORBIDDEN_COPY_TERMS =
   /\b(?:9:16|16:9|vertical|horizontal|portrait|landscape|aspect ratio|AR|Runway|Seedance|mobile vertical frame)\b/i;
+const KLING_STORYBOARD_MAX_CHARS = 2500;
 
 function cleanText(value: unknown, fallback: string): string {
   const text = typeof value === "string" ? value.trim() : "";
@@ -152,7 +153,8 @@ function sanitizeCopyablePrompt(text: string): string {
     .replace(/\bAR\b/g, "format")
     .replace(/\bRunway\b/g, "image-to-video tool")
     .replace(/\bSeedance\b/g, "motion tool")
-    .replace(/\s{2,}/g, " ")
+    .replace(/[^\S\r\n]{2,}/g, " ")
+    .replace(/\n{3,}/g, "\n\n")
     .trim();
 }
 
@@ -375,6 +377,109 @@ function buildImagePrompt(args: {
   ]));
 }
 
+function klingSubjectMotion(args: {
+  shot: (typeof SHOT_TIMINGS)[number];
+  storyMode: StoryMode;
+  subjectA: string;
+  subjectB: string;
+  summary: string;
+}) {
+  const a = args.subjectA;
+  const b = args.subjectB;
+
+  switch (args.storyMode) {
+    case StoryMode.HERD_DEFENSE:
+      if (args.shot.role === "hook") return `${a} holds a readable herd wall while ${b} watches from outside the line; only small head turns, breath, and weight shifts move at first.`;
+      if (args.shot.role === "pressure") return `${a} tightens shoulder spacing as ${b} tests one outside lane; the distance closes slowly without contact.`;
+      if (args.shot.role === "peak") return `${b} presses closest to the herd edge while ${a} steps as one guarded wall; this is the strongest boundary-pressure beat.`;
+      return `${b} remains held outside the line while ${a} settles back into a protected formation; tension stays unresolved.`;
+    case StoryMode.MOTHER_BABY:
+      if (args.shot.role === "hook") return `${a} keeps the protected young close while ${b} stays readable in the same threat line; movement is restrained and watchful.`;
+      if (args.shot.role === "pressure") return `${a} body-blocks with one deliberate step as ${b} edges closer; the young stays behind the protective body line.`;
+      if (args.shot.role === "peak") return `${a} gives the strongest defensive display while ${b} stops short; no impact, only protective pressure.`;
+      return `${a} holds the protective position while ${b} reassesses from farther back; the young remains shielded.`;
+    case StoryMode.RIVAL_CLASH:
+      if (args.shot.role === "hook") return `${a} and ${b} hold dominance posture with locked attention; subtle hoof, paw, head, or shoulder movement keeps the tension alive.`;
+      if (args.shot.role === "pressure") return `${a} and ${b} approach through display pressure, closing only one clear lane without collision.`;
+      if (args.shot.role === "peak") return `${a} and ${b} hit one peak display or near-clash motion beat, then stabilize with grounded contact.`;
+      return `${a} and ${b} pause in an unresolved standoff, breathing visible as the pressure hangs.`;
+    case StoryMode.NEAR_MISS:
+      if (args.shot.role === "hook") return `${a} and ${b} hold a clear danger read with the escape lane visible; readiness movement stays small and tense.`;
+      if (args.shot.role === "pressure") return `${b} closes pursuit pressure while ${a} commits into the escape lane; spacing tightens but remains readable.`;
+      if (args.shot.role === "peak") return `${a} makes one decisive dodge through the closest near-miss window as ${b} stops just short without impact.`;
+      return `${a} continues out of the pressure line while ${b} slows and reassesses; the ending remains open.`;
+    case StoryMode.FISHING_STRIKE:
+      if (args.shot.role === "hook") return `${a} holds focused posture at the water edge while the food source area stays readable through ripple and surface movement.`;
+      if (args.shot.role === "pressure") return `${a} shifts into strike position with a controlled lean, wing set, paw lift, or head lock; the water surface tightens with anticipation.`;
+      if (args.shot.role === "peak") return `${a} performs one clean strike-window motion with a readable splash or grab beat; keep it non-graphic and physically believable.`;
+      return `${a} settles as the water continues moving; the outcome is clean, documentary, and not graphic.`;
+    case StoryMode.WEATHER_SURVIVAL:
+      if (args.shot.role === "hook") return `${a} braces against visible weather pressure with small body adjustments; the survival read is immediate.`;
+      if (args.shot.role === "pressure") return `${a} pushes forward through the weather in one steady motion, keeping full-body readability.`;
+      if (args.shot.role === "peak") return `${a} hits the strongest endurance beat against wind, snow, rain, dust, or mist while staying grounded.`;
+      return `${a} holds an endurance finish as the weather continues around it; the final frame feels resilient.`;
+    case StoryMode.MIGRATION:
+      if (args.shot.role === "hook") return `${a} establishes a clear movement direction across the route; the group or lead animal moves with measured purpose.`;
+      if (args.shot.role === "pressure") return `${a} advances into the crossing pressure with one readable forward surge; spacing remains organized.`;
+      if (args.shot.role === "peak") return `${a} reaches the strongest crossing motion beat, pushing through the lane without chaotic overlap.`;
+      return `${a} continues into distance with a cohesive migration finish and lingering movement.`;
+    case StoryMode.SCAVENGER_CONFLICT:
+      if (args.shot.role === "hook") return `${a} guards the claim line while ${b} watches from the edge; the food source remains obscured and non-graphic.`;
+      if (args.shot.role === "pressure") return `${b} circles the claim edge in one slow testing move while ${a} stays planted and alert; spacing tightens without contact.`;
+      if (args.shot.role === "peak") return `${a} gives the strongest non-graphic display at the boundary while ${b} pauses mid-step; the obscured food source never becomes visible.`;
+      return `${a} keeps ownership as ${b} holds back; the food source stays obscured and the standoff remains unresolved.`;
+    case StoryMode.PREDATOR_VS_PREY:
+    default:
+      if (args.shot.role === "hook") return `${a} and ${b} hold a clear threat eye-line with subtle readiness movement; the first frame stays calm enough to read instantly.`;
+      if (args.shot.role === "pressure") return `${a} closes pressure through one action lane while ${b} braces, turns, squares up, or begins escape.`;
+      if (args.shot.role === "peak") return `${a} and ${b} reach the strongest chase, defensive step, or near-clash beat without graphic contact.`;
+      return `${b} escapes, reassesses, or holds just beyond danger while ${a} slows into unresolved survival tension.`;
+  }
+}
+
+function klingCameraMotion(role: StoryboardShotRole): string {
+  if (role === "hook") return "Use one controlled telephoto hold that eases into a slow push-in; keep the first frame readable and avoid sudden movement.";
+  if (role === "pressure") return "Use one slight lateral track or hold-then-pressure move that follows the tightening spacing without losing either subject.";
+  if (role === "peak") return "Use one low-angle drift or controlled push through the peak beat; no chaotic camera shake, no overcutting, no whip movement.";
+  return "Use a steady telephoto hold that settles or pulls back slightly so the final frame feels replay-worthy and readable.";
+}
+
+function klingEnvironmentMotion(args: {
+  storyMode: StoryMode;
+  habitat: string;
+  season: string;
+  timeOfDay: string;
+}) {
+  const base = `Keep ${args.habitat}, ${args.season}, ${args.timeOfDay} continuity with small natural motion: grass movement, breath, dust, mist, water ripple, snow, rain, or drifting light atmosphere.`;
+  if (args.storyMode === StoryMode.SCAVENGER_CONFLICT) {
+    return `${base} Keep the food source obscured by grass and terrain with no visible carcass detail.`;
+  }
+  return base;
+}
+
+function klingContinuity(args: {
+  shot: (typeof SHOT_TIMINGS)[number];
+  summary: string;
+}) {
+  if (args.shot.role === "hook") return `Start the sequence with ${args.summary}; preserve a clean readable handoff into the pressure build.`;
+  if (args.shot.role === "pressure") return `Continue from the hook by tightening posture and spacing; prepare the single peak beat without resolving it early.`;
+  if (args.shot.role === "peak") return `Pay off the setup with the strongest single motion beat, then leave a clean frame that can cut into the ending.`;
+  return `Close with unresolved or clean documentary payoff; let the final pose invite replay without showing a graphic outcome.`;
+}
+
+function enforceKlingPromptLength(prompt: string) {
+  if (prompt.length <= KLING_STORYBOARD_MAX_CHARS) return prompt;
+
+  const safetyMarker = "\n\nSafety:";
+  const safetyIndex = prompt.indexOf(safetyMarker);
+  if (safetyIndex === -1) return prompt.slice(0, KLING_STORYBOARD_MAX_CHARS).trim();
+
+  const body = prompt.slice(0, safetyIndex).trim();
+  const safety = prompt.slice(safetyIndex).trim();
+  const maxBodyLength = KLING_STORYBOARD_MAX_CHARS - safety.length - 2;
+  return `${body.slice(0, Math.max(0, maxBodyLength)).trim()}\n\n${safety}`;
+}
+
 function buildKlingPrompt(args: {
   shot: (typeof SHOT_TIMINGS)[number];
   summary: string;
@@ -386,25 +491,22 @@ function buildKlingPrompt(args: {
   season: string;
   timeOfDay: string;
 }) {
-  const motion =
-    args.shot.role === "hook"
-      ? "telephoto hold into a slow push-in"
-      : args.shot.role === "pressure"
-        ? "slight lateral tracking with hold-then-pressure timing"
-        : args.shot.role === "peak"
-          ? "low-angle drift into a controlled pressure beat"
-          : "telephoto hold with a subtle settling move";
+  const prompt = [
+    "Kling image-to-video, 5 seconds.",
+    "Use the storyboard image as the first frame. Preserve the exact animal identities, environment, lighting direction, scale, spacing, and grounded contact from the image.",
+    "",
+    `Subject motion:\n${klingSubjectMotion(args)}`,
+    "",
+    `Camera motion:\n${klingCameraMotion(args.shot.role)}`,
+    "",
+    `Environment motion:\n${klingEnvironmentMotion(args)}`,
+    "",
+    `Continuity:\n${klingContinuity(args)}`,
+    "",
+    `Safety:\n${nonGraphicSafetyLine(args.storyMode)}`,
+  ].join("\n");
 
-  return sanitizeCopyablePrompt(joinSentences([
-    `Kling image-to-video, 5 seconds. Shot ${args.shot.shotNumber} — ${args.shot.title}`,
-    `Continue from the shot image concept: ${args.summary}`,
-    `${storyModeLabel(args.storyMode)} subjects: ${args.subjectA} vs ${args.subjectB}`,
-    `Keep environment continuity in ${args.habitat}, ${args.season}, ${args.timeOfDay}`,
-    `Controlled cinematic camera motion: ${motion}`,
-    "Keep the first frame readable, both subjects fully visible when the story needs both, clean subject separation, one clear action lane, and clear foreground/midground/background depth",
-    "Use one dominant motion beat only, no overcutting, no chaotic camera shake, realistic animal physics, stable anatomy, grounded contact, correct scale",
-    nonGraphicSafetyLine(args.storyMode),
-  ]));
+  return enforceKlingPromptLength(sanitizeCopyablePrompt(prompt));
 }
 
 function buildNotes(args: {

@@ -163,11 +163,16 @@ function PromptBlock({
   title,
   text,
   copyLabel,
+  maxChars,
 }: {
   title: string;
   text: string;
   copyLabel: string;
+  maxChars?: number;
 }) {
+  const isNearLimit = typeof maxChars === "number" && text.length > maxChars * 0.88;
+  const characterLabel = maxChars ? `${text.length.toLocaleString()} / ${maxChars.toLocaleString()}` : `${text.length.toLocaleString()} chars`;
+
   return (
     <div className="rounded-2xl border border-[color:var(--border)] bg-[color:var(--surface)] p-4">
       <div className="flex flex-wrap items-start justify-between gap-3">
@@ -175,8 +180,12 @@ function PromptBlock({
           <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-[color:var(--muted)]">
             {title}
           </p>
-          <p className="mt-1 text-xs text-[color:var(--muted)]">
-            Copyable prompt body · {text.length} chars
+          <p className={[
+            "mt-1 text-xs",
+            isNearLimit ? "text-[color:var(--warning-text)]" : "text-[color:var(--muted)]",
+          ].join(" ")}
+          >
+            Copyable prompt body · {maxChars ? `Kling: ${characterLabel}` : characterLabel}
           </p>
         </div>
         <CopyButton text={text} label={copyLabel} idleText={copyLabel} size="sm" />
@@ -254,6 +263,7 @@ function ShotCard({ shot }: { shot: StoryboardShot }) {
             title="Kling Motion Prompt"
             text={shot.motionPrompts.kling}
             copyLabel="Copy Kling Motion Prompt"
+            maxChars={2500}
           />
 
           <div className="rounded-2xl border border-[color:var(--border)] bg-[color:var(--surface)] p-4">
