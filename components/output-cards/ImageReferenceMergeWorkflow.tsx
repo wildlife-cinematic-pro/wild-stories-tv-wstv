@@ -11,6 +11,7 @@ import {
   isNonPredatorStoryMode,
   type StoryModePromptContext,
 } from "@/lib/story-mode-prompt-context";
+import { normalizeScavengerFoodZone } from "@/lib/scavenger-food-zone";
 import {
   buildModeAwareImageReferencePrompt,
   getStoryModeImageReferenceRoles,
@@ -45,7 +46,7 @@ const OPTIONAL_RUNWAY_REFERENCE_NOTE =
   "If using Runway Gen-4 References later, save references as @lead_animal, @opposite_animal, and @environment, then use exactly 3 active references.";
 
 const FINAL_MERGE_NEGATIVE_PROMPT =
-  "Negative prompt: blood, gore, visible wounds, torn flesh, exposed injury, broken bones, dead animal, graphic injury, extra limbs, duplicate animals, fused bodies, melted anatomy, distorted face, floating animals, wrong scale, wrong habitat, humans, vehicles, fences, zoo enclosure, text, subtitles, watermark, logo, cartoon, CGI, plastic texture, excessive blur, excessive camera shake.";
+  "Negative prompt: no blood, no gore, no visible wounds, no visible injury, no graphic feeding, no exposed flesh, no graphic carcass detail, no extra limbs, no duplicate animals, no fused bodies, no melted anatomy, no distorted face, no floating animals, no wrong scale, no wrong habitat, no humans, no vehicles, no fences, no zoo enclosure, no text, no subtitles, no watermark, no logo, no cartoon, no CGI, no plastic texture, no excessive blur, no excessive camera shake.";
 
 const MERGE_STAGES: MergeStage[] = [
   {
@@ -157,6 +158,7 @@ function buildMergeMasterPrompt({
   leadAnimalName,
   oppositeAnimalName,
   environmentName,
+  environmentReferenceName,
   lightingName,
   stage,
   modeContext,
@@ -165,6 +167,7 @@ function buildMergeMasterPrompt({
   leadAnimalName: string;
   oppositeAnimalName: string;
   environmentName: string;
+  environmentReferenceName: string;
   lightingName: string;
   stage: MergeStage;
   modeContext?: StoryModePromptContext;
@@ -178,7 +181,7 @@ function buildMergeMasterPrompt({
     : `2. ${roles.secondaryReferenceLabel} for ${oppositeAnimalName}: ${roles.secondaryPreserveLine}`;
   const environmentReferenceLine = roles.isPredatorVsPrey
     ? `3. Environment reference image for ${environmentName}: background, lighting direction, ground texture, terrain depth, habitat structure, and atmosphere.`
-    : `3. ${roles.environmentReferenceLabel} for ${environmentName}: ${roles.environmentPreserveLine}`;
+    : `3. ${roles.environmentReferenceLabel} for ${environmentReferenceName}: ${roles.environmentPreserveLine}`;
   const compositionLine = roles.isPredatorVsPrey ? stage.composition : roles.mergeCompositionLine;
   const secondaryIsAnimal = roles.secondaryKind === "animal" || roles.secondaryKind === "group";
   const readabilityLine = roles.isPredatorVsPrey
@@ -253,6 +256,9 @@ function buildReferencePrompts(data: GeneratedPackage) {
     ? `\n\nStory-mode reference goal: ${modeContext.modeLabel}. ${modeContext.sceneGoal} ${modeContext.relationshipLine} ${modeContext.safetyLine}`
     : "";
   const roles = getStoryModeImageReferenceRoles(data);
+  const environmentSubjectName = roles.environmentKind === "food-zone"
+    ? normalizeScavengerFoodZone(data.foodItem)
+    : environmentName;
 
   const leadPrompt = buildAnimalMasterReferencePrompt({
     subjectName: leadAnimalName,
@@ -318,9 +324,6 @@ function buildReferencePrompts(data: GeneratedPackage) {
         sceneGoal: modeContext?.sceneGoal ?? roles.mergeCompositionLine,
       });
 
-  const environmentSubjectName = roles.environmentKind === "food-zone"
-    ? cleanText(data.foodItem, "non-graphic food zone")
-    : environmentName;
   const habitatPrompt = roles.isPredatorVsPrey
     ? strengthenReferencePrompt(environmentPrompt + modeReferenceLine, "environment")
     : buildModeAwareImageReferencePrompt({
@@ -340,6 +343,7 @@ function buildReferencePrompts(data: GeneratedPackage) {
     leadAnimalName,
     oppositeAnimalName,
     environmentName,
+    environmentReferenceName: environmentSubjectName,
     lightingName,
     modeContext,
     roles,
@@ -508,6 +512,7 @@ export default function ImageReferenceMergeWorkflow({
     leadAnimalName,
     oppositeAnimalName,
     environmentName,
+    environmentReferenceName,
     lightingName,
     modeContext,
     roles,
@@ -533,6 +538,7 @@ export default function ImageReferenceMergeWorkflow({
       leadAnimalName,
       oppositeAnimalName,
       environmentName,
+      environmentReferenceName,
       lightingName,
       stage,
       modeContext,

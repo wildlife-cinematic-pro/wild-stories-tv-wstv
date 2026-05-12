@@ -180,7 +180,8 @@ describe("story mode image reference roles", () => {
         foodItem: "Deer carcass zone",
       })
     );
-    expect(scavenger.mergeCompositionLine).toContain("non-graphic food zone");
+    expect(scavenger.mergeCompositionLine).toContain("non-graphic deer food claim zone");
+    expect(scavenger.mergeCompositionLine).toContain("claim-line pressure");
   });
 
 });
