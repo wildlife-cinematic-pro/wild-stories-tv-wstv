@@ -7,6 +7,7 @@ import { getDurationLaneConfig } from "@/lib/duration-lanes";
 import { getOrderedOutputTabs } from "@/lib/video-output-routing";
 import { getRouteAwareCopyActions } from "@/lib/video-route-copy-actions";
 import { getProductionChecklistForRoute } from "@/lib/video-production-checklist";
+import { WorkflowQACard } from "@/components/output-cards/workspaces/workflow-qa-card";
 
 import type { GeneratedPackage } from "@/types";
 import type { DirectWorkspaceTab, VideoWorkspaceTab } from "@/components/output-cards/workspaces/types";
@@ -239,6 +240,12 @@ export function VideoWorkspace({
               Copy Production Checklist
             </button>
           </div>
+
+          <WorkflowQACard
+            route={data.primaryVideoRoute}
+            guidance={data.modelPromptGuidance}
+            onCopy={onCopy}
+          />
 
           {routeCopyActions.length ? (
             <div className="mt-3 rounded-xl border border-[color:var(--border-soft)] bg-[color:var(--surface-muted)] p-3">
