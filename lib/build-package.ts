@@ -79,6 +79,7 @@ import {
 } from "@/lib/platform-packs";
 import { arcMotionStrength } from "@/lib/model-specs";
 import { buildSelectedVideoModelInfo } from "@/lib/video-model-capabilities";
+import { buildPrimaryRouteRoutingNote, getPrimaryVideoRoute } from "@/lib/video-output-routing";
 import {
   mergeGeneratedPackage,
   type GeneratedPackageEnhancements,
@@ -479,6 +480,15 @@ export function buildGeneratedPackageDraft(
   );
 
   const selectedVideoModel = buildSelectedVideoModelInfo(input.selectedVideoModelId);
+  const primaryVideoRoute = getPrimaryVideoRoute({
+    pipelineStyle: input.selectedPipelineStyle,
+    selectedVideoModelId: input.selectedVideoModelId,
+  });
+  const baseRoutingNote = buildDurationLaneRoutingNote(
+    input.durationLane,
+    input.runwayModel,
+    input.klingModel
+  );
 
   const basePkg: GeneratedPackage = {
     predatorName: input.predator,
@@ -626,11 +636,7 @@ export function buildGeneratedPackageDraft(
       klingPack.shot3.fullText,
       klingPack.shot4.fullText,
     ].join("\n\n---\n\n"),
-    routingNote: buildDurationLaneRoutingNote(
-      input.durationLane,
-      input.runwayModel,
-      input.klingModel
-    ),
+    routingNote: buildPrimaryRouteRoutingNote(primaryVideoRoute, baseRoutingNote),
     pipelineStyle: input.selectedPipelineStyle,
     fiveShotCinematic,
     fiveShotViral,
@@ -643,6 +649,7 @@ export function buildGeneratedPackageDraft(
     naturalismChecklist,
     modelsUsed: { runway: input.runwayModel, kling: input.klingModel },
     selectedVideoModel,
+    primaryVideoRoute,
     sceneDesc: input.sceneInject,
     soundDesignPack,
     animalBehavior: animalBehaviorResult ?? undefined,

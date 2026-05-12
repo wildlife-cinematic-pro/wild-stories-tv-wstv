@@ -4,6 +4,7 @@ import { ProShotCard, SectionLabel } from "@/components/output-cards/shared-pane
 import { TimelineModePanel } from "@/components/output-cards/prompt-guidance-panel";
 import { getPromptCardForEngine, getWorkflowPromptCard } from "@/components/output-cards/prompt-utils";
 import { getDurationLaneConfig } from "@/lib/duration-lanes";
+import { getOrderedOutputTabs } from "@/lib/video-output-routing";
 
 import type { GeneratedPackage } from "@/types";
 import type { DirectWorkspaceTab, VideoWorkspaceTab } from "@/components/output-cards/workspaces/types";
@@ -31,6 +32,10 @@ export function VideoWorkspace({
   onOpenWorkspace: (value: "direct") => void;
   onCopy: (text: string) => void | Promise<unknown>;
 }) {
+  const orderedVideoTabs = getOrderedOutputTabs(data.primaryVideoRoute);
+  const primaryWorkspaceTab = orderedVideoTabs[0];
+  const routeLabel = data.primaryVideoRoute?.label ?? "Primary Route: Hybrid 4-shot";
+  const routeDetail = data.primaryVideoRoute?.detail;
   const runwayShots = (data.runwayShots ?? []).map((shot) => String(shot ?? ""));
   const klingShots = (data.klingShots ?? []).map((shot) => String(shot ?? ""));
   const seedanceShots = (data.seedanceShots ?? []).map((shot) => String(shot ?? ""));
@@ -94,12 +99,20 @@ export function VideoWorkspace({
           </div>
 
           <div className="grid w-full min-w-0 grid-cols-1 gap-2 sm:flex sm:w-auto sm:flex-wrap">
-            {[
-              { key: "hybrid" as const, label: "Hybrid Primary" },
-              { key: "seedance" as const, label: "Seedance Optional" },
-              { key: "runway" as const, label: "Runway Optional" },
-              { key: "kling" as const, label: "Kling Optional" },
-            ].map((item) => (
+            {orderedVideoTabs.map((key) => {
+              const baseLabel =
+                key === "hybrid"
+                  ? "Hybrid"
+                  : key === "seedance"
+                    ? "Seedance"
+                    : key === "runway"
+                      ? "Runway"
+                      : "Kling";
+              const item = {
+                key,
+                label: key === primaryWorkspaceTab ? `${baseLabel} Primary` : `${baseLabel} Optional`,
+              };
+              return (
               <button
                 key={item.key}
                 type="button"
@@ -112,9 +125,24 @@ export function VideoWorkspace({
               >
                 {item.label}
               </button>
-            ))}
+            );
+            })}
           </div>
         </div>
+      </div>
+
+      <div className="rounded-2xl border border-[color:var(--border)] bg-[color:var(--surface-elevated)] p-4 shadow-[var(--surface-shadow)]">
+        <div className="text-[11px] font-extrabold uppercase tracking-[0.12em] text-[color:var(--muted)]">
+          Primary video route
+        </div>
+        <div className="mt-1 text-sm font-extrabold text-[color:var(--text)]">
+          {routeLabel}
+        </div>
+        {routeDetail ? (
+          <p className="mt-1 text-xs leading-relaxed text-[color:var(--muted)]">
+            {routeDetail}
+          </p>
+        ) : null}
       </div>
 
       <SectionLabel label="🎬 Video Shots (Pro Layout)" />

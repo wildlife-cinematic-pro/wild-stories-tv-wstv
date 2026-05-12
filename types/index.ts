@@ -168,6 +168,21 @@ export type SelectedVideoModelInfo = {
   recommendedUse: string;
   needsVerification: boolean;
 };
+
+export type PrimaryVideoRouteInfo = {
+  kind:
+    | "hybrid"
+    | "seedance-direct"
+    | "runway-third-party"
+    | "aleph-edit"
+    | "runway-native"
+    | "kling-direct";
+  label: string;
+  detail: string;
+  workspaceTab: "hybrid" | "seedance" | "runway" | "kling";
+  hybridProtected: boolean;
+  selectedVideoModel?: SelectedVideoModelInfo;
+};
 // types/index.ts (ADD near other shared types)
 // Legacy values are preserved for compatibility, but runtime image prompting
 // is now centered on the Nano Banana / Gemini path.
@@ -1294,6 +1309,7 @@ export type GeneratedPackage = {
   aiEnhanced?: boolean;
   modelsUsed?: { runway: RunwayModel; kling: KlingModel };
   selectedVideoModel?: SelectedVideoModelInfo;
+  primaryVideoRoute?: PrimaryVideoRouteInfo;
   sceneDesc?: string;
 
   // ── Pro features ──

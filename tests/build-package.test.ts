@@ -135,6 +135,15 @@ describe("build-package refactor seam", () => {
       runway: "Gen-4.5",
       kling: "Kling 3.0 Pro",
     });
+    expect(draft.basePkg.primaryVideoRoute).toMatchObject({
+      kind: "hybrid",
+      label: "Primary Route: Hybrid 4-shot",
+      workspaceTab: "hybrid",
+      hybridProtected: true,
+    });
+    expect(draft.basePkg.seedanceShots.length).toBeGreaterThan(0);
+    expect(draft.basePkg.runwayShots.length).toBeGreaterThan(0);
+    expect(draft.basePkg.klingShots.length).toBeGreaterThan(0);
     expect(draft.basePkg.shotPlan.map((shot) => shot.engine)).toEqual([
       "RUNWAY",
       "KLING",
