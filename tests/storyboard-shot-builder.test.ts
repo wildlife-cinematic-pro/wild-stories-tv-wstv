@@ -99,6 +99,60 @@ describe("cinematic USA viral storyboard builder", () => {
     );
   });
 
+  it("builds Kling storyboard prompts in a sectioned 5-second image-to-video format", () => {
+    const storyboard = buildCinematicStoryboard(baseInput);
+    const klingPrompts = storyboard.shots.map((shot) => shot.motionPrompts.kling);
+
+    expect(klingPrompts).toHaveLength(4);
+
+    for (const prompt of klingPrompts) {
+      expect(prompt).toContain("Kling image-to-video, 5 seconds");
+      expect(prompt).toContain("Use the storyboard image as the first frame");
+      expect(prompt).toContain("Subject motion:");
+      expect(prompt).toContain("Camera motion:");
+      expect(prompt).toContain("Environment motion:");
+      expect(prompt).toContain("Continuity:");
+      expect(prompt).toContain("Safety:");
+      expect(prompt.length).toBeLessThanOrEqual(2500);
+      expect(prompt).not.toMatch(
+        /\b(?:9:16|16:9|vertical|horizontal|portrait|landscape|aspect ratio|AR|Runway|Seedance|mobile vertical frame)\b/i
+      );
+    }
+  });
+
+  it("uses distinct Kling motion logic for the 4 storyboard beats", () => {
+    const storyboard = buildCinematicStoryboard(baseInput);
+    const [hook, pressure, peak, resolve] = storyboard.shots.map((shot) => shot.motionPrompts.kling);
+
+    expect(hook).toContain("slow push-in");
+    expect(hook).toContain("threat eye-line");
+    expect(pressure).toContain("slight lateral track");
+    expect(pressure).toContain("closes pressure");
+    expect(peak).toContain("strongest chase");
+    expect(peak).toContain("no chaotic camera shake");
+    expect(resolve).toContain("pulls back slightly");
+    expect(resolve).toContain("unresolved survival tension");
+    expect(new Set([hook, pressure, peak, resolve]).size).toBe(4);
+  });
+
+  it("keeps Scavenger Conflict Kling motion food-zone wording obscured and non-graphic", () => {
+    const storyboard = buildCinematicStoryboard({
+      ...baseInput,
+      storyMode: StoryMode.SCAVENGER_CONFLICT,
+      subjectA: "Bald Eagle",
+      subjectB: "Coyote",
+      foodItem: "Deer carcass zone",
+    });
+
+    for (const shot of storyboard.shots) {
+      expect(shot.motionPrompts.kling).toContain("food source");
+      expect(shot.motionPrompts.kling).toContain("obscured");
+      expect(shot.motionPrompts.kling).toContain("non-graphic");
+      expect(shot.motionPrompts.kling).toContain("no visible carcass detail");
+      expect(shot.motionPrompts.kling.length).toBeLessThanOrEqual(2500);
+    }
+  });
+
   it("applies cinematic USA viral style language to copyable prompts", () => {
     const promptText = allCopyablePromptText();
 
