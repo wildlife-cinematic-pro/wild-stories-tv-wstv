@@ -36,6 +36,7 @@ export function VideoWorkspace({
   const primaryWorkspaceTab = orderedVideoTabs[0];
   const routeLabel = data.primaryVideoRoute?.label ?? "Primary Route: Hybrid 4-shot";
   const routeDetail = data.primaryVideoRoute?.detail;
+  const modelGuidance = data.modelPromptGuidance;
   const runwayShots = (data.runwayShots ?? []).map((shot) => String(shot ?? ""));
   const klingShots = (data.klingShots ?? []).map((shot) => String(shot ?? ""));
   const seedanceShots = (data.seedanceShots ?? []).map((shot) => String(shot ?? ""));
@@ -144,6 +145,53 @@ export function VideoWorkspace({
           </p>
         ) : null}
       </div>
+
+      {modelGuidance ? (
+        <div className="rounded-2xl border border-[color:var(--border)] bg-[color:var(--surface-elevated)] p-4 shadow-[var(--surface-shadow)]">
+          <div className="flex flex-wrap items-center justify-between gap-2">
+            <div>
+              <div className="text-[11px] font-extrabold uppercase tracking-[0.12em] text-[color:var(--muted)]">
+                Model-specific prompt guidance
+              </div>
+              <div className="mt-1 text-sm font-extrabold text-[color:var(--text)]">
+                {modelGuidance.selectedModel}
+              </div>
+            </div>
+            {modelGuidance.sourceFootageRequired ? (
+              <span className="rounded-full border border-amber-500/40 bg-amber-500/12 px-2 py-0.5 text-[11px] font-extrabold text-amber-800 dark:text-amber-100">
+                Source footage required
+              </span>
+            ) : null}
+          </div>
+
+          <div className="mt-3 grid gap-3 md:grid-cols-3">
+            <div className="rounded-xl border border-[color:var(--border-soft)] bg-[color:var(--surface-muted)] p-3">
+              <div className="text-[10px] font-black uppercase tracking-[0.1em] text-[color:var(--muted)]">
+                Primary Route
+              </div>
+              <p className="mt-1 text-xs font-bold leading-relaxed text-[color:var(--text)]">
+                {modelGuidance.primaryRoute}
+              </p>
+            </div>
+            <div className="rounded-xl border border-[color:var(--border-soft)] bg-[color:var(--surface-muted)] p-3">
+              <div className="text-[10px] font-black uppercase tracking-[0.1em] text-[color:var(--muted)]">
+                Best Use
+              </div>
+              <p className="mt-1 text-xs font-semibold leading-relaxed text-[color:var(--text)]">
+                {modelGuidance.bestUse}
+              </p>
+            </div>
+            <div className="rounded-xl border border-[color:var(--border-soft)] bg-[color:var(--surface-muted)] p-3">
+              <div className="text-[10px] font-black uppercase tracking-[0.1em] text-[color:var(--muted)]">
+                Copy Tip
+              </div>
+              <p className="mt-1 text-xs font-semibold leading-relaxed text-[color:var(--text)]">
+                {modelGuidance.copyTip}
+              </p>
+            </div>
+          </div>
+        </div>
+      ) : null}
 
       <SectionLabel label="🎬 Video Shots (Pro Layout)" />
 
