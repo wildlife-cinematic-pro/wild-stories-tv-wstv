@@ -355,19 +355,19 @@ function buildImagePrompt(args: {
   season: string;
   timeOfDay: string;
 }) {
-  const engineTone =
+  const engineDirection =
     args.engine === "Nano Banana 2"
-      ? "reference-stable cinematic master image prompt"
+      ? "Prioritize reference-stable identity, grounded anatomy, and consistent species markers across the 4-shot sequence"
       : args.engine === "GPT Image 2"
-        ? "clean composition backup image prompt"
-        : "high-impact realistic image prompt";
+        ? "Prioritize clean composition, naturalistic lighting, and a reliable backup master image with clear subject readability"
+        : "Prioritize high-impact realism, strong thumbnail readability, and documentary wildlife texture without stylized exaggeration";
 
   return sanitizeCopyablePrompt(joinSentences([
-    `${args.engine} ${engineTone}`,
-    `Shot ${args.shot.shotNumber}, ${args.shot.timeRangeLabel}, ${args.shot.title}`,
+    `Shot ${args.shot.shotNumber} — ${args.shot.title}. Create a cinematic wildlife documentary master image for ${args.shot.timeRangeLabel}`,
     `${storyModeLabel(args.storyMode)} setup: ${args.subjectA} vs ${args.subjectB}`,
     `${args.summary}`,
     `Location continuity: ${args.habitat}, ${args.season}, ${args.timeOfDay}, ${resolveWeather(args.input)}`,
+    engineDirection,
     `Visual direction: ${cinematicStyleLine(args.input)}`,
     roleDirective(args.shot.role),
     "Preserve realistic wildlife behavior, correct animal scale, stable anatomy, grounded contact, clean silhouettes, and natural documentary tension",
@@ -396,8 +396,7 @@ function buildKlingPrompt(args: {
           : "telephoto hold with a subtle settling move";
 
   return sanitizeCopyablePrompt(joinSentences([
-    `Kling motion prompt for Shot ${args.shot.shotNumber}`,
-    "Duration: 5 seconds",
+    `Kling image-to-video, 5 seconds. Shot ${args.shot.shotNumber} — ${args.shot.title}`,
     `Continue from the shot image concept: ${args.summary}`,
     `${storyModeLabel(args.storyMode)} subjects: ${args.subjectA} vs ${args.subjectB}`,
     `Keep environment continuity in ${args.habitat}, ${args.season}, ${args.timeOfDay}`,
