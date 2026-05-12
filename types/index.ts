@@ -183,6 +183,15 @@ export type PrimaryVideoRouteInfo = {
   hybridProtected: boolean;
   selectedVideoModel?: SelectedVideoModelInfo;
 };
+
+export type ModelSpecificPromptGuidanceInfo = {
+  selectedModel: string;
+  primaryRoute: string;
+  bestUse: string;
+  copyTip: string;
+  promptNote: string;
+  sourceFootageRequired?: boolean;
+};
 // types/index.ts (ADD near other shared types)
 // Legacy values are preserved for compatibility, but runtime image prompting
 // is now centered on the Nano Banana / Gemini path.
@@ -1310,6 +1319,7 @@ export type GeneratedPackage = {
   modelsUsed?: { runway: RunwayModel; kling: KlingModel };
   selectedVideoModel?: SelectedVideoModelInfo;
   primaryVideoRoute?: PrimaryVideoRouteInfo;
+  modelPromptGuidance?: ModelSpecificPromptGuidanceInfo;
   sceneDesc?: string;
 
   // ── Pro features ──

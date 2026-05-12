@@ -81,6 +81,12 @@ import { arcMotionStrength } from "@/lib/model-specs";
 import { buildSelectedVideoModelInfo } from "@/lib/video-model-capabilities";
 import { buildPrimaryRouteRoutingNote, getPrimaryVideoRoute } from "@/lib/video-output-routing";
 import {
+  adaptGeneratedVideoPromptsForSelectedRoute,
+  adaptPromptListForSelectedVideoRoute,
+  adaptStructuredPromptForSelectedVideoRoute,
+  buildModelSpecificPromptGuidance,
+} from "@/lib/video-model-prompt-guidance";
+import {
   mergeGeneratedPackage,
   type GeneratedPackageEnhancements,
 } from "@/lib/generated-package";
@@ -281,6 +287,13 @@ export function buildGeneratedPackageDraft(
     input.quality,
     input.cameraAnglePreset
   );
+  const selectedVideoModel = buildSelectedVideoModelInfo(input.selectedVideoModelId);
+  const primaryVideoRoute = getPrimaryVideoRoute({
+    pipelineStyle: input.selectedPipelineStyle,
+    selectedVideoModelId: input.selectedVideoModelId,
+  });
+  const modelPromptGuidance = buildModelSpecificPromptGuidance(primaryVideoRoute);
+
   const runwayPack = buildRunwayPromptPack(
     input.predator,
     input.prey,
@@ -317,6 +330,26 @@ export function buildGeneratedPackageDraft(
     input.sceneInject,
     input.quality,
     input.cameraAnglePreset
+  );
+  const adaptedRunwayShots = adaptPromptListForSelectedVideoRoute(
+    [runwayPack.shot1, runwayPack.shot2, runwayPack.shot3, runwayPack.shot4],
+    primaryVideoRoute,
+    "runway"
+  );
+  const adaptedSeedanceShots = adaptPromptListForSelectedVideoRoute(
+    [seedancePack.shot1, seedancePack.shot2, seedancePack.shot3, seedancePack.shot4],
+    primaryVideoRoute,
+    "seedance"
+  );
+  const adaptedSeedanceMultiShot = adaptStructuredPromptForSelectedVideoRoute(
+    seedancePack.multiShotPrompt,
+    primaryVideoRoute,
+    "seedance"
+  );
+  const adaptedKlingShots = adaptPromptListForSelectedVideoRoute(
+    [klingPack.shot1, klingPack.shot2, klingPack.shot3, klingPack.shot4],
+    primaryVideoRoute,
+    "kling"
   );
   const fourShotWorkflowPack = buildFourShotWorkflowPromptPack({
     predator: input.predator,
@@ -479,11 +512,6 @@ export function buildGeneratedPackageDraft(
     (shot) => `Edit timeline: ${shot.editTimeline}`
   );
 
-  const selectedVideoModel = buildSelectedVideoModelInfo(input.selectedVideoModelId);
-  const primaryVideoRoute = getPrimaryVideoRoute({
-    pipelineStyle: input.selectedPipelineStyle,
-    selectedVideoModelId: input.selectedVideoModelId,
-  });
   const baseRoutingNote = buildDurationLaneRoutingNote(
     input.durationLane,
     input.runwayModel,
@@ -525,15 +553,10 @@ export function buildGeneratedPackageDraft(
     structuredPrompts: {
       imagePrompt: imagePromptCard,
       gptImage2Prompt: gptImage2PromptCard,
-      runwayShots: [runwayPack.shot1, runwayPack.shot2, runwayPack.shot3, runwayPack.shot4],
-      klingShots: [klingPack.shot1, klingPack.shot2, klingPack.shot3, klingPack.shot4],
-      seedanceShots: [
-        seedancePack.shot1,
-        seedancePack.shot2,
-        seedancePack.shot3,
-        seedancePack.shot4,
-      ],
-      seedanceMultiShot: seedancePack.multiShotPrompt,
+      runwayShots: adaptedRunwayShots,
+      klingShots: adaptedKlingShots,
+      seedanceShots: adaptedSeedanceShots,
+      seedanceMultiShot: adaptedSeedanceMultiShot,
       workflowShots: [
         fourShotWorkflowPack.shot1,
         fourShotWorkflowPack.shot2,
@@ -545,25 +568,10 @@ export function buildGeneratedPackageDraft(
       klingMultishotShots: klingMultishotCards,
       klingSixShot: klingSixShotCard,
     },
-    runwayShots: [
-      runwayPack.shot1.fullText,
-      runwayPack.shot2.fullText,
-      runwayPack.shot3.fullText,
-      runwayPack.shot4.fullText,
-    ],
-    klingShots: [
-      klingPack.shot1.fullText,
-      klingPack.shot2.fullText,
-      klingPack.shot3.fullText,
-      klingPack.shot4.fullText,
-    ],
-    seedanceShots: [
-      seedancePack.shot1.fullText,
-      seedancePack.shot2.fullText,
-      seedancePack.shot3.fullText,
-      seedancePack.shot4.fullText,
-    ],
-    seedanceMultiShotPrompt: seedancePack.multiShotPrompt.fullText,
+    runwayShots: adaptedRunwayShots.map((prompt) => prompt.fullText),
+    klingShots: adaptedKlingShots.map((prompt) => prompt.fullText),
+    seedanceShots: adaptedSeedanceShots.map((prompt) => prompt.fullText),
+    seedanceMultiShotPrompt: adaptedSeedanceMultiShot.fullText,
     seedanceWorkflowGuide: seedancePack.workflowGuide,
     klingNative15s: klingNative15sCard.fullText,
     klingFramesPrompt: klingFramesPromptCard.fullText,
@@ -624,18 +632,8 @@ export function buildGeneratedPackageDraft(
         why: primaryShotWhy[3],
       },
     ],
-    runwayBundle: [
-      runwayPack.shot1.fullText,
-      runwayPack.shot2.fullText,
-      runwayPack.shot3.fullText,
-      runwayPack.shot4.fullText,
-    ].join("\n\n---\n\n"),
-    klingBundle: [
-      klingPack.shot1.fullText,
-      klingPack.shot2.fullText,
-      klingPack.shot3.fullText,
-      klingPack.shot4.fullText,
-    ].join("\n\n---\n\n"),
+    runwayBundle: adaptedRunwayShots.map((prompt) => prompt.fullText).join("\n\n---\n\n"),
+    klingBundle: adaptedKlingShots.map((prompt) => prompt.fullText).join("\n\n---\n\n"),
     routingNote: buildPrimaryRouteRoutingNote(primaryVideoRoute, baseRoutingNote),
     pipelineStyle: input.selectedPipelineStyle,
     fiveShotCinematic,
@@ -650,6 +648,7 @@ export function buildGeneratedPackageDraft(
     modelsUsed: { runway: input.runwayModel, kling: input.klingModel },
     selectedVideoModel,
     primaryVideoRoute,
+    modelPromptGuidance,
     sceneDesc: input.sceneInject,
     soundDesignPack,
     animalBehavior: animalBehaviorResult ?? undefined,
@@ -695,6 +694,8 @@ export function buildGeneratedPackageDraft(
   if (storyModeOverrides) {
     Object.assign(basePkg, storyModeOverrides);
   }
+
+  adaptGeneratedVideoPromptsForSelectedRoute(basePkg, primaryVideoRoute);
 
   const capCutScript = buildCapCutScript(
     input.predator,
