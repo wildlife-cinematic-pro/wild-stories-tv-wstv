@@ -18,11 +18,18 @@ export type VideoModelSceneRecommendationInput = {
   contentLane?: ContentLane;
 };
 
+export type VideoModelSelectableTarget =
+  | { engine: "runway"; model: RunwayModel }
+  | { engine: "kling"; model: KlingModel };
+
 export type VideoModelSceneRecommendation = {
   id: string;
   label: string;
   reason: string;
+  bestFor: string;
   priority: number;
+  guidanceOnly: boolean;
+  selectableTarget?: VideoModelSelectableTarget;
 };
 
 const COMMON_VIDEO_GUARDRAILS = [
@@ -315,6 +322,49 @@ export function getVideoModelCapability(label: string): VideoModelCapability | u
   return VIDEO_MODEL_CAPABILITIES.find((capability) => capability.label === label);
 }
 
+
+const SELECTABLE_RUNWAY_MODELS: readonly RunwayModel[] = [
+  "Gen-4.5",
+  "Gen-4 Turbo",
+  "Gen-4",
+];
+
+const SELECTABLE_KLING_MODELS: readonly KlingModel[] = [
+  "Kling 3.0 Pro",
+  "Kling 3.0 Standard",
+  "Kling 2.6 Pro",
+  "Kling 2.5 Turbo Pro",
+  "Kling 2.5 Turbo",
+];
+
+function getSelectableTarget(label: string): VideoModelSelectableTarget | undefined {
+  if ((SELECTABLE_RUNWAY_MODELS as readonly string[]).includes(label)) {
+    return { engine: "runway", model: label as RunwayModel };
+  }
+
+  if ((SELECTABLE_KLING_MODELS as readonly string[]).includes(label)) {
+    return { engine: "kling", model: label as KlingModel };
+  }
+
+  return undefined;
+}
+
+function buildRecommendation(input: {
+  id: string;
+  label: string;
+  reason: string;
+  bestFor: string;
+  priority: number;
+}): VideoModelSceneRecommendation {
+  const selectableTarget = getSelectableTarget(input.label);
+
+  return {
+    ...input,
+    guidanceOnly: !selectableTarget,
+    selectableTarget,
+  };
+}
+
 function hasFastAction(input: VideoModelSceneRecommendationInput): boolean {
   return (
     input.actionStyle === "Viral chase" ||
@@ -340,64 +390,72 @@ export function getSceneBasedVideoModelRecommendations(
   input: VideoModelSceneRecommendationInput = {}
 ): VideoModelSceneRecommendation[] {
   const recommendations: VideoModelSceneRecommendation[] = [
-    {
+    buildRecommendation({
       id: "runway-gen-4-turbo",
       label: "Gen-4 Turbo",
       reason: "Cheap first pass for structure, spacing, and first-frame readability tests.",
+      bestFor: "Quick structure tests before spending final render time.",
       priority: 70,
-    },
-    {
+    }),
+    buildRecommendation({
       id: "runway-gen-4-5",
       label: "Gen-4.5",
       reason: "Final cinematic wildlife hero shots after the motion structure is proven.",
+      bestFor: "Polished Runway hybrid openings/endings with strong wildlife realism.",
       priority: 80,
-    },
-    {
+    }),
+    buildRecommendation({
       id: "runway-aleph",
       label: "Aleph",
       reason: "Use when editing or manipulating existing footage rather than generating a new shot.",
+      bestFor: "Existing-footage edits; guidance only in the current saved model system.",
       priority: 30,
-    },
+    }),
   ];
 
   if (hasGroundedPressure(input)) {
     recommendations.push(
-      {
+      buildRecommendation({
         id: "kling-03-4k",
         label: "Kling 03 4K",
         reason: "Final-quality grounded animal pressure and body mechanics when verified/available.",
+        bestFor: "Verified high-resolution action route planning; guidance only for now.",
         priority: 95,
-      },
-      {
+      }),
+      buildRecommendation({
         id: "kling-3-0-motion-control",
         label: "Kling 3.0 Motion Control",
         reason: "Controlled identity-locked action, realistic spacing, and pressure beats.",
+        bestFor: "Motion-control action planning; guidance only for current saved selectors.",
         priority: 92,
-      }
+      })
     );
   } else {
-    recommendations.push({
+    recommendations.push(buildRecommendation({
       id: "kling-3-0-pro",
       label: "Kling 3.0 Pro",
       reason: "Strong direct Kling action route for grounded middle-beat wildlife motion.",
+      bestFor: "Selectable direct Kling pressure/action shots inside the current hybrid workflow.",
       priority: 82,
-    });
+    }));
   }
 
   if (hasFastAction(input)) {
-    recommendations.push({
+    recommendations.push(buildRecommendation({
       id: "seedance-2",
       label: "Seedance 2",
       reason: "Fast chase/action and high-retention motion experiments with compact prompts.",
+      bestFor: "Optional Seedance action route; guidance only because saved selectors remain Runway/Kling.",
       priority: 90,
-    });
+    }));
   } else {
-    recommendations.push({
+    recommendations.push(buildRecommendation({
       id: "seedance-2",
       label: "Seedance 2",
       reason: "Optional fast direct route for compact social-motion tests.",
+      bestFor: "Optional compact motion experiments; guidance only in saved presets.",
       priority: 50,
-    });
+    }));
   }
 
   return recommendations.sort((a, b) =>

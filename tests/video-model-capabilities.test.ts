@@ -77,6 +77,44 @@ describe("video model capabilities", () => {
     expect(recommendations[0].label).toBe("Seedance 2");
   });
 
+
+  it("distinguishes saved selectable models from guidance-only recommendations", () => {
+    const standard = getSceneBasedVideoModelRecommendations({
+      actionStyle: "Natural tension",
+      arc: "Pack hunting strategy",
+      contentLane: "Pack Hunt",
+    });
+
+    const runwayHero = standard.find((entry) => entry.label === "Gen-4.5");
+    const klingDirect = standard.find((entry) => entry.label === "Kling 3.0 Pro");
+    const seedance = standard.find((entry) => entry.label === "Seedance 2");
+    const aleph = standard.find((entry) => entry.label === "Aleph");
+
+    expect(runwayHero?.guidanceOnly).toBe(false);
+    expect(runwayHero?.selectableTarget).toEqual({ engine: "runway", model: "Gen-4.5" });
+    expect(klingDirect?.guidanceOnly).toBe(false);
+    expect(klingDirect?.selectableTarget).toEqual({ engine: "kling", model: "Kling 3.0 Pro" });
+    expect(seedance?.guidanceOnly).toBe(true);
+    expect(seedance?.selectableTarget).toBeUndefined();
+    expect(aleph?.guidanceOnly).toBe(true);
+    expect(aleph?.selectableTarget).toBeUndefined();
+  });
+
+  it("keeps Runway third-party recommendations guidance-only", () => {
+    const pressure = getSceneBasedVideoModelRecommendations({
+      actionStyle: "Close-contact fight",
+      arc: "Territory dominance battle",
+      contentLane: "Defender",
+    });
+
+    for (const label of ["Kling 03 4K", "Kling 3.0 Motion Control"]) {
+      const recommendation = pressure.find((entry) => entry.label === label);
+      expect(recommendation?.guidanceOnly).toBe(true);
+      expect(recommendation?.selectableTarget).toBeUndefined();
+      expect(recommendation?.bestFor).toMatch(/guidance only|planning/i);
+    }
+  });
+
   it("keeps recommendations deterministic", () => {
     const input = {
       actionStyle: "Natural tension" as const,

@@ -13,6 +13,7 @@ import {
   getSceneBasedVideoModelRecommendations,
   getVideoModelCapabilitiesByGroup,
   type VideoModelCapability,
+  type VideoModelSceneRecommendation,
 } from "@/lib/video-model-capabilities";
 import {
   analyzePromptHealth,
@@ -260,6 +261,20 @@ export default function Step2EngineQuality({
     contentLane,
   }).slice(0, 4);
 
+  const handleApplySceneRecommendation = (
+    recommendation: VideoModelSceneRecommendation
+  ) => {
+    const target = recommendation.selectableTarget;
+    if (!target) return;
+
+    if (target.engine === "runway") {
+      onRunwayModelChange(target.model);
+      return;
+    }
+
+    onKlingModelChange(target.model);
+  };
+
   return (
     <div className="grid gap-6 xl:grid-cols-[minmax(0,1fr)_380px]">
       <div className="space-y-6">
@@ -477,11 +492,12 @@ export default function Step2EngineQuality({
             <div className="flex flex-wrap items-center justify-between gap-2">
               <div>
                 <div className="text-[10px] font-semibold uppercase tracking-[0.08em] text-indigo-700">
-                  Scene-based recommendation
+                  Recommended for this scene
                 </div>
                 <p className="mt-1 text-[11px] leading-relaxed text-indigo-800">
-                  Uses current action style, arc, and content lane. This is WSTV
-                  house routing guidance only; it does not rewrite prompts.
+                  Uses current action style, arc, and content lane. Nothing changes
+                  automatically; saved Runway/Kling selections update only when you
+                  click an apply button on a selectable recommendation.
                 </p>
               </div>
               <span className="rounded-full bg-white px-2.5 py-1 text-[10px] font-semibold text-indigo-700">
@@ -489,24 +505,64 @@ export default function Step2EngineQuality({
               </span>
             </div>
             <div className="mt-3 grid gap-2 md:grid-cols-2">
-              {sceneModelRecommendations.map((recommendation) => (
-                <div
-                  key={recommendation.id}
-                  className="rounded-xl border border-indigo-100 bg-white/85 px-3 py-2.5"
-                >
-                  <div className="flex items-center justify-between gap-2">
-                    <span className="text-xs font-semibold text-gray-900">
-                      {recommendation.label}
-                    </span>
-                    <span className="rounded-full bg-indigo-100 px-2 py-0.5 text-[10px] font-semibold text-indigo-700">
-                      {recommendation.priority}
-                    </span>
+              {sceneModelRecommendations.map((recommendation) => {
+                const target = recommendation.selectableTarget;
+                const isCurrentRunway =
+                  target?.engine === "runway" && target.model === runwayModel;
+                const isCurrentKling =
+                  target?.engine === "kling" && target.model === klingModel;
+                const isCurrentModel = isCurrentRunway || isCurrentKling;
+
+                return (
+                  <div
+                    key={recommendation.id}
+                    className="rounded-xl border border-indigo-100 bg-white/85 px-3 py-2.5"
+                  >
+                    <div className="flex flex-wrap items-center justify-between gap-2">
+                      <span className="text-xs font-semibold text-gray-900">
+                        {recommendation.label}
+                      </span>
+                      <div className="flex flex-wrap items-center gap-1.5">
+                        <span
+                          className={`rounded-full px-2 py-0.5 text-[10px] font-semibold ${
+                            target
+                              ? "bg-emerald-100 text-emerald-700"
+                              : "bg-amber-100 text-amber-800"
+                          }`}
+                        >
+                          {target ? "Selectable now" : "Guidance only"}
+                        </span>
+                        <span className="rounded-full bg-indigo-100 px-2 py-0.5 text-[10px] font-semibold text-indigo-700">
+                          {recommendation.priority}
+                        </span>
+                      </div>
+                    </div>
+                    <p className="mt-1.5 text-[11px] leading-relaxed text-gray-700">
+                      <span className="font-semibold text-gray-900">Why:</span>{" "}
+                      {recommendation.reason}
+                    </p>
+                    <p className="mt-1 text-[11px] leading-relaxed text-gray-600">
+                      <span className="font-semibold text-gray-800">Best for:</span>{" "}
+                      {recommendation.bestFor}
+                    </p>
+                    <p className="mt-1 text-[10px] font-semibold uppercase tracking-[0.08em] text-gray-500">
+                      {target
+                        ? `Applies saved ${target.engine === "runway" ? "Runway" : "Kling"} model only`
+                        : "No saved-state mutation available for this guidance card"}
+                    </p>
+                    {target && (
+                      <button
+                        type="button"
+                        disabled={isCurrentModel}
+                        onClick={() => handleApplySceneRecommendation(recommendation)}
+                        className="mt-2 rounded-xl border border-indigo-200 bg-indigo-600 px-3 py-1.5 text-[11px] font-semibold text-white shadow-sm shadow-indigo-100 transition-all hover:bg-indigo-700 disabled:border-gray-200 disabled:bg-gray-100 disabled:text-gray-500 disabled:shadow-none active:scale-[0.98]"
+                      >
+                        {isCurrentModel ? "Recommended model selected" : "Apply Recommended Model"}
+                      </button>
+                    )}
                   </div>
-                  <p className="mt-1 text-[11px] leading-relaxed text-gray-600">
-                    {recommendation.reason}
-                  </p>
-                </div>
-              ))}
+                );
+              })}
             </div>
           </div>
 
