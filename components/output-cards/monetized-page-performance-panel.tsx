@@ -18,7 +18,9 @@ import {
   matchFacebookInsightsRecord,
 } from "@/lib/facebook-insights";
 import { buildMonetizedFacebookReport } from "@/lib/facebook-monetization-engine";
+import { buildPerformanceWonLostSummary } from "@/lib/performance-diagnosis";
 import {
+  PERFORMANCE_TRACKER_AI_TOOL_OPTIONS,
   buildBlankPerformanceTrackerEntry,
   parsePerformanceTrackerEntryJson,
   serializePerformanceTrackerEntriesAsCsv,
@@ -40,9 +42,15 @@ type TextFieldKey =
   | "title"
   | "conceptLabel"
   | "publishedAt"
+  | "promptVersion"
+  | "promptVersionKey"
+  | "promptVersionLabel"
+  | "whyWonLostSummary"
   | "notes";
 
 type NumberFieldKey =
+  | "firstSecondHookScore"
+  | "thumbnailQualityScore"
   | "reach"
   | "threeSecondViews"
   | "oneMinuteViews"
@@ -155,6 +163,21 @@ const TEXT_FIELDS: Array<{
     label: "Published at",
     placeholder: "2026-04-27 08:30 EST",
   },
+  {
+    key: "promptVersion",
+    label: "Prompt version",
+    placeholder: "v12",
+  },
+  {
+    key: "promptVersionKey",
+    label: "Prompt version key",
+    placeholder: "Mountain Lion|Mule Deer|Escape from danger",
+  },
+  {
+    key: "promptVersionLabel",
+    label: "Prompt version label",
+    placeholder: "Kling pressure test A",
+  },
 ];
 
 const NUMBER_FIELDS: Array<{
@@ -162,6 +185,8 @@ const NUMBER_FIELDS: Array<{
   label: string;
   placeholder: string;
 }> = [
+  { key: "firstSecondHookScore", label: "First 1-second hook score", placeholder: "88" },
+  { key: "thumbnailQualityScore", label: "Thumbnail quality score", placeholder: "84" },
   { key: "reach", label: "Reach", placeholder: "120000" },
   { key: "threeSecondViews", label: "3-second views", placeholder: "54000" },
   { key: "oneMinuteViews", label: "1-minute views", placeholder: "5800" },
@@ -182,6 +207,33 @@ const NUMBER_FIELDS: Array<{
   { key: "monetizedPlays", label: "Monetized plays", placeholder: "21000" },
 ];
 
+function buildPromptVersionKey(data: GeneratedPackage): string {
+  return [data.predatorName ?? "", data.preyName ?? "", data.arcName ?? ""]
+    .filter(Boolean)
+    .join("|");
+}
+
+function isViralScoreField(key: NumberFieldKey): boolean {
+  return key === "firstSecondHookScore" || key === "thumbnailQualityScore";
+}
+
+function inferAiToolUsed(data: GeneratedPackage): PerformanceTrackerEntry["aiToolUsed"] {
+  const routeKind = data.primaryVideoRoute?.kind;
+
+  if (!routeKind || routeKind === "hybrid") return "Runway+Kling";
+  if (routeKind === "seedance-direct") return "Seedance";
+  if (routeKind === "kling-direct") return "Kling";
+  if (
+    routeKind === "runway-native" ||
+    routeKind === "runway-third-party" ||
+    routeKind === "aleph-edit"
+  ) {
+    return "Runway";
+  }
+
+  return "Other";
+}
+
 /** Builds the seeded local performance record for the current generated package. */
 function buildPerformanceSeed(
   data: GeneratedPackage,
@@ -201,6 +253,11 @@ function buildPerformanceSeed(
     durationLane: data.durationLane ?? "short",
     hookFamily: data.hookFamily ?? "",
     contentLane: "Auto",
+    aiToolUsed: inferAiToolUsed(data),
+    promptVersion: "",
+    promptVersionKey: buildPromptVersionKey(data),
+    promptVersionLabel: "",
+    whyWonLostSummary: "",
   };
 }
 
@@ -333,13 +390,24 @@ export function MonetizedPagePerformancePanel({
     () => buildMonetizedFacebookReport(data, entry),
     [data, entry]
   );
+  const effectiveWhyWonLostSummary = useMemo(
+    () => entry.whyWonLostSummary.trim() || buildPerformanceWonLostSummary(entry, report),
+    [entry, report]
+  );
+  const exportEntry = useMemo(
+    () => ({
+      ...entry,
+      whyWonLostSummary: effectiveWhyWonLostSummary,
+    }),
+    [entry, effectiveWhyWonLostSummary]
+  );
   const jsonValue = useMemo(
-    () => serializePerformanceTrackerEntryAsJson(entry),
-    [entry]
+    () => serializePerformanceTrackerEntryAsJson(exportEntry),
+    [exportEntry]
   );
   const csvValue = useMemo(
-    () => serializePerformanceTrackerEntryAsCsvRow(entry, true),
-    [entry]
+    () => serializePerformanceTrackerEntryAsCsvRow(exportEntry, true),
+    [exportEntry]
   );
   const importedJsonValue = useMemo(
     () => serializePerformanceTrackerEntriesAsJson(importedRecords),
@@ -384,16 +452,23 @@ export function MonetizedPagePerformancePanel({
   };
 
   const setNumberField = (key: NumberFieldKey, value: string) => {
+    const numericValue = value.trim() ? Number(value) : "";
+    const normalizedValue =
+      isViralScoreField(key) &&
+      (numericValue === "" || numericValue < 1 || numericValue > 100)
+        ? ""
+        : numericValue;
+
     setEntry((current) => ({
       ...current,
-      [key]: value.trim() ? Number(value) : "",
+      [key]: normalizedValue,
     }));
   };
 
   const saveRecord = () => {
     const next = buildBlankPerformanceTrackerEntry({
       ...seed,
-      ...entry,
+      ...exportEntry,
       generationId,
       source: "manual",
     });
@@ -595,6 +670,13 @@ export function MonetizedPagePerformancePanel({
         {report.summary}
       </div>
 
+      <div className="mt-4 rounded-2xl border border-cyan-400/30 bg-cyan-500/10 p-4 text-sm leading-relaxed text-cyan-950 dark:text-cyan-50">
+        <div className="text-[11px] font-black uppercase tracking-[0.12em] opacity-80">
+          Why this reel won/lost
+        </div>
+        <p className="mt-2 font-semibold">{effectiveWhyWonLostSummary}</p>
+      </div>
+
       <div className="mt-4 grid gap-4 xl:grid-cols-[1.15fr_0.85fr]">
         <div className="space-y-4 rounded-2xl border border-[color:var(--border)] bg-[color:var(--surface-elevated)] p-4">
           <div className="flex flex-wrap items-center justify-between gap-2">
@@ -680,13 +762,35 @@ export function MonetizedPagePerformancePanel({
             ))}
           </div>
 
+          <label className="block space-y-1 text-xs text-[color:var(--muted)]">
+            <span className="font-bold text-[color:var(--text)]">AI tool used</span>
+            <select
+              value={entry.aiToolUsed}
+              onChange={(event) =>
+                setEntry((current) => ({
+                  ...current,
+                  aiToolUsed: event.target.value as PerformanceTrackerEntry["aiToolUsed"],
+                }))
+              }
+              className="w-full rounded-xl border border-[color:var(--border)] bg-[color:var(--surface-muted)] px-3 py-2 text-sm text-[color:var(--text)] outline-none focus:border-cyan-400"
+            >
+              <option value="">Select AI tool route</option>
+              {PERFORMANCE_TRACKER_AI_TOOL_OPTIONS.map((option) => (
+                <option key={option} value={option}>
+                  {option}
+                </option>
+              ))}
+            </select>
+          </label>
+
           <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
             {NUMBER_FIELDS.map((field) => (
               <label key={field.key} className="space-y-1 text-xs text-[color:var(--muted)]">
                 <span className="font-bold text-[color:var(--text)]">{field.label}</span>
                 <input
                   type="number"
-                  min="0"
+                  min={isViralScoreField(field.key) ? "1" : "0"}
+                  max={isViralScoreField(field.key) ? "100" : undefined}
                   step="any"
                   value={formatFieldValue(entry[field.key])}
                   onChange={(event) => setNumberField(field.key, event.target.value)}
@@ -696,6 +800,17 @@ export function MonetizedPagePerformancePanel({
               </label>
             ))}
           </div>
+
+          <label className="space-y-1 text-xs text-[color:var(--muted)]">
+            <span className="font-bold text-[color:var(--text)]">Why this reel won/lost summary</span>
+            <textarea
+              value={effectiveWhyWonLostSummary}
+              onChange={(event) => setTextField("whyWonLostSummary", event.target.value)}
+              placeholder="Short diagnosis of what helped or hurt this reel."
+              rows={3}
+              className="w-full rounded-xl border border-[color:var(--border)] bg-[color:var(--surface-muted)] px-3 py-2 text-sm text-[color:var(--text)] outline-none focus:border-cyan-400"
+            />
+          </label>
 
           <label className="space-y-1 text-xs text-[color:var(--muted)]">
             <span className="font-bold text-[color:var(--text)]">Notes</span>

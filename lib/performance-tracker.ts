@@ -1,4 +1,10 @@
-import type { Arc, ContentLane, HookFamily, PerformanceTrackerEntry } from "@/types";
+import type {
+  Arc,
+  ContentLane,
+  HookFamily,
+  PerformanceTrackerAiToolUsed,
+  PerformanceTrackerEntry,
+} from "@/types";
 
 export const PERFORMANCE_TRACKER_CSV_HEADER = [
   "generationId",
@@ -38,6 +44,13 @@ export const PERFORMANCE_TRACKER_CSV_HEADER = [
   "rpm",
   "monetizedPlays",
   "notes",
+  "firstSecondHookScore",
+  "thumbnailQualityScore",
+  "aiToolUsed",
+  "promptVersion",
+  "promptVersionKey",
+  "promptVersionLabel",
+  "whyWonLostSummary",
 ] as const;
 
 const VALID_ARCS: Arc[] = [
@@ -49,6 +62,16 @@ const VALID_ARCS: Arc[] = [
   "Pack hunting strategy",
   "Defender stands ground",
   "Giant vs giant clash",
+];
+
+export const PERFORMANCE_TRACKER_AI_TOOL_OPTIONS: PerformanceTrackerAiToolUsed[] = [
+  "Kling",
+  "Runway",
+  "Seedance",
+  "Runway+Kling",
+  "Runway+Seedance",
+  "Kling+Seedance",
+  "Other",
 ];
 
 type PerformanceTrackerSeed = Partial<
@@ -89,6 +112,13 @@ type PerformanceTrackerSeed = Partial<
     | "estimatedEarnings"
     | "rpm"
     | "monetizedPlays"
+    | "firstSecondHookScore"
+    | "thumbnailQualityScore"
+    | "aiToolUsed"
+    | "promptVersion"
+    | "promptVersionKey"
+    | "promptVersionLabel"
+    | "whyWonLostSummary"
     | "notes"
   >
 > & {
@@ -123,6 +153,13 @@ function coerceNumericValue(value: unknown): number | "" {
   }
 
   return numeric;
+}
+
+/** Coerces score fields into the supported 1-100 range. */
+function coerceScoreValue(value: unknown): number | "" {
+  const numeric = coerceNumericValue(value);
+  if (numeric === "") return "";
+  return numeric >= 1 && numeric <= 100 ? numeric : "";
 }
 
 /** Coerces duration-like strings such as mm:ss into seconds for average watch time. */
@@ -215,6 +252,17 @@ function normalizePerformanceTrackerArc(
   return VALID_ARCS.includes(text as Arc) ? (text as Arc) : fallback;
 }
 
+/** Narrows arbitrary AI tool text into the supported tracker route labels. */
+function normalizeAiToolUsed(
+  value: unknown,
+  fallback: PerformanceTrackerAiToolUsed | "" = ""
+): PerformanceTrackerAiToolUsed | "" {
+  const text = coerceTextValue(value);
+  return PERFORMANCE_TRACKER_AI_TOOL_OPTIONS.includes(text as PerformanceTrackerAiToolUsed)
+    ? (text as PerformanceTrackerAiToolUsed)
+    : fallback;
+}
+
 /** Finalizes a normalized record with derived ids and animal-pair fallbacks. */
 function finalizePerformanceTrackerEntry(
   value: PerformanceTrackerEntry
@@ -277,6 +325,13 @@ export function buildBlankPerformanceTrackerEntry(
     estimatedEarnings: seed.estimatedEarnings ?? "",
     rpm: seed.rpm ?? "",
     monetizedPlays: seed.monetizedPlays ?? "",
+    firstSecondHookScore: seed.firstSecondHookScore ?? "",
+    thumbnailQualityScore: seed.thumbnailQualityScore ?? "",
+    aiToolUsed: normalizeAiToolUsed(seed.aiToolUsed),
+    promptVersion: seed.promptVersion ?? "",
+    promptVersionKey: seed.promptVersionKey ?? "",
+    promptVersionLabel: seed.promptVersionLabel ?? "",
+    whyWonLostSummary: seed.whyWonLostSummary ?? "",
     notes: seed.notes ?? "",
   });
 }
@@ -346,6 +401,13 @@ export function normalizePerformanceTrackerEntry(
     estimatedEarnings: coerceNumericValue(source.estimatedEarnings),
     rpm: coerceNumericValue(source.rpm),
     monetizedPlays: coerceNumericValue(source.monetizedPlays),
+    firstSecondHookScore: coerceScoreValue(source.firstSecondHookScore),
+    thumbnailQualityScore: coerceScoreValue(source.thumbnailQualityScore),
+    aiToolUsed: normalizeAiToolUsed(source.aiToolUsed, base.aiToolUsed),
+    promptVersion: coerceTextValue(source.promptVersion) || base.promptVersion,
+    promptVersionKey: coerceTextValue(source.promptVersionKey) || base.promptVersionKey,
+    promptVersionLabel: coerceTextValue(source.promptVersionLabel) || base.promptVersionLabel,
+    whyWonLostSummary: coerceTextValue(source.whyWonLostSummary) || base.whyWonLostSummary,
     notes: coerceTextValue(source.notes) || base.notes,
   });
 }

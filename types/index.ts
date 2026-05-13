@@ -403,6 +403,15 @@ export type ABExperimentRecord = {
   status: "planned" | "running" | "completed";
 };
 
+export type PerformanceTrackerAiToolUsed =
+  | "Kling"
+  | "Runway"
+  | "Seedance"
+  | "Runway+Kling"
+  | "Runway+Seedance"
+  | "Kling+Seedance"
+  | "Other";
+
 export type PerformanceTrackerEntry = {
   recordId?: string;
   source?: "manual" | "facebook_csv";
@@ -442,6 +451,13 @@ export type PerformanceTrackerEntry = {
   estimatedEarnings?: number | "";
   rpm?: number | "";
   monetizedPlays?: number | "";
+  firstSecondHookScore: number | "";
+  thumbnailQualityScore: number | "";
+  aiToolUsed: PerformanceTrackerAiToolUsed | "";
+  promptVersion: string;
+  promptVersionKey: string;
+  promptVersionLabel: string;
+  whyWonLostSummary: string;
   notes: string;
 };
 

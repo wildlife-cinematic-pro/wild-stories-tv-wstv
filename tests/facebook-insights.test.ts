@@ -90,8 +90,8 @@ function makePerformanceRecord(
 describe("facebook insights import", () => {
   it("parses common Facebook Insights aliases into normalized records", () => {
     const csv = [
-      "generation_id,permalink,description,created_time,people_reached,3-second video views,1-minute video views,average watch time,average percentage watched,shares,comments,new_followers,profile_visits,link_clicks,estimated earnings,revenue per 1000 plays,monetized plays,notes",
-      'generation_1,https://facebook.com/post/1,"Mountain lion pressure closes fast",2026-04-27 08:30 EST,120000,62000,14000,01:12,58,260,170,95,410,22,31,5.8,21000,"Strong repeat-viewer and earnings signal."',
+      "generation_id,permalink,description,created_time,people_reached,3-second video views,1-minute video views,average watch time,average percentage watched,shares,comments,new_followers,profile_visits,link_clicks,estimated earnings,revenue per 1000 plays,monetized plays,hook score,thumbnail quality score,ai tool used,prompt version,prompt version key,prompt version label,why won lost,notes",
+      'generation_1,https://facebook.com/post/1,"Mountain lion pressure closes fast",2026-04-27 08:30 EST,120000,62000,14000,01:12,58,260,170,95,410,22,31,5.8,21000,91,84,Runway+Kling,v12,"Mountain Lion|Mule Deer|Escape from danger","Winner A","Likely won because of hook and cover.","Strong repeat-viewer and earnings signal."',
     ].join("\n");
 
     const result = importFacebookInsightsCsv(csv);
@@ -116,6 +116,13 @@ describe("facebook insights import", () => {
       estimatedEarnings: 31,
       rpm: 5.8,
       monetizedPlays: 21000,
+      firstSecondHookScore: 91,
+      thumbnailQualityScore: 84,
+      aiToolUsed: "Runway+Kling",
+      promptVersion: "v12",
+      promptVersionKey: "Mountain Lion|Mule Deer|Escape from danger",
+      promptVersionLabel: "Winner A",
+      whyWonLostSummary: "Likely won because of hook and cover.",
       notes: "Strong repeat-viewer and earnings signal.",
     });
   });

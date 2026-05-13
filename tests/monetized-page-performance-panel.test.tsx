@@ -131,6 +131,58 @@ describe("MonetizedPagePerformancePanel", () => {
     ).toBeInTheDocument();
   });
 
+  it("renders viral tracker fields and exports the auto won/lost summary", () => {
+    const onCopy = vi.fn();
+
+    render(
+      <MonetizedPagePerformancePanel data={makePackage()} onCopy={onCopy} />
+    );
+
+    expect(screen.getByLabelText(/First 1-second hook score/i)).toBeInTheDocument();
+    expect(screen.getByLabelText(/Thumbnail quality score/i)).toBeInTheDocument();
+    expect(screen.getByLabelText(/AI tool used/i)).toHaveValue("Runway+Kling");
+    expect(screen.getByLabelText(/^Prompt version$/i)).toBeInTheDocument();
+    expect(screen.getByLabelText(/Prompt version key/i)).toHaveValue(
+      "Mountain Lion|Mule Deer|Escape from danger"
+    );
+    expect(screen.getByLabelText(/Prompt version label/i)).toBeInTheDocument();
+    expect(screen.getByLabelText(/Why this reel won.lost summary/i)).toBeInTheDocument();
+
+    fireEvent.change(screen.getByLabelText(/First 1-second hook score/i), {
+      target: { value: "88" },
+    });
+    fireEvent.change(screen.getByLabelText(/Thumbnail quality score/i), {
+      target: { value: "84" },
+    });
+    fireEvent.change(screen.getByLabelText(/^Views$/i), {
+      target: { value: "10000" },
+    });
+    fireEvent.change(screen.getByLabelText(/Watch %/i), {
+      target: { value: "58" },
+    });
+    fireEvent.change(screen.getByLabelText(/^Shares$/i), {
+      target: { value: "220" },
+    });
+    fireEvent.change(screen.getByLabelText(/^Comments$/i), {
+      target: { value: "80" },
+    });
+    fireEvent.change(screen.getByLabelText(/^Reactions$/i), {
+      target: { value: "900" },
+    });
+
+    fireEvent.click(screen.getByRole("button", { name: /Copy JSON/i }));
+
+    expect(onCopy).toHaveBeenCalled();
+    const copiedJson = JSON.parse(String(onCopy.mock.calls.at(-1)?.[0] ?? "{}"));
+    expect(copiedJson).toMatchObject({
+      firstSecondHookScore: 88,
+      thumbnailQualityScore: 84,
+      aiToolUsed: "Runway+Kling",
+      promptVersionKey: "Mountain Lion|Mule Deer|Escape from danger",
+    });
+    expect(copiedJson.whyWonLostSummary).toMatch(/Likely won|Mixed result/i);
+  });
+
   it("rejects non-csv uploads with a clear notice", async () => {
     render(
       <MonetizedPagePerformancePanel data={makePackage()} onCopy={vi.fn()} />
