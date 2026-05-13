@@ -51,6 +51,7 @@ import {
   readShareState,
   shareStateMatchesWorkflowSnapshot,
   writeLastGeneratedOutput,
+  type LastGeneratedOutputRecord,
 } from "@/lib/storage";
 
 import {
@@ -281,6 +282,10 @@ export default function Page() {
     useState<PromotedVariantPublishCopyOverride | null>(null);
   const [lastGeneratedRestoreNotice, setLastGeneratedRestoreNotice] =
     useState<string | null>(null);
+  const [availableLastGeneratedOutput, setAvailableLastGeneratedOutput] =
+    useState<LastGeneratedOutputRecord | null>(null);
+  const [lastGeneratedOutputBannerDismissed, setLastGeneratedOutputBannerDismissed] =
+    useState(false);
   const [creatorQaRuns, setCreatorQaRuns] = useState<CreatorQaRun[]>([]);
   const [pinnedOutput, setPinnedOutput] = useState<PinnedGeneratedOutput | null>(null);
   const [shouldRecordCreatorQaRun, setShouldRecordCreatorQaRun] = useState(false);
@@ -1563,6 +1568,23 @@ export default function Page() {
     []
   );
 
+  const restoreLastGeneratedOutput = useCallback(
+    (restoredOutput: LastGeneratedOutputRecord) => {
+      applyBuildSnapshot(restoredOutput.snapshot, { clearGeneratedOutput: false });
+      setPkg(restoredOutput.pkg);
+      setPublishFlowSummary(restoredOutput.publishFlowSummary);
+      setPackageLocks(restoredOutput.packageLocks);
+      setStep(3);
+      setActiveTab("build");
+      setLastGeneratedRestoreNotice(
+        "Restored your last generated output from this browser."
+      );
+      setAvailableLastGeneratedOutput(null);
+      setLastGeneratedOutputBannerDismissed(true);
+    },
+    [applyBuildSnapshot]
+  );
+
   useEffect(() => {
     const restoredOutput = readLastGeneratedOutput();
     if (!restoredOutput) return;
@@ -1578,16 +1600,9 @@ export default function Page() {
       return;
     }
 
-    applyBuildSnapshot(restoredOutput.snapshot, { clearGeneratedOutput: false });
-    setPkg(restoredOutput.pkg);
-    setPublishFlowSummary(restoredOutput.publishFlowSummary);
-    setPackageLocks(restoredOutput.packageLocks);
-    setStep(3);
-    setActiveTab("build");
-    setLastGeneratedRestoreNotice(
-      "Restored your last generated output from this browser."
-    );
-  }, [applyBuildSnapshot]);
+    setAvailableLastGeneratedOutput(restoredOutput);
+    setLastGeneratedOutputBannerDismissed(false);
+  }, []);
 
   useEffect(() => {
     if (!pkg) {
@@ -2179,6 +2194,40 @@ export default function Page() {
           )}
         </div>
       </header>
+
+      {availableLastGeneratedOutput && !lastGeneratedOutputBannerDismissed && (
+        <div className="mx-auto mt-4 w-full max-w-[var(--main-max-width)] px-4 sm:px-6 lg:px-8">
+          <div
+            data-testid="last-generated-output-banner"
+            className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-cyan-400/30 bg-cyan-500/10 p-4 shadow-[var(--surface-shadow)]"
+          >
+            <div>
+              <p className="text-[11px] font-black uppercase tracking-[0.14em] text-cyan-700 dark:text-cyan-200">
+                Last generated package found
+              </p>
+              <p className="mt-1 text-sm leading-relaxed text-[color:var(--muted)]">
+                Restore the saved package, setup snapshot, publish summary, and section locks from this browser.
+              </p>
+            </div>
+            <div className="flex flex-wrap gap-2">
+              <button
+                type="button"
+                onClick={() => restoreLastGeneratedOutput(availableLastGeneratedOutput)}
+                className="rounded-xl border border-cyan-400/30 bg-cyan-500/15 px-4 py-2 text-xs font-black uppercase tracking-[0.08em] text-cyan-700 transition hover:bg-cyan-500/20 active:scale-95 dark:text-cyan-100"
+              >
+                Restore
+              </button>
+              <button
+                type="button"
+                onClick={() => setLastGeneratedOutputBannerDismissed(true)}
+                className="rounded-xl border border-[color:var(--border)] bg-[color:var(--surface-elevated)] px-4 py-2 text-xs font-black uppercase tracking-[0.08em] text-[color:var(--muted)] transition hover:bg-[color:var(--surface-muted)] hover:text-[color:var(--text)] active:scale-95"
+              >
+                Dismiss
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* ══════════════════════════════════════════════════════════════════════
           BUILD TAB

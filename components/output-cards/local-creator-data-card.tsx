@@ -16,6 +16,7 @@ import {
   readReelPerformanceRecords,
   REELS_PERFORMANCE_STORAGE_EVENT,
 } from "@/lib/reels-performance-storage";
+import { clearLastGeneratedOutput, readLastGeneratedOutput } from "@/lib/storage";
 
 import type { ABExperimentRecord, ReelPerformanceRecord } from "@/types";
 
@@ -34,11 +35,14 @@ export default function LocalCreatorDataCard({
   const [restoreErrors, setRestoreErrors] = useState<string[]>([]);
   const [restoreWarnings, setRestoreWarnings] = useState<string[]>([]);
   const [replaceConfirmed, setReplaceConfirmed] = useState(false);
+  const [hasSavedOutput, setHasSavedOutput] = useState(false);
+  const [clearSavedOutputStatus, setClearSavedOutputStatus] = useState("");
 
   useEffect(() => {
     function loadLocalData() {
       setPerformanceRecords(readReelPerformanceRecords());
       setABExperiments(readABExperimentRecords());
+      setHasSavedOutput(Boolean(readLastGeneratedOutput()));
     }
 
     loadLocalData();
@@ -87,6 +91,13 @@ export default function LocalCreatorDataCard({
     );
     setImportJson("");
     setReplaceConfirmed(false);
+  }
+
+  function handleClearSavedOutput() {
+    clearLastGeneratedOutput();
+    setHasSavedOutput(false);
+    setClearSavedOutputStatus("Saved generated output cleared from this browser.");
+    window.setTimeout(() => setClearSavedOutputStatus(""), 2200);
   }
 
   function handleRestore(mode: LocalCreatorDataRestoreOptions["mode"]) {
@@ -152,12 +163,41 @@ export default function LocalCreatorDataCard({
         </div>
         <div className="rounded-xl border border-[color:var(--border)] bg-[color:var(--surface-elevated)] p-3">
           <p className="text-[10px] font-bold uppercase tracking-[0.12em] text-[color:var(--muted)]">
-            Export / Restore
+            Saved Output
+          </p>
+          <p className="mt-1 text-2xl font-black text-[color:var(--text)]">
+            {hasSavedOutput ? "1" : "0"}
           </p>
           <p className="mt-1 text-xs leading-relaxed text-[color:var(--muted)]">
-            Copy a readable JSON snapshot, or paste one below to restore it into this browser.
+            Last generated package snapshot saved for restore.
           </p>
         </div>
+      </div>
+
+      <div className="mt-4 rounded-xl border border-[color:var(--border)] bg-[color:var(--surface-elevated)] p-3">
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <div>
+            <p className="text-[10px] font-black uppercase tracking-[0.12em] text-cyan-700 dark:text-cyan-200">
+              Saved generated output
+            </p>
+            <p className="mt-1 text-xs leading-relaxed text-[color:var(--muted)]">
+              Clear only the last generated package restore snapshot. Performance records and A/B experiments stay untouched.
+            </p>
+          </div>
+          <button
+            type="button"
+            onClick={handleClearSavedOutput}
+            disabled={!hasSavedOutput}
+            className="rounded-xl border border-rose-400/30 bg-rose-500/10 px-4 py-2 text-xs font-black uppercase tracking-[0.08em] text-rose-700 hover:bg-rose-500/15 disabled:cursor-not-allowed disabled:opacity-40 dark:text-rose-200"
+          >
+            Clear saved output
+          </button>
+        </div>
+        {clearSavedOutputStatus && (
+          <p className="mt-2 text-xs font-semibold text-cyan-700 dark:text-cyan-200">
+            {clearSavedOutputStatus}
+          </p>
+        )}
       </div>
 
       <div className="mt-4 rounded-xl border border-cyan-400/20 bg-[color:var(--surface-elevated)] p-3">
