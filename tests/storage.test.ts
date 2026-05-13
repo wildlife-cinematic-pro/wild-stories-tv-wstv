@@ -11,6 +11,7 @@ import {
 } from "@/types";
 import {
   clearImportedMonetizedPagePerformanceRecords,
+  clearLastGeneratedOutput,
   createLastGeneratedOutputDebouncer,
   readCustomPredators,
   readLastGeneratedOutput,
@@ -222,6 +223,20 @@ describe("settings storage", () => {
       rutSeason: false,
     });
     expect("groupCount" in restored.snapshot).toBe(false);
+  });
+
+  it("clears the saved generated output without touching other local data", () => {
+    installLocalStorageMock();
+
+    writeLastGeneratedOutput(makeLastGeneratedOutputRecord());
+    writeSettings({ activeProvider: "gemini" });
+
+    expect(readLastGeneratedOutput()).toBeDefined();
+
+    clearLastGeneratedOutput();
+
+    expect(readLastGeneratedOutput()).toBeUndefined();
+    expect(readSettings()).toMatchObject({ activeProvider: "gemini" });
   });
 
   it("normalizes invalid custom predator arcs to a safe Arc value", () => {

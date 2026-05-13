@@ -90,6 +90,13 @@ test("main build flow generates output, keeps workspace tabs reachable, and show
 
   await page.reload();
 
+  await expect(page.getByTestId("last-generated-output-banner")).toContainText(
+    /Last generated package found/i
+  );
+  await page
+    .getByTestId("last-generated-output-banner")
+    .getByRole("button", { name: /^Restore$/i })
+    .click();
   await expect(page.getByTestId("last-generated-restore-notice")).toHaveText(
     /Restored your last generated output from this browser\./i
   );
