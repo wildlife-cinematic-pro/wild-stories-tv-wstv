@@ -79,6 +79,23 @@ const HEADER_ALIASES: Record<string, keyof PerformanceTrackerEntry> = {
   rpm: "rpm",
   revenueper1000plays: "rpm",
   monetizedplays: "monetizedPlays",
+  firstsecondhookscore: "firstSecondHookScore",
+  first1secondhookscore: "firstSecondHookScore",
+  hookscore: "firstSecondHookScore",
+  hookqualityscore: "firstSecondHookScore",
+  thumbnailqualityscore: "thumbnailQualityScore",
+  thumbnailscore: "thumbnailQualityScore",
+  coverqualityscore: "thumbnailQualityScore",
+  aitoolused: "aiToolUsed",
+  aiused: "aiToolUsed",
+  toolused: "aiToolUsed",
+  promptversion: "promptVersion",
+  promptversionkey: "promptVersionKey",
+  promptversionlabel: "promptVersionLabel",
+  whywonlost: "whyWonLostSummary",
+  whywonlostsummary: "whyWonLostSummary",
+  wonlostsummary: "whyWonLostSummary",
+  diagnosis: "whyWonLostSummary",
   notes: "notes",
 };
 
@@ -103,6 +120,8 @@ const NUMERIC_FIELDS = new Set<keyof PerformanceTrackerEntry>([
   "estimatedEarnings",
   "rpm",
   "monetizedPlays",
+  "firstSecondHookScore",
+  "thumbnailQualityScore",
 ]);
 
 /** Normalizes a CSV header into a comparison-friendly alias key. */
