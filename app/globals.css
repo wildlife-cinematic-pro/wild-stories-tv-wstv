@@ -555,3 +555,11 @@ html:not([data-theme="light"]) .ui-theme-scope :where(.text-indigo-600, .text-in
 .ui-theme-scope :where(pre, code, textarea) {
   scrollbar-color: color-mix(in oklab, var(--muted) 50%, transparent) color-mix(in oklab, var(--surface-muted) 85%, transparent);
 }
+
+
+.ui-theme-scope .qa-target-highlight {
+  outline: 3px solid color-mix(in oklab, var(--warning-text) 72%, transparent);
+  outline-offset: 4px;
+  box-shadow: 0 0 0 8px color-mix(in oklab, var(--warning-bg) 72%, transparent), var(--surface-shadow);
+  transition: outline-color 180ms ease, box-shadow 180ms ease;
+}

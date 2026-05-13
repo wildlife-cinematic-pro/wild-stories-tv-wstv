@@ -837,7 +837,7 @@ export default function Step2EngineQuality({
           />
         </section>
 
-        <section className="rounded-2xl border border-orange-200 bg-orange-50 p-5 sm:p-6">
+        <section id="qa-scene-description-controls" className="rounded-2xl border border-orange-200 bg-orange-50 p-5 sm:p-6">
           <div className="mb-4 flex flex-wrap items-start justify-between gap-3">
             <div>
               <h3 className="text-[11px] font-semibold uppercase tracking-[0.1em] text-orange-500">

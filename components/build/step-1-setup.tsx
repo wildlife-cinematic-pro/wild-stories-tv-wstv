@@ -873,7 +873,7 @@ export default function Step1Setup({
         />
 
 
-        <div className="space-y-6">
+        <div id="qa-subject-setup" className="scroll-mt-24 space-y-6">
           {isPredatorVsPreyMode ? (
             <section className="rounded-2xl border border-gray-200 bg-white p-5 sm:p-6">
             <h3 className="text-[11px] font-semibold uppercase tracking-[0.1em] text-gray-400">
@@ -1163,22 +1163,24 @@ export default function Step1Setup({
           )}
 
 
-          <SceneRelationshipCard
-            encounterMode={encounterMode}
-            endingMode={endingMode}
-            viralLane={viralLane}
-            violenceLevel={violenceLevel}
-            habitatRegion={habitatRegion}
-            season={season}
-            timeOfDay={timeOfDay}
-            onEncounterModeChange={onEncounterModeChange}
-            onEndingModeChange={onEndingModeChange}
-            onViralLaneChange={onViralLaneChange}
-            onViolenceLevelChange={onViolenceLevelChange}
-            onHabitatRegionChange={onHabitatRegionChange}
-            onSeasonChange={onSeasonChange}
-            onTimeOfDayChange={onTimeOfDayChange}
-          />
+          <div id="qa-story-controls" className="scroll-mt-24">
+            <SceneRelationshipCard
+              encounterMode={encounterMode}
+              endingMode={endingMode}
+              viralLane={viralLane}
+              violenceLevel={violenceLevel}
+              habitatRegion={habitatRegion}
+              season={season}
+              timeOfDay={timeOfDay}
+              onEncounterModeChange={onEncounterModeChange}
+              onEndingModeChange={onEndingModeChange}
+              onViralLaneChange={onViralLaneChange}
+              onViolenceLevelChange={onViolenceLevelChange}
+              onHabitatRegionChange={onHabitatRegionChange}
+              onSeasonChange={onSeasonChange}
+              onTimeOfDayChange={onTimeOfDayChange}
+            />
+          </div>
 
           <SeasonalRealismAdvisorCard
             storyMode={storyMode}

@@ -271,6 +271,7 @@ export default function Page() {
   const [step, setStep] = useState<Step>(1);
   const [activeTab, setActiveTab] = useState<TopTab>("build");
   const [workflowTab, setWorkflowTab] = useState<WorkflowTab>("wstv");
+  const [pendingQaTarget, setPendingQaTarget] = useState<{ step: Step; targetId: string } | null>(null);
 
   const [marketMode] = useState<MarketMode>("US_ONLY");
   const [durationLane, setDurationLane] = useState<DurationLaneMode>("short");
@@ -742,6 +743,30 @@ export default function Page() {
     setHeroVeo,
     setAutoApplyHighDrift,
   });
+
+  const handleOpenQaTarget = useCallback((targetStep: Step, targetId: string) => {
+    setActiveTab("build");
+    setPendingQaTarget({ step: targetStep, targetId });
+    setStep(targetStep);
+  }, []);
+
+  useEffect(() => {
+    if (!pendingQaTarget || step !== pendingQaTarget.step) return;
+
+    const timeout = window.setTimeout(() => {
+      const element = document.getElementById(pendingQaTarget.targetId);
+      if (!element) return;
+
+      element.scrollIntoView({ behavior: "smooth", block: "center" });
+      element.classList.add("qa-target-highlight");
+      window.setTimeout(() => {
+        element.classList.remove("qa-target-highlight");
+      }, 2800);
+      setPendingQaTarget(null);
+    }, 80);
+
+    return () => window.clearTimeout(timeout);
+  }, [pendingQaTarget, step]);
 
   const handleVideoModelSelectionChange = useCallback((videoModelId: string) => {
     const patch = getVideoModelSelectionPatch(videoModelId);
@@ -2600,6 +2625,8 @@ export default function Page() {
                 onRestoreVersion={handleRestoreVersion}
                 onApplyStoryModePreset={handleApplyStoryModePreset}
                 onApplySetupFixAction={handleApplySetupFixAction}
+                onApplyCleanScenePrompt={handleSceneDescriptionChange}
+                onOpenQaTarget={handleOpenQaTarget}
                 setupFixFeedback={setupFixFeedback}
                 lastGeneratedRestoreNotice={lastGeneratedRestoreNotice}
                 onDismissLastGeneratedRestoreNotice={() =>
