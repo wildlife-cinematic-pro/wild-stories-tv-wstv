@@ -8,6 +8,7 @@ import {
 
 export type ImageReferenceKind =
   | "animal"
+  | "offspring"
   | "group"
   | "food-source"
   | "hazard"
@@ -24,6 +25,12 @@ export type StoryModeImageReferenceRoles = {
   environmentTitle: string;
   finalMergeTitle: string;
   primaryCopyLabel: string;
+  offspringTitle?: string;
+  offspringCopyLabel?: string;
+  offspringHelper?: string;
+  offspringReferenceLabel?: string;
+  offspringKind?: ImageReferenceKind;
+  offspringPreserveLine?: string;
   secondaryCopyLabel: string;
   environmentCopyLabel: string;
   primaryHelper: string;
@@ -84,6 +91,9 @@ function groupPreserveLine(subject: string) {
   return `${subject} group identity, readable herd/pack formation, believable animal count, species markers, stable anatomy across visible animals, grounded contact, and clean spacing.`;
 }
 
+function offspringPreserveLine(offspring: string, mother: string) {
+  return `${offspring} identity as a correctly scaled young animal, same species as ${mother} when applicable, smaller body scale than the mother, sheltered posture, clean full-body silhouette, stable young-animal anatomy, grounded contact, and readable separation from the mother.`;
+}
 function nonAnimalPreserveLine(subject: string, kind: ImageReferenceKind) {
   if (kind === "hazard") {
     return `${subject} as environmental pressure only: wind/snow/ice/water/heat texture, atmosphere direction, visibility layers, terrain interaction, and natural hazard realism.`;
@@ -197,26 +207,32 @@ export function getStoryModeImageReferenceRoles(data: GeneratedPackage): StoryMo
       return {
         ...common,
         primaryTitle: "Mother Master Image",
+        offspringTitle: "Offspring / Cub Master Image",
         secondaryTitle: "Threat Master Image",
         environmentTitle: "Environment Master Image",
         primaryCopyLabel: "Mother Reference",
+        offspringCopyLabel: "Offspring/Cub Reference",
+        offspringHelper: "Create the reusable offspring or cub reference in Nano Banana 2 first.",
         secondaryCopyLabel: "Threat Reference",
         primaryReferenceLabel: "Mother reference image",
+        offspringReferenceLabel: "Offspring / cub reference image",
         secondaryReferenceLabel: "Threat reference image",
         environmentReferenceLabel: "Environment reference image",
         primaryKind: "animal",
+        offspringKind: "offspring",
         secondaryKind: "animal",
         environmentKind: "environment",
         primaryPreserveLine: `${animalPreserveLine(primary)} Include an offspring-safe body-blocking silhouette and space where the ${offspring} can shelter close without being fused to the mother.`,
+        offspringPreserveLine: offspringPreserveLine(offspring, primary),
         secondaryPreserveLine: animalPreserveLine(secondary),
         environmentPreserveLine: nonAnimalPreserveLine(cleanText(data.environmentName, "protective wildlife habitat"), "environment"),
-        mergeCompositionLine: `${primary} shields the ${offspring} in a protected pocket while ${secondary} remains at a readable distance; keep the offspring visible, sheltered, correctly scaled, and safe with no contact or injury.`,
+        mergeCompositionLine: `${primary} shields the ${offspring} in a protected pocket while ${secondary} remains at a readable distance; keep the ${offspring} close to the mother, partially sheltered behind or under her body line, visibly smaller than the mother, readable as its own subject, not fused into the mother, with no contact, no blood, no gore, and no visible injury.`,
         mergeStageSubjectLine: `${primary}, sheltered ${offspring}, distant ${secondary}, and ${cleanText(data.environmentName, "protective wildlife habitat")}`,
         mergeStageDirections: {
-          1: `${primary} and the ${offspring} are visible together, with ${secondary} distant enough to read as pressure without contact.`,
-          2: `${secondary} presence grows while ${primary} blocks the line of approach and keeps the ${offspring} sheltered close.`,
-          3: `Strongest protective beat: ${primary} shields the ${offspring}, ${secondary} remains separated, no contact, no injury.`,
-          4: `Protected exit or unresolved safety frame with ${primary} and the ${offspring} readable and ${secondary} held at distance.`,
+          1: `${primary} and the smaller ${offspring} are visible together, with the ${offspring} close and partly sheltered behind or under her body line while ${secondary} stays distant enough to read as pressure without contact.`,
+          2: `${secondary} presence grows while ${primary} blocks the line of approach and keeps the smaller ${offspring} sheltered close but visibly separate from the mother silhouette.`,
+          3: `Strongest protective beat: ${primary} shields the smaller ${offspring}, ${secondary} remains separated at readable distance, no contact, no blood, no gore, no visible injury.`,
+          4: `Protected exit or unresolved safety frame with ${primary} and the smaller ${offspring} readable as separate subjects and ${secondary} held at distance.`,
         },
       };
     case StoryMode.RIVAL_CLASH:
@@ -398,7 +414,7 @@ export function buildModeAwareImageReferencePrompt({
   relationshipLine: string;
   sceneGoal: string;
 }) {
-  const subjectLine = kind === "animal" || kind === "group"
+  const subjectLine = kind === "animal" || kind === "group" || kind === "offspring"
     ? `${subjectName} only. ${kind === "group" ? "Show a readable group/formation when appropriate." : "Show one clean subject only unless the role explicitly needs a family unit."}`
     : kind === "environment"
       ? `${subjectName} only as an environment reference; do not include animals or humans.`

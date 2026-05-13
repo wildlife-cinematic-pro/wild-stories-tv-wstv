@@ -2,10 +2,12 @@ import type {
   ImageReferenceKind,
   StoryModeImageReferenceRoles,
 } from "@/lib/story-mode-image-reference-roles";
+import { StoryMode } from "@/types";
 import { buildReferenceTag } from "@/lib/reference-tags";
 
 export type NanoBananaReferenceTags = {
   primary: string;
+  offspring?: string;
   secondary: string;
   environment: string;
 };
@@ -17,8 +19,17 @@ export function buildNanoBananaReferenceTags({
 }: {
   leadAnimalName: string;
   oppositeAnimalName: string;
-  roles: Pick<StoryModeImageReferenceRoles, "secondaryKind" | "environmentKind">;
+  roles: Pick<StoryModeImageReferenceRoles, "storyMode" | "secondaryKind" | "environmentKind">;
 }): NanoBananaReferenceTags {
+  if (roles.storyMode === StoryMode.MOTHER_BABY) {
+    return {
+      primary: "@mother",
+      offspring: "@offspring",
+      secondary: "@threat",
+      environment: "@environment",
+    };
+  }
+
   const secondaryFallback =
     roles.secondaryKind === "food-source"
       ? "fish_food_reference"
@@ -64,6 +75,10 @@ export function buildPreparedReferenceLine({
     return `${tag} — ${subject} identity only: species markers, coat/feathers/fur, head profile, body scale, legs/wings, grounded contact, clean silhouette, stable anatomy.`;
   }
 
+  if (kind === "offspring") {
+    return `${tag} — ${subject} identity only: correctly scaled young animal, same species as mother when applicable, smaller than mother, sheltered posture, clean full-body silhouette, stable anatomy, grounded contact, no injury, and readable separation from the mother.`;
+  }
+
   if (kind === "group") {
     return `${tag} — ${subject} identity only: species markers, coat/fur, herd/pack formation, body scale, legs, grounded contact, clean silhouettes, stable anatomy.`;
   }
@@ -82,17 +97,19 @@ export function buildPreparedReferenceLine({
 export function buildPreparedReferenceBlock({
   referenceTags,
   leadAnimalName,
+  offspringName,
   oppositeAnimalName,
   environmentReferenceName,
   roles,
 }: {
   referenceTags: NanoBananaReferenceTags;
   leadAnimalName: string;
+  offspringName?: string;
   oppositeAnimalName: string;
   environmentReferenceName: string;
   roles: StoryModeImageReferenceRoles;
 }) {
-  return [
+  const lines = [
     `1. ${buildPreparedReferenceLine({
       tag: referenceTags.primary,
       subject: leadAnimalName,
@@ -100,21 +117,35 @@ export function buildPreparedReferenceBlock({
       preserveLine: roles.primaryPreserveLine,
       fallbackLabel: roles.primaryReferenceLabel,
     })}`,
-    `2. ${buildPreparedReferenceLine({
-      tag: referenceTags.secondary,
-      subject: oppositeAnimalName,
-      kind: roles.secondaryKind,
-      preserveLine: roles.secondaryPreserveLine,
-      fallbackLabel: roles.secondaryReferenceLabel,
-    })}`,
-    `3. ${buildPreparedReferenceLine({
-      tag: referenceTags.environment,
-      subject: environmentReferenceName,
-      kind: roles.environmentKind,
-      preserveLine: roles.environmentPreserveLine,
-      fallbackLabel: roles.environmentReferenceLabel,
-    })}`,
   ];
+
+  if (referenceTags.offspring && roles.offspringKind && roles.offspringPreserveLine && roles.offspringReferenceLabel) {
+    lines.push(`2. ${buildPreparedReferenceLine({
+      tag: referenceTags.offspring,
+      subject: offspringName ?? roles.offspringReferenceLabel,
+      kind: roles.offspringKind,
+      preserveLine: roles.offspringPreserveLine,
+      fallbackLabel: roles.offspringReferenceLabel,
+    })}`);
+  }
+
+  const secondaryNumber = lines.length + 1;
+  lines.push(`${secondaryNumber}. ${buildPreparedReferenceLine({
+    tag: referenceTags.secondary,
+    subject: oppositeAnimalName,
+    kind: roles.secondaryKind,
+    preserveLine: roles.secondaryPreserveLine,
+    fallbackLabel: roles.secondaryReferenceLabel,
+  })}`);
+  lines.push(`${secondaryNumber + 1}. ${buildPreparedReferenceLine({
+    tag: referenceTags.environment,
+    subject: environmentReferenceName,
+    kind: roles.environmentKind,
+    preserveLine: roles.environmentPreserveLine,
+    fallbackLabel: roles.environmentReferenceLabel,
+  })}`);
+
+  return lines;
 }
 
 export function buildPreparedReferenceRoleLockBlock(input: Parameters<typeof buildPreparedReferenceBlock>[0]) {
