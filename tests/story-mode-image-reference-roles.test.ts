@@ -5,6 +5,10 @@ import {
   getStoryModeImageReferenceRoles,
 } from "@/lib/story-mode-image-reference-roles";
 import { StoryMode, type GeneratedPackage } from "@/types";
+import {
+  buildNanoBananaReferenceTags,
+  buildPreparedReferenceRoleLockBlock,
+} from "@/lib/nano-banana-reference-tags";
 
 function packageFor(input: Partial<GeneratedPackage>): GeneratedPackage {
   return {
@@ -37,6 +41,49 @@ describe("story mode image reference roles", () => {
     expect(roles.primaryTitle).toBe(primary);
     expect(roles.secondaryTitle).toBe(secondary);
     expect(roles.environmentTitle).toBe(environment);
+  });
+
+  it("adds an explicit Mother & Baby offspring reference and merge tag", () => {
+    const pkg = packageFor({
+      storyMode: StoryMode.MOTHER_BABY,
+      predatorName: "Grizzly Mother",
+      preyName: "Male Grizzly",
+      subjectA: "Grizzly Mother",
+      subjectB: "Male Grizzly",
+      offspringLabel: "cub",
+      environmentName: "Yellowstone meadow edge",
+    });
+    const roles = getStoryModeImageReferenceRoles(pkg);
+    const referenceTags = buildNanoBananaReferenceTags({
+      leadAnimalName: pkg.predatorName ?? "mother",
+      oppositeAnimalName: pkg.preyName ?? "threat",
+      roles,
+    });
+    const finalMergeReferenceText = buildPreparedReferenceRoleLockBlock({
+      referenceTags,
+      leadAnimalName: pkg.predatorName ?? "mother",
+      offspringName: pkg.offspringLabel,
+      oppositeAnimalName: pkg.preyName ?? "threat",
+      environmentReferenceName: pkg.environmentName ?? "environment",
+      roles,
+    });
+
+    expect(roles.offspringTitle).toBe("Offspring / Cub Master Image");
+    expect(roles.offspringCopyLabel).toBe("Offspring/Cub Reference");
+    expect(roles.offspringReferenceLabel).toBe("Offspring / cub reference image");
+    expect(roles.offspringPreserveLine).toContain("smaller body scale than the mother");
+    expect(referenceTags).toEqual({
+      primary: "@mother",
+      offspring: "@offspring",
+      secondary: "@threat",
+      environment: "@environment",
+    });
+    expect(finalMergeReferenceText).toContain("1. @mother");
+    expect(finalMergeReferenceText).toContain("2. @offspring");
+    expect(finalMergeReferenceText).toContain("3. @threat");
+    expect(finalMergeReferenceText).toContain("4. @environment");
+    expect(finalMergeReferenceText).toContain("correctly scaled young animal");
+    expect(finalMergeReferenceText).toContain("smaller than mother");
   });
 
   it("keeps Predator vs Prey reference labels backward-compatible", () => {

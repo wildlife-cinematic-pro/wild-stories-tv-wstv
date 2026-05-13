@@ -116,9 +116,38 @@ function strengthenReferencePrompt(prompt: string, role: "lead" | "opposite" | "
   ].join("\n");
 }
 
+function buildOffspringMasterReferencePrompt({
+  offspringLabel,
+  motherName,
+  roleTitle,
+  preserveLine,
+  relationshipLine,
+  sceneGoal,
+}: {
+  offspringLabel: string;
+  motherName: string;
+  roleTitle: string;
+  preserveLine: string;
+  relationshipLine: string;
+  sceneGoal: string;
+}) {
+  return [
+    "Photorealistic wildlife documentary master reference image.",
+    `single ${offspringLabel}, correctly scaled young animal, sheltered posture, same species as mother when applicable, clean silhouette, full-body readable, no injury.`,
+    `${roleTitle} for WSTV Mother & Baby.`,
+    `${preserveLine}`,
+    `Mother species anchor: ${motherName}; keep the young animal smaller than the mother in later merge prompts.`,
+    `${sceneGoal} ${relationshipLine}`,
+    "Simple uncluttered natural background, grounded contact, readable young-animal anatomy, no adult duplicate, no second offspring, no fusion with any parent body.",
+    "Production-ready wildlife master reference image for Nano Banana 2 primary image generation.",
+    "No blood, no gore, no visible wounds, no duplicate animals, no humans, no text, no watermark, no graphic injury.",
+  ].join(" ");
+}
+
 export function buildMergeMasterPrompt({
   leadAnimalName,
   oppositeAnimalName,
+  offspringName = "offspring",
   environmentName,
   environmentReferenceName,
   lightingName,
@@ -129,6 +158,7 @@ export function buildMergeMasterPrompt({
 }: {
   leadAnimalName: string;
   oppositeAnimalName: string;
+  offspringName?: string;
   environmentName: string;
   environmentReferenceName: string;
   lightingName: string;
@@ -141,10 +171,17 @@ export function buildMergeMasterPrompt({
     referenceTags,
     leadAnimalName,
     oppositeAnimalName,
+    offspringName,
     environmentReferenceName,
     roles,
   });
   const compositionLine = roles.isPredatorVsPrey ? stage.composition : roles.mergeCompositionLine;
+  const explicitReferenceLine = referenceTags.offspring
+    ? `Use all four prepared references explicitly: ${referenceTags.primary}, ${referenceTags.offspring}, ${referenceTags.secondary}, ${referenceTags.environment}.`
+    : "";
+  const offspringScaleLine = referenceTags.offspring
+    ? `Mother & Baby blocking: keep ${referenceTags.offspring} close to ${referenceTags.primary}, partially sheltered behind or under her body line, visibly smaller than the mother, readable as its own subject, and not fused into ${referenceTags.primary}; keep ${referenceTags.secondary} separated at readable distance with no contact.`
+    : "";
   const secondaryIsAnimal = roles.secondaryKind === "animal" || roles.secondaryKind === "group";
   const readabilityLine = roles.isPredatorVsPrey
     ? `Keep ${leadAnimalName} and ${oppositeAnimalName} with full-body readability from ears/head through legs/feet/tail, with stable anatomy, correct limb count, realistic muscle/bone landmarks, grounded paw and hoof contact, clean silhouettes, no fused bodies, and no duplicated animals.`
@@ -156,6 +193,8 @@ export function buildMergeMasterPrompt({
     "Final merge master-image prompt. Use a natural-language cinematic brief with clear reference roles, layered scene construction, and photographic direction.",
     "",
     roleLockBlock,
+    explicitReferenceLine,
+    offspringScaleLine,
     "",
     `Final image goal: ${stage.title}. Photorealistic wildlife documentary final scene master image, video-ready source frame for a hybrid wildlife reel.`,
     modeContext ? `Story mode: ${modeContext.modeLabel}. ${modeContext.sceneGoal} ${modeContext.relationshipLine}` : "",
@@ -171,6 +210,7 @@ export function buildMergeMasterPrompt({
     `Purpose: ${roles.mergeStageDirections[stage.number] ?? stage.stageDirection}`,
     "Safety and realism: clean survival tension only, no visible injury, no graphic outcome, no humans, no vehicles, no fences, no zoo enclosure, no text, no watermark.",
     "",
+    referenceTags.offspring ? "Mother & Baby safety: no blood, no gore, no visible injury, no contact, correct young-animal scale, no fused mother-offspring bodies." : "",
     FINAL_MERGE_NEGATIVE_PROMPT,
   ].filter(Boolean).join("\n");
 }
@@ -215,6 +255,7 @@ export function buildReferencePrompts(data: GeneratedPackage) {
     ? `\n\nStory-mode reference goal: ${modeContext.modeLabel}. ${modeContext.sceneGoal} ${modeContext.relationshipLine} ${modeContext.safetyLine}`
     : "";
   const roles = getStoryModeImageReferenceRoles(data);
+  const offspringName = cleanText(data.offspringLabel, "cub");
   const environmentSubjectName = roles.environmentKind === "food-zone"
     ? normalizeScavengerFoodZone(data.foodItem)
     : environmentName;
@@ -303,46 +344,76 @@ export function buildReferencePrompts(data: GeneratedPackage) {
     ? "Nano Banana 2 Primary · GPT Image 2 Backup"
     : "Nano Banana 2 Primary";
 
+  const offspringPrompt = referenceTags.offspring && roles.offspringTitle && roles.offspringPreserveLine
+    ? buildOffspringMasterReferencePrompt({
+        offspringLabel: offspringName,
+        motherName: leadAnimalName,
+        roleTitle: roles.offspringTitle,
+        preserveLine: roles.offspringPreserveLine,
+        relationshipLine: modeContext?.relationshipLine ?? roles.mergeCompositionLine,
+        sceneGoal: modeContext?.sceneGoal ?? roles.mergeCompositionLine,
+      })
+    : undefined;
+
+  const referencePrompts: WorkflowPrompt[] = [
+    {
+      number: 1,
+      title: `${referenceTags.primary} — ${roles.primaryTitle}`,
+      helper: roles.primaryHelper,
+      badge: nanoBadge,
+      prompt: withReferenceName(primaryPrompt, referenceTags.primary),
+      copyLabel: roles.primaryCopyLabel,
+      tone: "amber",
+      backupNote: roles.isPredatorVsPrey ? OPTIONAL_GPT_IMAGE_2_BACKUP_NOTE : undefined,
+    },
+  ];
+
+  if (referenceTags.offspring && offspringPrompt && roles.offspringTitle && roles.offspringCopyLabel) {
+    referencePrompts.push({
+      number: 2,
+      title: `${referenceTags.offspring} — ${roles.offspringTitle}`,
+      helper: roles.offspringHelper ?? "Create the reusable offspring reference in Nano Banana 2 first.",
+      badge: nanoBadge,
+      prompt: withReferenceName(offspringPrompt, referenceTags.offspring),
+      copyLabel: roles.offspringCopyLabel,
+      tone: "amber",
+      backupNote: roles.isPredatorVsPrey ? OPTIONAL_GPT_IMAGE_2_BACKUP_NOTE : undefined,
+    });
+  }
+
+  referencePrompts.push(
+    {
+      number: referencePrompts.length + 1,
+      title: `${referenceTags.secondary} — ${roles.secondaryTitle}`,
+      helper: roles.secondaryHelper,
+      badge: nanoBadge,
+      prompt: withReferenceName(secondaryPrompt, referenceTags.secondary),
+      copyLabel: roles.secondaryCopyLabel,
+      tone: "amber",
+      backupNote: roles.isPredatorVsPrey ? OPTIONAL_GPT_IMAGE_2_BACKUP_NOTE : undefined,
+    },
+    {
+      number: referencePrompts.length + 2,
+      title: `${referenceTags.environment} — ${roles.environmentTitle}`,
+      helper: roles.environmentHelper,
+      badge: nanoBadge,
+      prompt: withReferenceName(habitatPrompt, referenceTags.environment),
+      copyLabel: roles.environmentCopyLabel,
+      tone: "indigo",
+      backupNote: roles.isPredatorVsPrey ? OPTIONAL_GPT_IMAGE_2_BACKUP_NOTE : undefined,
+    }
+  );
+
   return {
     leadAnimalName,
     oppositeAnimalName,
+    offspringName,
     environmentName,
     environmentReferenceName: environmentSubjectName,
     lightingName,
     modeContext,
     roles,
-    referencePrompts: [
-      {
-        number: 1,
-        title: `${referenceTags.primary} — ${roles.primaryTitle}`,
-        helper: roles.primaryHelper,
-        badge: nanoBadge,
-        prompt: withReferenceName(primaryPrompt, referenceTags.primary),
-        copyLabel: roles.primaryCopyLabel,
-        tone: "amber",
-        backupNote: roles.isPredatorVsPrey ? OPTIONAL_GPT_IMAGE_2_BACKUP_NOTE : undefined,
-      },
-      {
-        number: 2,
-        title: `${referenceTags.secondary} — ${roles.secondaryTitle}`,
-        helper: roles.secondaryHelper,
-        badge: nanoBadge,
-        prompt: withReferenceName(secondaryPrompt, referenceTags.secondary),
-        copyLabel: roles.secondaryCopyLabel,
-        tone: "amber",
-        backupNote: roles.isPredatorVsPrey ? OPTIONAL_GPT_IMAGE_2_BACKUP_NOTE : undefined,
-      },
-      {
-        number: 3,
-        title: `${referenceTags.environment} — ${roles.environmentTitle}`,
-        helper: roles.environmentHelper,
-        badge: nanoBadge,
-        prompt: withReferenceName(habitatPrompt, referenceTags.environment),
-        copyLabel: roles.environmentCopyLabel,
-        tone: "indigo",
-        backupNote: roles.isPredatorVsPrey ? OPTIONAL_GPT_IMAGE_2_BACKUP_NOTE : undefined,
-      },
-    ] satisfies WorkflowPrompt[],
+    referencePrompts,
     referenceTags,
   };
 }
@@ -351,6 +422,7 @@ export function buildNanoBananaMergePrompts(data: GeneratedPackage): WorkflowPro
   const {
     leadAnimalName,
     oppositeAnimalName,
+    offspringName,
     environmentName,
     environmentReferenceName,
     lightingName,
@@ -374,6 +446,7 @@ export function buildNanoBananaMergePrompts(data: GeneratedPackage): WorkflowPro
     prompt: buildMergeMasterPrompt({
       leadAnimalName,
       oppositeAnimalName,
+      offspringName,
       environmentName,
       environmentReferenceName,
       lightingName,
@@ -520,6 +593,7 @@ export default function ImageReferenceMergeWorkflow({
     : "Reference prompts are derived from the current package story mode, subjects, and environment.";
 
   const mergePrompts = buildNanoBananaMergePrompts(data);
+  const referenceCountLabel = referencePrompts.length === 4 ? "four" : "three";
 
   const allPrompts = [
     "WSTV IMAGE REFERENCE MERGE WORKFLOW",
@@ -556,7 +630,7 @@ export default function ImageReferenceMergeWorkflow({
               Nano Banana 2 Reference Merge Workflow
             </h2>
             <p className="mt-1 max-w-3xl text-xs leading-relaxed text-zinc-400">
-              Build three Nano Banana 2 primary references first, then generate four mode-aware merge
+              Build {referenceCountLabel} Nano Banana 2 primary references first, then generate four mode-aware merge
               master images for the hybrid video handoff. {structuredSourceNote}
             </p>
           </div>
@@ -571,20 +645,20 @@ export default function ImageReferenceMergeWorkflow({
             title="MASTER REFERENCE IMAGES"
             note={roles.isPredatorVsPrey ? "Create the separate Nano Banana 2 primary references before merging scenes." : "Create the separate Nano Banana 2 primary references for " + roles.modeLabel.toLowerCase() + " before merging scenes."}
           />
-          <div className="grid gap-4 lg:grid-cols-3">
+          <div className="grid gap-4 lg:grid-cols-2 xl:grid-cols-4">
             {referencePrompts.map((item) => (
               <WorkflowCard key={item.title} item={item} onCopy={onCopy} />
             ))}
           </div>
         </div>
 
-        <FlowDivider label={roles.isPredatorVsPrey ? "Use the 3 reference images in Nano Banana 2, then merge" : "Use the 3 " + roles.modeLabel + " references in Nano Banana 2, then merge"} />
+        <FlowDivider label={roles.isPredatorVsPrey ? "Use the 3 reference images in Nano Banana 2, then merge" : "Use the " + referencePrompts.length + " " + roles.modeLabel + " references in Nano Banana 2, then merge"} />
 
         <div>
           <StepHeader
             step="STEP 2"
             title="FINAL MERGE MASTER IMAGES"
-            note={roles.isPredatorVsPrey ? "Each merge prompt uses the lead animal, opposite animal, and environment reference images." : "Each merge prompt uses the mode-specific subject, pressure, and environment references."}
+            note={roles.isPredatorVsPrey ? "Each merge prompt uses the lead animal, opposite animal, and environment reference images." : referencePrompts.length === 4 ? "Each merge prompt uses the mother, offspring/cub, threat, and environment references." : "Each merge prompt uses the mode-specific subject, pressure, and environment references."}
           />
           <div className="grid gap-4 xl:grid-cols-2">
             {mergePrompts.map((item) => (
