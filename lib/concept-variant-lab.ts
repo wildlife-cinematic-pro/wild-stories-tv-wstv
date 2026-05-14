@@ -202,7 +202,7 @@ function buildPlausibleArcs(currentArc: Arc, suggestedArc: Arc): Arc[] {
 }
 
 function buildBlueprintLabel(contentLane: ContentLane, tone: BlueprintTone): string {
-  const labels: Record<Exclude<ContentLane, "Auto">, Record<BlueprintTone, string>> = {
+  const labels: Partial<Record<Exclude<ContentLane, "Auto">, Record<BlueprintTone, string>>> = {
     "Pack Hunt": {
       control: "Pack Control",
       fast: "Closing Pressure",
@@ -258,7 +258,7 @@ function buildBlueprintLabel(contentLane: ContentLane, tone: BlueprintTone): str
     return autoLabels[tone];
   }
 
-  return labels[contentLane][tone];
+  return labels[contentLane]?.[tone] ?? `${contentLane} ${tone}`;
 }
 
 function buildBlueprintSummary(
@@ -284,7 +284,7 @@ function buildBlueprintSummary(
     return autoSummaries[tone];
   }
 
-  const laneSummaries: Record<Exclude<ContentLane, "Auto">, Record<BlueprintTone, string>> = {
+  const laneSummaries: Partial<Record<Exclude<ContentLane, "Auto">, Record<BlueprintTone, string>>> = {
     "Pack Hunt": {
       control:
         "Baseline pack-control pass with readable group pressure and clean chase spacing.",
@@ -357,7 +357,7 @@ function buildBlueprintSummary(
     },
   };
 
-  return laneSummaries[contentLane][tone];
+  return laneSummaries[contentLane]?.[tone] ?? `${contentLane} variant tuned for the selected wildlife story lane.`;
 }
 
 function getLaneHookFamilyPool(
@@ -538,7 +538,7 @@ function buildBlueprints(
     ];
   }
 
-  const spotlightArcPriorities: Record<Exclude<ContentLane, "Auto">, Arc[]> = {
+  const spotlightArcPriorities: Partial<Record<Exclude<ContentLane, "Auto">, Arc[]>> = {
     "Pack Hunt": ["Pack hunting strategy", "Chase and takedown", "Escape from danger"],
     Defender: ["Defender stands ground", "Territory dominance battle", "Giant vs giant clash"],
     "Fishing Strike": ["Ambush attack", "Chase and takedown", "Escape from danger"],
@@ -555,7 +555,7 @@ function buildBlueprints(
     suggestedArc;
   const spotlightArc = pickFirstMatchingArc(
     arcPool,
-    spotlightArcPriorities[input.contentLane],
+    spotlightArcPriorities[input.contentLane] ?? arcPool,
     suggestedArc
   );
 

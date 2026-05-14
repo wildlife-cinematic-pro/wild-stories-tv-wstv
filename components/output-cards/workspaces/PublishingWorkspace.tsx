@@ -27,6 +27,33 @@ export function PublishingWorkspace({
     trackUsage("publish_action", buildUsagePayload(data));
   };
   const monetizedPanelKey = getRealGenerationEvidenceGenerationId(data);
+  const facebookPack = data.platformPack?.facebook;
+  const communityPackage = facebookPack?.communityPackage;
+  const originalityChecklist = facebookPack?.originalityChecklist;
+  const pageOptimization = facebookPack?.pageOptimization;
+  const communityPackageCopy = communityPackage
+    ? [
+        `Community: ${communityPackage.communityName}`,
+        `Pinned comment: ${communityPackage.pinnedComment}`,
+        `Series CTA: ${communityPackage.seriesCTA}`,
+        `Follow CTA: ${communityPackage.followCTA}`,
+        `Discussion question: ${communityPackage.discussionQuestion}`,
+      ].join("\n")
+    : "";
+  const originalityChecklistCopy = originalityChecklist
+    ? [
+        `AI-generated label reminder: ${originalityChecklist.aiGeneratedLabelReminder}`,
+        `Original WSTV signal: ${originalityChecklist.originalProductionSignal}`,
+        `No repost/watermark warning: ${originalityChecklist.noRepostWatermarkWarning}`,
+        `No fake real-footage claim: ${originalityChecklist.noFakeRealFootageClaim}`,
+      ].join("\n")
+    : "";
+  const pageOptimizationCopy = pageOptimization
+    ? [
+        `Page bio: ${pageOptimization.pageBio}`,
+        `Tagline: ${pageOptimization.tagline}`,
+      ].join("\n")
+    : "";
 
   return (
     <div className="space-y-6">
@@ -116,6 +143,51 @@ export function PublishingWorkspace({
           copyButtonClassName="wstv-copy-button wstv-copy-button-secondary rounded-xl px-3 py-2 text-sm font-semibold active:scale-95"
         />
       )}
+
+      {communityPackage ? (
+        <>
+          <SectionLabel label="Community Package" />
+          <Card
+            title={`${communityPackage.communityName} Package`}
+            value={communityPackageCopy}
+            onCopy={handleCopy}
+            copyLabel="Copy Community Package"
+            accent="border-l-cyan-500"
+            className="border-cyan-400/45"
+            copyButtonClassName="wstv-copy-button wstv-copy-button-secondary rounded-xl px-3 py-2 text-sm font-semibold active:scale-95"
+          />
+        </>
+      ) : null}
+
+      {originalityChecklist ? (
+        <>
+          <SectionLabel label="Originality / AI Disclosure Checklist" />
+          <Card
+            title="Publish Checklist"
+            value={originalityChecklistCopy}
+            onCopy={handleCopy}
+            copyLabel="Copy Checklist"
+            accent="border-l-amber-500"
+            className="border-amber-400/45"
+            copyButtonClassName="wstv-copy-button wstv-copy-button-secondary rounded-xl px-3 py-2 text-sm font-semibold active:scale-95"
+          />
+        </>
+      ) : null}
+
+      {pageOptimization ? (
+        <>
+          <SectionLabel label="Facebook Page Optimization" />
+          <Card
+            title="Page Bio + Tagline"
+            value={pageOptimizationCopy}
+            onCopy={handleCopy}
+            copyLabel="Copy Page Copy"
+            accent="border-l-blue-500"
+            className="border-blue-400/45"
+            copyButtonClassName="wstv-copy-button wstv-copy-button-secondary rounded-xl px-3 py-2 text-sm font-semibold active:scale-95"
+          />
+        </>
+      ) : null}
 
       {data.hashtags && (
         <Card

@@ -10,7 +10,7 @@ function buildBasePlatformPack() {
       hook: "Mountain lion pressure closes before the mule deer clears the break.",
       caption:
         "Mountain lion pressure closes before the mule deer finds a clean turn.\n\nWhat changed the outcome first?",
-      pinnedComment: "Wild Watchers — did you spot the tell before it happened?",
+      pinnedComment: "Wild Crew — did you spot the tell before it happened?",
       hashtags:
         "#MountainLion #MuleDeer #WildlifeReel #PredatorPrey #NatureShorts",
       bestTime: "7:30 PM EST",
@@ -68,7 +68,7 @@ function buildBasePlatformPack() {
       hook: "Mountain lion pressure closes before the mule deer clears the break.",
       caption:
         "Mountain lion pressure closes before the mule deer finds a clean turn.\n\nWhat changed the outcome first?",
-      pinnedComment: "Wild Watchers — did you spot the tell before it happened?",
+      pinnedComment: "Wild Crew — did you spot the tell before it happened?",
       hashtags:
         "#MountainLion #MuleDeer #WildlifeReel #PredatorPrey #NatureShorts",
       bestTime: "7:30 PM EST",
@@ -112,7 +112,7 @@ function makePackage(overrides: Partial<GeneratedPackage> = {}): GeneratedPackag
       "Mountain lion pressure closes before the mule deer finds a clean turn.\n\nWhat changed the outcome first?",
     cta: "What changed the outcome first?",
     altTextPrompt:
-      "AI-generated cinematic wildlife scene showing Mountain Lion and Mule Deer during an Escape from danger sequence. Wild Stories TV original content.",
+      "AI-generated cinematic wildlife scene showing Mountain Lion and Mule Deer during an Escape from danger sequence. Wild Stories TV original AI wildlife scene — produced for cinematic storytelling.",
     hashtags:
       "#MountainLion #MuleDeer #WildlifeReel #PredatorPrey #NatureShorts",
     tenIdeas: [],

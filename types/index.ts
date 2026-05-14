@@ -47,7 +47,15 @@ export type ContentLane =
   | "Defender"
   | "Fishing Strike"
   | "Rut Battle"
-  | "Escape";
+  | "Escape"
+  | "Mother Defense"
+  | "Herd Defense"
+  | "Giant Standoff"
+  | "Predator Pressure"
+  | "Escape Lane"
+  | "Swamp Ambush"
+  | "Winter Survival"
+  | "Territory Clash";
 
 export type CameraAnglePreset =
   | "Auto"
@@ -1126,6 +1134,26 @@ export type FirstFrameOverlayGuidance = {
   tone: string;
 };
 
+export type CommunityPackage = {
+  communityName: string;
+  pinnedComment: string;
+  seriesCTA: string;
+  followCTA: string;
+  discussionQuestion: string;
+};
+
+export type OriginalityPublishChecklist = {
+  aiGeneratedLabelReminder: string;
+  originalProductionSignal: string;
+  noRepostWatermarkWarning: string;
+  noFakeRealFootageClaim: string;
+};
+
+export type FacebookPageOptimizationCopy = {
+  pageBio: string;
+  tagline: string;
+};
+
 export type PlatformPostCommon = {
   bestTime: string;
   strategyNote?: string;
@@ -1141,6 +1169,9 @@ export type FacebookPack = PlatformPostCommon & {
   tags?: string;
   cmpNote: string;
   publishReminders?: string[];
+  communityPackage?: CommunityPackage;
+  originalityChecklist?: OriginalityPublishChecklist;
+  pageOptimization?: FacebookPageOptimizationCopy;
   facebookOverlayPresets?: FacebookOverlayPreset[];
   facebookCoverFramePresets?: FacebookCoverFrameTextPreset[];
   facebookOverlayRecommendation?: FacebookOverlayRecommendation;

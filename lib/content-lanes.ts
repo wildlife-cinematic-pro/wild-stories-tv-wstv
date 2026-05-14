@@ -43,6 +43,14 @@ export const contentLaneOptions: ContentLane[] = [
   "Fishing Strike",
   "Rut Battle",
   "Escape",
+  "Mother Defense",
+  "Herd Defense",
+  "Giant Standoff",
+  "Predator Pressure",
+  "Escape Lane",
+  "Swamp Ambush",
+  "Winter Survival",
+  "Territory Clash",
 ];
 
 const CONTENT_LANE_CONFIG: Record<Exclude<ContentLane, "Auto">, ContentLaneConfig> = {
@@ -286,6 +294,150 @@ const CONTENT_LANE_CONFIG: Record<Exclude<ContentLane, "Auto">, ContentLaneConfi
         "The breakaway window is smaller than it looks, and the survival move has to happen before the chase fully closes."
     ),
   },
+  "Mother Defense": {
+    preferredArcs: ["Defender stands ground", "Escape from danger"],
+    nearbyArcs: ["Defender stands ground", "Escape from danger", "Territory dominance battle"],
+    preferredHabitats: ["Forest Clearing", "Rocky Mountain Meadow", "Open Prairie Grassland"],
+    preferredHookFamily: "reversal",
+    laneTag: "#motherdefense",
+    predatorKeywords: ["mother", "grizzly", "bear", "moose", "bison", "elk", "lioness", "wolf"],
+    preyKeywords: ["cub", "calf", "fawn", "pup", "kit", "young", "offspring"],
+    habitatKeywords: ["shelter", "body line", "protective stance", "close to mother"],
+    habitatClause: "with protective mother-and-young spacing and a clear shelter line",
+    hooks: [
+      predatorOnly((predator) => `The ${predator.toLowerCase()} held the line before the threat could close space.`),
+      constantLaneCopy(() => "The protective stance reads before the pressure peaks."),
+      constantLaneCopy(() => "One body line kept the young animal sheltered without hiding the scene."),
+    ],
+    shortLead: constantLaneCopy(() => "The protective body line changes the read."),
+    longLead: constantLaneCopy(() => "The protective body line changes the read because the young animal stays visible and sheltered."),
+  },
+  "Herd Defense": {
+    preferredArcs: ["Defender stands ground", "Pack hunting strategy"],
+    nearbyArcs: ["Defender stands ground", "Pack hunting strategy", "Giant vs giant clash"],
+    preferredHabitats: ["Open Prairie Grassland", "Dry Prairie Plain", "Rocky Mountain Meadow"],
+    preferredHookFamily: "reversal",
+    laneTag: "#herddefense",
+    predatorKeywords: ["bison", "buffalo", "musk ox", "elk", "moose", "herd"],
+    preyKeywords: ["wolf", "wolf pack", "coyote", "lion", "hyena", "predator"],
+    habitatKeywords: ["herd wall", "defensive ring", "calf shelter", "group spacing"],
+    habitatClause: "with herd-wall spacing and a readable defensive ring",
+    hooks: [
+      constantLaneCopy(() => "The herd shape formed before the pressure reached the center."),
+      constantLaneCopy(() => "The defensive ring made the open ground feel smaller."),
+      constantLaneCopy(() => "A scattered field turned into a wall before the pack could split it."),
+    ],
+    shortLead: constantLaneCopy(() => "The herd wall forms before contact."),
+    longLead: constantLaneCopy(() => "The herd wall forms before contact, keeping the defensive shape clear from the first frame."),
+  },
+  "Giant Standoff": {
+    preferredArcs: ["Giant vs giant clash", "Territory dominance battle"],
+    nearbyArcs: ["Giant vs giant clash", "Territory dominance battle", "Defender stands ground"],
+    preferredHabitats: ["Open Prairie Grassland", "Rocky Mountain Meadow", "Snow Field Tundra"],
+    preferredHookFamily: "curiosity",
+    laneTag: "#giantstandoff",
+    predatorKeywords: ["bison", "moose", "elk", "musk ox", "bear", "elephant", "rhino", "hippo"],
+    preyKeywords: ["bison", "moose", "elk", "musk ox", "bear", "elephant", "rhino", "hippo"],
+    habitatKeywords: ["standoff", "shoulder line", "heavy footing", "body weight"],
+    habitatClause: "with wide standoff spacing and heavy-footed silhouette reads",
+    hooks: [
+      constantLaneCopy(() => "The standoff was visible in the shoulder line before either animal moved."),
+      constantLaneCopy(() => "Two heavy silhouettes made the space feel charged before contact."),
+      constantLaneCopy(() => "The footing shift gave away the standoff first."),
+    ],
+    shortLead: constantLaneCopy(() => "The standoff reads in the shoulder line."),
+    longLead: constantLaneCopy(() => "The standoff reads in the shoulder line before either animal commits to the next move."),
+  },
+  "Predator Pressure": {
+    preferredArcs: ["Ambush attack", "Chase and takedown"],
+    nearbyArcs: ["Ambush attack", "Chase and takedown", "Escape from danger"],
+    preferredHabitats: ["Forest Clearing", "Rocky Mountain Meadow", "Open Prairie Grassland"],
+    preferredHookFamily: "danger",
+    laneTag: "#predatorpressure",
+    predatorKeywords: ["wolf", "mountain lion", "cougar", "bear", "coyote", "bobcat", "lion", "tiger", "leopard"],
+    preyKeywords: ["deer", "elk", "rabbit", "antelope", "gazelle", "calf", "fawn"],
+    habitatKeywords: ["pressure line", "closing distance", "danger zone", "readable distance"],
+    habitatClause: "with a clear pressure line and readable predator distance",
+    hooks: [
+      predatorOnly((predator) => `The ${predator.toLowerCase()} was already shaping the pressure line.`),
+      constantLaneCopy(() => "The danger beat arrived before the chase opened fully."),
+      constantLaneCopy(() => "The pressure was readable before the subject reacted."),
+    ],
+    shortLead: constantLaneCopy(() => "The pressure line is readable early."),
+    longLead: constantLaneCopy(() => "The pressure line is readable early, so the danger beat lands before the full chase begins."),
+  },
+  "Escape Lane": {
+    preferredArcs: ["Escape from danger", "Chase and takedown"],
+    nearbyArcs: ["Escape from danger", "Chase and takedown", "Ambush attack"],
+    preferredHabitats: ["Open Prairie Grassland", "Forest Clearing", "Rocky Mountain Meadow"],
+    preferredHookFamily: "danger",
+    laneTag: "#escapelane",
+    predatorKeywords: ["wolf", "coyote", "mountain lion", "cougar", "bear", "bobcat"],
+    preyKeywords: ["deer", "elk", "rabbit", "antelope", "gazelle", "calf", "fawn"],
+    habitatKeywords: ["escape lane", "breakaway", "open gap", "turning room"],
+    habitatClause: "with one clean escape lane and visible turning room",
+    hooks: [
+      constantLaneCopy(() => "One escape lane stayed open for less than a second."),
+      preyOnly((prey) => `The ${prey.toLowerCase()} had one clean turn before the pressure closed.`),
+      constantLaneCopy(() => "The whole scene turns on whether the opening stays wide enough."),
+    ],
+    shortLead: constantLaneCopy(() => "One escape lane stays readable."),
+    longLead: constantLaneCopy(() => "One escape lane stays readable, making the survival beat clear without graphic escalation."),
+  },
+  "Swamp Ambush": {
+    preferredArcs: ["Ambush attack", "Escape from danger"],
+    nearbyArcs: ["Ambush attack", "Escape from danger", "Chase and takedown"],
+    preferredHabitats: ["Everglades Marsh", "Cypress Swamp Edge", "Riverbank Reeds"],
+    preferredHookFamily: "danger",
+    laneTag: "#swampambush",
+    predatorKeywords: ["alligator", "crocodile", "jaguar", "snake", "heron", "bobcat"],
+    preyKeywords: ["deer", "boar", "fish", "duck", "frog", "calf", "fawn"],
+    habitatKeywords: ["swamp", "marsh", "cypress", "waterline", "muddy bank"],
+    habitatClause: "with swamp-edge cover and clean waterline separation",
+    hooks: [
+      constantLaneCopy(() => "The swamp edge gave away the ambush before the water moved."),
+      constantLaneCopy(() => "A quiet waterline turned into the warning sign."),
+      constantLaneCopy(() => "The cover looked still until the pressure line appeared."),
+    ],
+    shortLead: constantLaneCopy(() => "The swamp edge hides the pressure early."),
+    longLead: constantLaneCopy(() => "The swamp edge hides the pressure early while the subjects stay readable and separated."),
+  },
+  "Winter Survival": {
+    preferredArcs: ["Escape from danger", "Defender stands ground"],
+    nearbyArcs: ["Escape from danger", "Defender stands ground", "Pack hunting strategy"],
+    preferredHabitats: ["Snow Field Tundra", "Rocky Mountain Meadow", "Forest Clearing"],
+    preferredHookFamily: "danger",
+    laneTag: "#wintersurvival",
+    predatorKeywords: ["wolf", "fox", "lynx", "coyote", "polar bear", "bear", "eagle"],
+    preyKeywords: ["deer", "elk", "caribou", "hare", "rabbit", "seal", "calf", "fawn"],
+    habitatKeywords: ["snow", "winter", "ice", "frozen", "whiteout"],
+    habitatClause: "with winter footing, visible breath, and clean snowfield spacing",
+    hooks: [
+      constantLaneCopy(() => "The snow made every survival step easier to read."),
+      preyOnly((prey) => `The ${prey.toLowerCase()} had to find traction before the pressure closed.`),
+      constantLaneCopy(() => "Winter footing turned the escape into the story beat."),
+    ],
+    shortLead: constantLaneCopy(() => "The winter footing changes the survival read."),
+    longLead: constantLaneCopy(() => "The winter footing changes the survival read because every track and turn stays visible."),
+  },
+  "Territory Clash": {
+    preferredArcs: ["Territory dominance battle", "Predator vs predator fight"],
+    nearbyArcs: ["Territory dominance battle", "Predator vs predator fight", "Giant vs giant clash"],
+    preferredHabitats: ["Forest Clearing", "Rocky Mountain Meadow", "Dry Prairie Plain"],
+    preferredHookFamily: "curiosity",
+    laneTag: "#territoryclash",
+    predatorKeywords: ["bear", "wolf", "lion", "tiger", "leopard", "elk", "bison", "moose"],
+    preyKeywords: ["bear", "wolf", "lion", "tiger", "leopard", "elk", "bison", "moose"],
+    habitatKeywords: ["territory", "claim line", "boundary", "warning step"],
+    habitatClause: "with a visible claim line and readable territorial spacing",
+    hooks: [
+      constantLaneCopy(() => "The claim line was visible before the clash started."),
+      constantLaneCopy(() => "One warning step turned the space into territory."),
+      constantLaneCopy(() => "The boundary mattered before either animal committed."),
+    ],
+    shortLead: constantLaneCopy(() => "The claim line is visible early."),
+    longLead: constantLaneCopy(() => "The claim line is visible early, keeping the territorial clash readable without graphic escalation."),
+  },
 };
 
 function normalizeText(value: string): string {
@@ -403,8 +555,18 @@ export function isContentLaneCompatible(
     case "Rut Battle":
       return isRutBattleSpeciesPair(predator, prey);
     case "Defender":
+    case "Mother Defense":
+    case "Herd Defense":
       return predatorMatch || preyMatch || arcMatch;
+    case "Giant Standoff":
+    case "Territory Clash":
+      return predatorMatch || preyMatch || arcMatch;
+    case "Predator Pressure":
+    case "Swamp Ambush":
+      return predatorMatch || arcMatch;
     case "Escape":
+    case "Escape Lane":
+    case "Winter Survival":
       return preyMatch || arcMatch || predatorMatch;
     default:
       return false;

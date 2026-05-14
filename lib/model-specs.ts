@@ -13,6 +13,7 @@
 // ─────────────────────────────────────────────────────────────
 
 import type { RunwayModel, KlingModel, Arc, Engine, DepthMode, Weather, HabitatPreset } from "@/types";
+import { BRAND_NAME as PAGE_BRAND_NAME, WORKFLOW_PREFIX } from "@/lib/brand";
 
 export {
   VIDEO_MODEL_CAPABILITIES,
@@ -25,8 +26,8 @@ export {
 // ─────────────────────────────────────────────────────────────
 // BRAND
 // ─────────────────────────────────────────────────────────────
-export const BRAND_NAME      = "WILD STORIES TV";
-export const WORKFLOW_PREFIX = "WSTV";
+export const BRAND_NAME = PAGE_BRAND_NAME.toUpperCase();
+export { WORKFLOW_PREFIX };
 // Reference tags (standardized for Runway reference workflows)
 export const REF_TAGS = {
   leadAnimal: "@lead_animal",

@@ -1,6 +1,17 @@
 import type { Arc } from "@/types";
 
 import {
+  AI_GENERATED_LABEL_REMINDER,
+  BRAND_NAME,
+  COMMUNITY_NAME,
+  FACEBOOK_PAGE_BIO,
+  FACEBOOK_PAGE_TAGLINE,
+  NO_FAKE_REAL_FOOTAGE_CLAIM,
+  NO_REPOST_WATERMARK_WARNING,
+  ORIGINALITY_LINE,
+} from "@/lib/brand";
+
+import {
   buildContentLaneLongCaptionLead,
   buildContentLaneShortCaptionLead,
   getContentLaneHashtag,
@@ -54,8 +65,6 @@ const SHORT_CAPTIONS_2026: Partial<Record<Arc, (predator: string, prey: string, 
   "Escape from danger": (predator, prey) =>
     `The ${predator.toLowerCase()} moved first. The ${prey.toLowerCase()} had almost no time to turn.`,
 };
-
-const COMMUNITY_NAME = "Wild Watchers";
 
 const CAPTIONS_2026: Partial<Record<Arc, (predator: string, prey: string, env: string) => string>> = {
   "Ambush attack": (predator, prey, env) =>
@@ -290,6 +299,29 @@ Who gave up position first? 👀`;
   }
 }
 
+function getDiscussionQuestion(arc: Arc): string {
+  switch (arc) {
+    case "Ambush attack":
+      return "Where did the ambush give itself away?";
+    case "Chase and takedown":
+      return "Which move closed the escape lane first?";
+    case "Escape from danger":
+      return "Predator read it first or prey almost escaped?";
+    case "Pack hunting strategy":
+      return "Which angle closed the escape lane first?";
+    case "Defender stands ground":
+      return "Did you spot the tell before it happened?";
+    case "Giant vs giant clash":
+      return "Which body shift made contact feel inevitable?";
+    case "Territory dominance battle":
+      return "Would you have noticed the claim earlier?";
+    case "Predator vs predator fight":
+      return "Which animal gave up position first?";
+    default:
+      return "Did you spot the tell before it happened?";
+  }
+}
+
 export function buildPinnedComment(arc: Arc): string {
   switch (arc) {
     case "Ambush attack":
@@ -311,6 +343,34 @@ export function buildPinnedComment(arc: Arc): string {
     default:
       return `${COMMUNITY_NAME} — did you spot the tell before it happened?`;
   }
+}
+
+export function buildCommunityPackage(arc: Arc) {
+  const discussionQuestion = getDiscussionQuestion(arc);
+
+  return {
+    communityName: COMMUNITY_NAME,
+    pinnedComment: buildPinnedComment(arc),
+    seriesCTA: `${BRAND_NAME} field note for the ${COMMUNITY_NAME}: watch the tension line, then compare the next scene.`,
+    followCTA: `Follow ${BRAND_NAME} for the next ${COMMUNITY_NAME} wildlife story.`,
+    discussionQuestion,
+  };
+}
+
+export function buildOriginalityPublishChecklist() {
+  return {
+    aiGeneratedLabelReminder: AI_GENERATED_LABEL_REMINDER,
+    originalProductionSignal: ORIGINALITY_LINE,
+    noRepostWatermarkWarning: NO_REPOST_WATERMARK_WARNING,
+    noFakeRealFootageClaim: NO_FAKE_REAL_FOOTAGE_CLAIM,
+  };
+}
+
+export function buildFacebookPageOptimizationCopy() {
+  return {
+    pageBio: FACEBOOK_PAGE_BIO,
+    tagline: FACEBOOK_PAGE_TAGLINE,
+  };
 }
 
 export function buildCaption(
@@ -452,7 +512,7 @@ export function buildTags(predator: string, prey: string, arc: Arc): string {
 }
 
 export function buildSEOTitle(predator: string, prey: string, arc: Arc): string {
-  return `${predator} vs ${prey} — ${arc} | Wild Stories TV`;
+  return `${predator} vs ${prey} — ${arc} | ${BRAND_NAME}`;
 }
 
 export function buildAltTextPrompt(
@@ -462,5 +522,5 @@ export function buildAltTextPrompt(
   arc: Arc
 ): string {
   const cleanEnv = sanitizeSocialEnv(env);
-  return `AI-generated cinematic wildlife scene showing ${predator} and ${prey} in ${cleanEnv} during a ${arc.toLowerCase()} sequence. Wild Stories TV original content.`;
+  return `AI-generated cinematic wildlife scene showing ${predator} and ${prey} in ${cleanEnv} during a ${arc.toLowerCase()} sequence. ${ORIGINALITY_LINE}`;
 }
