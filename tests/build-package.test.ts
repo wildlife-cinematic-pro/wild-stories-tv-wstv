@@ -1,5 +1,7 @@
 import { describe, expect, it } from "vitest";
 
+import { AI_GENERATED_LABEL_REMINDER } from "@/lib/brand";
+
 import { StoryMode, ViolenceLevel } from "@/types";
 
 import {
@@ -229,6 +231,7 @@ describe("build-package refactor seam", () => {
     expect(prompts?.seedanceMultiShot?.pasteReady).toContain("Shot 3, 10-15s final hold / resolved or unresolved tension");
     expect(prompts?.seedanceMultiShot?.pasteReady.match(/\bCut to\b/g)).toHaveLength(2);
     expect(prompts?.seedanceMultiShot?.pasteReady).not.toContain("Shot 4: resolved tension");
+
     expect(prompts?.klingNative15s?.pasteReady.length).toBeGreaterThan(0);
     expect(prompts?.klingNative15s?.pasteReady.startsWith("Image-to-video from master image")).toBe(true);
     expect(prompts?.klingFramesPrompt?.pasteReady.length).toBeGreaterThan(0);
@@ -305,13 +308,13 @@ describe("build-package refactor seam", () => {
     const reminders = draft.basePkg.platformPack?.facebook.publishReminders ?? [];
 
     expect(reminders).toContain(
-      "⚠️ Reminder: Label this content as AI-generated before publishing to comply with Meta policy and SynthID detection."
+      AI_GENERATED_LABEL_REMINDER
     );
     expect(
       reminders.filter(
         (item) =>
           item ===
-          "⚠️ Reminder: Label this content as AI-generated before publishing to comply with Meta policy and SynthID detection."
+          AI_GENERATED_LABEL_REMINDER
       )
     ).toHaveLength(1);
   });

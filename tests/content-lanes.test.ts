@@ -256,18 +256,18 @@ describe("Content Lane system", () => {
     );
 
     expect(ambush).toContain("escape lane");
-    expect(ambush).not.toContain("Wild Watchers");
+    expect(ambush).not.toContain("Wild Crew");
     expect(ambush.toLowerCase()).not.toMatch(/who wins|killed|blood|gore/);
     expect(escape.toLowerCase()).toMatch(/warning sign|almost no time to turn/);
-    expect(escape).not.toContain("Wild Watchers");
+    expect(escape).not.toContain("Wild Crew");
     expect(pack.toLowerCase()).toContain("open space");
-    expect(pack).not.toContain("Wild Watchers");
+    expect(pack).not.toContain("Wild Crew");
     expect(ambush.length).toBeLessThanOrEqual(150);
     expect(escape.length).toBeLessThanOrEqual(150);
     expect(pack.length).toBeLessThanOrEqual(150);
   });
 
-  it("keeps fallback captions outside us-only mode and builds Wild Watchers pinned comments", () => {
+  it("keeps fallback captions outside us-only mode and builds Wild Crew pinned comments", () => {
     const nonUs = buildShortCaption(
       "Mountain Lion",
       "White-tailed Deer",
@@ -286,13 +286,13 @@ describe("Content Lane system", () => {
     const escapePinned = buildPinnedComment("Escape from danger");
 
     expect(nonUs).not.toContain("escape lane");
-    expect(nonUs).not.toContain("Wild Watchers");
+    expect(nonUs).not.toContain("Wild Crew");
     expect(giant).toContain("body shift");
-    expect(giant).not.toContain("Wild Watchers");
+    expect(giant).not.toContain("Wild Crew");
     expect(giant.length).toBeLessThanOrEqual(150);
     expect(nonUs.length).toBeLessThanOrEqual(150);
-    expect(ambushPinned).toContain("Wild Watchers");
-    expect(escapePinned).toContain("Wild Watchers");
+    expect(ambushPinned).toContain("Wild Crew");
+    expect(escapePinned).toContain("Wild Crew");
     expect(`${ambushPinned} ${escapePinned}`.toLowerCase()).not.toMatch(
       /like|share|follow|comment yes/
     );

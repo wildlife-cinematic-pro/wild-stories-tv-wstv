@@ -5,6 +5,7 @@ import type {
   PerformanceTrackerAiToolUsed,
   PerformanceTrackerEntry,
 } from "@/types";
+import { isContentLane } from "@/lib/content-lanes";
 
 export const PERFORMANCE_TRACKER_CSV_HEADER = [
   "generationId",
@@ -373,12 +374,7 @@ export function normalizePerformanceTrackerEntry(
         ? source.hookFamily
         : base.hookFamily,
     contentLane:
-      source.contentLane === "Auto" ||
-      source.contentLane === "Pack Hunt" ||
-      source.contentLane === "Defender" ||
-      source.contentLane === "Fishing Strike" ||
-      source.contentLane === "Rut Battle" ||
-      source.contentLane === "Escape"
+      typeof source.contentLane === "string" && isContentLane(source.contentLane)
         ? source.contentLane
         : base.contentLane,
     reach: coerceNumericValue(source.reach),
