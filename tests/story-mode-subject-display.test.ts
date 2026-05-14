@@ -1,5 +1,7 @@
 import { describe, expect, it } from "vitest";
 
+import { STORY_MODE_OPTIONS } from "@/lib/story-mode-selector-options";
+import { getStoryModeImageSetupGuidance } from "@/lib/story-mode-image-setup-guidance";
 import {
   formatStoryModeGenerateCtaLabel,
   formatStoryModeSubjectPair,
@@ -12,6 +14,69 @@ import {
 import { StoryMode } from "@/types";
 
 describe("formatStoryModeSubjectPair", () => {
+
+  it("uses USA-native Facebook Reels examples in the story mode selector", () => {
+    const examples = new Map(
+      STORY_MODE_OPTIONS.map((option) => [option.value, option.example])
+    );
+
+    expect(examples.get(StoryMode.PREDATOR_VS_PREY)).toBe(
+      "Mountain Lion vs Mule Deer"
+    );
+    expect(examples.get(StoryMode.HERD_DEFENSE)).toBe(
+      "Bison Herd vs Wolf Pack"
+    );
+    expect(examples.get(StoryMode.MOTHER_BABY)).toBe(
+      "Grizzly Mother Protects Cubs"
+    );
+    expect(examples.get(StoryMode.RIVAL_CLASH)).toBe(
+      "Bull Elk Rut Standoff"
+    );
+    expect(examples.get(StoryMode.NEAR_MISS)).toBe(
+      "Deer Last-Second Brush Escape"
+    );
+    expect(examples.get(StoryMode.FISHING_STRIKE)).toBe(
+      "Bald Eagle River Strike"
+    );
+    expect(examples.get(StoryMode.WEATHER_SURVIVAL)).toBe(
+      "Yellowstone Bison Blizzard"
+    );
+    expect(examples.get(StoryMode.MIGRATION)).toBe(
+      "Elk Herd Migration Lane"
+    );
+    expect(examples.get(StoryMode.SCAVENGER_CONFLICT)).toBe(
+      "Bald Eagle vs Coyote Claim"
+    );
+  });
+
+  it("adds image setup guidance only for non-Predator story modes", () => {
+    expect(getStoryModeImageSetupGuidance(StoryMode.PREDATOR_VS_PREY)).toBeUndefined();
+
+    expect(getStoryModeImageSetupGuidance(StoryMode.HERD_DEFENSE)).toContain(
+      "readable herd formation"
+    );
+    expect(getStoryModeImageSetupGuidance(StoryMode.MOTHER_BABY)).toContain(
+      "sheltered visible offspring"
+    );
+    expect(getStoryModeImageSetupGuidance(StoryMode.RIVAL_CLASH)).toContain(
+      "two similar rivals facing off"
+    );
+    expect(getStoryModeImageSetupGuidance(StoryMode.NEAR_MISS)).toContain(
+      "one clear escape lane"
+    );
+    expect(getStoryModeImageSetupGuidance(StoryMode.FISHING_STRIKE)).toContain(
+      "waterline target"
+    );
+    expect(getStoryModeImageSetupGuidance(StoryMode.WEATHER_SURVIVAL)).toContain(
+      "no predator requirement"
+    );
+    expect(getStoryModeImageSetupGuidance(StoryMode.MIGRATION)).toContain(
+      "visible crossing obstacle"
+    );
+    expect(getStoryModeImageSetupGuidance(StoryMode.SCAVENGER_CONFLICT)).toContain(
+      "no carcass detail or blood"
+    );
+  });
   it("keeps predator vs prey labels for the default story mode", () => {
     expect(
       formatStoryModeSubjectPair({

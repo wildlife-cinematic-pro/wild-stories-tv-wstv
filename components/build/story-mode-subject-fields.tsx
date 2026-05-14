@@ -1,6 +1,7 @@
 "use client";
 
 import { HabitatRegion, StoryMode } from "@/types";
+import { getStoryModeImageSetupGuidance } from "@/lib/story-mode-image-setup-guidance";
 
 import AnimalSearchSelect from "@/components/build/animal-search-select";
 import {
@@ -567,6 +568,20 @@ export default function StoryModeSubjectFields({
         Smart defaults are applied for each story mode. You can override any subject
         or production control before generating.
       </div>
+
+      {getStoryModeImageSetupGuidance(storyMode) ? (
+        <div
+          className="mb-4 rounded-xl border border-amber-400/20 bg-amber-500/10 px-3 py-2.5"
+          data-testid="story-mode-image-setup-guidance"
+        >
+          <p className="text-[10px] font-black uppercase tracking-[0.14em] text-amber-300">
+            Master image needs
+          </p>
+          <p className="mt-1 text-xs font-semibold leading-relaxed text-amber-50/90">
+            {getStoryModeImageSetupGuidance(storyMode)}
+          </p>
+        </div>
+      ) : null}
 
       <div className="grid gap-4 md:grid-cols-2">
         <AnimalSearchSelect
