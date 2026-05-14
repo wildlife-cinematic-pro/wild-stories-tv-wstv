@@ -1,5 +1,7 @@
 import { describe, expect, it } from "vitest";
 
+import { AI_GENERATED_LABEL_REMINDER } from "@/lib/brand";
+
 import { StoryMode, ViolenceLevel } from "@/types";
 
 import {
@@ -291,13 +293,13 @@ describe("build-package refactor seam", () => {
     const reminders = draft.basePkg.platformPack?.facebook.publishReminders ?? [];
 
     expect(reminders).toContain(
-      "⚠️ Reminder: Label this content as AI-generated before publishing to comply with Meta policy and SynthID detection."
+      AI_GENERATED_LABEL_REMINDER
     );
     expect(
       reminders.filter(
         (item) =>
           item ===
-          "⚠️ Reminder: Label this content as AI-generated before publishing to comply with Meta policy and SynthID detection."
+          AI_GENERATED_LABEL_REMINDER
       )
     ).toHaveLength(1);
   });

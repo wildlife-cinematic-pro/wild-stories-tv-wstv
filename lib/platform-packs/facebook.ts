@@ -618,10 +618,10 @@ function laneOverlayPresetBias(
   contentLane: ContentLane,
   preset: FacebookFirstFrameOverlayPreset
 ): number {
-  const bias: Record<
+  const bias: Partial<Record<
     ContentLane,
     Partial<Record<FacebookFirstFrameOverlayPreset, number>>
-  > = {
+  >> = {
     Auto: {},
     "Pack Hunt": {
       facebook_two_line_readable: 6,

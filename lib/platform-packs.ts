@@ -23,10 +23,13 @@ import {
   buildHookFormattingPresets,
 } from "@/lib/platform-packs/overlays";
 import {
+  buildFacebookPageOptimizationCopy,
   buildHashtags,
   buildLongCaption,
-  buildPinnedComment,
+  buildOriginalityPublishChecklist,
+  buildCommunityPackage,
   buildShortCaption,
+  buildSEOTitle,
   buildTags,
 } from "@/lib/platform-packs/publishing";
 import { normalizeCopy, sanitizeSocialEnv } from "@/lib/platform-packs/shared";
@@ -77,8 +80,11 @@ export {
   build2026Caption,
   buildAltTextPrompt,
   buildCaption,
+  buildCommunityPackage,
+  buildFacebookPageOptimizationCopy,
   buildHashtags,
   buildLongCaption,
+  buildOriginalityPublishChecklist,
   buildPinnedComment,
   buildSEOTitle,
   buildShortCaption,
@@ -127,7 +133,8 @@ export function buildPlatformPack(
     contentLane: effectiveContentLane,
   });
   const tags = buildTags(predator, prey, arc);
-  const pinnedComment = buildPinnedComment(arc);
+  const communityPackage = buildCommunityPackage(arc);
+  const pinnedComment = communityPackage.pinnedComment;
   const overlayGuidance = buildFirstFrameOverlayGuidance();
   const facebookOverlayPresets = buildFacebookFirstFrameOverlayPresets(
     hooks[0],
@@ -151,6 +158,10 @@ export function buildPlatformPack(
       "Start with weekday morning or midday, then keep the winner from your own Facebook Insights.",
     cmpNote:
       "Keep the packaging original, keep the overlay in the upper safe zone and clear of the animals, and make sure the reel reads with or without sound.",
+    communityPackage,
+    originalityChecklist: buildOriginalityPublishChecklist(),
+    pageOptimization: buildFacebookPageOptimizationCopy(),
+    publishReminders: [buildOriginalityPublishChecklist().aiGeneratedLabelReminder],
     strategyNote:
       "Lead with the clearest species read or the clearest danger beat, then keep the overlay compact and off the main silhouette.",
     overlayGuidance,
@@ -194,7 +205,7 @@ export function buildPlatformPack(
   };
 
   const youtube_shorts: YouTubeShortsPack = {
-    title: `${predator} vs ${prey} — ${arc} | Wild Stories TV`,
+    title: buildSEOTitle(predator, prey, arc),
     description: longCaption,
     tags,
     bestTime:

@@ -59,7 +59,7 @@ describe("platform pack hook engine v2", () => {
     );
     const guidance = JSON.stringify(pack).toLowerCase();
 
-    expect(pack.facebook.pinnedComment).toContain("Wild Watchers");
+    expect(pack.facebook.pinnedComment).toContain("Wild Crew");
     expect(pack.facebook.pinnedComment.toLowerCase()).not.toMatch(
       /like|share|follow|comment yes/
     );
@@ -267,7 +267,7 @@ describe("platform pack hook engine v2", () => {
     expect(validateCaptionCTA(pack.facebook.caption)).toBe(true);
   });
 
-  it("builds safe three-line short captions, Wild Watchers pinned comments, and five Facebook-safe hashtags", () => {
+  it("builds safe three-line short captions, Wild Crew pinned comments, and five Facebook-safe hashtags", () => {
     const pack = buildPlatformPack(
       "Mountain Lion",
       "White-tailed Deer",
@@ -294,8 +294,8 @@ describe("platform pack hook engine v2", () => {
     expect(shortCaption.split(/\n/)[0].split(/\s+/)).toHaveLength(5);
     expect(shortCaption.length).toBeLessThanOrEqual(150);
     expect(shortCaption).not.toMatch(forbidden);
-    expect(pack.facebook.pinnedComment).toContain("Wild Watchers");
-    expect(pinnedComments.every((comment) => comment.includes("Wild Watchers"))).toBe(true);
+    expect(pack.facebook.pinnedComment).toContain("Wild Crew");
+    expect(pinnedComments.every((comment) => comment.includes("Wild Crew"))).toBe(true);
     expect(pinnedComments.join(" ")).not.toMatch(forbidden);
     expect(hashtags).toHaveLength(5);
     expect(hashtags).toEqual([
