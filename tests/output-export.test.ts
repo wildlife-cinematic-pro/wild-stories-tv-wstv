@@ -13,6 +13,7 @@ import {
   buildSeedanceShots,
   buildThumbnailPrompt,
   buildVoiceoverLine,
+  buildKlingMultishotPromptCards,
   buildCapCutPlan,
   buildClipChaining,
 } from "@/lib/prompt-builders";
@@ -245,4 +246,40 @@ describe("live export TXT path", () => {
     );
     expect(text).toMatch(/grass sway|background vegetation movement|dry wind|terrain|open-plain ambience/i);
   });
+  it("labels Kling multishot export as 3-shot and keeps Seedance separate", () => {
+    const data = makePackage({
+      predator: "Crocodile",
+      prey: "Warthog",
+      env: "dry-season African muddy waterhole",
+      arc: "Ambush attack",
+      weather: "Golden Hour",
+      sceneDesc: "The warthog notices too late at the waterline.",
+    });
+    const klingMultishotShots = buildKlingMultishotPromptCards(
+      "Crocodile",
+      "Warthog",
+      "dry-season African muddy waterhole",
+      "Ambush attack",
+      "Golden Hour",
+      "Kling 3.0 Pro",
+      "Raw Tension",
+      "National Geographic Wild",
+      "The warthog notices too late at the waterline.",
+      quality
+    );
+
+    const text = buildExportTxtFull({
+      ...data,
+      klingMultishotShots: klingMultishotShots.map((shot) => shot.fullText),
+      structuredPrompts: {
+        klingMultishotShots,
+      },
+    });
+
+    expect(klingMultishotShots).toHaveLength(3);
+    expect(data.seedanceMultiShotPrompt).toContain("Shot 4");
+    expect(text).toContain("=== KLING MULTISHOT 3-SHOT PROMPTS ===");
+    expect(text).not.toContain("=== KLING MULTISHOT 4-SHOT PROMPTS ===");
+  });
+
 });

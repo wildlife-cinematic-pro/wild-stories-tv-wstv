@@ -8,6 +8,7 @@ import {
 
 import type { GeneratedPackage, StructuredPrompt } from "@/types";
 import type { DirectWorkspaceTab } from "@/components/output-cards/workspaces/types";
+import { resolveDirectWorkspaceTab } from "@/components/output-cards/workspaces/direct-workspace-utils";
 
 function CountPill({ label, count, limit }: { label: string; count: number; limit: number }) {
   const pass = count <= limit;
@@ -23,6 +24,7 @@ function CountPill({ label, count, limit }: { label: string; count: number; limi
     </span>
   );
 }
+
 
 type KlingCombinedPromptInfo = {
   combinedPrompt: string;
@@ -73,18 +75,20 @@ export function DirectWorkspace({
   onDirectWorkspaceChange: (value: DirectWorkspaceTab) => void;
   onCopy: (text: string) => void | Promise<unknown>;
 }) {
-  const hasKlingFrames =
-    data.klingFramesPrompt !== undefined || data.klingNative15s !== undefined;
-
-  const resolvedDirectWorkspace: DirectWorkspaceTab =
-    directWorkspace === "kling15" && hasKlingFrames
-      ? "kling15"
-      : "seedance";
-
   const seedanceMultiShotCard = getSeedanceMultiShotCard(data);
   const klingFramesCard = getKlingFramesPromptCard(data);
   const klingMultishotCards = getKlingMultishotPromptCards(data);
-  const klingCombinedPromptInfo = getKlingCombinedPromptInfo(klingFramesCard);
+  const hasSeedance = Boolean(data.seedanceMultiShotPrompt);
+  const hasKlingFrames = Boolean(data.klingFramesPrompt ?? data.klingNative15s);
+  const hasKlingDirect = hasKlingFrames || klingMultishotCards.length > 0;
+  const resolvedDirectWorkspace = resolveDirectWorkspaceTab({
+    selected: directWorkspace,
+    hasKlingDirect,
+    hasSeedance,
+  });
+  const klingCombinedPromptInfo = hasKlingFrames
+    ? getKlingCombinedPromptInfo(klingFramesCard)
+    : null;
 
   return (
     <div className="space-y-6">
@@ -95,12 +99,12 @@ export function DirectWorkspace({
               Direct prompt workspace
             </div>
             <p className="mt-1 max-w-3xl text-xs leading-relaxed text-[color:var(--muted)]">
-              One-click direct prompts live here. Kling now separates the single Frames prompt from the 4-shot Multishot prompts so each field stays inside its own model limit.
+              One-click direct prompts live here. Kling separates the single Frames prompt from the 3-shot Multishot prompts so each field stays inside its own model limit.
             </p>
           </div>
 
           <div className="grid w-full min-w-0 grid-cols-1 gap-2 sm:flex sm:w-auto sm:flex-wrap">
-            {data.seedanceMultiShotPrompt && (
+            {hasSeedance && (
               <button
                 type="button"
                 onClick={() => onDirectWorkspaceChange("seedance")}
@@ -113,7 +117,7 @@ export function DirectWorkspace({
                 Seedance 2.0
               </button>
             )}
-            {hasKlingFrames && (
+            {hasKlingDirect && (
               <button
                 type="button"
                 onClick={() => onDirectWorkspaceChange("kling15")}
@@ -129,6 +133,12 @@ export function DirectWorkspace({
           </div>
         </div>
       </div>
+
+      {resolvedDirectWorkspace === null && (
+        <div className="rounded-2xl border border-[color:var(--border)] bg-[color:var(--surface-elevated)] p-4 text-sm font-bold text-[color:var(--muted)]">
+          No direct prompts are available for this package yet.
+        </div>
+      )}
 
       {resolvedDirectWorkspace === "seedance" &&
         data.seedanceMultiShotPrompt !== undefined &&
@@ -185,8 +195,10 @@ export function DirectWorkspace({
           </div>
         )}
 
-      {resolvedDirectWorkspace === "kling15" && hasKlingFrames && (
+      {resolvedDirectWorkspace === "kling15" && hasKlingDirect && (
         <div className="space-y-4 rounded-2xl border border-blue-500/30 bg-blue-500/12 p-4 shadow-sm">
+          {hasKlingFrames && (
+            <>
           <div className="flex flex-wrap items-center gap-2">
             <div className="text-sm font-extrabold text-blue-900 dark:text-blue-100">
               Kling Frames Prompt
@@ -237,6 +249,9 @@ export function DirectWorkspace({
             </pre>
           </details>
 
+          </>
+          )}
+
           {klingCombinedPromptInfo && (
             <div className="rounded-xl border border-blue-300/60 bg-[color:var(--surface-elevated)] p-3">
               <div className="flex flex-wrap items-center gap-2">
@@ -280,10 +295,10 @@ export function DirectWorkspace({
           <div className="rounded-2xl border border-blue-300/60 bg-[color:var(--surface-elevated)] p-4">
             <div className="mb-3 flex flex-wrap items-center gap-2">
               <div className="text-sm font-extrabold text-blue-900 dark:text-blue-100">
-                Kling Multishot 4-Shot Prompts
+                Kling Multishot 3-Shot Prompts
               </div>
               <span className="rounded-full bg-green-100 px-2 py-0.5 text-[11px] font-extrabold text-green-700 ring-1 ring-green-200 dark:bg-green-500/15 dark:text-green-100">
-                exactly 4 shots
+                {klingMultishotCards.length === 3 ? "exactly 3 shots" : `${klingMultishotCards.length} saved shots`}
               </span>
               {klingMultishotCards.map((card, index) => (
                 <CountPill key={card.metadata?.shotKey ?? index} label={`Shot ${index + 1}`} count={card.pasteReady.length} limit={512} />

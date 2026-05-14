@@ -934,7 +934,7 @@ function buildCandidateDefinitions(
       label: `KLING MULTISHOT SHOT ${index + 1}`,
       engine: `Kling Multishot Shot ${index + 1}`,
       reason:
-        "Dedicated 4-shot Kling Multishot prompt capped at 512 characters for the shot field.",
+        "Dedicated 3-shot Kling Multishot prompt capped at 512 characters for each shot field.",
       prompt: shot.pasteReady,
       metadata: shot.metadata,
     });

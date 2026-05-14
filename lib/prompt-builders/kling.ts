@@ -1153,7 +1153,7 @@ export function buildKlingMultishotPromptCards(
   if (!isNative) {
     const fallback =
       `Kling Multishot requires Kling 3.0 Pro or Kling 3.0 Standard. Selected: ${model}.`;
-    return [1, 2, 3, 4].map((shot) =>
+    return [1, 2, 3].map((shot) =>
       buildStructuredPrompt({
         fullText: fallback,
         pasteReady: fallback,
@@ -1167,70 +1167,53 @@ export function buildKlingMultishotPromptCards(
     );
   }
 
+  void sceneDesc;
+  void quality;
+
   const profile = getCatalogKlingPairProfile(predator, prey, env);
   const cues = getKlingStyleCues(profile.style);
   const arcCues = getKlingArcCues(arc);
   const shotEnv = compactEnvironmentPhrase(env, 8, 16);
   const toneCue = getCompactKlingToneTag(emotionalTone);
   const vibeCue = getCompactKlingVibeTag(animalVibe);
-  const qualityCue = buildCompactKlingQualityCue(quality);
-  const sceneCue = buildCompactKlingSceneCue(sceneDesc, 44);
   const setupIntensity = getKlingMotionIntensity(arc, "establish");
-  const triggerIntensity = Number(
-    (
-      (getKlingMotionIntensity(arc, "establish") +
-        getKlingMotionIntensity(arc, "action")) /
-      2
-    ).toFixed(2)
-  );
   const pressureIntensity = getKlingMotionIntensity(arc, "action");
   const cliffIntensity = Math.min(
     1,
     Number((getKlingMotionIntensity(arc, "aftermath") + 0.08).toFixed(2))
   );
 
+  const safetyCue = "clean non-graphic wildlife tension; no extra animals, subtitles, text, or watermark.";
+
   const shots = [
     [
-      `Same ${predator} and ${prey} in ${shotEnv}.`,
-      sceneCue,
+      "0-5s opening tension / first-frame hook.",
+      `Same ${predator} and ${prey} in ${shotEnv}; identity locked from the master frame.`,
       `${toneCue}; ${vibeCue}.`,
-      `${qualityCue}.`,
       `${getKlingIntensityCue(setupIntensity, "setup")} ${arcCues.setup}`,
       `${cues.setup}.`,
-      buildKlingSafetyLine(),
-      `Both animals stay readable from frame one.`,
+      "Full bodies readable, clear spacing, grounded paw or hoof contact.",
+      safetyCue,
     ]
       .filter(Boolean)
       .join(" "),
     [
-      "Trigger beat.",
+      "5-10s pressure build with one readable peak movement beat.",
       `${toneCue}; ${vibeCue}.`,
-      `${getKlingIntensityCue(triggerIntensity, "trigger")} ${arcCues.trigger}`,
+      `${getKlingIntensityCue(pressureIntensity, "pressure")} ${arcCues.trigger}`,
       `${predator} ${cues.trigger}; ${prey} ${cues.reaction}.`,
-      `Use ${cues.motion}; keep both bodies visible.`,
-      `stable anatomy, grounded contact.`,
-      buildKlingSafetyLine(),
+      `Use ${cues.motion}; one clean action lane, stable anatomy, grounded contact.`,
+      safetyCue,
     ]
       .filter(Boolean)
       .join(" "),
     [
-      "Near-clash pressure.",
-      `${toneCue}; ${vibeCue}.`,
-      `${getKlingIntensityCue(pressureIntensity, "pressure")} ${arcCues.pressure}`,
-      `${cues.pressure}.`,
-      `Show resistance, corridor tightening, or grounded traction with both animals readable.`,
-      `stable anatomy, grounded contact.`,
-      buildKlingSafetyLine(),
-    ]
-      .filter(Boolean)
-      .join(" "),
-    [
-      "Cliffhanger finish.",
+      "10-15s replay-worthy final hold with resolved or unresolved tension.",
       `${toneCue}.`,
       `${getKlingIntensityCue(cliffIntensity, "cliff")} ${arcCues.cliff}`,
       `${cues.cliff}.`,
-      `Keep ${predator} and ${prey} readable in ${shotEnv}.`,
-      buildKlingSafetyLine(true),
+      `Hold ${predator} and ${prey} readable in ${shotEnv}; identity, scale, spacing, and contact stay grounded.`,
+      safetyCue,
     ]
       .filter(Boolean)
       .join(" "),
@@ -1238,18 +1221,17 @@ export function buildKlingMultishotPromptCards(
 
   return shots.map((shot, index) => {
     const shotNumber = index + 1;
-    const timings = ["0-4s", "4-8s", "8-12s", "12-15s"];
+    const timings = ["0-5s", "5-10s", "10-15s"];
     const titles = [
-      "setup / tension",
-      "trigger / burst",
-      "near-clash pressure",
-      "cliffhanger finish",
+      "opening tension / first-frame hook",
+      "pressure build / peak movement",
+      "final hold / resolved or unresolved tension",
     ];
     const countLine = `Shot ${shotNumber}: ${shot.length}/${KLING_MULTISHOT_SHOT_CHAR_LIMIT}`;
 
     return buildStructuredPrompt({
       fullText: `KLING MULTISHOT SHOT ${shotNumber} (${timings[index]}) — ${titles[index]}\n${countLine}\n${shot}`,
-      pasteReady: sanitizeForEngine(shot, "kling"),
+      pasteReady: clampKlingShotPrompt(sanitizeForEngine(shot, "kling")),
       settings: [
         countLine,
         `Timing: ${timings[index]}`,
@@ -1260,7 +1242,7 @@ export function buildKlingMultishotPromptCards(
         engine: "kling",
         shotKey: `shot${shotNumber}`,
         title: `Kling Multishot Shot ${shotNumber}`,
-        durationSeconds: shotNumber === 4 ? 3 : 4,
+        durationSeconds: 5,
         variant: "kling-multishot",
       },
     });

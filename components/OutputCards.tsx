@@ -6,6 +6,7 @@ import { OverviewWorkspace } from "@/components/output-cards/workspaces/Overview
 import { PromptsWorkspace } from "@/components/output-cards/workspaces/PromptsWorkspace";
 import { VideoWorkspace } from "@/components/output-cards/workspaces/VideoWorkspace";
 import { DirectWorkspace } from "@/components/output-cards/workspaces/DirectWorkspace";
+import { getDefaultDirectWorkspace } from "@/components/output-cards/workspaces/direct-workspace-utils";
 import { PublishingWorkspace } from "@/components/output-cards/workspaces/PublishingWorkspace";
 import { EvidenceWorkspace } from "@/components/output-cards/workspaces/EvidenceWorkspace";
 import { AdvancedWorkspace } from "@/components/output-cards/workspaces/AdvancedWorkspace";
@@ -46,10 +47,11 @@ export default function OutputCards({
   const [activeWorkspace, setActiveWorkspace] =
     useState<OutputWorkspaceTab>("overview");
   const primaryVideoWorkspace = getOrderedOutputTabs(data.primaryVideoRoute)[0];
+  const defaultDirectWorkspace = useMemo(() => getDefaultDirectWorkspace(data), [data]);
   const [videoWorkspace, setVideoWorkspace] =
     useState<VideoWorkspaceTab>(primaryVideoWorkspace);
   const [directWorkspace, setDirectWorkspace] =
-    useState<DirectWorkspaceTab>("seedance");
+    useState<DirectWorkspaceTab>(() => defaultDirectWorkspace);
   const [outputFixFeedback, setOutputFixFeedback] = useState<string | null>(null);
   const onCopy = useOutputCopy();
 
@@ -67,6 +69,10 @@ export default function OutputCards({
   useEffect(() => {
     setVideoWorkspace(primaryVideoWorkspace);
   }, [data.generationId, primaryVideoWorkspace]);
+
+  useEffect(() => {
+    setDirectWorkspace(defaultDirectWorkspace);
+  }, [data.generationId, defaultDirectWorkspace]);
 
   const versionKey = useMemo(() => {
     const predator = data.predatorName ?? "";

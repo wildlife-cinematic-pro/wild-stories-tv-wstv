@@ -376,7 +376,7 @@ export function buildCopyAllPacksText(data: GeneratedPackage) {
     `=== KLING FRAMES PROMPT ===`,
     safeStr((data as Record<string, unknown>).klingFramesPrompt) || safeStr((data as Record<string, unknown>).klingNative15s) || "(none)",
     "",
-    `=== KLING MULTISHOT 4-SHOT PROMPTS ===`,
+    `=== KLING MULTISHOT 3-SHOT PROMPTS ===`,
     Array.isArray((data as Record<string, unknown>).klingMultishotShots)
       ? ((data as Record<string, unknown>).klingMultishotShots as unknown[]).map((shot, index) => `Shot ${index + 1}:\n${safeStr(shot)}`).join("\n\n")
       : "(none)",
