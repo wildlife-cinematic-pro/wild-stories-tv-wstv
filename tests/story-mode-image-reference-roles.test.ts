@@ -69,7 +69,7 @@ describe("story mode image reference roles", () => {
     });
 
     expect(roles.offspringTitle).toBe("Offspring / Cub Master Image");
-    expect(roles.offspringCopyLabel).toBe("Offspring/Cub Reference");
+    expect(roles.offspringCopyLabel).toBe("Cub Reference");
     expect(roles.offspringReferenceLabel).toBe("Offspring / cub reference image");
     expect(roles.offspringPreserveLine).toContain("smaller body scale than the mother");
     expect(referenceTags).toEqual({
@@ -84,6 +84,36 @@ describe("story mode image reference roles", () => {
     expect(finalMergeReferenceText).toContain("4. @environment");
     expect(finalMergeReferenceText).toContain("correctly scaled young animal");
     expect(finalMergeReferenceText).toContain("smaller than mother");
+  });
+
+  it("uses the selected Mother & Baby offspring label in reference roles and prompts", () => {
+    const pkg = packageFor({
+      storyMode: StoryMode.MOTHER_BABY,
+      predatorName: "Bison Mother",
+      preyName: "Male Grizzly",
+      subjectA: "Bison Mother",
+      subjectB: "Male Grizzly",
+      offspringLabel: "calf",
+      environmentName: "Yellowstone meadow edge",
+    });
+    const roles = getStoryModeImageReferenceRoles(pkg);
+    const prompt = buildModeAwareImageReferencePrompt({
+      subjectName: "calf",
+      roleTitle: roles.offspringTitle ?? "Offspring / Calf Master Image",
+      kind: roles.offspringKind ?? "offspring",
+      preserveLine: roles.offspringPreserveLine ?? "",
+      modeLabel: roles.modeLabel,
+      relationshipLine: "Bison Mother shields the calf while Male Grizzly stays distant.",
+      sceneGoal: "Protective mother and calf survival sequence.",
+    });
+
+    expect(roles.offspringTitle).toBe("Offspring / Calf Master Image");
+    expect(roles.offspringCopyLabel).toBe("Calf Reference");
+    expect(roles.offspringReferenceLabel).toBe("Offspring / calf reference image");
+    expect(prompt).toContain("calf only");
+    expect(prompt).toContain("smaller body scale than the mother");
+    expect(prompt).toContain("sheltered posture");
+    expect(prompt).toContain("readable separation from the mother");
   });
 
   it("keeps Predator vs Prey reference labels backward-compatible", () => {

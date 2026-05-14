@@ -1,3 +1,5 @@
+import { readFileSync } from "node:fs";
+import { join } from "node:path";
 import { describe, expect, it } from "vitest";
 
 import {
@@ -112,5 +114,30 @@ describe("hybrid reference image prompts", () => {
     expect(prompt).toContain("readable pressure-ready posture");
     expect(prompt).toContain("readable survival-reaction posture");
     expect(prompt).toContain("one clear open attack/escape corridor");
+  });
+});
+
+
+describe("WorkflowPromptMap story-mode-aware reference routing", () => {
+  const source = readFileSync(
+    join(process.cwd(), "components/output-cards/workflow-prompt-map.tsx"),
+    "utf8"
+  );
+
+  it("keeps a legacy Predator vs Prey reference path while gating mode-aware routing", () => {
+    expect(source).toContain("const legacyReferenceSteps: WorkflowItem[]");
+    expect(source).toContain('title: "Lead Animal Master Image"');
+    expect(source).toContain('title: "Opposite Animal Master Image"');
+    expect(source).toContain("const useModeAwareReferenceFlow = !modeAwareReferenceWorkflow.roles.isPredatorVsPrey");
+    expect(source).toContain("? modeAwareReferenceSteps");
+    expect(source).toContain(": legacyReferenceSteps");
+  });
+
+  it("uses the existing mode-aware reference helper output for non-Predator modes", () => {
+    expect(source).toContain("buildReferencePrompts(data)");
+    expect(source).toContain("buildNanoBananaMergePrompts(data)[0]");
+    expect(source).toContain("...selectedReferenceSteps");
+    expect(source).toContain("mode-aware Nano Banana 2 primary references");
+    expect(source).toContain("Merge the mother, offspring, threat, and environment references");
   });
 });
