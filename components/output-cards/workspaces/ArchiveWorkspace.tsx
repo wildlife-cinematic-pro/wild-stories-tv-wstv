@@ -5,11 +5,15 @@ import { useEffect, useMemo, useState, type ChangeEvent } from "react";
 import {
   VIDEO_ARCHIVE_STORAGE_EVENT,
   buildVideoArchiveCaptionHashtagsText,
+  buildVideoArchiveFolderChecklistText,
+  buildVideoArchivePromptPackText,
+  buildVideoArchiveRecommendedFolderName,
   createVideoArchiveEntryFromPackage,
   deleteVideoArchiveEntry,
   exportVideoArchiveJson,
   findVideoArchiveEntryByGenerationId,
   getVideoArchiveGenerationId,
+  exportVideoArchiveEntryJson,
   importVideoArchiveJson,
   readVideoArchiveEntries,
   upsertVideoArchiveEntry,
@@ -505,6 +509,20 @@ export function ArchiveWorkspace({
                   <button type="button" onClick={() => onCopy(buildVideoArchiveCaptionHashtagsText(entry))} className="rounded-lg border border-[color:var(--border)] px-3 py-1.5 text-[11px] font-bold text-[color:var(--text)] hover:bg-[color:var(--surface-muted)] active:scale-95">Copy Caption + Hashtags</button>
                   <button type="button" onClick={() => onCopy(entry.localFolderPath ?? "")} className="rounded-lg border border-[color:var(--border)] px-3 py-1.5 text-[11px] font-bold text-[color:var(--text)] hover:bg-[color:var(--surface-muted)] active:scale-95">Copy Folder Path</button>
                   <button type="button" onClick={() => deleteEntry(entry)} className="rounded-lg border border-rose-400/40 px-3 py-1.5 text-[11px] font-bold text-rose-300 hover:bg-rose-500/10 active:scale-95">Delete</button>
+                </div>
+
+                <div className="mt-3 rounded-lg border border-[color:var(--border)] bg-[color:var(--surface-muted)] p-3">
+                  <div className="flex flex-wrap items-center justify-between gap-2">
+                    <span className="text-[10px] font-black uppercase tracking-[0.14em] text-cyan-400">Folder Pack</span>
+                    <span className="break-all font-mono text-[10px] text-[color:var(--muted)]">{buildVideoArchiveRecommendedFolderName(entry)}</span>
+                  </div>
+                  <div className="mt-2 flex flex-wrap gap-2">
+                    <button type="button" onClick={() => onCopy(buildVideoArchiveRecommendedFolderName(entry))} className="rounded-lg border border-[color:var(--border)] bg-[color:var(--surface)] px-3 py-1.5 text-[11px] font-bold text-[color:var(--text)] hover:bg-[color:var(--surface-elevated)] active:scale-95">Copy Folder Name</button>
+                    <button type="button" onClick={() => onCopy(buildVideoArchiveFolderChecklistText(entry))} className="rounded-lg border border-[color:var(--border)] bg-[color:var(--surface)] px-3 py-1.5 text-[11px] font-bold text-[color:var(--text)] hover:bg-[color:var(--surface-elevated)] active:scale-95">Copy Folder Checklist</button>
+                    <button type="button" onClick={() => downloadText("01_prompt-pack.txt", buildVideoArchivePromptPackText(entry))} className="rounded-lg border border-[color:var(--border)] bg-[color:var(--surface)] px-3 py-1.5 text-[11px] font-bold text-[color:var(--text)] hover:bg-[color:var(--surface-elevated)] active:scale-95">Download Prompt TXT</button>
+                    <button type="button" onClick={() => downloadText("02_caption-hashtags.txt", buildVideoArchiveCaptionHashtagsText(entry))} className="rounded-lg border border-[color:var(--border)] bg-[color:var(--surface)] px-3 py-1.5 text-[11px] font-bold text-[color:var(--text)] hover:bg-[color:var(--surface-elevated)] active:scale-95">Download Caption TXT</button>
+                    <button type="button" onClick={() => downloadText("03_archive-metadata.json", exportVideoArchiveEntryJson(entry))} className="rounded-lg border border-[color:var(--border)] bg-[color:var(--surface)] px-3 py-1.5 text-[11px] font-bold text-[color:var(--text)] hover:bg-[color:var(--surface-elevated)] active:scale-95">Download Entry JSON</button>
+                  </div>
                 </div>
               </article>
             ))
