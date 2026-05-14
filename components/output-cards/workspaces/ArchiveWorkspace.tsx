@@ -4,6 +4,7 @@ import { useEffect, useMemo, useState, type ChangeEvent } from "react";
 
 import {
   VIDEO_ARCHIVE_STORAGE_EVENT,
+  buildVideoArchiveCaptionHashtagsText,
   createVideoArchiveEntryFromPackage,
   deleteVideoArchiveEntry,
   exportVideoArchiveJson,
@@ -14,6 +15,7 @@ import {
   upsertVideoArchiveEntry,
   type VideoArchiveEntry,
   type VideoArchivePerformanceStats,
+  videoArchiveEntryMatchesSearch,
 } from "@/lib/video-archive-storage";
 import { downloadText } from "@/lib/storage";
 
@@ -27,6 +29,8 @@ type FormState = {
   thumbnailPath: string;
   facebookPostUrl: string;
   resultNotes: string;
+  caption: string;
+  hashtags: string;
   tags: string;
   views: string;
   likes: string;
@@ -45,6 +49,8 @@ const EMPTY_FORM: FormState = {
   thumbnailPath: "",
   facebookPostUrl: "",
   resultNotes: "",
+  caption: "",
+  hashtags: "",
   tags: "",
   views: "",
   likes: "",
@@ -84,8 +90,18 @@ function performanceFromForm(form: FormState): VideoArchivePerformanceStats {
   return stats;
 }
 
-function formFromEntry(entry: VideoArchiveEntry | null, fallbackTags = ""): FormState {
-  if (!entry) return { ...EMPTY_FORM, tags: fallbackTags };
+function formFromEntry(
+  entry: VideoArchiveEntry | null,
+  fallback: { caption?: string; hashtags?: string; tags?: string } = {}
+): FormState {
+  if (!entry) {
+    return {
+      ...EMPTY_FORM,
+      caption: fallback.caption ?? "",
+      hashtags: fallback.hashtags ?? "",
+      tags: fallback.tags ?? "",
+    };
+  }
 
   return {
     archiveId: entry.archiveId,
@@ -95,7 +111,9 @@ function formFromEntry(entry: VideoArchiveEntry | null, fallbackTags = ""): Form
     thumbnailPath: entry.thumbnailPath ?? "",
     facebookPostUrl: entry.facebookPostUrl ?? "",
     resultNotes: entry.resultNotes ?? "",
-    tags: entry.tags ?? fallbackTags,
+    caption: entry.caption ?? fallback.caption ?? "",
+    hashtags: entry.hashtags ?? fallback.hashtags ?? "",
+    tags: entry.tags ?? fallback.tags ?? "",
     views: numberText(entry.performance.views),
     likes: numberText(entry.performance.likes),
     shares: numberText(entry.performance.shares),
@@ -106,34 +124,19 @@ function formFromEntry(entry: VideoArchiveEntry | null, fallbackTags = ""): Form
   };
 }
 
-function entryMatchesSearch(entry: VideoArchiveEntry, query: string) {
-  const q = query.trim().toLowerCase();
-  if (!q) return true;
-  return [
-    entry.createdAt,
-    entry.updatedAt,
-    entry.animalPair,
-    entry.storyMode,
-    entry.engineRoute,
-    entry.workflowType,
-    entry.localFolderPath,
-    entry.facebookPostUrl,
-    entry.resultNotes,
-  ]
-    .filter(Boolean)
-    .join(" ")
-    .toLowerCase()
-    .includes(q);
-}
-
-function captionHashtagsText(entry: VideoArchiveEntry) {
-  return [entry.caption, entry.hashtags].filter(Boolean).join("\n\n");
-}
-
-function compactDate(value: string) {
+function readableDateTime(value?: string) {
+  if (!value) return "not set";
   const date = new Date(value);
-  if (Number.isNaN(date.getTime())) return value;
-  return date.toLocaleDateString();
+  if (!Number.isNaN(date.getTime())) {
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, "0");
+    const day = String(date.getDate()).padStart(2, "0");
+    const hours = String(date.getHours()).padStart(2, "0");
+    const minutes = String(date.getMinutes()).padStart(2, "0");
+    return year + "-" + month + "-" + day + " " + hours + ":" + minutes;
+  }
+
+  return value.replace("T", " ");
 }
 
 function MetricInput({
@@ -195,8 +198,16 @@ export function ArchiveWorkspace({
   onCopy: (text: string) => void | Promise<unknown>;
 }) {
   const generationId = useMemo(() => getVideoArchiveGenerationId(data), [data]);
+  const packageFallback = useMemo(
+    () => ({
+      caption: data.caption2026 || data.caption || "",
+      hashtags: data.hashtags ?? "",
+      tags: data.tags ?? "",
+    }),
+    [data.caption, data.caption2026, data.hashtags, data.tags]
+  );
   const [entries, setEntries] = useState<VideoArchiveEntry[]>([]);
-  const [form, setForm] = useState<FormState>(() => ({ ...EMPTY_FORM, tags: data.tags ?? "" }));
+  const [form, setForm] = useState<FormState>(() => formFromEntry(null, packageFallback));
   const [search, setSearch] = useState("");
   const [importJson, setImportJson] = useState("");
   const [status, setStatus] = useState("");
@@ -207,7 +218,7 @@ export function ArchiveWorkspace({
   );
 
   const visibleEntries = useMemo(
-    () => entries.filter((entry) => entryMatchesSearch(entry, search)),
+    () => entries.filter((entry) => videoArchiveEntryMatchesSearch(entry, search)),
     [entries, search]
   );
 
@@ -216,7 +227,7 @@ export function ArchiveWorkspace({
       const nextEntries = readVideoArchiveEntries();
       setEntries(nextEntries);
       const existing = findVideoArchiveEntryByGenerationId(generationId);
-      setForm(formFromEntry(existing, data.tags ?? ""));
+      setForm(formFromEntry(existing, packageFallback));
     }
 
     loadEntries();
@@ -226,7 +237,7 @@ export function ArchiveWorkspace({
       window.removeEventListener(VIDEO_ARCHIVE_STORAGE_EVENT, loadEntries);
       window.removeEventListener("storage", loadEntries);
     };
-  }, [data.tags, generationId]);
+  }, [generationId, packageFallback]);
 
   function updateField(field: keyof FormState) {
     return (event: ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
@@ -251,6 +262,8 @@ export function ArchiveWorkspace({
         archiveId: existing?.archiveId,
         createdAt: existing?.createdAt,
         updatedAt: now,
+        caption: form.caption,
+        hashtags: form.hashtags,
         tags: form.tags,
         performance: performanceFromForm(form),
       },
@@ -258,7 +271,7 @@ export function ArchiveWorkspace({
     );
     const saved = upsertVideoArchiveEntry(entry);
     if (saved) {
-      setForm(formFromEntry(saved, data.tags ?? ""));
+      setForm(formFromEntry(saved, packageFallback));
       refreshEntries(existing ? "Archive entry updated locally." : "Generation archived locally.");
       return;
     }
@@ -266,13 +279,13 @@ export function ArchiveWorkspace({
   }
 
   function editEntry(entry: VideoArchiveEntry) {
-    setForm(formFromEntry(entry, data.tags ?? ""));
+    setForm(formFromEntry(entry, packageFallback));
     setStatus("Editing saved archive entry.");
   }
 
   function deleteEntry(entry: VideoArchiveEntry) {
     deleteVideoArchiveEntry(entry.archiveId);
-    if (form.archiveId === entry.archiveId) setForm(formFromEntry(null, data.tags ?? ""));
+    if (form.archiveId === entry.archiveId) setForm(formFromEntry(null, packageFallback));
     refreshEntries("Archive entry deleted locally.");
   }
 
@@ -310,7 +323,7 @@ export function ArchiveWorkspace({
               Archive this generation
             </h3>
             <p className="mt-1 max-w-3xl text-xs leading-relaxed text-[color:var(--muted)]">
-              Saves prompt package metadata, captions, local Mac paths, Facebook URL, notes, and manual performance stats in browser localStorage. No video upload, no file storage, no cloud sync.
+              Saved locally in this browser. Keep your actual video files in your Mac folder. Use Export JSON for backup. No video upload, no file storage, no cloud sync.
             </p>
           </div>
           <span className="rounded-full border border-cyan-400/30 bg-cyan-500/10 px-3 py-1 text-[10px] font-black uppercase tracking-wide text-cyan-200">
@@ -339,13 +352,40 @@ export function ArchiveWorkspace({
           <TextInput label="Thumbnail file/path" value={form.thumbnailPath} onChange={updateField("thumbnailPath")} placeholder="cover.jpg or full local path" />
           <TextInput label="Facebook URL" value={form.facebookPostUrl} onChange={updateField("facebookPostUrl")} placeholder="https://facebook.com/..." />
           <TextInput label="Tags" value={form.tags} onChange={updateField("tags")} placeholder="yellowstone, bison, direct" />
-          <TextInput label="Posted date" value={form.postedAt} onChange={updateField("postedAt")} type="date" />
+          <TextInput label="Posted date & time" value={form.postedAt} onChange={updateField("postedAt")} type="datetime-local" />
           <MetricInput label="Views" value={form.views} onChange={updateField("views")} />
           <MetricInput label="Likes" value={form.likes} onChange={updateField("likes")} />
           <MetricInput label="Shares" value={form.shares} onChange={updateField("shares")} />
           <MetricInput label="Comments" value={form.comments} onChange={updateField("comments")} />
           <MetricInput label="Watch time" value={form.watchTime} onChange={updateField("watchTime")} />
           <TextInput label="Thumbnail file name" value={form.thumbnailFileName} onChange={updateField("thumbnailFileName")} placeholder="optional separate filename" />
+        </div>
+
+        <p className="mt-2 text-[11px] font-semibold text-[color:var(--muted)]">
+          Video stays in your Mac folder. Archive stores metadata only.
+        </p>
+
+        <div className="mt-3 grid gap-3 lg:grid-cols-2">
+          <label className="space-y-1 text-[11px] font-bold text-[color:var(--muted)]">
+            <span>Caption</span>
+            <textarea
+              value={form.caption}
+              onChange={updateField("caption")}
+              rows={3}
+              placeholder="Saved Facebook caption"
+              className="w-full resize-y rounded-xl border border-[color:var(--border)] bg-[color:var(--surface-muted)] px-3 py-2 text-sm text-[color:var(--text)] outline-none focus:border-cyan-400"
+            />
+          </label>
+          <label className="space-y-1 text-[11px] font-bold text-[color:var(--muted)]">
+            <span>Hashtags</span>
+            <textarea
+              value={form.hashtags}
+              onChange={updateField("hashtags")}
+              rows={3}
+              placeholder="#WildlifeReels #Yellowstone"
+              className="w-full resize-y rounded-xl border border-[color:var(--border)] bg-[color:var(--surface-muted)] px-3 py-2 text-sm text-[color:var(--text)] outline-none focus:border-cyan-400"
+            />
+          </label>
         </div>
 
         <div className="mt-3 grid gap-3 lg:grid-cols-2">
@@ -381,7 +421,7 @@ export function ArchiveWorkspace({
           </button>
           <button
             type="button"
-            onClick={() => setForm(formFromEntry(null, data.tags ?? ""))}
+            onClick={() => setForm(formFromEntry(null, packageFallback))}
             className="rounded-xl border border-[color:var(--border)] bg-[color:var(--surface)] px-4 py-2 text-xs font-bold text-[color:var(--text)] hover:bg-[color:var(--surface-muted)] active:scale-95"
           >
             Clear Form
@@ -395,10 +435,11 @@ export function ArchiveWorkspace({
           <div>
             <h3 className="text-base font-black text-[color:var(--text)]">Video Archive</h3>
             <p className="mt-1 text-xs leading-relaxed text-[color:var(--muted)]">
-              Search by animal pair, story mode, engine, date, local path, Facebook URL, or notes.
+              Search by animal pair, story mode, engine, workflow type, date/time, local path, Facebook URL, caption, hashtags, tags, or notes.
             </p>
           </div>
           <div className="flex flex-wrap gap-2">
+            <span className="w-full text-[10px] font-semibold text-[color:var(--muted)] sm:w-auto sm:self-center">Export JSON regularly if you want a backup before clearing browser data.</span>
             <button type="button" onClick={exportArchive} className="rounded-xl border border-[color:var(--border)] bg-[color:var(--surface)] px-3 py-2 text-xs font-bold text-[color:var(--text)] hover:bg-[color:var(--surface-muted)] active:scale-95">
               Export JSON
             </button>
@@ -426,7 +467,10 @@ export function ArchiveWorkspace({
                       <span className="rounded-full bg-[color:var(--surface-muted)] px-2 py-0.5 text-[10px] font-bold text-[color:var(--muted)] ring-1 ring-[color:var(--border)]">{entry.workflowType}</span>
                     </div>
                     <p className="mt-1 text-xs leading-relaxed text-[color:var(--muted)]">
-                      {compactDate(entry.createdAt)} · {entry.storyMode ?? "Story mode"} · {entry.engineRoute}
+                      Created: {readableDateTime(entry.createdAt)} · {entry.storyMode ?? "Story mode"} · {entry.engineRoute}
+                    </p>
+                    <p className="mt-1 break-words text-xs text-[color:var(--muted)]">
+                      Posted: {readableDateTime(entry.performance.postedAt)}
                     </p>
                     <p className="mt-1 break-words text-xs text-[color:var(--muted)]">
                       Folder: {entry.localFolderPath || "not set"}
@@ -442,6 +486,13 @@ export function ArchiveWorkspace({
                   </div>
                 </div>
 
+                {(entry.caption || entry.hashtags) && (
+                  <div className="mt-2 rounded-lg bg-[color:var(--surface-muted)] px-3 py-2 text-xs leading-relaxed text-[color:var(--muted)]">
+                    {entry.caption && <p className="line-clamp-2">{entry.caption}</p>}
+                    {entry.hashtags && <p className="mt-1 break-words text-cyan-300">{entry.hashtags}</p>}
+                  </div>
+                )}
+
                 {entry.resultNotes && (
                   <p className="mt-2 rounded-lg bg-[color:var(--surface-muted)] px-3 py-2 text-xs leading-relaxed text-[color:var(--muted)]">
                     {entry.resultNotes}
@@ -451,7 +502,7 @@ export function ArchiveWorkspace({
                 <div className="mt-3 flex flex-wrap gap-2">
                   <button type="button" onClick={() => editEntry(entry)} className="rounded-lg bg-gray-900 px-3 py-1.5 text-[11px] font-bold text-white hover:bg-black active:scale-95">Edit</button>
                   <button type="button" onClick={() => onCopy(entry.fullPromptPackage)} className="rounded-lg border border-[color:var(--border)] px-3 py-1.5 text-[11px] font-bold text-[color:var(--text)] hover:bg-[color:var(--surface-muted)] active:scale-95">Copy Prompt Package</button>
-                  <button type="button" onClick={() => onCopy(captionHashtagsText(entry))} className="rounded-lg border border-[color:var(--border)] px-3 py-1.5 text-[11px] font-bold text-[color:var(--text)] hover:bg-[color:var(--surface-muted)] active:scale-95">Copy Caption + Hashtags</button>
+                  <button type="button" onClick={() => onCopy(buildVideoArchiveCaptionHashtagsText(entry))} className="rounded-lg border border-[color:var(--border)] px-3 py-1.5 text-[11px] font-bold text-[color:var(--text)] hover:bg-[color:var(--surface-muted)] active:scale-95">Copy Caption + Hashtags</button>
                   <button type="button" onClick={() => onCopy(entry.localFolderPath ?? "")} className="rounded-lg border border-[color:var(--border)] px-3 py-1.5 text-[11px] font-bold text-[color:var(--text)] hover:bg-[color:var(--surface-muted)] active:scale-95">Copy Folder Path</button>
                   <button type="button" onClick={() => deleteEntry(entry)} className="rounded-lg border border-rose-400/40 px-3 py-1.5 text-[11px] font-bold text-rose-300 hover:bg-rose-500/10 active:scale-95">Delete</button>
                 </div>

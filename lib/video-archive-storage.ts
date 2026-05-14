@@ -238,6 +238,35 @@ export function createVideoArchiveEntryFromPackage(
   };
 }
 
+export function buildVideoArchiveCaptionHashtagsText(entry: Pick<VideoArchiveEntry, "caption" | "hashtags">): string {
+  return [entry.caption, entry.hashtags].filter(Boolean).join("\n\n");
+}
+
+export function videoArchiveEntryMatchesSearch(entry: VideoArchiveEntry, query: string): boolean {
+  const q = query.trim().toLowerCase();
+  if (!q) return true;
+
+  return [
+    entry.createdAt,
+    entry.updatedAt,
+    entry.performance.postedAt,
+    entry.animalPair,
+    entry.storyMode,
+    entry.engineRoute,
+    entry.workflowType,
+    entry.localFolderPath,
+    entry.facebookPostUrl,
+    entry.caption,
+    entry.hashtags,
+    entry.tags,
+    entry.resultNotes,
+  ]
+    .filter(Boolean)
+    .join(" ")
+    .toLowerCase()
+    .includes(q);
+}
+
 export function normalizeVideoArchiveEntry(value: unknown): VideoArchiveEntry | null {
   if (!isRecord(value)) return null;
 

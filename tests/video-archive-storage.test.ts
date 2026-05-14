@@ -2,6 +2,7 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 
 import {
   VIDEO_ARCHIVE_STORAGE_KEY,
+  buildVideoArchiveCaptionHashtagsText,
   createVideoArchiveEntryFromPackage,
   exportVideoArchiveJson,
   importVideoArchiveJson,
@@ -9,6 +10,7 @@ import {
   sanitizeArchiveMetadata,
   updateVideoArchiveEntry,
   upsertVideoArchiveEntry,
+  videoArchiveEntryMatchesSearch,
 } from "@/lib/video-archive-storage";
 import { StoryMode, type GeneratedPackage } from "@/types";
 
@@ -111,8 +113,31 @@ describe("video archive storage", () => {
     expect(entry.videoPrompt).toBe("Hybrid primary shot 1 prompt");
     expect(entry.caption).toContain("bison mother shields");
     expect(entry.hashtags).toContain("#Bison");
+    expect(entry.tags).toBe("bison, calf, yellowstone");
     expect(entry.localFolderPath).toContain("/Users/me/Movies");
     expect(entry.performance.views).toBe(1200);
+  });
+
+  it("loads past saved entries after a fresh read", () => {
+    installLocalStorageMock();
+    const first = createVideoArchiveEntryFromPackage(
+      makePackage({ generationId: "generation_old" }),
+      { archiveId: "archive_old", createdAt: "2026-05-13T20:10:00.000Z", updatedAt: "2026-05-13T20:10:00.000Z" },
+      "2026-05-13T20:10:00.000Z"
+    );
+    const second = createVideoArchiveEntryFromPackage(
+      makePackage({ generationId: "generation_new" }),
+      { archiveId: "archive_new", createdAt: "2026-05-14T21:50:00.000Z", updatedAt: "2026-05-14T21:50:00.000Z" },
+      "2026-05-14T21:50:00.000Z"
+    );
+
+    upsertVideoArchiveEntry(first);
+    upsertVideoArchiveEntry(second);
+
+    expect(readVideoArchiveEntries().map((entry) => entry.archiveId)).toEqual([
+      "archive_new",
+      "archive_old",
+    ]);
   });
 
   it("saves and loads archive entries from versioned localStorage", () => {
@@ -125,7 +150,12 @@ describe("video archive storage", () => {
     expect(raw).toContain('"archiveSchemaVersion":1');
     const restored = readVideoArchiveEntries();
     expect(restored).toHaveLength(1);
-    expect(restored[0]).toMatchObject({ generationId: "generation_1", animalPair: "Bison Mother vs Male Grizzly" });
+    expect(restored[0]).toMatchObject({
+      generationId: "generation_1",
+      animalPair: "Bison Mother vs Male Grizzly",
+      caption: "A bison mother shields her calf as pressure closes in.",
+      hashtags: "#Bison #Yellowstone #WildlifeReel #AnimalMothers #NatureShorts",
+    });
   });
 
   it("falls back safely when localStorage is corrupted", () => {
@@ -158,13 +188,51 @@ describe("video archive storage", () => {
     const updated = updateVideoArchiveEntry("archive_update", {
       facebookPostUrl: "https://facebook.com/reel/updated",
       resultNotes: "Posted version held the calf silhouette.",
-      performance: { views: 2200, likes: 150, shares: 31, comments: 11, retentionNotes: "Replay spike at final hold." },
+      performance: { views: 2200, likes: 150, shares: 31, comments: 11, retentionNotes: "Replay spike at final hold.", postedAt: "2026-05-15T22:10" },
     });
 
     expect(updated?.facebookPostUrl).toBe("https://facebook.com/reel/updated");
     expect(updated?.resultNotes).toContain("calf silhouette");
     expect(updated?.performance).toMatchObject({ views: 2200, likes: 150, shares: 31, comments: 11 });
     expect(updated?.performance.retentionNotes).toContain("Replay spike");
+    expect(updated?.performance.postedAt).toBe("2026-05-15T22:10");
+  });
+
+  it("copies caption and hashtags from the saved archive entry", () => {
+    const entry = createVideoArchiveEntryFromPackage(
+      makePackage(),
+      {
+        caption: "Saved caption changed after posting.",
+        hashtags: "#SavedTag #FollowUp",
+      },
+      "2026-05-14T10:00:00.000Z"
+    );
+
+    expect(buildVideoArchiveCaptionHashtagsText(entry)).toBe(
+      "Saved caption changed after posting.\n\n#SavedTag #FollowUp"
+    );
+  });
+
+  it("search matches caption, hashtags, tags, date time, and postedAt", () => {
+    const entry = createVideoArchiveEntryFromPackage(
+      makePackage(),
+      {
+        caption: "Saved caption with river pressure.",
+        hashtags: "#RiverPressure #Bison",
+        tags: "archive-search-tag",
+        createdAt: "2026-05-15T21:50:00.000Z",
+        updatedAt: "2026-05-15T21:55:00.000Z",
+        performance: { postedAt: "2026-05-15T22:10" },
+      },
+      "2026-05-15T21:50:00.000Z"
+    );
+
+    expect(videoArchiveEntryMatchesSearch(entry, "river pressure")).toBe(true);
+    expect(videoArchiveEntryMatchesSearch(entry, "#riverpressure")).toBe(true);
+    expect(videoArchiveEntryMatchesSearch(entry, "archive-search-tag")).toBe(true);
+    expect(videoArchiveEntryMatchesSearch(entry, "2026-05-15T21:50")).toBe(true);
+    expect(videoArchiveEntryMatchesSearch(entry, "2026-05-15T22:10")).toBe(true);
+    expect(videoArchiveEntryMatchesSearch(entry, "not-present")).toBe(false);
   });
 
   it("does not persist video binary/blob/base64 fields", () => {
