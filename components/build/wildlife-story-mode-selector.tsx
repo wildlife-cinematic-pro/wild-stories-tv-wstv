@@ -1,75 +1,10 @@
 "use client";
 
+import {
+  getStoryModeLabel,
+  STORY_MODE_OPTIONS,
+} from "@/lib/story-mode-selector-options";
 import { StoryMode } from "@/types";
-
-const STORY_MODE_OPTIONS: Array<{
-  value: StoryMode;
-  icon: string;
-  label: string;
-  example: string;
-}> = [
-  {
-    value: StoryMode.PREDATOR_VS_PREY,
-    icon: "P/P",
-    label: "Predator vs Prey",
-    example: "Mountain lion vs deer",
-  },
-  {
-    value: StoryMode.HERD_DEFENSE,
-    icon: "HD",
-    label: "Herd Defense",
-    example: "Bison circle defense",
-  },
-  {
-    value: StoryMode.MOTHER_BABY,
-    icon: "MB",
-    label: "Mother & Baby",
-    example: "Bear mother and cubs",
-  },
-  {
-    value: StoryMode.RIVAL_CLASH,
-    icon: "RC",
-    label: "Rival Clash",
-    example: "Bull elk standoff",
-  },
-  {
-    value: StoryMode.NEAR_MISS,
-    icon: "NM",
-    label: "Near-Miss Escape",
-    example: "Escape at the edge",
-  },
-  {
-    value: StoryMode.FISHING_STRIKE,
-    icon: "FS",
-    label: "Fishing Strike",
-    example: "Bear salmon swipe",
-  },
-  {
-    value: StoryMode.WEATHER_SURVIVAL,
-    icon: "WS",
-    label: "Weather Survival",
-    example: "Bison in blizzard",
-  },
-  {
-    value: StoryMode.MIGRATION,
-    icon: "MG",
-    label: "Migration Crossing",
-    example: "Caribou crossing",
-  },
-  {
-    value: StoryMode.SCAVENGER_CONFLICT,
-    icon: "SC",
-    label: "Scavenger Conflict",
-    example: "Eagle vs coyote",
-  },
-];
-
-export function getStoryModeLabel(value: StoryMode) {
-  return (
-    STORY_MODE_OPTIONS.find((option) => option.value === value)?.label ??
-    "Predator vs Prey"
-  );
-}
 
 export default function WildlifeStoryModeSelector({
   value,
