@@ -277,7 +277,10 @@ describe("live export TXT path", () => {
     });
 
     expect(klingMultishotShots).toHaveLength(3);
-    expect(data.seedanceMultiShotPrompt).toContain("Shot 4");
+    expect(data.seedanceMultiShotPrompt).toContain("SEEDANCE DIRECT 15S MULTISHOT PROMPT");
+    expect(data.seedanceMultiShotPrompt).toContain("Shot 3, 10-15s final hold / resolved or unresolved tension");
+    expect(data.seedanceShots).toHaveLength(4);
+    expect(text).toContain("=== SEEDANCE DIRECT 15S MULTISHOT ===");
     expect(text).toContain("=== KLING MULTISHOT 3-SHOT PROMPTS ===");
     expect(text).not.toContain("=== KLING MULTISHOT 4-SHOT PROMPTS ===");
   });

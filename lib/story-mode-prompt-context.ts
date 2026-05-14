@@ -546,29 +546,54 @@ function buildStoryModeSeedanceMultiShotPrompt(
   context: StoryModePromptContext,
   seedanceShots: StructuredPrompt[]
 ): StructuredPrompt {
-  const pasteReady = seedanceShots
+  const pressurePeakShot = [
+    seedanceShots[1]?.pasteReady,
+    seedanceShots[2]?.pasteReady
+      ? `One readable peak movement follows: ${seedanceShots[2].pasteReady}`
+      : "",
+  ]
+    .filter(Boolean)
+    .join(" ");
+  const directShots = [
+    seedanceShots[0]?.pasteReady,
+    pressurePeakShot,
+    seedanceShots[3]?.pasteReady,
+  ].filter(Boolean);
+  const timings = [
+    "Shot 1, 0-5s opening tension / first-frame hook",
+    "Shot 2, 5-10s pressure build / peak movement",
+    "Shot 3, 10-15s final hold / resolved or unresolved tension",
+  ];
+  const pasteReady = directShots
     .map((shot, index) =>
-      index === 0 ? shot.pasteReady : `Cut to ${shot.pasteReady}`
+      index === 0
+        ? `${timings[index]}: ${shot}`
+        : `Cut to ${timings[index]}: ${shot}`
     )
     .join("\n");
 
+  const safePasteReady = [
+    pasteReady,
+    "Safety: no blood, no gore, no visible injury, no extra animals, no subtitles, no text, no watermark.",
+  ].join("\n");
+
   const fullText = [
-    `SEEDANCE 4-SHOT CONTINUITY PROMPT — ${context.modeLabel}`,
+    `SEEDANCE DIRECT 15S MULTISHOT PROMPT — ${context.modeLabel}`,
     "Conservative WSTV Seedance rule — keep the prompt simple, movement-led, reference-aware, and easy to paste cleanly.",
     "",
     "═══ PASTE-READY SEEDANCE MULTI-SHOT PROMPT (copy this block into Seedance) ═══",
-    pasteReady,
+    safePasteReady,
     "",
     "─── BREAKDOWN (reference only) ───",
     `Subjects: ${context.primarySubjectLabel}; ${context.secondarySubjectLabel}.`,
     `Relationship: ${context.relationshipLine}`,
-    "Generate separate 5-second shots when cleaner continuity is needed.",
+    "Direct prompt timing: Shot 1 0-5s, Shot 2 5-10s, Shot 3 10-15s. Use normal separate shot cards for 4-shot / 20s workflows.",
   ].join("\n");
 
   return makeStructuredPrompt(
     fullText,
     "seedance",
-    `${context.modeLabel} Seedance 4-shot continuity prompt`,
+    `${context.modeLabel} Seedance Direct 15s 3-shot multishot prompt`,
     "multi-shot"
   );
 }

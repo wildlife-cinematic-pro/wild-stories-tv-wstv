@@ -146,10 +146,10 @@ export function DirectWorkspace({
           <div className="rounded-2xl border border-orange-500/30 bg-orange-500/12 p-4 shadow-sm">
             <div className="mb-2 flex flex-wrap items-center gap-2">
               <div className="text-sm font-extrabold text-orange-900 dark:text-orange-100">
-                Seedance 2.0 Direct Multi-Shot
+                Seedance Direct 15s Multishot
               </div>
               <span className="rounded-full bg-green-100 px-2 py-0.5 text-[11px] font-extrabold text-green-700 ring-1 ring-green-200 dark:bg-green-500/15 dark:text-green-100">
-                4 shots - 1 prompt
+                3 shots - 15s direct prompt
               </span>
             </div>
 

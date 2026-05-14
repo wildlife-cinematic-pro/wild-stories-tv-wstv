@@ -215,12 +215,20 @@ describe("build-package refactor seam", () => {
     expect(prompts?.imagePrompt?.fullText).not.toMatch(/--ar\s+9:16/i);
     expect(prompts?.imagePrompt?.fullText).not.toMatch(/--style\s+raw/i);
 
+    expect(prompts?.runwayShots).toHaveLength(4);
+    expect(prompts?.klingShots).toHaveLength(4);
+    expect(prompts?.seedanceShots).toHaveLength(4);
     expect(prompts?.runwayShots?.[0]?.pasteReady.length).toBeGreaterThan(0);
     expect(prompts?.klingShots?.[1]?.audio).toBeTruthy();
     expect(prompts?.seedanceMultiShot?.fullText).toBe(
       draft.basePkg.seedanceMultiShotPrompt
     );
-    expect(prompts?.seedanceMultiShot?.fullText).toContain("Shot 4");
+    expect(prompts?.seedanceMultiShot?.fullText).toContain("SEEDANCE DIRECT 15S MULTISHOT PROMPT");
+    expect(prompts?.seedanceMultiShot?.pasteReady).toContain("Shot 1, 0-5s opening tension / first-frame hook");
+    expect(prompts?.seedanceMultiShot?.pasteReady).toContain("Shot 2, 5-10s pressure build / peak movement");
+    expect(prompts?.seedanceMultiShot?.pasteReady).toContain("Shot 3, 10-15s final hold / resolved or unresolved tension");
+    expect(prompts?.seedanceMultiShot?.pasteReady.match(/\bCut to\b/g)).toHaveLength(2);
+    expect(prompts?.seedanceMultiShot?.pasteReady).not.toContain("Shot 4: resolved tension");
     expect(prompts?.klingNative15s?.pasteReady.length).toBeGreaterThan(0);
     expect(prompts?.klingNative15s?.pasteReady.startsWith("Image-to-video from master image")).toBe(true);
     expect(prompts?.klingFramesPrompt?.pasteReady.length).toBeGreaterThan(0);

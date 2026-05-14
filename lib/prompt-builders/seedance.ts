@@ -117,8 +117,16 @@ export function buildSeedancePromptPack(
     )
   );
 
+  const directShot2Body = finalizePrompt(
+    sanitizeVideoBeatText(
+      `${pressurePredator}. ${pressurePrey}. One readable peak movement follows: ${formatActionSubject(predator, s2Predator)} while ${prey} ${s2Prey}. ${buildSeedanceBackgroundMotion(habitatMode, micro, "action")} ${shotWorldLock} Camera stays wide with restrained energy. Keep one clean action lane, stable body mechanics, grounded contact, and clear spacing. ${cleanWeather}.`
+    )
+  );
+
+  const directSafetyLine = "Safety: no blood, no gore, no visible injury, no extra animals, no subtitles, no text, no watermark.";
+
   const multiShotBody = finalizePrompt(
-    `${shot1Body}\nCut to ${shot2Body}\nCut to ${shot3Body}\nCut to ${shot4Body}`
+    `Shot 1, 0-5s opening tension / first-frame hook: ${shot1Body}\nCut to Shot 2, 5-10s pressure build / peak movement: ${directShot2Body}\nCut to Shot 3, 10-15s final hold / resolved or unresolved tension: ${shot4Body}\n${directSafetyLine}`
   );
 
   const workflowGuide = finalizePrompt(`SEEDANCE 2.0 NODE WORKFLOW
@@ -263,7 +271,7 @@ Seedance 2.0 settings: Duration 5s | Prompt + First Frame. Fixed or non-fixed ca
       },
     }),
     multiShotPrompt: buildStructuredPrompt({
-      fullText: `SEEDANCE 4-SHOT CONTINUITY PROMPT
+      fullText: `SEEDANCE DIRECT 15S MULTISHOT PROMPT
 ${seedanceRule}
 ${cameraRule}
 ${qLead}
@@ -274,15 +282,14 @@ ${motionRule}${context}
 ${multiShotBody}
 
 ─── BREAKDOWN (reference only) ───
-Shot 1: opening tension
-Shot 2: pressure build
-Shot 3: peak action
-Shot 4: resolved tension
-Use "Cut to" exactly as written so Seedance preserves the shot-to-shot relationship more clearly. For the 5s x 4 workflow, generate each shot separately.`,
+Shot 1: 0-5s opening tension / first-frame hook
+Shot 2: 5-10s pressure build / peak movement
+Shot 3: 10-15s final hold / resolved or unresolved tension
+Use "Cut to" exactly as written so Seedance preserves the shot-to-shot relationship more clearly. This Direct prompt is one 15-second, 3-shot multishot; use the separate Seedance shot cards for the normal 4-shot / 20s workflow.`,
       pasteReady: multiShotBody,
       metadata: {
         engine: "seedance",
-        title: "Seedance 4-shot continuity prompt",
+        title: "Seedance Direct 15s 3-shot multishot prompt",
         variant: "multi-shot",
       },
     }),

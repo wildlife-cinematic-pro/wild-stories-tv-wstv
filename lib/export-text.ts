@@ -364,7 +364,7 @@ export function buildCopyAllPacksText(data: GeneratedPackage) {
     `=== SEEDANCE PACK (I2V | simple motion-first prompting | NO negatives) ===`,
     seedance || "(none)",
     "",
-    `=== SEEDANCE MULTI-SHOT ===`,
+    `=== SEEDANCE DIRECT 15S MULTISHOT ===`,
     safeStr((data as Record<string, unknown>).seedanceMultiShotPrompt) || "(none)",
     "",
     `=== RUNWAY PACK (Gen-4.5 | 24/25fps | 720p | NO negatives) ===`,

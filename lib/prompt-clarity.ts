@@ -947,10 +947,10 @@ function buildCandidateDefinitions(
     candidates.push({
       key: "seedance-multishot",
       source: "seedance",
-      label: "SEEDANCE MULTI-SHOT",
-      engine: "Seedance 2.0 multi-shot",
+      label: "SEEDANCE DIRECT 15S MULTISHOT",
+      engine: "Seedance 2.0 Direct 15s multishot",
       reason:
-        "Best optional block when you want one structured Seedance multi-shot paste that preserves subject/background/camera flow.",
+        "Best optional block when you want one 15-second, 3-shot Seedance direct paste that preserves subject/background/camera flow.",
       prompt: seedancePrompt,
       metadata: pkg.structuredPrompts?.seedanceMultiShot?.metadata,
     });

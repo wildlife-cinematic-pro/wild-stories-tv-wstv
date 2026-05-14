@@ -349,9 +349,13 @@ describe("Seedance prompt builder", () => {
       quality
     );
 
-    expect(shots.multiShotPrompt).toContain("SEEDANCE 4-SHOT CONTINUITY PROMPT");
-    expect(shots.multiShotPrompt).toContain("Shot 4: resolved tension");
-    expect(shots.multiShotPrompt).toMatch(/\bCut to\b/g);
+    expect(shots.multiShotPrompt).toContain("SEEDANCE DIRECT 15S MULTISHOT PROMPT");
+    expect(shots.multiShotPrompt).toContain("Shot 1, 0-5s opening tension / first-frame hook");
+    expect(shots.multiShotPrompt).toContain("Shot 2, 5-10s pressure build / peak movement");
+    expect(shots.multiShotPrompt).toContain("Shot 3, 10-15s final hold / resolved or unresolved tension");
+    expect(shots.multiShotPrompt).not.toContain("Shot 4: resolved tension");
+    expect(shots.multiShotPrompt.match(/Cut to Shot \d/g)).toHaveLength(2);
+    expect(shots.shot4).toContain("SEEDANCE SHOT 4");
   });
 
   it("retains the existing Seedance workflow-guide wording", () => {
@@ -1689,8 +1693,8 @@ describe("Step 12 — export cleanup guards", () => {
         quality
       );
 
-      expect(shots.multiShotPrompt).toContain("Cut to Mountain Lion");
-      expect(shots.multiShotPrompt).not.toContain("Cut to mountain Lion");
+      expect(shots.multiShotPrompt).toContain("Cut to Shot 2, 5-10s pressure build / peak movement: Mountain Lion");
+      expect(shots.multiShotPrompt).not.toContain("Cut to Shot 2, 5-10s pressure build / peak movement: mountain Lion");
     });
   });
 });
@@ -2175,7 +2179,10 @@ describe("structured prompt refactor guards", () => {
     expect(kling.shot2.audio).toContain("Audio:");
     expect(kling.shot2.settings?.length).toBeGreaterThan(0);
     expect(kling.shot2.metadata?.motionIntensity).toBeGreaterThan(0);
-    expect(seedance.multiShotPrompt.pasteReady).toContain("Cut to");
+    expect(seedance.multiShotPrompt.pasteReady).toContain("Shot 1, 0-5s opening tension / first-frame hook");
+    expect(seedance.multiShotPrompt.pasteReady).toContain("Shot 3, 10-15s final hold / resolved or unresolved tension");
+    expect(seedance.multiShotPrompt.pasteReady.match(/\bCut to\b/g)).toHaveLength(2);
+    expect(seedance.shot4.pasteReady.length).toBeGreaterThan(0);
   });
 
   it("uses cleaner continuity wording in motion-only Kling prompts", () => {
