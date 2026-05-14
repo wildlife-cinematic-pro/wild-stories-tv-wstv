@@ -7,7 +7,7 @@
   "subject": "grizzly bear on the right in full-body readable profile",
   "action": "grizzly bear reacts defensively with grounded motion, stable anatomy, and clear survival tension",
   "lighting": "soft overcast winter light with slight golden rim glow",
-  "style": "photorealistic wildlife documentary",
+  "style": "professional pencil-drawn wildlife storyboard frame",
   "environment": "heavy deep snow winter meadow, 3 to 5 foot snowbanks, pine forest, distant mountain ridge, cold clean air",
   "duration": 3,
   "generateVideo": true,
@@ -20,7 +20,7 @@
   "storyboardProject": "generic_wildlife_standoff",
   "negativePrompt": "metadata only: avoid text overlays, malformed anatomy, duplicated limbs, unstable scale, cropped bodies, subject merge",
   "continuityRules": [
-    "preserve subject identity from master references",
+    "preserve subject identity from storyboard references",
     "maintain role-aware left-right blocking unless the prompt explicitly changes it",
     "keep anatomy stable and grounded through all image and video outputs",
     "preserve environment lighting, ground texture, and open reaction lane"

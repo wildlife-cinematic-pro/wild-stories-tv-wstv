@@ -33,9 +33,10 @@ export type StoryboardShot = {
   timeRangeLabel: string;
   summary: string;
   imagePrompts: {
-    nanoBanana2: string;
-    gptImage2: string;
-    grokImagine: string;
+    gptImage2Long: string;
+    gptImage2Short: string;
+    nanoBanana2Long: string;
+    nanoBanana2Short: string;
   };
   motionPrompts: {
     kling: string;
@@ -88,7 +89,8 @@ export type StoryboardSummary = {
   season: string;
   timeOfDay: string;
   totalShots: 4;
-  imageEngines: ["Nano Banana 2", "GPT Image 2", "Grok Imagine"];
+  imageEngines: ["GPT Image 2", "Nano Banana 2"];
+  imagePromptVariants: ["GPT Image 2 — Long Version", "GPT Image 2 — Short Version", "Nano Banana 2 — Long Version", "Nano Banana 2 — Short Version"];
   motionEngine: "Kling";
   totalMotionDurationSeconds: 20;
   totalMotionDurationLabel: "20s";
@@ -98,9 +100,10 @@ export type CinematicStoryboard = {
   summary: StoryboardSummary;
   shots: StoryboardShot[];
   copy: {
-    allNanoBanana2: string;
-    allGptImage2: string;
-    allGrokImagine: string;
+    allGptImage2Long: string;
+    allGptImage2Short: string;
+    allNanoBanana2Long: string;
+    allNanoBanana2Short: string;
     allKling: string;
     allStoryboard: string;
   };
@@ -120,10 +123,17 @@ const SHOT_TIMINGS = [
   { shotNumber: 4, role: "resolve", title: "Resolve / Unresolved Replay Ending", timeRangeLabel: "0:15-0:20" },
 ] as const;
 
-const IMAGE_ENGINES = ["Nano Banana 2", "GPT Image 2", "Grok Imagine"] as const;
+const IMAGE_ENGINES = ["GPT Image 2", "Nano Banana 2"] as const;
+const IMAGE_PROMPT_VARIANTS = [
+  "GPT Image 2 — Long Version",
+  "GPT Image 2 — Short Version",
+  "Nano Banana 2 — Long Version",
+  "Nano Banana 2 — Short Version",
+] as const;
+const FULL_BODY_RULE = "Both animals must be full-body visible, fully readable, correctly scaled, grounded, and clearly separated.";
+const ANIMAL_CROP_RULE = "Do not crop heads, backs, legs, hooves, paws, tails, horns, shoulders, or body mass.";
 
-const FORBIDDEN_COPY_TERMS =
-  /\b(?:9:16|16:9|vertical|horizontal|portrait|landscape|aspect ratio|AR|Runway|Seedance|mobile vertical frame)\b/i;
+const FORBIDDEN_COPY_TERMS = /\b(?:Runway|Seedance|mobile vertical frame)\b/i;
 const KLING_STORYBOARD_MAX_CHARS = 2500;
 
 function cleanText(value: unknown, fallback: string): string {
@@ -156,20 +166,6 @@ function sanitizeCopyablePrompt(text: string): string {
     .replace(/[^\S\r\n]{2,}/g, " ")
     .replace(/\n{3,}/g, "\n\n")
     .trim();
-}
-
-function asSentence(value: string): string {
-  const trimmed = value.trim();
-  if (!trimmed) return "";
-  return /[.!?]$/.test(trimmed) ? trimmed : `${trimmed}.`;
-}
-
-function joinSentences(parts: Array<string | null | undefined>): string {
-  return parts
-    .map((part) => (part ?? "").trim())
-    .filter(Boolean)
-    .map(asSentence)
-    .join(" ");
 }
 
 function storyModeLabel(storyMode: StoryMode): string {
@@ -217,29 +213,67 @@ function nonGraphicSafetyLine(storyMode: StoryMode): string {
   return base;
 }
 
-function cinematicStyleLine(input: CinematicStoryboardInput): string {
+function storyboardStyleLine(): string {
   return [
-    "Strong first-frame hook",
+    "Hand-drawn pencil storyboard look",
+    "grayscale sketch",
+    "black-and-white graphite drawing",
+    "visible pencil strokes",
+    "rough but clean linework",
+    "light paper texture",
+    "soft shading",
+    "cinematic storyboard composition",
+    "professional film previsualization style",
+  ].join(", ");
+}
+
+function storyboardVisualDirectionLine(input: CinematicStoryboardInput): string {
+  return [
+    "Single storyboard frame only",
+    "9:16 vertical composition",
+    "strong first-frame hook",
     "mobile-readable composition",
-    "strong thumbnail readability",
+    FULL_BODY_RULE,
+    ANIMAL_CROP_RULE,
     "full-body readability",
     "clean subject separation",
     "one clear action lane",
     "clear foreground/midground/background depth",
-    "cinematic wildlife documentary realism",
-    "telephoto compression or low-angle cinematic feel",
-    "controlled motion, not chaotic action",
+    "strong subject silhouettes",
+    "natural blocking",
     "one dominant action beat",
     "non-graphic survival pressure",
     "replay-worthy final frame",
-    input.animalVibe ? `${input.animalVibe} behavior tone` : null,
-    input.emotionalTone ? `${input.emotionalTone} emotional tone` : null,
-    input.depthMode ? `${input.depthMode} depth treatment` : null,
+    input.depthMode ? `${input.depthMode} depth planning` : null,
     input.cameraAnglePreset ? `${input.cameraAnglePreset} camera preference` : null,
     input.strictOriginalityGuard ? "fresh composition, no copied viral shot layout" : null,
   ]
     .filter(Boolean)
     .join(", ");
+}
+
+function storyboardBehaviorLine(storyMode: StoryMode): string {
+  const motherBabyScale =
+    storyMode === StoryMode.MOTHER_BABY
+      ? " For Mother and Baby shots, keep the cub, calf, fawn, pup, kit, or offspring visibly smaller than the mother and sheltered close without being fused into her body."
+      : "";
+
+  return `Preserve realistic animal anatomy, believable scale, grounded hoof/paw/foot contact, natural posture, clean silhouettes, and realistic wildlife behavior.${motherBabyScale}`;
+}
+
+function storyboardImageConstraintsLine(storyMode: StoryMode): string {
+  return [
+    nonGraphicSafetyLine(storyMode).replace(/\.$/, ""),
+    "no cartoon style",
+    "no anime style",
+    "no 3D style",
+    "no color rendering",
+    "no photorealism",
+    "no photorealistic final illustration",
+    "no polished final illustration",
+    "no polished poster look",
+    "no cinematic render",
+  ].join(", ");
 }
 
 function storyModeShotSummaries(input: {
@@ -345,8 +379,7 @@ function roleDirective(role: StoryboardShotRole): string {
   return "Finish with unresolved or satisfying replay value while keeping the final frame clean and readable";
 }
 
-function buildImagePrompt(args: {
-  engine: "Nano Banana 2" | "GPT Image 2" | "Grok Imagine";
+function buildStoryboardPromptContext(args: {
   shot: (typeof SHOT_TIMINGS)[number];
   summary: string;
   input: CinematicStoryboardInput;
@@ -357,24 +390,140 @@ function buildImagePrompt(args: {
   season: string;
   timeOfDay: string;
 }) {
-  const engineDirection =
-    args.engine === "Nano Banana 2"
-      ? "Prioritize reference-stable identity, grounded anatomy, and consistent species markers across the 4-shot sequence"
-      : args.engine === "GPT Image 2"
-        ? "Prioritize clean composition, naturalistic lighting, and a reliable backup master image with clear subject readability"
-        : "Prioritize high-impact realism, strong thumbnail readability, and documentary wildlife texture without stylized exaggeration";
+  return {
+    sceneTitle: `${args.subjectA} vs ${args.subjectB} in ${args.habitat}`,
+    setupLine: `${storyModeLabel(args.storyMode)} setup: ${args.subjectA} vs ${args.subjectB}.`,
+    beatLine: `${args.summary}. Opening/pressure/peak/ending beat: ${args.shot.title} for ${args.shot.timeRangeLabel}.`,
+    habitatLine: `${args.habitat}, ${args.season}, ${args.timeOfDay}, ${resolveWeather(args.input)}. Keep the environment lightly sketched but readable and natural.`,
+    visualDirection: storyboardVisualDirectionLine(args.input),
+    behaviorLine: storyboardBehaviorLine(args.storyMode),
+    constraintsLine: storyboardImageConstraintsLine(args.storyMode),
+    roleLine: roleDirective(args.shot.role),
+  };
+}
 
-  return sanitizeCopyablePrompt(joinSentences([
-    `Shot ${args.shot.shotNumber} — ${args.shot.title}. Create a cinematic wildlife documentary master image for ${args.shot.timeRangeLabel}`,
-    `${storyModeLabel(args.storyMode)} setup: ${args.subjectA} vs ${args.subjectB}`,
-    `${args.summary}`,
-    `Location continuity: ${args.habitat}, ${args.season}, ${args.timeOfDay}, ${resolveWeather(args.input)}`,
-    engineDirection,
-    `Visual direction: ${cinematicStyleLine(args.input)}`,
-    roleDirective(args.shot.role),
-    "Preserve realistic wildlife behavior, correct animal scale, stable anatomy, grounded contact, clean silhouettes, and natural documentary tension",
-    nonGraphicSafetyLine(args.storyMode),
-  ]));
+function buildGptImage2LongPrompt(args: {
+  shot: (typeof SHOT_TIMINGS)[number];
+  summary: string;
+  input: CinematicStoryboardInput;
+  storyMode: StoryMode;
+  subjectA: string;
+  subjectB: string;
+  habitat: string;
+  season: string;
+  timeOfDay: string;
+}) {
+  const context = buildStoryboardPromptContext(args);
+
+  return [
+    `Shot ${args.shot.shotNumber} — ${args.shot.title}.`,
+    "Create a single 9:16 vertical storyboard frame in pencil sketch style, not a multi-panel sheet.",
+    "",
+    `Scene: ${context.sceneTitle}.`,
+    "",
+    `Show a powerful ${args.shot.role} moment between ${args.subjectA} and ${args.subjectB} in ${args.habitat}. ${FULL_BODY_RULE} ${ANIMAL_CROP_RULE} ${args.subjectA} and ${args.subjectB} must stay clearly separated with immediate wild conflict and survival tension. The first frame must have a strong visual hook, with both animals instantly readable and the tension clear at first glance.`,
+    context.setupLine,
+    context.beatLine,
+    "",
+    "Style:",
+    `${storyboardStyleLine()}.`,
+    "",
+    "Visual direction:",
+    `Single storyboard frame only. 9:16 vertical composition. Strong first-frame hook. Mobile-readable composition. ${FULL_BODY_RULE} ${ANIMAL_CROP_RULE} Keep clean subject separation and one clear action lane between the animals. Clear foreground, midground, and background depth. Use strong silhouettes and natural blocking. ${context.visualDirection}. ${context.roleLine}.`,
+    "",
+    "Habitat:",
+    context.habitatLine,
+    "",
+    "Camera:",
+    "Cinematic storyboard framing, slightly low angle or eye-level, wildlife previsualization framing. Use a wide enough frame to show both animals completely while keeping the confrontation dramatic.",
+    "",
+    "Mood:",
+    "Raw tension, quiet pressure, natural conflict, cinematic wildlife realism, strong documentary opening image.",
+    "",
+    "Behavior and realism:",
+    context.behaviorLine,
+    "",
+    "Important constraints:",
+    context.constraintsLine,
+    "",
+    "Make it look like a professional pencil-drawn wildlife storyboard frame, not a polished final illustration.",
+  ].join("\n");
+}
+
+function buildGptImage2ShortPrompt(args: {
+  shot: (typeof SHOT_TIMINGS)[number];
+  summary: string;
+  input: CinematicStoryboardInput;
+  storyMode: StoryMode;
+  subjectA: string;
+  subjectB: string;
+  habitat: string;
+  season: string;
+  timeOfDay: string;
+}) {
+  const context = buildStoryboardPromptContext(args);
+
+  return [
+    `Shot ${args.shot.shotNumber} — ${args.shot.title}. Create a single 9:16 vertical pencil sketch storyboard frame of ${args.subjectA} and ${args.subjectB} in ${args.habitat}.`,
+    `${FULL_BODY_RULE} ${ANIMAL_CROP_RULE}`,
+    `Use grayscale graphite drawing, visible pencil strokes, light paper texture, rough but clean linework, and professional film storyboard style. Show ${args.summary.toLowerCase()} with a strong first-frame hook, cinematic composition, realistic anatomy, clean silhouettes, one clear action lane, and lightly sketched habitat continuity: ${context.habitatLine}`,
+    `Constraints: ${context.constraintsLine}.`,
+  ].join("\n");
+}
+
+function buildNanoBanana2LongPrompt(args: {
+  shot: (typeof SHOT_TIMINGS)[number];
+  summary: string;
+  input: CinematicStoryboardInput;
+  storyMode: StoryMode;
+  subjectA: string;
+  subjectB: string;
+  habitat: string;
+  season: string;
+  timeOfDay: string;
+}) {
+  const context = buildStoryboardPromptContext(args);
+
+  return [
+    `Shot ${args.shot.shotNumber} — ${args.shot.title}. Nano Banana 2 image prompt for a single 9:16 vertical storyboard frame.`,
+    "Create a professional pencil-drawn wildlife storyboard frame, not a rendered poster or final illustration.",
+    "",
+    `Subject frame: ${args.subjectA} vs ${args.subjectB}. ${FULL_BODY_RULE} ${ANIMAL_CROP_RULE}`,
+    `${context.beatLine}`,
+    "",
+    "Image style:",
+    "Pencil sketch, grayscale graphite, black-and-white drawing, visible pencil strokes, rough but clean linework, light paper texture, soft shading, professional film previsualization style.",
+    "",
+    "Composition controls:",
+    `9:16 vertical storyboard frame, both animals full-body visible, no animal cropping, clean subject separation, one clear action lane, realistic anatomy and scale, grounded hoof/paw contact, clear silhouettes, mobile-readable staging. ${context.roleLine}.`,
+    "",
+    "Habitat:",
+    `${context.habitatLine} Keep habitat lightly sketched but readable; do not over-render it.`,
+    "",
+    "Negative controls:",
+    `${context.constraintsLine}, no over-polished finish, no glossy render, no copied poster look.`,
+  ].join("\n");
+}
+
+function buildNanoBanana2ShortPrompt(args: {
+  shot: (typeof SHOT_TIMINGS)[number];
+  summary: string;
+  input: CinematicStoryboardInput;
+  storyMode: StoryMode;
+  subjectA: string;
+  subjectB: string;
+  habitat: string;
+  season: string;
+  timeOfDay: string;
+}) {
+  const context = buildStoryboardPromptContext(args);
+
+  return [
+    `Shot ${args.shot.shotNumber} — ${args.shot.title}. Pencil storyboard, 9:16 vertical, ${args.subjectA} vs ${args.subjectB} in ${args.habitat}.`,
+    `${FULL_BODY_RULE} ${ANIMAL_CROP_RULE}`,
+    `Clean separation, one clear action lane, realistic anatomy, correct scale, grounded hoof/paw contact, grayscale graphite drawing, visible pencil strokes, light paper texture, lightly sketched habitat. ${args.summary}.`,
+    `No color rendering, no photorealism, no photorealistic final illustration, no polished poster look, no cartoon style, no anime style, no 3D style, no text, no watermark, no blood, no gore, no visible injury. ${context.roleLine}.`,
+  ].join("\n");
 }
 
 function klingSubjectMotion(args: {
@@ -528,9 +677,10 @@ function buildNotes(args: {
 function assertCopyablePromptSafety(storyboard: CinematicStoryboard) {
   const allPromptText = storyboard.shots
     .flatMap((shot) => [
-      shot.imagePrompts.nanoBanana2,
-      shot.imagePrompts.gptImage2,
-      shot.imagePrompts.grokImagine,
+      shot.imagePrompts.gptImage2Long,
+      shot.imagePrompts.gptImage2Short,
+      shot.imagePrompts.nanoBanana2Long,
+      shot.imagePrompts.nanoBanana2Short,
       shot.motionPrompts.kling,
     ])
     .join("\n");
@@ -566,6 +716,18 @@ export function buildCinematicStoryboard(input: CinematicStoryboardInput = {}): 
 
   const shots = SHOT_TIMINGS.map((shot, index): StoryboardShot => {
     const summary = summaries[index];
+    const promptArgs = {
+      shot,
+      summary,
+      input,
+      storyMode,
+      subjectA,
+      subjectB,
+      habitat,
+      season,
+      timeOfDay,
+    };
+
     return {
       id: `shot-${shot.shotNumber}`,
       shotNumber: shot.shotNumber,
@@ -575,55 +737,13 @@ export function buildCinematicStoryboard(input: CinematicStoryboardInput = {}): 
       timeRangeLabel: shot.timeRangeLabel,
       summary,
       imagePrompts: {
-        nanoBanana2: buildImagePrompt({
-          engine: "Nano Banana 2",
-          shot,
-          summary,
-          input,
-          storyMode,
-          subjectA,
-          subjectB,
-          habitat,
-          season,
-          timeOfDay,
-        }),
-        gptImage2: buildImagePrompt({
-          engine: "GPT Image 2",
-          shot,
-          summary,
-          input,
-          storyMode,
-          subjectA,
-          subjectB,
-          habitat,
-          season,
-          timeOfDay,
-        }),
-        grokImagine: buildImagePrompt({
-          engine: "Grok Imagine",
-          shot,
-          summary,
-          input,
-          storyMode,
-          subjectA,
-          subjectB,
-          habitat,
-          season,
-          timeOfDay,
-        }),
+        gptImage2Long: buildGptImage2LongPrompt(promptArgs),
+        gptImage2Short: buildGptImage2ShortPrompt(promptArgs),
+        nanoBanana2Long: buildNanoBanana2LongPrompt(promptArgs),
+        nanoBanana2Short: buildNanoBanana2ShortPrompt(promptArgs),
       },
       motionPrompts: {
-        kling: buildKlingPrompt({
-          shot,
-          summary,
-          input,
-          storyMode,
-          subjectA,
-          subjectB,
-          habitat,
-          season,
-          timeOfDay,
-        }),
+        kling: buildKlingPrompt(promptArgs),
       },
       notes: buildNotes({ shot, storyMode, subjectA, subjectB }),
     };
@@ -641,6 +761,7 @@ export function buildCinematicStoryboard(input: CinematicStoryboardInput = {}): 
     timeOfDay,
     totalShots: 4,
     imageEngines: [...IMAGE_ENGINES],
+    imagePromptVariants: [...IMAGE_PROMPT_VARIANTS],
     motionEngine: "Kling",
     totalMotionDurationSeconds: 20,
     totalMotionDurationLabel: "20s",
@@ -650,9 +771,10 @@ export function buildCinematicStoryboard(input: CinematicStoryboardInput = {}): 
     summary,
     shots,
     copy: {
-      allNanoBanana2: buildBulkCopy(shots, (shot) => shot.imagePrompts.nanoBanana2),
-      allGptImage2: buildBulkCopy(shots, (shot) => shot.imagePrompts.gptImage2),
-      allGrokImagine: buildBulkCopy(shots, (shot) => shot.imagePrompts.grokImagine),
+      allGptImage2Long: buildBulkCopy(shots, (shot) => shot.imagePrompts.gptImage2Long),
+      allGptImage2Short: buildBulkCopy(shots, (shot) => shot.imagePrompts.gptImage2Short),
+      allNanoBanana2Long: buildBulkCopy(shots, (shot) => shot.imagePrompts.nanoBanana2Long),
+      allNanoBanana2Short: buildBulkCopy(shots, (shot) => shot.imagePrompts.nanoBanana2Short),
       allKling: buildBulkCopy(shots, (shot) => shot.motionPrompts.kling),
       allStoryboard: [
         `Storyboard Summary: ${summary.title}`,
@@ -667,12 +789,14 @@ export function buildCinematicStoryboard(input: CinematicStoryboardInput = {}): 
             shot.title,
             `Role: ${shot.role}`,
             `Summary: ${shot.summary}`,
-            "Nano Banana 2:",
-            shot.imagePrompts.nanoBanana2,
-            "GPT Image 2:",
-            shot.imagePrompts.gptImage2,
-            "Grok Imagine:",
-            shot.imagePrompts.grokImagine,
+            "GPT Image 2 — Long Version:",
+            shot.imagePrompts.gptImage2Long,
+            "GPT Image 2 — Short Version:",
+            shot.imagePrompts.gptImage2Short,
+            "Nano Banana 2 — Long Version:",
+            shot.imagePrompts.nanoBanana2Long,
+            "Nano Banana 2 — Short Version:",
+            shot.imagePrompts.nanoBanana2Short,
             "Kling Motion:",
             shot.motionPrompts.kling,
             "Notes:",

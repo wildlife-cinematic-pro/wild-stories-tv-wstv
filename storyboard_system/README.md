@@ -54,7 +54,7 @@ Use the object schema for any predator/defender animal pair and any environment:
   "finalScene": {
     "composition": "prey/defender on the left, predator on the right, clear reaction lane between them",
     "camera": "cinematic telephoto documentary framing",
-    "style": "photorealistic wildlife documentary",
+    "style": "professional pencil-drawn wildlife storyboard frame",
     "aspectRatio": "9:16",
     "tension": "high survival tension with clean readable spacing",
     "action": "defender holds dominant pressure while predator reacts defensively"
@@ -70,7 +70,7 @@ Use the object schema for any predator/defender animal pair and any environment:
   "aiEnhancement": {
     "enabled": true,
     "provider": "gemini",
-    "style": "viral wildlife documentary",
+    "style": "professional wildlife storyboard previsualization",
     "strictness": "preserve identity, stable anatomy, grounded motion, positive prompt wording"
   }
 }
@@ -82,14 +82,14 @@ The old flat schema still works. If the input uses string fields like `predator`
 
 The generated workflow is:
 
-1. Generate prey-only master image.
+1. Generate prey-only storyboard reference frame.
 2. Save/tag in Runway as `@<prey_slug>`.
-3. Generate predator-only master image.
+3. Generate predator-only storyboard reference frame.
 4. Save/tag in Runway as `@<predator_slug>`.
-5. Generate environment-only master image.
+5. Generate environment-only storyboard reference frame.
 6. Save/tag in Runway as `@<environment_slug>`.
-7. Use all 3 references to generate the final scene master image.
-8. Use the final scene master image as the source for Runway/Kling video.
+7. Use all 3 references to generate the final scene storyboard frame.
+8. Use the final scene storyboard frame as the source for Runway/Kling video.
 
 Use positive control language in Runway. The prompts emphasize separated animals, a clear open reaction lane, full body readability, clean spacing, grounded contact, stable anatomy, and environment-only background control.
 
@@ -153,7 +153,7 @@ The pipeline also writes compatibility manifests and scene/video job manifests u
 4. Tag that output as `@<predator_slug>`.
 5. Open `prompts/environment_master.txt` and generate the environment-only master image in Runway.
 6. Tag that output as `@<environment_slug>`.
-7. Open `prompts/final_scene_master.txt` and generate the final scene master image using exactly those three active references.
+7. Open `prompts/final_scene_master.txt` and generate the final scene storyboard frame using exactly those three active references.
 8. Use `master_images/final_scene_master/<project>.final.png` as the source image for Runway or Kling video.
 9. Use `prompts/final_scene_video_runway.txt` for Runway, `prompts/final_scene_video_kling.txt` for Kling, and `prompts/elevenlabs_action_music.txt` for ElevenLabs music.
 

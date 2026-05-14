@@ -107,7 +107,7 @@ function normalizeFinalScene(value, input, predator, prey, environment) {
       source.composition ??
       `prey/defender on the ${prey.side}, predator on the ${predator.side}, clear open reaction lane between them`,
     camera: source.camera ?? "cinematic telephoto documentary framing",
-    style: source.style ?? input.styleGuide ?? "photorealistic wildlife documentary",
+    style: source.style ?? input.styleGuide ?? "professional pencil-drawn wildlife storyboard frame",
     aspectRatio: source.aspectRatio ?? input.aspectRatio ?? "9:16",
     tension: source.tension ?? "high survival tension with clean readable spacing",
     action:
@@ -139,7 +139,7 @@ function normalizeAiEnhancement(value) {
   return {
     enabled: source.enabled !== false,
     provider: source.provider ?? "gemini",
-    style: source.style ?? "viral wildlife documentary",
+    style: source.style ?? "professional wildlife storyboard previsualization",
     strictness: source.strictness ?? "preserve identity, stable anatomy, grounded motion, positive prompt wording"
   };
 }
@@ -180,7 +180,7 @@ function normalizeInput(input) {
       input.negativePrompt ??
       "metadata only: avoid text overlays, malformed anatomy, duplicated limbs, unstable scale, cropped bodies, subject merge",
     continuityRules: input.continuityRules ?? [
-      "preserve subject identity from master references",
+      "preserve subject identity from storyboard references",
       "maintain role-aware left-right blocking unless the prompt explicitly changes it",
       "keep anatomy stable and grounded through all image and video outputs",
       "preserve environment lighting, ground texture, and open reaction lane"

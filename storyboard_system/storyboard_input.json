@@ -27,7 +27,7 @@
   "finalScene": {
     "composition": "prey/defender on the left, predator on the right, clear reaction lane between them",
     "camera": "cinematic telephoto documentary framing",
-    "style": "photorealistic wildlife documentary",
+    "style": "professional pencil-drawn wildlife storyboard frame",
     "aspectRatio": "9:16",
     "tension": "high survival tension with clean readable spacing",
     "action": "defender holds dominant pressure while predator reacts defensively"
@@ -43,7 +43,7 @@
   "aiEnhancement": {
     "enabled": true,
     "provider": "gemini",
-    "style": "viral wildlife documentary",
+    "style": "professional wildlife storyboard previsualization",
     "strictness": "preserve identity, stable anatomy, grounded motion, positive prompt wording"
   }
 }

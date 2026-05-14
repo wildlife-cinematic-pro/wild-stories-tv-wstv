@@ -95,7 +95,7 @@ function getFinalScene(storyboard) {
   return storyboard.finalScene ?? {
     composition: "prey/defender on the left, predator on the right, clear reaction lane between them",
     camera: "cinematic telephoto documentary framing",
-    style: storyboard.styleGuide ?? "photorealistic wildlife documentary",
+    style: storyboard.styleGuide ?? "professional pencil-drawn wildlife storyboard frame",
     aspectRatio: storyboard.aspectRatio ?? "9:16",
     tension: "high survival tension with clean readable spacing",
     action: "defender holds dominant pressure while predator reacts defensively"
@@ -113,51 +113,96 @@ function getVideo(storyboard) {
   };
 }
 
+function storyboardStyleBlock() {
+  return "Hand-drawn pencil storyboard look, grayscale sketch, black-and-white graphite drawing, visible pencil strokes, rough but clean linework, light paper texture, soft shading, cinematic storyboard composition, professional film previsualization style.";
+}
+
+function storyboardVisualDirectionBlock() {
+  return "Single storyboard frame only. 9:16 vertical composition. Strong first-frame hook. Mobile-readable composition. Full-body readability. Clean subject separation. One clear action lane. Clear foreground, midground, and background depth. Strong silhouettes and natural blocking.";
+}
+
+function storyboardBehaviorBlock() {
+  return "Preserve realistic animal anatomy, believable scale, grounded hoof/paw/foot contact, natural posture, clean silhouettes, and realistic wildlife behavior.";
+}
+
+function storyboardConstraintsBlock() {
+  return "No blood, no gore, no visible injury, no graphic feeding, no humans, no vehicles, no buildings, no zoo enclosure, no text, no watermark, no cartoon style, no anime style, no 3D style, no color rendering, no photorealistic final illustration, no polished final illustration, no polished poster look, no cinematic render.";
+}
+
 function buildPromptCore(scene, storyboard) {
-  const style = scene.styleGuide ?? scene.style ?? storyboard.styleGuide;
   const continuity = (storyboard.continuityRules ?? []).join(", ");
 
   return [
     `${scene.camera}, ${scene.motion}.`,
     `${scene.description} in ${scene.environment}.`,
     `${scene.subject}, ${scene.action}.`,
-    `${scene.lighting}, ${style}.`,
-    `${storyboard.aspectRatio} vertical framing.`,
+    `Grayscale graphite shading and light paper texture; translate this lighting cue into black-and-white value contrast: ${scene.lighting}.`,
+    `${storyboard.aspectRatio ?? "9:16"} vertical storyboard framing.`,
     continuity ? `Continuity rules: ${continuity}.` : null
   ]
     .filter(Boolean)
     .join(" ");
 }
 
-function formatImagePrompt(scene, storyboard) {
-  return `${buildPromptCore(scene, storyboard)} Single storyboard frame, clean composition for edit planning, clear silhouette readability.`;
+export function formatImagePrompt(scene, storyboard) {
+  return [
+    `${storyboard.aspectRatio ?? "9:16"} vertical storyboard frame command: Create a single 9:16 vertical storyboard frame in pencil sketch style, not a multi-panel sheet.`,
+    "",
+    "Scene:",
+    `${scene.name}: ${scene.description} in ${scene.environment}.`,
+    `${scene.subject}, ${scene.action}.`,
+    "",
+    "Style:",
+    storyboardStyleBlock(),
+    "",
+    "Visual direction:",
+    storyboardVisualDirectionBlock(),
+    "",
+    "Habitat:",
+    `${scene.environment}. Keep the environment lightly sketched but readable and natural.`,
+    "",
+    "Camera:",
+    `${scene.camera}. Cinematic storyboard framing, slightly low angle or eye-level, wildlife previsualization framing.`,
+    "",
+    "Mood:",
+    "Raw tension, quiet pressure, natural conflict, cinematic wildlife realism, strong documentary opening image.",
+    "",
+    "Behavior and realism:",
+    storyboardBehaviorBlock(),
+    "",
+    "Important constraints:",
+    storyboardConstraintsBlock(),
+    "",
+    "Make it look like a professional pencil-drawn wildlife storyboard frame, not a polished final illustration."
+  ].join("\n");
 }
 
-function formatFinalImagePrompt(scene, storyboard) {
-  return `${buildPromptCore(scene, storyboard)} Scene keyframe uses the generated final scene master image as continuity source, with stable anatomy, clean readable spacing, grounded contact, and full-body subject readability.`;
+export function formatFinalImagePrompt(scene, storyboard) {
+  return `${formatImagePrompt(scene, storyboard)}\n\nContinuity source: use the generated storyboard reference frame for stable anatomy, clean readable spacing, grounded contact, and full-body subject readability.`;
 }
 
 function formatVideoPrompt(scene, storyboard) {
-  return `${buildPromptCore(scene, storyboard)} Use the final scene master image as the source frame. Maintain separated subjects, an open reaction lane, grounded movement, realistic physics, and stable identity.`;
+  return `${buildPromptCore(scene, storyboard)} Use the storyboard frame as the source frame. Maintain separated subjects, an open reaction lane, grounded movement, realistic physics, and stable identity.`;
 }
 
 function formatRunwayPrompt(scene, storyboard) {
-  return `${formatVideoPrompt(scene, storyboard)} Runway image-to-video motion: smooth documentary camera movement, controlled acceleration, readable subject silhouettes, strong foreground-background separation, and edit-friendly timing.`;
+  return `${formatVideoPrompt(scene, storyboard)} Runway image-to-video motion: smooth storyboard-informed camera movement, controlled acceleration, readable subject silhouettes, strong foreground-background separation, and edit-friendly timing.`;
 }
 
 function formatKlingPrompt(scene, storyboard) {
-  return `${formatVideoPrompt(scene, storyboard)} Kling motion: clear action timing, natural body mechanics, role-aware reaction, realistic ground contact, and stable source-image continuity.`;
+  return `${formatVideoPrompt(scene, storyboard)} Kling motion: clear action timing, natural body mechanics, role-aware reaction, realistic ground contact, and stable source-frame continuity.`;
 }
 
 function formatAnimalMasterPrompt(subject, storyboard, referenceRole) {
   return [
-    `Photorealistic wildlife documentary reusable Runway reference image, ${storyboard.aspectRatio} vertical frame.`,
+    `Professional pencil-drawn wildlife storyboard reference frame, ${storyboard.aspectRatio} vertical frame.`,
     `Single animal only: ${subject.name}.`,
     `${subject.description}.`,
     `Role for later reference: ${referenceRole}.`,
-    `Full body readable, neutral or grounded natural stance, stable anatomy, clear identity markers, realistic body mass, grounded hoof/paw/foot contact, simple uncluttered background.`,
+    `Full body readable, neutral or grounded natural stance, stable anatomy, clear identity markers, realistic body mass, grounded hoof/paw/foot contact, simple uncluttered lightly sketched background.`,
     subject.identityNotes ? `Identity preservation notes: ${subject.identityNotes}` : null,
-    `Reusable master image for future final-scene composition.`
+    `Reusable storyboard reference frame for future final-scene composition.`,
+    storyboardConstraintsBlock()
   ]
     .filter(Boolean)
     .join(" ");
@@ -165,12 +210,13 @@ function formatAnimalMasterPrompt(subject, storyboard, referenceRole) {
 
 function formatEnvironmentMasterPrompt(environment, storyboard) {
   return [
-    `Photorealistic wildlife documentary environment-only reusable Runway reference image, ${storyboard.aspectRatio} vertical frame.`,
+    `Professional pencil-drawn wildlife storyboard environment reference frame, ${storyboard.aspectRatio} vertical frame.`,
     `${environment.name}: ${environment.description}.`,
-    `${environment.lighting}.`,
-    `Clean open central space for future wildlife subjects, readable habitat texture, realistic depth, natural ground plane, atmosphere matched to the environment.`,
+    `Grayscale graphite shading and light paper texture; translate this lighting cue into black-and-white value contrast: ${environment.lighting}.`,
+    `Clean open central space for future wildlife subjects, readable habitat texture, realistic depth, natural ground plane, atmosphere matched to the environment, lightly sketched but readable.`,
     `Reference role: environment/background/lighting/ground texture only.`,
-    environment.rules
+    environment.rules,
+    storyboardConstraintsBlock()
   ]
     .filter(Boolean)
     .join(" ");
@@ -183,15 +229,16 @@ function formatFinalSceneMasterPrompt(storyboard) {
   const finalScene = getFinalScene(storyboard);
 
   return [
-    `Create one final scene master image using exactly these 3 active Runway references: ${tagFor(prey)}, ${tagFor(predator)}, ${tagFor(environment)}.`,
+    `Create one final 9:16 vertical pencil sketch storyboard frame using exactly these 3 active references: ${tagFor(prey)}, ${tagFor(predator)}, ${tagFor(environment)}.`,
     `Use ${tagFor(prey)} only for ${prey.name} prey/defender identity: body scale, anatomy, markings, head shape, grounded contact, and identity continuity.`,
     `Use ${tagFor(predator)} only for ${predator.name} predator identity: body scale, anatomy, markings, head shape, grounded contact, and identity continuity.`,
     `Use ${tagFor(environment)} only for environment/background/lighting/ground texture: ${environment.description}.`,
-    `${finalScene.style}, ${finalScene.camera}, ${finalScene.aspectRatio} vertical framing.`,
+    storyboardStyleBlock(),
     `Composition: ${finalScene.composition}.`,
     `Action and tension: ${finalScene.action}. ${finalScene.tension}.`,
     `Animals remain separated, both animals fully visible, clear open reaction lane, clean readable spacing, stable anatomy, grounded hoof/paw/foot contact, realistic wildlife documentary body language.`,
-    `Video-ready source frame for Runway and Kling.`
+    storyboardConstraintsBlock(),
+    `Video-ready storyboard source frame for Runway and Kling.`
   ].join(" ");
 }
 
@@ -203,10 +250,10 @@ function formatRunwayFinalVideoPrompt(storyboard) {
   const video = getVideo(storyboard);
 
   return [
-    `Use master_images/final_scene_master/${storyboard.project}.final.png as the Runway image-to-video source frame.`,
-    `${video.duration}-second ${finalScene.style} wildlife documentary motion in ${environment.name}.`,
+    `Use master_images/final_scene_master/${storyboard.project}.final.png as the Runway image-to-video source storyboard frame.`,
+    `${video.duration}-second wildlife storyboard motion in ${environment.name}.`,
     `${prey.name} remains on the ${prey.side} as the prey/defender, ${predator.name} remains on the ${predator.side} as the predator, with the clear open reaction lane preserved.`,
-    `Motion: ${finalScene.action}. Stable anatomy, grounded movement, full-body readability, clean readable spacing, source-image identity continuity, realistic camera drift, cinematic tension rise.`
+    `Motion: ${finalScene.action}. Stable anatomy, grounded movement, full-body readability, clean readable spacing, source-frame identity continuity, realistic camera drift, cinematic tension rise.`
   ].join(" ");
 }
 
@@ -222,13 +269,13 @@ function formatKlingFinalVideoPrompt(storyboard) {
     `Shot 1 establishing tension: ${environment.name}, ${prey.name} on the ${prey.side}, ${predator.name} on the ${predator.side}, clear open reaction lane, slow push-in.`,
     `Shot 2 prey/defender pressure move: ${prey.name} uses role-appropriate grounded pressure, full body readable, stable contact with the terrain.`,
     `Shot 3 predator reaction: ${predator.name} reacts defensively with realistic weight shift, stable anatomy, and clean silhouette readability.`,
-    `Shot 4 wide separation: both animals remain separated with the reaction lane visible, environment texture and lighting consistent.`,
-    `Shot 5 final dramatic hold: ${finalScene.action}, final bass-hit visual hold, cinematic wildlife documentary tension.`
+    `Shot 4 wide separation: both animals remain separated with the reaction lane visible, environment texture and grayscale shading consistent.`,
+    `Shot 5 final dramatic hold: ${finalScene.action}, final bass-hit visual hold, cinematic wildlife storyboard tension.`
   ];
 
   return [
-    `Kling image-to-video prompt using master_images/final_scene_master/${storyboard.project}.final.png as the source image.`,
-    `${duration}-second ${video.format ?? "multi-shot"} sequence, ${video.shotCount ?? 5} shots, ${finalScene.style}, ${finalScene.camera}.`,
+    `Kling image-to-video prompt using master_images/final_scene_master/${storyboard.project}.final.png as the source storyboard frame.`,
+    `${duration}-second ${video.format ?? "multi-shot"} sequence, ${video.shotCount ?? 5} shots, professional pencil-drawn wildlife storyboard frame, cinematic storyboard framing.`,
     shots.join(" "),
     `Maintain source-frame identity, separated animals, clear open reaction lane, grounded hoof/paw/foot contact, stable anatomy, realistic wildlife motion, and clean readable spacing.`
   ].join(" ");
@@ -274,14 +321,14 @@ export async function generateReferenceWorkflow(storyboard) {
   const environment = getEnvironment(storyboard);
   const finalOutput = `master_images/final_scene_master/${storyboard.project}.final.png`;
   const productionOrder = [
-    "Generate prey-only master image",
+    "Generate prey-only storyboard reference frame",
     `Save/tag in Runway as ${tagFor(prey)}`,
-    "Generate predator-only master image",
+    "Generate predator-only storyboard reference frame",
     `Save/tag in Runway as ${tagFor(predator)}`,
-    "Generate environment-only master image",
+    "Generate environment-only storyboard reference frame",
     `Save/tag in Runway as ${tagFor(environment)}`,
-    "Use all 3 references to generate final scene master image",
-    "Use final scene master image as source for Runway/Kling video"
+    "Use all 3 references to generate final scene storyboard frame",
+    "Use final scene storyboard frame as source for Runway/Kling video"
   ];
 
   const manifest = {
@@ -693,7 +740,7 @@ function buildStoryboardPreviewHtml(storyboard, masterImageJobs, finalSceneJob, 
     .map((tag) => `<div><dt>${escapeHtml(tag)}</dt><dd>${escapeHtml(finalSceneJob.referenceRoles[tag])}</dd></div>`)
     .join("\n");
 
-  return `<!DOCTYPE html><html lang="en"><head><meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" /><title>${escapeHtml(storyboard.project)} Storyboard Preview</title><style>:root{color-scheme:dark;--bg:#09110f;--panel:#111a17;--panel-border:#2b3c35;--text:#f5fbf7;--muted:#a8bbb0;--accent:#8ee6b4}*{box-sizing:border-box}body{margin:0;font-family:Inter,Arial,sans-serif;background:#09110f;color:var(--text)}main{max-width:1180px;margin:0 auto;padding:32px 20px 60px}header{margin-bottom:24px}header h1{margin:0 0 8px;font-size:32px}header p{margin:0;color:var(--muted);line-height:1.6}.grid{display:grid;gap:18px}.section-label{margin:28px 0 12px;color:var(--accent);font-size:13px;font-weight:800;letter-spacing:.08em;text-transform:uppercase}.panel{border:1px solid var(--panel-border);border-radius:8px;padding:18px;background:var(--panel)}.scene-meta{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:12px;margin:0 0 16px}.scene-meta div{border:1px solid var(--panel-border);border-radius:8px;padding:12px;background:rgba(255,255,255,.025)}dt{margin:0 0 6px;color:var(--muted);font-size:12px;text-transform:uppercase;font-weight:700}dd{margin:0;font-size:14px;line-height:1.5}.prompt-block{margin-top:14px}.prompt-block h3{margin:0 0 8px;font-size:15px}pre{margin:0;white-space:pre-wrap;word-break:break-word;border:1px solid var(--panel-border);border-radius:8px;padding:12px;background:rgba(255,255,255,.03);line-height:1.6;font-size:14px}ol{margin:0;padding-left:22px;line-height:1.8}</style></head><body><main><header><h1>${escapeHtml(storyboard.project)}</h1><p>Animal pair: ${escapeHtml(prey.name)} and ${escapeHtml(predator.name)}</p><p>Environment: ${escapeHtml(environment.name)}</p><p>Workflow: generic Runway 3-reference final scene master -> Runway/Kling video source</p></header><div class="section-label">Active Runway References</div><section class="panel"><dl class="scene-meta">${referenceRows}</dl></section><div class="section-label">Master Prompts</div><section class="panel">${promptSection("Prey master prompt", preyJob?.prompt ?? "")}${promptSection("Predator master prompt", predatorJob?.prompt ?? "")}${promptSection("Environment master prompt", environmentJob?.prompt ?? "")}</section><div class="section-label">Final Scene</div><section class="panel">${promptSection("Final scene master prompt", finalSceneJob.prompt)}${promptSection("Runway video prompt", finalVideoPrompts.runwayPrompt)}${promptSection("Kling video prompt", finalVideoPrompts.klingPrompt)}${promptSection("ElevenLabs music prompt", finalVideoPrompts.musicPrompt)}</section><div class="section-label">Production Order</div><section class="panel"><ol>${orderItems}</ol></section></main></body></html>\n`;
+  return `<!DOCTYPE html><html lang="en"><head><meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" /><title>${escapeHtml(storyboard.project)} Storyboard Preview</title><style>:root{color-scheme:dark;--bg:#09110f;--panel:#111a17;--panel-border:#2b3c35;--text:#f5fbf7;--muted:#a8bbb0;--accent:#8ee6b4}*{box-sizing:border-box}body{margin:0;font-family:Inter,Arial,sans-serif;background:#09110f;color:var(--text)}main{max-width:1180px;margin:0 auto;padding:32px 20px 60px}header{margin-bottom:24px}header h1{margin:0 0 8px;font-size:32px}header p{margin:0;color:var(--muted);line-height:1.6}.grid{display:grid;gap:18px}.section-label{margin:28px 0 12px;color:var(--accent);font-size:13px;font-weight:800;letter-spacing:.08em;text-transform:uppercase}.panel{border:1px solid var(--panel-border);border-radius:8px;padding:18px;background:var(--panel)}.scene-meta{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:12px;margin:0 0 16px}.scene-meta div{border:1px solid var(--panel-border);border-radius:8px;padding:12px;background:rgba(255,255,255,.025)}dt{margin:0 0 6px;color:var(--muted);font-size:12px;text-transform:uppercase;font-weight:700}dd{margin:0;font-size:14px;line-height:1.5}.prompt-block{margin-top:14px}.prompt-block h3{margin:0 0 8px;font-size:15px}pre{margin:0;white-space:pre-wrap;word-break:break-word;border:1px solid var(--panel-border);border-radius:8px;padding:12px;background:rgba(255,255,255,.03);line-height:1.6;font-size:14px}ol{margin:0;padding-left:22px;line-height:1.8}</style></head><body><main><header><h1>${escapeHtml(storyboard.project)}</h1><p>Animal pair: ${escapeHtml(prey.name)} and ${escapeHtml(predator.name)}</p><p>Environment: ${escapeHtml(environment.name)}</p><p>Workflow: generic Runway 3-reference final scene storyboard frame -> Runway/Kling video source</p></header><div class="section-label">Active Runway References</div><section class="panel"><dl class="scene-meta">${referenceRows}</dl></section><div class="section-label">Master Prompts</div><section class="panel">${promptSection("Prey master prompt", preyJob?.prompt ?? "")}${promptSection("Predator master prompt", predatorJob?.prompt ?? "")}${promptSection("Environment master prompt", environmentJob?.prompt ?? "")}</section><div class="section-label">Final Scene</div><section class="panel">${promptSection("Final scene master prompt", finalSceneJob.prompt)}${promptSection("Runway video prompt", finalVideoPrompts.runwayPrompt)}${promptSection("Kling video prompt", finalVideoPrompts.klingPrompt)}${promptSection("ElevenLabs music prompt", finalVideoPrompts.musicPrompt)}</section><div class="section-label">Production Order</div><section class="panel"><ol>${orderItems}</ol></section></main></body></html>\n`;
 }
 
 async function ensureFreshDirectories() {

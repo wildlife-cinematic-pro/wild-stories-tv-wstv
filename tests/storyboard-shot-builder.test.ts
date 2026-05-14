@@ -27,15 +27,16 @@ function allCopyablePromptText(input: CinematicStoryboardInput = baseInput) {
   const storyboard = buildCinematicStoryboard(input);
   return storyboard.shots
     .flatMap((shot) => [
-      shot.imagePrompts.nanoBanana2,
-      shot.imagePrompts.gptImage2,
-      shot.imagePrompts.grokImagine,
+      shot.imagePrompts.gptImage2Long,
+      shot.imagePrompts.gptImage2Short,
+      shot.imagePrompts.nanoBanana2Long,
+      shot.imagePrompts.nanoBanana2Short,
       shot.motionPrompts.kling,
     ])
     .join("\n");
 }
 
-describe("cinematic USA viral storyboard builder", () => {
+describe("pencil storyboard shot builder", () => {
   it("builds exactly 4 shots with 5 seconds each and 20 seconds total", () => {
     const storyboard = buildCinematicStoryboard(baseInput);
 
@@ -52,14 +53,27 @@ describe("cinematic USA viral storyboard builder", () => {
     ]);
   });
 
-  it("includes exactly three image prompt engines and Kling-only motion prompts for each shot", () => {
+  it("outputs GPT Image 2 and Nano Banana 2 long/short prompt variants plus Kling-only motion prompts", () => {
     const storyboard = buildCinematicStoryboard(baseInput);
 
+    expect(storyboard.summary.imagePromptVariants).toEqual([
+      "GPT Image 2 — Long Version",
+      "GPT Image 2 — Short Version",
+      "Nano Banana 2 — Long Version",
+      "Nano Banana 2 — Short Version",
+    ]);
+
     for (const shot of storyboard.shots) {
-      expect(Object.keys(shot.imagePrompts)).toEqual(["nanoBanana2", "gptImage2", "grokImagine"]);
-      expect(shot.imagePrompts.nanoBanana2).toMatch(/^Shot \d — /);
-      expect(shot.imagePrompts.gptImage2).toMatch(/^Shot \d — /);
-      expect(shot.imagePrompts.grokImagine).toMatch(/^Shot \d — /);
+      expect(Object.keys(shot.imagePrompts)).toEqual([
+        "gptImage2Long",
+        "gptImage2Short",
+        "nanoBanana2Long",
+        "nanoBanana2Short",
+      ]);
+      expect(shot.imagePrompts.gptImage2Long).toMatch(/^Shot \d — /);
+      expect(shot.imagePrompts.gptImage2Short).toMatch(/^Shot \d — /);
+      expect(shot.imagePrompts.nanoBanana2Long).toMatch(/^Shot \d — /);
+      expect(shot.imagePrompts.nanoBanana2Short).toMatch(/^Shot \d — /);
       expect(Object.keys(shot.motionPrompts)).toEqual(["kling"]);
       expect(shot.motionPrompts.kling).toContain("Kling image-to-video, 5 seconds");
       expect("runway" in shot.motionPrompts).toBe(false);
@@ -67,36 +81,46 @@ describe("cinematic USA viral storyboard builder", () => {
     }
   });
 
-
   it("keeps storyboard image prompt bodies free of engine-heading labels and comma fragments", () => {
     const storyboard = buildCinematicStoryboard(baseInput);
     const imagePrompts = storyboard.shots.flatMap((shot) => [
-      shot.imagePrompts.nanoBanana2,
-      shot.imagePrompts.gptImage2,
-      shot.imagePrompts.grokImagine,
+      shot.imagePrompts.gptImage2Long,
+      shot.imagePrompts.gptImage2Short,
+      shot.imagePrompts.nanoBanana2Long,
+      shot.imagePrompts.nanoBanana2Short,
     ]);
 
     for (const prompt of imagePrompts) {
       expect(prompt).not.toMatch(/^Nano Banana 2 reference-stable cinematic master image prompt/i);
       expect(prompt).not.toMatch(/^GPT Image 2 cinematic master image prompt/i);
-      expect(prompt).not.toMatch(/^Grok Imagine cinematic master image prompt/i);
-      expect(prompt).not.toMatch(/^(Nano Banana 2|GPT Image 2|Grok Imagine) prompt\./i);
+      expect(prompt).not.toMatch(/^(Nano Banana 2|GPT Image 2) prompt\./i);
       expect(prompt).not.toMatch(/Shot [1-4],/);
       expect(prompt).toMatch(/^Shot [1-4] — /);
-      expect(prompt).toContain("Create a cinematic wildlife documentary master image");
+      expect(prompt).toContain("Both animals must be full-body visible, fully readable, correctly scaled, grounded, and clearly separated.");
+      expect(prompt).toContain("Do not crop heads, backs, legs, hooves, paws, tails, horns, shoulders, or body mass.");
     }
 
-    expect(storyboard.shots[3].imagePrompts.nanoBanana2).toContain(
+    expect(storyboard.shots[3].imagePrompts.nanoBanana2Long).toContain(
       "Shot 4 — Resolve / Unresolved Replay Ending"
     );
   });
 
-  it("keeps copyable storyboard prompts free of aspect-ratio and non-storyboard engine wording", () => {
+  it("keeps storyboard image prompts explicit about 9:16 vertical frames without non-storyboard engine wording", () => {
+    const storyboard = buildCinematicStoryboard(baseInput);
+    const imagePrompts = storyboard.shots.flatMap((shot) => [
+      shot.imagePrompts.gptImage2Long,
+      shot.imagePrompts.gptImage2Short,
+      shot.imagePrompts.nanoBanana2Long,
+      shot.imagePrompts.nanoBanana2Short,
+    ]);
     const promptText = allCopyablePromptText();
 
-    expect(promptText).not.toMatch(
-      /\b(?:9:16|16:9|vertical|horizontal|portrait|landscape|aspect ratio|AR|Runway|Seedance|mobile vertical frame)\b/i
-    );
+    for (const prompt of imagePrompts) {
+      expect(prompt).toContain("9:16 vertical");
+      expect(prompt).toContain("Both animals must be full-body visible, fully readable, correctly scaled, grounded, and clearly separated.");
+    }
+
+    expect(promptText).not.toMatch(/\b(?:Runway|Seedance|mobile vertical frame)\b/i);
   });
 
   it("builds Kling storyboard prompts in a sectioned 5-second image-to-video format", () => {
@@ -153,17 +177,58 @@ describe("cinematic USA viral storyboard builder", () => {
     }
   });
 
-  it("applies cinematic USA viral style language to copyable prompts", () => {
+  it("includes the exact full-body and no-cropping rules in every storyboard image variant", () => {
+    const storyboard = buildCinematicStoryboard(baseInput);
+    const imagePrompts = storyboard.shots.flatMap((shot) => [
+      shot.imagePrompts.gptImage2Long,
+      shot.imagePrompts.gptImage2Short,
+      shot.imagePrompts.nanoBanana2Long,
+      shot.imagePrompts.nanoBanana2Short,
+    ]);
+
+    for (const prompt of imagePrompts) {
+      expect(prompt).toContain("Both animals must be full-body visible, fully readable, correctly scaled, grounded, and clearly separated.");
+      expect(prompt).toContain("Do not crop heads, backs, legs, hooves, paws, tails, horns, shoulders, or body mass.");
+    }
+  });
+
+  it("applies pencil storyboard style language to copyable image prompts", () => {
     const promptText = allCopyablePromptText();
 
-    expect(promptText).toContain("Strong first-frame hook");
-    expect(promptText).toContain("full-body readability");
-    expect(promptText).toContain("clean subject separation");
+    expect(promptText).toContain("pencil sketch style");
+    expect(promptText).toContain("grayscale sketch");
+    expect(promptText).toContain("black-and-white graphite drawing");
+    expect(promptText).toContain("visible pencil strokes");
+    expect(promptText).toContain("rough but clean linework");
+    expect(promptText).toContain("light paper texture");
+    expect(promptText).toContain("soft shading");
+    expect(promptText).toContain("cinematic storyboard composition");
+    expect(promptText).toContain("professional film previsualization style");
+    expect(promptText).toContain("mobile-readable composition");
     expect(promptText).toContain("one clear action lane");
-    expect(promptText).toContain("clear foreground/midground/background depth");
-    expect(promptText).toContain("cinematic wildlife documentary realism");
-    expect(promptText).toContain("non-graphic survival pressure");
-    expect(promptText).toContain("replay-worthy final frame");
+    expect(promptText).toContain("realistic wildlife behavior");
+  });
+
+  it("forbids color, photoreal final art, poster, cartoon, anime, and 3D styling in storyboard prompts", () => {
+    const promptText = allCopyablePromptText();
+
+    expect(promptText).toContain("no color rendering");
+    expect(promptText).toContain("no photorealistic final illustration");
+    expect(promptText).toContain("no polished final illustration");
+    expect(promptText).toContain("no polished poster look");
+    expect(promptText).toContain("no cartoon style");
+    expect(promptText).toContain("no anime style");
+    expect(promptText).toContain("no 3D style");
+  });
+
+  it("does not reuse photorealistic master-image wording for storyboard image prompts", () => {
+    const promptText = allCopyablePromptText();
+
+    expect(promptText).not.toContain("cinematic wildlife documentary master image");
+    expect(promptText).not.toContain("photorealistic wildlife documentary");
+    expect(promptText).not.toContain("National Geographic Wild");
+    expect(promptText).not.toContain("golden-hour realism");
+    expect(promptText).not.toContain("polished master image");
   });
 
   it.each([

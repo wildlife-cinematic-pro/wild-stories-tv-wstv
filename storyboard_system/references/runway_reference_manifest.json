@@ -27,13 +27,13 @@
   },
   "finalSceneMasterOutput": "master_images/final_scene_master/generic_wildlife_standoff.final.png",
   "productionOrder": [
-    "Generate prey-only master image",
+    "Generate prey-only storyboard reference frame",
     "Save/tag in Runway as @massive_bison",
-    "Generate predator-only master image",
+    "Generate predator-only storyboard reference frame",
     "Save/tag in Runway as @grizzly_bear",
-    "Generate environment-only master image",
+    "Generate environment-only storyboard reference frame",
     "Save/tag in Runway as @heavy_snow_winter_meadow",
-    "Use all 3 references to generate final scene master image",
-    "Use final scene master image as source for Runway/Kling video"
+    "Use all 3 references to generate final scene storyboard frame",
+    "Use final scene storyboard frame as source for Runway/Kling video"
   ]
 }
