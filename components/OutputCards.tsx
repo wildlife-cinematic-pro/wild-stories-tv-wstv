@@ -10,6 +10,7 @@ import { getDefaultDirectWorkspace } from "@/components/output-cards/workspaces/
 import { PublishingWorkspace } from "@/components/output-cards/workspaces/PublishingWorkspace";
 import { EvidenceWorkspace } from "@/components/output-cards/workspaces/EvidenceWorkspace";
 import { AdvancedWorkspace } from "@/components/output-cards/workspaces/AdvancedWorkspace";
+import { ArchiveWorkspace } from "@/components/output-cards/workspaces/ArchiveWorkspace";
 import { FastPublishPanel } from "@/components/output-cards/fast-publish-panel";
 import { PromptGuidancePanel } from "@/components/output-cards/prompt-guidance-panel";
 import type {
@@ -212,6 +213,13 @@ export default function OutputCards({
       icon: "↑",
     },
     {
+      key: "archive",
+      label: "Archive",
+      detail: "Local video metadata log",
+      badge: "Local",
+      icon: "▣",
+    },
+    {
       key: "evidence",
       label: "Evidence",
       detail: "Score real generations, drift notes, keep/retry",
@@ -303,6 +311,14 @@ export default function OutputCards({
       footer: "Open publishing workspace",
     },
     {
+      key: "archive" as const,
+      eyebrow: "Archive",
+      title: "Save generation metadata",
+      detail:
+        "Log the local Mac folder, prompt package, caption, Facebook URL, performance stats, and notes without uploading video files.",
+      footer: "Open video archive",
+    },
+    {
       key: "evidence" as const,
       eyebrow: "Evidence",
       title: "Real generation QA loop",
@@ -379,6 +395,13 @@ export default function OutputCards({
             </button>
             <button
               type="button"
+              onClick={() => setActiveWorkspace("archive")}
+              className="w-full rounded-xl bg-cyan-700 px-4 py-2 text-xs font-extrabold text-white hover:bg-cyan-800 active:scale-95 sm:w-auto"
+            >
+              Archive Generation
+            </button>
+            <button
+              type="button"
               onClick={exportTxt}
               className="w-full rounded-xl border border-[color:var(--border)] bg-[color:var(--surface)] px-4 py-2 text-xs font-extrabold text-[color:var(--text)] hover:border-cyan-400/60 hover:text-cyan-200 active:scale-95 sm:w-auto"
             >
@@ -409,6 +432,13 @@ export default function OutputCards({
                 className="w-full rounded-xl bg-gray-900 px-4 py-2.5 text-sm font-extrabold text-white hover:bg-black active:scale-95 sm:w-auto sm:min-w-[13rem]"
               >
                 Copy Full Package
+              </button>
+              <button
+                type="button"
+                onClick={() => setActiveWorkspace("archive")}
+                className="w-full rounded-xl bg-cyan-700 px-4 py-2.5 text-xs font-bold text-white hover:bg-cyan-800 active:scale-95 sm:w-auto"
+              >
+                Save This Generation
               </button>
               <button
                 type="button"
@@ -514,6 +544,10 @@ export default function OutputCards({
 
         {activeWorkspace === "publishing" && (
           <PublishingWorkspace data={data} onCopy={onCopy} />
+        )}
+
+        {activeWorkspace === "archive" && (
+          <ArchiveWorkspace data={data} onCopy={onCopy} />
         )}
 
         {activeWorkspace === "evidence" && <EvidenceWorkspace data={data} />}

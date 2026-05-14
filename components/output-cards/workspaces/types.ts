@@ -4,6 +4,7 @@ export type OutputWorkspaceTab =
   | "video"
   | "direct"
   | "publishing"
+  | "archive"
   | "evidence"
   | "advanced";
 
