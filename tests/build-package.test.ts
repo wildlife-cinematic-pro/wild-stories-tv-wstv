@@ -220,11 +220,17 @@ describe("build-package refactor seam", () => {
     expect(prompts?.seedanceMultiShot?.fullText).toBe(
       draft.basePkg.seedanceMultiShotPrompt
     );
+    expect(prompts?.seedanceMultiShot?.fullText).toContain("Shot 4");
     expect(prompts?.klingNative15s?.pasteReady.length).toBeGreaterThan(0);
     expect(prompts?.klingNative15s?.pasteReady.startsWith("Image-to-video from master image")).toBe(true);
     expect(prompts?.klingFramesPrompt?.pasteReady.length).toBeGreaterThan(0);
-    expect(prompts?.klingMultishotShots).toHaveLength(4);
+    expect(prompts?.klingMultishotShots).toHaveLength(3);
     expect(prompts?.klingMultishotShots?.every((shot) => shot.pasteReady.length <= 512)).toBe(true);
+    expect(prompts?.klingMultishotShots?.map((shot) => shot.settings?.find((line) => line.startsWith("Timing:")))).toEqual([
+      "Timing: 0-5s",
+      "Timing: 5-10s",
+      "Timing: 10-15s",
+    ]);
     expect(prompts?.klingNative15s?.pasteReady).toContain("Negative prompt:");
     expect(prompts?.klingNative15s?.pasteReady).not.toContain("KLING 3.0 PRO DIRECT 15S MULTISHOT");
     expect(prompts?.klingFramesPrompt?.pasteReady).toContain("raw documentary tension");

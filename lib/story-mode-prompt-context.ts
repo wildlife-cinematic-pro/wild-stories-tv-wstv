@@ -631,13 +631,15 @@ function buildStoryModeKlingFramesPrompt(
 function buildStoryModeKlingMultishotPromptCards(
   context: StoryModePromptContext
 ): StructuredPrompt[] {
-  return context.shotStages.map((stage, index) => {
+  const timings = ["0-5s", "5-10s", "10-15s"];
+
+  return context.shotStages.slice(0, 3).map((stage, index) => {
     const pasteReady = [
-      `Shot ${index + 1}: ${stage.stage}.`,
+      `Shot ${index + 1}, ${timings[index]}: ${stage.stage}.`,
       `${context.primarySubjectLabel} and ${context.secondarySubjectLabel} stay readable with the same identity, habitat, spacing, lighting, and grounded contact.`,
       stage.motionDirection,
       "Camera holds wide with controlled motion and clean continuity.",
-      "No blood, no gore, no visible injury.",
+      "Clean non-graphic wildlife tension, no extra animals, no subtitles, no text, no watermark.",
     ].join(" ");
 
     return makeStructuredPrompt(

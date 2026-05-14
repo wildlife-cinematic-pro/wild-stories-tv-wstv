@@ -844,7 +844,7 @@ describe("Step 7C — supporting prompt helpers keep readability language", () =
   });
 
 
-  it("Kling Multishot returns exactly four 15s shot prompts under 512 chars", () => {
+  it("Kling Multishot returns exactly three 15s shot prompts under 512 chars", () => {
     const shots = buildKlingMultishotPromptCards(
       "Crocodile",
       "Warthog",
@@ -858,17 +858,29 @@ describe("Step 7C — supporting prompt helpers keep readability language", () =
       quality
     );
 
-    expect(shots).toHaveLength(4);
+    expect(shots).toHaveLength(3);
     expect(shots.map((shot) => shot.metadata?.durationSeconds).reduce((sum, value) => sum + (value ?? 0), 0)).toBe(15);
+    expect(shots.map((shot) => shot.settings?.find((line) => line.startsWith("Timing:")))).toEqual([
+      "Timing: 0-5s",
+      "Timing: 5-10s",
+      "Timing: 10-15s",
+    ]);
+    expect(shots.map((shot) => shot.fullText)).toEqual([
+      expect.stringContaining("opening tension / first-frame hook"),
+      expect.stringContaining("pressure build / peak movement"),
+      expect.stringContaining("final hold / resolved or unresolved tension"),
+    ]);
     shots.forEach((shot, index) => {
       expect(shot.pasteReady.length).toBeLessThanOrEqual(512);
       expect(shot.fullText).toContain(`Shot ${index + 1}:`);
       expect(shot.pasteReady).not.toContain("Image-to-video from master image");
+      expect(shot.pasteReady).not.toContain("Shot 4");
       expect(shot.pasteReady).not.toContain("Shot 5");
+      expect(shot.pasteReady).not.toMatch(/\b(?:blood|gore|visible wounds?|visible injury)\b/i);
       expect(shot.pasteReady).not.toMatch(/no\s*,\s*no/i);
     });
     expect(shots[0].pasteReady.length).toBeLessThan(512);
-    expect(shots[1].pasteReady).toMatch(/Trigger beat|surges|bursts|launches|dives|closes/i);
+    expect(shots[1].pasteReady).toMatch(/pressure build|surges|bursts|launches|dives|closes|peak movement/i);
   });
 
   it("Kling Multishot changes Shot 2 and Shot 3 when arc changes", () => {
@@ -973,8 +985,10 @@ describe("Step 7C — supporting prompt helpers keep readability language", () =
     expect(frameCard.pasteReady).toContain("no blood, no gore, no visible wounds");
     expect(frameCard.pasteReady).not.toMatch(/no\s*,\s*no/i);
     expect(shots.every((shot) => !/no\s*,\s*no/i.test(shot.pasteReady))).toBe(true);
-    expect(shots[0].pasteReady).toMatch(/no blood, no gore, no visible wounds/i);
-    expect(shots[3].pasteReady).toMatch(/no death close-up, no blood, no gore, no visible wounds/i);
+    expect(shots).toHaveLength(3);
+    expect(shots[0].pasteReady).toMatch(/clean non-graphic wildlife tension/i);
+    expect(shots[2].pasteReady).toMatch(/clean non-graphic wildlife tension/i);
+    expect(shots.every((shot) => !/\b(?:blood|gore|visible wounds?|visible injury)\b/i.test(shot.pasteReady))).toBe(true);
   });
 
   it("Kling close-contact trigger keeps the standard 15s structure unchanged when trigger terms are absent", () => {
@@ -1118,7 +1132,7 @@ describe("Step 7C — supporting prompt helpers keep readability language", () =
         "A fast non-graphic survival pressure beat.",
         quality
       );
-      expect(shots).toHaveLength(4);
+      expect(shots).toHaveLength(3);
       expect(shots.every((shot) => shot.pasteReady.length <= 512)).toBe(true);
       expect(shots.map((shot) => shot.pasteReady).join(" ")).toMatch(expected);
     }
