@@ -17,6 +17,10 @@ import {
   buildEnvironmentMasterReferencePrompt,
   buildFinalMergeMasterPrompt,
 } from "@/components/output-cards/reference-image-prompts";
+import {
+  buildNanoBananaMergePrompts,
+  buildReferencePrompts,
+} from "@/components/output-cards/ImageReferenceMergeWorkflow";
 import { buildCreatorQaPack } from "@/lib/creator-qa-pack";
 
 function deriveDriftLabel(
@@ -219,6 +223,7 @@ export function WorkflowPromptMap({
     9: false,
     10: false,
     11: false,
+    12: false,
   };
 
   const [mode, setMode] = useState<WorkflowMode>("hybrid");
@@ -333,7 +338,7 @@ export function WorkflowPromptMap({
       "7. Kling negative prompts are optional, but only use them when actually needed.",
     ].join("\n");
 
-    const hybridGuide = [
+    let hybridGuide = [
       buildHybridRoutingGuide(),
       routingNote ? `Routing note from package: ${routingNote}` : "Routing note: Runway Shot 1 → Kling Shot 2–3 → Runway Shot 4, all sourced from the final scene master image.",
     ].join("\n\n");
@@ -399,6 +404,122 @@ export function WorkflowPromptMap({
       "[ ] Final merge image generated",
       "[ ] Final merge image used as video source",
     ].join("\n");
+
+    const legacyReferenceSteps: WorkflowItem[] = [
+      {
+        step: 1,
+        title: "Lead Animal Master Image",
+        badge: "Nano Banana 2 Primary · GPT Image 2 Backup",
+        color: imageCardColor,
+        help: `Build the reusable production reference for ${leadAnimalName}. Keep the copyable prompt image-focused; Runway reference tags stay in optional helper notes.`,
+        value: leadMasterPrompt,
+        actions: [{ label: "Copy Lead Animal Master Prompt", value: leadMasterPrompt }],
+      },
+      {
+        step: 2,
+        title: "Opposite Animal Master Image",
+        badge: "Nano Banana 2 Primary · GPT Image 2 Backup",
+        color: imageCardColor,
+        help: `Build the reusable production reference for ${oppositeAnimalName}. Keep identity, anatomy, and contact readable.`,
+        value: oppositeMasterPrompt,
+        actions: [{ label: "Copy Opposite Animal Master Prompt", value: oppositeMasterPrompt }],
+      },
+      {
+        step: 3,
+        title: "Environment Master Image",
+        badge: "Nano Banana 2 Primary · GPT Image 2 Backup",
+        color: guideColor,
+        help: `Build the reusable background reference for ${environmentName}; environment-only composition with open central subject-ready space.`,
+        value: environmentMasterPrompt,
+        actions: [{ label: "Copy Environment Master Prompt", value: environmentMasterPrompt }],
+      },
+      {
+        step: 4,
+        title: "Final Merge Master Image",
+        badge: "Nano Banana 2 Primary · GPT Image 2 Backup",
+        color: runwayColor,
+        help: `Merge the three prepared image references into one final scene master image for video source continuity. Optional Runway tags: ${leadReferenceTag}, ${oppositeReferenceTag}, ${environmentReferenceTag}.`,
+        value: finalMergeMasterPrompt,
+        actions: [{ label: "Copy Final Merge Master Prompt", value: finalMergeMasterPrompt }],
+        checklist: runwayReferenceChecklist,
+      },
+    ];
+
+    const modeAwareReferenceWorkflow = buildReferencePrompts(data);
+    const modeAwareMergePrompt = buildNanoBananaMergePrompts(data)[0];
+    const useModeAwareReferenceFlow = !modeAwareReferenceWorkflow.roles.isPredatorVsPrey;
+    const modeAwareReferenceCount = modeAwareReferenceWorkflow.referencePrompts.length;
+    const modeAwareFinalMergePrompt = modeAwareMergePrompt?.prompt ?? finalMergeMasterPrompt;
+    const displayReferenceTitle = (title: string) => title.replace(/^@\S+\s+—\s+/, "");
+    const modeAwareReferenceBuildPrompts = [
+      ...modeAwareReferenceWorkflow.referencePrompts.flatMap((item) => [
+        displayReferenceTitle(item.title),
+        item.prompt,
+        "",
+      ]),
+      modeAwareReferenceWorkflow.roles.finalMergeTitle,
+      modeAwareFinalMergePrompt,
+    ].join("\n");
+    const modeAwareReferenceChecklist = [
+      ...modeAwareReferenceWorkflow.referencePrompts.map((item) =>
+        `[ ] ${displayReferenceTitle(item.title)} saved`
+      ),
+      `[ ] Exactly ${modeAwareReferenceCount} active references selected`,
+      "[ ] Final merge image generated",
+      "[ ] Final merge image used as video source",
+    ].join("\n");
+    const modeAwareReferenceSteps: WorkflowItem[] = [
+      ...modeAwareReferenceWorkflow.referencePrompts.map((item, index) => ({
+        step: index + 1,
+        title: displayReferenceTitle(item.title),
+        badge: item.badge,
+        color: item.tone === "indigo" ? guideColor : imageCardColor,
+        help: item.helper,
+        value: item.prompt,
+        actions: [{ label: `Copy ${item.copyLabel} Prompt`, value: item.prompt }],
+      })),
+      {
+        step: modeAwareReferenceCount + 1,
+        title: modeAwareReferenceWorkflow.roles.finalMergeTitle,
+        badge: modeAwareMergePrompt?.badge ?? "Nano Banana 2 Primary",
+        color: runwayColor,
+        help:
+          modeAwareReferenceCount === 4
+            ? "Merge the mother, offspring, threat, and environment references into one mode-aware final scene master image."
+            : `Merge the ${modeAwareReferenceWorkflow.roles.modeLabel.toLowerCase()} subject, pressure, and environment references into one mode-aware final scene master image.`,
+        value: modeAwareFinalMergePrompt,
+        actions: [{ label: "Copy Final Merge Master Prompt", value: modeAwareFinalMergePrompt }],
+        checklist: modeAwareReferenceChecklist,
+      },
+    ];
+    const selectedReferenceSteps = useModeAwareReferenceFlow
+      ? modeAwareReferenceSteps
+      : legacyReferenceSteps;
+    const selectedReferenceBuildPrompts = useModeAwareReferenceFlow
+      ? modeAwareReferenceBuildPrompts
+      : referenceBuildPrompts;
+    const selectedReferenceCount = useModeAwareReferenceFlow ? modeAwareReferenceCount : 3;
+    const selectedReferenceCountLabel = selectedReferenceCount === 4 ? "4" : "3";
+    const videoStepStart = selectedReferenceSteps.length + 1;
+
+    if (useModeAwareReferenceFlow) {
+      const referenceTitles = modeAwareReferenceWorkflow.referencePrompts
+        .map((item) => displayReferenceTitle(item.title))
+        .join(" → ");
+      hybridGuide = [
+        "PRIMARY HYBRID 4-SHOT ROUTING",
+        "Nano Banana 2 is the primary image workflow; GPT Image 2 is the backup image workflow.",
+        `1. Build these mode-aware references first: ${referenceTitles}.`,
+        `2. Build the final scene master image from all ${selectedReferenceCountLabel} prepared references.`,
+        "3. Use the final scene master image as the source image for video generation.",
+        "4. Shot 1 uses Runway Gen-4/Gen-4.5 image-to-video for clean opening tension.",
+        "5. Shot 2 uses Kling for pressure/action physics.",
+        "6. Shot 3 uses Kling for peak action physics.",
+        "7. Shot 4 returns to Runway Gen-4/Gen-4.5 for resolved tension and final settle.",
+        "8. Add ElevenLabs 20s action music under the 4-shot edit.",
+        routingNote ? `Routing note from package: ${routingNote}` : "Routing note: Runway Shot 1 → Kling Shot 2–3 → Runway Shot 4, all sourced from the final scene master image.",
+      ].join("\n");
+    }
 
     return {
       seedance: {
@@ -632,55 +753,23 @@ export function WorkflowPromptMap({
         ],
       },
       hybrid: {
-        pipeline:
-          "Nano Banana 2 lead animal reference → Nano Banana 2 opposite animal reference → Nano Banana 2 environment reference → Nano Banana 2 final merge master image → optional Runway reference helper → Runway Shot 1 → Kling Shot 2 → Kling Shot 3 → Runway Shot 4 → Music: ElevenLabs 20s action music",
+        pipeline: useModeAwareReferenceFlow
+          ? `Nano Banana 2 mode-aware references (${selectedReferenceCountLabel}) → Nano Banana 2 final merge master image → optional Runway reference helper → Runway Shot 1 → Kling Shot 2 → Kling Shot 3 → Runway Shot 4 → Music: ElevenLabs 20s action music`
+          : "Nano Banana 2 lead animal reference → Nano Banana 2 opposite animal reference → Nano Banana 2 environment reference → Nano Banana 2 final merge master image → optional Runway reference helper → Runway Shot 1 → Kling Shot 2 → Kling Shot 3 → Runway Shot 4 → Music: ElevenLabs 20s action music",
         bannerTitle: "Primary hybrid 4-shot route",
-        bannerBody:
-          "First build 3 Nano Banana 2 primary image references and one final merge master image, then use Runway for the clean opening/final settle, Kling for Shot 2–3 pressure/action physics, and ElevenLabs for 20s action music.",
-        workflowLabel: "Nano Banana 2 builds primary image references. GPT Image 2 is backup.",
+        bannerBody: useModeAwareReferenceFlow
+          ? `First build ${selectedReferenceCountLabel} mode-aware Nano Banana 2 primary references and one final merge master image, then use Runway for the clean opening/final settle, Kling for Shot 2–3 pressure/action physics, and ElevenLabs for 20s action music.`
+          : "First build 3 Nano Banana 2 primary image references and one final merge master image, then use Runway for the clean opening/final settle, Kling for Shot 2–3 pressure/action physics, and ElevenLabs for 20s action music.",
+        workflowLabel: useModeAwareReferenceFlow
+          ? `Nano Banana 2 builds ${modeAwareReferenceWorkflow.roles.modeLabel} reference images. GPT Image 2 is backup.`
+          : "Nano Banana 2 builds primary image references. GPT Image 2 is backup.",
         topNote:
           "Keep image generation prompts clean and image-focused. Use Runway wording only for image-to-video motion prompts or for the optional Runway @reference helper workflow.",
-        referenceBuildPrompts,
+        referenceBuildPrompts: selectedReferenceBuildPrompts,
         steps: [
+          ...selectedReferenceSteps,
           {
-            step: 1,
-            title: "Lead Animal Master Image",
-            badge: "Nano Banana 2 Primary · GPT Image 2 Backup",
-            color: imageCardColor,
-            help: `Build the reusable production reference for ${leadAnimalName}. Keep the copyable prompt image-focused; Runway reference tags stay in optional helper notes.`,
-            value: leadMasterPrompt,
-            actions: [{ label: "Copy Lead Animal Master Prompt", value: leadMasterPrompt }],
-          },
-          {
-            step: 2,
-            title: "Opposite Animal Master Image",
-            badge: "Nano Banana 2 Primary · GPT Image 2 Backup",
-            color: imageCardColor,
-            help: `Build the reusable production reference for ${oppositeAnimalName}. Keep identity, anatomy, and contact readable.`,
-            value: oppositeMasterPrompt,
-            actions: [{ label: "Copy Opposite Animal Master Prompt", value: oppositeMasterPrompt }],
-          },
-          {
-            step: 3,
-            title: "Environment Master Image",
-            badge: "Nano Banana 2 Primary · GPT Image 2 Backup",
-            color: guideColor,
-            help: `Build the reusable background reference for ${environmentName}; environment-only composition with open central subject-ready space.`,
-            value: environmentMasterPrompt,
-            actions: [{ label: "Copy Environment Master Prompt", value: environmentMasterPrompt }],
-          },
-          {
-            step: 4,
-            title: "Final Merge Master Image",
-            badge: "Nano Banana 2 Primary · GPT Image 2 Backup",
-            color: runwayColor,
-            help: `Merge the three prepared image references into one final scene master image for video source continuity. Optional Runway tags: ${leadReferenceTag}, ${oppositeReferenceTag}, ${environmentReferenceTag}.`,
-            value: finalMergeMasterPrompt,
-            actions: [{ label: "Copy Final Merge Master Prompt", value: finalMergeMasterPrompt }],
-            checklist: runwayReferenceChecklist,
-          },
-          {
-            step: 5,
+            step: videoStepStart,
             title: "Hybrid Shot 1 — Runway Opening Tension",
             badge: "Runway Gen-4/Gen-4.5 Image-to-Video · 5s",
             color: runwayColor,
@@ -697,7 +786,7 @@ export function WorkflowPromptMap({
             ],
           },
           {
-            step: 6,
+            step: videoStepStart + 1,
             title: "Hybrid Shot 2 — Kling Pressure Build",
             badge: "Kling pressure/action physics · 5s",
             color: klingColor,
@@ -714,7 +803,7 @@ export function WorkflowPromptMap({
             ],
           },
           {
-            step: 7,
+            step: videoStepStart + 2,
             title: "Hybrid Shot 3 — Kling Peak Action",
             badge: "Kling peak action physics · 5s",
             color: klingColor,
@@ -731,7 +820,7 @@ export function WorkflowPromptMap({
             ],
           },
           {
-            step: 8,
+            step: videoStepStart + 3,
             title: "Hybrid Shot 4 — Runway Resolved Tension",
             badge: "Runway Gen-4/Gen-4.5 resolved tension · 5s",
             color: runwayColor,
@@ -748,7 +837,7 @@ export function WorkflowPromptMap({
             ],
           },
           {
-            step: 9,
+            step: videoStepStart + 4,
             title: "Hybrid Routing Rules",
             badge: "Hybrid guide",
             color: hybridColor,
@@ -757,7 +846,7 @@ export function WorkflowPromptMap({
             actions: [{ label: "Copy Hybrid Rules", value: hybridGuide }],
           },
           {
-            step: 10,
+            step: videoStepStart + 5,
             title: "ElevenLabs 20s Action Music",
             badge: "ElevenLabs 20s action music",
             color: musicColor,
@@ -766,7 +855,7 @@ export function WorkflowPromptMap({
             actions: [{ label: "Copy ElevenLabs 20s Music Prompt", value: elevenLabs20sPrompt }],
           },
           {
-            step: 11,
+            step: videoStepStart + 6,
             title: "Creator QA Pack",
             badge: "QA + export helpers",
             color: hybridColor,

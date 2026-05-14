@@ -180,7 +180,7 @@ export function buildMergeMasterPrompt({
     ? `Use all four prepared references explicitly: ${referenceTags.primary}, ${referenceTags.offspring}, ${referenceTags.secondary}, ${referenceTags.environment}.`
     : "";
   const offspringScaleLine = referenceTags.offspring
-    ? `Mother & Baby blocking: keep ${referenceTags.offspring} close to ${referenceTags.primary}, partially sheltered behind or under her body line, visibly smaller than the mother, readable as its own subject, and not fused into ${referenceTags.primary}; keep ${referenceTags.secondary} separated at readable distance with no contact.`
+    ? `Mother & Baby blocking: keep ${referenceTags.offspring} close to ${referenceTags.primary}, partially sheltered behind or under her body line, visibly smaller than the mother, readable as its own separate subject, and not fused into ${referenceTags.primary}; keep ${referenceTags.secondary} as the threat at a distant or readable pressure distance with no contact.`
     : "";
   const secondaryIsAnimal = roles.secondaryKind === "animal" || roles.secondaryKind === "group";
   const readabilityLine = roles.isPredatorVsPrey

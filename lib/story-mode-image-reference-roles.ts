@@ -55,6 +55,14 @@ function cleanText(value: unknown, fallback: string) {
   return text || fallback;
 }
 
+function titleCaseLabel(value: string) {
+  return value
+    .split(/\s+/)
+    .filter(Boolean)
+    .map((part) => part.charAt(0).toUpperCase() + part.slice(1).toLowerCase())
+    .join(" ");
+}
+
 function buildContext(data: GeneratedPackage): StoryModePromptContext | undefined {
   if (!isNonPredatorStoryMode(data)) return undefined;
 
@@ -159,6 +167,7 @@ export function getStoryModeImageReferenceRoles(data: GeneratedPackage): StoryMo
   const primary = context.primarySubjectLabel;
   const secondary = context.secondarySubjectLabel;
   const offspring = cleanText(data.offspringLabel, "cub");
+  const offspringTitleLabel = titleCaseLabel(offspring);
   const foodItem = context.storyMode === StoryMode.SCAVENGER_CONFLICT
     ? normalizeScavengerFoodZone(data.foodItem)
     : cleanText(data.foodItem, "non-graphic food zone");
@@ -207,15 +216,15 @@ export function getStoryModeImageReferenceRoles(data: GeneratedPackage): StoryMo
       return {
         ...common,
         primaryTitle: "Mother Master Image",
-        offspringTitle: "Offspring / Cub Master Image",
+        offspringTitle: `Offspring / ${offspringTitleLabel} Master Image`,
         secondaryTitle: "Threat Master Image",
         environmentTitle: "Environment Master Image",
         primaryCopyLabel: "Mother Reference",
-        offspringCopyLabel: "Offspring/Cub Reference",
-        offspringHelper: "Create the reusable offspring or cub reference in Nano Banana 2 first.",
+        offspringCopyLabel: `${offspringTitleLabel} Reference`,
+        offspringHelper: `Create the reusable ${offspring} reference in Nano Banana 2 first.`,
         secondaryCopyLabel: "Threat Reference",
         primaryReferenceLabel: "Mother reference image",
-        offspringReferenceLabel: "Offspring / cub reference image",
+        offspringReferenceLabel: `Offspring / ${offspring} reference image`,
         secondaryReferenceLabel: "Threat reference image",
         environmentReferenceLabel: "Environment reference image",
         primaryKind: "animal",
