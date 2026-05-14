@@ -28,7 +28,7 @@
   },
   "finalSceneMasterOutput": "master_images/final_scene_master/generic_wildlife_standoff.final.png",
   "continuityRules": [
-    "preserve subject identity from master references",
+    "preserve subject identity from storyboard references",
     "maintain role-aware left-right blocking unless the prompt explicitly changes it",
     "keep anatomy stable and grounded through all image and video outputs",
     "preserve environment lighting, ground texture, and open reaction lane"

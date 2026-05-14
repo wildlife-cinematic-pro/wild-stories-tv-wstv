@@ -69,6 +69,29 @@ describe("buildImagePrompt – Nano Banana image path", () => {
     expect(hasMJParams(p)).toBe(false);
   });
 
+  it("preserves photorealistic documentary behavior for non-storyboard image prompts", () => {
+    const p = buildImagePrompt(
+      args.predator,
+      args.prey,
+      args.env,
+      args.arc,
+      args.lighting,
+      args.cameraGear,
+      args.texture,
+      args.depthMode,
+      args.weather,
+      args.emotionalTone,
+      args.animalVibe,
+      args.sceneDesc
+    );
+
+    expect(p).toContain("raw wildlife documentary");
+    expect(p).toContain("natural light");
+    expect(p).toContain("Telephoto framing");
+    expect(p).not.toContain("pencil sketch style");
+    expect(p).not.toContain("professional film previsualization style");
+  });
+
   it("does NOT append MJ params when target is RUNWAY", () => {
     const p = buildImagePrompt(
       args.predator,

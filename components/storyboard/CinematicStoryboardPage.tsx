@@ -230,23 +230,28 @@ function ShotCard({ shot }: { shot: StoryboardShot }) {
               Image Prompt Pack
             </p>
             <p className="mt-1 text-sm text-[color:var(--muted)]">
-              Generate the still first, then use the matching Kling motion prompt.
+              Copy a long production-ready prompt or a compact fast-use prompt, then use the matching Kling motion prompt.
             </p>
           </div>
           <PromptBlock
-            title="Nano Banana 2"
-            text={shot.imagePrompts.nanoBanana2}
-            copyLabel="Copy Nano Banana 2 Prompt"
+            title="GPT Image 2 — Long Version"
+            text={shot.imagePrompts.gptImage2Long}
+            copyLabel="Copy GPT Image 2 Long Version"
           />
           <PromptBlock
-            title="GPT Image 2"
-            text={shot.imagePrompts.gptImage2}
-            copyLabel="Copy GPT Image 2 Prompt"
+            title="GPT Image 2 — Short Version"
+            text={shot.imagePrompts.gptImage2Short}
+            copyLabel="Copy GPT Image 2 Short Version"
           />
           <PromptBlock
-            title="Grok Imagine"
-            text={shot.imagePrompts.grokImagine}
-            copyLabel="Copy Grok Imagine Prompt"
+            title="Nano Banana 2 — Long Version"
+            text={shot.imagePrompts.nanoBanana2Long}
+            copyLabel="Copy Nano Banana 2 Long Version"
+          />
+          <PromptBlock
+            title="Nano Banana 2 — Short Version"
+            text={shot.imagePrompts.nanoBanana2Short}
+            copyLabel="Copy Nano Banana 2 Short Version"
           />
         </section>
 
@@ -311,10 +316,10 @@ export default function CinematicStoryboardPage() {
                   Storyboard
                 </p>
                 <h1 className="mt-2 text-3xl font-semibold tracking-tight text-[color:var(--text)] sm:text-4xl">
-                  Cinematic USA Viral 4-Shot Reel Planner
+                  Pencil Wildlife 4-Shot Storyboard Planner
                 </h1>
                 <p className="mt-3 text-sm leading-6 text-[color:var(--muted)]">
-                  Build setup to four image prompts, four Kling motion prompts, and one concise 20-second wildlife reel plan.
+                  Build setup to GPT Image 2 and Nano Banana 2 long/short pencil storyboard prompts, plus four Kling motion prompts.
                 </p>
               </div>
               <div className="flex flex-wrap items-center gap-3">
@@ -365,13 +370,14 @@ export default function CinematicStoryboardPage() {
                 {storyboard.summary.title}
               </h2>
               <p className="mt-2 text-sm leading-6 text-[color:var(--muted)]">
-                Image engines: {storyboard.summary.imageEngines.join(", ")} · Motion engine: {storyboard.summary.motionEngine} · Every shot is 5 seconds.
+                Image variants: {storyboard.summary.imagePromptVariants.join(", ")} · Motion engine: {storyboard.summary.motionEngine} · Every shot is 5 seconds.
               </p>
             </div>
             <div className="flex flex-wrap gap-2">
-              <CopyButton text={storyboard.copy.allNanoBanana2} label="All Nano Banana 2 Storyboard Prompts" idleText="Copy All Nano Banana 2 Storyboard Prompts" size="md" />
-              <CopyButton text={storyboard.copy.allGptImage2} label="All GPT Image 2 Storyboard Prompts" idleText="Copy All GPT Image 2 Storyboard Prompts" size="md" />
-              <CopyButton text={storyboard.copy.allGrokImagine} label="All Grok Imagine Storyboard Prompts" idleText="Copy All Grok Imagine Storyboard Prompts" size="md" />
+              <CopyButton text={storyboard.copy.allGptImage2Long} label="All GPT Image 2 Long Prompts" idleText="Copy All GPT Image 2 Long" size="md" />
+              <CopyButton text={storyboard.copy.allGptImage2Short} label="All GPT Image 2 Short Prompts" idleText="Copy All GPT Image 2 Short" size="md" />
+              <CopyButton text={storyboard.copy.allNanoBanana2Long} label="All Nano Banana 2 Long Prompts" idleText="Copy All Nano Banana 2 Long" size="md" />
+              <CopyButton text={storyboard.copy.allNanoBanana2Short} label="All Nano Banana 2 Short Prompts" idleText="Copy All Nano Banana 2 Short" size="md" />
               <CopyButton text={storyboard.copy.allKling} label="All Kling Motion Prompts" idleText="Copy All Kling Motion Prompts" size="md" />
             </div>
           </div>

@@ -2273,7 +2273,7 @@ export default function Page() {
                     Open Storyboard for Current Setup
                   </h2>
                   <p className="mt-2 max-w-3xl text-sm leading-6 text-[color:var(--muted)]">
-                    Storyboard will generate four Nano Banana 2, GPT Image 2, Grok Imagine image prompts and four Kling motion prompts for the current setup.
+                    Storyboard will generate GPT Image 2 and Nano Banana 2 long/short pencil storyboard prompts plus four Kling motion prompts for the current setup.
                   </p>
                 </div>
                 <Link

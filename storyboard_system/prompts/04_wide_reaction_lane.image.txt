@@ -1,1 +1,28 @@
-locked wide documentary shot, slow pull-back. wide separation beat showing the open reaction lane in heavy deep snow winter meadow, 3 to 5 foot snowbanks, pine forest, distant mountain ridge, cold clean air. massive bison and grizzly bear remain separated in heavy snow winter meadow, the open central reaction lane stays visible while both animals remain fully readable. soft overcast winter light with slight golden rim glow, photorealistic wildlife documentary. 9:16 vertical framing. Continuity rules: preserve subject identity from master references, maintain role-aware left-right blocking unless the prompt explicitly changes it, keep anatomy stable and grounded through all image and video outputs, preserve environment lighting, ground texture, and open reaction lane. Single storyboard frame, clean composition for edit planning, clear silhouette readability.
+9:16 vertical storyboard frame command: Create a single 9:16 vertical storyboard frame in pencil sketch style, not a multi-panel sheet.
+
+Scene:
+wide_reaction_lane: wide separation beat showing the open reaction lane in heavy deep snow winter meadow, 3 to 5 foot snowbanks, pine forest, distant mountain ridge, cold clean air.
+massive bison and grizzly bear remain separated in heavy snow winter meadow, the open central reaction lane stays visible while both animals remain fully readable.
+
+Style:
+Hand-drawn pencil storyboard look, grayscale sketch, black-and-white graphite drawing, visible pencil strokes, rough but clean linework, light paper texture, soft shading, cinematic storyboard composition, professional film previsualization style.
+
+Visual direction:
+Single storyboard frame only. 9:16 vertical composition. Strong first-frame hook. Mobile-readable composition. Full-body readability. Clean subject separation. One clear action lane. Clear foreground, midground, and background depth. Strong silhouettes and natural blocking.
+
+Habitat:
+heavy deep snow winter meadow, 3 to 5 foot snowbanks, pine forest, distant mountain ridge, cold clean air. Keep the environment lightly sketched but readable and natural.
+
+Camera:
+locked wide documentary shot. Cinematic storyboard framing, slightly low angle or eye-level, wildlife previsualization framing.
+
+Mood:
+Raw tension, quiet pressure, natural conflict, cinematic wildlife realism, strong documentary opening image.
+
+Behavior and realism:
+Preserve realistic animal anatomy, believable scale, grounded hoof/paw/foot contact, natural posture, clean silhouettes, and realistic wildlife behavior.
+
+Important constraints:
+No blood, no gore, no visible injury, no graphic feeding, no humans, no vehicles, no buildings, no zoo enclosure, no text, no watermark, no cartoon style, no anime style, no 3D style, no color rendering, no photorealistic final illustration, no polished final illustration, no polished poster look, no cinematic render.
+
+Make it look like a professional pencil-drawn wildlife storyboard frame, not a polished final illustration.
