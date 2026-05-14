@@ -3,6 +3,8 @@
 import { useMemo, useState } from "react";
 import Link from "next/link";
 
+import { BRAND_NAME } from "@/lib/brand";
+
 import ImageStudioControls from "@/components/image-studio/ImageStudioControls";
 import ImageStudioOutputs from "@/components/image-studio/ImageStudioOutputs";
 import {
@@ -274,7 +276,7 @@ export default function ImagePage() {
               W
             </span>
             <span className="truncate text-sm font-bold tracking-tight text-white">
-              WILD STORIES TV
+              {BRAND_NAME.toUpperCase()}
             </span>
           </Link>
           <nav className="flex max-w-full items-center gap-1 overflow-x-auto rounded-2xl border border-white/[0.08] bg-white/[0.04] p-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">

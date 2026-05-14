@@ -36,6 +36,7 @@ import type {
 } from "@/types";
 
 import type { OpeningFrameInput } from "@/lib/openingFrameScore";
+import { AI_GENERATED_LABEL_REMINDER } from "@/lib/brand";
 
 import {
   buildImagePromptCard,
@@ -115,9 +116,6 @@ export type PublishFlowSummary = {
   publishGuardReport: PublishGuardReport;
   publishWorthy: boolean;
 };
-
-const FACEBOOK_AI_DISCLOSURE_REMINDER =
-  "⚠️ Reminder: Label this content as AI-generated before publishing to comply with Meta policy and SynthID detection.";
 
 export function buildOpeningFrameInput(
   arc: Arc,
@@ -449,7 +447,7 @@ export function buildGeneratedPackageDraft(
   platformPack.facebook.publishReminders = [
     ...new Set([
       ...(platformPack.facebook.publishReminders ?? []),
-      FACEBOOK_AI_DISCLOSURE_REMINDER,
+      AI_GENERATED_LABEL_REMINDER,
     ]),
   ];
   const primaryHook = platformPack.facebook.hook;

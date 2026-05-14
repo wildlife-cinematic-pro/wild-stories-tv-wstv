@@ -45,6 +45,22 @@ const LANE_MICRO_GUIDANCE: Record<ContentLane, string> = {
     "Best for antler posture, shoulder-line escalation, rut-season footing, and heavy standoff tension.",
   Escape:
     "Best for near-miss survival, one breakaway move, and a fast but clean payoff beat.",
+  "Mother Defense":
+    "Best for mother-and-young scenes where the offspring stays visible, smaller, and sheltered without graphic contact.",
+  "Herd Defense":
+    "Best for group protection, herd-wall spacing, and readable defensive shape around a vulnerable subject.",
+  "Giant Standoff":
+    "Best for heavy-body posture, shoulder-line tension, and wide readable standoffs before escalation.",
+  "Predator Pressure":
+    "Best for clean predator distance, visible pressure lines, and non-graphic danger beats.",
+  "Escape Lane":
+    "Best for one readable breakaway path, turning room, and near-miss survival without contact.",
+  "Swamp Ambush":
+    "Best for marsh cover, waterline pressure, and swamp-edge ambush reads with clear separation.",
+  "Winter Survival":
+    "Best for snowfield footing, cold-weather survival pressure, and readable tracks or turning space.",
+  "Territory Clash":
+    "Best for claim lines, warning steps, and grounded territorial spacing before the clash.",
 };
 
 const LANE_STRONGEST_HINT: Record<ContentLane, string> = {
@@ -60,6 +76,22 @@ const LANE_STRONGEST_HINT: Record<ContentLane, string> = {
     "Strongest Facebook test: two heavy animals, antler room, set footing, and a clear dominance claim.",
   Escape:
     "Strongest Facebook test: visible danger, a narrow opening, and one survival move that feels possible.",
+  "Mother Defense":
+    "Strongest Facebook test: a visible young animal, protective body line, and separated threat pressure.",
+  "Herd Defense":
+    "Strongest Facebook test: herd-wall formation, protected center, and a challenger at readable distance.",
+  "Giant Standoff":
+    "Strongest Facebook test: two large silhouettes, set footing, and a clear standoff before movement.",
+  "Predator Pressure":
+    "Strongest Facebook test: species-clear threat, clean pressure lane, and no graphic contact promise.",
+  "Escape Lane":
+    "Strongest Facebook test: one visible exit lane and a survival turn viewers can read instantly.",
+  "Swamp Ambush":
+    "Strongest Facebook test: swamp-edge cover, waterline warning, and readable subject separation.",
+  "Winter Survival":
+    "Strongest Facebook test: snow footing, visible tracks, and a survival decision in cold conditions.",
+  "Territory Clash":
+    "Strongest Facebook test: visible claim line, warning step, and grounded territorial posture.",
 };
 
 const ARC_MICRO_GUIDANCE: Record<Arc, string> = {

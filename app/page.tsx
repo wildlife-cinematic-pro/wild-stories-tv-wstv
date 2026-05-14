@@ -4,6 +4,8 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
 import Link from "next/link";
 
+import { BRAND_NAME } from "@/lib/brand";
+
 import {
   EncounterMode,
   EndingMode,
@@ -2079,7 +2081,7 @@ export default function Page() {
               </div>
               <div className="min-w-0">
                 <div className="flex flex-wrap items-center gap-x-2 gap-y-0.5">
-                  <span className="truncate text-sm font-bold tracking-tight text-white sm:text-[15px]">WILD STORIES TV</span>
+                  <span className="truncate text-sm font-bold tracking-tight text-white sm:text-[15px]">{BRAND_NAME.toUpperCase()}</span>
                   <span className="hidden text-[10px] font-medium text-white/35 sm:inline">WSTV Production Studio</span>
                 </div>
                 <div className="mt-0.5 text-[10px] font-medium text-white/30 sm:hidden">Production Studio</div>
