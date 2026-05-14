@@ -89,6 +89,7 @@ function makePackage(input: Partial<GeneratedPackage> = {}): GeneratedPackage {
 
 describe("video archive storage", () => {
   afterEach(() => {
+    vi.useRealTimers();
     vi.unstubAllGlobals();
   });
 
@@ -184,10 +185,15 @@ describe("video archive storage", () => {
     expect(readVideoArchiveEntries()[0].archiveId).toBe("archive_fixed");
   });
 
-  it("updates result notes, Facebook URL, and performance stats", () => {
+  it("updates result notes, Facebook URL, and performance stats without duplicating the entry", () => {
     installLocalStorageMock();
-    const entry = createVideoArchiveEntryFromPackage(makePackage(), { archiveId: "archive_update" }, "2026-05-14T10:00:00.000Z");
+    const entry = createVideoArchiveEntryFromPackage(
+      makePackage({ generationId: "generation_original" }),
+      { archiveId: "archive_update" },
+      "2026-05-14T10:00:00.000Z"
+    );
     upsertVideoArchiveEntry(entry);
+    vi.setSystemTime(new Date("2026-05-16T10:30:00.000Z"));
 
     const updated = updateVideoArchiveEntry("archive_update", {
       facebookPostUrl: "https://facebook.com/reel/updated",
@@ -195,6 +201,12 @@ describe("video archive storage", () => {
       performance: { views: 2200, likes: 150, shares: 31, comments: 11, retentionNotes: "Replay spike at final hold.", postedAt: "2026-05-15T22:10" },
     });
 
+    const stored = readVideoArchiveEntries();
+    expect(stored).toHaveLength(1);
+    expect(updated?.archiveId).toBe("archive_update");
+    expect(updated?.generationId).toBe("generation_original");
+    expect(updated?.createdAt).toBe("2026-05-14T10:00:00.000Z");
+    expect(updated?.updatedAt).toBe("2026-05-16T10:30:00.000Z");
     expect(updated?.facebookPostUrl).toBe("https://facebook.com/reel/updated");
     expect(updated?.resultNotes).toContain("calf silhouette");
     expect(updated?.performance).toMatchObject({ views: 2200, likes: 150, shares: 31, comments: 11 });
