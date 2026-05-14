@@ -3,7 +3,11 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 import {
   VIDEO_ARCHIVE_STORAGE_KEY,
   buildVideoArchiveCaptionHashtagsText,
+  buildVideoArchiveFolderChecklistText,
+  buildVideoArchivePromptPackText,
+  buildVideoArchiveRecommendedFolderName,
   createVideoArchiveEntryFromPackage,
+  exportVideoArchiveEntryJson,
   exportVideoArchiveJson,
   importVideoArchiveJson,
   readVideoArchiveEntries,
@@ -211,6 +215,70 @@ describe("video archive storage", () => {
     expect(buildVideoArchiveCaptionHashtagsText(entry)).toBe(
       "Saved caption changed after posting.\n\n#SavedTag #FollowUp"
     );
+  });
+
+  it("builds the recommended Mac folder name", () => {
+    const entry = createVideoArchiveEntryFromPackage(makePackage(), {}, "2026-05-15T21:50:00.000Z");
+
+    expect(buildVideoArchiveRecommendedFolderName(entry)).toBe(
+      "2026-05-15_Bison-Mother-vs-Male-Grizzly_Mother-Baby_Hybrid-4-shot"
+    );
+  });
+
+  it("builds a creator folder checklist", () => {
+    const entry = createVideoArchiveEntryFromPackage(makePackage(), {}, "2026-05-15T21:50:00.000Z");
+    const checklist = buildVideoArchiveFolderChecklistText(entry);
+
+    expect(checklist).toContain("Create folder with recommended name");
+    expect(checklist).toContain("2026-05-15_Bison-Mother-vs-Male-Grizzly_Mother-Baby_Hybrid-4-shot");
+    expect(checklist).toContain("04_final-video.mp4");
+    expect(checklist).toContain("05_thumbnail.jpg");
+    expect(checklist).toContain("01_prompt-pack.txt");
+    expect(checklist).toContain("02_caption-hashtags.txt");
+    expect(checklist).toContain("03_archive-metadata.json");
+    expect(checklist).toContain("24h / 48h / 7d");
+  });
+
+  it("builds prompt and caption text exports", () => {
+    const entry = createVideoArchiveEntryFromPackage(makePackage(), {}, "2026-05-15T21:50:00.000Z");
+
+    expect(buildVideoArchivePromptPackText(entry)).toBe(entry.fullPromptPackage);
+    expect(buildVideoArchivePromptPackText(entry)).toContain("Bison Mother");
+    expect(buildVideoArchiveCaptionHashtagsText(entry)).toBe(
+      "A bison mother shields her calf as pressure closes in.\n\n#Bison #Yellowstone #WildlifeReel #AnimalMothers #NatureShorts"
+    );
+  });
+
+  it("exports single-entry archive metadata JSON", () => {
+    const entry = createVideoArchiveEntryFromPackage(makePackage(), { archiveId: "archive_single" }, "2026-05-15T21:50:00.000Z");
+    const parsed = JSON.parse(exportVideoArchiveEntryJson(entry));
+
+    expect(parsed.archiveSchemaVersion).toBe(1);
+    expect(parsed.entry.archiveId).toBe("archive_single");
+    expect(parsed.entry.animalPair).toBe("Bison Mother vs Male Grizzly");
+    expect(parsed.entries).toBeUndefined();
+  });
+
+  it("strips video binary/blob/base64 fields from single-entry JSON exports", () => {
+    const entry = createVideoArchiveEntryFromPackage(makePackage(), { archiveId: "archive_single_safe" }, "2026-05-15T21:50:00.000Z");
+    const unsafeEntry = {
+      ...entry,
+      videoBase64: "data:video/mp4;base64,AAAA",
+      videoBlob: "blob:https://example.test/123",
+      promptPackage: {
+        ...(entry.promptPackage as Record<string, unknown>),
+        videoData: "data:video/mp4;base64,BBBB",
+      },
+    };
+
+    const json = exportVideoArchiveEntryJson(unsafeEntry);
+
+    expect(json).not.toContain("videoBase64");
+    expect(json).not.toContain("videoBlob");
+    expect(json).not.toContain("videoData");
+    expect(json).not.toContain("data:video");
+    expect(json).not.toContain("blob:");
+    expect(json).toContain("archive_single_safe");
   });
 
   it("search matches caption, hashtags, tags, date time, and postedAt", () => {

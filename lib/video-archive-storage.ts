@@ -242,6 +242,79 @@ export function buildVideoArchiveCaptionHashtagsText(entry: Pick<VideoArchiveEnt
   return [entry.caption, entry.hashtags].filter(Boolean).join("\n\n");
 }
 
+function folderSegment(value: string | undefined, fallback: string): string {
+  const source = (value?.trim() || fallback).replace(/&/g, " and ");
+  const normalized = source
+    .replace(/[_\s]+/g, "-")
+    .replace(/[^A-Za-z0-9-]+/g, "-")
+    .replace(/-+/g, "-")
+    .replace(/^-|-$/g, "");
+  return normalized || fallback;
+}
+
+function storyModeFolderSegment(storyMode: string | undefined): string {
+  if (!storyMode) return "Story-Mode";
+  return folderSegment(
+    storyMode
+      .toLowerCase()
+      .split(/[_\s-]+/)
+      .filter(Boolean)
+      .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
+      .join(" "),
+    "Story-Mode"
+  );
+}
+
+function folderDate(createdAt: string): string {
+  const match = createdAt.match(/^\d{4}-\d{2}-\d{2}/);
+  return match ? match[0] : "undated";
+}
+
+export function buildVideoArchiveRecommendedFolderName(entry: VideoArchiveEntry): string {
+  const pairParts = entry.animalPair.split(/\s+vs\s+/i);
+  const subjectA = folderSegment(entry.subjectA ?? pairParts[0], "AnimalA");
+  const subjectB = folderSegment(entry.subjectB ?? pairParts[1], "AnimalB");
+  const storyMode = storyModeFolderSegment(entry.storyMode);
+  const workflow = folderSegment(entry.workflowType, "Workflow");
+  return [folderDate(entry.createdAt), subjectA + "-vs-" + subjectB, storyMode, workflow].join("_");
+}
+
+export function buildVideoArchiveFolderChecklistText(entry: VideoArchiveEntry): string {
+  const folderName = buildVideoArchiveRecommendedFolderName(entry);
+  return [
+    "WSTV Archive Folder Checklist",
+    "",
+    "Recommended folder name:",
+    folderName,
+    "",
+    "[ ] Create folder with recommended name",
+    "[ ] Save downloaded prompt pack as 01_prompt-pack.txt",
+    "[ ] Save caption/hashtags as 02_caption-hashtags.txt",
+    "[ ] Save archive metadata as 03_archive-metadata.json",
+    "[ ] Save final video as 04_final-video.mp4",
+    "[ ] Save thumbnail as 05_thumbnail.jpg",
+    "[ ] Add Facebook URL after posting",
+    "[ ] Add performance stats after 24h / 48h / 7d",
+  ].join("\n");
+}
+
+export function buildVideoArchivePromptPackText(entry: Pick<VideoArchiveEntry, "fullPromptPackage">): string {
+  return entry.fullPromptPackage || "";
+}
+
+export function exportVideoArchiveEntryJson(entry: VideoArchiveEntry): string {
+  const normalized = normalizeVideoArchiveEntry(sanitizeArchiveMetadata(entry));
+  return JSON.stringify(
+    {
+      archiveSchemaVersion: VIDEO_ARCHIVE_SCHEMA_VERSION,
+      exportedAt: new Date().toISOString(),
+      entry: normalized,
+    },
+    null,
+    2
+  );
+}
+
 export function videoArchiveEntryMatchesSearch(entry: VideoArchiveEntry, query: string): boolean {
   const q = query.trim().toLowerCase();
   if (!q) return true;
