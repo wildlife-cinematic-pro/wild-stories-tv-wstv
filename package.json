@@ -17,7 +17,9 @@
     "storyboard:generate": "node storyboard_system/generate_from_input.mjs",
     "storyboard": "node storyboard_system/generate_from_input.mjs && node storyboard_system/pipeline.mjs",
     "test:golden": "vitest run tests/golden-prompt-regression.test.ts tests/selected-model-golden-regression.test.ts tests/provider-regression.test.ts tests/local-data-roundtrip.test.ts",
-    "e2e": "playwright test"
+    "e2e": "playwright test",
+    "fourshot:photo": "node storyboard_system/four_shot_photo_system/generate_fourshot.mjs",
+    "fourshot:validate": "node storyboard_system/four_shot_photo_system/validate_fourshot.mjs"
   },
   "dependencies": {
     "@vercel/blob": "^2.3.3",
