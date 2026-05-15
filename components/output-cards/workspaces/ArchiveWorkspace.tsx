@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState, type ChangeEvent } from "react";
+import { useEffect, useMemo, useRef, useState, type ChangeEvent, type Ref } from "react";
 
 import {
   VIDEO_ARCHIVE_STORAGE_EVENT,
@@ -16,6 +16,7 @@ import {
   exportVideoArchiveEntryJson,
   importVideoArchiveJson,
   readVideoArchiveEntries,
+  updateVideoArchiveEntry,
   upsertVideoArchiveEntry,
   type VideoArchiveEntry,
   type VideoArchivePerformanceStats,
@@ -92,6 +93,21 @@ function performanceFromForm(form: FormState): VideoArchivePerformanceStats {
   if (form.postedAt.trim()) stats.postedAt = form.postedAt.trim();
 
   return stats;
+}
+
+function archivePatchFromForm(form: FormState): Partial<VideoArchiveEntry> {
+  return {
+    localFolderPath: form.localFolderPath,
+    videoFileName: form.videoFileName,
+    thumbnailFileName: form.thumbnailFileName,
+    thumbnailPath: form.thumbnailPath,
+    facebookPostUrl: form.facebookPostUrl,
+    resultNotes: form.resultNotes,
+    caption: form.caption,
+    hashtags: form.hashtags,
+    tags: form.tags,
+    performance: performanceFromForm(form),
+  };
 }
 
 function formFromEntry(
@@ -173,17 +189,20 @@ function TextInput({
   onChange,
   placeholder,
   type = "text",
+  inputRef,
 }: {
   label: string;
   value: string;
   onChange: (event: ChangeEvent<HTMLInputElement>) => void;
   placeholder?: string;
   type?: string;
+  inputRef?: Ref<HTMLInputElement>;
 }) {
   return (
     <label className="space-y-1 text-[11px] font-bold text-[color:var(--muted)]">
       <span>{label}</span>
       <input
+        ref={inputRef}
         type={type}
         value={value}
         onChange={onChange}
@@ -215,6 +234,9 @@ export function ArchiveWorkspace({
   const [search, setSearch] = useState("");
   const [importJson, setImportJson] = useState("");
   const [status, setStatus] = useState("");
+  const [editingEntry, setEditingEntry] = useState<VideoArchiveEntry | null>(null);
+  const formSectionRef = useRef<HTMLElement | null>(null);
+  const facebookUrlInputRef = useRef<HTMLInputElement | null>(null);
 
   const currentDraft = useMemo(
     () => createVideoArchiveEntryFromPackage(data, form, new Date().toISOString()),
@@ -225,11 +247,18 @@ export function ArchiveWorkspace({
     () => entries.filter((entry) => videoArchiveEntryMatchesSearch(entry, search)),
     [entries, search]
   );
+  const editingEntryId = editingEntry?.archiveId ?? "";
+  const formSummary = editingEntry ?? currentDraft;
 
   useEffect(() => {
     function loadEntries() {
       const nextEntries = readVideoArchiveEntries();
       setEntries(nextEntries);
+      if (editingEntryId) {
+        const currentEdit = nextEntries.find((entry) => entry.archiveId === editingEntryId) ?? null;
+        setEditingEntry(currentEdit);
+        return;
+      }
       const existing = findVideoArchiveEntryByGenerationId(generationId);
       setForm(formFromEntry(existing, packageFallback));
     }
@@ -241,7 +270,7 @@ export function ArchiveWorkspace({
       window.removeEventListener(VIDEO_ARCHIVE_STORAGE_EVENT, loadEntries);
       window.removeEventListener("storage", loadEntries);
     };
-  }, [generationId, packageFallback]);
+  }, [editingEntryId, generationId, packageFallback]);
 
   function updateField(field: keyof FormState) {
     return (event: ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
@@ -258,38 +287,61 @@ export function ArchiveWorkspace({
     const existing = form.archiveId
       ? entries.find((entry) => entry.archiveId === form.archiveId)
       : findVideoArchiveEntryByGenerationId(generationId);
+
+    if (existing) {
+      const saved = updateVideoArchiveEntry(existing.archiveId, archivePatchFromForm(form));
+      if (saved) {
+        setForm(formFromEntry(saved, packageFallback));
+        if (editingEntryId === saved.archiveId) setEditingEntry(saved);
+        refreshEntries("Archive entry updated locally.");
+        return;
+      }
+      setStatus("Could not save archive entry.");
+      return;
+    }
+
     const now = new Date().toISOString();
     const entry = createVideoArchiveEntryFromPackage(
       data,
       {
         ...form,
-        archiveId: existing?.archiveId,
-        createdAt: existing?.createdAt,
         updatedAt: now,
-        caption: form.caption,
-        hashtags: form.hashtags,
-        tags: form.tags,
-        performance: performanceFromForm(form),
+        ...archivePatchFromForm(form),
       },
       now
     );
     const saved = upsertVideoArchiveEntry(entry);
     if (saved) {
       setForm(formFromEntry(saved, packageFallback));
-      refreshEntries(existing ? "Archive entry updated locally." : "Generation archived locally.");
+      refreshEntries("Generation archived locally.");
       return;
     }
     setStatus("Could not save archive entry.");
   }
 
   function editEntry(entry: VideoArchiveEntry) {
+    setEditingEntry(entry);
     setForm(formFromEntry(entry, packageFallback));
     setStatus("Editing saved archive entry.");
+    window.setTimeout(() => {
+      formSectionRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+      facebookUrlInputRef.current?.focus({ preventScroll: true });
+    }, 0);
+  }
+
+  function cancelEdit() {
+    const existing = findVideoArchiveEntryByGenerationId(generationId);
+    setEditingEntry(null);
+    setForm(formFromEntry(existing, packageFallback));
+    setStatus("Edit cancelled.");
   }
 
   function deleteEntry(entry: VideoArchiveEntry) {
     deleteVideoArchiveEntry(entry.archiveId);
-    if (form.archiveId === entry.archiveId) setForm(formFromEntry(null, packageFallback));
+    if (form.archiveId === entry.archiveId) {
+      setEditingEntry(null);
+      setForm(formFromEntry(null, packageFallback));
+    }
     refreshEntries("Archive entry deleted locally.");
   }
 
@@ -317,14 +369,14 @@ export function ArchiveWorkspace({
 
   return (
     <div className="space-y-5">
-      <section className="rounded-2xl border border-[color:var(--border)] bg-[color:var(--surface-elevated)] p-4 shadow-sm sm:p-5">
+      <section ref={formSectionRef} className="rounded-2xl border border-[color:var(--border)] bg-[color:var(--surface-elevated)] p-4 shadow-sm sm:p-5">
         <div className="flex flex-wrap items-start justify-between gap-3">
           <div>
             <p className="text-[11px] font-black uppercase tracking-[0.16em] text-cyan-500">
               Local metadata only
             </p>
             <h3 className="mt-1 text-base font-black text-[color:var(--text)]">
-              Archive this generation
+              {editingEntry ? "Editing saved archive entry" : "Archive this generation"}
             </h3>
             <p className="mt-1 max-w-3xl text-xs leading-relaxed text-[color:var(--muted)]">
               Saved locally in this browser. Keep your actual video files in your Mac folder. Use Export JSON for backup. No video upload, no file storage, no cloud sync.
@@ -335,18 +387,26 @@ export function ArchiveWorkspace({
           </span>
         </div>
 
+        {editingEntry && (
+          <div className="mt-4 rounded-xl border border-cyan-400/30 bg-cyan-500/10 p-3 text-sm">
+            <div className="text-[11px] font-black uppercase tracking-[0.14em] text-cyan-300">Editing saved archive entry</div>
+            <div className="mt-1 font-black text-[color:var(--text)]">{editingEntry.animalPair}</div>
+            <div className="mt-1 text-xs text-[color:var(--muted)]">Created: {readableDateTime(editingEntry.createdAt)}</div>
+          </div>
+        )}
+
         <div className="mt-4 grid gap-3 lg:grid-cols-3">
           <div className="rounded-xl border border-[color:var(--border)] bg-[color:var(--surface-muted)] p-3">
             <div className="text-[10px] font-bold uppercase tracking-wide text-[color:var(--muted)]">Animal pair</div>
-            <div className="mt-1 text-sm font-black text-[color:var(--text)]">{currentDraft.animalPair}</div>
+            <div className="mt-1 text-sm font-black text-[color:var(--text)]">{formSummary.animalPair}</div>
           </div>
           <div className="rounded-xl border border-[color:var(--border)] bg-[color:var(--surface-muted)] p-3">
             <div className="text-[10px] font-bold uppercase tracking-wide text-[color:var(--muted)]">Workflow</div>
-            <div className="mt-1 text-sm font-black text-[color:var(--text)]">{currentDraft.workflowType}</div>
+            <div className="mt-1 text-sm font-black text-[color:var(--text)]">{formSummary.workflowType}</div>
           </div>
           <div className="rounded-xl border border-[color:var(--border)] bg-[color:var(--surface-muted)] p-3">
             <div className="text-[10px] font-bold uppercase tracking-wide text-[color:var(--muted)]">Engine route</div>
-            <div className="mt-1 text-sm font-black text-[color:var(--text)]">{currentDraft.engineRoute}</div>
+            <div className="mt-1 text-sm font-black text-[color:var(--text)]">{formSummary.engineRoute}</div>
           </div>
         </div>
 
@@ -354,15 +414,21 @@ export function ArchiveWorkspace({
           <TextInput label="Local folder path" value={form.localFolderPath} onChange={updateField("localFolderPath")} placeholder="/Users/name/Movies/WSTV/bison-calf" />
           <TextInput label="Video file name" value={form.videoFileName} onChange={updateField("videoFileName")} placeholder="bison-calf-final.mp4" />
           <TextInput label="Thumbnail file/path" value={form.thumbnailPath} onChange={updateField("thumbnailPath")} placeholder="cover.jpg or full local path" />
-          <TextInput label="Facebook URL" value={form.facebookPostUrl} onChange={updateField("facebookPostUrl")} placeholder="https://facebook.com/..." />
-          <TextInput label="Tags" value={form.tags} onChange={updateField("tags")} placeholder="yellowstone, bison, direct" />
-          <TextInput label="Posted date & time" value={form.postedAt} onChange={updateField("postedAt")} type="datetime-local" />
-          <MetricInput label="Views" value={form.views} onChange={updateField("views")} />
-          <MetricInput label="Likes" value={form.likes} onChange={updateField("likes")} />
-          <MetricInput label="Shares" value={form.shares} onChange={updateField("shares")} />
-          <MetricInput label="Comments" value={form.comments} onChange={updateField("comments")} />
-          <MetricInput label="Watch time" value={form.watchTime} onChange={updateField("watchTime")} />
           <TextInput label="Thumbnail file name" value={form.thumbnailFileName} onChange={updateField("thumbnailFileName")} placeholder="optional separate filename" />
+          <TextInput label="Tags" value={form.tags} onChange={updateField("tags")} placeholder="yellowstone, bison, direct" />
+        </div>
+
+        <div className="mt-4 rounded-xl border border-[color:var(--border)] bg-[color:var(--surface-muted)] p-3">
+          <div className="text-[10px] font-black uppercase tracking-[0.14em] text-cyan-400">Facebook follow-up / performance update</div>
+          <div className="mt-3 grid gap-3 md:grid-cols-2 xl:grid-cols-4">
+            <TextInput label="Facebook URL" value={form.facebookPostUrl} onChange={updateField("facebookPostUrl")} placeholder="https://facebook.com/..." inputRef={facebookUrlInputRef} />
+            <TextInput label="Posted date & time" value={form.postedAt} onChange={updateField("postedAt")} type="datetime-local" />
+            <MetricInput label="Views" value={form.views} onChange={updateField("views")} />
+            <MetricInput label="Likes" value={form.likes} onChange={updateField("likes")} />
+            <MetricInput label="Shares" value={form.shares} onChange={updateField("shares")} />
+            <MetricInput label="Comments" value={form.comments} onChange={updateField("comments")} />
+            <MetricInput label="Watch time" value={form.watchTime} onChange={updateField("watchTime")} />
+          </div>
         </div>
 
         <p className="mt-2 text-[11px] font-semibold text-[color:var(--muted)]">
@@ -423,13 +489,23 @@ export function ArchiveWorkspace({
           >
             {form.archiveId ? "Update Archive Entry" : "Save This Generation"}
           </button>
-          <button
-            type="button"
-            onClick={() => setForm(formFromEntry(null, packageFallback))}
-            className="rounded-xl border border-[color:var(--border)] bg-[color:var(--surface)] px-4 py-2 text-xs font-bold text-[color:var(--text)] hover:bg-[color:var(--surface-muted)] active:scale-95"
-          >
-            Clear Form
-          </button>
+          {editingEntry ? (
+            <button
+              type="button"
+              onClick={cancelEdit}
+              className="rounded-xl border border-[color:var(--border)] bg-[color:var(--surface)] px-4 py-2 text-xs font-bold text-[color:var(--text)] hover:bg-[color:var(--surface-muted)] active:scale-95"
+            >
+              Cancel Edit
+            </button>
+          ) : (
+            <button
+              type="button"
+              onClick={() => setForm(formFromEntry(null, packageFallback))}
+              className="rounded-xl border border-[color:var(--border)] bg-[color:var(--surface)] px-4 py-2 text-xs font-bold text-[color:var(--text)] hover:bg-[color:var(--surface-muted)] active:scale-95"
+            >
+              Clear Form
+            </button>
+          )}
           {status && <span className="text-xs font-semibold text-[color:var(--muted)]">{status}</span>}
         </div>
       </section>
