@@ -8,6 +8,13 @@ export type FourShotPhotoInput = {
   aspectRatio: string;
   predatorIdentityNotes: string;
   preyIdentityNotes: string;
+  predatorStoryRole?: string;
+  preyStoryRole?: string;
+  storyDirection?: string;
+  predatorPlacement?: string;
+  preyPlacement?: string;
+  identityLockStrength?: string;
+  groundIntegrationStrength?: string;
   environmentPlateDescription?: string;
   shotMode?: string;
 };
@@ -62,6 +69,13 @@ const DEFAULT_INPUT: Required<FourShotPhotoInput> = {
     "adult predator with correct species anatomy, stable body mass, clean full-body silhouette, grounded paws, and consistent coat markers",
   preyIdentityNotes:
     "adult prey animal with correct species anatomy, stable body mass, clean full-body silhouette, grounded hooves, and consistent coat markers",
+  predatorStoryRole: "pressure animal / pursuer",
+  preyStoryRole: "escape animal / target",
+  storyDirection: "predator stays behind, prey stays ahead, same action lane across all shots",
+  predatorPlacement: "behind or rear side of the action lane",
+  preyPlacement: "ahead or front side of the action lane",
+  identityLockStrength: "strict",
+  groundIntegrationStrength: "strong",
 };
 
 const ENVIRONMENT_LOCK_RULES = [
@@ -79,6 +93,26 @@ const ANIMAL_REALISM_RULES = [
   "grounded paw and hoof contact with no floating animals",
   "believable wildlife behavior and threat awareness",
   "same animal identity markers across all shots",
+];
+
+const IDENTITY_LOCK_RULES = [
+  "same predator and same prey identities across every shot",
+  "preserve species, body scale, coat color, head shape, ear shape, muzzle/profile, tail shape, body silhouette, and relative size",
+  "do not change animal age, color, markings, body mass, or species",
+];
+
+const STORY_DIRECTION_LOCK_RULES = [
+  "predator stays behind, prey stays ahead",
+  "predator remains the pressure animal behind or pursuing",
+  "prey remains the escape animal ahead or reacting",
+  "do not swap roles, reverse predator/prey logic, or make the prey chase the predator",
+  "do not change the action lane direction without story reason",
+];
+
+const GAZE_ATTENTION_LOCK_RULES = [
+  "predator eyes, head, and body intention stay locked toward the prey",
+  "prey ears, eyes, head angle, and body tension stay aware of the predator threat direction",
+  "do not let either animal stare randomly at camera unless explicitly requested",
 ];
 
 const PHYSICAL_INTEGRATION_RULES = [
@@ -143,11 +177,11 @@ const SHOTS: ShotTemplate[] = [
     name: "Chase / Action",
     purpose: "grounded action peak with predator behind, prey ahead, and no graphic contact",
     composition:
-      "side or slight reverse-angle action frame along the same dirt game trail, prey ahead in the action lane, predator behind in pursuit, same meadow texture and ridge identity still visible",
+      "readable side/reverse angle action frame along the same dirt game trail, prey ahead in the action lane, predator behind in pursuit, both animals moving in the same direction, same meadow texture and ridge identity still visible",
     action:
-      "prey launches forward with hooves striking dirt and grass while predator accelerates behind, paws grounded, subtle dry dust only near the trail, no contact and no injury",
+      "prey launches forward with hooves striking dirt and grass while predator accelerates behind in the same direction, paws grounded, subtle dry dust only near the trail, no contact and no injury",
     continuityNote:
-      "same story geography, predator behind and prey ahead, same season, same golden-hour direction, same habitat density and color tone",
+      "same story geography, predator behind and prey ahead, both moving in the same direction, background may have subtle motion feel but animal faces and bodies must remain readable, same season, same golden-hour direction, same habitat density and color tone",
   },
 ];
 
@@ -192,13 +226,50 @@ function environmentLock(input: Required<FourShotPhotoInput>): string {
 
 function subjectIdentityLines(input: Required<FourShotPhotoInput>): string {
   return [
-    "Predator identity: " + input.predator + " - " + input.predatorIdentityNotes + ".",
-    "Prey identity: " + input.prey + " - " + input.preyIdentityNotes + ".",
+    "Predator identity: " + input.predator + " - " + input.predatorIdentityNotes + ". Story role: " + input.predatorStoryRole + ". Placement: " + input.predatorPlacement + ".",
+    "Prey identity: " + input.prey + " - " + input.preyIdentityNotes + ". Story role: " + input.preyStoryRole + ". Placement: " + input.preyPlacement + ".",
   ].join(" ");
 }
 
 function negativeLine(): string {
   return "Avoid: " + compactRuleSentence(NEGATIVE_REALISM_RULES);
+}
+
+function animalIdentityLock(input: Required<FourShotPhotoInput>): string {
+  return [
+    "Animal identity lock (" + input.identityLockStrength + "): keep the same predator and same prey identities across every shot: same " + input.predator + " and same " + input.prey + ".",
+    "Preserve species, body scale, coat color, head shape, ear shape, muzzle/profile, tail shape, body silhouette, and relative size.",
+    "Do not change animal age, color, markings, body mass, or species.",
+  ].join(" ");
+}
+
+function storyDirectionLock(input: Required<FourShotPhotoInput>): string {
+  return [
+    "Story direction lock: " + input.storyDirection + ".",
+    input.predator + " always remains the " + input.predatorStoryRole + " " + input.predatorPlacement + ".",
+    input.prey + " always remains the " + input.preyStoryRole + " " + input.preyPlacement + ".",
+    "Predator stays behind, prey stays ahead. Do not swap roles, do not reverse predator/prey logic, do not make the prey chase the predator, do not change the action lane direction without story reason.",
+  ].join(" ");
+}
+
+function gazeAttentionLock(): string {
+  return [
+    "Gaze / attention lock: predator eyes, head, and body intention stay locked toward the prey.",
+    "Prey ears, eyes, head angle, and body tension stay aware of the predator threat direction.",
+    "Do not let either animal stare randomly at camera unless explicitly requested.",
+  ].join(" ");
+}
+
+function groundIntegrationLock(input: Required<FourShotPhotoInput>): string {
+  return [
+    "Ground integration lock (" + input.groundIntegrationStrength + "): blend both animals naturally into the terrain with grounded paw/hoof contact, soft cast shadows, contact shadows, grass brushing legs, subtle terrain displacement, and tiny dust only around foot contact on dry ground.",
+    "No floating, sticker, pasted, cutout, or composited look.",
+  ].join(" ");
+}
+
+function shotSpecificLock(shot: ShotTemplate): string | null {
+  if (shot.id !== 4) return null;
+  return "Shot 4 chase lock: predator behind, prey ahead, both moving in the same direction, no contact, no injury, readable side/reverse angle; background may have subtle motion feel, but animal faces and bodies must remain readable.";
 }
 
 function buildMasterEnvironmentPrompt(input: Required<FourShotPhotoInput>, engineKey: EngineKey): string {
@@ -231,6 +302,10 @@ function buildShotPrompt(input: Required<FourShotPhotoInput>, shot: ShotTemplate
     shot.name + ": " + shot.purpose,
     environmentLock(input),
     subjectIdentityLines(input),
+    animalIdentityLock(input),
+    storyDirectionLock(input),
+    gazeAttentionLock(),
+    groundIntegrationLock(input),
     "Composition: " + shot.composition,
     "Action: " + shot.action,
     "Continuity: " + shot.continuityNote,
@@ -240,6 +315,8 @@ function buildShotPrompt(input: Required<FourShotPhotoInput>, shot: ShotTemplate
     policy.qualityLine,
     negativeLine(),
   ];
+  const specificLock = shotSpecificLock(shot);
+  if (specificLock) lines.push(specificLock);
 
   if (policy.length === "rich") {
     lines.push(
@@ -254,6 +331,9 @@ function continuityChecklistForShot(shot: ShotTemplate): string[] {
   return [
     ...ENVIRONMENT_LOCK_RULES,
     ...ANIMAL_REALISM_RULES,
+    ...IDENTITY_LOCK_RULES,
+    ...STORY_DIRECTION_LOCK_RULES,
+    ...GAZE_ATTENTION_LOCK_RULES,
     ...PHYSICAL_INTEGRATION_RULES,
     "predator gaze remains locked toward prey threat direction",
     "prey attention remains locked toward predator pressure",
@@ -278,6 +358,13 @@ export function normalizeFourShotPhotoInput(raw: Partial<FourShotPhotoInput> = {
     ),
     predatorIdentityNotes: text(raw.predatorIdentityNotes, DEFAULT_INPUT.predatorIdentityNotes),
     preyIdentityNotes: text(raw.preyIdentityNotes, DEFAULT_INPUT.preyIdentityNotes),
+    predatorStoryRole: text(raw.predatorStoryRole, DEFAULT_INPUT.predatorStoryRole),
+    preyStoryRole: text(raw.preyStoryRole, DEFAULT_INPUT.preyStoryRole),
+    storyDirection: text(raw.storyDirection, DEFAULT_INPUT.storyDirection),
+    predatorPlacement: text(raw.predatorPlacement, DEFAULT_INPUT.predatorPlacement),
+    preyPlacement: text(raw.preyPlacement, DEFAULT_INPUT.preyPlacement),
+    identityLockStrength: text(raw.identityLockStrength, DEFAULT_INPUT.identityLockStrength),
+    groundIntegrationStrength: text(raw.groundIntegrationStrength, DEFAULT_INPUT.groundIntegrationStrength),
   };
 }
 

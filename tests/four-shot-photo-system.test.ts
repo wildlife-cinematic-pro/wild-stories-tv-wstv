@@ -36,6 +36,32 @@ describe("four-shot photo system UI builder", () => {
     }
   });
 
+  it("adds identity, story direction, gaze, and ground integration locks to shot prompts", () => {
+    const output = buildFourShotPhotoPrompts({
+      predator: "Mountain Lion",
+      prey: "Mule Deer",
+      environment: "sagebrush trail",
+      lighting: "golden side light",
+      season: "early autumn",
+      aspectRatio: "9:16",
+      predatorIdentityNotes: "same tawny mountain lion with long low tail",
+      preyIdentityNotes: "same mule deer doe with large ears",
+    });
+    const shotOne = output.shots[0].nanoBanana2Prompt;
+    const shotFour = output.shots[3].gptImage2Prompt;
+
+    expect(shotOne).toContain("same predator and same prey identities");
+    expect(shotOne).toContain("Predator stays behind, prey stays ahead");
+    expect(shotOne).toContain("Gaze / attention lock");
+    expect(shotOne).toContain("predator eyes, head, and body intention stay locked toward the prey");
+    expect(shotOne).toContain("contact shadows");
+    expect(shotOne).toContain("grass brushing legs");
+    expect(shotFour).toContain("Shot 4 chase lock");
+    expect(shotFour).toContain("both moving in the same direction");
+    expect(shotFour).toContain("no contact, no injury");
+    expect(shotFour).toContain("animal faces and bodies must remain readable");
+  });
+
   it("builds copy-all text for both engines", () => {
     const output = buildFourShotPhotoPrompts();
     const nano = buildAllNanoBanana2Text(output);

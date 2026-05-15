@@ -25,6 +25,13 @@ export type FourShotPhotoBuildSetup = {
   sceneDescription?: TextLike;
   predatorIdentityNotes?: TextLike;
   preyIdentityNotes?: TextLike;
+  predatorStoryRole?: TextLike;
+  preyStoryRole?: TextLike;
+  storyDirection?: TextLike;
+  predatorPlacement?: TextLike;
+  preyPlacement?: TextLike;
+  identityLockStrength?: TextLike;
+  groundIntegrationStrength?: TextLike;
   createdAt?: TextLike;
 };
 
@@ -115,6 +122,13 @@ export function handoffToFourShotInput(payload: FourShotPhotoBuildSetup | null |
   if (aspectRatio) input.aspectRatio = aspectRatio;
   if (predator) input.predatorIdentityNotes = buildIdentityNotes("predator", predator, payload);
   if (prey) input.preyIdentityNotes = buildIdentityNotes("prey", prey, payload);
+  if (cleanText(payload.predatorStoryRole)) input.predatorStoryRole = cleanText(payload.predatorStoryRole);
+  if (cleanText(payload.preyStoryRole)) input.preyStoryRole = cleanText(payload.preyStoryRole);
+  if (cleanText(payload.storyDirection)) input.storyDirection = cleanText(payload.storyDirection);
+  if (cleanText(payload.predatorPlacement)) input.predatorPlacement = cleanText(payload.predatorPlacement);
+  if (cleanText(payload.preyPlacement)) input.preyPlacement = cleanText(payload.preyPlacement);
+  if (cleanText(payload.identityLockStrength)) input.identityLockStrength = cleanText(payload.identityLockStrength);
+  if (cleanText(payload.groundIntegrationStrength)) input.groundIntegrationStrength = cleanText(payload.groundIntegrationStrength);
   return input;
 }
 
@@ -139,6 +153,13 @@ function hasFourShotPhotoParams(params: URLSearchParams): boolean {
     "sceneDescription",
     "predatorIdentityNotes",
     "preyIdentityNotes",
+    "predatorStoryRole",
+    "preyStoryRole",
+    "storyDirection",
+    "predatorPlacement",
+    "preyPlacement",
+    "identityLockStrength",
+    "groundIntegrationStrength",
   ];
   return keys.some((key) => cleanText(params.get(key)) !== "");
 }
@@ -166,6 +187,13 @@ export function paramsToFourShotInput(params: URLSearchParams): Partial<FourShot
     sceneDescription: params.get("sceneDescription"),
     predatorIdentityNotes: params.get("predatorIdentityNotes"),
     preyIdentityNotes: params.get("preyIdentityNotes"),
+    predatorStoryRole: params.get("predatorStoryRole"),
+    preyStoryRole: params.get("preyStoryRole"),
+    storyDirection: params.get("storyDirection"),
+    predatorPlacement: params.get("predatorPlacement"),
+    preyPlacement: params.get("preyPlacement"),
+    identityLockStrength: params.get("identityLockStrength"),
+    groundIntegrationStrength: params.get("groundIntegrationStrength"),
     source: params.get("source"),
   });
 }
@@ -200,6 +228,13 @@ export function buildFourShotPhotoHandoffPayloadFromBuildSetup(
     lighting,
     season: cleanText(setup.season),
     aspectRatio: cleanText(setup.aspectRatio) || "9:16",
+    predatorStoryRole: cleanText(setup.predatorStoryRole),
+    preyStoryRole: cleanText(setup.preyStoryRole),
+    storyDirection: cleanText(setup.storyDirection),
+    predatorPlacement: cleanText(setup.predatorPlacement),
+    preyPlacement: cleanText(setup.preyPlacement),
+    identityLockStrength: cleanText(setup.identityLockStrength),
+    groundIntegrationStrength: cleanText(setup.groundIntegrationStrength),
     createdAt,
   };
 }
