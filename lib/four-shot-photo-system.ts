@@ -1,3 +1,8 @@
+import {
+  LOCAL_PROVIDER_PACK_POLISH_METADATA,
+  type ProviderPackPolishMetadata,
+} from "@/lib/provider-polish-metadata";
+
 export type FourShotPhotoInput = {
   project?: string;
   predator: string;
@@ -39,7 +44,7 @@ export type FourShotPhotoOutput = {
     continuityChecklist: string[];
   };
   shots: FourShotPhotoShot[];
-};
+} & ProviderPackPolishMetadata;
 
 type ShotTemplate = {
   id: number;
@@ -390,7 +395,14 @@ export function buildFourShotPhotoPrompts(rawInput: Partial<FourShotPhotoInput> 
     continuityChecklist: continuityChecklistForShot(shot),
   }));
 
-  return { project: input.project, shotMode: input.shotMode, input, masterEnvironment, shots };
+  return {
+    project: input.project,
+    shotMode: input.shotMode,
+    input,
+    masterEnvironment,
+    shots,
+    ...LOCAL_PROVIDER_PACK_POLISH_METADATA,
+  };
 }
 
 export function buildAllNanoBanana2Text(output: FourShotPhotoOutput): string {

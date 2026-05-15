@@ -2,6 +2,7 @@
 import { createFixedWindowRateLimiter } from "@/lib/in-memory-rate-limit";
 import { handleCopyPolishRequest } from "./copy-polish";
 import { handleMediaAnalysisRequest } from "./media-analysis";
+import { handleProviderPackPolishRequest } from "./provider-pack-polish";
 import { getClientIp, jsonError } from "./request-utils";
 
 const RATE_LIMIT_MAX = 25;
@@ -27,6 +28,10 @@ export async function POST(req: Request) {
 
   if (body?.analyzeMedia === true) {
     return handleMediaAnalysisRequest(body);
+  }
+
+  if (body?.packPolish === true) {
+    return handleProviderPackPolishRequest(body);
   }
 
   return handleCopyPolishRequest(body);

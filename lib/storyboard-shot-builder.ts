@@ -21,6 +21,10 @@ import {
   type Weather,
   type WeatherHazard,
 } from "@/types";
+import {
+  LOCAL_PROVIDER_PACK_POLISH_METADATA,
+  type ProviderPackPolishMetadata,
+} from "@/lib/provider-polish-metadata";
 
 export type StoryboardShotRole = "hook" | "pressure" | "peak" | "resolve";
 
@@ -107,7 +111,7 @@ export type CinematicStoryboard = {
     allKling: string;
     allStoryboard: string;
   };
-};
+} & ProviderPackPolishMetadata;
 
 const DEFAULT_STORY_MODE = StoryMode.PREDATOR_VS_PREY;
 const DEFAULT_SUBJECT_A = "Wolf Pack";
@@ -696,6 +700,47 @@ function buildBulkCopy(shots: StoryboardShot[], selector: (shot: StoryboardShot)
     .join("\n\n---\n\n");
 }
 
+export function buildCinematicStoryboardCopy(
+  summary: StoryboardSummary,
+  shots: StoryboardShot[]
+): CinematicStoryboard["copy"] {
+  return {
+    allGptImage2Long: buildBulkCopy(shots, (shot) => shot.imagePrompts.gptImage2Long),
+    allGptImage2Short: buildBulkCopy(shots, (shot) => shot.imagePrompts.gptImage2Short),
+    allNanoBanana2Long: buildBulkCopy(shots, (shot) => shot.imagePrompts.nanoBanana2Long),
+    allNanoBanana2Short: buildBulkCopy(shots, (shot) => shot.imagePrompts.nanoBanana2Short),
+    allKling: buildBulkCopy(shots, (shot) => shot.motionPrompts.kling),
+    allStoryboard: [
+      `Storyboard Summary: ${summary.title}`,
+      `Story Mode: ${summary.storyModeLabel}`,
+      `Subject Pair: ${summary.subjectPair}`,
+      `Habitat: ${summary.habitat}`,
+      `Total Shots: ${summary.totalShots}`,
+      `Total Motion Duration: ${summary.totalMotionDurationLabel}`,
+      "",
+      ...shots.map((shot) =>
+        [
+          shot.title,
+          `Role: ${shot.role}`,
+          `Summary: ${shot.summary}`,
+          "GPT Image 2 — Long Version:",
+          shot.imagePrompts.gptImage2Long,
+          "GPT Image 2 — Short Version:",
+          shot.imagePrompts.gptImage2Short,
+          "Nano Banana 2 — Long Version:",
+          shot.imagePrompts.nanoBanana2Long,
+          "Nano Banana 2 — Short Version:",
+          shot.imagePrompts.nanoBanana2Short,
+          "Kling Motion:",
+          shot.motionPrompts.kling,
+          "Notes:",
+          shot.notes.join("\n"),
+        ].join("\n")
+      ),
+    ].join("\n\n---\n\n"),
+  };
+}
+
 export function buildCinematicStoryboard(input: CinematicStoryboardInput = {}): CinematicStoryboard {
   const storyMode = input.storyMode ?? DEFAULT_STORY_MODE;
   const { subjectA, subjectB } = resolveSubjects(input, storyMode);
@@ -770,44 +815,10 @@ export function buildCinematicStoryboard(input: CinematicStoryboardInput = {}): 
   const storyboard: CinematicStoryboard = {
     summary,
     shots,
-    copy: {
-      allGptImage2Long: buildBulkCopy(shots, (shot) => shot.imagePrompts.gptImage2Long),
-      allGptImage2Short: buildBulkCopy(shots, (shot) => shot.imagePrompts.gptImage2Short),
-      allNanoBanana2Long: buildBulkCopy(shots, (shot) => shot.imagePrompts.nanoBanana2Long),
-      allNanoBanana2Short: buildBulkCopy(shots, (shot) => shot.imagePrompts.nanoBanana2Short),
-      allKling: buildBulkCopy(shots, (shot) => shot.motionPrompts.kling),
-      allStoryboard: [
-        `Storyboard Summary: ${summary.title}`,
-        `Story Mode: ${summary.storyModeLabel}`,
-        `Subject Pair: ${summary.subjectPair}`,
-        `Habitat: ${summary.habitat}`,
-        `Total Shots: ${summary.totalShots}`,
-        `Total Motion Duration: ${summary.totalMotionDurationLabel}`,
-        "",
-        ...shots.map((shot) =>
-          [
-            shot.title,
-            `Role: ${shot.role}`,
-            `Summary: ${shot.summary}`,
-            "GPT Image 2 — Long Version:",
-            shot.imagePrompts.gptImage2Long,
-            "GPT Image 2 — Short Version:",
-            shot.imagePrompts.gptImage2Short,
-            "Nano Banana 2 — Long Version:",
-            shot.imagePrompts.nanoBanana2Long,
-            "Nano Banana 2 — Short Version:",
-            shot.imagePrompts.nanoBanana2Short,
-            "Kling Motion:",
-            shot.motionPrompts.kling,
-            "Notes:",
-            shot.notes.join("\n"),
-          ].join("\n")
-        ),
-      ].join("\n\n---\n\n"),
-    },
+    copy: buildCinematicStoryboardCopy(summary, shots),
+    ...LOCAL_PROVIDER_PACK_POLISH_METADATA,
   };
 
   assertCopyablePromptSafety(storyboard);
   return storyboard;
 }
-

@@ -127,7 +127,11 @@ export async function callOpenAIText(apiKey: string, prompt: string) {
   return { res, data };
 }
 
-export async function callGroqText(apiKey: string, prompt: string) {
+export async function callGroqText(
+  apiKey: string,
+  prompt: string,
+  options: { maxCompletionTokens?: number } = {}
+) {
   const res = await fetchWithProviderTimeout("https://api.groq.com/openai/v1/chat/completions", {
     method: "POST",
     headers: {
@@ -138,7 +142,7 @@ export async function callGroqText(apiKey: string, prompt: string) {
       model: GROQ_COPY_POLISH_MODEL,
       messages: [{ role: "user", content: prompt }],
       temperature: 0.3,
-      max_completion_tokens: 800,
+      max_completion_tokens: options.maxCompletionTokens ?? 800,
     }),
   });
 

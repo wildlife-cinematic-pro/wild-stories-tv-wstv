@@ -8,12 +8,24 @@ import {
   buildAllGptImage2Text,
   buildAllNanoBanana2Text,
   buildFourShotPhotoPrompts,
+  type FourShotPhotoOutput,
   type FourShotPhotoInput,
 } from "@/lib/four-shot-photo-system";
 import {
   loadFourShotPhotoHandoffPayload,
   resolveFourShotPhotoInitialInput,
 } from "@/lib/four-shot-photo-handoff";
+import type { AIProvider } from "@/types";
+
+type ProviderPolishConfig = {
+  activeProvider: AIProvider;
+  autoFallback: boolean;
+};
+
+const DEFAULT_PROVIDER_POLISH_CONFIG: ProviderPolishConfig = {
+  activeProvider: "gemini",
+  autoFallback: false,
+};
 
 type FieldKey = keyof Pick<
   FourShotPhotoInput,
@@ -96,19 +108,78 @@ function OutputBlock({ title, nano, gpt }: { title: string; nano: string; gpt: s
   );
 }
 
+async function requestFourShotProviderPolish(
+  base: FourShotPhotoOutput,
+  config: ProviderPolishConfig,
+  signal: AbortSignal
+): Promise<FourShotPhotoOutput | null> {
+  if (config.activeProvider === "none") return null;
+
+  const res = await fetch("/api/enhance", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    signal,
+    body: JSON.stringify({
+      packPolish: true,
+      packKind: "fourShotPhoto",
+      provider: config.activeProvider,
+      autoFallback: config.autoFallback,
+      base,
+    }),
+  });
+
+  if (!res.ok) return null;
+  const data = await res.json().catch(() => null) as { output?: FourShotPhotoOutput } | null;
+  if (!data?.output || data.output.polished !== true) return null;
+  if (data.output.input?.aspectRatio !== base.input.aspectRatio || data.output.shots?.length !== 4) return null;
+  return data.output;
+}
+
 export default function FourShotPhotoPage() {
   const [form, setForm] = useState<FourShotPhotoInput>(DEFAULT_FORM);
+  const [providerPolishConfig, setProviderPolishConfig] = useState<ProviderPolishConfig>(
+    DEFAULT_PROVIDER_POLISH_CONFIG
+  );
+  const [polishedOutput, setPolishedOutput] = useState<FourShotPhotoOutput | null>(null);
+  const [isProviderPolishing, setIsProviderPolishing] = useState(false);
   const [loadedFromBuild, setLoadedFromBuild] = useState(false);
 
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
     const handoff = loadFourShotPhotoHandoffPayload();
     setForm(resolveFourShotPhotoInitialInput(DEFAULT_FORM, handoff, params));
+    setProviderPolishConfig({
+      activeProvider: handoff?.activeProvider ?? DEFAULT_PROVIDER_POLISH_CONFIG.activeProvider,
+      autoFallback: handoff?.autoFallback === true,
+    });
     setLoadedFromBuild(params.get("source") === "build" || handoff?.source === "build");
   }, []);
-  const output = useMemo(() => buildFourShotPhotoPrompts(form), [form]);
+  const localOutput = useMemo(() => buildFourShotPhotoPrompts(form), [form]);
+  const output = polishedOutput ?? localOutput;
   const allNano = useMemo(() => buildAllNanoBanana2Text(output), [output]);
   const allGpt = useMemo(() => buildAllGptImage2Text(output), [output]);
+
+  useEffect(() => {
+    const controller = new AbortController();
+    setPolishedOutput(null);
+    setIsProviderPolishing(providerPolishConfig.activeProvider !== "none");
+
+    void requestFourShotProviderPolish(localOutput, providerPolishConfig, controller.signal)
+      .then((result) => {
+        if (!controller.signal.aborted && result) setPolishedOutput(result);
+      })
+      .catch(() => {
+        // The local four-shot pack is already rendered; provider failures stay non-blocking.
+      })
+      .finally(() => {
+        if (!controller.signal.aborted) setIsProviderPolishing(false);
+      });
+
+    return () => {
+      controller.abort();
+      setIsProviderPolishing(false);
+    };
+  }, [localOutput, providerPolishConfig]);
 
   function updateField(field: FieldKey, value: string) {
     setForm((current) => ({ ...current, [field]: value }));
@@ -132,6 +203,15 @@ export default function FourShotPhotoPage() {
               {loadedFromBuild ? (
                 <span className="rounded-full border border-cyan-400/35 bg-cyan-500/10 px-3 py-2 text-xs font-semibold text-cyan-300">
                   Loaded from Build setup
+                </span>
+              ) : null}
+              <span className="rounded-full border border-[color:var(--border)] bg-[color:var(--surface)] px-3 py-2 text-xs font-semibold text-[color:var(--muted)]">
+                Provider: {output.providerUsed} {output.polished ? "polished" : "local"}
+                {output.fallbackUsed ? " fallback" : ""}
+              </span>
+              {isProviderPolishing ? (
+                <span className="rounded-full border border-amber-400/35 bg-amber-500/10 px-3 py-2 text-xs font-semibold text-amber-300">
+                  Polishing in background
                 </span>
               ) : null}
               <Link href="/storyboard" className="rounded-xl border border-[color:var(--border)] bg-[color:var(--surface)] px-4 py-2 text-sm font-semibold text-[color:var(--text)] transition hover:border-cyan-400/60 hover:text-cyan-300">

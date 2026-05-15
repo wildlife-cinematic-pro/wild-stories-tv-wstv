@@ -1,4 +1,5 @@
 import type { FourShotPhotoInput } from "@/lib/four-shot-photo-system";
+import type { AIProvider } from "@/types";
 
 export const FOUR_SHOT_PHOTO_HANDOFF_KEY = "wstv-four-shot-photo-handoff";
 
@@ -32,6 +33,8 @@ export type FourShotPhotoBuildSetup = {
   preyPlacement?: TextLike;
   identityLockStrength?: TextLike;
   groundIntegrationStrength?: TextLike;
+  activeProvider?: AIProvider;
+  autoFallback?: boolean;
   createdAt?: TextLike;
 };
 
@@ -235,6 +238,8 @@ export function buildFourShotPhotoHandoffPayloadFromBuildSetup(
     preyPlacement: cleanText(setup.preyPlacement),
     identityLockStrength: cleanText(setup.identityLockStrength),
     groundIntegrationStrength: cleanText(setup.groundIntegrationStrength),
+    activeProvider: setup.activeProvider,
+    autoFallback: setup.autoFallback === true,
     createdAt,
   };
 }
