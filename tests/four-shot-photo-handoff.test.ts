@@ -90,6 +90,35 @@ describe("four-shot photo Build handoff", () => {
     expect(input.season).toBe("dry summer");
   });
 
+  it("passes explicit continuity controls while leaving defaults manual when absent", () => {
+    const withControls = handoffToFourShotInput({
+      source: "build",
+      predator: "Wolf",
+      prey: "Elk",
+      storyDirection: "wolf remains behind elk along the same snowy trail",
+      predatorPlacement: "rear-left side of the trail",
+      preyPlacement: "front-right side of the trail",
+      identityLockStrength: "extra strict",
+      groundIntegrationStrength: "maximum",
+      createdAt: "2026-05-15T00:00:00.000Z",
+    });
+
+    expect(withControls.storyDirection).toBe("wolf remains behind elk along the same snowy trail");
+    expect(withControls.predatorPlacement).toBe("rear-left side of the trail");
+    expect(withControls.preyPlacement).toBe("front-right side of the trail");
+    expect(withControls.identityLockStrength).toBe("extra strict");
+    expect(withControls.groundIntegrationStrength).toBe("maximum");
+
+    const withoutControls = handoffToFourShotInput({
+      source: "build",
+      predator: "Wolf",
+      prey: "Elk",
+      createdAt: "2026-05-15T00:00:00.000Z",
+    });
+    expect(withoutControls.storyDirection).toBeUndefined();
+    expect(withoutControls.identityLockStrength).toBeUndefined();
+  });
+
   it("keeps manual defaults when no handoff or URL params exist", () => {
     const input = resolveFourShotPhotoInitialInput(defaults, null, new URLSearchParams());
 

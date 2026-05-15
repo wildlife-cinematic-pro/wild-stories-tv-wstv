@@ -17,7 +17,7 @@ import {
 
 type FieldKey = keyof Pick<
   FourShotPhotoInput,
-  "predator" | "prey" | "environment" | "lighting" | "season" | "aspectRatio" | "predatorIdentityNotes" | "preyIdentityNotes"
+  "predator" | "prey" | "environment" | "lighting" | "season" | "aspectRatio" | "predatorIdentityNotes" | "preyIdentityNotes" | "storyDirection" | "predatorPlacement" | "preyPlacement" | "identityLockStrength" | "groundIntegrationStrength"
 >;
 
 const DEFAULT_FORM: FourShotPhotoInput = {
@@ -32,6 +32,11 @@ const DEFAULT_FORM: FourShotPhotoInput = {
     "adult mountain lion, lean muscular body mass, tawny coat, pale muzzle, rounded ears, long tail carried low, full-body readable, grounded paws",
   preyIdentityNotes:
     "adult mule deer doe, large ears, tan-gray coat, slim legs, black-tipped tail, alert posture, full-body readable, grounded hooves",
+  storyDirection: "predator stays behind, prey stays ahead, same action lane across all shots",
+  predatorPlacement: "behind or rear side of the action lane",
+  preyPlacement: "ahead or front side of the action lane",
+  identityLockStrength: "strict",
+  groundIntegrationStrength: "strong",
 };
 
 function Field({
@@ -165,6 +170,18 @@ export default function FourShotPhotoPage() {
             <div className="md:col-span-2">
               <Field label="Prey Identity Notes" field="preyIdentityNotes" value={form.preyIdentityNotes} onChange={updateField} rows={3} />
             </div>
+            <details className="md:col-span-2 xl:col-span-4 rounded-2xl border border-cyan-400/20 bg-cyan-500/5 p-4">
+              <summary className="cursor-pointer text-sm font-black text-cyan-200">Continuity Controls</summary>
+              <div className="mt-4 grid gap-4 md:grid-cols-2 xl:grid-cols-5">
+                <div className="md:col-span-2 xl:col-span-3">
+                  <Field label="Story Direction" field="storyDirection" value={form.storyDirection ?? ""} onChange={updateField} rows={2} />
+                </div>
+                <Field label="Predator Placement" field="predatorPlacement" value={form.predatorPlacement ?? ""} onChange={updateField} rows={2} />
+                <Field label="Prey Placement" field="preyPlacement" value={form.preyPlacement ?? ""} onChange={updateField} rows={2} />
+                <Field label="Identity Lock Strength" field="identityLockStrength" value={form.identityLockStrength ?? ""} onChange={updateField} />
+                <Field label="Ground Integration Strength" field="groundIntegrationStrength" value={form.groundIntegrationStrength ?? ""} onChange={updateField} />
+              </div>
+            </details>
           </div>
         </section>
 
