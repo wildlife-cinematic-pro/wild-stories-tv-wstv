@@ -1,0 +1,9 @@
+Clean photorealistic environment plate prompt for Nano Banana 2. Keep it direct, natural, and continuity-first.
+Create the master environment plate for yellowstone_mountain_lion_mule_deer_chase.
+Location lock: Yellowstone sagebrush meadow with a narrow dirt game trail, tawny grass, scattered sagebrush, dark pine treeline, and a distant blue-gray mountain ridge. Season lock: early autumn. Lighting lock: low golden-hour side light from camera left with soft natural rim light. Aspect ratio: 9:16. Environment plate identity: empty Yellowstone meadow plate, narrow dirt game trail cuts diagonally through tawny grass and sagebrush, pine treeline holds the back edge, distant blue-gray mountain ridge stays visible, no animals, no people, no structures.
+No animals in this master plate. No people, roads, fences, buildings, vehicles, text, or watermark.
+Leave one clean natural action lane through the habitat where future wildlife can be integrated.
+Continuity requirements: same terrain and trail/path geometry across every shot; same grass or sagebrush density and height; same treeline placement and distant ridge/habitat identity; same season, lighting direction, color tone, and atmosphere; no environment redesign, no random new landmarks, no weather drift.
+Physical realism: soft natural cast shadows and contact shadows at paws and hooves; grass and sagebrush interaction around legs; subtle terrain displacement where feet meet dirt or dry grass; matching rim light and atmospheric perspective; no pasted, cutout, collage, or composited look.
+Ultra-realistic natural wildlife photography, clean documentary realism, believable ground contact, same-background continuity.
+Avoid: no oversaturated fantasy look; no fake HDR or plastic fur; no excessive blur or impossible lens distortion; no melted anatomy, duplicate limbs, extra animals, people, roads, fences, buildings, text, watermark, subtitles; no blood, no gore, no visible wounds, no graphic contact.

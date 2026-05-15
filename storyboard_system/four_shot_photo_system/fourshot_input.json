@@ -1,0 +1,13 @@
+{
+  "project": "yellowstone_mountain_lion_mule_deer_chase",
+  "predator": "Mountain Lion",
+  "prey": "Mule Deer",
+  "environment": "Yellowstone sagebrush meadow with a narrow dirt game trail, tawny grass, scattered sagebrush, dark pine treeline, and a distant blue-gray mountain ridge",
+  "lighting": "low golden-hour side light from camera left with soft natural rim light",
+  "season": "early autumn",
+  "aspectRatio": "9:16",
+  "shotMode": "4-shot same-environment wildlife photo continuity",
+  "environmentPlateDescription": "empty Yellowstone meadow plate, narrow dirt game trail cuts diagonally through tawny grass and sagebrush, pine treeline holds the back edge, distant blue-gray mountain ridge stays visible, no animals, no people, no structures",
+  "predatorIdentityNotes": "adult mountain lion, lean muscular body mass, tawny coat, pale muzzle, rounded ears, long tail carried low, full-body readable, grounded paws",
+  "preyIdentityNotes": "adult mule deer doe, large ears, tan-gray coat, slim legs, black-tipped tail, alert posture, full-body readable, grounded hooves"
+}
