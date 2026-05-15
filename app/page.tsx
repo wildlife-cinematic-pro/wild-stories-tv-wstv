@@ -2070,6 +2070,8 @@ export default function Page() {
       reelType: [contentLane, previewArc, durationLane].join(" • "),
       safetyRule:
         "Clean survival tension only. No blood, no gore, no visible injury; preserve realistic animal behavior and Facebook-safe documentary framing.",
+      activeProvider,
+      autoFallback,
       createdAt: new Date().toISOString(),
     }),
     [
@@ -2096,6 +2098,8 @@ export default function Page() {
       previewArc,
       strictOriginalityGuard,
       weather,
+      activeProvider,
+      autoFallback,
     ]
   );
 
@@ -2118,6 +2122,8 @@ export default function Page() {
         realismMode,
         referenceLock,
         sceneDescription,
+        activeProvider,
+        autoFallback,
       }),
     [
       animalVibe,
@@ -2133,6 +2139,8 @@ export default function Page() {
       season,
       timeOfDay,
       weather,
+      activeProvider,
+      autoFallback,
     ]
   );
 

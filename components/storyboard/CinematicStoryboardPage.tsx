@@ -5,7 +5,9 @@ import { useEffect, useMemo, useState } from "react";
 
 import CopyButton from "@/components/storyboard/copy-button";
 import {
+  buildCinematicStoryboardCopy,
   buildCinematicStoryboard,
+  type CinematicStoryboard,
   type CinematicStoryboardInput,
   type StoryboardShot,
 } from "@/lib/storyboard-shot-builder";
@@ -31,6 +33,7 @@ import {
   type TimeOfDay,
   type Weather,
   type WeatherHazard,
+  type AIProvider,
 } from "@/types";
 
 const STORYBOARD_HANDOFF_KEY = "wstv-storyboard-handoff";
@@ -41,7 +44,19 @@ type HandoffPayload = CinematicStoryboardInput & {
   opposingAnimal?: string;
   environment?: string;
   lighting?: string;
+  activeProvider?: AIProvider;
+  autoFallback?: boolean;
   createdAt?: string;
+};
+
+type ProviderPolishConfig = {
+  activeProvider: AIProvider;
+  autoFallback: boolean;
+};
+
+const DEFAULT_PROVIDER_POLISH_CONFIG: ProviderPolishConfig = {
+  activeProvider: "gemini",
+  autoFallback: false,
 };
 
 function enumValue<T extends Record<string, string | number>>(
@@ -157,6 +172,47 @@ function loadHandoffPayload(): HandoffPayload | null {
   } catch {
     return null;
   }
+}
+
+function providerConfigFromHandoff(payload: HandoffPayload | null): ProviderPolishConfig {
+  return {
+    activeProvider: payload?.activeProvider ?? DEFAULT_PROVIDER_POLISH_CONFIG.activeProvider,
+    autoFallback: payload?.autoFallback === true,
+  };
+}
+
+function rebuildStoryboardCopy(storyboard: CinematicStoryboard): CinematicStoryboard {
+  return {
+    ...storyboard,
+    copy: buildCinematicStoryboardCopy(storyboard.summary, storyboard.shots),
+  };
+}
+
+async function requestStoryboardProviderPolish(
+  base: CinematicStoryboard,
+  config: ProviderPolishConfig,
+  signal: AbortSignal
+): Promise<CinematicStoryboard | null> {
+  if (config.activeProvider === "none") return null;
+
+  const res = await fetch("/api/enhance", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    signal,
+    body: JSON.stringify({
+      packPolish: true,
+      packKind: "storyboard",
+      provider: config.activeProvider,
+      autoFallback: config.autoFallback,
+      base,
+    }),
+  });
+
+  if (!res.ok) return null;
+  const data = await res.json().catch(() => null) as { output?: CinematicStoryboard } | null;
+  if (!data?.output || data.output.polished !== true) return null;
+  if (data.output.summary?.totalShots !== 4 || data.output.shots?.length !== 4) return null;
+  return rebuildStoryboardCopy(data.output);
 }
 
 function PromptBlock({
@@ -289,6 +345,11 @@ function ShotCard({ shot }: { shot: StoryboardShot }) {
 
 export default function CinematicStoryboardPage() {
   const [input, setInput] = useState<CinematicStoryboardInput>({});
+  const [providerPolishConfig, setProviderPolishConfig] = useState<ProviderPolishConfig>(
+    DEFAULT_PROVIDER_POLISH_CONFIG
+  );
+  const [polishedStoryboard, setPolishedStoryboard] = useState<CinematicStoryboard | null>(null);
+  const [isProviderPolishing, setIsProviderPolishing] = useState(false);
   const [loadedFromBuild, setLoadedFromBuild] = useState(false);
 
   useEffect(() => {
@@ -300,10 +361,38 @@ export default function CinematicStoryboardPage() {
     };
 
     setInput(nextInput);
+    setProviderPolishConfig(providerConfigFromHandoff(handoff));
     setLoadedFromBuild(params.get("source") === "build" || handoff?.source === "build");
   }, []);
 
-  const storyboard = useMemo(() => buildCinematicStoryboard(input), [input]);
+  const localStoryboard = useMemo(() => buildCinematicStoryboard(input), [input]);
+  const storyboard = polishedStoryboard ?? localStoryboard;
+
+  useEffect(() => {
+    const controller = new AbortController();
+    setPolishedStoryboard(null);
+    setIsProviderPolishing(providerPolishConfig.activeProvider !== "none");
+
+    void requestStoryboardProviderPolish(
+      localStoryboard,
+      providerPolishConfig,
+      controller.signal
+    )
+      .then((result) => {
+        if (!controller.signal.aborted && result) setPolishedStoryboard(result);
+      })
+      .catch(() => {
+        // The local storyboard is already rendered; provider failures stay non-blocking.
+      })
+      .finally(() => {
+        if (!controller.signal.aborted) setIsProviderPolishing(false);
+      });
+
+    return () => {
+      controller.abort();
+      setIsProviderPolishing(false);
+    };
+  }, [localStoryboard, providerPolishConfig]);
 
   return (
     <main className="min-h-screen bg-[color:var(--bg)] px-4 py-10 text-[color:var(--text)] sm:px-6 lg:px-8">
@@ -326,6 +415,15 @@ export default function CinematicStoryboardPage() {
                 {loadedFromBuild ? (
                   <span className="rounded-full border border-cyan-400/35 bg-cyan-500/10 px-3 py-1 text-xs font-semibold text-cyan-300">
                     Loaded from Build setup
+                  </span>
+                ) : null}
+                <span className="rounded-full border border-[color:var(--border)] bg-[color:var(--surface)] px-3 py-1 text-xs font-semibold text-[color:var(--muted)]">
+                  Provider: {storyboard.providerUsed} {storyboard.polished ? "polished" : "local"}
+                  {storyboard.fallbackUsed ? " fallback" : ""}
+                </span>
+                {isProviderPolishing ? (
+                  <span className="rounded-full border border-amber-400/35 bg-amber-500/10 px-3 py-1 text-xs font-semibold text-amber-300">
+                    Polishing in background
                   </span>
                 ) : null}
                 <Link
@@ -398,4 +496,3 @@ export default function CinematicStoryboardPage() {
     </main>
   );
 }
-
