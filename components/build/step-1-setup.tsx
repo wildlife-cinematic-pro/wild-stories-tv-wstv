@@ -237,6 +237,7 @@ type Step1SetupProps = {
   customPredatorCount: number;
   finalEnvironment: string;
   storyboardHref: string;
+  fourShotPhotoHref: string;
   currentSetupLabel: string;
   driftRisk: PredatorInfo["driftRisk"];
   workflowPresets: SavedWorkflowPreset[];
@@ -308,6 +309,7 @@ type Step1SetupProps = {
   onContinue: () => void;
   onOpenCustomAnimal: () => void;
   onOpenStoryboardWorkflow: () => void;
+  onOpenFourShotPhotoWorkflow: () => void;
   onWorkflowPresetNameChange: (value: string) => void;
   onWorkflowPresetPackNameChange: (value: string) => void;
   onWorkflowPresetPackDescriptionChange: (value: string) => void;
@@ -398,6 +400,7 @@ export default function Step1Setup({
   customPredatorCount,
   finalEnvironment,
   storyboardHref,
+  fourShotPhotoHref,
   currentSetupLabel,
   driftRisk,
   workflowPresets,
@@ -469,6 +472,7 @@ export default function Step1Setup({
   onContinue,
   onOpenCustomAnimal,
   onOpenStoryboardWorkflow,
+  onOpenFourShotPhotoWorkflow,
   onWorkflowPresetNameChange,
   onWorkflowPresetPackNameChange,
   onWorkflowPresetPackDescriptionChange,
@@ -1044,10 +1048,10 @@ export default function Step1Setup({
                 <div className="flex flex-wrap items-center justify-between gap-3">
                   <div className="min-w-0">
                     <p className="text-[11px] font-semibold uppercase tracking-[0.1em] text-cyan-700">
-                      Storyboard handoff
+                      Storyboard / photo handoff
                     </p>
                     <p className="mt-1 text-[11px] leading-relaxed text-cyan-900/75">
-                      Send {predator} vs {prey} plus the current habitat setup into the 5-shot reel workflow.
+                      Send {predator} vs {prey} plus the current habitat setup into storyboard or same-environment photo workflows.
                     </p>
                   </div>
                   <button
@@ -1057,6 +1061,14 @@ export default function Step1Setup({
                     className="rounded-xl border border-cyan-300 bg-cyan-600 px-3.5 py-2 text-xs font-semibold text-white shadow-sm transition hover:bg-cyan-500 active:scale-[0.98]"
                   >
                     Build 4-Shot Storyboard
+                  </button>
+                  <button
+                    type="button"
+                    onClick={onOpenFourShotPhotoWorkflow}
+                    title={fourShotPhotoHref}
+                    className="rounded-xl border border-cyan-300 bg-white px-3.5 py-2 text-xs font-semibold text-cyan-700 shadow-sm transition hover:bg-cyan-50 active:scale-[0.98]"
+                  >
+                    4-Shot Photo
                   </button>
                 </div>
               </div>

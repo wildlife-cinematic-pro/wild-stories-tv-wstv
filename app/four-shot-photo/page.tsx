@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 
 import CopyButton from "@/components/storyboard/copy-button";
 import {
@@ -10,13 +10,17 @@ import {
   buildFourShotPhotoPrompts,
   type FourShotPhotoInput,
 } from "@/lib/four-shot-photo-system";
+import {
+  loadFourShotPhotoHandoffPayload,
+  resolveFourShotPhotoInitialInput,
+} from "@/lib/four-shot-photo-handoff";
 
 type FieldKey = keyof Pick<
   FourShotPhotoInput,
   "predator" | "prey" | "environment" | "lighting" | "season" | "aspectRatio" | "predatorIdentityNotes" | "preyIdentityNotes"
 >;
 
-const DEFAULT_FORM: Record<FieldKey, string> = {
+const DEFAULT_FORM: FourShotPhotoInput = {
   predator: "Mountain Lion",
   prey: "Mule Deer",
   environment:
@@ -88,7 +92,15 @@ function OutputBlock({ title, nano, gpt }: { title: string; nano: string; gpt: s
 }
 
 export default function FourShotPhotoPage() {
-  const [form, setForm] = useState(DEFAULT_FORM);
+  const [form, setForm] = useState<FourShotPhotoInput>(DEFAULT_FORM);
+  const [loadedFromBuild, setLoadedFromBuild] = useState(false);
+
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const handoff = loadFourShotPhotoHandoffPayload();
+    setForm(resolveFourShotPhotoInitialInput(DEFAULT_FORM, handoff, params));
+    setLoadedFromBuild(params.get("source") === "build" || handoff?.source === "build");
+  }, []);
   const output = useMemo(() => buildFourShotPhotoPrompts(form), [form]);
   const allNano = useMemo(() => buildAllNanoBanana2Text(output), [output]);
   const allGpt = useMemo(() => buildAllGptImage2Text(output), [output]);
@@ -112,6 +124,11 @@ export default function FourShotPhotoPage() {
               </p>
             </div>
             <div className="flex flex-wrap gap-2">
+              {loadedFromBuild ? (
+                <span className="rounded-full border border-cyan-400/35 bg-cyan-500/10 px-3 py-2 text-xs font-semibold text-cyan-300">
+                  Loaded from Build setup
+                </span>
+              ) : null}
               <Link href="/storyboard" className="rounded-xl border border-[color:var(--border)] bg-[color:var(--surface)] px-4 py-2 text-sm font-semibold text-[color:var(--text)] transition hover:border-cyan-400/60 hover:text-cyan-300">
                 Pencil Storyboard Planner
               </Link>

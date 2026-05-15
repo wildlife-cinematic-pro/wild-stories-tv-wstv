@@ -67,6 +67,10 @@ import {
 } from "@/lib/video-model-capabilities";
 import { DEFAULT_CAMERA_ANGLE_PRESET } from "@/lib/camera-angle-presets";
 import { buildStoryboardPreviewLinkMetadata } from "@/lib/storyboard-link-metadata";
+import {
+  FOUR_SHOT_PHOTO_HANDOFF_KEY,
+  buildFourShotPhotoHandoffPayloadFromBuildSetup,
+} from "@/lib/four-shot-photo-handoff";
 import { WORKFLOW_TEST_PRESETS } from "@/lib/workflow-presets";
 import {
   formatStoryModeGenerateCtaLabel,
@@ -1328,6 +1332,48 @@ export default function Page() {
     weather,
   ]);
 
+  const currentFourShotPhotoHref = useMemo(() => {
+    const params = new URLSearchParams({
+      source: "build",
+      predator,
+      prey,
+      season,
+      aspectRatio: "9:16",
+      ...(currentStorySubjectSnapshot.subjectA
+        ? { subjectA: currentStorySubjectSnapshot.subjectA }
+        : {}),
+      ...(currentStorySubjectSnapshot.subjectB
+        ? { subjectB: currentStorySubjectSnapshot.subjectB }
+        : {}),
+      ...(finalEnvironment ? { finalEnvironment, environment: finalEnvironment } : {}),
+      ...(habitatRegion ? { habitatRegion } : {}),
+      ...(habitat ? { habitat } : {}),
+      ...(weather ? { weather } : {}),
+      ...(timeOfDay ? { timeOfDay } : {}),
+      lighting: [timeOfDay, weather].filter(Boolean).join(", "),
+      animalVibe,
+      realismMode,
+      referenceLock: String(referenceLock),
+      ...(sceneDescription ? { sceneDescription } : {}),
+    });
+
+    return `/four-shot-photo?${params.toString()}`;
+  }, [
+    animalVibe,
+    currentStorySubjectSnapshot,
+    finalEnvironment,
+    habitat,
+    habitatRegion,
+    predator,
+    prey,
+    realismMode,
+    referenceLock,
+    sceneDescription,
+    season,
+    timeOfDay,
+    weather,
+  ]);
+
   const activePromotedPublishCopyOverride = useMemo<ActivePromotedPublishCopyOverride | null>(
     () => {
       if (!promotedPublishCopyOverride) return null;
@@ -2053,6 +2099,43 @@ export default function Page() {
     ]
   );
 
+  const fourShotPhotoHandoffPayload = useMemo(
+    () =>
+      buildFourShotPhotoHandoffPayloadFromBuildSetup({
+        source: "build",
+        predator,
+        prey,
+        subjectA: currentStorySubjectSnapshot.subjectA,
+        subjectB: currentStorySubjectSnapshot.subjectB,
+        habitatRegion,
+        habitat,
+        finalEnvironment,
+        weather,
+        timeOfDay,
+        season,
+        aspectRatio: "9:16",
+        animalVibe,
+        realismMode,
+        referenceLock,
+        sceneDescription,
+      }),
+    [
+      animalVibe,
+      currentStorySubjectSnapshot,
+      finalEnvironment,
+      habitat,
+      habitatRegion,
+      predator,
+      prey,
+      realismMode,
+      referenceLock,
+      sceneDescription,
+      season,
+      timeOfDay,
+      weather,
+    ]
+  );
+
   const saveStoryboardHandoff = useCallback(() => {
     window.localStorage.setItem(
       STORYBOARD_HANDOFF_KEY,
@@ -2064,6 +2147,18 @@ export default function Page() {
     saveStoryboardHandoff();
     window.location.assign(currentStoryboardHref);
   }, [currentStoryboardHref, saveStoryboardHandoff]);
+
+  const saveFourShotPhotoHandoff = useCallback(() => {
+    window.localStorage.setItem(
+      FOUR_SHOT_PHOTO_HANDOFF_KEY,
+      JSON.stringify(fourShotPhotoHandoffPayload)
+    );
+  }, [fourShotPhotoHandoffPayload]);
+
+  const openFourShotPhotoWorkflow = useCallback(() => {
+    saveFourShotPhotoHandoff();
+    window.location.assign(currentFourShotPhotoHref);
+  }, [currentFourShotPhotoHref, saveFourShotPhotoHandoff]);
   // ─── RENDER ───────────────────────────────────────────────────────────────
 
   return (
@@ -2136,7 +2231,8 @@ export default function Page() {
                   Storyboard
                 </Link>
                 <Link
-                  href="/four-shot-photo"
+                  href={currentFourShotPhotoHref}
+                  onClick={saveFourShotPhotoHandoff}
                   className="group flex items-center gap-2 rounded-xl border border-transparent px-3.5 py-2 text-xs font-semibold tracking-[0.01em] text-white/50 transition-all hover:bg-white/[0.06] hover:text-white/80"
                 >
                   <span className="grid h-5 w-5 place-items-center rounded-full bg-white/[0.06] text-[11px] text-white/70 transition-all group-hover:bg-white/[0.1] group-hover:text-white">
@@ -2223,6 +2319,17 @@ export default function Page() {
                       </span>
                       Open Storyboard for Current Setup
                     </Link>
+                    <Link
+                      href={currentFourShotPhotoHref}
+                      onClick={saveFourShotPhotoHandoff}
+                      title={currentFourShotPhotoHref}
+                      className="inline-flex items-center gap-2 rounded-xl border border-cyan-400/30 bg-cyan-500/10 px-3.5 py-2 text-xs font-semibold text-cyan-200 transition hover:border-cyan-300 hover:bg-cyan-500/15"
+                    >
+                      <span className="grid h-5 w-5 place-items-center rounded-full bg-cyan-400/15 text-[11px] text-cyan-200">
+                        4
+                      </span>
+                      4-Shot Photo
+                    </Link>
                   </div>
                 </div>
               </div>
@@ -2295,6 +2402,14 @@ export default function Page() {
                 >
                   Open Storyboard for Current Setup
                 </Link>
+                <Link
+                  href={currentFourShotPhotoHref}
+                  onClick={saveFourShotPhotoHandoff}
+                  title={currentFourShotPhotoHref}
+                  className="rounded-xl border border-cyan-400/35 bg-cyan-500/10 px-4 py-2 text-sm font-semibold text-cyan-200 transition hover:border-cyan-300/70 hover:bg-cyan-500/15 hover:text-cyan-100"
+                >
+                  4-Shot Photo
+                </Link>
               </div>
             </div>
 
@@ -2339,8 +2454,10 @@ export default function Page() {
                 customPredatorCount={customPredators.length}
                 finalEnvironment={finalEnvironment}
                 storyboardHref={currentStoryboardHref}
+                fourShotPhotoHref={currentFourShotPhotoHref}
                 currentSetupLabel={currentGenerateCtaLabel}
                 onOpenStoryboardWorkflow={openStoryboardWorkflow}
+                onOpenFourShotPhotoWorkflow={openFourShotPhotoWorkflow}
                 driftRisk={preset.driftRisk}
                 workflowPresets={workflowPresetControls.presets}
                 workflowPresetPacks={workflowPresetControls.presetPacks}

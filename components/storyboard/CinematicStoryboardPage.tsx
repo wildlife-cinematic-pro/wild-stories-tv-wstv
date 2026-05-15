@@ -329,6 +329,12 @@ export default function CinematicStoryboardPage() {
                   </span>
                 ) : null}
                 <Link
+                  href="/four-shot-photo"
+                  className="rounded-xl border border-cyan-400/35 bg-cyan-500/10 px-4 py-2 text-sm font-semibold text-cyan-200 transition hover:border-cyan-300/70 hover:bg-cyan-500/15 hover:text-cyan-100"
+                >
+                  4-Shot Same Environment Photo Generator
+                </Link>
+                <Link
                   href="/"
                   className="rounded-xl border border-[color:var(--border)] bg-[color:var(--surface)] px-4 py-2 text-sm font-semibold text-[color:var(--text)] transition hover:border-cyan-400/60 hover:text-cyan-300"
                 >
