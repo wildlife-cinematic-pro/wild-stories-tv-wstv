@@ -2135,6 +2135,15 @@ export default function Page() {
                   </span>
                   Storyboard
                 </Link>
+                <Link
+                  href="/four-shot-photo"
+                  className="group flex items-center gap-2 rounded-xl border border-transparent px-3.5 py-2 text-xs font-semibold tracking-[0.01em] text-white/50 transition-all hover:bg-white/[0.06] hover:text-white/80"
+                >
+                  <span className="grid h-5 w-5 place-items-center rounded-full bg-white/[0.06] text-[11px] text-white/70 transition-all group-hover:bg-white/[0.1] group-hover:text-white">
+                    4
+                  </span>
+                  4-Shot Photo
+                </Link>
               </nav>
             </div>
 
