@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, type ReactNode } from "react";
 
 import MediaAnalyzer from "@/components/MediaAnalyzer";
 import QualityPanel, { type QualityPanelProps } from "@/components/QualityPanel";
@@ -87,10 +87,10 @@ function CapabilityInfoCard({
       data-testid={`video-model-card-${capability.id}`}
       onClick={onSelect}
       aria-pressed={selected}
-      className={`w-full rounded-2xl border px-3.5 py-3.5 text-left shadow-sm transition-all active:scale-[0.99] ${
+      className={`w-full rounded-2xl border px-3.5 py-3.5 text-left shadow-[0_12px_28px_rgba(0,0,0,0.18)] transition-all active:scale-[0.99] ${
         selected
-          ? "border-indigo-300 bg-indigo-50 shadow-indigo-100/80"
-          : "border-gray-200 bg-white shadow-gray-100/70 hover:border-indigo-200 hover:bg-indigo-50/40"
+          ? "border-[#d9a94f]/45 bg-[#1b170b] shadow-[#d9a94f]/10"
+          : "border-[#2d3d28] bg-[#09110b] hover:border-cyan-400/35 hover:bg-[#0d1811]"
       }`}
     >
       <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
@@ -124,10 +124,10 @@ function CapabilityInfoCard({
           {verificationLabel}
         </span>
       </div>
-      <div className="text-sm font-semibold tracking-tight text-gray-900">
+      <div className="text-sm font-semibold tracking-tight text-[#f7f1df]">
         {capability.label}
       </div>
-      <p className="mt-1 text-xs leading-relaxed text-gray-600">
+      <p className="mt-1 text-xs leading-relaxed text-[#9da892]">
         {capability.recommendedUse}
       </p>
       <div className="mt-3 flex flex-wrap gap-1.5 text-[10px] font-semibold">
@@ -144,10 +144,10 @@ function CapabilityInfoCard({
           {routeLabel}
         </span>
       </div>
-      <p className="mt-2 text-[11px] leading-relaxed text-gray-500">
+      <p className="mt-2 text-[11px] leading-relaxed text-[#9da892]">
         {capability.wildlifeUseCase}
       </p>
-      <p className="mt-2 text-[10px] font-semibold uppercase tracking-[0.08em] text-gray-500">
+      <p className="mt-2 text-[10px] font-semibold uppercase tracking-[0.08em] text-[#71806b]">
         {patch?.runwayModel
           ? "Syncs legacy Runway model"
           : patch?.klingModel
@@ -155,6 +155,36 @@ function CapabilityInfoCard({
             : "Expanded model only"}
       </p>
     </button>
+  );
+}
+
+function StudioCard({
+  id,
+  children,
+  className = "",
+  tone = "default",
+}: {
+  id?: string;
+  children: ReactNode;
+  className?: string;
+  tone?: "default" | "gold" | "cyan" | "warning";
+}) {
+  const toneClass =
+    tone === "gold"
+      ? "border-[#d9a94f]/25 bg-[#131409]"
+      : tone === "cyan"
+        ? "border-cyan-400/20 bg-[#071318]"
+        : tone === "warning"
+          ? "border-orange-400/25 bg-[#1b1008]"
+          : "border-[#2d3d28] bg-[#0c130d]";
+
+  return (
+    <section
+      id={id}
+      className={`rounded-[26px] border ${toneClass} p-4 shadow-[0_18px_55px_rgba(0,0,0,0.24)] sm:p-5 ${className}`}
+    >
+      {children}
+    </section>
   );
 }
 
@@ -353,13 +383,43 @@ export default function Step2EngineQuality({
   ]);
 
   return (
-    <div className="grid gap-6 xl:grid-cols-[minmax(0,1fr)_380px]">
-      <div className="space-y-6">
-        <section className="rounded-2xl border border-gray-200 bg-white p-5 sm:p-6">
+    <div className="space-y-4 text-[#f7f1df]">
+      <div className="rounded-[28px] border border-[#2d3d28] bg-[#071009] p-4 shadow-[0_22px_70px_rgba(0,0,0,0.3)] sm:p-5">
+        <div className="flex flex-wrap items-start justify-between gap-3">
+          <div>
+            <p className="text-[10px] font-black uppercase tracking-[0.22em] text-[#d9a94f]">
+              Step 2 command deck
+            </p>
+            <h2 className="mt-1 text-xl font-semibold text-[#f7f1df]">
+              Engine & quality control room
+            </h2>
+            <p className="mt-1 max-w-3xl text-sm leading-6 text-[#9da892]">
+              Tune the video engine stack, publishing guardrails, media analysis,
+              and scene notes before generation. All controls keep their existing
+              state and callbacks.
+            </p>
+          </div>
+          <div className="flex flex-wrap gap-2 text-[10px] font-black uppercase tracking-[0.12em]">
+            <span className="rounded-full border border-[#d9a94f]/35 bg-[#d9a94f]/12 px-3 py-1.5 text-[#f3c766]">
+              {qualityReco.level} drift
+            </span>
+            <span className="rounded-full border border-cyan-400/25 bg-cyan-500/10 px-3 py-1.5 text-cyan-200">
+              {VIDEO_MODEL_GROUP_LABELS[selectedVideoProviderGroup]}
+            </span>
+            <span className="rounded-full border border-emerald-400/25 bg-emerald-500/10 px-3 py-1.5 text-emerald-200">
+              {activeProvider}
+            </span>
+          </div>
+        </div>
+      </div>
+
+      <div className="grid gap-4 xl:grid-cols-[minmax(0,1fr)_390px]">
+        <div className="space-y-4">
+          <StudioCard tone="gold">
           <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
             <div className="flex items-center gap-2">
-              <h3 className="text-[11px] font-semibold uppercase tracking-[0.1em] text-gray-400">
-                🛡 Quality Automation
+              <h3 className="text-[11px] font-black uppercase tracking-[0.18em] text-[#d9a94f]">
+                Recommendation
               </h3>
               <span
                 className={`rounded-full px-2 py-0.5 text-[10px] font-semibold ${
@@ -379,8 +439,8 @@ export default function Step2EngineQuality({
                 onClick={onToggleAutoApplyHighDrift}
                 className={`rounded-2xl border px-3.5 py-2 text-xs font-semibold transition-all active:scale-95 ${
                   autoApplyHighDrift
-                    ? "border-gray-900 bg-gray-900 text-white shadow-sm shadow-gray-300/60"
-                    : "border-gray-200 bg-white text-gray-600 shadow-sm shadow-gray-100/80 hover:bg-gray-50"
+                    ? "border-[#d9a94f]/60 bg-[#d9a94f] text-[#111207] shadow-sm shadow-[#d9a94f]/20"
+                    : "border-[#2d3d28] bg-[#071009] text-[#c9d2bd] shadow-sm shadow-black/20 hover:border-[#d9a94f]/35"
                 }`}
               >
                 {autoApplyHighDrift ? "⚡ Auto: ON" : "⚡ Auto: OFF"}
@@ -389,14 +449,14 @@ export default function Step2EngineQuality({
                 type="button"
                 disabled={!hasUndoQuality}
                 onClick={onUndoRecommendedQuality}
-                className="rounded-2xl border border-gray-200 bg-white px-3.5 py-2 text-xs font-semibold text-gray-600 shadow-sm shadow-gray-100/80 hover:bg-gray-50 disabled:opacity-40 active:scale-95"
+                className="rounded-2xl border border-[#2d3d28] bg-[#071009] px-3.5 py-2 text-xs font-semibold text-[#c9d2bd] shadow-sm shadow-black/20 hover:border-[#d9a94f]/35 disabled:opacity-40 active:scale-95"
               >
                 ↩ Undo
               </button>
               <button
                 type="button"
                 onClick={onApplyRecommendedQuality}
-                className="rounded-2xl bg-gray-900 px-3.5 py-2 text-xs font-semibold text-white shadow-sm shadow-gray-300/60 hover:bg-black active:scale-95"
+                className="rounded-2xl bg-[#d9a94f] px-3.5 py-2 text-xs font-semibold text-[#111207] shadow-sm shadow-[#d9a94f]/20 hover:bg-[#f3c766] active:scale-95"
               >
                 ✅ Apply
               </button>
@@ -431,30 +491,30 @@ export default function Step2EngineQuality({
 
           {qualityReco.why.length > 0 && (
             <div className="mt-2 text-xs text-gray-400">
-              <span className="font-semibold text-gray-500">Why:</span>{" "}
+              <span className="font-semibold text-[#d9a94f]">Why:</span>{" "}
               {qualityReco.why.join(" • ")}
             </div>
           )}
 
-          <div className="mt-3 rounded-xl border border-blue-100 bg-blue-50 p-3 text-xs text-blue-800">
+          <div className="mt-3 rounded-2xl border border-cyan-400/20 bg-cyan-500/10 p-3 text-xs text-cyan-100">
             <div className="font-semibold">Publish path</div>
             <div className="mt-0.5">
               Inputs → U.S. score → Opening score → Publish guard → Final output
             </div>
-            <div className="mt-1 text-blue-700">
+            <div className="mt-1 text-cyan-200">
               Suggested lane:{" "}
               <span className="font-semibold uppercase">{qualityReco.suggestedLane}</span> •{" "}
               {qualityReco.publishSafeRecommendation}
             </div>
           </div>
-        </section>
+          </StudioCard>
 
-        <section className="rounded-2xl border border-gray-200 bg-white p-5 sm:p-6">
+          <StudioCard>
           <div className="mb-4 flex flex-wrap items-center justify-between gap-2">
-            <h3 className="text-[11px] font-semibold uppercase tracking-[0.1em] text-gray-400">
-              Market & Publish Flow
+            <h3 className="text-[11px] font-black uppercase tracking-[0.18em] text-[#d9a94f]">
+              Quality Target
             </h3>
-            <span className="rounded-full bg-blue-100 px-2.5 py-1 text-[10px] font-semibold text-blue-700">
+            <span className="rounded-full border border-cyan-400/25 bg-cyan-500/10 px-2.5 py-1 text-[10px] font-semibold text-cyan-200">
               {marketMode}
             </span>
           </div>
@@ -467,7 +527,7 @@ export default function Step2EngineQuality({
               <select
                 value={durationLane}
                 onChange={(event) => onDurationLaneChange(event.target.value as DurationLane)}
-                className="w-full rounded-xl border border-gray-200 bg-gray-50 px-3 py-2.5 text-sm font-medium text-gray-900"
+                className="w-full rounded-xl border border-[#2d3d28] bg-[#071009] px-3 py-2.5 text-sm font-medium text-[#f7f1df] outline-none focus:border-[#d9a94f]/55"
               >
                 <option value="short">Short — 20s final edit</option>
                 <option value="medium">Medium — 35s final edit</option>
@@ -483,7 +543,7 @@ export default function Step2EngineQuality({
                 onChange={(event) =>
                   onHookModeChange(event.target.value as HookFamily | "all")
                 }
-                className="w-full rounded-xl border border-gray-200 bg-gray-50 px-3 py-2.5 text-sm font-medium text-gray-900"
+                className="w-full rounded-xl border border-[#2d3d28] bg-[#071009] px-3 py-2.5 text-sm font-medium text-[#f7f1df] outline-none focus:border-[#d9a94f]/55"
               >
                 <option value="all">All hook variants</option>
                 <option value="danger">Danger</option>
@@ -499,8 +559,8 @@ export default function Step2EngineQuality({
               onClick={onToggleFastPublishMode}
               className={`rounded-2xl border px-3.5 py-2 text-xs font-semibold transition-all active:scale-95 ${
                 fastPublishMode
-                  ? "border-gray-900 bg-gray-900 text-white shadow-sm shadow-gray-300/60"
-                  : "border-gray-200 bg-white text-gray-600 shadow-sm shadow-gray-100/80 hover:bg-gray-50"
+                  ? "border-[#d9a94f]/60 bg-[#d9a94f] text-[#111207] shadow-sm shadow-[#d9a94f]/20"
+                  : "border-[#2d3d28] bg-[#071009] text-[#c9d2bd] shadow-sm shadow-black/20 hover:border-[#d9a94f]/35"
               }`}
             >
               {fastPublishMode ? "⚡ Fast Publish: ON" : "⚡ Fast Publish: OFF"}
@@ -510,8 +570,8 @@ export default function Step2EngineQuality({
               onClick={onToggleStrictOriginalityGuard}
               className={`rounded-2xl border px-3.5 py-2 text-xs font-semibold transition-all active:scale-95 ${
                 strictOriginalityGuard
-                  ? "border-emerald-200 bg-emerald-50 text-emerald-700 shadow-sm shadow-emerald-100/70"
-                  : "border-gray-200 bg-white text-gray-600 shadow-sm shadow-gray-100/80 hover:bg-gray-50"
+                  ? "border-emerald-400/35 bg-emerald-500/10 text-emerald-200 shadow-sm shadow-emerald-950/20"
+                  : "border-[#2d3d28] bg-[#071009] text-[#c9d2bd] shadow-sm shadow-black/20 hover:border-emerald-400/35"
               }`}
             >
               {strictOriginalityGuard
@@ -520,28 +580,28 @@ export default function Step2EngineQuality({
             </button>
           </div>
 
-          <div className="mt-4 rounded-xl border border-gray-100 bg-gray-50 p-3 text-xs text-gray-600">
+          <div className="mt-4 rounded-2xl border border-[#2d3d28] bg-[#071009] p-3 text-xs text-[#9da892]">
             <div>
-              <span className="font-semibold text-gray-700">U.S. score:</span>{" "}
+              <span className="font-semibold text-[#f7f1df]">U.S. score:</span>{" "}
               {previewAudienceScore.total}/100
             </div>
             <div className="mt-1">
-              <span className="font-semibold text-gray-700">Opening score:</span>{" "}
+              <span className="font-semibold text-[#f7f1df]">Opening score:</span>{" "}
               {previewOpeningFrameScore.total}/100
             </div>
             <div className="mt-1">
-              <span className="font-semibold text-gray-700">Publish guard:</span>{" "}
+              <span className="font-semibold text-[#f7f1df]">Publish guard:</span>{" "}
               {previewPublishGuardReport.isPass ? "Pass" : "Needs cleanup"}
             </div>
           </div>
-        </section>
+          </StudioCard>
 
-        <section className="rounded-2xl border border-gray-200 bg-white p-5 sm:p-6">
+          <StudioCard tone="cyan">
           <div className="mb-4 flex flex-wrap items-center justify-between gap-2">
-            <h3 className="text-[11px] font-semibold uppercase tracking-[0.1em] text-gray-400">
-              Model Profile
+            <h3 className="text-[11px] font-black uppercase tracking-[0.18em] text-[#d9a94f]">
+              Engine Stack
             </h3>
-            <span className="rounded-full bg-gray-100 px-2.5 py-1 text-[10px] font-medium text-gray-500">
+            <span className="rounded-full border border-cyan-400/25 bg-cyan-500/10 px-2.5 py-1 text-[10px] font-medium text-cyan-200">
               grouped by workflow
             </span>
           </div>
@@ -558,19 +618,19 @@ export default function Step2EngineQuality({
             />
           </div>
 
-          <div className="mb-4 rounded-2xl border border-gray-100 bg-gray-50 px-3.5 py-2.5 text-[11px] font-medium leading-relaxed text-gray-600">
+          <div className="mb-4 rounded-2xl border border-[#2d3d28] bg-[#071009] px-3.5 py-2.5 text-[11px] font-medium leading-relaxed text-[#9da892]">
             Video models are now organized by workflow role. Every card can be
             selected through the new expanded video model field, while legacy
             Runway/Kling fields stay intact for old presets and prompt generation.
           </div>
 
-          <div className="mb-4 rounded-2xl border border-indigo-100 bg-indigo-50 p-3.5">
+          <div className="mb-4 rounded-2xl border border-[#d9a94f]/25 bg-[#d9a94f]/10 p-3.5">
             <div className="flex flex-wrap items-center justify-between gap-2">
               <div>
-                <div className="text-[10px] font-semibold uppercase tracking-[0.08em] text-indigo-700">
+                <div className="text-[10px] font-semibold uppercase tracking-[0.08em] text-[#d9a94f]">
                   Recommended for this scene
                 </div>
-                <p className="mt-1 text-[11px] leading-relaxed text-indigo-800">
+                <p className="mt-1 text-[11px] leading-relaxed text-[#c9d2bd]">
                   Uses current action style, arc, and content lane. Auto-select is
                   off by default; when enabled it updates the expanded selected model,
                   and legacy Runway/Kling fields only sync for matching legacy models.
@@ -592,8 +652,8 @@ export default function Step2EngineQuality({
                   }
                   className={`rounded-full border px-3 py-1.5 text-[10px] font-semibold transition-all active:scale-[0.98] ${
                     autoSelectRecommendedVideoModel
-                      ? "border-indigo-600 bg-indigo-600 text-white"
-                      : "border-indigo-200 bg-white text-indigo-700 hover:bg-indigo-100"
+                      ? "border-[#d9a94f] bg-[#d9a94f] text-[#111207]"
+                      : "border-[#d9a94f]/35 bg-[#071009] text-[#f3c766] hover:bg-[#d9a94f]/10"
                   }`}
                 >
                   Auto-select best model for scene: {autoSelectRecommendedVideoModel ? "ON" : "OFF"}
@@ -614,12 +674,12 @@ export default function Step2EngineQuality({
                     key={recommendation.id}
                     className={`rounded-xl border px-3 py-2.5 ${
                       isSelected
-                        ? "border-indigo-300 bg-white shadow-sm shadow-indigo-100"
-                        : "border-indigo-100 bg-white/85"
+                        ? "border-[#d9a94f]/45 bg-[#131409] shadow-sm shadow-[#d9a94f]/10"
+                        : "border-[#2d3d28] bg-[#071009]"
                     }`}
                   >
                     <div className="flex flex-wrap items-center justify-between gap-2">
-                      <span className="text-xs font-semibold text-gray-900">
+                      <span className="text-xs font-semibold text-[#f7f1df]">
                         {recommendation.label}
                       </span>
                       <div className="flex flex-wrap items-center gap-1.5">
@@ -649,15 +709,15 @@ export default function Step2EngineQuality({
                         </span>
                       </div>
                     </div>
-                    <p className="mt-1.5 text-[11px] leading-relaxed text-gray-700">
-                      <span className="font-semibold text-gray-900">Why:</span>{" "}
+                    <p className="mt-1.5 text-[11px] leading-relaxed text-[#c9d2bd]">
+                      <span className="font-semibold text-[#f7f1df]">Why:</span>{" "}
                       {recommendation.reason}
                     </p>
-                    <p className="mt-1 text-[11px] leading-relaxed text-gray-600">
-                      <span className="font-semibold text-gray-800">Best for:</span>{" "}
+                    <p className="mt-1 text-[11px] leading-relaxed text-[#9da892]">
+                      <span className="font-semibold text-[#c9d2bd]">Best for:</span>{" "}
                       {recommendation.bestFor}
                     </p>
-                    <p className="mt-1 text-[10px] font-semibold uppercase tracking-[0.08em] text-gray-500">
+                    <p className="mt-1 text-[10px] font-semibold uppercase tracking-[0.08em] text-[#71806b]">
                       {patch?.runwayModel
                         ? "Updates selected model and legacy Runway model"
                         : patch?.klingModel
@@ -668,7 +728,7 @@ export default function Step2EngineQuality({
                       type="button"
                       disabled={isSelected}
                       onClick={() => handleApplySceneRecommendation(recommendation)}
-                      className="mt-2 rounded-xl border border-indigo-200 bg-indigo-600 px-3 py-1.5 text-[11px] font-semibold text-white shadow-sm shadow-indigo-100 transition-all hover:bg-indigo-700 disabled:border-gray-200 disabled:bg-gray-100 disabled:text-gray-500 disabled:shadow-none active:scale-[0.98]"
+                      className="mt-2 rounded-xl border border-[#d9a94f]/40 bg-[#d9a94f] px-3 py-1.5 text-[11px] font-semibold text-[#111207] shadow-sm shadow-[#d9a94f]/10 transition-all hover:bg-[#f3c766] disabled:border-[#2d3d28] disabled:bg-[#101a10] disabled:text-[#71806b] disabled:shadow-none active:scale-[0.98]"
                     >
                       {isSelected ? "Recommended model selected" : "Apply Recommended Model"}
                     </button>
@@ -747,22 +807,22 @@ export default function Step2EngineQuality({
           </div>
 
           <div className="mt-4 grid gap-3 md:grid-cols-2">
-            <div className="rounded-xl border border-green-100 bg-green-50 px-3.5 py-3 text-xs leading-relaxed text-green-900">
+            <div className="rounded-xl border border-emerald-400/20 bg-emerald-500/10 px-3.5 py-3 text-xs leading-relaxed text-emerald-100">
               <div className="text-[10px] font-semibold uppercase tracking-[0.08em] text-green-700">
                 Runway I2V rule
               </div>
-              <ul className="mt-2 space-y-1 text-[11px] text-green-800">
+              <ul className="mt-2 space-y-1 text-[11px] text-emerald-100/85">
                 <li>• Gen-4 Turbo: cheap first structure tests</li>
                 <li>• Gen-4.5: final cinematic wildlife hero shots</li>
                 <li>• Motion/camera/physics only; reference images carry identity</li>
                 <li>• Preserve @lead_animal, @opposite_animal, @environment</li>
               </ul>
             </div>
-            <div className="rounded-xl border border-blue-100 bg-blue-50 px-3.5 py-3 text-xs leading-relaxed text-blue-900">
-              <div className="text-[10px] font-semibold uppercase tracking-[0.08em] text-blue-700">
+            <div className="rounded-xl border border-cyan-400/20 bg-cyan-500/10 px-3.5 py-3 text-xs leading-relaxed text-cyan-100">
+              <div className="text-[10px] font-semibold uppercase tracking-[0.08em] text-cyan-200">
                 Action routing rule
               </div>
-              <ul className="mt-2 space-y-1 text-[11px] text-blue-800">
+              <ul className="mt-2 space-y-1 text-[11px] text-cyan-100/85">
                 <li>• Kling: grounded animal pressure and body mechanics</li>
                 <li>• Seedance 2: fast chase/action and retention pacing</li>
                 <li>• Aleph: edit/manipulate existing footage only</li>
@@ -770,21 +830,21 @@ export default function Step2EngineQuality({
               </ul>
             </div>
           </div>
-        </section>
+          </StudioCard>
 
-        <section className="rounded-2xl border border-gray-200 bg-white p-5 sm:p-6">
-          <h3 className="mb-4 text-[11px] font-semibold uppercase tracking-[0.1em] text-gray-400">
-            Quality Toggles
+          <StudioCard>
+          <h3 className="mb-4 text-[11px] font-black uppercase tracking-[0.18em] text-[#d9a94f]">
+            Quality Settings
           </h3>
           <QualityPanel {...qualityPanelProps} />
-          <div className="mt-4 border-t border-gray-100 pt-4">
+          <div className="mt-4 border-t border-[#2d3d28] pt-4">
             <label className="mb-1.5 block text-[11px] font-medium text-gray-500">
               Image Prompt Engine
             </label>
-            <div className="rounded-xl border border-gray-200 bg-gray-50 px-3 py-2.5 text-sm font-medium text-gray-900">
+            <div className="rounded-xl border border-[#2d3d28] bg-[#071009] px-3 py-2.5 text-sm font-medium text-[#f7f1df]">
               Nano Banana 2 primary image master prompt
             </div>
-            <div className="mt-2 text-xs leading-relaxed text-gray-500">
+            <div className="mt-2 text-xs leading-relaxed text-[#9da892]">
               Image prompt generation is fixed to the Nano Banana path. Runway and
               Kling stay motion/video only.
             </div>
@@ -816,16 +876,16 @@ export default function Step2EngineQuality({
               Video prompts मा appearance नलेख — reference image नै identity हो।
             </div>
           </div>
-        </section>
+          </StudioCard>
       </div>
 
-      <div className="space-y-6">
-        <section className="rounded-2xl border border-gray-200 bg-white p-5 sm:p-6">
+      <div className="space-y-4">
+        <StudioCard tone="cyan">
           <div className="mb-4 flex items-center justify-between">
-            <h3 className="text-[11px] font-semibold uppercase tracking-[0.1em] text-gray-400">
-              📎 Media Upload
+            <h3 className="text-[11px] font-black uppercase tracking-[0.18em] text-[#d9a94f]">
+              Media Analysis
             </h3>
-            <span className="rounded-full bg-purple-50 px-2.5 py-1 text-[10px] font-semibold text-purple-600">
+            <span className="rounded-full border border-cyan-400/25 bg-cyan-500/10 px-2.5 py-1 text-[10px] font-semibold text-cyan-200">
               Auto Analyze
             </span>
           </div>
@@ -835,9 +895,9 @@ export default function Step2EngineQuality({
             onAnalysisComplete={onMediaAnalysisComplete}
             onClear={onClearMediaAnalysis}
           />
-        </section>
+        </StudioCard>
 
-        <section id="qa-scene-description-controls" className="rounded-2xl border border-orange-200 bg-orange-50 p-5 sm:p-6">
+        <StudioCard id="qa-scene-description-controls" tone="warning">
           <div className="mb-4 flex flex-wrap items-start justify-between gap-3">
             <div>
               <h3 className="text-[11px] font-semibold uppercase tracking-[0.1em] text-orange-500">
@@ -962,9 +1022,9 @@ export default function Step2EngineQuality({
                 : `${sceneDescription.trim().length} chars`}
             </span>
           </div>
-        </section>
+        </StudioCard>
 
-        <section className={`rounded-2xl border p-5 sm:p-6 ${promptHealthColor}`}>
+        <section className={`rounded-[26px] border p-4 shadow-[0_18px_55px_rgba(0,0,0,0.24)] sm:p-5 ${promptHealthColor}`}>
           <div className="flex flex-wrap items-center justify-between gap-3">
             <div>
               <h3 className="text-[11px] font-semibold uppercase tracking-[0.1em] opacity-70">
@@ -1096,13 +1156,13 @@ export default function Step2EngineQuality({
           </div>
         </section>
 
-        <div className="rounded-[24px] border border-gray-200 bg-white p-4 shadow-sm shadow-gray-100/80 sm:p-5">
+        <div className="rounded-[24px] border border-[#2d3d28] bg-[#0c130d] p-4 shadow-[0_18px_55px_rgba(0,0,0,0.24)] sm:p-5">
           <div className="flex flex-wrap items-start justify-between gap-3">
             <div>
-              <div className="text-[11px] font-semibold uppercase tracking-[0.1em] text-gray-400">
+              <div className="text-[11px] font-black uppercase tracking-[0.18em] text-[#d9a94f]">
                 Current Setup
               </div>
-              <div className="mt-1 text-sm font-semibold text-gray-900">
+              <div className="mt-1 text-sm font-semibold text-[#f7f1df]">
                 {predator} vs {prey}
               </div>
               <div className="mt-2 flex flex-wrap gap-2">
@@ -1129,22 +1189,23 @@ export default function Step2EngineQuality({
         </div>
       </div>
 
-      <div className="flex flex-wrap gap-2 border-t border-gray-200/80 pt-5 lg:col-span-2">
+      <div className="flex flex-wrap gap-2 border-t border-[#2d3d28] pt-5 lg:col-span-2">
         <button
           type="button"
           onClick={onBack}
-          className="rounded-2xl border border-gray-200 bg-white px-5 py-2.5 text-sm font-semibold text-gray-600 shadow-sm shadow-gray-100/80 hover:bg-gray-50 active:scale-[0.98]"
+          className="rounded-2xl border border-[#2d3d28] bg-[#071009] px-5 py-2.5 text-sm font-semibold text-[#c9d2bd] shadow-sm shadow-black/20 hover:border-[#d9a94f]/35 active:scale-[0.98]"
         >
           ← Back
         </button>
         <button
           type="button"
           onClick={onContinue}
-          className="rounded-2xl bg-gray-900 px-5 py-2.5 text-sm font-semibold text-white shadow-sm shadow-gray-300/70 hover:bg-black active:scale-[0.98]"
+          className="rounded-2xl bg-[#d9a94f] px-5 py-2.5 text-sm font-semibold text-[#111207] shadow-sm shadow-[#d9a94f]/20 hover:bg-[#f3c766] active:scale-[0.98]"
         >
           Continue → Generate
         </button>
       </div>
+    </div>
     </div>
   );
 }

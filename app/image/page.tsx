@@ -249,18 +249,18 @@ export default function ImagePage() {
     IMAGE_STUDIO_WORKSPACE_ITEMS[0];
 
   const headerMeta = (
-    <div className="max-w-full min-w-0 overflow-x-auto scroll-px-4 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden sm:overflow-visible">
-      <div className="flex w-max min-w-full flex-nowrap gap-2 pr-3 sm:w-auto sm:min-w-0 sm:flex-wrap sm:pr-0">
-        <span className="inline-flex shrink-0 whitespace-nowrap rounded-full border border-cyan-400/30 bg-cyan-500/10 px-3 py-1 text-xs font-semibold text-cyan-200">
+    <div className="max-w-full min-w-0 overflow-hidden">
+      <div className="grid min-w-0 grid-cols-1 gap-2 sm:flex sm:flex-wrap">
+        <span className="inline-flex min-w-0 justify-center whitespace-normal break-words rounded-full border border-cyan-400/30 bg-cyan-500/10 px-3 py-1.5 text-center text-xs font-semibold leading-snug text-cyan-200 [overflow-wrap:anywhere] sm:shrink-0 sm:whitespace-nowrap">
           {selectedPreset.collection}
         </span>
-        <span className="inline-flex shrink-0 whitespace-nowrap rounded-full border border-white/[0.08] bg-white/[0.04] px-3 py-1 text-xs font-semibold text-[color:var(--muted)]">
+        <span className="inline-flex min-w-0 justify-center whitespace-normal break-words rounded-full border border-white/[0.08] bg-white/[0.04] px-3 py-1.5 text-center text-xs font-semibold leading-snug text-[color:var(--muted)] [overflow-wrap:anywhere] sm:shrink-0 sm:whitespace-nowrap">
           Nano Banana 2 + GPT Image 2
         </span>
-        <span className="inline-flex shrink-0 whitespace-nowrap rounded-full border border-white/[0.08] bg-white/[0.04] px-3 py-1 text-xs font-semibold text-[color:var(--muted)]">
+        <span className="inline-flex min-w-0 justify-center whitespace-normal break-words rounded-full border border-white/[0.08] bg-white/[0.04] px-3 py-1.5 text-center text-xs font-semibold leading-snug text-[color:var(--muted)] [overflow-wrap:anywhere] sm:shrink-0 sm:whitespace-nowrap">
           American English only
         </span>
-        <span className="inline-flex shrink-0 whitespace-nowrap rounded-full border border-white/[0.08] bg-white/[0.04] px-3 py-1 text-xs font-semibold text-[color:var(--muted)]">
+        <span className="inline-flex min-w-0 justify-center whitespace-normal break-words rounded-full border border-white/[0.08] bg-white/[0.04] px-3 py-1.5 text-center text-xs font-semibold leading-snug text-[color:var(--muted)] [overflow-wrap:anywhere] sm:shrink-0 sm:whitespace-nowrap">
           Exactly 5 hashtags
         </span>
       </div>
@@ -280,16 +280,16 @@ export default function ImagePage() {
             </span>
           </Link>
           <nav className="flex max-w-full items-center gap-1 overflow-x-auto rounded-2xl border border-white/[0.08] bg-white/[0.04] p-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-            <Link className="rounded-xl px-3.5 py-2 text-xs font-semibold text-white/55 hover:bg-white/[0.06] hover:text-white" href="/">
+            <Link className="shrink-0 whitespace-nowrap rounded-xl px-3.5 py-2 text-xs font-semibold text-white/55 hover:bg-white/[0.06] hover:text-white" href="/">
               Build
             </Link>
-            <Link className="rounded-xl px-3.5 py-2 text-xs font-semibold text-white/55 hover:bg-white/[0.06] hover:text-white" href="/?tab=workflows">
+            <Link className="shrink-0 whitespace-nowrap rounded-xl px-3.5 py-2 text-xs font-semibold text-white/55 hover:bg-white/[0.06] hover:text-white" href="/?tab=workflows">
               Workflows
             </Link>
-            <Link className="rounded-xl bg-white px-3.5 py-2 text-xs font-semibold text-gray-950" href="/image">
+            <Link className="shrink-0 whitespace-nowrap rounded-xl bg-white px-3.5 py-2 text-xs font-semibold text-gray-950" href="/image">
               Image
             </Link>
-            <Link className="rounded-xl px-3.5 py-2 text-xs font-semibold text-white/55 hover:bg-white/[0.06] hover:text-white" href="/storyboard">
+            <Link className="shrink-0 whitespace-nowrap rounded-xl px-3.5 py-2 text-xs font-semibold text-white/55 hover:bg-white/[0.06] hover:text-white" href="/storyboard">
               Storyboard
             </Link>
           </nav>
@@ -301,17 +301,17 @@ export default function ImagePage() {
           <p className="text-xs font-black uppercase tracking-[0.2em] text-cyan-300">
             Photo-only content studio
           </p>
-          <h1 className="mt-2 text-[1.9rem] font-black tracking-tight text-white sm:text-4xl">
+          <h1 className="mt-2 break-words text-[1.7rem] font-black leading-tight tracking-tight text-white sm:text-4xl">
             World Scenic Wildlife Image Studio
           </h1>
           <p className="mt-2 max-w-4xl text-sm leading-6 text-white/60">
             Nano Banana 2 + GPT Image 2 prompts, American English Facebook captions, USA-viral hashtags, 3 variations, 5-post packs, and prompt quality checks.
           </p>
-          <div className="mt-3 flex gap-2 overflow-x-auto pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden sm:mt-4 sm:flex-wrap sm:overflow-visible sm:pb-0">
+          <div className="mt-3 flex flex-wrap gap-2 sm:mt-4">
             {IMAGE_STUDIO_FEATURE_BADGES.map((item) => (
               <div
                 key={item}
-                className="shrink-0 rounded-full border border-white/[0.08] bg-white/[0.04] px-3 py-1.5 text-xs font-black text-white/75"
+                className="min-w-0 rounded-full border border-white/[0.08] bg-white/[0.04] px-3 py-1.5 text-xs font-black leading-snug text-white/75 [overflow-wrap:anywhere]"
               >
                 {item}
               </div>

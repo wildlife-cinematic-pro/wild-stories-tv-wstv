@@ -24,7 +24,7 @@ function CopyAllButton({
     <button
       type="button"
       onClick={copy}
-      className={`rounded-2xl border px-3 py-1.5 text-xs font-bold transition ${
+      className={`min-h-9 whitespace-normal rounded-2xl border px-3 py-1.5 text-xs font-bold leading-snug transition ${
         copiedKey === "all"
           ? "border-emerald-400/40 bg-emerald-400/10 text-emerald-300"
           : "border-white/10 bg-white/[0.04] text-white/65 hover:bg-white/[0.08] hover:text-white"
@@ -37,9 +37,10 @@ function CopyAllButton({
 
 function StatCard({ label, value }: { label: string; value: string }) {
   return (
-    <WorkspaceCard className="h-full bg-[color:var(--surface-elevated)]" title={value} eyebrow={label}>
-      <div className="hidden" />
-    </WorkspaceCard>
+    <section className="h-full min-w-0 rounded-[24px] border border-[color:var(--border)] bg-[color:var(--surface-elevated)] p-4 shadow-[var(--surface-shadow)]">
+      <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-cyan-300/80">{label}</p>
+      <p className="mt-2 break-words text-base font-semibold leading-snug text-[color:var(--text)] [overflow-wrap:anywhere] sm:text-lg">{value}</p>
+    </section>
   );
 }
 
@@ -90,7 +91,7 @@ export default function ImageStudioOutputs({
           }
           actions={<CopyAllButton value={copyAll} copiedKey={copiedKey} onCopied={setCopiedKey} />}
         >
-          <div className="grid gap-3 sm:gap-4 md:grid-cols-2 xl:grid-cols-4">
+          <div className="grid min-w-0 gap-3 sm:gap-4 md:grid-cols-2 xl:grid-cols-4">
             <StatCard label="Collection" value={selectedCollection} />
             <StatCard label="Model outputs" value="Nano Banana 2 + GPT Image 2" />
             <StatCard label="Caption" value="American English" />

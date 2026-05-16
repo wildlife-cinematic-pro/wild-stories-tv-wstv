@@ -230,34 +230,56 @@ function PromptBlock({
   const characterLabel = maxChars ? `${text.length.toLocaleString()} / ${maxChars.toLocaleString()}` : `${text.length.toLocaleString()} chars`;
 
   return (
-    <div className="rounded-2xl border border-[color:var(--border)] bg-[color:var(--surface)] p-4">
+    <div className="min-w-0 rounded-2xl border border-[color:var(--border)] bg-[#0d140d]/80 p-4 shadow-[inset_0_1px_0_rgba(255,255,255,0.04)] transition hover:border-cyan-400/35 sm:p-5">
       <div className="flex flex-wrap items-start justify-between gap-3">
-        <div>
-          <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-[color:var(--muted)]">
+        <div className="min-w-0 flex-1">
+          <p className="break-words text-[11px] font-semibold uppercase tracking-[0.18em] text-[color:var(--muted)] [overflow-wrap:anywhere]">
             {title}
           </p>
-          <p className={[
-            "mt-1 text-xs",
-            isNearLimit ? "text-[color:var(--warning-text)]" : "text-[color:var(--muted)]",
-          ].join(" ")}
+          <p
+            className={[
+              "mt-1 text-xs leading-5",
+              isNearLimit ? "text-[color:var(--warning-text)]" : "text-[color:var(--muted)]",
+            ].join(" ")}
           >
             Copyable prompt body · {maxChars ? `Kling: ${characterLabel}` : characterLabel}
           </p>
         </div>
         <CopyButton text={text} label={copyLabel} idleText={copyLabel} size="sm" />
       </div>
-      <p className="mt-3 whitespace-pre-wrap break-words text-sm leading-6 text-[color:var(--text)]">
+      <p className="mt-3 whitespace-pre-wrap break-words rounded-xl border border-white/5 bg-black/20 p-3 text-sm leading-6 text-[color:var(--text)] [overflow-wrap:anywhere]">
         {text}
       </p>
     </div>
   );
 }
-
 function ShotCard({ shot }: { shot: StoryboardShot }) {
   return (
-    <article className="rounded-[28px] border border-[color:var(--border)] bg-[color:var(--surface-elevated)] p-5 shadow-[var(--surface-shadow)] sm:p-6">
-      <div className="flex flex-wrap items-start justify-between gap-4 border-b border-[color:var(--border)] pb-5">
-        <div className="max-w-3xl">
+    <article className="min-w-0 overflow-hidden rounded-[28px] border border-[color:var(--border)] bg-[linear-gradient(135deg,rgba(18,29,18,0.96),rgba(9,13,9,0.98))] shadow-[var(--surface-shadow)]">
+      <div className="grid gap-5 border-b border-[color:var(--border)] p-5 sm:p-6 lg:grid-cols-[220px_minmax(0,1fr)]">
+        <div className="relative min-h-40 overflow-hidden rounded-2xl border border-amber-300/20 bg-[radial-gradient(circle_at_30%_20%,rgba(245,193,91,0.22),transparent_34%),linear-gradient(145deg,rgba(16,27,16,0.95),rgba(4,8,5,0.98))] p-4">
+          <div className="absolute inset-x-4 top-4 flex items-center justify-between gap-2">
+            <span className="rounded-full border border-amber-300/35 bg-amber-300/10 px-3 py-1 text-[11px] font-bold uppercase tracking-[0.16em] text-amber-200">
+              Shot {shot.shotNumber}
+            </span>
+            <span className="rounded-full border border-emerald-400/35 bg-emerald-500/10 px-3 py-1 text-[11px] font-semibold text-emerald-200">
+              Prompt-ready
+            </span>
+          </div>
+          <div className="absolute inset-x-4 bottom-4">
+            <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-cyan-200/80">
+              Production slate
+            </p>
+            <p className="mt-2 text-3xl font-semibold tracking-tight text-[color:var(--text)]">
+              {shot.timeRangeLabel}
+            </p>
+            <p className="mt-1 text-xs font-semibold uppercase tracking-[0.14em] text-[color:var(--muted)]">
+              Continuity locked · 5s beat
+            </p>
+          </div>
+        </div>
+
+        <div className="min-w-0">
           <div className="flex flex-wrap items-center gap-2">
             <span className="rounded-full border border-cyan-400/35 bg-cyan-500/10 px-3 py-1 text-xs font-semibold text-cyan-300">
               Shot {shot.shotNumber}
@@ -269,23 +291,23 @@ function ShotCard({ shot }: { shot: StoryboardShot }) {
               5s
             </span>
           </div>
-          <h2 className="mt-3 text-2xl font-semibold tracking-tight text-[color:var(--text)]">
+          <h2 className="mt-3 break-words text-2xl font-semibold tracking-tight text-[color:var(--text)] [overflow-wrap:anywhere] sm:text-3xl">
             {shot.title}
           </h2>
           <p className="mt-2 text-sm font-semibold uppercase tracking-[0.16em] text-[color:var(--muted)]">
             Role: {shot.role}
           </p>
-          <p className="mt-3 text-base leading-7 text-[color:var(--text)]">{shot.summary}</p>
+          <p className="mt-3 max-w-4xl text-base leading-7 text-[color:var(--text)]">{shot.summary}</p>
         </div>
       </div>
 
-      <div className="mt-5 grid gap-5 xl:grid-cols-[minmax(0,1fr)_minmax(0,0.9fr)]">
-        <section className="space-y-4">
-          <div>
-            <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-cyan-400">
+      <div className="grid gap-5 p-5 sm:p-6 xl:grid-cols-[minmax(0,1fr)_minmax(280px,0.82fr)]">
+        <section className="min-w-0 space-y-4">
+          <div className="rounded-2xl border border-cyan-400/20 bg-cyan-500/5 p-4">
+            <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-cyan-300">
               Image Prompt Pack
             </p>
-            <p className="mt-1 text-sm text-[color:var(--muted)]">
+            <p className="mt-1 text-sm leading-6 text-[color:var(--muted)]">
               Copy a long production-ready prompt or a compact fast-use prompt, then use the matching Kling motion prompt.
             </p>
           </div>
@@ -311,12 +333,12 @@ function ShotCard({ shot }: { shot: StoryboardShot }) {
           />
         </section>
 
-        <section className="space-y-4">
-          <div>
-            <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-cyan-400">
+        <section className="min-w-0 space-y-4">
+          <div className="rounded-2xl border border-amber-300/20 bg-amber-300/5 p-4">
+            <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-amber-200">
               Video Motion Prompt Pack
             </p>
-            <p className="mt-1 text-sm text-[color:var(--muted)]">
+            <p className="mt-1 text-sm leading-6 text-[color:var(--muted)]">
               One controlled 5-second Kling beat for this shot.
             </p>
           </div>
@@ -327,13 +349,13 @@ function ShotCard({ shot }: { shot: StoryboardShot }) {
             maxChars={2500}
           />
 
-          <div className="rounded-2xl border border-[color:var(--border)] bg-[color:var(--surface)] p-4">
+          <div className="rounded-2xl border border-[color:var(--border)] bg-[#0d140d]/80 p-4 shadow-[inset_0_1px_0_rgba(255,255,255,0.04)]">
             <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-[color:var(--muted)]">
               Shot Notes
             </p>
             <ul className="mt-3 space-y-2 text-sm leading-6 text-[color:var(--text)]">
               {shot.notes.map((note) => (
-                <li key={note}>- {note}</li>
+                <li key={note} className="break-words [overflow-wrap:anywhere]">- {note}</li>
               ))}
             </ul>
           </div>
@@ -342,7 +364,6 @@ function ShotCard({ shot }: { shot: StoryboardShot }) {
     </article>
   );
 }
-
 export default function CinematicStoryboardPage() {
   const [input, setInput] = useState<CinematicStoryboardInput>({});
   const [providerPolishConfig, setProviderPolishConfig] = useState<ProviderPolishConfig>(
@@ -395,23 +416,23 @@ export default function CinematicStoryboardPage() {
   }, [localStoryboard, providerPolishConfig]);
 
   return (
-    <main className="min-h-screen bg-[color:var(--bg)] px-4 py-10 text-[color:var(--text)] sm:px-6 lg:px-8">
-      <div className="mx-auto max-w-7xl space-y-8">
-        <section className="overflow-hidden rounded-[28px] border border-[color:var(--border)] bg-[color:var(--surface-elevated)] shadow-[var(--surface-shadow)]">
-          <div className="border-b border-[color:var(--border)] bg-[color:var(--surface)] p-6 sm:p-8">
+    <main className="min-h-screen overflow-x-hidden bg-[#071009] px-3 py-6 text-[color:var(--text)] sm:px-6 sm:py-8 lg:px-8">
+      <div className="mx-auto max-w-[1500px] space-y-6 sm:space-y-8">
+        <section className="overflow-hidden rounded-[30px] border border-emerald-300/15 bg-[linear-gradient(135deg,rgba(17,26,17,0.98),rgba(7,12,7,0.98))] shadow-[0_24px_80px_rgba(0,0,0,0.42)]">
+          <div className="border-b border-emerald-300/10 bg-[radial-gradient(circle_at_top_left,rgba(245,193,91,0.13),transparent_34%),linear-gradient(135deg,rgba(13,20,13,0.96),rgba(7,12,7,0.94))] p-5 sm:p-8">
             <div className="flex flex-wrap items-start justify-between gap-5">
-              <div className="max-w-3xl">
-                <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-cyan-400">
-                  Storyboard
+              <div className="min-w-0 max-w-4xl">
+                <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-amber-200">
+                  Production Storyboard Board
                 </p>
-                <h1 className="mt-2 text-3xl font-semibold tracking-tight text-[color:var(--text)] sm:text-4xl">
+                <h1 className="mt-2 break-words text-3xl font-semibold tracking-tight text-[color:var(--text)] [overflow-wrap:anywhere] sm:text-4xl">
                   Pencil Wildlife 4-Shot Storyboard Planner
                 </h1>
                 <p className="mt-3 text-sm leading-6 text-[color:var(--muted)]">
                   Build setup to GPT Image 2 and Nano Banana 2 long/short pencil storyboard prompts, plus four Kling motion prompts.
                 </p>
               </div>
-              <div className="flex flex-wrap items-center gap-3">
+              <div className="flex min-w-0 flex-wrap items-center justify-start gap-2 sm:justify-end">
                 {loadedFromBuild ? (
                   <span className="rounded-full border border-cyan-400/35 bg-cyan-500/10 px-3 py-1 text-xs font-semibold text-cyan-300">
                     Loaded from Build setup
@@ -428,13 +449,13 @@ export default function CinematicStoryboardPage() {
                 ) : null}
                 <Link
                   href="/four-shot-photo"
-                  className="rounded-xl border border-cyan-400/35 bg-cyan-500/10 px-4 py-2 text-sm font-semibold text-cyan-200 transition hover:border-cyan-300/70 hover:bg-cyan-500/15 hover:text-cyan-100"
+                  className="inline-flex min-h-10 max-w-full items-center justify-center rounded-xl border border-cyan-400/35 bg-cyan-500/10 px-4 py-2 text-center text-sm font-semibold leading-snug text-cyan-200 transition [overflow-wrap:anywhere] hover:border-cyan-300/70 hover:bg-cyan-500/15 hover:text-cyan-100"
                 >
                   4-Shot Same Environment Photo Generator
                 </Link>
                 <Link
                   href="/"
-                  className="rounded-xl border border-[color:var(--border)] bg-[color:var(--surface)] px-4 py-2 text-sm font-semibold text-[color:var(--text)] transition hover:border-cyan-400/60 hover:text-cyan-300"
+                  className="inline-flex min-h-10 max-w-full items-center justify-center rounded-xl border border-[color:var(--border)] bg-[color:var(--surface)] px-4 py-2 text-center text-sm font-semibold leading-snug text-[color:var(--text)] transition [overflow-wrap:anywhere] hover:border-cyan-400/60 hover:text-cyan-300"
                 >
                   Back to Build
                 </Link>
@@ -442,7 +463,7 @@ export default function CinematicStoryboardPage() {
             </div>
           </div>
 
-          <div className="grid gap-4 p-6 sm:p-8 lg:grid-cols-4">
+          <div className="grid gap-3 p-5 sm:p-8 md:grid-cols-2 xl:grid-cols-4">
             <div className="rounded-2xl border border-[color:var(--border)] bg-[color:var(--surface)] p-4">
               <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-[color:var(--muted)]">Story Mode</p>
               <p className="mt-2 text-lg font-semibold text-[color:var(--text)]">{storyboard.summary.storyModeLabel}</p>
@@ -464,7 +485,7 @@ export default function CinematicStoryboardPage() {
           </div>
         </section>
 
-        <section className="rounded-[28px] border border-[color:var(--border)] bg-[color:var(--surface-elevated)] p-5 shadow-[var(--surface-shadow)] sm:p-6">
+        <section className="rounded-[28px] border border-[color:var(--border)] bg-[linear-gradient(135deg,rgba(18,29,18,0.96),rgba(9,13,9,0.98))] p-5 shadow-[var(--surface-shadow)] sm:p-6">
           <div className="flex flex-wrap items-start justify-between gap-5">
             <div>
               <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-cyan-400">
@@ -477,7 +498,7 @@ export default function CinematicStoryboardPage() {
                 Image variants: {storyboard.summary.imagePromptVariants.join(", ")} · Motion engine: {storyboard.summary.motionEngine} · Every shot is 5 seconds.
               </p>
             </div>
-            <div className="flex flex-wrap gap-2">
+            <div className="grid w-full min-w-0 grid-cols-1 gap-2 sm:grid-cols-2 xl:w-auto xl:grid-cols-3 2xl:grid-cols-5">
               <CopyButton text={storyboard.copy.allGptImage2Long} label="All GPT Image 2 Long Prompts" idleText="Copy All GPT Image 2 Long" size="md" />
               <CopyButton text={storyboard.copy.allGptImage2Short} label="All GPT Image 2 Short Prompts" idleText="Copy All GPT Image 2 Short" size="md" />
               <CopyButton text={storyboard.copy.allNanoBanana2Long} label="All Nano Banana 2 Long Prompts" idleText="Copy All Nano Banana 2 Long" size="md" />
@@ -487,7 +508,7 @@ export default function CinematicStoryboardPage() {
           </div>
         </section>
 
-        <section className="space-y-6">
+        <section className="space-y-6 pb-6">
           {storyboard.shots.map((shot) => (
             <ShotCard key={shot.id} shot={shot} />
           ))}
