@@ -143,6 +143,7 @@ function OutputBlock({ title, nano, gpt }: { title: string; nano: string; gpt: s
     </article>
   );
 }
+
 async function requestFourShotProviderPolish(
   base: FourShotPhotoOutput,
   config: ProviderPolishConfig,
