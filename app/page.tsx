@@ -2395,9 +2395,9 @@ export default function Page() {
       {activeTab === "build" && (
         <div className="overflow-x-hidden bg-[#050806] text-[#f7f1df]">
           <div className="pointer-events-none fixed inset-0 -z-10 bg-[radial-gradient(circle_at_16%_8%,rgba(52,96,61,0.3),transparent_30%),radial-gradient(circle_at_86%_0%,rgba(217,169,79,0.12),transparent_28%),linear-gradient(135deg,#050806_0%,#09120d_44%,#111609_100%)]" />
-          <div className="mx-auto w-full max-w-[1880px] px-4 py-5 sm:px-6 sm:py-7 lg:px-8">
-            <div className="grid gap-4 2xl:grid-cols-[270px_minmax(0,1fr)_310px] 2xl:items-start">
-              <aside className="space-y-4 2xl:sticky 2xl:top-36">
+          <div className="mx-auto w-full max-w-[2040px] px-3 py-5 sm:px-5 sm:py-7 lg:px-6 xl:px-8">
+            <div className="grid gap-4 xl:grid-cols-[minmax(0,1fr)_280px] xl:items-start 2xl:grid-cols-[220px_minmax(0,1fr)_280px] min-[1800px]:grid-cols-[250px_minmax(0,1fr)_300px]">
+              <aside className="space-y-4 xl:col-start-2 xl:row-start-1 xl:sticky xl:top-36 2xl:col-start-auto 2xl:row-start-auto">
                 <StudioPanel className="p-4" variant="muted">
                   <p className="text-[11px] font-black uppercase tracking-[0.22em] text-[#d9a94f]">Current setup</p>
                   <h2 className="mt-2 text-lg font-semibold text-white">{currentGenerateSubjectPairLabel}</h2>
@@ -2432,7 +2432,7 @@ export default function Page() {
                 </StudioPanel>
               </aside>
 
-              <section className="min-w-0 space-y-4">
+              <section className="min-w-0 space-y-4 xl:col-start-1 xl:row-span-3 xl:row-start-1 2xl:col-start-auto 2xl:row-auto 2xl:row-span-auto">
                 <StudioPanel className="p-4 sm:p-5" variant="default">
                   <StudioSectionHeader
                     eyebrow="Build command center"
@@ -2855,7 +2855,7 @@ export default function Page() {
             )}
               </section>
 
-              <aside className="space-y-4 2xl:sticky 2xl:top-36">
+              <aside className="space-y-4 xl:col-start-2 xl:row-start-2 xl:sticky xl:top-[420px] 2xl:col-start-auto 2xl:row-start-auto 2xl:top-36">
                 <StudioPanel className="p-4" variant="gold">
                   <p className="text-[11px] font-black uppercase tracking-[0.22em] text-[#d9a94f]">Next actions</p>
                   <div className="mt-3 grid gap-2">
