@@ -117,14 +117,14 @@ type SummaryChipProps = {
 function SummaryChip({ label, value, tone = "neutral" }: SummaryChipProps) {
   const toneClass =
     tone === "cyan"
-      ? "border-cyan-100 bg-cyan-50 text-cyan-800"
+      ? "border-cyan-400/25 bg-cyan-500/10 text-cyan-100"
       : tone === "amber"
-        ? "border-amber-100 bg-amber-50 text-amber-800"
+        ? "border-[#d9a94f]/30 bg-[#d9a94f]/12 text-[#f3c766]"
         : tone === "emerald"
-          ? "border-emerald-100 bg-emerald-50 text-emerald-800"
+          ? "border-emerald-400/25 bg-emerald-500/10 text-emerald-100"
           : tone === "violet"
-            ? "border-violet-100 bg-violet-50 text-violet-800"
-            : "border-gray-200 bg-gray-50 text-gray-700";
+            ? "border-violet-400/25 bg-violet-500/10 text-violet-100"
+            : "border-[#2d3d28] bg-[#071009] text-[#c9d2bd]";
 
   return (
     <span
@@ -160,7 +160,7 @@ function CollapsibleControlSection({
   children,
 }: CollapsibleControlSectionProps) {
   return (
-    <section className="rounded-2xl border border-gray-200 bg-white p-4 shadow-sm shadow-gray-100/80 sm:p-6">
+    <section className="rounded-[26px] border border-[#2d3d28] bg-[#0c130d] p-4 shadow-[0_18px_55px_rgba(0,0,0,0.24)] sm:p-5">
       <button
         type="button"
         aria-expanded={isOpen}
@@ -168,27 +168,27 @@ function CollapsibleControlSection({
         className="flex w-full flex-wrap items-start justify-between gap-3 text-left"
       >
         <div className="min-w-0">
-          <p className="text-[11px] font-semibold uppercase tracking-[0.1em] text-gray-400">
+          <p className="text-[10px] font-black uppercase tracking-[0.2em] text-[#d9a94f]">
             {eyebrow}
           </p>
-          <h3 className="mt-1 text-base font-bold tracking-tight text-gray-900">
+          <h3 className="mt-1 text-base font-semibold tracking-tight text-[#f7f1df]">
             {title}
           </h3>
-          <p className="mt-1 max-w-3xl text-[11px] leading-relaxed text-gray-500">
+          <p className="mt-1 max-w-3xl text-[11px] leading-relaxed text-[#9da892]">
             {helper}
           </p>
         </div>
         <div className="flex shrink-0 items-center gap-2">
-          <span className="rounded-full border border-cyan-100 bg-cyan-50 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.08em] text-cyan-700">
+          <span className="rounded-full border border-cyan-400/25 bg-cyan-500/10 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.08em] text-cyan-100">
             {badge}
           </span>
-          <span className="rounded-full border border-gray-200 bg-gray-50 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.08em] text-gray-600">
+          <span className="rounded-full border border-[#2d3d28] bg-[#071009] px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.08em] text-[#c9d2bd]">
             {isOpen ? "Collapse" : "Expand"}
           </span>
         </div>
       </button>
 
-      <div className="mt-4 rounded-2xl border border-gray-200 bg-gray-50/70 p-3">
+      <div className="mt-4 rounded-2xl border border-[#2d3d28] bg-[#071009]/75 p-3">
         <div className="flex flex-wrap gap-2">{summary}</div>
       </div>
 
@@ -654,8 +654,38 @@ export default function Step1Setup({
       });
 
   return (
-    <div className="grid gap-6 xl:grid-cols-[minmax(0,1fr)_340px]">
-      <div className="space-y-6">
+    <div className="space-y-4 text-[#f7f1df] [&_input:not([type='checkbox'])]:border-[#2d3d28] [&_input:not([type='checkbox'])]:bg-[#071009] [&_input:not([type='checkbox'])]:text-[#f7f1df] [&_input:not([type='checkbox'])]:placeholder:text-[#71806b] [&_label]:text-[#9da892] [&_select]:border-[#2d3d28] [&_select]:bg-[#071009] [&_select]:text-[#f7f1df] [&_textarea]:border-[#2d3d28] [&_textarea]:bg-[#071009] [&_textarea]:text-[#f7f1df]">
+      <div className="rounded-[28px] border border-[#2d3d28] bg-[#071009] p-4 shadow-[0_22px_70px_rgba(0,0,0,0.3)] sm:p-5">
+        <div className="flex flex-wrap items-start justify-between gap-3">
+          <div>
+            <p className="text-[10px] font-black uppercase tracking-[0.22em] text-[#d9a94f]">
+              Step 1 command deck
+            </p>
+            <h2 className="mt-1 text-xl font-semibold text-[#f7f1df]">
+              Wildlife setup control room
+            </h2>
+            <p className="mt-1 max-w-3xl text-sm leading-6 text-[#9da892]">
+              Choose animals, story direction, habitat, camera language, presets,
+              and safe handoffs before engine tuning. Existing setup logic stays
+              wired exactly as before.
+            </p>
+          </div>
+          <div className="flex flex-wrap gap-2 text-[10px] font-black uppercase tracking-[0.12em]">
+            <span className="rounded-full border border-[#d9a94f]/35 bg-[#d9a94f]/12 px-3 py-1.5 text-[#f3c766]">
+              {storyMode.replace(/_/g, " ")}
+            </span>
+            <span className="rounded-full border border-cyan-400/25 bg-cyan-500/10 px-3 py-1.5 text-cyan-200">
+              {wildlifeScopeMode}
+            </span>
+            <span className="rounded-full border border-emerald-400/25 bg-emerald-500/10 px-3 py-1.5 text-emerald-200">
+              Drift {driftRisk}
+            </span>
+          </div>
+        </div>
+      </div>
+
+      <div className="grid gap-4 xl:grid-cols-[minmax(0,1fr)_350px]">
+      <div className="space-y-4">
         <CollapsibleControlSection
           title="Saved workflow presets"
           eyebrow="Workflow Preset Library"
@@ -767,7 +797,7 @@ export default function Step1Setup({
         />
         </CollapsibleControlSection>
 
-        <section className="rounded-2xl border border-slate-700 bg-slate-900 p-4 text-white shadow-[0_18px_40px_rgba(15,23,42,0.18)]">
+        <section className="rounded-[26px] border border-violet-400/20 bg-[#0b1014] p-4 text-white shadow-[0_18px_55px_rgba(0,0,0,0.24)] sm:p-5">
           <button
             type="button"
             aria-expanded={isCreatorQaPresetsOpen}
@@ -775,8 +805,8 @@ export default function Step1Setup({
             className="flex w-full flex-wrap items-start justify-between gap-3 text-left"
           >
             <div>
-              <h3 className="text-[11px] font-semibold uppercase tracking-[0.1em] text-white/55">
-                Creator QA Presets
+              <h3 className="text-[10px] font-black uppercase tracking-[0.2em] text-[#d9a94f]">
+                Presets
               </h3>
               <p className="mt-1 text-[11px] leading-relaxed text-white/65">
                 Fills setup only — does not generate.
@@ -830,21 +860,21 @@ export default function Step1Setup({
           onDelete={onDeleteMyWorkflowPreset}
         />
 
-        <section className="rounded-2xl border border-[color:var(--border)] bg-[color:var(--panel)] p-5 text-[color:var(--text)] shadow-[0_18px_40px_rgba(2,6,23,0.16)]">
+        <section className="rounded-[26px] border border-[#2d3d28] bg-[#0c130d] p-4 text-[#f7f1df] shadow-[0_18px_55px_rgba(0,0,0,0.24)] sm:p-5">
           <div className="mb-4 flex flex-wrap items-start justify-between gap-3">
             <div>
-              <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-[rgb(var(--accent-rgb))]">
-                Story Setup Tuners
+              <p className="text-[10px] font-black uppercase tracking-[0.2em] text-[#d9a94f]">
+                Story Direction
               </p>
-              <h3 className="mt-1 text-base font-semibold text-[color:var(--text)]">
+              <h3 className="mt-1 text-base font-semibold text-[#f7f1df]">
                 One-click control tuning
               </h3>
-              <p className="mt-1 max-w-2xl text-xs leading-relaxed text-[color:var(--muted)]">
+              <p className="mt-1 max-w-2xl text-xs leading-relaxed text-[#9da892]">
                 Adjusts existing setup controls only. Animals, habitat, and
                 custom manual values stay untouched.
               </p>
             </div>
-            <span className="rounded-full border border-[color:var(--border)] bg-[color:var(--surface-muted)] px-3 py-1 text-[10px] font-bold uppercase tracking-[0.1em] text-[color:var(--muted)]">
+            <span className="rounded-full border border-[#2d3d28] bg-[#071009] px-3 py-1 text-[10px] font-bold uppercase tracking-[0.1em] text-[#c9d2bd]">
               Setup only
             </span>
           </div>
@@ -855,15 +885,15 @@ export default function Step1Setup({
                 key={tuner.id}
                 type="button"
                 onClick={() => onApplyStorySetupTuner(tuner.id)}
-                className="rounded-2xl border border-[color:var(--border-soft)] bg-[color:var(--surface)] p-3 text-left transition hover:border-[rgb(var(--accent-rgb)/0.45)] hover:bg-[color:var(--surface-elevated)] active:scale-[0.99]"
+                className="rounded-2xl border border-[#2d3d28] bg-[#071009] p-3 text-left transition hover:border-[#d9a94f]/45 hover:bg-[#101a10] active:scale-[0.99]"
               >
-                <span className="block text-sm font-black text-[color:var(--text)]">
+                <span className="block text-sm font-black text-[#f7f1df]">
                   {tuner.label}
                 </span>
-                <span className="mt-1 block text-[11px] leading-relaxed text-[color:var(--muted)]">
+                <span className="mt-1 block text-[11px] leading-relaxed text-[#9da892]">
                   {tuner.helper}
                 </span>
-                <span className="mt-3 block text-[10px] font-bold uppercase tracking-[0.08em] text-[rgb(var(--accent-rgb))]">
+                <span className="mt-3 block text-[10px] font-bold uppercase tracking-[0.08em] text-[#d9a94f]">
                   {tuner.adjustedControls.slice(0, 3).join(" · ")}
                 </span>
               </button>
@@ -877,13 +907,13 @@ export default function Step1Setup({
         />
 
 
-        <div id="qa-subject-setup" className="scroll-mt-24 space-y-6">
+        <div id="qa-subject-setup" className="scroll-mt-24 space-y-4">
           {isPredatorVsPreyMode ? (
-            <section className="rounded-2xl border border-gray-200 bg-white p-5 sm:p-6">
-            <h3 className="text-[11px] font-semibold uppercase tracking-[0.1em] text-gray-400">
-              Setup Essentials
+            <section className="rounded-[26px] border border-[#2d3d28] bg-[#0c130d] p-4 shadow-[0_18px_55px_rgba(0,0,0,0.24)] sm:p-5">
+            <h3 className="text-[10px] font-black uppercase tracking-[0.2em] text-[#d9a94f]">
+              Animal Pair
             </h3>
-            <p className="mb-4 mt-1 text-[11px] leading-relaxed text-gray-500">
+            <p className="mb-4 mt-1 text-[11px] leading-relaxed text-[#9da892]">
               Start with the pairing viewers can identify fastest. Lower drift
               risk is usually the safest Facebook first test.
             </p>
@@ -1005,9 +1035,9 @@ export default function Step1Setup({
                   Filtered for realism from the selected lead animal.
                 </p>
               </div>
-              <div className="rounded-2xl border border-gray-200 bg-gray-50/80 p-3 text-[11px] leading-relaxed text-gray-700 sm:col-span-2">
+              <div className="rounded-2xl border border-[#2d3d28] bg-[#071009] p-3 text-[11px] leading-relaxed text-[#c9d2bd] sm:col-span-2">
                 <div className="flex flex-wrap items-center gap-2">
-                  <span className="font-semibold text-gray-900">
+                  <span className="font-semibold text-[#f7f1df]">
                     Current pair:
                   </span>
                   <span>{predator} vs {prey}</span>
@@ -1040,17 +1070,17 @@ export default function Step1Setup({
                   )}
                 </div>
               </div>
-              <div className="rounded-2xl border border-emerald-100 bg-emerald-50/70 p-3 text-[11px] leading-relaxed text-emerald-800 sm:col-span-2">
+              <div className="rounded-2xl border border-emerald-400/20 bg-emerald-500/10 p-3 text-[11px] leading-relaxed text-emerald-100 sm:col-span-2">
                 <span className="font-semibold">Facebook setup hint:</span>{" "}
                 {regionalStep1Hint} {animalPairGuidance}
               </div>
-              <div className="rounded-2xl border border-cyan-100 bg-cyan-50/80 p-3 sm:col-span-2">
+              <div className="rounded-2xl border border-cyan-400/25 bg-cyan-500/10 p-3 sm:col-span-2">
                 <div className="flex flex-wrap items-center justify-between gap-3">
                   <div className="min-w-0">
-                    <p className="text-[11px] font-semibold uppercase tracking-[0.1em] text-cyan-700">
-                      Storyboard / photo handoff
+                    <p className="text-[10px] font-black uppercase tracking-[0.16em] text-cyan-200">
+                      Handoffs
                     </p>
-                    <p className="mt-1 text-[11px] leading-relaxed text-cyan-900/75">
+                    <p className="mt-1 text-[11px] leading-relaxed text-cyan-100/75">
                       Send {predator} vs {prey} plus the current habitat setup into storyboard or same-environment photo workflows.
                     </p>
                   </div>
@@ -1058,7 +1088,7 @@ export default function Step1Setup({
                     type="button"
                     onClick={onOpenStoryboardWorkflow}
                     title={storyboardHref}
-                    className="rounded-xl border border-cyan-300 bg-cyan-600 px-3.5 py-2 text-xs font-semibold text-white shadow-sm transition hover:bg-cyan-500 active:scale-[0.98]"
+                    className="rounded-xl border border-cyan-300/50 bg-cyan-500/20 px-3.5 py-2 text-xs font-semibold text-cyan-100 shadow-sm transition hover:bg-cyan-500/30 active:scale-[0.98]"
                   >
                     Build 4-Shot Storyboard
                   </button>
@@ -1066,7 +1096,7 @@ export default function Step1Setup({
                     type="button"
                     onClick={onOpenFourShotPhotoWorkflow}
                     title={fourShotPhotoHref}
-                    className="rounded-xl border border-cyan-300 bg-white px-3.5 py-2 text-xs font-semibold text-cyan-700 shadow-sm transition hover:bg-cyan-50 active:scale-[0.98]"
+                    className="rounded-xl border border-[#d9a94f]/40 bg-[#d9a94f] px-3.5 py-2 text-xs font-semibold text-[#111207] shadow-sm transition hover:bg-[#f3c766] active:scale-[0.98]"
                   >
                     4-Shot Photo
                   </button>
@@ -1086,7 +1116,7 @@ export default function Step1Setup({
                   ) : null}
                 </div>
               )}
-              <div className="rounded-2xl border border-violet-100 bg-violet-50/70 p-3 text-[11px] leading-relaxed text-violet-900 sm:col-span-2">
+              <div className="rounded-2xl border border-violet-400/20 bg-violet-500/10 p-3 text-[11px] leading-relaxed text-violet-100 sm:col-span-2">
                 <p>
                   <span className="font-semibold">
                     Facebook-safe survival framing:
@@ -1362,11 +1392,11 @@ export default function Step1Setup({
             </div>
           </CollapsibleControlSection>
 
-          <section className="rounded-2xl border border-gray-200 bg-white p-5 sm:p-6">
-            <h3 className="text-[11px] font-semibold uppercase tracking-[0.1em] text-gray-400">
-              Scene Assistant
+          <section className="rounded-[26px] border border-cyan-400/20 bg-[#071318] p-4 shadow-[0_18px_55px_rgba(0,0,0,0.24)] sm:p-5">
+            <h3 className="text-[10px] font-black uppercase tracking-[0.2em] text-[#d9a94f]">
+              World & Camera
             </h3>
-            <p className="mb-4 mt-1 text-[11px] leading-relaxed text-gray-500">
+            <p className="mb-4 mt-1 text-[11px] leading-relaxed text-[#9da892]">
               These controls bias the existing arc engine. Auto choices are
               safest; lane and habitat choices make the first Facebook test
               more specific.
@@ -1461,7 +1491,7 @@ export default function Step1Setup({
               <button
                 type="button"
                 onClick={() => applySceneSettings(sceneReport.recommended)}
-                className="mt-4 w-full rounded-xl bg-gray-900 px-3 py-2.5 text-xs font-semibold text-white shadow-sm hover:bg-black active:scale-[0.98] sm:w-auto"
+                className="mt-4 w-full rounded-xl bg-[#d9a94f] px-3 py-2.5 text-xs font-semibold text-[#111207] shadow-sm hover:bg-[#f3c766] active:scale-[0.98] sm:w-auto"
               >
                 Apply Recommended Scene
               </button>
@@ -1700,44 +1730,44 @@ export default function Step1Setup({
             </div>
         </CollapsibleControlSection>
 
-        <div className="flex flex-wrap gap-2.5 border-t border-gray-200/80 pt-5">
+        <div className="flex flex-wrap gap-2.5 border-t border-[#2d3d28] pt-5">
           <button
             type="button"
             onClick={onResetDefaults}
-            className="rounded-2xl border border-gray-200 bg-white px-4 py-2.5 text-sm font-semibold text-gray-600 shadow-sm shadow-gray-100/80 hover:bg-gray-50 active:scale-[0.98]"
+            className="rounded-2xl border border-[#2d3d28] bg-[#071009] px-4 py-2.5 text-sm font-semibold text-[#c9d2bd] shadow-sm shadow-black/20 hover:border-[#d9a94f]/35 active:scale-[0.98]"
           >
             Reset Defaults
           </button>
           <button
             type="button"
             onClick={onContinue}
-            className="rounded-2xl bg-gray-900 px-5 py-2.5 text-sm font-semibold text-white shadow-sm shadow-gray-300/70 hover:bg-black active:scale-[0.98]"
+            className="rounded-2xl bg-[#d9a94f] px-5 py-2.5 text-sm font-semibold text-[#111207] shadow-sm shadow-[#d9a94f]/20 hover:bg-[#f3c766] active:scale-[0.98]"
           >
             Continue → Engine & Quality
           </button>
         </div>
       </div>
 
-      <div className="space-y-6">
-        <div className="rounded-[24px] border border-gray-200 border-l-4 border-l-violet-400 bg-white p-5 shadow-sm shadow-gray-200/70 sm:p-6 lg:sticky lg:top-[calc(56px+41px)]">
+      <div className="space-y-4">
+        <div className="rounded-[26px] border border-[#2d3d28] border-l-4 border-l-[#d9a94f] bg-[#0c130d] p-4 shadow-[0_18px_55px_rgba(0,0,0,0.24)] sm:p-5 lg:sticky lg:top-[calc(56px+41px)]">
           <div className="flex items-start justify-between gap-3">
             <div>
-              <h3 className="text-[11px] font-semibold uppercase tracking-[0.1em] text-gray-400">
+              <h3 className="text-[10px] font-black uppercase tracking-[0.2em] text-[#d9a94f]">
                 Current Setup
               </h3>
-              <p className="mt-1 text-[11px] leading-relaxed text-gray-500">
+              <p className="mt-1 text-[11px] leading-relaxed text-[#9da892]">
                 Live preview of your wildlife build
               </p>
             </div>
-            <span className="rounded-full bg-violet-100 px-2.5 py-1 text-[10px] font-semibold text-violet-700">
+            <span className="rounded-full border border-emerald-400/25 bg-emerald-500/10 px-2.5 py-1 text-[10px] font-semibold text-emerald-100">
               Live
             </span>
           </div>
-          <div className="mt-4 rounded-2xl border border-gray-200/80 bg-gradient-to-br from-gray-50 to-white p-4">
-            <div className="text-base font-bold tracking-tight text-gray-900">
+          <div className="mt-4 rounded-2xl border border-[#2d3d28] bg-gradient-to-br from-[#071009] to-[#101a10] p-4">
+            <div className="text-base font-bold tracking-tight text-[#f7f1df]">
               {currentSetupLabel}
             </div>
-            <p className="mt-2 text-[11px] leading-relaxed text-gray-500">
+            <p className="mt-2 text-[11px] leading-relaxed text-[#9da892]">
               Smart defaults are applied for each story mode. You can override
               any subject or production control before generating.
             </p>
@@ -1760,39 +1790,39 @@ export default function Step1Setup({
             </div>
           </div>
           <div className="mt-3 space-y-3">
-            <div className="rounded-2xl border border-gray-100 bg-gray-50 p-3.5">
-              <div className="mb-1 text-[10px] font-semibold uppercase tracking-wide text-gray-400">
+            <div className="rounded-2xl border border-[#2d3d28] bg-[#071009] p-3.5">
+              <div className="mb-1 text-[10px] font-semibold uppercase tracking-wide text-[#d9a94f]">
                 Environment
               </div>
-              <div className="text-[11px] leading-relaxed text-gray-600">
+              <div className="text-[11px] leading-relaxed text-[#c9d2bd]">
                 {finalEnvironment}
               </div>
             </div>
-            <div className="rounded-2xl border border-emerald-100 bg-emerald-50/70 p-3.5">
-              <div className="mb-1 text-[10px] font-semibold uppercase tracking-wide text-emerald-700">
+            <div className="rounded-2xl border border-emerald-400/20 bg-emerald-500/10 p-3.5">
+              <div className="mb-1 text-[10px] font-semibold uppercase tracking-wide text-emerald-200">
                 Facebook first test
               </div>
-              <div className="text-[11px] font-semibold leading-relaxed text-emerald-900">
+              <div className="text-[11px] font-semibold leading-relaxed text-emerald-100">
                 {facebookRecommendation.title}
               </div>
-              <div className="mt-1 text-[11px] leading-relaxed text-emerald-800">
+              <div className="mt-1 text-[11px] leading-relaxed text-emerald-100/85">
                 {facebookRecommendation.summary}
               </div>
               <div className="mt-3 space-y-2">
                 {facebookRecommendation.hints.map((hint) => (
-                  <div key={hint.label} className="rounded-xl bg-white/75 px-3 py-2">
-                    <span className="font-semibold text-emerald-800">
+                  <div key={hint.label} className="rounded-xl bg-[#071009]/75 px-3 py-2">
+                    <span className="font-semibold text-emerald-100">
                       {hint.label}:
                     </span>{" "}
-                    <span className="text-[11px] leading-relaxed text-emerald-800">
+                    <span className="text-[11px] leading-relaxed text-emerald-100/85">
                       {hint.text}
                     </span>
                   </div>
                 ))}
               </div>
             </div>
-            <div className="flex items-center justify-between rounded-2xl border border-gray-100 bg-gray-50 px-3.5 py-3">
-              <span className="text-[11px] font-medium text-gray-500">Drift Risk</span>
+            <div className="flex items-center justify-between rounded-2xl border border-[#2d3d28] bg-[#071009] px-3.5 py-3">
+              <span className="text-[11px] font-medium text-[#9da892]">Drift Risk</span>
               <span
                 className={`rounded-full px-2.5 py-1 text-[10px] font-semibold ${
                   driftRisk === "HIGH"
@@ -1808,29 +1838,30 @@ export default function Step1Setup({
           </div>
         </div>
 
-        <div className="rounded-[24px] border border-dashed border-gray-300 bg-white/80 p-4 shadow-sm shadow-gray-100/80 sm:p-5">
+        <div className="rounded-[26px] border border-dashed border-[#d9a94f]/35 bg-[#131409] p-4 shadow-[0_18px_55px_rgba(0,0,0,0.24)] sm:p-5">
           <div className="flex items-center justify-between gap-3">
             <div>
-              <div className="text-xs font-semibold uppercase tracking-[0.08em] text-gray-500">
+              <div className="text-[10px] font-black uppercase tracking-[0.2em] text-[#d9a94f]">
                 Custom Animal
               </div>
-              <div className="mt-1 text-sm font-semibold text-gray-800">
+              <div className="mt-1 text-sm font-semibold text-[#f7f1df]">
                 Add any animal to the list
               </div>
-              <div className="mt-0.5 text-[11px] text-gray-500">
+              <div className="mt-0.5 text-[11px] text-[#9da892]">
                 Save a reusable local preset without changing the current flow.
               </div>
             </div>
             <button
               type="button"
               onClick={onOpenCustomAnimal}
-              className="rounded-2xl border border-gray-200 bg-white px-3.5 py-2 text-xs font-semibold text-gray-700 shadow-sm shadow-gray-100/80 hover:bg-gray-50 active:scale-[0.98]"
+              className="rounded-2xl border border-[#d9a94f]/40 bg-[#d9a94f] px-3.5 py-2 text-xs font-semibold text-[#111207] shadow-sm shadow-[#d9a94f]/20 hover:bg-[#f3c766] active:scale-[0.98]"
             >
               + Add
             </button>
           </div>
         </div>
       </div>
+    </div>
     </div>
   );
 }

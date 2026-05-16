@@ -196,16 +196,16 @@ function combineStatuses(statuses: WorkflowItemStatus[]): WorkflowItemStatus {
 function StepQaBadge({ label, status }: { label: string; status: WorkflowItemStatus }) {
   const tone =
     status === "pass"
-      ? "border-emerald-200 bg-emerald-100 text-emerald-700"
+      ? "border-emerald-400/35 bg-[color:var(--success-bg)] text-[color:var(--success-text)]"
       : status === "warning"
-        ? "border-amber-200 bg-amber-100 text-amber-700"
-        : "border-rose-200 bg-rose-100 text-rose-700";
+        ? "border-amber-400/35 bg-[color:var(--warning-bg)] text-[color:var(--warning-text)]"
+        : "border-rose-400/35 bg-[color:var(--danger-bg)] text-[color:var(--danger-text)]";
   const statusText = status === "pass" ? "✓ clean" : "⚠ needs review";
 
   return (
     <span className={`inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.08em] ${tone}`}>
       <span>{label}</span>
-      <span className="rounded-full bg-white/70 px-1.5 py-0.5 text-[9px]">{statusText}</span>
+      <span className="rounded-full border border-white/10 bg-white/8 px-1.5 py-0.5 text-[9px]">{statusText}</span>
     </span>
   );
 }
@@ -228,21 +228,21 @@ function PromptCleanupAssistant({
   onOpenRelatedStep: (item: FinalQaCleanupItem) => void;
 }) {
   return (
-    <div className="mb-4 rounded-2xl border border-slate-200 bg-white p-4 shadow-sm shadow-slate-200/60">
+    <div className="mb-4 rounded-2xl border border-[color:var(--border)] bg-[color:var(--surface-elevated)] p-4 shadow-[var(--surface-shadow)]">
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
-          <div className="text-[11px] font-semibold uppercase tracking-[0.14em] text-slate-400">
+          <div className="text-[11px] font-semibold uppercase tracking-[0.14em] text-[color:var(--muted)]">
             Prompt Cleanup Assistant
           </div>
-          <div className="mt-1 text-sm font-semibold text-slate-900">
+          <div className="mt-1 text-sm font-semibold text-[color:var(--text)]">
             Clean up the wildlife documentary handoff without overwriting prompts automatically
           </div>
-          <p className="mt-1 max-w-3xl text-xs leading-relaxed text-slate-500">
+          <p className="mt-1 max-w-3xl text-xs leading-relaxed text-[color:var(--muted)]">
             Suggestions stay preview-only until Apply Fix is clicked. Open Related Step jumps to the controls that caused the warning.
           </p>
         </div>
         {feedback ? (
-          <span className="rounded-full bg-emerald-100 px-2.5 py-1 text-[10px] font-semibold text-emerald-700">
+          <span className="rounded-full border border-emerald-400/30 bg-[color:var(--success-bg)] px-2.5 py-1 text-[10px] font-semibold text-[color:var(--success-text)]">
             {feedback}
           </span>
         ) : null}
@@ -253,25 +253,25 @@ function PromptCleanupAssistant({
           {items.map((item) => (
             <article
               key={item.id}
-              className="rounded-2xl border border-slate-200 bg-slate-50/70 p-3 text-slate-900"
+              className="rounded-2xl border border-[color:var(--border)] bg-[color:var(--surface-muted)] p-3 text-[color:var(--text)]"
             >
               <div className="flex flex-wrap items-center justify-between gap-2">
-                <div className="text-[10px] font-semibold uppercase tracking-[0.1em] text-slate-500">
+                <div className="text-[10px] font-semibold uppercase tracking-[0.1em] text-[color:var(--muted)]">
                   {item.sourceLabel}
                 </div>
-                <span className="rounded-full bg-white px-2 py-0.5 text-[9px] font-semibold uppercase tracking-[0.08em] text-slate-500">
+                <span className="rounded-full border border-[color:var(--border)] bg-[color:var(--surface)] px-2 py-0.5 text-[9px] font-semibold uppercase tracking-[0.08em] text-[color:var(--muted)]">
                   Step {item.relatedStep}
                 </span>
               </div>
               <div className="mt-2 text-sm font-extrabold">{item.issue}</div>
-              <p className="mt-2 text-xs leading-relaxed text-slate-600">
-                <span className="font-semibold text-slate-800">Why it matters:</span> {item.whyItMatters}
+              <p className="mt-2 text-xs leading-relaxed text-[color:var(--muted)]">
+                <span className="font-semibold text-[color:var(--text)]">Why it matters:</span> {item.whyItMatters}
               </p>
-              <div className="mt-3 rounded-xl border border-slate-200 bg-white p-3">
-                <div className="text-[10px] font-semibold uppercase tracking-[0.1em] text-slate-400">
+              <div className="mt-3 rounded-xl border border-[color:var(--border)] bg-[color:var(--surface)] p-3">
+                <div className="text-[10px] font-semibold uppercase tracking-[0.1em] text-[color:var(--muted)]">
                   Suggested cleaner wording
                 </div>
-                <p className="mt-1 text-xs leading-relaxed text-slate-800">
+                <p className="mt-1 text-xs leading-relaxed text-[color:var(--text)]">
                   {item.suggestedCleanerWording}
                 </p>
               </div>
@@ -279,14 +279,14 @@ function PromptCleanupAssistant({
                 <button
                   type="button"
                   onClick={() => onApply(item)}
-                  className="rounded-xl bg-slate-900 px-3 py-2 text-xs font-semibold text-white shadow-sm hover:bg-black active:scale-[0.98]"
+                  className="rounded-xl bg-amber-400 px-3 py-2 text-xs font-semibold text-black shadow-sm hover:bg-amber-300 active:scale-[0.98]"
                 >
                   Apply Fix
                 </button>
                 <button
                   type="button"
                   onClick={() => onOpenRelatedStep(item)}
-                  className="rounded-xl border border-slate-200 bg-white px-3 py-2 text-xs font-semibold text-slate-700 shadow-sm hover:bg-slate-50 active:scale-[0.98]"
+                  className="rounded-xl border border-cyan-400/25 bg-cyan-400/10 px-3 py-2 text-xs font-semibold text-cyan-100 shadow-sm hover:bg-cyan-400/15 active:scale-[0.98]"
                 >
                   Open Related Step
                 </button>
@@ -295,26 +295,26 @@ function PromptCleanupAssistant({
           ))}
         </div>
       ) : (
-        <div className="mt-4 rounded-xl border border-emerald-200 bg-emerald-50 px-3 py-2 text-xs font-semibold text-emerald-800">
+        <div className="mt-4 rounded-xl border border-emerald-400/30 bg-[color:var(--success-bg)] px-3 py-2 text-xs font-semibold text-[color:var(--success-text)]">
           No cleanup issues detected. The prompt lane is ready for a clean wildlife documentary handoff.
         </div>
       )}
 
       {hasCameraActionConflict ? (
         <div className="mt-4 grid gap-3 lg:grid-cols-2">
-          <div className="rounded-2xl border border-amber-200 bg-amber-50 p-3">
-            <div className="text-[10px] font-semibold uppercase tracking-[0.1em] text-amber-700">
+          <div className="rounded-2xl border border-amber-400/25 bg-amber-500/10 p-3">
+            <div className="text-[10px] font-semibold uppercase tracking-[0.1em] text-amber-200">
               Before
             </div>
-            <p className="mt-2 max-h-40 overflow-y-auto whitespace-pre-wrap text-xs leading-relaxed text-amber-950">
+            <p className="mt-2 max-h-40 overflow-y-auto whitespace-pre-wrap text-xs leading-relaxed text-amber-50/90">
               {before}
             </p>
           </div>
-          <div className="rounded-2xl border border-emerald-200 bg-emerald-50 p-3">
-            <div className="text-[10px] font-semibold uppercase tracking-[0.1em] text-emerald-700">
+          <div className="rounded-2xl border border-emerald-400/25 bg-emerald-500/10 p-3">
+            <div className="text-[10px] font-semibold uppercase tracking-[0.1em] text-emerald-200">
               After clean preview
             </div>
-            <p className="mt-2 text-xs leading-relaxed text-emerald-950">
+            <p className="mt-2 text-xs leading-relaxed text-emerald-50/90">
               {after}
             </p>
           </div>
@@ -603,10 +603,10 @@ export default function Step3Generate({
   );
   const workflowQaColor =
     workflowQa.status === "Ready"
-      ? "border-emerald-200 bg-emerald-50 text-emerald-900"
+      ? "border-emerald-400/35 bg-[color:var(--success-bg)] text-[color:var(--success-text)]"
       : workflowQa.status === "Needs review"
-        ? "border-amber-200 bg-amber-50 text-amber-900"
-        : "border-rose-200 bg-rose-50 text-rose-900";
+        ? "border-amber-400/35 bg-[color:var(--warning-bg)] text-[color:var(--warning-text)]"
+        : "border-rose-400/35 bg-[color:var(--danger-bg)] text-[color:var(--danger-text)]";
   const cameraActionPreview = useMemo(
     () =>
       buildCameraActionCleanPromptPreview({
@@ -821,14 +821,14 @@ export default function Step3Generate({
     status?: CreatorQaRun["finalQaStatus"]
   ) => {
     if (status === "Ready") {
-      return "bg-emerald-100 text-emerald-700";
+      return "border border-emerald-400/30 bg-[color:var(--success-bg)] text-[color:var(--success-text)]";
     }
 
     if (status === "Needs review") {
-      return "bg-amber-100 text-amber-700";
+      return "border border-amber-400/30 bg-[color:var(--warning-bg)] text-[color:var(--warning-text)]";
     }
 
-    return "bg-rose-100 text-rose-700";
+    return "border border-rose-400/30 bg-[color:var(--danger-bg)] text-[color:var(--danger-text)]";
   };
 
   const buildFullPackageText = (data: GeneratedPackage) => {
@@ -876,20 +876,25 @@ export default function Step3Generate({
   };
 
   return (
-    <div className="space-y-6">
-      <section className="rounded-[24px] border border-[color:var(--border)] bg-[color:var(--surface-elevated)] p-5 text-[color:var(--text)] shadow-[var(--surface-shadow)] sm:p-6">
+    <div className="space-y-5 text-[color:var(--text)]">
+      <section className="overflow-hidden rounded-[28px] border border-emerald-400/20 bg-[radial-gradient(circle_at_top_left,rgba(245,193,91,0.16),transparent_34%),linear-gradient(135deg,rgba(7,18,12,0.98),rgba(10,18,28,0.96))] p-4 text-[color:var(--text)] shadow-[0_24px_70px_rgba(0,0,0,0.35)] sm:p-5">
         <div className="mb-5 flex flex-wrap items-center justify-between gap-2">
-          <h3 className="text-[11px] font-semibold uppercase tracking-[0.1em] text-[color:var(--muted)]">
-            Generate for Reels
-          </h3>
-          <div className="rounded-full border border-[color:var(--border)] bg-[color:var(--surface-muted)] px-2.5 py-1 text-[10px] font-semibold text-[color:var(--muted)]">
+          <div>
+            <h3 className="text-[11px] font-extrabold uppercase tracking-[0.24em] text-amber-300">
+              Provider &amp; Readiness Console
+            </h3>
+            <p className="mt-1 max-w-2xl text-xs leading-relaxed text-[color:var(--muted)]">
+              Select optional AI polish, confirm pre-generate readiness, then build the prompt package without changing the generation flow.
+            </p>
+          </div>
+          <div className="rounded-full border border-amber-400/25 bg-amber-400/10 px-3 py-1.5 text-[10px] font-bold text-amber-100">
             {subjectPairLabel}
           </div>
         </div>
 
-        <div className="mb-5 rounded-2xl border border-[color:var(--border)] bg-[color:var(--surface)] p-3.5">
+        <div className="mb-5 rounded-2xl border border-cyan-400/20 bg-[color:var(--surface)]/85 p-3.5 shadow-inner shadow-black/20">
           <div className="mb-1 text-[11px] font-semibold uppercase tracking-wide text-[color:var(--muted)]">
-            AI Copy &amp; Prompt Polish
+            Provider Polish Layer
           </div>
           <div className="mb-3 text-[11px] text-[color:var(--muted)]">
             Optional polish only. Main cinematic 4-shot packs now come from the
@@ -1008,9 +1013,9 @@ export default function Step3Generate({
           </div>
         </div>
 
-        <div className="mb-5 rounded-2xl border border-[color:var(--border)] bg-[color:var(--surface-muted)] px-3.5 py-3 text-[11px] text-[color:var(--muted)]">
-          Flow: 1. Inputs → 2. U.S. score → 3. Opening score → 4. Publish guard →
-          5. Final output
+        <div className="mb-5 rounded-2xl border border-amber-400/20 bg-amber-400/10 px-3.5 py-3 text-[11px] text-amber-50/80">
+          <span className="font-bold uppercase tracking-[0.16em] text-amber-300">Generate Actions</span>
+          <span className="mt-1 block">Flow: 1. Inputs → 2. U.S. score → 3. Opening score → 4. Publish guard → 5. Final output</span>
         </div>
 
         <ConceptVariantLab
@@ -1022,11 +1027,11 @@ export default function Step3Generate({
           onAutoCleanupVariant={onAutoCleanupConceptVariant}
         />
 
-        <section className="mb-5 rounded-2xl border border-[color:var(--border)] bg-[color:var(--surface)] p-4 text-[color:var(--text)]">
+        <section className="mb-5 rounded-2xl border border-emerald-400/20 bg-[color:var(--surface)]/85 p-4 text-[color:var(--text)] shadow-inner shadow-black/20">
           <div className="mb-3 flex flex-wrap items-center justify-between gap-3">
             <div>
               <div className="text-[11px] font-semibold uppercase tracking-[0.12em] text-[color:var(--muted)]">
-                Pre-Generate Readiness
+                QA Checklist
               </div>
               <div className="mt-1 text-xs text-[color:var(--muted)]">
                 Setup-only guidance. Generation stays available.
@@ -1105,7 +1110,7 @@ export default function Step3Generate({
           type="button"
           onClick={onGenerate}
           disabled={isGenerating || isRegeneratingUnlocked}
-          className="w-full rounded-2xl bg-[color:var(--surface-inverse)] py-4 text-sm font-bold text-[color:var(--inverse-text)] shadow-sm shadow-black/20 transition-all hover:opacity-90 disabled:opacity-70 active:scale-[0.98]"
+          className="w-full rounded-2xl bg-amber-400 py-4 text-sm font-extrabold text-black shadow-[0_18px_40px_rgba(245,193,91,0.18)] transition-all hover:bg-amber-300 disabled:opacity-70 active:scale-[0.98]"
         >
           {isGenerating ? (
             <span className="flex items-center justify-center gap-2">
@@ -1122,25 +1127,40 @@ export default function Step3Generate({
         </p>
 
         {pkg && (
-          <SectionLockControls
-            locks={packageLocks}
-            isRegenerating={isRegeneratingUnlocked}
-            onToggleLock={onTogglePackageLock}
-            onSetLocks={onSetPackageLocks}
-            onRegenerateUnlocked={onRegenerateUnlocked}
-          />
+          <section className="mt-5 rounded-2xl border border-cyan-400/20 bg-cyan-400/8 p-3.5">
+            <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
+              <div>
+                <div className="text-[10px] font-extrabold uppercase tracking-[0.2em] text-cyan-300">
+                  Locks &amp; Versions
+                </div>
+                <p className="mt-1 text-[10px] leading-relaxed text-[color:var(--muted)]">
+                  Preserve locked package sections while regenerating only the unlocked parts.
+                </p>
+              </div>
+              <span className="rounded-full border border-cyan-400/25 bg-cyan-400/10 px-2.5 py-1 text-[10px] font-bold text-cyan-100">
+                Regenerate-safe
+              </span>
+            </div>
+            <SectionLockControls
+              locks={packageLocks}
+              isRegenerating={isRegeneratingUnlocked}
+              onToggleLock={onTogglePackageLock}
+              onSetLocks={onSetPackageLocks}
+              onRegenerateUnlocked={onRegenerateUnlocked}
+            />
+          </section>
         )}
       </section>
 
       {enhancementNotice && (
-        <div className="rounded-xl border border-sky-200 bg-sky-50 p-4">
-          <p className="text-sm font-semibold text-sky-900">{enhancementNotice}</p>
+        <div className="rounded-2xl border border-cyan-400/25 bg-cyan-400/10 p-4">
+          <p className="text-sm font-semibold text-cyan-100">{enhancementNotice}</p>
         </div>
       )}
 
       {error && (
-        <div className="rounded-xl border border-red-200 bg-red-50 p-4">
-          <p className="text-sm font-semibold text-red-700">⚠️ {error}</p>
+        <div className="rounded-2xl border border-rose-400/30 bg-[color:var(--danger-bg)] p-4">
+          <p className="text-sm font-semibold text-[color:var(--danger-text)]">⚠️ {error}</p>
         </div>
       )}
 
@@ -1148,7 +1168,11 @@ export default function Step3Generate({
         <GenerationOutputBoundary
           resetKey={`${pkg.hook ?? ""}|${pkg.caption ?? ""}|${pkg.routingNote ?? ""}`}
         >
-          <section id="qa-generated-output" ref={generatedOutputTopRef}>
+          <section
+            id="qa-generated-output"
+            ref={generatedOutputTopRef}
+            className="rounded-[28px] border border-cyan-400/20 bg-[radial-gradient(circle_at_top_right,rgba(34,211,238,0.10),transparent_30%),rgba(8,15,13,0.94)] p-4 shadow-[0_22px_60px_rgba(0,0,0,0.32)] sm:p-5"
+          >
             {lastGeneratedRestoreNotice && (
               <div
                 className="mb-4 flex flex-wrap items-start justify-between gap-3 rounded-2xl border border-sky-200 bg-sky-50 px-4 py-3 text-sm text-sky-900 shadow-sm shadow-sky-100/60"
@@ -1177,14 +1201,14 @@ export default function Step3Generate({
             {publishFlowSummary && (
               <div className="mb-4 overflow-x-auto pb-1">
                 <div className="grid min-w-[940px] gap-3 md:grid-cols-2 xl:grid-cols-5">
-                  <div className="rounded-2xl border border-gray-200 bg-white p-4 shadow-sm shadow-gray-200/60">
-                    <div className="text-[10px] font-semibold uppercase tracking-[0.1em] text-gray-400">
+                  <div className="rounded-2xl border border-[color:var(--border)] bg-[color:var(--surface-elevated)] p-4 shadow-[var(--surface-shadow)]">
+                    <div className="text-[10px] font-semibold uppercase tracking-[0.1em] text-[color:var(--muted)]">
                       1. User Inputs
                     </div>
-                    <div className="mt-2 text-sm font-semibold text-gray-900">
+                    <div className="mt-2 text-sm font-semibold text-[color:var(--text)]">
                       {publishFlowSummary.predatorName} vs {publishFlowSummary.preyName}
                     </div>
-                    <div className="mt-1 text-xs text-gray-500">
+                    <div className="mt-1 text-xs text-[color:var(--muted)]">
                       {publishFlowSummary.arcName} • {publishFlowSummary.marketMode}
                     </div>
                   </div>
@@ -1240,23 +1264,23 @@ export default function Step3Generate({
                     <div
                       className={`mt-1 text-xs ${
                         publishFlowSummary.publishGuardReport.isPass
-                          ? "text-emerald-700"
-                          : "text-amber-700"
+                          ? "text-emerald-200"
+                          : "text-amber-200"
                       }`}
                     >
                       {publishFlowSummary.publishGuardReport.warnings[0] ??
                         "Packaging is within the default fast-publish guard."}
                     </div>
                   </div>
-                  <div className="rounded-2xl border border-gray-200 bg-white p-4 shadow-sm shadow-gray-200/60">
-                    <div className="text-[10px] font-semibold uppercase tracking-[0.1em] text-gray-400">
+                  <div className="rounded-2xl border border-[color:var(--border)] bg-[color:var(--surface-elevated)] p-4 shadow-[var(--surface-shadow)]">
+                    <div className="text-[10px] font-semibold uppercase tracking-[0.1em] text-[color:var(--muted)]">
                       5. Final Output
                     </div>
-                    <div className="mt-2 text-sm font-semibold text-gray-900">
+                    <div className="mt-2 text-sm font-semibold text-[color:var(--text)]">
                       {publishFlowSummary.durationLane.toUpperCase()} •{" "}
                       {formatPipelineStyleLabel(publishFlowSummary.pipelineStyle)}
                     </div>
-                    <div className="mt-1 text-xs text-gray-500">
+                    <div className="mt-1 text-xs text-[color:var(--muted)]">
                       Hook: {publishFlowSummary.hookFamily}{" "}
                       {publishFlowSummary.fastPublishMode ? "• Fast publish" : ""}
                     </div>
@@ -1283,10 +1307,10 @@ export default function Step3Generate({
                     <div className="text-[11px] font-semibold uppercase tracking-[0.14em] opacity-70">
                       Final QA Summary
                     </div>
-                    <span className="rounded-full bg-white/85 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.08em] text-gray-900">
+                    <span className="rounded-full bg-white/85 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.08em] text-gray-950">
                       {workflowQa.status}
                     </span>
-                    <span className="rounded-full bg-white/70 px-2.5 py-1 text-[10px] font-semibold text-gray-900">
+                    <span className="rounded-full bg-white/70 px-2.5 py-1 text-[10px] font-semibold text-gray-950">
                       {workflowQa.score}/100
                     </span>
                   </div>
@@ -1307,7 +1331,7 @@ export default function Step3Generate({
                 <button
                   type="button"
                   onClick={() => setIsQaDetailsOpen((current) => !current)}
-                  className="rounded-xl border border-white/70 bg-white/75 px-3 py-2 text-xs font-semibold text-gray-900 shadow-sm hover:bg-white active:scale-[0.98]"
+                  className="rounded-xl border border-white/70 bg-white/75 px-3 py-2 text-xs font-semibold text-gray-950 shadow-sm hover:bg-white active:scale-[0.98]"
                 >
                   {isQaDetailsOpen ? "Hide checklist" : "Show checklist"}
                 </button>
@@ -1365,9 +1389,9 @@ export default function Step3Generate({
                 })}
               </div>
               {quickFixes.length > 0 && (
-                <div className="mt-4 rounded-xl border border-white/70 bg-white/70 p-3">
-                  <div className="text-[11px] font-semibold text-gray-900">Top fixes</div>
-                  <div className="mt-2 space-y-1 text-[10px] leading-relaxed text-gray-700">
+                <div className="mt-4 rounded-xl border border-[color:var(--border)] bg-[color:var(--surface-muted)] p-3">
+                  <div className="text-[11px] font-semibold text-[color:var(--text)]">Top fixes</div>
+                  <div className="mt-2 space-y-1 text-[10px] leading-relaxed text-[color:var(--muted)]">
                     {quickFixes.map((fix) => (
                       <p key={fix}>• {fix}</p>
                     ))}
@@ -1413,7 +1437,7 @@ export default function Step3Generate({
                               );
                               if (cleanupItem) openCleanupItem(cleanupItem);
                             }}
-                            className="mt-2 rounded-lg border border-white/80 bg-white/80 px-2.5 py-1.5 text-[10px] font-semibold text-gray-900 shadow-sm hover:bg-white active:scale-[0.98]"
+                            className="mt-2 rounded-lg border border-white/80 bg-white/80 px-2.5 py-1.5 text-[10px] font-semibold text-[color:var(--text)] shadow-sm hover:bg-white active:scale-[0.98]"
                           >
                             Fix now
                           </button>
@@ -1423,9 +1447,9 @@ export default function Step3Generate({
                   </div>
 
                   {outputReadiness && (
-                    <div className="rounded-xl border border-white/70 bg-white/70 p-3">
+                    <div className="rounded-xl border border-[color:var(--border)] bg-[color:var(--surface-muted)] p-3">
                       <div className="flex flex-wrap items-center gap-2">
-                        <div className="text-[11px] font-semibold text-gray-900">Output readiness</div>
+                        <div className="text-[11px] font-semibold text-[color:var(--text)]">Output readiness</div>
                         <span
                           className={`rounded-full px-2.5 py-1 text-[10px] font-semibold ${
                             outputReadiness.status === "Ready"
@@ -1464,7 +1488,7 @@ export default function Step3Generate({
                                   }
                                   onOpenQaTarget?.(3, "qa-generated-output");
                                 }}
-                                className="mt-2 rounded-lg border border-white/80 bg-white/80 px-2.5 py-1.5 text-[10px] font-semibold text-gray-900 shadow-sm hover:bg-white active:scale-[0.98]"
+                                className="mt-2 rounded-lg border border-white/80 bg-white/80 px-2.5 py-1.5 text-[10px] font-semibold text-[color:var(--text)] shadow-sm hover:bg-white active:scale-[0.98]"
                               >
                                 Fix now
                               </button>
@@ -1497,21 +1521,21 @@ export default function Step3Generate({
             )}
 
             {aiHandoffInput && (
-              <div className="mb-4 rounded-2xl border border-slate-200 bg-white p-4 shadow-sm shadow-slate-200/60">
+              <div className="mb-4 rounded-2xl border border-[color:var(--border)] bg-[color:var(--surface-elevated)] p-4 shadow-[var(--surface-shadow)]">
                 <div className="flex flex-wrap items-start justify-between gap-3">
                   <div>
-                    <div className="text-[11px] font-semibold uppercase tracking-[0.14em] text-slate-400">
+                    <div className="text-[11px] font-semibold uppercase tracking-[0.14em] text-[color:var(--muted)]">
                       AI Handoff
                     </div>
-                    <div className="mt-1 text-sm font-semibold text-slate-900">
+                    <div className="mt-1 text-sm font-semibold text-[color:var(--text)]">
                       Locked handoff modes for Claude or ChatGPT
                     </div>
-                    <div className="mt-1 text-xs leading-relaxed text-slate-500">
+                    <div className="mt-1 text-xs leading-relaxed text-[color:var(--muted)]">
                       Copies a ready prompt you can paste into Claude or ChatGPT. Nothing is sent automatically.
                     </div>
                   </div>
                   {copyFeedback && copyFeedback.includes("Prompt") && (
-                    <div className="rounded-full bg-slate-900 px-2.5 py-1 text-[10px] font-semibold text-white">
+                    <div className="rounded-full bg-amber-400 px-2.5 py-1 text-[10px] font-semibold text-black">
                       {copyFeedback} copied
                     </div>
                   )}
@@ -1526,7 +1550,7 @@ export default function Step3Generate({
                         buildPolishOnlyPrompt(aiHandoffInput)
                       )
                     }
-                    className="rounded-xl bg-slate-900 px-3.5 py-2 text-xs font-semibold text-white shadow-sm hover:bg-black active:scale-[0.98]"
+                    className="rounded-xl bg-amber-400 px-3.5 py-2 text-xs font-semibold text-black shadow-sm hover:bg-amber-300 active:scale-[0.98]"
                   >
                     Copy Polish Only Prompt
                   </button>
@@ -1538,7 +1562,7 @@ export default function Step3Generate({
                         buildReviewOnlyPrompt(aiHandoffInput)
                       )
                     }
-                    className="rounded-xl border border-slate-200 bg-white px-3.5 py-2 text-xs font-semibold text-slate-800 shadow-sm hover:bg-slate-50 active:scale-[0.98]"
+                    className="rounded-xl border border-cyan-400/25 bg-cyan-400/10 px-3.5 py-2 text-xs font-semibold text-cyan-100 shadow-sm hover:bg-cyan-400/15 active:scale-[0.98]"
                   >
                     Copy Review Only Prompt
                   </button>
@@ -1550,7 +1574,7 @@ export default function Step3Generate({
                         buildFixWeakSectionPrompt(aiHandoffInput)
                       )
                     }
-                    className="rounded-xl border border-slate-200 bg-white px-3.5 py-2 text-xs font-semibold text-slate-800 shadow-sm hover:bg-slate-50 active:scale-[0.98]"
+                    className="rounded-xl border border-cyan-400/25 bg-cyan-400/10 px-3.5 py-2 text-xs font-semibold text-cyan-100 shadow-sm hover:bg-cyan-400/15 active:scale-[0.98]"
                   >
                     Copy Fix Weak Section Prompt
                   </button>
@@ -1558,29 +1582,29 @@ export default function Step3Generate({
               </div>
             )}
 
-            <div className="mb-4 rounded-2xl border border-slate-200 bg-white p-4 shadow-sm shadow-slate-200/60">
+            <div className="mb-4 rounded-2xl border border-[color:var(--border)] bg-[color:var(--surface-elevated)] p-4 shadow-[var(--surface-shadow)]">
               <div className="flex flex-wrap items-start justify-between gap-3">
                 <div>
-                  <div className="text-[11px] font-semibold uppercase tracking-[0.14em] text-slate-400">
+                  <div className="text-[11px] font-semibold uppercase tracking-[0.14em] text-[color:var(--muted)]">
                     Quick Export Bar
                   </div>
-                  <div className="mt-1 text-sm font-semibold text-slate-900">
+                  <div className="mt-1 text-sm font-semibold text-[color:var(--text)]">
                     Shortcut copy actions for the current output package
                   </div>
-                  <div className="mt-1 text-xs leading-relaxed text-slate-500">
+                  <div className="mt-1 text-xs leading-relaxed text-[color:var(--muted)]">
                     Copy shortcuts only. Existing output workspaces and export actions stay available below.
                   </div>
                 </div>
                 <div className="flex flex-wrap items-center gap-2">
                   {copyFeedback && (
-                    <div className="rounded-full bg-slate-900 px-2.5 py-1 text-[10px] font-semibold text-white">
+                    <div className="rounded-full bg-amber-400 px-2.5 py-1 text-[10px] font-semibold text-black">
                       {copyFeedback} copied
                     </div>
                   )}
                   <button
                     type="button"
                     onClick={onPinCurrentOutput}
-                    className="rounded-xl border border-slate-200 bg-white px-3.5 py-2 text-xs font-semibold text-slate-800 shadow-sm hover:bg-slate-50 active:scale-[0.98]"
+                    className="rounded-xl border border-cyan-400/25 bg-cyan-400/10 px-3.5 py-2 text-xs font-semibold text-cyan-100 shadow-sm hover:bg-cyan-400/15 active:scale-[0.98]"
                   >
                     Pin This Output
                   </button>
@@ -1590,28 +1614,28 @@ export default function Step3Generate({
                 <button
                   type="button"
                   onClick={() => handleCopy("Full Package", buildFullPackageText(pkg))}
-                  className="rounded-xl bg-gray-900 px-3.5 py-2 text-xs font-semibold text-white shadow-sm hover:bg-black active:scale-[0.98]"
+                  className="rounded-xl bg-amber-400 px-3.5 py-2 text-xs font-semibold text-black shadow-sm hover:bg-amber-300 active:scale-[0.98]"
                 >
                   Copy Full Package
                 </button>
                 <button
                   type="button"
                   onClick={() => handleCopy("Image Prompt", pkg.imagePrompt)}
-                  className="rounded-xl border border-slate-200 bg-white px-3.5 py-2 text-xs font-semibold text-slate-800 shadow-sm hover:bg-slate-50 active:scale-[0.98]"
+                  className="rounded-xl border border-cyan-400/25 bg-cyan-400/10 px-3.5 py-2 text-xs font-semibold text-cyan-100 shadow-sm hover:bg-cyan-400/15 active:scale-[0.98]"
                 >
                   Copy Image Prompt
                 </button>
                 <button
                   type="button"
                   onClick={() => handleCopy("Caption", pkg.caption)}
-                  className="rounded-xl border border-slate-200 bg-white px-3.5 py-2 text-xs font-semibold text-slate-800 shadow-sm hover:bg-slate-50 active:scale-[0.98]"
+                  className="rounded-xl border border-cyan-400/25 bg-cyan-400/10 px-3.5 py-2 text-xs font-semibold text-cyan-100 shadow-sm hover:bg-cyan-400/15 active:scale-[0.98]"
                 >
                   Copy Caption
                 </button>
                 <button
                   type="button"
                   onClick={() => handleCopy("Hashtags", pkg.hashtags)}
-                  className="rounded-xl border border-slate-200 bg-white px-3.5 py-2 text-xs font-semibold text-slate-800 shadow-sm hover:bg-slate-50 active:scale-[0.98]"
+                  className="rounded-xl border border-cyan-400/25 bg-cyan-400/10 px-3.5 py-2 text-xs font-semibold text-cyan-100 shadow-sm hover:bg-cyan-400/15 active:scale-[0.98]"
                 >
                   Copy Hashtags
                 </button>
@@ -1773,21 +1797,21 @@ export default function Step3Generate({
               </div>
             )}
 
-            <div className="mb-4 rounded-2xl border border-gray-200 bg-white/80 p-4 shadow-sm shadow-gray-200/60">
+            <div className="mb-4 rounded-2xl border border-[color:var(--border)] bg-[color:var(--surface-elevated)] p-4 shadow-[var(--surface-shadow)]">
               <div className="flex flex-wrap items-start justify-between gap-3">
                 <div>
                   <div className="flex flex-wrap items-center gap-2">
-                    <div className="text-[11px] font-semibold uppercase tracking-[0.14em] text-gray-400">
+                    <div className="text-[11px] font-semibold uppercase tracking-[0.14em] text-[color:var(--muted)]">
                       Generated Output
                     </div>
-                    <span className="rounded-full bg-gray-900 px-2.5 py-1 text-[10px] font-semibold text-white/80">
+                    <span className="rounded-full bg-amber-400 px-2.5 py-1 text-[10px] font-semibold text-black/80">
                       Ready to scan
                     </span>
                   </div>
-                  <div className="mt-1 text-sm font-semibold text-gray-800">
+                  <div className="mt-1 text-sm font-semibold text-[color:var(--text)]">
                     Prompt pack, workflow guidance, and export-ready copy
                   </div>
-                  <div className="mt-1 text-xs leading-relaxed text-gray-500">
+                  <div className="mt-1 text-xs leading-relaxed text-[color:var(--muted)]">
                     Core prompts, workflow notes, and posting assets are grouped
                     below for quick review.
                   </div>
@@ -1805,7 +1829,7 @@ export default function Step3Generate({
                 </div>
               </div>
             </div>
-            <div className="overflow-hidden rounded-2xl border border-gray-200 bg-white">
+            <div className="overflow-hidden rounded-2xl border border-[color:var(--border)] bg-[color:var(--surface)]">
               <OutputCards
                 data={pkg}
                 onRestoreVersion={onRestoreVersion}
@@ -1816,11 +1840,11 @@ export default function Step3Generate({
         </GenerationOutputBoundary>
       )}
 
-      <div className="flex flex-wrap gap-2 border-t border-gray-200/80 pt-5">
+      <div className="flex flex-wrap gap-2 border-t border-[color:var(--border)] pt-5">
         <button
           type="button"
           onClick={onBack}
-          className="rounded-2xl border border-gray-200 bg-white px-5 py-2.5 text-sm font-semibold text-gray-600 shadow-sm shadow-gray-100/80 hover:bg-gray-50 active:scale-[0.98]"
+          className="rounded-2xl border border-cyan-400/25 bg-cyan-400/10 px-5 py-2.5 text-sm font-semibold text-cyan-100 shadow-sm hover:bg-cyan-400/15 active:scale-[0.98]"
         >
           ← Back
         </button>
@@ -1837,7 +1861,7 @@ export default function Step3Generate({
 
             window.scrollTo({ top: 0, behavior: "smooth" });
           }}
-          className="rounded-2xl border border-gray-200 bg-white px-5 py-2.5 text-sm font-semibold text-gray-600 shadow-sm shadow-gray-100/80 hover:bg-gray-50 active:scale-[0.98]"
+          className="rounded-2xl border border-cyan-400/25 bg-cyan-400/10 px-5 py-2.5 text-sm font-semibold text-cyan-100 shadow-sm hover:bg-cyan-400/15 active:scale-[0.98]"
         >
           ↑ Top
         </button>

@@ -62,7 +62,7 @@ export default function CopyButton({
     }
   }
 
-  const padding = size === "md" ? "px-3 py-2 text-sm" : "px-2.5 py-1.5 text-xs";
+  const padding = size === "md" ? "min-h-10 px-3 py-2 text-sm" : "min-h-9 px-2.5 py-1.5 text-xs";
   const buttonText = status === "copied" ? "Copied ✓" : status === "error" ? "Copy failed" : idleText;
 
   return (
@@ -71,7 +71,7 @@ export default function CopyButton({
       onClick={handleCopy}
       disabled={!text.trim()}
       aria-label={`Copy ${label}`}
-      className={`inline-flex items-center justify-center rounded-xl border border-[color:var(--border)] bg-[color:var(--surface)] font-semibold text-[color:var(--text)] transition hover:border-cyan-400/60 hover:text-cyan-200 disabled:cursor-not-allowed disabled:opacity-50 ${padding}`}
+      className={`inline-flex max-w-full items-center justify-center whitespace-normal break-words rounded-xl border border-[color:var(--border)] bg-[color:var(--surface)] text-center font-semibold leading-snug text-[color:var(--text)] transition [overflow-wrap:anywhere] hover:border-cyan-400/60 hover:text-cyan-200 disabled:cursor-not-allowed disabled:opacity-50 ${padding}`}
     >
       {buttonText}
     </button>

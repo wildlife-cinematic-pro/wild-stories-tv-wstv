@@ -129,6 +129,14 @@ import { useWorkflowPresets } from "@/hooks/use-workflow-presets";
 import SettingsDrawer from "@/components/SettingsDrawer";
 import WSTVWorkflowDiagram from "@/components/WSTVWorkflowDiagram";
 import RunwayOfficialWorkflowDiagram from "@/components/RunwayOfficialWorkflowDiagram";
+import {
+  StudioActionBar,
+  StudioDiagramFrame,
+  StudioPanel,
+  StudioSectionHeader,
+  StudioStatusPill,
+  StudioTabs,
+} from "@/components/studio-layout";
 import CustomAnimalModal from "@/components/build/custom-animal-modal";
 import Step1Setup from "@/components/build/step-1-setup";
 import {
@@ -2193,7 +2201,7 @@ export default function Page() {
 
             {/* Top-level tab switcher — compact segmented control */}
             <div className="order-3 flex w-full justify-start sm:order-2 sm:flex-1 sm:justify-center">
-              <nav className="inline-flex items-center rounded-2xl border border-white/[0.08] bg-white/[0.04] p-1 shadow-[inset_0_1px_0_rgba(255,255,255,0.04)]">
+              <nav className="flex max-w-full items-center overflow-x-auto rounded-2xl border border-white/[0.08] bg-white/[0.04] p-1 shadow-[inset_0_1px_0_rgba(255,255,255,0.04)] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
                 {([
                   { id: "build" as TopTab, label: "Build", icon: "⚡" },
                   { id: "workflows" as TopTab, label: "Workflows", icon: "⬡" },
@@ -2384,42 +2392,109 @@ export default function Page() {
           BUILD TAB
       ══════════════════════════════════════════════════════════════════════ */}
       {activeTab === "build" && (
-        <>
-          {/* Page content */}
-          <div className="mx-auto w-full max-w-[var(--main-max-width)] px-4 py-5 sm:px-6 sm:py-8 lg:px-8">
-            <div className="mb-5 rounded-[24px] border border-[color:var(--border)] bg-[color:var(--surface-elevated)] p-4 shadow-[var(--surface-shadow)]">
-              <div className="flex flex-wrap items-start justify-between gap-4">
-                <div>
-                  <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-cyan-400/80">
-                    Storyboard preview
-                  </p>
-                  <h2 className="mt-2 text-lg font-semibold text-[color:var(--text)]">
-                    Open Storyboard for Current Setup
-                  </h2>
-                  <p className="mt-2 max-w-3xl text-sm leading-6 text-[color:var(--muted)]">
-                    Storyboard will generate GPT Image 2 and Nano Banana 2 long/short pencil storyboard prompts plus four Kling motion prompts for the current setup.
-                  </p>
-                </div>
-                <Link
-                  key={detailedStoryboardLinkMetadata.key}
-                  href={currentStoryboardHref}
-                  onClick={saveStoryboardHandoff}
-                  aria-label={detailedStoryboardLinkMetadata.ariaLabel}
-                  title={detailedStoryboardLinkMetadata.title}
-                  className="rounded-xl border border-[color:var(--border)] bg-[color:var(--surface)] px-4 py-2 text-sm font-semibold text-[color:var(--text)] transition hover:border-cyan-400/60 hover:text-cyan-200"
-                >
-                  Open Storyboard for Current Setup
-                </Link>
-                <Link
-                  href={currentFourShotPhotoHref}
-                  onClick={saveFourShotPhotoHandoff}
-                  title={currentFourShotPhotoHref}
-                  className="rounded-xl border border-cyan-400/35 bg-cyan-500/10 px-4 py-2 text-sm font-semibold text-cyan-200 transition hover:border-cyan-300/70 hover:bg-cyan-500/15 hover:text-cyan-100"
-                >
-                  4-Shot Photo
-                </Link>
-              </div>
-            </div>
+        <div className="overflow-x-hidden bg-[#050806] text-[#f7f1df]">
+          <div className="pointer-events-none fixed inset-0 -z-10 bg-[radial-gradient(circle_at_16%_8%,rgba(52,96,61,0.3),transparent_30%),radial-gradient(circle_at_86%_0%,rgba(217,169,79,0.12),transparent_28%),linear-gradient(135deg,#050806_0%,#09120d_44%,#111609_100%)]" />
+          <div className="mx-auto w-full max-w-[1880px] px-4 py-5 sm:px-6 sm:py-7 lg:px-8">
+            <div className="grid gap-4 2xl:grid-cols-[270px_minmax(0,1fr)_310px] 2xl:items-start">
+              <aside className="space-y-4 2xl:sticky 2xl:top-36">
+                <StudioPanel className="p-4" variant="muted">
+                  <p className="text-[11px] font-black uppercase tracking-[0.22em] text-[#d9a94f]">Current setup</p>
+                  <h2 className="mt-2 text-lg font-semibold text-white">{currentGenerateSubjectPairLabel}</h2>
+                  <div className="mt-4 grid gap-2 text-xs">
+                    {[
+                      ["Mode", storyMode.replace(/_/g, " ")],
+                      ["Habitat", habitatRegion.replace(/_/g, " ")],
+                      ["Season", season.replace(/_/g, " ")],
+                      ["Time", timeOfDay.replace(/_/g, " ")],
+                      ["Output", durationLane + " reel"],
+                    ].map(([label, value]) => (
+                      <div key={label} className="rounded-2xl border border-[#263820] bg-[#071009] p-3">
+                        <p className="text-[10px] font-black uppercase tracking-[0.14em] text-[#9da892]">{label}</p>
+                        <p className="mt-1 font-semibold text-[#f7f1df]">{value}</p>
+                      </div>
+                    ))}
+                  </div>
+                </StudioPanel>
+
+                <StudioPanel className="p-4" variant="muted">
+                  <p className="text-[11px] font-black uppercase tracking-[0.22em] text-[#d9a94f]">Provider status</p>
+                  <div className="mt-3 space-y-2">
+                    <div className="flex items-center justify-between gap-3 rounded-2xl border border-[#263820] bg-[#071009] px-3 py-2">
+                      <span className="text-xs font-semibold text-[#dce8d1]">{activeProvider === "gemini" ? "Gemini Default" : activeProvider}</span>
+                      <StudioStatusPill tone="green">Selected</StudioStatusPill>
+                    </div>
+                    <div className="flex items-center justify-between gap-3 rounded-2xl border border-[#4b3816] bg-[#1a1307] px-3 py-2">
+                      <span className="text-xs font-semibold text-[#dce8d1]">Fallback</span>
+                      <StudioStatusPill tone={autoFallback ? "gold" : "muted"}>{autoFallback ? "On" : "Off"}</StudioStatusPill>
+                    </div>
+                  </div>
+                </StudioPanel>
+              </aside>
+
+              <section className="min-w-0 space-y-4">
+                <StudioPanel className="p-4 sm:p-5" variant="default">
+                  <StudioSectionHeader
+                    eyebrow="Build command center"
+                    title="Wildlife reel setup workspace"
+                    description="Build setup, tune engine quality, generate the prompt package, and hand off the current setup to Storyboard or Four-Shot Photo without changing the existing Step logic."
+                    badges={
+                      <>
+                        <StudioStatusPill tone="gold">Step {step}</StudioStatusPill>
+                        <StudioStatusPill tone="green">Layout only</StudioStatusPill>
+                        <StudioStatusPill tone="cyan">Handoffs preserved</StudioStatusPill>
+                      </>
+                    }
+                    actions={
+                      <>
+                        <Link
+                          key={detailedStoryboardLinkMetadata.key}
+                          href={currentStoryboardHref}
+                          onClick={saveStoryboardHandoff}
+                          aria-label={detailedStoryboardLinkMetadata.ariaLabel}
+                          title={detailedStoryboardLinkMetadata.title}
+                          className="inline-flex min-h-10 items-center rounded-xl border border-cyan-400/35 bg-cyan-500/10 px-4 py-2 text-sm font-semibold text-cyan-100 transition hover:border-cyan-300/70 hover:bg-cyan-500/15"
+                        >
+                          Open Storyboard
+                        </Link>
+                        <Link
+                          href={currentFourShotPhotoHref}
+                          onClick={saveFourShotPhotoHandoff}
+                          title={currentFourShotPhotoHref}
+                          className="inline-flex min-h-10 items-center rounded-xl border border-[#d9a94f]/40 bg-[#d9a94f]/12 px-4 py-2 text-sm font-semibold text-[#f3c766] transition hover:border-[#d9a94f]/70 hover:bg-[#d9a94f]/18"
+                        >
+                          4-Shot Photo
+                        </Link>
+                      </>
+                    }
+                  />
+                  <div className="mt-4 rounded-[22px] border border-[#263820] bg-[#071009]/82 p-2">
+                    <div className="flex flex-wrap gap-2">
+                      {([
+                        { step: 1 as Step, label: "Wildlife Setup" },
+                        { step: 2 as Step, label: "Engine & Quality" },
+                        { step: 3 as Step, label: "Generate" },
+                      ]).map((s) => (
+                        <button
+                          key={s.step}
+                          type="button"
+                          aria-current={step === s.step ? "step" : undefined}
+                          onClick={() => setStep(s.step)}
+                          className={[
+                            "min-h-11 flex-1 rounded-2xl border px-3 py-2 text-left text-xs font-black transition active:scale-[0.98] sm:min-w-[190px]",
+                            step === s.step
+                              ? "border-[#d9a94f]/45 bg-[#d9a94f] text-[#111207] shadow-[0_12px_30px_rgba(217,169,79,0.16)]"
+                              : step > s.step
+                                ? "border-emerald-400/30 bg-emerald-500/10 text-emerald-100 hover:bg-emerald-500/15"
+                                : "border-[#314428] bg-[#101a10] text-[#c7d0bd] hover:border-[#d9a94f]/45 hover:text-white",
+                          ].join(" ")}
+                        >
+                          <span className="block text-[10px] uppercase tracking-[0.16em] opacity-70">Step {s.step}</span>
+                          <span className="mt-0.5 block">{s.label}</span>
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                </StudioPanel>
 
             {step === 1 && (
               <Step1Setup
@@ -2777,113 +2852,137 @@ export default function Page() {
                 onBack={() => setStep(2)}
               />
             )}
+              </section>
+
+              <aside className="space-y-4 2xl:sticky 2xl:top-36">
+                <StudioPanel className="p-4" variant="gold">
+                  <p className="text-[11px] font-black uppercase tracking-[0.22em] text-[#d9a94f]">Next actions</p>
+                  <div className="mt-3 grid gap-2">
+                    <Link
+                      key={compactStoryboardLinkMetadata.key}
+                      href={currentStoryboardHref}
+                      onClick={saveStoryboardHandoff}
+                      aria-label={compactStoryboardLinkMetadata.ariaLabel}
+                      title={compactStoryboardLinkMetadata.title}
+                      className="rounded-2xl border border-cyan-400/30 bg-cyan-500/10 px-3 py-2 text-sm font-semibold text-cyan-100 transition hover:border-cyan-300/70 hover:bg-cyan-500/15"
+                    >
+                      Open Storyboard for Current Setup
+                    </Link>
+                    <Link
+                      href={currentFourShotPhotoHref}
+                      onClick={saveFourShotPhotoHandoff}
+                      title={currentFourShotPhotoHref}
+                      className="rounded-2xl border border-[#d9a94f]/40 bg-[#d9a94f]/12 px-3 py-2 text-sm font-semibold text-[#f3c766] transition hover:border-[#d9a94f]/70 hover:bg-[#d9a94f]/18"
+                    >
+                      4-Shot Photo
+                    </Link>
+                  </div>
+                  <p className="mt-3 text-xs leading-5 text-[#c9d2bd]">
+                    These use the existing query params and localStorage handoff callbacks.
+                  </p>
+                </StudioPanel>
+
+                <StudioPanel className="p-4" variant="muted">
+                  <p className="text-[11px] font-black uppercase tracking-[0.22em] text-[#d9a94f]">Readiness</p>
+                  <div className="mt-3 space-y-2">
+                    {[
+                      ["Setup", "Active"],
+                      ["Quality", qualityReco.level],
+                      ["Package", pkg ? "Generated" : "Waiting"],
+                      ["Locks", Object.values(packageLocks).filter(Boolean).length + " active"],
+                    ].map(([label, value]) => (
+                      <div key={label} className="flex items-center justify-between gap-3 rounded-2xl border border-[#263820] bg-[#071009] px-3 py-2 text-xs">
+                        <span className="font-semibold text-[#9da892]">{label}</span>
+                        <span className="font-black text-[#f7f1df]">{value}</span>
+                      </div>
+                    ))}
+                  </div>
+                </StudioPanel>
+              </aside>
+            </div>
           </div>
-        </>
+        </div>
       )}
 
       {/* ══════════════════════════════════════════════════════════════════════
           WORKFLOWS TAB — scoped dark zone
       ══════════════════════════════════════════════════════════════════════ */}
       {activeTab === "workflows" && (
-        <div className="min-h-[calc(100vh-56px)] bg-gray-950">
-          <div className="w-full px-4 py-8 sm:px-6 sm:py-10 lg:px-8 xl:px-10 2xl:px-12">
-
-            {/* Workflow tab selector */}
-            <div className="mb-7 space-y-3">
-              <div className="flex flex-col gap-4 xl:flex-row xl:items-end xl:justify-between">
-                <div className="max-w-2xl">
-                  <div className="text-[11px] font-semibold uppercase tracking-[0.1em] text-white/30">Workflow Viewer</div>
-                  <div className="mt-1 text-sm text-white/50">Switch between the primary hybrid 4-shot production workflow view and the optional Runway-native reference handoff view.</div>
-                </div>
-                <div className="rounded-[24px] border border-white/[0.08] bg-white/[0.03] p-1.5 shadow-[inset_0_1px_0_rgba(255,255,255,0.03)]">
-                  <div className="flex flex-wrap gap-1.5">
-                    {([
+        <div className="min-h-[calc(100vh-56px)] overflow-x-hidden bg-[#050806] text-[#f7f1df]">
+          <div className="pointer-events-none fixed inset-0 -z-10 bg-[radial-gradient(circle_at_14%_12%,rgba(52,96,61,0.32),transparent_30%),radial-gradient(circle_at_86%_4%,rgba(217,169,79,0.14),transparent_28%),linear-gradient(135deg,#050806_0%,#09120d_44%,#111609_100%)]" />
+          <div className="w-full px-4 py-5 sm:px-6 sm:py-7 lg:px-8 xl:px-10 2xl:px-12">
+            <div className="mx-auto max-w-[1880px] space-y-4">
+              <StudioPanel className="p-4 sm:p-5" variant="default">
+                <StudioSectionHeader
+                  eyebrow="Production workflow viewer"
+                  title="Wild Stories TV workflow maps"
+                  description="Full-width production diagram viewer for the real WSTV custom workflow and the Runway official reference workflow. State and diagram behavior stay owned by the existing workflowTab and setWorkflowTab logic."
+                  badges={
+                    <>
+                      <StudioStatusPill tone="green">Production reused</StudioStatusPill>
+                      <StudioStatusPill tone="gold">Preview-approved style</StudioStatusPill>
+                      <StudioStatusPill tone="muted">Layout only</StudioStatusPill>
+                    </>
+                  }
+                />
+                <div className="mt-4 grid gap-3 xl:grid-cols-[minmax(0,1fr)_minmax(420px,0.42fr)] xl:items-end">
+                  <StudioActionBar>
+                    {[
+                      "Canonical Anchor",
+                      "Extract Frame Handoff",
+                      "Last Frame Fallback",
+                      "First Frame QA",
+                      "Audio Layering",
+                      "Social Side Outputs",
+                    ].map((item) => (
+                      <StudioStatusPill key={item} tone="default">{item}</StudioStatusPill>
+                    ))}
+                  </StudioActionBar>
+                  <StudioTabs
+                    tabs={[
                       {
                         id: "wstv" as WorkflowTab,
                         label: "WSTV Custom Workflow",
-                        badge: "Primary",
-                        icon: "◈",
                         description: "Production continuity map",
+                        badge: "Primary",
                       },
                       {
                         id: "runway" as WorkflowTab,
                         label: "Runway Official Workflow",
-                        badge: "Optional reference",
-                        icon: "↗",
                         description: "Native safe-handoff reference",
+                        badge: "Reference",
                       },
-                    ]).map((tab) => (
-                      <button
-                        key={tab.id}
-                        type="button"
-                        onClick={() => setWorkflowTab(tab.id)}
-                        className={`group flex min-w-[240px] items-center justify-between gap-3 rounded-2xl border px-4 py-3 text-left transition-all ${
-                          workflowTab === tab.id
-                            ? "border-white/15 bg-white/[0.96] text-gray-900 shadow-[0_1px_3px_rgba(15,23,42,0.2)]"
-                            : "border-transparent text-white/45 hover:border-white/[0.08] hover:bg-white/[0.04] hover:text-white/75"
-                        }`}
-                      >
-                        <div className="flex items-center gap-3">
-                          <span
-                            className={`grid h-8 w-8 place-items-center rounded-2xl text-sm ${
-                              workflowTab === tab.id
-                                ? "bg-gray-900/10 text-gray-900"
-                                : "bg-white/[0.06] text-white/70 group-hover:bg-white/[0.1] group-hover:text-white"
-                            }`}
-                          >
-                            {tab.icon}
-                          </span>
-                          <span className="min-w-0">
-                            <span className="block text-sm font-semibold">{tab.label}</span>
-                            <span className={`mt-0.5 block text-[11px] ${
-                              workflowTab === tab.id ? "text-gray-500" : "text-white/35 group-hover:text-white/45"
-                            }`}>
-                              {tab.description}
-                            </span>
-                          </span>
-                        </div>
-                        <span className={`rounded-full px-2 py-1 text-[10px] font-semibold ${
-                          workflowTab === tab.id
-                            ? tab.id === "wstv" ? "bg-violet-100 text-violet-700" : "bg-green-100 text-green-700"
-                            : "bg-white/[0.06] text-white/35"
-                        }`}>
-                          {tab.badge}
-                        </span>
-                      </button>
-                    ))}
-                  </div>
+                    ]}
+                    activeId={workflowTab}
+                    onChange={setWorkflowTab}
+                  />
                 </div>
-              </div>
-              <div className="text-xs text-white/25">
-                Interactive viewer with drag, zoom, and inspectable continuity wires. The primary runtime lane is the hybrid 4-shot workflow.
-              </div>
-            </div>
+              </StudioPanel>
 
-            {/* Diagram frame */}
-            <div className="overflow-hidden rounded-2xl border border-white/[0.08] bg-gray-900">
-              <div className="border-b border-white/[0.08] px-5 py-4 sm:px-6">
-                <div className="flex flex-wrap items-center gap-3">
-                  <div className="flex items-center gap-1.5">
-                    <div className="h-2 w-2 rounded-full bg-red-500/60" />
-                    <div className="h-2 w-2 rounded-full bg-yellow-500/60" />
-                    <div className="h-2 w-2 rounded-full bg-green-500/60" />
-                  </div>
-                  <div>
-                    <div className="text-xs font-semibold text-gray-300">
-                      {workflowTab === "wstv"
-                        ? "WSTV · 4-shot production workflow · hybrid primary lane"
-                        : "Runway Official · 4-shot safe handoff · Gen-4.5 native"}
-                    </div>
-                    <div className="mt-0.5 text-[11px] text-gray-500">
-                      {workflowTab === "wstv"
-                        ? "Production-oriented continuity viewer for the hybrid 4-shot path, with Canonical Anchor, preferred Extract Frame handoff, and Last Frame fallback."
-                        : "Optional reference viewer for the Runway-native safe-handoff pattern, manual overrides, and stitched final assembly."}
-                    </div>
-                  </div>
-                </div>
-              </div>
-              <div className="p-3 sm:p-4 lg:p-5">
+              <StudioDiagramFrame
+                eyebrow="Premium diagram frame"
+                title={workflowTab === "wstv"
+                  ? "WSTV · 4-shot production workflow · hybrid primary lane"
+                  : "Runway Official · 4-shot safe handoff · Gen-4.5 native"}
+                description={workflowTab === "wstv"
+                  ? "Production-oriented continuity viewer for the hybrid 4-shot path, with Canonical Anchor, preferred Extract Frame handoff, Last Frame fallback, First Frame QA, audio layering, and social side outputs."
+                  : "Optional reference viewer for the Runway-native safe-handoff pattern, manual overrides, and stitched final assembly."}
+              >
                 {workflowTab === "wstv" ? <WSTVWorkflowDiagram /> : <RunwayOfficialWorkflowDiagram />}
+              </StudioDiagramFrame>
+
+              <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-4">
+                {[
+                  ["Primary lane", "WSTV custom workflow remains the default production map for the hybrid 4-shot path."],
+                  ["Runway reference", "Runway official diagram remains available through the same workflowTab state switch."],
+                  ["Mobile safe", "The diagram is framed inside an overflow-safe panel so the page avoids horizontal spill."],
+                  ["No logic change", "Only wrapper classes and visual components changed in this production pass."],
+                ].map(([title, detail]) => (
+                  <StudioPanel key={title} className="p-4" variant="muted">
+                    <p className="text-[11px] font-black uppercase tracking-[0.18em] text-[#d9a94f]">{title}</p>
+                    <p className="mt-2 text-sm leading-6 text-[#c9d2bd]">{detail}</p>
+                  </StudioPanel>
+                ))}
               </div>
             </div>
           </div>

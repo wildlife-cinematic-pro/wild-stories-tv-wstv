@@ -24,14 +24,14 @@ export default function OutputCard({
 
   return (
     <section className="overflow-hidden rounded-3xl border border-white/[0.08] bg-gray-950/55 shadow-[var(--surface-shadow)]">
-      <div className="flex items-center justify-between gap-2 border-b border-white/[0.07] px-3 py-2.5 sm:gap-3 sm:px-4 sm:py-3">
-        <h2 className="text-[11px] font-black uppercase tracking-[0.16em] text-cyan-200 sm:text-xs">
+      <div className="flex flex-wrap items-start justify-between gap-2 border-b border-white/[0.07] px-3 py-2.5 sm:gap-3 sm:px-4 sm:py-3">
+        <h2 className="min-w-0 flex-1 break-words text-[11px] font-black uppercase leading-snug tracking-[0.16em] text-cyan-200 [overflow-wrap:anywhere] sm:text-xs">
           {label}
         </h2>
         <button
           type="button"
           onClick={copy}
-          className={`rounded-2xl border px-2.5 py-1.5 text-[11px] font-bold transition sm:px-3 sm:text-xs ${
+          className={`shrink-0 rounded-2xl border px-2.5 py-1.5 text-[11px] font-bold transition sm:px-3 sm:text-xs ${
             copiedKey === copyKey
               ? "border-emerald-400/40 bg-emerald-400/10 text-emerald-300"
               : "border-white/10 bg-white/[0.04] text-white/65 hover:bg-white/[0.08] hover:text-white"
@@ -40,7 +40,7 @@ export default function OutputCard({
           {copiedKey === copyKey ? "Copied" : "Copy"}
         </button>
       </div>
-      <pre className="max-h-[320px] overflow-auto whitespace-pre-wrap break-words p-3 text-[11px] leading-5 text-white/82 sm:max-h-[430px] sm:p-4 sm:text-xs sm:leading-6">
+      <pre className="max-h-[320px] overflow-auto whitespace-pre-wrap break-words p-3 text-[11px] leading-5 text-white/82 [overflow-wrap:anywhere] sm:max-h-[430px] sm:p-4 sm:text-xs sm:leading-6">
         {value}
       </pre>
     </section>

@@ -15,7 +15,7 @@ test("main build flow generates output, keeps workspace tabs reachable, and show
   await page.getByRole("button", { name: /Workflow Preset Library/i }).click();
 
   await expect(
-    page.locator("button[aria-current=\"step\"]").filter({ hasText: "Wildlife Setup" })
+    page.getByRole("button", { name: "Step 1 Wildlife Setup", exact: true })
   ).toBeVisible();
   await expect(page.getByText("Wildlife Focus", { exact: true })).toBeVisible();
   await expect(
@@ -27,15 +27,15 @@ test("main build flow generates output, keeps workspace tabs reachable, and show
   await page.getByRole("button", { name: /Continue.*Engine & Quality/i }).click();
 
   await expect(
-    page.locator("button[aria-current=\"step\"]").filter({ hasText: "Engine & Quality" })
+    page.getByRole("button", { name: "Step 2 Engine & Quality", exact: true })
   ).toBeVisible();
   await expect(page.getByText("Image Prompt Engine")).toBeVisible();
   await page.getByRole("button", { name: /Continue.*Generate/i }).click();
 
   await expect(
-    page.locator("button[aria-current=\"step\"]").filter({ hasText: "Generate" })
+    page.getByRole("button", { name: "Step 3 Generate", exact: true })
   ).toBeVisible();
-  await expect(page.getByText("Generate for Reels")).toBeVisible();
+  await expect(page.getByText("Generate Actions", { exact: true })).toBeVisible();
   await page.getByRole("button", { name: /Generate.*vs/i }).click();
 
   await expect(page.getByText("Generated Output", { exact: true })).toBeVisible({
