@@ -8,16 +8,16 @@ async function openFreshBuild(page: Page) {
   });
   await page.reload();
   await expect(
-    page.locator('button[aria-current="step"]').filter({ hasText: "Wildlife Setup" })
+    page.getByRole("button", { name: "Step 1 Wildlife Setup", exact: true })
   ).toBeVisible();
 }
 
 async function goToEngineQuality(page: Page) {
   await page.getByRole("button", { name: /Continue.*Engine & Quality/i }).click();
   await expect(
-    page.locator('button[aria-current="step"]').filter({ hasText: "Engine & Quality" })
+    page.getByRole("button", { name: "Step 2 Engine & Quality", exact: true })
   ).toBeVisible();
-  await expect(page.getByText("Model Profile", { exact: true })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Engine Stack" })).toBeVisible();
 }
 
 async function selectVideoModel(page: Page, modelId: string) {
@@ -31,7 +31,7 @@ async function selectVideoModel(page: Page, modelId: string) {
 async function generateOutput(page: Page) {
   await page.getByRole("button", { name: /Continue.*Generate/i }).click();
   await expect(
-    page.locator('button[aria-current="step"]').filter({ hasText: "Generate" })
+    page.getByRole("button", { name: "Step 3 Generate", exact: true })
   ).toBeVisible();
   await page.getByRole("button", { name: /Generate.*vs/i }).click();
   await expect(page.getByText("Generated Output", { exact: true })).toBeVisible({
