@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
+import Image from "next/image";
 import Link from "next/link";
 
 import { BRAND_NAME } from "@/lib/brand";
@@ -2896,6 +2897,57 @@ export default function Page() {
                         <span className="font-black text-[#f7f1df]">{value}</span>
                       </div>
                     ))}
+                  </div>
+                </StudioPanel>
+
+                <StudioPanel className="overflow-hidden p-4" variant="muted">
+                  <div className="flex flex-wrap items-center justify-between gap-3">
+                    <div>
+                      <p className="text-[11px] font-black uppercase tracking-[0.22em] text-[#d9a94f]">Brand preview</p>
+                      <p className="mt-1 text-xs leading-5 text-[#c9d2bd]">Production asset cards only. Images stay out of live UI backgrounds.</p>
+                    </div>
+                    <Link
+                      href="/studio-full-preview"
+                      className="rounded-full border border-[#d9a94f]/35 bg-[#d9a94f]/12 px-3 py-1.5 text-[11px] font-black text-[#f3c766] transition hover:border-[#d9a94f]/70 hover:bg-[#d9a94f]/18"
+                    >
+                      View Brand Assets
+                    </Link>
+                  </div>
+
+                  <div className="mt-4 space-y-3">
+                    <div className="overflow-hidden rounded-2xl border border-[#263820] bg-[#071009]">
+                      <div className="relative aspect-[16/7] w-full">
+                        <Image
+                          src="/brand-assets/wild-stories-tv-cover-lion.png"
+                          alt="Wild Stories TV lion Facebook cover preview"
+                          fill
+                          sizes="(min-width: 1536px) 280px, 100vw"
+                          className="object-cover"
+                          priority={false}
+                        />
+                      </div>
+                      <div className="border-t border-[#263820] px-3 py-2">
+                        <p className="text-[10px] font-black uppercase tracking-[0.16em] text-[#9da892]">Facebook cover</p>
+                        <p className="mt-0.5 text-xs font-semibold text-[#f7f1df]">Lion banner preview</p>
+                      </div>
+                    </div>
+
+                    <div className="grid grid-cols-[86px_minmax(0,1fr)] gap-3 rounded-2xl border border-[#263820] bg-[#071009] p-3">
+                      <div className="relative aspect-[3/4] overflow-hidden rounded-xl border border-[#314428] bg-[#101a10]">
+                        <Image
+                          src="/brand-assets/creator-poster-01.png"
+                          alt="Wild Stories TV creator identity poster preview"
+                          fill
+                          sizes="86px"
+                          className="object-cover object-top"
+                        />
+                      </div>
+                      <div className="min-w-0 self-center">
+                        <p className="text-[10px] font-black uppercase tracking-[0.16em] text-[#9da892]">Creator identity</p>
+                        <p className="mt-1 text-sm font-semibold text-[#f7f1df]">Poster preview card</p>
+                        <p className="mt-1 text-xs leading-5 text-[#c9d2bd]">Text-heavy artwork is shown as a preview asset, not as a live dashboard background.</p>
+                      </div>
+                    </div>
                   </div>
                 </StudioPanel>
               </aside>
