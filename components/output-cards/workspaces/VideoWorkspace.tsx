@@ -82,8 +82,8 @@ export function VideoWorkspace({
       cardEngine: isRunway ? ("runway" as const) : ("kling" as const),
       engineLabel: isRunway ? "Runway" : "Kling",
       color: isRunway
-        ? "border-green-500/30 bg-green-500/12 text-green-900 dark:text-green-100"
-        : "border-blue-500/30 bg-blue-500/12 text-blue-900 dark:text-blue-100",
+        ? "border-[#d9a94f]/35 bg-[#d9a94f]/10 text-[#f3c766]"
+        : "border-cyan-400/30 bg-cyan-500/10 text-cyan-100",
     };
   });
   const hybridPastePack = primaryShotPlan
@@ -129,7 +129,7 @@ export function VideoWorkspace({
                 onClick={() => onVideoWorkspaceChange(item.key)}
                 className={`w-full rounded-xl border px-3 py-2 text-xs font-extrabold sm:w-auto ${
                   videoWorkspace === item.key
-                    ? "border-gray-900 bg-gray-900 text-white"
+                    ? "border-[#d9a94f]/55 bg-[#d9a94f] text-[#111207]"
                     : "border-[color:var(--border)] bg-[color:var(--surface-elevated)] text-[color:var(--text)] hover:bg-[color:var(--surface-muted)]"
                 }`}
               >
@@ -274,7 +274,7 @@ export function VideoWorkspace({
                     title={action.helper}
                     className={`rounded-lg px-3 py-1.5 text-xs font-extrabold active:scale-95 ${
                       action.primary
-                        ? "bg-gray-900 text-white hover:bg-black dark:bg-white dark:text-gray-950 dark:hover:bg-gray-200"
+                        ? "border border-cyan-400/35 bg-cyan-500/10 text-cyan-100 hover:bg-cyan-500/15"
                         : "border border-[color:var(--border)] bg-[color:var(--surface-elevated)] text-[color:var(--text)] hover:bg-[color:var(--surface)]"
                     }`}
                   >
@@ -293,9 +293,9 @@ export function VideoWorkspace({
 
       {videoWorkspace === "hybrid" && (
         <div className="space-y-4">
-          <div className="rounded-2xl border border-violet-500/30 bg-violet-500/12 p-4 shadow-sm">
+          <div className="rounded-2xl border border-[#d9a94f]/25 bg-[#111207]/80 p-4 shadow-sm">
             <div className="flex flex-wrap items-center justify-between gap-2">
-              <div className="text-sm font-extrabold text-violet-900 dark:text-violet-100">
+              <div className="text-sm font-extrabold text-[#f3c766]">
                 {resolvedLane === "long"
                   ? "Primary long hybrid 4-shot route summary"
                   : resolvedLane === "medium"
@@ -303,21 +303,21 @@ export function VideoWorkspace({
                     : "Primary hybrid 4-shot route summary"}
               </div>
               <div className="flex flex-wrap items-center gap-2">
-                <span className="rounded-full bg-[color:var(--surface-elevated)] px-2 py-0.5 text-[11px] font-bold text-violet-700 ring-1 ring-violet-200 dark:text-violet-200">
+                <span className="rounded-full bg-[color:var(--surface-elevated)] px-2 py-0.5 text-[11px] font-bold text-[#f3c766] ring-1 ring-[#d9a94f]/25">
                   {hybridRouteBadge}
                 </span>
-                <span className="rounded-full bg-[color:var(--surface-elevated)] px-2 py-0.5 text-[11px] font-bold text-violet-700 ring-1 ring-violet-200 dark:text-violet-200">
+                <span className="rounded-full bg-[color:var(--surface-elevated)] px-2 py-0.5 text-[11px] font-bold text-[#f3c766] ring-1 ring-[#d9a94f]/25">
                   {hybridRouteTiming}
                 </span>
               </div>
             </div>
 
-            <p className="mt-2 text-xs leading-relaxed text-violet-800 dark:text-violet-100/90">
+            <p className="mt-2 text-xs leading-relaxed text-[color:var(--muted)]">
               {hybridRouteSummary}
             </p>
 
             {laneConfig.optionalFinalEditNote && (
-              <div className="mt-3 rounded-xl border border-violet-200 bg-[color:var(--surface-elevated)]/80 px-3 py-2 text-[11px] font-semibold text-violet-700 dark:text-violet-200">
+              <div className="mt-3 rounded-xl border border-[#d9a94f]/25 bg-[color:var(--surface-elevated)]/80 px-3 py-2 text-[11px] font-semibold text-[#f3c766]">
                 {laneConfig.optionalFinalEditNote}
               </div>
             )}
@@ -327,16 +327,16 @@ export function VideoWorkspace({
                 type="button"
                 onClick={() => onCopy(hybridPastePack)}
                 disabled={!hybridPastePack}
-                className="rounded-lg bg-violet-700 px-3 py-1.5 text-xs font-extrabold text-white hover:bg-violet-800 active:scale-95 disabled:cursor-not-allowed disabled:bg-[color:var(--surface-muted)] disabled:text-[color:var(--disabled-text)]"
+                className="rounded-lg border border-cyan-400/35 bg-cyan-500/10 px-3 py-1.5 text-xs font-extrabold text-cyan-100 hover:bg-cyan-500/15 active:scale-95 disabled:cursor-not-allowed disabled:bg-[color:var(--surface-muted)] disabled:text-[color:var(--disabled-text)]"
               >
                 Copy Hybrid 4-Shot Paste Pack
               </button>
-              <p className="text-[11px] font-semibold text-violet-700 dark:text-violet-200">
+              <p className="text-[11px] font-semibold text-cyan-100/80">
                 Copies paste-ready prompt bodies only, in shot order.
               </p>
             </div>
 
-            <p className="mt-3 text-[11px] font-semibold uppercase tracking-wide text-violet-500 dark:text-violet-200/80">
+            <p className="mt-3 text-[11px] font-semibold uppercase tracking-wide text-[#f3c766]/80">
               {resolvedLane === "long"
                 ? "Continuity-safe long hybrid route preserved"
                 : resolvedLane === "medium"
@@ -386,17 +386,17 @@ export function VideoWorkspace({
       )}
 
       {videoWorkspace === "seedance" && (
-        <div className="rounded-2xl border border-orange-500/30 bg-orange-500/12 p-4 shadow-sm">
+        <div className="rounded-2xl border border-[#d9a94f]/25 bg-[#111207]/80 p-4 shadow-sm">
           <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
-            <div className="text-sm font-extrabold text-orange-900 dark:text-orange-100">
+            <div className="text-sm font-extrabold text-[#f3c766]">
               Seedance Shots
             </div>
-            <span className="rounded-full bg-[color:var(--surface-elevated)] px-2 py-0.5 text-[11px] font-bold text-orange-700 ring-1 ring-orange-200 dark:text-orange-200">
+            <span className="rounded-full bg-[color:var(--surface-elevated)] px-2 py-0.5 text-[11px] font-bold text-[#f3c766] ring-1 ring-[#d9a94f]/25">
               Seedance 2.0 | optional full 4-shot bundle | multimodal refs
             </span>
           </div>
 
-          <p className="mb-3 text-xs text-orange-800 dark:text-orange-100/90">
+          <p className="mb-3 text-xs text-[color:var(--muted)]">
             Optional full Seedance 2.0 bundle. Base workflow: `Prompt` + `First
             Frame`, then add `Ref Image` or `Ref Video` only when useful.
             Standard Seedance setup here is 4 separate shots at 5 seconds each.
@@ -416,11 +416,11 @@ export function VideoWorkspace({
                       .join(PASTE_READY_SEPARATOR)
                   )
                 }
-                className="w-full rounded-lg border border-orange-200 bg-orange-100 px-3 py-1.5 text-xs font-extrabold text-orange-900 hover:bg-orange-200 active:scale-95 dark:bg-orange-500/15 dark:text-orange-100 dark:hover:bg-orange-500/25 sm:w-auto"
+                className="w-full rounded-lg border border-cyan-400/35 bg-cyan-500/10 px-3 py-1.5 text-xs font-extrabold text-cyan-100 hover:bg-cyan-500/15 active:scale-95 sm:w-auto"
               >
                 Copy All Seedance Prompts
               </button>
-              <span className="text-[11px] font-semibold text-orange-800 dark:text-orange-100/90">
+              <span className="text-[11px] font-semibold text-cyan-100/80">
                 Copies paste-ready prompt bodies only.
               </span>
             </div>
@@ -432,7 +432,7 @@ export function VideoWorkspace({
                   onOpenDirectWorkspace("seedance");
                   onOpenWorkspace("direct");
                 }}
-                className="w-full rounded-lg border border-orange-300 bg-[color:var(--surface-elevated)] px-3 py-1.5 text-xs font-extrabold text-orange-800 hover:bg-orange-500/12 active:scale-95 dark:text-orange-100 sm:w-auto"
+                className="w-full rounded-lg border border-[color:var(--border)] bg-[color:var(--surface-elevated)] px-3 py-1.5 text-xs font-extrabold text-[color:var(--text)] hover:border-cyan-400/45 hover:bg-cyan-500/10 hover:text-cyan-100 active:scale-95 sm:w-auto"
               >
                 Open Direct Seedance Prompt
               </button>
@@ -455,23 +455,23 @@ export function VideoWorkspace({
       )}
 
       {videoWorkspace === "runway" && (
-        <div className="rounded-2xl border border-green-500/30 bg-green-500/12 p-4 shadow-sm">
+        <div className="rounded-2xl border border-[#d9a94f]/25 bg-[#111207]/80 p-4 shadow-sm">
           <div className="mb-2 flex min-w-0 flex-wrap items-center justify-between gap-2">
-            <div className="text-sm font-extrabold text-green-900 dark:text-green-100">
+            <div className="text-sm font-extrabold text-[#f3c766]">
               Runway Shots
             </div>
-            <span className="rounded-full bg-[color:var(--surface-elevated)] px-2 py-0.5 text-[11px] font-bold text-green-700 ring-1 ring-green-200 dark:text-green-200">
+            <span className="rounded-full bg-[color:var(--surface-elevated)] px-2 py-0.5 text-[11px] font-bold text-[#f3c766] ring-1 ring-[#d9a94f]/25">
               Gen-4.5 | 24/25fps | 720p
             </span>
           </div>
 
-          <p className="mb-3 text-xs text-green-800 dark:text-green-100/90">
+          <p className="mb-3 text-xs text-[color:var(--muted)]">
             Optional full Runway 4-shot bundle. It supports opening tension,
             pressure build, peak action, and resolved tension. In the hybrid
             route, Runway is used for Shot 1 and Shot 4.
           </p>
 
-          <p className="mb-3 text-xs text-green-800 dark:text-green-100/90">
+          <p className="mb-3 text-xs text-[color:var(--muted)]">
             I2V = motion only. No negative prompts. Last-frame chaining is
             recommended only when the outgoing frame remains a clean full-body
             handoff frame.
@@ -489,11 +489,11 @@ export function VideoWorkspace({
                       .join(PASTE_READY_SEPARATOR)
                   )
                 }
-                className="w-full rounded-lg border border-green-200 bg-green-100 px-3 py-1.5 text-xs font-extrabold text-green-900 hover:bg-green-200 active:scale-95 dark:bg-green-500/15 dark:text-green-100 dark:hover:bg-green-500/25 sm:w-auto"
+                className="w-full rounded-lg border border-cyan-400/35 bg-cyan-500/10 px-3 py-1.5 text-xs font-extrabold text-cyan-100 hover:bg-cyan-500/15 active:scale-95 sm:w-auto"
               >
                 Copy All Runway I2V
               </button>
-              <span className="text-[11px] font-semibold text-green-800 dark:text-green-100/90">
+              <span className="text-[11px] font-semibold text-cyan-100/80">
                 Copies paste-ready prompt bodies only.
               </span>
             </div>
@@ -515,22 +515,22 @@ export function VideoWorkspace({
       )}
 
       {videoWorkspace === "kling" && (
-        <div className="rounded-2xl border border-blue-500/30 bg-blue-500/12 p-4 shadow-sm">
+        <div className="rounded-2xl border border-cyan-400/25 bg-cyan-500/10 p-4 shadow-sm">
           <div className="mb-2 flex min-w-0 flex-wrap items-center justify-between gap-2">
-            <div className="text-sm font-extrabold text-blue-900 dark:text-blue-100">
+            <div className="text-sm font-extrabold text-cyan-100">
               Kling Shots
             </div>
-            <span className="rounded-full bg-[color:var(--surface-elevated)] px-2 py-0.5 text-[11px] font-bold text-blue-700 ring-1 ring-blue-200 dark:text-blue-200">
+            <span className="rounded-full bg-[color:var(--surface-elevated)] px-2 py-0.5 text-[11px] font-bold text-cyan-100 ring-1 ring-cyan-400/25">
               Kling 3.0 | Action workflow | Audio-capable
             </span>
           </div>
 
-          <p className="mb-3 text-xs text-blue-800 dark:text-blue-100/90">
+          <p className="mb-3 text-xs text-[color:var(--muted)]">
             Optional full Kling 4-shot bundle. It works especially well for
             pressure build and peak action, and the hybrid route uses Kling for
             Shot 2 and Shot 3.
           </p>
-          <p className="mb-3 text-xs text-blue-800 dark:text-blue-100/90">
+          <p className="mb-3 text-xs text-[color:var(--muted)]">
             Paste-ready body is director-style narrative. Negative prompts OK.
             Bind Subject + Start/End Frame. Structured breakdown remains for
             reference.
@@ -548,11 +548,11 @@ export function VideoWorkspace({
                       .join(PASTE_READY_SEPARATOR)
                   )
                 }
-                className="w-full rounded-lg border border-blue-200 bg-blue-100 px-3 py-1.5 text-xs font-extrabold text-blue-900 hover:bg-blue-200 active:scale-95 dark:bg-blue-500/15 dark:text-blue-100 dark:hover:bg-blue-500/25 sm:w-auto"
+                className="w-full rounded-lg border border-cyan-400/35 bg-cyan-500/10 px-3 py-1.5 text-xs font-extrabold text-cyan-100 hover:bg-cyan-500/15 active:scale-95 sm:w-auto"
               >
                 Copy All Kling Prompts
               </button>
-              <span className="text-[11px] font-semibold text-blue-800 dark:text-blue-100/90">
+              <span className="text-[11px] font-semibold text-cyan-100/80">
                 Copies paste-ready prompt bodies only.
               </span>
             </div>
@@ -563,7 +563,7 @@ export function VideoWorkspace({
                   onOpenDirectWorkspace("kling15");
                   onOpenWorkspace("direct");
                 }}
-                className="w-full rounded-lg border border-blue-300 bg-[color:var(--surface-elevated)] px-3 py-1.5 text-xs font-extrabold text-blue-800 hover:bg-blue-500/12 active:scale-95 dark:text-blue-100 sm:w-auto"
+                className="w-full rounded-lg border border-[color:var(--border)] bg-[color:var(--surface-elevated)] px-3 py-1.5 text-xs font-extrabold text-[color:var(--text)] hover:border-cyan-400/45 hover:bg-cyan-500/10 hover:text-cyan-100 active:scale-95 sm:w-auto"
               >
                 Open Kling Frames + Multishot
               </button>

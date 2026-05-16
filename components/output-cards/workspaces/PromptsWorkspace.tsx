@@ -38,7 +38,7 @@ export function PromptsWorkspace({
         <span className="rounded-full border border-amber-400/30 bg-amber-500/10 px-3 py-1 text-[10px] font-bold uppercase tracking-[0.1em] text-amber-700 dark:text-amber-200">
           Story Mode: {formatPromptBadgeValue(data.storyMode, "Predator Vs Prey")}
         </span>
-        <span className="rounded-full border border-indigo-400/30 bg-indigo-500/10 px-3 py-1 text-[10px] font-bold uppercase tracking-[0.1em] text-indigo-700 dark:text-indigo-200">
+        <span className="rounded-full border border-cyan-400/30 bg-cyan-500/10 px-3 py-1 text-[10px] font-bold uppercase tracking-[0.1em] text-cyan-700 dark:text-cyan-200">
           Viral Lane: {formatPromptBadgeValue(data.viralLane, "Tension")}
         </span>
         <span className="rounded-full border border-emerald-400/30 bg-emerald-500/10 px-3 py-1 text-[10px] font-bold uppercase tracking-[0.1em] text-emerald-700 dark:text-emerald-200">
@@ -141,7 +141,7 @@ export function PromptsWorkspace({
         title="🧪 Creator QA Pack"
         value={creatorQaPack.summaryText}
         onCopy={onCopy}
-        accent="border-l-indigo-500"
+        accent="border-l-cyan-400"
         copyLabel="Copy Creator QA Pack"
         extraActions={[
           {
@@ -175,7 +175,7 @@ export function PromptsWorkspace({
         title="📣 Facebook Viral Pack"
         value={creatorQaPack.facebookSummary}
         onCopy={onCopy}
-        accent="border-l-rose-400"
+        accent="border-l-cyan-400"
         copyLabel="Copy Facebook Pack"
         extraActions={[
           {
@@ -198,7 +198,7 @@ export function PromptsWorkspace({
           title="🖼️ Thumbnail Prompt"
           value={data.thumbnailPrompt}
           onCopy={onCopy}
-          accent="border-l-purple-400"
+          accent="border-l-cyan-400"
           copyLabel="Copy Thumbnail Prompt"
         />
       )}

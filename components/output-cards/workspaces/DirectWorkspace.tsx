@@ -110,8 +110,8 @@ export function DirectWorkspace({
                 onClick={() => onDirectWorkspaceChange("seedance")}
                 className={`w-full rounded-xl border px-3 py-2 text-xs font-extrabold sm:w-auto ${
                   resolvedDirectWorkspace === "seedance"
-                    ? "border-orange-700 bg-orange-700 text-white"
-                    : "border-orange-200 bg-[color:var(--surface-elevated)] text-orange-800 hover:bg-orange-500/12 dark:text-orange-100"
+                    ? "border-[#d9a94f]/55 bg-[#d9a94f] text-[#111207]"
+                    : "border-[#d9a94f]/25 bg-[color:var(--surface-elevated)] text-[#f3c766] hover:bg-[#d9a94f]/10"
                 }`}
               >
                 Seedance 2.0
@@ -123,8 +123,8 @@ export function DirectWorkspace({
                 onClick={() => onDirectWorkspaceChange("kling15")}
                 className={`w-full rounded-xl border px-3 py-2 text-xs font-extrabold sm:w-auto ${
                   resolvedDirectWorkspace === "kling15"
-                    ? "border-blue-700 bg-blue-700 text-white"
-                    : "border-blue-200 bg-[color:var(--surface-elevated)] text-blue-800 hover:bg-blue-500/12 dark:text-blue-100"
+                    ? "border-[#d9a94f]/55 bg-[#d9a94f] text-[#111207]"
+                    : "border-cyan-400/25 bg-[color:var(--surface-elevated)] text-cyan-100 hover:bg-cyan-500/10"
                 }`}
               >
                 Kling Frames + Multishot
@@ -143,9 +143,9 @@ export function DirectWorkspace({
       {resolvedDirectWorkspace === "seedance" &&
         data.seedanceMultiShotPrompt !== undefined &&
         data.seedanceMultiShotPrompt !== null && (
-          <div className="rounded-2xl border border-orange-500/30 bg-orange-500/12 p-4 shadow-sm">
+          <div className="rounded-2xl border border-[#d9a94f]/25 bg-[#111207]/80 p-4 shadow-sm">
             <div className="mb-2 flex flex-wrap items-center gap-2">
-              <div className="text-sm font-extrabold text-orange-900 dark:text-orange-100">
+              <div className="text-sm font-extrabold text-[#f3c766]">
                 Seedance Direct 15s Multishot
               </div>
               <span className="rounded-full bg-green-100 px-2 py-0.5 text-[11px] font-extrabold text-green-700 ring-1 ring-green-200 dark:bg-green-500/15 dark:text-green-100">
@@ -153,12 +153,12 @@ export function DirectWorkspace({
               </span>
             </div>
 
-            <div className="rounded-xl border border-orange-200 bg-[color:var(--surface-elevated)] p-3">
+            <div className="rounded-xl border border-[#d9a94f]/25 bg-[color:var(--surface-elevated)] p-3">
               <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
-                <span className="rounded-full bg-orange-100 px-2 py-0.5 text-[10px] font-black uppercase tracking-wide text-orange-800 ring-1 ring-orange-200 dark:bg-orange-500/15 dark:text-orange-100">
+                <span className="rounded-full border border-[#d9a94f]/30 bg-[#d9a94f]/10 px-2 py-0.5 text-[10px] font-black uppercase tracking-wide text-[#f3c766]">
                   PASTE THIS INTO SEEDANCE
                 </span>
-                <span className="text-[10px] font-bold uppercase tracking-wide text-orange-800 dark:text-orange-100/90">
+                <span className="text-[10px] font-bold uppercase tracking-wide text-[#f3c766]/90">
                   Paste-ready prompt only
                 </span>
               </div>
@@ -171,24 +171,24 @@ export function DirectWorkspace({
               <button
                 type="button"
                 onClick={() => onCopy(seedanceMultiShotCard.pasteReady)}
-                className="w-full rounded-xl bg-orange-700 px-4 py-2 text-sm font-extrabold text-white hover:bg-orange-800 active:scale-[0.98] sm:w-auto"
+                className="w-full rounded-xl border border-cyan-400/35 bg-cyan-500/10 px-4 py-2 text-sm font-extrabold text-cyan-100 hover:bg-cyan-500/15 active:scale-[0.98] sm:w-auto"
               >
                 Copy Seedance Direct Prompt
               </button>
               <button
                 type="button"
                 onClick={() => onCopy(seedanceMultiShotCard.fullText)}
-                className="w-full rounded-xl border border-orange-300 bg-[color:var(--surface-elevated)] px-4 py-2 text-sm font-extrabold text-orange-700 hover:bg-orange-500/12 active:scale-[0.98] dark:text-orange-100 sm:w-auto"
+                className="w-full rounded-xl border border-[color:var(--border)] bg-[color:var(--surface-elevated)] px-4 py-2 text-sm font-extrabold text-[color:var(--text)] hover:border-cyan-400/45 hover:bg-cyan-500/10 hover:text-cyan-100 active:scale-[0.98] sm:w-auto"
               >
                 Copy Full Reference
               </button>
             </div>
 
-            <details className="mt-3 rounded-xl border border-orange-200 bg-[color:var(--surface-elevated)] p-3">
-              <summary className="cursor-pointer text-xs font-extrabold uppercase tracking-wide text-orange-800 dark:text-orange-100">
+            <details className="mt-3 rounded-xl border border-[#d9a94f]/25 bg-[color:var(--surface-elevated)] p-3">
+              <summary className="cursor-pointer text-xs font-extrabold uppercase tracking-wide text-cyan-100">
                 REFERENCE / FULL CARD
               </summary>
-              <pre className="mt-2 max-w-full whitespace-pre-wrap break-words border-t border-orange-200 pt-2 text-xs leading-relaxed text-[color:var(--text)] [overflow-wrap:anywhere]">
+              <pre className="mt-2 max-w-full whitespace-pre-wrap break-words border-t border-[color:var(--border)] pt-2 text-xs leading-relaxed text-[color:var(--text)] [overflow-wrap:anywhere]">
                 {seedanceMultiShotCard.fullText}
               </pre>
             </details>
@@ -196,25 +196,25 @@ export function DirectWorkspace({
         )}
 
       {resolvedDirectWorkspace === "kling15" && hasKlingDirect && (
-        <div className="space-y-4 rounded-2xl border border-blue-500/30 bg-blue-500/12 p-4 shadow-sm">
+        <div className="space-y-4 rounded-2xl border border-cyan-400/25 bg-cyan-500/10 p-4 shadow-sm">
           {hasKlingFrames && (
             <>
           <div className="flex flex-wrap items-center gap-2">
-            <div className="text-sm font-extrabold text-blue-900 dark:text-blue-100">
+            <div className="text-sm font-extrabold text-cyan-100">
               Kling Frames Prompt
             </div>
             <CountPill label="Frames" count={klingFramesCard.pasteReady.length} limit={2500} />
-            <span className="rounded-full bg-[color:var(--surface-elevated)] px-2 py-0.5 text-[11px] font-bold text-blue-700 ring-1 ring-blue-200 dark:text-blue-200">
+            <span className="rounded-full bg-[color:var(--surface-elevated)] px-2 py-0.5 text-[11px] font-bold text-cyan-100 ring-1 ring-cyan-400/25">
               single prompt field
             </span>
           </div>
 
-          <div className="rounded-xl border border-blue-200 bg-[color:var(--surface-elevated)] p-3">
+          <div className="rounded-xl border border-cyan-400/25 bg-[color:var(--surface-elevated)] p-3">
             <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
-              <span className="rounded-full bg-blue-100 px-2 py-0.5 text-[10px] font-black uppercase tracking-wide text-blue-800 ring-1 ring-blue-200 dark:bg-blue-500/15 dark:text-blue-100">
+              <span className="rounded-full border border-cyan-400/30 bg-cyan-500/10 px-2 py-0.5 text-[10px] font-black uppercase tracking-wide text-cyan-100">
                 PASTE THIS INTO KLING FRAMES
               </span>
-              <span className="text-[10px] font-bold uppercase tracking-wide text-blue-800 dark:text-blue-100/90">
+              <span className="text-[10px] font-bold uppercase tracking-wide text-cyan-100/90">
                 Single prompt field
               </span>
             </div>
@@ -227,24 +227,24 @@ export function DirectWorkspace({
             <button
               type="button"
               onClick={() => onCopy(klingFramesCard.pasteReady)}
-              className="w-full rounded-xl bg-blue-700 px-4 py-2 text-sm font-extrabold text-white hover:bg-blue-800 active:scale-[0.98] sm:w-auto"
+              className="w-full rounded-xl border border-cyan-400/35 bg-cyan-500/10 px-4 py-2 text-sm font-extrabold text-cyan-100 hover:bg-cyan-500/15 active:scale-[0.98] sm:w-auto"
             >
               Copy Kling Frames Prompt
             </button>
             <button
               type="button"
               onClick={() => onCopy(klingFramesCard.fullText)}
-              className="w-full rounded-xl border border-blue-300 bg-[color:var(--surface-elevated)] px-4 py-2 text-sm font-extrabold text-blue-700 hover:bg-blue-500/12 active:scale-[0.98] dark:text-blue-100 sm:w-auto"
+              className="w-full rounded-xl border border-[color:var(--border)] bg-[color:var(--surface-elevated)] px-4 py-2 text-sm font-extrabold text-[color:var(--text)] hover:border-cyan-400/45 hover:bg-cyan-500/10 hover:text-cyan-100 active:scale-[0.98] sm:w-auto"
             >
               Copy Full Reference
             </button>
           </div>
 
-          <details className="rounded-xl border border-blue-200 bg-[color:var(--surface-elevated)] p-3">
-            <summary className="cursor-pointer text-xs font-extrabold uppercase tracking-wide text-blue-800 dark:text-blue-100">
+          <details className="rounded-xl border border-cyan-400/25 bg-[color:var(--surface-elevated)] p-3">
+            <summary className="cursor-pointer text-xs font-extrabold uppercase tracking-wide text-cyan-100">
               REFERENCE / FULL CARD
             </summary>
-            <pre className="mt-2 max-w-full whitespace-pre-wrap break-words border-t border-blue-200 pt-2 text-xs leading-relaxed text-[color:var(--text)] [overflow-wrap:anywhere]">
+            <pre className="mt-2 max-w-full whitespace-pre-wrap break-words border-t border-[color:var(--border)] pt-2 text-xs leading-relaxed text-[color:var(--text)] [overflow-wrap:anywhere]">
               {klingFramesCard.fullText}
             </pre>
           </details>
@@ -253,9 +253,9 @@ export function DirectWorkspace({
           )}
 
           {klingCombinedPromptInfo && (
-            <div className="rounded-xl border border-blue-300/60 bg-[color:var(--surface-elevated)] p-3">
+            <div className="rounded-xl border border-cyan-400/25 bg-[color:var(--surface-elevated)] p-3">
               <div className="flex flex-wrap items-center gap-2">
-                <div className="text-sm font-extrabold text-blue-900 dark:text-blue-100">
+                <div className="text-sm font-extrabold text-cyan-100">
                   Kling 15s Combined Prompt
                 </div>
                 <CountPill
@@ -284,7 +284,7 @@ export function DirectWorkspace({
                 <button
                   type="button"
                   onClick={() => onCopy(klingCombinedPromptInfo.combinedPrompt)}
-                  className="w-full rounded-xl border border-blue-300 bg-[color:var(--surface-elevated)] px-4 py-2 text-sm font-extrabold text-blue-700 hover:bg-blue-500/12 active:scale-[0.98] dark:text-blue-100 sm:w-auto"
+                  className="w-full rounded-xl border border-[color:var(--border)] bg-[color:var(--surface-elevated)] px-4 py-2 text-sm font-extrabold text-[color:var(--text)] hover:border-cyan-400/45 hover:bg-cyan-500/10 hover:text-cyan-100 active:scale-[0.98] sm:w-auto"
                 >
                   Copy exact Kling paste-ready prompt
                 </button>
@@ -292,9 +292,9 @@ export function DirectWorkspace({
             </div>
           )}
 
-          <div className="rounded-2xl border border-blue-300/60 bg-[color:var(--surface-elevated)] p-4">
+          <div className="rounded-2xl border border-cyan-400/25 bg-[color:var(--surface-elevated)] p-4">
             <div className="mb-3 flex flex-wrap items-center gap-2">
-              <div className="text-sm font-extrabold text-blue-900 dark:text-blue-100">
+              <div className="text-sm font-extrabold text-cyan-100">
                 Kling Multishot 3-Shot Prompts
               </div>
               <span className="rounded-full bg-green-100 px-2 py-0.5 text-[11px] font-extrabold text-green-700 ring-1 ring-green-200 dark:bg-green-500/15 dark:text-green-100">
@@ -307,8 +307,8 @@ export function DirectWorkspace({
 
             <div className="grid gap-3 lg:grid-cols-2">
               {klingMultishotCards.map((card, index) => (
-                <div key={card.metadata?.shotKey ?? index} className="rounded-xl border border-blue-100 bg-blue-50/50 p-3 dark:border-[color:var(--border)] dark:bg-[color:var(--surface-muted)]">
-                  <div className="mb-2 text-xs font-black text-blue-900 dark:text-blue-100">
+                <div key={card.metadata?.shotKey ?? index} className="rounded-xl border border-[color:var(--border)] bg-[color:var(--surface-muted)] p-3">
+                  <div className="mb-2 text-xs font-black text-cyan-100">
                     Shot {index + 1}: {card.pasteReady.length}/512
                   </div>
                   <pre className="max-w-full whitespace-pre-wrap break-words text-xs leading-relaxed text-[color:var(--text)] [overflow-wrap:anywhere]">
@@ -317,7 +317,7 @@ export function DirectWorkspace({
                   <button
                     type="button"
                     onClick={() => onCopy(card.pasteReady)}
-                    className="mt-3 w-full rounded-lg border border-blue-300 bg-[color:var(--surface-elevated)] px-3 py-1.5 text-xs font-extrabold text-blue-800 hover:bg-blue-500/12 active:scale-[0.98] dark:text-blue-100 sm:w-auto"
+                    className="mt-3 w-full rounded-lg border border-cyan-400/35 bg-cyan-500/10 px-3 py-1.5 text-xs font-extrabold text-cyan-100 hover:bg-cyan-500/15 active:scale-[0.98] sm:w-auto"
                   >
                     Copy Shot {index + 1}
                   </button>
