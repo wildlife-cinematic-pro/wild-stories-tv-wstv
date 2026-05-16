@@ -70,6 +70,11 @@ The CI workflow runs on Node.js 20, so matching that version locally will give t
 - `BLOB_READ_WRITE_TOKEN` — required for blob-backed preset and media flows
 - `PRESET_LIBRARY_AUTH_SECRET` — required in production for preset-library auth
 
+Cloud preset libraries require `BLOB_READ_WRITE_TOKEN` and
+`PRESET_LIBRARY_AUTH_SECRET`. Without them,
+`/api/preset-library/session` returns `503` with `available:false`, and local
+presets remain active.
+
 ## Local development
 
 Run the app locally with:
