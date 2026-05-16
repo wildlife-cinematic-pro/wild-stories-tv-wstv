@@ -330,7 +330,6 @@ const repoRoutes = [
   { path: "/image", purpose: "Image Studio with WorkspaceShell", type: "Production" },
   { path: "/storyboard", purpose: "CinematicStoryboardPage handoff target", type: "Production" },
   { path: "/four-shot-photo", purpose: "Same-environment 4-shot photo generator", type: "Production" },
-  { path: "/studio-preview", purpose: "Single-screen visual layout preview", type: "Preview" },
   { path: "/studio-full-preview", purpose: "Full repo/workflow prototype for owner review", type: "Preview" },
   { path: "/api/enhance", purpose: "Provider enhancement, media analysis, copy polish", type: "API" },
   { path: "/api/enhance/provider-pack-polish", purpose: "Internal pack polish handler for storyboard and four-shot photo schema preservation", type: "API" },
