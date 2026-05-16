@@ -16,10 +16,10 @@ export function EngineSpecsPanel() {
           <span className="text-sm font-bold text-[color:var(--text)]">
             ⚙️ Engine Specs (Runway + Kling workflow notes)
           </span>
-          <span className="rounded bg-green-100 px-2 py-0.5 text-xs font-bold text-green-700">
+          <span className="rounded border border-[#d9a94f]/35 bg-[#d9a94f]/10 px-2 py-0.5 text-xs font-bold text-[#f3c766]">
             Runway Gen-4.5
           </span>
-          <span className="rounded bg-blue-100 px-2 py-0.5 text-xs font-bold text-blue-700">
+          <span className="rounded border border-cyan-400/30 bg-cyan-500/10 px-2 py-0.5 text-xs font-bold text-cyan-200">
             Kling 3.0
           </span>
         </div>
@@ -34,11 +34,11 @@ export function EngineSpecsPanel() {
 
       {open && (
         <div className="mt-3 grid gap-3 md:grid-cols-2">
-          <div className="rounded-xl border border-green-200 bg-green-50 p-3">
-            <p className="mb-2 text-xs font-extrabold text-green-900">
+          <div className="rounded-xl border border-[#d9a94f]/25 bg-[#111207]/80 p-3">
+            <p className="mb-2 text-xs font-extrabold text-[#f3c766]">
               🟢 Runway Gen-4.5 (Official)
             </p>
-            <div className="space-y-1.5 text-xs text-green-800">
+            <div className="space-y-1.5 text-xs text-[color:var(--muted)]">
               <p>
                 <span className="font-bold">FPS:</span> 24 or 25 only
               </p>
@@ -70,11 +70,11 @@ export function EngineSpecsPanel() {
             </div>
           </div>
 
-          <div className="rounded-xl border border-blue-200 bg-blue-50 p-3">
-            <p className="mb-2 text-xs font-extrabold text-blue-900">
+          <div className="rounded-xl border border-cyan-400/25 bg-cyan-500/10 p-3">
+            <p className="mb-2 text-xs font-extrabold text-cyan-100">
               🔵 Kling 3.0 (Current WSTV action workflow)
             </p>
-            <div className="space-y-1.5 text-xs text-blue-800">
+            <div className="space-y-1.5 text-xs text-[color:var(--muted)]">
               <p>
                 <span className="font-bold">Role:</span> WSTV action-focused
                 workflow engine
@@ -131,15 +131,15 @@ export function ProShotCard({
       ? promptCard.metadata.motionIntensity
       : null;
   const borderColor = isRunway
-    ? "border-green-200"
+    ? "border-[#d9a94f]/35"
     : isSeedance
-      ? "border-orange-200"
-      : "border-blue-200";
+      ? "border-cyan-400/30"
+      : "border-cyan-400/30";
   const btnColor = isRunway
-    ? "bg-green-700 hover:bg-green-800"
+    ? "border border-cyan-400/35 bg-cyan-500/10 text-cyan-100 hover:bg-cyan-500/15"
     : isSeedance
-      ? "bg-orange-700 hover:bg-orange-800"
-      : "bg-blue-700 hover:bg-blue-800";
+      ? "border border-cyan-400/35 bg-cyan-500/10 text-cyan-100 hover:bg-cyan-500/15"
+      : "border border-cyan-400/35 bg-cyan-500/10 text-cyan-100 hover:bg-cyan-500/15";
   const engineLabel = isRunway ? "Runway" : isSeedance ? "Seedance" : "Kling";
   const primaryCopyLabel = isRunway
     ? "Copy Runway I2V"
@@ -165,7 +165,7 @@ export function ProShotCard({
             🎬 {engineLabel} Shot {index + 1}
           </div>
           {motionIntensity !== null && (
-            <span className="rounded-full bg-indigo-100 px-2 py-0.5 text-[10px] font-bold text-indigo-700">
+            <span className="rounded-full border border-[#d9a94f]/30 bg-[#d9a94f]/10 px-2 py-0.5 text-[10px] font-bold text-[#f3c766]">
               MI: {motionIntensity.toFixed(2)}
             </span>
           )}
@@ -178,7 +178,7 @@ export function ProShotCard({
           <button
             type="button"
             onClick={() => onCopy(pasteReady)}
-            className={`w-full rounded px-2 py-1 text-[11px] font-bold text-white active:scale-95 sm:w-auto ${btnColor}`}
+            className={`w-full rounded-xl px-3 py-1.5 text-[11px] font-bold active:scale-95 sm:w-auto ${btnColor}`}
             title="Copy paste-ready prompt only"
           >
             {primaryCopyLabel}
@@ -240,7 +240,7 @@ export function ProShotCard({
             <button
               type="button"
               onClick={() => onCopy(audioPrompt)}
-              className="rounded bg-indigo-600 px-2 py-0.5 text-[10px] font-bold text-white hover:bg-indigo-700 active:scale-95"
+              className="rounded-lg border border-cyan-400/35 bg-cyan-500/10 px-2 py-0.5 text-[10px] font-bold text-cyan-100 hover:bg-cyan-500/15 active:scale-95"
             >
               Copy Audio
             </button>
@@ -281,13 +281,13 @@ export function Card({
     <div
       className={`wstv-readable-card min-w-0 max-w-full overflow-hidden rounded-xl border p-4 ${
         accent ? `border-l-4 ${accent}` : "border-[color:var(--border)]"
-      } ${aiEnhanced ? "ring-1 ring-purple-200" : ""} ${className ?? ""}`}
+      } ${aiEnhanced ? "ring-1 ring-cyan-400/25" : ""} ${className ?? ""}`}
     >
       <div className="mb-3 flex min-w-0 flex-wrap items-start justify-between gap-3">
         <h2 className="flex min-w-0 items-center gap-2 break-words font-bold text-[color:var(--text)] [overflow-wrap:anywhere]">
           {title}
           {aiEnhanced && (
-            <span className="text-xs font-normal text-purple-500">✦ AI</span>
+            <span className="text-xs font-normal text-cyan-300">✦ AI</span>
           )}
         </h2>
         <div className="grid w-full min-w-0 grid-cols-1 gap-2 sm:flex sm:w-auto sm:flex-wrap sm:justify-end">

@@ -37,7 +37,7 @@ export default function WorkspaceShell({
   const isWorkspaceScroll = desktopScrollMode === "workspace";
   const desktopGridClass = isSidebarCollapsed
     ? "lg:grid-cols-[92px_minmax(0,1fr)]"
-    : "lg:grid-cols-[280px_minmax(0,1fr)] xl:grid-cols-[300px_minmax(0,1fr)]";
+    : "lg:grid-cols-[240px_minmax(0,1fr)] xl:grid-cols-[260px_minmax(0,1fr)]";
 
   return (
     <div
@@ -74,7 +74,7 @@ export default function WorkspaceShell({
         <section className="min-w-0 max-w-full overflow-hidden rounded-[28px] border border-[color:var(--border)] bg-[color:var(--surface-elevated)] p-4 shadow-[var(--surface-shadow)] sm:p-6 lg:p-4 xl:p-5">
           <div className="flex min-w-0 flex-wrap items-start justify-between gap-3 xl:gap-4">
             <div className="min-w-0 flex-1">
-              <div className="text-[11px] font-semibold uppercase tracking-[0.2em] text-cyan-300/80">
+              <div className="text-[11px] font-semibold uppercase tracking-[0.2em] text-[#d9a94f]">
                 {sidebarTitle}
               </div>
               <h1 className="mt-2 max-w-full break-words text-2xl font-semibold tracking-tight text-[color:var(--text)] xl:text-3xl">

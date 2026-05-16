@@ -389,14 +389,14 @@ export default function OutputCards({
             <button
               type="button"
               onClick={copyAllPacks}
-              className="w-full rounded-xl bg-gray-900 px-4 py-2 text-xs font-extrabold text-white hover:bg-black active:scale-95 sm:w-auto"
+              className="w-full rounded-xl border border-[#d9a94f]/45 bg-[#d9a94f] px-4 py-2 text-xs font-extrabold text-[#111207] hover:bg-[#f3c766] active:scale-95 sm:w-auto"
             >
               📋 Copy All Output
             </button>
             <button
               type="button"
               onClick={() => setActiveWorkspace("archive")}
-              className="w-full rounded-xl bg-cyan-700 px-4 py-2 text-xs font-extrabold text-white hover:bg-cyan-800 active:scale-95 sm:w-auto"
+              className="w-full rounded-xl border border-cyan-400/35 bg-cyan-500/10 px-4 py-2 text-xs font-extrabold text-cyan-100 hover:bg-cyan-500/15 active:scale-95 sm:w-auto"
             >
               Archive Generation
             </button>
@@ -417,7 +417,7 @@ export default function OutputCards({
           </>
         }
         headerMeta={headerMeta}
-        desktopScrollMode="workspace"
+        desktopScrollMode="page"
         desktopSidebarCollapsible
       >
         <WorkspaceSection
@@ -429,28 +429,28 @@ export default function OutputCards({
               <button
                 type="button"
                 onClick={copyAllPacks}
-                className="w-full rounded-xl bg-gray-900 px-4 py-2.5 text-sm font-extrabold text-white hover:bg-black active:scale-95 sm:w-auto sm:min-w-[13rem]"
+                className="w-full rounded-xl border border-[#d9a94f]/45 bg-[#d9a94f] px-4 py-2.5 text-sm font-extrabold text-[#111207] hover:bg-[#f3c766] active:scale-95 sm:w-auto sm:min-w-[13rem]"
               >
                 Copy Full Package
               </button>
               <button
                 type="button"
                 onClick={() => setActiveWorkspace("archive")}
-                className="w-full rounded-xl bg-cyan-700 px-4 py-2.5 text-xs font-bold text-white hover:bg-cyan-800 active:scale-95 sm:w-auto"
+                className="w-full rounded-xl border border-cyan-400/35 bg-cyan-500/10 px-4 py-2.5 text-xs font-bold text-cyan-100 hover:bg-cyan-500/15 active:scale-95 sm:w-auto"
               >
                 Save This Generation
               </button>
               <button
                 type="button"
                 onClick={exportTxt}
-                className="w-full rounded-xl border border-[color:var(--border)] bg-[color:var(--surface)] px-4 py-2.5 text-xs font-bold text-[color:var(--text)] hover:bg-[color:var(--surface-muted)] active:scale-95 sm:w-auto"
+                className="w-full rounded-xl border border-[color:var(--border)] bg-[color:var(--surface)] px-4 py-2.5 text-xs font-bold text-[color:var(--text)] hover:border-cyan-400/45 hover:bg-cyan-500/10 hover:text-cyan-100 active:scale-95 sm:w-auto"
               >
                 Export Text
               </button>
               <button
                 type="button"
                 onClick={exportJson}
-                className="w-full rounded-xl border border-[color:var(--border)] bg-[color:var(--surface)] px-4 py-2.5 text-xs font-bold text-[color:var(--text)] hover:bg-[color:var(--surface-muted)] active:scale-95 sm:w-auto"
+                className="w-full rounded-xl border border-[color:var(--border)] bg-[color:var(--surface)] px-4 py-2.5 text-xs font-bold text-[color:var(--text)] hover:border-cyan-400/45 hover:bg-cyan-500/10 hover:text-cyan-100 active:scale-95 sm:w-auto"
               >
                 Export JSON
               </button>
