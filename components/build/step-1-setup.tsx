@@ -628,12 +628,12 @@ export default function Step1Setup({
     animalVibe === preset.animalVibe;
   const sceneReportColor =
     sceneReport.severity === "success"
-      ? "border-emerald-100 bg-emerald-50/80 text-emerald-900"
+      ? "border-emerald-400/30 bg-emerald-500/10 text-emerald-50"
       : sceneReport.severity === "info"
-        ? "border-sky-100 bg-sky-50/80 text-sky-900"
+        ? "border-cyan-400/30 bg-cyan-500/10 text-cyan-50"
         : sceneReport.severity === "warning"
-          ? "border-amber-100 bg-amber-50/80 text-amber-900"
-          : "border-rose-100 bg-rose-50/80 text-rose-900";
+          ? "border-amber-400/35 bg-amber-500/10 text-amber-50"
+          : "border-rose-400/35 bg-rose-500/10 text-rose-50";
   const isPredatorVsPreyMode = storyMode === StoryMode.PREDATOR_VS_PREY;
   const activeStorySetupSummary = isPredatorVsPreyMode
     ? `Story Setup: ${predator} vs ${prey} · ${habitatRegion} · ${season} · ${timeOfDay}`
@@ -654,7 +654,7 @@ export default function Step1Setup({
       });
 
   return (
-    <div className="space-y-4 text-[#f7f1df] [&_input:not([type='checkbox'])]:border-[#2d3d28] [&_input:not([type='checkbox'])]:bg-[#071009] [&_input:not([type='checkbox'])]:text-[#f7f1df] [&_input:not([type='checkbox'])]:placeholder:text-[#71806b] [&_label]:text-[#9da892] [&_select]:border-[#2d3d28] [&_select]:bg-[#071009] [&_select]:text-[#f7f1df] [&_textarea]:border-[#2d3d28] [&_textarea]:bg-[#071009] [&_textarea]:text-[#f7f1df]">
+    <div className="mx-auto w-full max-w-[1760px] space-y-4 text-[#f7f1df] [&_input:not([type='checkbox'])]:border-[#2d3d28] [&_input:not([type='checkbox'])]:bg-[#071009] [&_input:not([type='checkbox'])]:text-[#f7f1df] [&_input:not([type='checkbox'])]:placeholder:text-[#71806b] [&_label]:text-[#9da892] [&_select]:border-[#2d3d28] [&_select]:bg-[#071009] [&_select]:text-[#f7f1df] [&_textarea]:border-[#2d3d28] [&_textarea]:bg-[#071009] [&_textarea]:text-[#f7f1df]">
       <div className="rounded-[28px] border border-[#2d3d28] bg-[#071009] p-4 shadow-[0_22px_70px_rgba(0,0,0,0.3)] sm:p-5">
         <div className="flex flex-wrap items-start justify-between gap-3">
           <div>
@@ -684,7 +684,7 @@ export default function Step1Setup({
         </div>
       </div>
 
-      <div className="grid gap-4 xl:grid-cols-[minmax(0,1fr)_350px]">
+      <div className="grid gap-4 min-[1800px]:grid-cols-[minmax(0,1fr)_380px]">
       <div className="space-y-4">
         <CollapsibleControlSection
           title="Saved workflow presets"
@@ -919,7 +919,7 @@ export default function Step1Setup({
             </p>
             <div className="grid gap-4 sm:grid-cols-2">
               <div className="sm:col-span-2">
-                <label className="mb-1.5 block text-[11px] font-medium text-gray-500">
+                <label className="mb-1.5 block text-[11px] font-medium text-[#c9d2bd]">
                   Wildlife Focus
                 </label>
                 <select
@@ -929,7 +929,7 @@ export default function Step1Setup({
                       event.target.value as WildlifeScopeMode
                     )
                   }
-                  className="w-full rounded-xl border border-gray-200 bg-gray-50 px-3 py-2.5 text-sm font-medium text-gray-900 focus:border-gray-400 focus:outline-none"
+                  className="w-full rounded-xl border border-[#2d3d28] bg-[#071009] px-3 py-2.5 text-sm font-medium text-[#f7f1df] focus:border-[#d9a94f]/60 focus:outline-none"
                 >
                   {wildlifeScopeOptions.map((option) => (
                     <option key={option} value={option}>
@@ -937,7 +937,7 @@ export default function Step1Setup({
                     </option>
                   ))}
                 </select>
-                <p className="mt-1 text-[11px] text-gray-400">
+                <p className="mt-1 text-[11px] text-[#9da892]">
                   Choose a wildlife focus to bias Step 1 toward animals and
                   environments viewers recognize fastest. World Wide Wildlife
                   restores broad documentary browsing. USA Viral Wildlife keeps
@@ -945,12 +945,12 @@ export default function Step1Setup({
                   prioritizes fast Kling Direct 15s encounter setups. Custom
                   animals stay available in every mode.
                 </p>
-                <p className="mt-1 text-[11px] text-gray-400">
+                <p className="mt-1 text-[11px] text-[#9da892]">
                   {wildlifeScopeHelperText}
                 </p>
               </div>
               <div>
-                <label className="mb-1.5 block text-[11px] font-medium text-gray-500">
+                <label className="mb-1.5 block text-[11px] font-medium text-[#c9d2bd]">
                   Lead Animal
                 </label>
                 <div className="space-y-2">
@@ -962,14 +962,14 @@ export default function Step1Setup({
                         setLeadAnimalSearch(event.target.value)
                       }
                       placeholder="Search lead animal..."
-                      className="min-w-0 flex-1 rounded-xl border border-gray-200 bg-gray-50 px-3 py-2.5 text-sm font-medium text-gray-900 placeholder:text-gray-400 focus:border-gray-400 focus:outline-none"
+                      className="min-w-0 flex-1 rounded-xl border border-[#2d3d28] bg-[#071009] px-3 py-2.5 text-sm font-medium text-[#f7f1df] placeholder:text-[#71806b] focus:border-[#d9a94f]/60 focus:outline-none"
                     />
 
                     {leadAnimalSearch && (
                       <button
                         type="button"
                         onClick={() => setLeadAnimalSearch("")}
-                        className="rounded-xl border border-gray-200 bg-white px-3 py-2 text-xs font-semibold text-gray-500 hover:bg-gray-50"
+                        className="rounded-xl border border-[#2d3d28] bg-[#071009] px-3 py-2 text-xs font-semibold text-[#c9d2bd] hover:border-[#d9a94f]/40 hover:bg-[#101a10]"
                       >
                         Clear
                       </button>
@@ -982,7 +982,7 @@ export default function Step1Setup({
                       onPredatorChange(event.target.value);
                       setLeadAnimalSearch("");
                     }}
-                    className="w-full rounded-xl border border-gray-200 bg-gray-50 px-3 py-2.5 text-sm font-medium text-gray-900 focus:border-gray-400 focus:outline-none"
+                    className="w-full rounded-xl border border-[#2d3d28] bg-[#071009] px-3 py-2.5 text-sm font-medium text-[#f7f1df] focus:border-[#d9a94f]/60 focus:outline-none"
                   >
                     {filteredPredatorOptions.map((option) => (
                       <option key={option} value={option}>
@@ -999,31 +999,31 @@ export default function Step1Setup({
                   </p>
                 )}
 
-                <p className="mt-1 text-[11px] text-gray-400">
+                <p className="mt-1 text-[11px] text-[#9da892]">
                   Sets the primary behavior cue; search or choose the animal
                   viewers recognize first.
                 </p>
 
-                <p className="mt-0.5 text-[11px] text-gray-400">
+                <p className="mt-0.5 text-[11px] text-[#9da892]">
                   Showing {leadAnimalMatches.length} of {predatorOptions.length}{" "}
                   lead animals.
                 </p>
 
                 {customPredatorCount > 0 && (
-                  <p className="mt-0.5 text-[11px] text-gray-400">
+                  <p className="mt-0.5 text-[11px] text-[#9da892]">
                     {customPredatorCount} custom animal
                     {customPredatorCount > 1 ? "s" : ""} added
                   </p>
                 )}
               </div>
               <div>
-                <label className="mb-1.5 block text-[11px] font-medium text-gray-500">
+                <label className="mb-1.5 block text-[11px] font-medium text-[#c9d2bd]">
                   Opposing Animal
                 </label>
                 <select
                   value={prey}
                   onChange={(event) => onPreyChange(event.target.value)}
-                  className="w-full rounded-xl border border-gray-200 bg-gray-50 px-3 py-2.5 text-sm font-medium text-gray-900 focus:border-gray-400 focus:outline-none"
+                  className="w-full rounded-xl border border-[#2d3d28] bg-[#071009] px-3 py-2.5 text-sm font-medium text-[#f7f1df] focus:border-[#d9a94f]/60 focus:outline-none"
                 >
                   {preyOptions.map((option) => (
                     <option key={option} value={option}>
@@ -1031,7 +1031,7 @@ export default function Step1Setup({
                     </option>
                   ))}
                 </select>
-                <p className="mt-1 text-[11px] text-gray-400">
+                <p className="mt-1 text-[11px] text-[#9da892]">
                   Filtered for realism from the selected lead animal.
                 </p>
               </div>
@@ -1058,13 +1058,13 @@ export default function Step1Setup({
                     pairingHighlights.badges.map((badge) => (
                       <span
                         key={badge}
-                        className="rounded-full border border-violet-200 bg-white px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.08em] text-violet-700"
+                        className="rounded-full border border-violet-300/25 bg-violet-500/10 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.08em] text-violet-100"
                       >
                         {badge}
                       </span>
                     ))
                   ) : (
-                    <span className="rounded-full border border-violet-200 bg-white px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.08em] text-violet-700">
+                    <span className="rounded-full border border-violet-300/25 bg-violet-500/10 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.08em] text-violet-100">
                       Facebook-safe
                     </span>
                   )}
@@ -1103,7 +1103,7 @@ export default function Step1Setup({
                 </div>
               </div>
               {wildlifeSafetyHint && (
-                <div className="rounded-2xl border border-rose-100 bg-rose-50/70 p-3 text-[11px] leading-relaxed text-rose-900 sm:col-span-2">
+                <div className="rounded-2xl border border-rose-400/30 bg-rose-500/10 p-3 text-[11px] leading-relaxed text-rose-100 sm:col-span-2">
                   <span className="font-semibold">
                     Facebook-safe survival framing:
                   </span>{" "}
@@ -1131,17 +1131,17 @@ export default function Step1Setup({
                     {pairingHighlights.safeArcLabel}
                   </p>
                 )}
-                <p className="mt-1 text-violet-800/80">
+                <p className="mt-1 text-violet-100/75">
                   {safetyDefaults.join(" • ")}
                 </p>
               </div>
             </div>
 
-            <div className="mt-5 border-t border-gray-200 pt-4">
+            <div className="mt-5 border-t border-[#2d3d28] pt-4">
               <div
                 role="tablist"
                 aria-label="Step 1 setup mode"
-                className="inline-flex rounded-2xl border border-gray-200 bg-gray-50 p-1"
+                className="inline-flex rounded-2xl border border-[#2d3d28] bg-[#071009] p-1"
               >
                 {[
                   { value: "simple", label: "Simple Setup" },
@@ -1160,8 +1160,8 @@ export default function Step1Setup({
                       }
                       className={
                         isSelected
-                          ? "rounded-xl bg-white px-3 py-2 text-xs font-semibold text-gray-900 shadow-sm"
-                          : "rounded-xl px-3 py-2 text-xs font-semibold text-gray-500 hover:text-gray-700"
+                          ? "rounded-xl bg-[#d9a94f] px-3 py-2 text-xs font-semibold text-[#111207] shadow-sm"
+                          : "rounded-xl px-3 py-2 text-xs font-semibold text-[#c9d2bd] hover:text-[#f7f1df]"
                       }
                     >
                       {mode.label}
@@ -1169,7 +1169,7 @@ export default function Step1Setup({
                   );
                 })}
               </div>
-              <p className="mt-2 text-[11px] leading-relaxed text-gray-500">
+              <p className="mt-2 text-[11px] leading-relaxed text-[#c9d2bd]">
                 Use Simple Setup for the fastest first test, or open Advanced
                 Controls to fine-tune the same animal pair.
               </p>
@@ -1268,7 +1268,7 @@ export default function Step1Setup({
           >
             <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3">
               <div>
-                <label className="mb-1.5 block text-[11px] font-medium text-gray-500">
+                <label className="mb-1.5 block text-[11px] font-medium text-[#c9d2bd]">
                   Wildlife Scope
                 </label>
                 <select
@@ -1278,7 +1278,7 @@ export default function Step1Setup({
                       event.target.value as WildlifeScopeMode
                     )
                   }
-                  className="w-full rounded-xl border border-gray-200 bg-gray-50 px-3 py-2.5 text-sm font-medium text-gray-900 focus:border-gray-400 focus:outline-none"
+                  className="w-full rounded-xl border border-[#2d3d28] bg-[#071009] px-3 py-2.5 text-sm font-medium text-[#f7f1df] focus:border-[#d9a94f]/60 focus:outline-none"
                 >
                   {wildlifeScopeOptions.map((option) => (
                     <option key={option} value={option}>
@@ -1286,13 +1286,13 @@ export default function Step1Setup({
                     </option>
                   ))}
                 </select>
-                <p className="mt-1 text-[11px] text-gray-400">
+                <p className="mt-1 text-[11px] text-[#9da892]">
                   {wildlifeScopeHelperText}
                 </p>
               </div>
 
               <div>
-                <label className="mb-1.5 block text-[11px] font-medium text-gray-500">
+                <label className="mb-1.5 block text-[11px] font-medium text-[#c9d2bd]">
                   Duration Lane
                 </label>
                 <select
@@ -1300,19 +1300,19 @@ export default function Step1Setup({
                   onChange={(event) =>
                     onDurationLaneChange(event.target.value as DurationLane)
                   }
-                  className="w-full rounded-xl border border-gray-200 bg-gray-50 px-3 py-2.5 text-sm font-medium text-gray-900 focus:border-gray-400 focus:outline-none"
+                  className="w-full rounded-xl border border-[#2d3d28] bg-[#071009] px-3 py-2.5 text-sm font-medium text-[#f7f1df] focus:border-[#d9a94f]/60 focus:outline-none"
                 >
                   <option value="short">Short — 20s final edit</option>
                   <option value="medium">Medium — 35s final edit</option>
                   <option value="long">Long — 40s safe generation</option>
                 </select>
-                <p className="mt-1 text-[11px] text-gray-400">
+                <p className="mt-1 text-[11px] text-[#9da892]">
                   Auto-safe routing stays available; override when a reel needs more room.
                 </p>
               </div>
 
               <div>
-                <label className="mb-1.5 block text-[11px] font-medium text-gray-500">
+                <label className="mb-1.5 block text-[11px] font-medium text-[#c9d2bd]">
                   Action Style
                 </label>
                 <select
@@ -1320,7 +1320,7 @@ export default function Step1Setup({
                   onChange={(event) =>
                     onActionStyleChange(event.target.value as ActionStylePreset)
                   }
-                  className="w-full rounded-xl border border-gray-200 bg-gray-50 px-3 py-2.5 text-sm font-medium text-gray-900 focus:border-gray-400 focus:outline-none"
+                  className="w-full rounded-xl border border-[#2d3d28] bg-[#071009] px-3 py-2.5 text-sm font-medium text-[#f7f1df] focus:border-[#d9a94f]/60 focus:outline-none"
                 >
                   {ACTION_STYLE_OPTIONS.map((option) => (
                     <option key={option} value={option}>
@@ -1328,13 +1328,13 @@ export default function Step1Setup({
                     </option>
                   ))}
                 </select>
-                <p className="mt-1 text-[11px] text-gray-400">
+                <p className="mt-1 text-[11px] text-[#9da892]">
                   Shapes movement intensity without changing the selected story mode.
                 </p>
               </div>
 
               <div>
-                <label className="mb-1.5 block text-[11px] font-medium text-gray-500">
+                <label className="mb-1.5 block text-[11px] font-medium text-[#c9d2bd]">
                   Hook Mode
                 </label>
                 <select
@@ -1342,14 +1342,14 @@ export default function Step1Setup({
                   onChange={(event) =>
                     onHookModeChange(event.target.value as HookFamily | "all")
                   }
-                  className="w-full rounded-xl border border-gray-200 bg-gray-50 px-3 py-2.5 text-sm font-medium text-gray-900 focus:border-gray-400 focus:outline-none"
+                  className="w-full rounded-xl border border-[#2d3d28] bg-[#071009] px-3 py-2.5 text-sm font-medium text-[#f7f1df] focus:border-[#d9a94f]/60 focus:outline-none"
                 >
                   <option value="all">All hook variants</option>
                   <option value="danger">Danger</option>
                   <option value="curiosity">Curiosity</option>
                   <option value="reversal">Reversal</option>
                 </select>
-                <p className="mt-1 text-[11px] text-gray-400">
+                <p className="mt-1 text-[11px] text-[#9da892]">
                   Auto uses the best fit; manual choice stays available.
                 </p>
               </div>
@@ -1359,8 +1359,8 @@ export default function Step1Setup({
                 onClick={onToggleFastPublishMode}
                 className={`rounded-2xl border px-3.5 py-3 text-left text-xs font-semibold transition-all active:scale-95 ${
                   fastPublishMode
-                    ? "border-gray-900 bg-gray-900 text-white shadow-sm shadow-gray-300/60"
-                    : "border-gray-200 bg-white text-gray-600 shadow-sm shadow-gray-100/80 hover:bg-gray-50"
+                    ? "border-[#d9a94f]/45 bg-[#d9a94f]/16 text-[#f3c766] shadow-sm shadow-[#d9a94f]/10"
+                    : "border-[#2d3d28] bg-[#071009] text-[#c9d2bd] shadow-sm shadow-black/20 hover:border-[#d9a94f]/35 hover:bg-[#101a10]"
                 }`}
               >
                 <span className="block">
@@ -1376,8 +1376,8 @@ export default function Step1Setup({
                 onClick={onToggleStrictOriginalityGuard}
                 className={`rounded-2xl border px-3.5 py-3 text-left text-xs font-semibold transition-all active:scale-95 ${
                   strictOriginalityGuard
-                    ? "border-emerald-200 bg-emerald-50 text-emerald-700 shadow-sm shadow-emerald-100/70"
-                    : "border-gray-200 bg-white text-gray-600 shadow-sm shadow-gray-100/80 hover:bg-gray-50"
+                    ? "border-emerald-400/30 bg-emerald-500/10 text-emerald-100 shadow-sm shadow-emerald-900/20"
+                    : "border-[#2d3d28] bg-[#071009] text-[#c9d2bd] shadow-sm shadow-black/20 hover:border-[#d9a94f]/35 hover:bg-[#101a10]"
                 }`}
               >
                 <span className="block">
@@ -1402,7 +1402,7 @@ export default function Step1Setup({
               more specific.
             </p>
             <div
-              className={`rounded-2xl border p-4 text-[11px] leading-relaxed ${sceneReportColor}`}
+              className={`rounded-2xl border bg-[#08110b] p-4 text-[11px] leading-relaxed shadow-[inset_0_1px_0_rgba(255,255,255,0.04)] ${sceneReportColor}`}
             >
               <div className="flex flex-wrap items-start justify-between gap-3">
                 <div>
@@ -1413,7 +1413,7 @@ export default function Step1Setup({
                     {sceneReport.score}/100
                   </div>
                 </div>
-                <span className="rounded-full bg-white/80 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.08em]">
+                <span className="rounded-full border border-white/10 bg-[#0c130d] px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.08em] text-[#f7f1df]">
                   {sceneReport.label}
                 </span>
               </div>
@@ -1426,7 +1426,7 @@ export default function Step1Setup({
                 <span className="font-semibold">Fix:</span> {sceneReport.fix}
               </p>
 
-              <div className="mt-3 rounded-xl bg-white/75 p-3">
+              <div className="mt-3 rounded-xl border border-[#2d3d28] bg-[#071009] p-3 text-[#dce8d1]">
                 <div className="font-semibold">Recommended Scene</div>
                 <div className="mt-1">
                   {sceneReport.recommended.habitat} +{" "}
@@ -1444,8 +1444,8 @@ export default function Step1Setup({
                 <div
                   className={
                     habitatCompatibility.isWarning
-                      ? "mt-3 rounded-xl border border-amber-200 bg-amber-50/90 p-3 text-[11px] leading-relaxed text-amber-900"
-                      : "mt-3 rounded-xl border border-sky-100 bg-sky-50/90 p-3 text-[11px] leading-relaxed text-sky-900"
+                      ? "mt-3 rounded-xl border border-amber-400/30 bg-amber-500/10 p-3 text-[11px] leading-relaxed text-amber-100"
+                      : "mt-3 rounded-xl border border-cyan-400/25 bg-cyan-500/10 p-3 text-[11px] leading-relaxed text-cyan-100"
                   }
                 >
                   <span className="font-semibold">
@@ -1478,8 +1478,8 @@ export default function Step1Setup({
                       onClick={() => applySceneSettings(preset)}
                       className={
                         isScenePresetActive(preset)
-                          ? "rounded-full border border-sky-700 bg-sky-900 px-3 py-1.5 text-[10px] font-semibold uppercase tracking-[0.08em] text-white shadow-sm hover:bg-sky-950 active:scale-[0.98]"
-                          : "rounded-full border border-gray-300 bg-white px-3 py-1.5 text-[10px] font-semibold uppercase tracking-[0.08em] text-gray-800 shadow-sm hover:bg-gray-50 active:scale-[0.98]"
+                          ? "rounded-full border border-cyan-300/45 bg-cyan-500/20 px-3 py-1.5 text-[10px] font-semibold uppercase tracking-[0.08em] text-cyan-100 shadow-sm hover:bg-cyan-500/30 active:scale-[0.98]"
+                          : "rounded-full border border-[#2d3d28] bg-[#071009] px-3 py-1.5 text-[10px] font-semibold uppercase tracking-[0.08em] text-[#dce8d1] shadow-sm hover:border-[#d9a94f]/40 hover:bg-[#101a10] active:scale-[0.98]"
                       }
                     >
                       {preset.label}
@@ -1524,13 +1524,13 @@ export default function Step1Setup({
             </>
           }
         >
-            <div className="mb-4 rounded-2xl border border-gray-200 bg-gray-50/70 p-3 text-[11px] leading-relaxed text-gray-700">
+            <div className="mb-4 rounded-2xl border border-[#2d3d28] bg-[#071009] p-3 text-[11px] leading-relaxed text-[#dce8d1]">
               <span className="font-semibold">Current setup:</span> {activeStorySetupSummary}
             </div>
             <QualityPanel {...qualityPanelProps} />
             <div className="mt-4 grid grid-cols-1 gap-4 sm:grid-cols-2">
             <div>
-                <label className="mb-1.5 block text-[11px] font-medium text-gray-500">
+                <label className="mb-1.5 block text-[11px] font-medium text-[#c9d2bd]">
                   Content Lane
                 </label>
                 <select
@@ -1538,7 +1538,7 @@ export default function Step1Setup({
                   onChange={(event) =>
                     onContentLaneChange(event.target.value as ContentLane)
                   }
-                  className="w-full rounded-xl border border-gray-200 bg-gray-50 px-3 py-2.5 text-sm font-medium text-gray-900 focus:border-gray-400 focus:outline-none"
+                  className="w-full rounded-xl border border-[#2d3d28] bg-[#071009] px-3 py-2.5 text-sm font-medium text-[#f7f1df] focus:border-[#d9a94f]/60 focus:outline-none"
                 >
                   {contentLaneOptions.map((option) => (
                     <option key={option} value={option}>
@@ -1546,35 +1546,35 @@ export default function Step1Setup({
                     </option>
                   ))}
                 </select>
-                <p className="mt-1 text-[11px] text-gray-400">
+                <p className="mt-1 text-[11px] text-[#9da892]">
                   {getContentLaneMicroGuidance(contentLane)}
                 </p>
               </div>
               <div>
-                <label className="mb-1.5 block text-[11px] font-medium text-gray-500">
+                <label className="mb-1.5 block text-[11px] font-medium text-[#c9d2bd]">
                   Conflict Arc {isPredatorVsPreyMode ? "" : "(Predator vs Prey only)"}
                 </label>
                 <select
                   value={arc}
                   disabled
-                  className="w-full cursor-not-allowed rounded-xl border border-gray-200 bg-gray-100 px-3 py-2.5 text-sm text-gray-400"
+                  className="w-full cursor-not-allowed rounded-xl border border-[#2d3d28] bg-[#0c130d] px-3 py-2.5 text-sm text-[#71806b]"
                 >
                   <option value={arc}>{arc}</option>
                 </select>
-                <p className="mt-1 text-[11px] text-gray-400">
+                <p className="mt-1 text-[11px] text-[#9da892]">
                   {isPredatorVsPreyMode
                     ? getArcMicroGuidance(arc)
                     : "Auto-kept from the Predator vs Prey engine so non-predator story modes stay compatible until deeper routing expands."}
                 </p>
               </div>
               <div>
-                <label className="mb-1.5 block text-[11px] font-medium text-gray-500">
+                <label className="mb-1.5 block text-[11px] font-medium text-[#c9d2bd]">
                   Scene Atmosphere
                 </label>
                 <select
                   value={weather}
                   onChange={(event) => onWeatherChange(event.target.value as Weather)}
-                  className="w-full rounded-xl border border-gray-200 bg-gray-50 px-3 py-2.5 text-sm font-medium text-gray-900 focus:border-gray-400 focus:outline-none"
+                  className="w-full rounded-xl border border-[#2d3d28] bg-[#071009] px-3 py-2.5 text-sm font-medium text-[#f7f1df] focus:border-[#d9a94f]/60 focus:outline-none"
                 >
                   {weatherOptions.map((option) => (
                     <option key={option} value={option}>
@@ -1582,18 +1582,18 @@ export default function Step1Setup({
                     </option>
                   ))}
                 </select>
-                <p className="mt-1 text-[11px] text-gray-400">
+                <p className="mt-1 text-[11px] text-[#9da892]">
                   {getWeatherMicroGuidance(weather)}
                 </p>
               </div>
               <div>
-                <label className="mb-1.5 block text-[11px] font-medium text-gray-500">
+                <label className="mb-1.5 block text-[11px] font-medium text-[#c9d2bd]">
                   Cinematic Depth
                 </label>
                 <select
                   value={depthMode}
                   onChange={(event) => onDepthModeChange(event.target.value as DepthMode)}
-                  className="w-full rounded-xl border border-gray-200 bg-gray-50 px-3 py-2.5 text-sm font-medium text-gray-900 focus:border-gray-400 focus:outline-none"
+                  className="w-full rounded-xl border border-[#2d3d28] bg-[#071009] px-3 py-2.5 text-sm font-medium text-[#f7f1df] focus:border-[#d9a94f]/60 focus:outline-none"
                 >
                   {depthModes.map((option) => (
                     <option key={option} value={option}>
@@ -1601,12 +1601,12 @@ export default function Step1Setup({
                     </option>
                   ))}
                 </select>
-                <p className="mt-1 text-[11px] text-gray-400">
+                <p className="mt-1 text-[11px] text-[#9da892]">
                   {getDepthModeMicroGuidance(depthMode)}
                 </p>
               </div>
               <div>
-                <label className="mb-1.5 block text-[11px] font-medium text-gray-500">
+                <label className="mb-1.5 block text-[11px] font-medium text-[#c9d2bd]">
                   Camera Angle Preset
                 </label>
                 <select
@@ -1616,7 +1616,7 @@ export default function Step1Setup({
                       event.target.value as CameraAnglePreset
                     )
                   }
-                  className="w-full rounded-xl border border-gray-200 bg-gray-50 px-3 py-2.5 text-sm font-medium text-gray-900 focus:border-gray-400 focus:outline-none"
+                  className="w-full rounded-xl border border-[#2d3d28] bg-[#071009] px-3 py-2.5 text-sm font-medium text-[#f7f1df] focus:border-[#d9a94f]/60 focus:outline-none"
                 >
                   {cameraAnglePresetOptions.map((option) => (
                     <option key={option} value={option}>
@@ -1624,18 +1624,18 @@ export default function Step1Setup({
                     </option>
                   ))}
                 </select>
-                <p className="mt-1 text-[11px] text-gray-400">
+                <p className="mt-1 text-[11px] text-[#9da892]">
                   {cameraPresetDefinition.helper}
                 </p>
               </div>
               <div>
-                <label className="mb-1.5 block text-[11px] font-medium text-gray-500">
+                <label className="mb-1.5 block text-[11px] font-medium text-[#c9d2bd]">
                   Habitat Override
                 </label>
                 <select
                   value={habitat}
                   onChange={(event) => onHabitatChange(event.target.value as HabitatPreset)}
-                  className="w-full rounded-xl border border-gray-200 bg-gray-50 px-3 py-2.5 text-sm font-medium text-gray-900 focus:border-gray-400 focus:outline-none"
+                  className="w-full rounded-xl border border-[#2d3d28] bg-[#071009] px-3 py-2.5 text-sm font-medium text-[#f7f1df] focus:border-[#d9a94f]/60 focus:outline-none"
                 >
                   {habitatOptions.map((option) => (
                     <option key={option} value={option}>
@@ -1646,8 +1646,8 @@ export default function Step1Setup({
                 <div
                   className={`mt-1 rounded-xl px-2.5 py-2 text-[11px] leading-relaxed ${
                     habitatGuidance.isWarning
-                      ? "bg-amber-50 text-amber-700"
-                      : "bg-emerald-50 text-emerald-700"
+                      ? "border border-amber-400/30 bg-amber-500/10 text-amber-100"
+                      : "border border-emerald-400/25 bg-emerald-500/10 text-emerald-100"
                   }`}
                 >
                   <span className="font-semibold">{habitatGuidance.label}:</span>{" "}
@@ -1655,7 +1655,7 @@ export default function Step1Setup({
                 </div>
               </div>
               <div>
-                <label className="mb-1.5 block text-[11px] font-medium text-gray-500">
+                <label className="mb-1.5 block text-[11px] font-medium text-[#c9d2bd]">
                   Tension Level
                 </label>
                 <select
@@ -1663,7 +1663,7 @@ export default function Step1Setup({
                   onChange={(event) =>
                     onEmotionalToneChange(event.target.value as EmotionalTone)
                   }
-                  className="w-full rounded-xl border border-gray-200 bg-gray-50 px-3 py-2.5 text-sm font-medium text-gray-900 focus:border-gray-400 focus:outline-none"
+                  className="w-full rounded-xl border border-[#2d3d28] bg-[#071009] px-3 py-2.5 text-sm font-medium text-[#f7f1df] focus:border-[#d9a94f]/60 focus:outline-none"
                 >
                   {emotionalTones.map((option) => (
                     <option key={option} value={option}>
@@ -1671,12 +1671,12 @@ export default function Step1Setup({
                     </option>
                   ))}
                 </select>
-                <p className="mt-1 text-[11px] text-gray-400">
+                <p className="mt-1 text-[11px] text-[#9da892]">
                   {getToneMicroGuidance(emotionalTone)}
                 </p>
               </div>
               <div>
-                <label className="mb-1.5 block text-[11px] font-medium text-gray-500">
+                <label className="mb-1.5 block text-[11px] font-medium text-[#c9d2bd]">
                   Instinct Style
                 </label>
                 <select
@@ -1684,7 +1684,7 @@ export default function Step1Setup({
                   onChange={(event) =>
                     onAnimalVibeChange(event.target.value as AnimalVibe)
                   }
-                  className="w-full rounded-xl border border-gray-200 bg-gray-50 px-3 py-2.5 text-sm font-medium text-gray-900 focus:border-gray-400 focus:outline-none"
+                  className="w-full rounded-xl border border-[#2d3d28] bg-[#071009] px-3 py-2.5 text-sm font-medium text-[#f7f1df] focus:border-[#d9a94f]/60 focus:outline-none"
                 >
                   {animalVibes.map((option) => (
                     <option key={option} value={option}>
@@ -1692,24 +1692,24 @@ export default function Step1Setup({
                     </option>
                   ))}
                 </select>
-                <p className="mt-1 text-[11px] text-gray-400">
+                <p className="mt-1 text-[11px] text-[#9da892]">
                   {getAnimalVibeMicroGuidance(animalVibe)}
                 </p>
               </div>
             </div>
-            <div className="mt-4 rounded-2xl border border-violet-100 bg-violet-50/80 p-3 text-[11px] leading-relaxed text-violet-900">
+            <div className="mt-4 rounded-2xl border border-violet-400/20 bg-violet-500/10 p-3 text-[11px] leading-relaxed text-violet-100">
               <div className="flex flex-wrap gap-2">
                 {pairingHighlights.badges.length > 0 ? (
                   pairingHighlights.badges.map((badge) => (
                     <span
                       key={badge}
-                      className="rounded-full border border-violet-200 bg-white/80 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.08em] text-violet-700"
+                      className="rounded-full border border-violet-300/25 bg-violet-500/10 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.08em] text-violet-100"
                     >
                       {badge}
                     </span>
                   ))
                 ) : (
-                  <span className="rounded-full border border-violet-200 bg-white/80 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.08em] text-violet-700">
+                  <span className="rounded-full border border-violet-300/25 bg-violet-500/10 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.08em] text-violet-100">
                     Facebook-safe
                   </span>
                 )}
@@ -1724,7 +1724,7 @@ export default function Step1Setup({
                   {pairingHighlights.safeArcLabel}
                 </p>
               )}
-              <p className="mt-1 text-violet-800/80">
+              <p className="mt-1 text-violet-100/75">
                 {safetyDefaults.join(" • ")}
               </p>
             </div>
@@ -1772,19 +1772,19 @@ export default function Step1Setup({
               any subject or production control before generating.
             </p>
             <div className="mt-1.5 flex flex-wrap gap-2">
-              <span className="rounded-full bg-violet-50 px-2.5 py-1 text-[10px] font-semibold text-violet-700 shadow-sm shadow-violet-100">
+              <span className="rounded-full border border-violet-300/25 bg-violet-500/10 px-2.5 py-1 text-[10px] font-semibold text-violet-100 shadow-sm shadow-black/20">
                 {contentLane}
               </span>
-              <span className="rounded-full bg-white px-2.5 py-1 text-[10px] font-semibold text-gray-600 shadow-sm shadow-gray-100">
+              <span className="rounded-full border border-[#2d3d28] bg-[#071009] px-2.5 py-1 text-[10px] font-semibold text-[#dce8d1] shadow-sm shadow-black/20">
                 {arc}
               </span>
-              <span className="rounded-full bg-white px-2.5 py-1 text-[10px] font-semibold text-gray-500 shadow-sm shadow-gray-100">
+              <span className="rounded-full border border-[#2d3d28] bg-[#071009] px-2.5 py-1 text-[10px] font-semibold text-[#c9d2bd] shadow-sm shadow-black/20">
                 {weather}
               </span>
-              <span className="rounded-full bg-white px-2.5 py-1 text-[10px] font-semibold text-gray-500 shadow-sm shadow-gray-100">
+              <span className="rounded-full border border-[#2d3d28] bg-[#071009] px-2.5 py-1 text-[10px] font-semibold text-[#c9d2bd] shadow-sm shadow-black/20">
                 {depthMode}
               </span>
-              <span className="rounded-full bg-white px-2.5 py-1 text-[10px] font-semibold text-gray-500 shadow-sm shadow-gray-100">
+              <span className="rounded-full border border-[#2d3d28] bg-[#071009] px-2.5 py-1 text-[10px] font-semibold text-[#c9d2bd] shadow-sm shadow-black/20">
                 {cameraPresetDefinition.label}
               </span>
             </div>
