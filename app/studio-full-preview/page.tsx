@@ -31,6 +31,7 @@ type CleanAssetGuide = {
   dimensions: string;
   placement: string;
   prompt: string;
+  negativePrompt?: string;
 };
 
 const sections: { id: SectionId; label: string; eyebrow: string }[] = [
@@ -339,9 +340,10 @@ const cleanAssetGuides: CleanAssetGuide[] = [
     file: "public/brand-assets/clean/hero-wide-wild-stories-tv-no-text.png",
     title: "Wide app hero background",
     purpose: "Overview / Build top hero",
-    dimensions: "16:9 or 21:9, minimum 2400px wide",
-    placement: "Future Overview hero or Build top summary art after a clean no-text file exists.",
-    prompt: "Premium cinematic wildlife creator control-room atmosphere, North American wilderness, lion and eagle wildlife storytelling mood, dark forest green and black palette, warm golden rim light, realistic documentary style, clean negative space for UI overlay, no text, no logo, no watermark, no UI, no poster typography.",
+    dimensions: "21:9 or 16:9, minimum 2400px wide",
+    placement: "Future Build / Overview hero after the clean no-text file exists and passes visual review.",
+    prompt: "Premium cinematic wildlife creator control-room atmosphere, North American wilderness, lion and eagle wildlife storytelling mood, dark forest green and black color palette, warm golden rim light, realistic documentary style, subtle camera gear and creator-studio energy, clean negative space for UI overlay, dramatic but believable, high-end editorial wildlife brand background, no text, no logo, no watermark, no UI, no poster typography, no captions, no social media icons.",
+    negativePrompt: "text, logo, watermark, words, letters, captions, UI elements, poster typography, blurry animals, cartoon, fantasy, low quality, overexposed background, crowded composition, cropped faces, distorted camera gear.",
   },
   {
     file: "public/brand-assets/clean/build-hero-wildlife-creator-no-text.png",
@@ -1009,6 +1011,32 @@ function BrandAssetsScreen() {
         </div>
       </Panel>
 
+      <Panel className="overflow-hidden border-[#d9a94f]/35 bg-[#100f07]/90 p-4 sm:p-5">
+        <div className="grid gap-4 lg:grid-cols-[minmax(0,0.72fr)_minmax(320px,1fr)] lg:items-stretch">
+          <div className="rounded-[24px] border border-dashed border-[#d9a94f]/45 bg-[#070b07] p-4">
+            <p className="text-[11px] font-black uppercase tracking-[0.22em] text-[#f3c766]">Clean Hero Asset — Needed</p>
+            <h2 className="mt-2 text-2xl font-semibold text-[#f8f0da]">hero-wide-wild-stories-tv-no-text.png</h2>
+            <p className="mt-3 text-sm leading-6 text-[#c9d2bd]">Status: Not yet added. This is a spec card only, so the missing future asset is not referenced by production UI.</p>
+            <div className="mt-4 grid gap-2 sm:grid-cols-2">
+              <div className="rounded-2xl border border-[#314428] bg-[#0b130c] p-3"><p className="text-[10px] font-black uppercase tracking-[0.14em] text-[#889580]">Purpose</p><p className="mt-1 text-xs leading-5 text-[#e8eadf]">Overview / Build hero background</p></div>
+              <div className="rounded-2xl border border-[#314428] bg-[#0b130c] p-3"><p className="text-[10px] font-black uppercase tracking-[0.14em] text-[#889580]">Recommended size</p><p className="mt-1 text-xs leading-5 text-[#e8eadf]">21:9 or 16:9, minimum 2400px wide</p></div>
+              <div className="rounded-2xl border border-[#314428] bg-[#0b130c] p-3"><p className="text-[10px] font-black uppercase tracking-[0.14em] text-[#889580]">Placement</p><p className="mt-1 text-xs leading-5 text-[#e8eadf]">Future Build / Overview hero</p></div>
+              <div className="rounded-2xl border border-[#314428] bg-[#0b130c] p-3"><p className="text-[10px] font-black uppercase tracking-[0.14em] text-[#889580]">Safety</p><p className="mt-1 text-xs leading-5 text-[#e8eadf]">Do not use behind forms unless a dark overlay keeps text readable.</p></div>
+            </div>
+          </div>
+          <div className="rounded-[24px] border border-[#4b3816] bg-[#1a1307] p-4">
+            <p className="text-[10px] font-black uppercase tracking-[0.14em] text-[#f3c766]">Generation prompt</p>
+            <p className="mt-2 text-sm leading-6 text-[#eadfca]">Premium cinematic wildlife creator control-room atmosphere, North American wilderness, lion and eagle wildlife storytelling mood, dark forest green and black color palette, warm golden rim light, realistic documentary style, subtle camera gear and creator-studio energy, clean negative space for UI overlay, dramatic but believable, high-end editorial wildlife brand background, no text, no logo, no watermark, no UI, no poster typography, no captions, no social media icons.</p>
+            <p className="mt-4 text-[10px] font-black uppercase tracking-[0.14em] text-[#f3c766]">Optional negative prompt</p>
+            <p className="mt-2 text-sm leading-6 text-[#eadfca]">text, logo, watermark, words, letters, captions, UI elements, poster typography, blurry animals, cartoon, fantasy, low quality, overexposed background, crowded composition, cropped faces, distorted camera gear.</p>
+            <div className="mt-4 flex flex-wrap gap-2">
+              <StatusPill tone="gold">No baked-in text</StatusPill>
+              <StatusPill tone="muted">Spec only</StatusPill>
+            </div>
+          </div>
+        </div>
+      </Panel>
+
       <Panel className="overflow-hidden p-0">
         <div className="grid gap-0 lg:grid-cols-[minmax(0,1.2fr)_minmax(320px,0.8fr)]">
           <div className="relative min-h-[260px] overflow-hidden bg-[#050806]">
@@ -1080,6 +1108,12 @@ function BrandAssetsScreen() {
                 <p className="text-[10px] font-black uppercase tracking-[0.14em] text-[#f3c766]">Generation prompt</p>
                 <p className="mt-2 text-xs leading-5 text-[#eadfca]">{asset.prompt}</p>
               </div>
+              {asset.negativePrompt ? (
+                <div className="mt-3 rounded-2xl border border-[#46301d] bg-[#130d08] p-3">
+                  <p className="text-[10px] font-black uppercase tracking-[0.14em] text-[#f3c766]">Optional negative prompt</p>
+                  <p className="mt-2 text-xs leading-5 text-[#eadfca]">{asset.negativePrompt}</p>
+                </div>
+              ) : null}
             </div>
           ))}
         </div>
