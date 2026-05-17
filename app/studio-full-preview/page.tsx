@@ -24,6 +24,15 @@ type BrandAsset = {
   futurePlacement: string;
 };
 
+type CleanAssetGuide = {
+  file: string;
+  title: string;
+  purpose: string;
+  dimensions: string;
+  placement: string;
+  prompt: string;
+};
+
 const sections: { id: SectionId; label: string; eyebrow: string }[] = [
   { id: "overview", label: "Overview", eyebrow: "Studio" },
   { id: "build", label: "Build", eyebrow: "Setup" },
@@ -324,6 +333,49 @@ const brandAssets: { wide: BrandAsset[]; posters: BrandAsset[] } = {
     },
   ],
 };
+
+const cleanAssetGuides: CleanAssetGuide[] = [
+  {
+    file: "public/brand-assets/clean/hero-wide-wild-stories-tv-no-text.png",
+    title: "Wide app hero background",
+    purpose: "Overview / Build top hero",
+    dimensions: "16:9 or 21:9, minimum 2400px wide",
+    placement: "Future Overview hero or Build top summary art after a clean no-text file exists.",
+    prompt: "Premium cinematic wildlife creator control-room atmosphere, North American wilderness, lion and eagle wildlife storytelling mood, dark forest green and black palette, warm golden rim light, realistic documentary style, clean negative space for UI overlay, no text, no logo, no watermark, no UI, no poster typography.",
+  },
+  {
+    file: "public/brand-assets/clean/build-hero-wildlife-creator-no-text.png",
+    title: "Build command-center background",
+    purpose: "Subtle Build summary art",
+    dimensions: "16:9",
+    placement: "Future Build command-center summary strip, never behind form fields or buttons.",
+    prompt: "Dark cinematic wildlife field studio, professional camera gear, wilderness background, realistic documentary production mood, deep forest shadows, warm rim light, dark empty side areas for UI cards, no text, no logo, no watermark, no buttons, no interface.",
+  },
+  {
+    file: "public/brand-assets/clean/creator-profile-no-text.png",
+    title: "Creator profile no-text poster",
+    purpose: "Small creator identity card",
+    dimensions: "4:5 or 9:16",
+    placement: "Future Build rail creator profile or owner brand card.",
+    prompt: "Realistic wildlife content creator profile portrait style, cinematic but believable, documentary creator mood, natural wilderness background, clean premium lighting, no text, no logo, no watermark, face-safe composition if a real reference photo is provided later.",
+  },
+  {
+    file: "public/brand-assets/clean/mobile-hero-no-text.png",
+    title: "Mobile hero no-text",
+    purpose: "Mobile landing/header",
+    dimensions: "9:16",
+    placement: "Future mobile header with safe top/bottom overlay zones.",
+    prompt: "Vertical premium wildlife creator hero background, dark cinematic wilderness, warm golden rim light, safe empty top and bottom areas for UI text, realistic documentary atmosphere, no text, no logo, no watermark, no poster words.",
+  },
+  {
+    file: "public/brand-assets/clean/facebook-cover-clean-no-text.png",
+    title: "Clean Facebook cover background",
+    purpose: "Facebook cover preview base",
+    dimensions: "1640x624 or equivalent wide banner",
+    placement: "Future Facebook cover base where HTML/Canva text is added separately.",
+    prompt: "Premium cinematic wildlife landscape, powerful lion on the left, eagle in dramatic sky on the right, mountain or sunset wilderness atmosphere, dark-gold documentary color grade, safe empty right area for real HTML/Canva text later, no text, no logo, no watermark.",
+  },
+];
 
 const repoRoutes = [
   { path: "/", purpose: "Production Build and Workflows home", type: "Production" },
@@ -931,36 +983,113 @@ function BrandImageCard({ asset, aspect = "aspect-[16/7]" }: { asset: BrandAsset
 }
 
 function BrandAssetsScreen() {
+  const allAssets = [...brandAssets.wide, ...brandAssets.posters];
+
   return (
     <div className="space-y-4">
-      <SectionHeading eyebrow="Brand Assets" title="Creator image integration preview" detail="These eight copied images are displayed as owner-review brand cards only. No pixels are edited, and text-heavy assets are not used behind live UI text." />
+      <SectionHeading eyebrow="Brand Assets" title="Creator image integration preview" detail="All eight existing images are shown as owner-review brand cards. Text-heavy files stay out of live UI backgrounds until clean no-text versions are produced." />
+
       <Panel className="grid gap-3 p-4 lg:grid-cols-3">
         <div>
-          <p className="text-[11px] font-black uppercase tracking-[0.22em] text-[#d9a94f]">Production asset recommendation note</p>
-          <h2 className="mt-2 text-xl font-semibold text-[#f8f0da]">Use these as covers, posters, and brand references for now.</h2>
-          <p className="mt-2 text-sm leading-6 text-[#c9d2bd]">Each image below is marked preview-card-only because the current files contain baked-in text. The production path is to create clean no-text versions for Overview hero, Build hero, Creator profile, and Facebook cover placements.</p>
+          <p className="text-[11px] font-black uppercase tracking-[0.22em] text-[#d9a94f]">Current asset decision</p>
+          <h2 className="mt-2 text-xl font-semibold text-[#f8f0da]">Use current images as premium previews, not UI backgrounds.</h2>
+          <p className="mt-2 text-sm leading-6 text-[#c9d2bd]">The lion cover and creator posters make the studio feel branded, but baked-in typography means HTML/UI should provide the real text. Clean no-text assets are planned below.</p>
         </div>
         <div className="rounded-[20px] border border-[#5b4724] bg-[#d9a94f]/10 p-4">
-          <p className="text-[11px] font-black uppercase tracking-[0.2em] text-[#f3c766]">Do Not Use As Background</p>
-          <p className="mt-2 text-sm leading-6 text-[#eadfca]">All supplied assets contain baked-in typography. For production hero/background use, request a clean no-text landscape version so live UI headings remain readable.</p>
+          <p className="text-[11px] font-black uppercase tracking-[0.2em] text-[#f3c766]">Rules</p>
+          <ul className="mt-2 space-y-1.5 text-sm leading-6 text-[#eadfca]">
+            <li>No baked-in text for UI backgrounds.</li>
+            <li>No clutter behind buttons, forms, or prompt cards.</li>
+            <li>No cropped faces, stretched images, logos, or watermarks.</li>
+          </ul>
         </div>
         <div className="rounded-[20px] border border-[#33512d] bg-[#547d40]/12 p-4">
           <p className="text-[11px] font-black uppercase tracking-[0.2em] text-[#b7e5a8]">Preview Safe</p>
-          <p className="mt-2 text-sm leading-6 text-[#dce8d1]">Copied to <span className="font-mono text-[#f3c766]">/public/brand-assets</span> and referenced only inside this preview route.</p>
+          <p className="mt-2 text-sm leading-6 text-[#dce8d1]">Current assets are loaded from <span className="font-mono text-[#f3c766]">/public/brand-assets</span>. Workflows and Repo Map remain image-free.</p>
         </div>
       </Panel>
 
-      <div className="grid gap-3 xl:grid-cols-2">
-        {brandAssets.wide.map((asset) => (
-          <BrandImageCard key={asset.src} asset={asset} />
-        ))}
+      <Panel className="overflow-hidden p-0">
+        <div className="grid gap-0 lg:grid-cols-[minmax(0,1.2fr)_minmax(320px,0.8fr)]">
+          <div className="relative min-h-[260px] overflow-hidden bg-[#050806]">
+            <Image src="/brand-assets/wild-stories-tv-cover-lion.png" alt="Wild Stories TV lion cover preview" fill sizes="(max-width: 1024px) 100vw, 58vw" className="object-cover" />
+            <div className="absolute inset-0 bg-gradient-to-r from-[#050806]/25 via-[#050806]/10 to-[#050806]/70" />
+          </div>
+          <div className="self-center p-5">
+            <p className="text-[11px] font-black uppercase tracking-[0.22em] text-[#d9a94f]">Facebook Cover / Page Banner</p>
+            <h2 className="mt-2 text-2xl font-semibold text-[#f8f0da]">Best current production preview: lion cover card.</h2>
+            <p className="mt-3 text-sm leading-6 text-[#c9d2bd]">Use the lion banner as a brand kit preview or Facebook cover preview only. A clean no-text lion/eagle landscape should be created before any app hero/background use.</p>
+            <div className="mt-4 grid gap-2 sm:grid-cols-2">
+              <StatusPill tone="gold">Preview card only</StatusPill>
+              <StatusPill tone="muted">Clean version needed</StatusPill>
+            </div>
+          </div>
+        </div>
+      </Panel>
+
+      <div className="space-y-3">
+        <SectionHeading eyebrow="Hero / Wide Covers" title="Wide creator assets" detail="Use only as small preview cards until clean negative-space, no-text versions exist." />
+        <div className="grid gap-3 xl:grid-cols-2">
+          {brandAssets.wide.map((asset) => (
+            <BrandImageCard key={asset.src} asset={asset} />
+          ))}
+        </div>
       </div>
 
-      <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
-        {brandAssets.posters.map((asset) => (
-          <BrandImageCard key={asset.src} asset={asset} aspect="aspect-[9/16]" />
-        ))}
+      <div className="space-y-3">
+        <SectionHeading eyebrow="Creator Posters" title="Vertical identity previews" detail="These are best as creator identity cards, mobile poster previews, or brand-kit references, not dashboard backgrounds." />
+        <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+          {brandAssets.posters.map((asset) => (
+            <BrandImageCard key={asset.src} asset={asset} aspect="aspect-[9/16]" />
+          ))}
+        </div>
       </div>
+
+      <Panel className="p-4 sm:p-5">
+        <SectionHeading eyebrow="Recommended Usage" title="Current-image placement matrix" detail="Every current file remains preview-only because the artwork already contains typography." />
+        <div className="mt-4 grid gap-2 md:grid-cols-2 xl:grid-cols-4">
+          {allAssets.map((asset) => (
+            <div key={asset.src} className="rounded-2xl border border-[#2d3f27] bg-[#071009] p-3">
+              <p className="text-sm font-black text-[#f8f0da]">{asset.title}</p>
+              <p className="mt-2 text-[10px] font-black uppercase tracking-[0.14em] text-[#d9a94f]">Current use: preview card only</p>
+              <p className="mt-2 text-xs leading-5 text-[#c9d2bd]">{asset.futurePlacement}</p>
+            </div>
+          ))}
+        </div>
+      </Panel>
+
+      <Panel className="p-4 sm:p-5">
+        <SectionHeading eyebrow="Brand Asset Production Guide" title="Clean no-text assets needed" detail="These future files are specs only. They are not referenced by production pages until real clean assets are added." />
+        <div className="mt-4 grid gap-3 xl:grid-cols-2">
+          {cleanAssetGuides.map((asset) => (
+            <div key={asset.file} className="rounded-[22px] border border-[#2d3f27] bg-[#071009] p-4">
+              <div className="flex flex-wrap items-start justify-between gap-3">
+                <div>
+                  <p className="text-[10px] font-black uppercase tracking-[0.16em] text-[#d9a94f]">Status: Needed / Not yet added</p>
+                  <h3 className="mt-1 text-lg font-semibold text-[#f8f0da]">{asset.title}</h3>
+                </div>
+                <StatusPill tone="muted">Spec only</StatusPill>
+              </div>
+              <div className="mt-3 grid gap-2 sm:grid-cols-2">
+                <div className="rounded-2xl border border-[#314428] bg-[#0b130c] p-3"><p className="text-[10px] font-black uppercase tracking-[0.14em] text-[#889580]">Future file</p><p className="mt-1 break-words font-mono text-xs leading-5 text-[#f3c766]">{asset.file}</p></div>
+                <div className="rounded-2xl border border-[#314428] bg-[#0b130c] p-3"><p className="text-[10px] font-black uppercase tracking-[0.14em] text-[#889580]">Dimensions</p><p className="mt-1 text-xs leading-5 text-[#e8eadf]">{asset.dimensions}</p></div>
+                <div className="rounded-2xl border border-[#314428] bg-[#0b130c] p-3"><p className="text-[10px] font-black uppercase tracking-[0.14em] text-[#889580]">Purpose</p><p className="mt-1 text-xs leading-5 text-[#e8eadf]">{asset.purpose}</p></div>
+                <div className="rounded-2xl border border-[#314428] bg-[#0b130c] p-3"><p className="text-[10px] font-black uppercase tracking-[0.14em] text-[#889580]">Placement</p><p className="mt-1 text-xs leading-5 text-[#e8eadf]">{asset.placement}</p></div>
+              </div>
+              <div className="mt-3 rounded-2xl border border-[#4b3816] bg-[#1a1307] p-3">
+                <p className="text-[10px] font-black uppercase tracking-[0.14em] text-[#f3c766]">Generation prompt</p>
+                <p className="mt-2 text-xs leading-5 text-[#eadfca]">{asset.prompt}</p>
+              </div>
+            </div>
+          ))}
+        </div>
+      </Panel>
+
+      <Panel className="grid gap-3 p-4 md:grid-cols-2 xl:grid-cols-4">
+        {["HTML/UI provides real text", "Hero art needs dark empty space", "No image backgrounds in Workflows", "Repo Map stays architecture-first"].map((rule) => (
+          <div key={rule} className="rounded-2xl border border-[#314428] bg-[#071009] p-3 text-sm font-semibold text-[#dce8d1]">{rule}</div>
+        ))}
+      </Panel>
     </div>
   );
 }
