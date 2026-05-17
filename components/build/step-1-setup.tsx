@@ -1767,8 +1767,8 @@ export default function Step1Setup({
           <div className="mt-4 overflow-hidden rounded-2xl border border-[#314428] bg-[#071009] shadow-[0_14px_36px_rgba(0,0,0,0.28)]">
             <div className="relative aspect-[16/7] w-full">
               <Image
-                src="/brand-assets/wild-stories-tv-cover-lion.png"
-                alt="Wild Stories TV Facebook cover brand preview"
+                src="/brand-assets/clean/build-hero-wildlife-creator-no-text.png"
+                alt="Clean Build command-center brand preview"
                 fill
                 sizes="(min-width: 1280px) 380px, 100vw"
                 className="object-cover"
@@ -1778,7 +1778,7 @@ export default function Step1Setup({
             </div>
             <div className="border-t border-[#263820] px-3 py-2">
               <p className="text-[10px] font-black uppercase tracking-[0.16em] text-[#d9a94f]">Brand Preview</p>
-              <p className="mt-0.5 text-[11px] leading-5 text-[#c9d2bd]">Preview-card-only cover art. Clean no-text hero assets planned separately.</p>
+              <p className="mt-0.5 text-[11px] leading-5 text-[#c9d2bd]">Clean no-text command-center art with dark overlay for readability.</p>
             </div>
           </div>
           <div className="mt-4 rounded-2xl border border-[#2d3d28] bg-gradient-to-br from-[#071009] to-[#101a10] p-4">

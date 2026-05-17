@@ -952,6 +952,39 @@ function ExportReviewScreen() {
   );
 }
 
+function CleanProductionAssetCard({ asset, aspect = "aspect-[16/7]" }: { asset: CleanAssetGuide; aspect?: string }) {
+  const src = asset.file.replace("public", "");
+  const fileName = asset.file.split("/").pop() ?? asset.file;
+
+  return (
+    <Panel className="overflow-hidden border-[#33512d]">
+      <div className={["relative overflow-hidden bg-[#050806]", aspect].join(" ")}>
+        <Image src={src} alt={asset.title} fill sizes="(max-width: 768px) 100vw, 520px" className="object-cover" />
+        <div className="absolute inset-0 bg-gradient-to-t from-[#050806]/88 via-[#050806]/18 to-[#050806]/35" />
+        <div className="absolute bottom-3 left-3 right-3 flex flex-wrap gap-1.5">
+          <StatusPill tone="green">Status: Added</StatusPill>
+          <StatusPill tone="gold">Production-ready / overlay-safe</StatusPill>
+        </div>
+      </div>
+      <div className="p-4">
+        <h2 className="break-words font-mono text-sm font-semibold text-[#f8f0da]">{fileName}</h2>
+        <div className="mt-4 grid gap-2">
+          {[
+            ["Purpose", asset.purpose],
+            ["Recommended placement", asset.placement],
+            ["Status", "Added"],
+          ].map(([label, value]) => (
+            <div key={label} className="rounded-2xl border border-[#2d3f27] bg-[#071009] p-3">
+              <p className="text-[10px] font-black uppercase tracking-[0.16em] text-[#889580]">{label}</p>
+              <p className="mt-1 text-xs leading-5 text-[#e8eadf]">{value}</p>
+            </div>
+          ))}
+        </div>
+      </div>
+    </Panel>
+  );
+}
+
 function BrandImageCard({ asset, aspect = "aspect-[16/7]" }: { asset: BrandAsset; aspect?: string }) {
   return (
     <Panel className="overflow-hidden">
@@ -1014,9 +1047,9 @@ function BrandAssetsScreen() {
       <Panel className="overflow-hidden border-[#d9a94f]/35 bg-[#100f07]/90 p-4 sm:p-5">
         <div className="grid gap-4 lg:grid-cols-[minmax(0,0.72fr)_minmax(320px,1fr)] lg:items-stretch">
           <div className="rounded-[24px] border border-dashed border-[#d9a94f]/45 bg-[#070b07] p-4">
-            <p className="text-[11px] font-black uppercase tracking-[0.22em] text-[#f3c766]">Clean Hero Asset — Needed</p>
+            <p className="text-[11px] font-black uppercase tracking-[0.22em] text-[#f3c766]">Clean Hero Asset — Added</p>
             <h2 className="mt-2 text-2xl font-semibold text-[#f8f0da]">hero-wide-wild-stories-tv-no-text.png</h2>
-            <p className="mt-3 text-sm leading-6 text-[#c9d2bd]">Status: Not yet added. This is a spec card only, so the missing future asset is not referenced by production UI.</p>
+            <p className="mt-3 text-sm leading-6 text-[#c9d2bd]">Status: Added. The clean no-text file is now available and can be used with dark overlays for future Build / Overview hero placement.</p>
             <div className="mt-4 grid gap-2 sm:grid-cols-2">
               <div className="rounded-2xl border border-[#314428] bg-[#0b130c] p-3"><p className="text-[10px] font-black uppercase tracking-[0.14em] text-[#889580]">Purpose</p><p className="mt-1 text-xs leading-5 text-[#e8eadf]">Overview / Build hero background</p></div>
               <div className="rounded-2xl border border-[#314428] bg-[#0b130c] p-3"><p className="text-[10px] font-black uppercase tracking-[0.14em] text-[#889580]">Recommended size</p><p className="mt-1 text-xs leading-5 text-[#e8eadf]">21:9 or 16:9, minimum 2400px wide</p></div>
@@ -1031,11 +1064,20 @@ function BrandAssetsScreen() {
             <p className="mt-2 text-sm leading-6 text-[#eadfca]">text, logo, watermark, words, letters, captions, UI elements, poster typography, blurry animals, cartoon, fantasy, low quality, overexposed background, crowded composition, cropped faces, distorted camera gear.</p>
             <div className="mt-4 flex flex-wrap gap-2">
               <StatusPill tone="gold">No baked-in text</StatusPill>
-              <StatusPill tone="muted">Spec only</StatusPill>
+              <StatusPill tone="green">Added</StatusPill>
             </div>
           </div>
         </div>
       </Panel>
+
+      <div className="space-y-3">
+        <SectionHeading eyebrow="Clean Production Assets" title="No-text brand assets now added" detail="These five clean files are production-ready source assets for overlay-safe hero, Build mood, creator identity, mobile, and Facebook cover treatments. They stay out of Workflows and Repo Map." />
+        <div className="grid gap-3 xl:grid-cols-2">
+          {cleanAssetGuides.map((asset) => (
+            <CleanProductionAssetCard key={asset.file} asset={asset} aspect={asset.file.includes("creator-profile") || asset.file.includes("mobile-hero") ? "aspect-[9/16]" : "aspect-[16/7]"} />
+          ))}
+        </div>
+      </div>
 
       <Panel className="overflow-hidden p-0">
         <div className="grid gap-0 lg:grid-cols-[minmax(0,1.2fr)_minmax(320px,0.8fr)]">
@@ -1087,16 +1129,16 @@ function BrandAssetsScreen() {
       </Panel>
 
       <Panel className="p-4 sm:p-5">
-        <SectionHeading eyebrow="Brand Asset Production Guide" title="Clean no-text assets needed" detail="These future files are specs only. They are not referenced by production pages until real clean assets are added." />
+        <SectionHeading eyebrow="Brand Asset Production Guide" title="Clean no-text assets needed" detail="These clean files now exist and are documented for safe overlay use. Production usage remains visual-only and avoids Workflows / Repo Map backgrounds." />
         <div className="mt-4 grid gap-3 xl:grid-cols-2">
           {cleanAssetGuides.map((asset) => (
             <div key={asset.file} className="rounded-[22px] border border-[#2d3f27] bg-[#071009] p-4">
               <div className="flex flex-wrap items-start justify-between gap-3">
                 <div>
-                  <p className="text-[10px] font-black uppercase tracking-[0.16em] text-[#d9a94f]">Status: Needed / Not yet added</p>
+                  <p className="text-[10px] font-black uppercase tracking-[0.16em] text-[#d9a94f]">Status: Added</p>
                   <h3 className="mt-1 text-lg font-semibold text-[#f8f0da]">{asset.title}</h3>
                 </div>
-                <StatusPill tone="muted">Spec only</StatusPill>
+                <StatusPill tone="green">Added</StatusPill>
               </div>
               <div className="mt-3 grid gap-2 sm:grid-cols-2">
                 <div className="rounded-2xl border border-[#314428] bg-[#0b130c] p-3"><p className="text-[10px] font-black uppercase tracking-[0.14em] text-[#889580]">Future file</p><p className="mt-1 break-words font-mono text-xs leading-5 text-[#f3c766]">{asset.file}</p></div>
