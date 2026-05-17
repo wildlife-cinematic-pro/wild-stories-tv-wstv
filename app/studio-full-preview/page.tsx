@@ -371,7 +371,7 @@ const cleanAssetGuides: CleanAssetGuide[] = [
   },
   {
     file: "public/brand-assets/clean/facebook-cover-clean-no-text.png",
-    title: "Clean Facebook cover background",
+    title: "Clean Facebook Cover / Lion Brand Banner",
     purpose: "Facebook cover preview base",
     dimensions: "1640x624 or equivalent wide banner",
     placement: "Future Facebook cover base where HTML/Canva text is added separately.",
