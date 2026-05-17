@@ -442,34 +442,34 @@ export function WorkspaceTabButton({
 }) {
   const accents: Record<string, { active: string; idle: string; chip: string }> = {
     Overview: {
-      active: "border-gray-900 bg-gray-900 text-white shadow-sm",
+      active: "border-[#d9a94f]/45 bg-[#d9a94f]/16 text-[#f3c766] shadow-sm shadow-[#d9a94f]/10",
       idle: "border-[color:var(--border)] bg-[color:var(--surface-elevated)] text-[color:var(--muted)] hover:border-[color:var(--border)] hover:bg-[color:var(--surface-muted)]",
-      chip: "bg-gray-100 text-[color:var(--muted)]",
+      chip: "border border-white/10 bg-white/8 text-[#c9d2bd]",
     },
     Prompts: {
-      active: "border-amber-500 bg-amber-500 text-white shadow-sm",
-      idle: "border-amber-200 bg-amber-50/80 text-amber-950 hover:border-amber-300 hover:bg-amber-100/70",
-      chip: "bg-amber-100 text-amber-700",
+      active: "border-[#d9a94f]/50 bg-[#d9a94f] text-[#111207] shadow-sm shadow-[#d9a94f]/20",
+      idle: "border-[#4b3816] bg-[#1a1307] text-[#f3c766] hover:border-[#d9a94f]/50 hover:bg-[#211806]",
+      chip: "border border-[#d9a94f]/25 bg-[#d9a94f]/12 text-[#f3c766]",
     },
     Video: {
-      active: "border-teal-600 bg-teal-600 text-white shadow-sm",
-      idle: "border-teal-200 bg-teal-50/80 text-teal-950 hover:border-teal-300 hover:bg-teal-100/70",
-      chip: "bg-teal-100 text-teal-700",
+      active: "border-cyan-300/45 bg-cyan-500/20 text-cyan-100 shadow-sm shadow-cyan-900/20",
+      idle: "border-cyan-400/25 bg-cyan-500/10 text-cyan-100 hover:border-cyan-300/50 hover:bg-cyan-500/15",
+      chip: "border border-cyan-400/25 bg-cyan-500/10 text-cyan-100",
     },
     Direct: {
-      active: "border-indigo-600 bg-indigo-600 text-white shadow-sm",
-      idle: "border-indigo-200 bg-indigo-50/80 text-indigo-950 hover:border-indigo-300 hover:bg-indigo-100/70",
-      chip: "bg-indigo-100 text-indigo-700",
+      active: "border-violet-300/45 bg-violet-500/20 text-violet-100 shadow-sm shadow-violet-900/20",
+      idle: "border-violet-400/25 bg-violet-500/10 text-violet-100 hover:border-violet-300/50 hover:bg-violet-500/15",
+      chip: "border border-violet-400/25 bg-violet-500/10 text-violet-100",
     },
     Publishing: {
-      active: "border-rose-600 bg-rose-600 text-white shadow-sm",
-      idle: "border-rose-200 bg-rose-50/80 text-rose-950 hover:border-rose-300 hover:bg-rose-100/70",
-      chip: "bg-rose-100 text-rose-700",
+      active: "border-rose-300/45 bg-rose-500/20 text-rose-100 shadow-sm shadow-rose-900/20",
+      idle: "border-rose-400/25 bg-rose-500/10 text-rose-100 hover:border-rose-300/50 hover:bg-rose-500/15",
+      chip: "border border-rose-400/25 bg-rose-500/10 text-rose-100",
     },
     Advanced: {
-      active: "border-emerald-600 bg-emerald-600 text-white shadow-sm",
-      idle: "border-emerald-200 bg-emerald-50/80 text-emerald-950 hover:border-emerald-300 hover:bg-emerald-100/70",
-      chip: "bg-emerald-100 text-emerald-700",
+      active: "border-emerald-300/45 bg-emerald-500/20 text-emerald-100 shadow-sm shadow-emerald-900/20",
+      idle: "border-emerald-400/25 bg-emerald-500/10 text-emerald-100 hover:border-emerald-300/50 hover:bg-emerald-500/15",
+      chip: "border border-emerald-400/25 bg-emerald-500/10 text-emerald-100",
     },
   };
   const accent = accents[label] ?? accents.Overview;
@@ -527,34 +527,34 @@ export function WorkspaceJumpCard({
 }) {
   const accents: Record<string, { active: string; idle: string; eyebrow: string }> = {
     Story: {
-      active: "border-gray-900 bg-gray-900 text-white shadow-sm",
+      active: "border-[#d9a94f]/45 bg-[#d9a94f]/16 text-[#f3c766] shadow-sm shadow-[#d9a94f]/10",
       idle: "border-[color:var(--border)] bg-[color:var(--surface-elevated)]/90 text-[color:var(--text)] hover:-translate-y-0.5 hover:border-[color:var(--border)] hover:shadow-sm",
       eyebrow: "text-[color:var(--muted)]",
     },
     Prompts: {
-      active: "border-amber-500 bg-amber-500 text-white shadow-sm",
-      idle: "border-amber-200 bg-amber-50/80 text-[color:var(--text)] hover:-translate-y-0.5 hover:border-amber-300 hover:shadow-sm",
-      eyebrow: "text-amber-600",
+      active: "border-[#d9a94f]/50 bg-[#d9a94f] text-[#111207] shadow-sm shadow-[#d9a94f]/20",
+      idle: "border-[#4b3816] bg-[#1a1307] text-[#f3c766] hover:-translate-y-0.5 hover:border-[#d9a94f]/50 hover:shadow-sm",
+      eyebrow: "text-[#f3c766]",
     },
     Video: {
-      active: "border-teal-600 bg-teal-600 text-white shadow-sm",
-      idle: "border-teal-200 bg-teal-50/80 text-[color:var(--text)] hover:-translate-y-0.5 hover:border-teal-300 hover:shadow-sm",
-      eyebrow: "text-teal-600",
+      active: "border-cyan-300/45 bg-cyan-500/20 text-cyan-100 shadow-sm shadow-cyan-900/20",
+      idle: "border-cyan-400/25 bg-cyan-500/10 text-cyan-100 hover:-translate-y-0.5 hover:border-cyan-300/50 hover:shadow-sm",
+      eyebrow: "text-cyan-200",
     },
     Direct: {
-      active: "border-indigo-600 bg-indigo-600 text-white shadow-sm",
-      idle: "border-indigo-200 bg-indigo-50/80 text-[color:var(--text)] hover:-translate-y-0.5 hover:border-indigo-300 hover:shadow-sm",
-      eyebrow: "text-indigo-600",
+      active: "border-violet-300/45 bg-violet-500/20 text-violet-100 shadow-sm shadow-violet-900/20",
+      idle: "border-violet-400/25 bg-violet-500/10 text-violet-100 hover:-translate-y-0.5 hover:border-violet-300/50 hover:shadow-sm",
+      eyebrow: "text-violet-200",
     },
     Publishing: {
-      active: "border-rose-600 bg-rose-600 text-white shadow-sm",
-      idle: "border-rose-200 bg-rose-50/80 text-[color:var(--text)] hover:-translate-y-0.5 hover:border-rose-300 hover:shadow-sm",
-      eyebrow: "text-rose-600",
+      active: "border-rose-300/45 bg-rose-500/20 text-rose-100 shadow-sm shadow-rose-900/20",
+      idle: "border-rose-400/25 bg-rose-500/10 text-rose-100 hover:-translate-y-0.5 hover:border-rose-300/50 hover:shadow-sm",
+      eyebrow: "text-rose-200",
     },
     Advanced: {
-      active: "border-emerald-600 bg-emerald-600 text-white shadow-sm",
-      idle: "border-emerald-200 bg-emerald-50/80 text-[color:var(--text)] hover:-translate-y-0.5 hover:border-emerald-300 hover:shadow-sm",
-      eyebrow: "text-emerald-600",
+      active: "border-emerald-300/45 bg-emerald-500/20 text-emerald-100 shadow-sm shadow-emerald-900/20",
+      idle: "border-emerald-400/25 bg-emerald-500/10 text-emerald-100 hover:-translate-y-0.5 hover:border-emerald-300/50 hover:shadow-sm",
+      eyebrow: "text-emerald-200",
     },
   };
   const accent = accents[eyebrow] ?? accents.Story;
