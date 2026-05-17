@@ -67,7 +67,7 @@ export default function WorkspaceShell({
         className={[
           "min-w-0 max-w-full overflow-hidden space-y-5 lg:space-y-4",
           isWorkspaceScroll
-            ? "lg:max-h-[calc(100vh-var(--app-header-height)-1.5rem)] lg:overflow-y-auto lg:overscroll-contain lg:pr-2"
+            ? "lg:max-h-[calc(100vh-var(--app-header-height)-1.5rem)] lg:overflow-y-auto lg:overscroll-contain lg:pr-2 [scrollbar-color:rgba(217,169,79,0.45)_rgba(7,16,9,0.55)] [scrollbar-width:thin] [&::-webkit-scrollbar]:w-2 [&::-webkit-scrollbar-track]:rounded-full [&::-webkit-scrollbar-track]:bg-[#071009] [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-thumb]:bg-[#52633f]"
             : "lg:pr-1 xl:pr-2",
         ].join(" ")}
       >
