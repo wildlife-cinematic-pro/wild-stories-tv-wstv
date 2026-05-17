@@ -10,7 +10,7 @@ This folder contains clean no-text brand assets for safe visual use in the app. 
 | `build-hero-wildlife-creator-no-text.png` | Added | Build command-center mood art | Small Build support visual or secondary summary art |
 | `creator-profile-no-text.png` | Added | Creator identity portrait | Brand Preview / Creator Identity card |
 | `mobile-hero-no-text.png` | Added | Vertical mobile hero treatment | Mobile hero fallback where vertical crop is safer |
-| `facebook-cover-clean-no-text.png` | Added | Clean Facebook cover base | Brand Assets / Facebook cover preview base |
+| `facebook-cover-clean-no-text.png` | Added | Clean Facebook Cover / Lion Brand Banner | Brand Assets / Facebook cover preview base |
 
 ## Phase 1 Hero Prompt
 
