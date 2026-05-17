@@ -2433,66 +2433,88 @@ export default function Page() {
               </aside>
 
               <section className={["min-w-0 space-y-4", step === 1 || step === 3 ? "xl:order-1" : "xl:col-start-1 xl:row-span-3 xl:row-start-1 2xl:col-start-auto 2xl:row-auto 2xl:row-span-auto"].join(" ")}>
-                <StudioPanel className="p-4 sm:p-5" variant="default">
-                  <StudioSectionHeader
-                    eyebrow="Build command center"
-                    title="Wildlife reel setup workspace"
-                    description="Build setup, tune engine quality, generate the prompt package, and hand off the current setup to Storyboard or Four-Shot Photo without changing the existing Step logic."
-                    badges={
-                      <>
-                        <StudioStatusPill tone="gold">Step {step}</StudioStatusPill>
-                        <StudioStatusPill tone="green">Layout only</StudioStatusPill>
-                        <StudioStatusPill tone="cyan">Handoffs preserved</StudioStatusPill>
-                      </>
-                    }
-                    actions={
-                      <>
-                        <Link
-                          key={detailedStoryboardLinkMetadata.key}
-                          href={currentStoryboardHref}
-                          onClick={saveStoryboardHandoff}
-                          aria-label={detailedStoryboardLinkMetadata.ariaLabel}
-                          title={detailedStoryboardLinkMetadata.title}
-                          className="inline-flex min-h-10 items-center rounded-xl border border-cyan-400/35 bg-cyan-500/10 px-4 py-2 text-sm font-semibold text-cyan-100 transition hover:border-cyan-300/70 hover:bg-cyan-500/15"
-                        >
-                          Open Storyboard
-                        </Link>
-                        <Link
-                          href={currentFourShotPhotoHref}
-                          onClick={saveFourShotPhotoHandoff}
-                          title={currentFourShotPhotoHref}
-                          className="inline-flex min-h-10 items-center rounded-xl border border-[#d9a94f]/40 bg-[#d9a94f]/12 px-4 py-2 text-sm font-semibold text-[#f3c766] transition hover:border-[#d9a94f]/70 hover:bg-[#d9a94f]/18"
-                        >
-                          4-Shot Photo
-                        </Link>
-                      </>
-                    }
-                  />
-                  <div className="mt-4 rounded-[22px] border border-[#263820] bg-[#071009]/82 p-2">
-                    <div className="flex flex-wrap gap-2">
-                      {([
-                        { step: 1 as Step, label: "Wildlife Setup" },
-                        { step: 2 as Step, label: "Engine & Quality" },
-                        { step: 3 as Step, label: "Generate" },
-                      ]).map((s) => (
-                        <button
-                          key={s.step}
-                          type="button"
-                          aria-current={step === s.step ? "step" : undefined}
-                          onClick={() => setStep(s.step)}
-                          className={[
-                            "min-h-11 flex-1 rounded-2xl border px-3 py-2 text-left text-xs font-black transition active:scale-[0.98] sm:min-w-[190px]",
-                            step === s.step
-                              ? "border-[#d9a94f]/45 bg-[#d9a94f] text-[#111207] shadow-[0_12px_30px_rgba(217,169,79,0.16)]"
-                              : step > s.step
-                                ? "border-emerald-400/30 bg-emerald-500/10 text-emerald-100 hover:bg-emerald-500/15"
-                                : "border-[#314428] bg-[#101a10] text-[#c7d0bd] hover:border-[#d9a94f]/45 hover:text-white",
-                          ].join(" ")}
-                        >
-                          <span className="block text-[10px] uppercase tracking-[0.16em] opacity-70">Step {s.step}</span>
-                          <span className="mt-0.5 block">{s.label}</span>
-                        </button>
-                      ))}
+                <StudioPanel className="relative overflow-hidden p-4 sm:p-5" variant="default">
+                  <div className="absolute inset-0">
+                    <Image
+                      src="/brand-assets/clean/hero-wide-wild-stories-tv-no-text.png"
+                      alt="Clean Wild Stories TV wide hero background"
+                      fill
+                      sizes="100vw"
+                      className="hidden object-cover object-center opacity-80 sm:block"
+                      priority
+                    />
+                    <Image
+                      src="/brand-assets/clean/mobile-hero-no-text.png"
+                      alt="Clean Wild Stories TV mobile hero background"
+                      fill
+                      sizes="100vw"
+                      className="object-cover object-center opacity-72 sm:hidden"
+                      priority
+                    />
+                    <div className="absolute inset-0 bg-[linear-gradient(90deg,rgba(5,8,6,0.86)_0%,rgba(5,8,6,0.68)_44%,rgba(5,8,6,0.48)_100%)]" />
+                    <div className="absolute inset-0 bg-[radial-gradient(circle_at_18%_18%,rgba(217,169,79,0.18),transparent_34%),linear-gradient(0deg,rgba(5,8,6,0.76),rgba(5,8,6,0.18)_48%,rgba(5,8,6,0.72))]" />
+                  </div>
+                  <div className="relative z-10">
+                    <StudioSectionHeader
+                      eyebrow="Build command center"
+                      title="Wildlife reel setup workspace"
+                      description="Build setup, tune engine quality, generate the prompt package, and hand off the current setup to Storyboard or Four-Shot Photo without changing the existing Step logic."
+                      badges={
+                        <>
+                          <StudioStatusPill tone="gold">Step {step}</StudioStatusPill>
+                          <StudioStatusPill tone="green">Layout only</StudioStatusPill>
+                          <StudioStatusPill tone="cyan">Handoffs preserved</StudioStatusPill>
+                        </>
+                      }
+                      actions={
+                        <>
+                          <Link
+                            key={detailedStoryboardLinkMetadata.key}
+                            href={currentStoryboardHref}
+                            onClick={saveStoryboardHandoff}
+                            aria-label={detailedStoryboardLinkMetadata.ariaLabel}
+                            title={detailedStoryboardLinkMetadata.title}
+                            className="inline-flex min-h-10 items-center rounded-xl border border-cyan-400/35 bg-[#061315]/80 px-4 py-2 text-sm font-semibold text-cyan-100 shadow-[0_14px_34px_rgba(0,0,0,0.28)] transition hover:border-cyan-300/70 hover:bg-cyan-500/15"
+                          >
+                            Open Storyboard
+                          </Link>
+                          <Link
+                            href={currentFourShotPhotoHref}
+                            onClick={saveFourShotPhotoHandoff}
+                            title={currentFourShotPhotoHref}
+                            className="inline-flex min-h-10 items-center rounded-xl border border-[#d9a94f]/45 bg-[#1d1607]/82 px-4 py-2 text-sm font-semibold text-[#f3c766] shadow-[0_14px_34px_rgba(0,0,0,0.28)] transition hover:border-[#d9a94f]/70 hover:bg-[#d9a94f]/18"
+                          >
+                            4-Shot Photo
+                          </Link>
+                        </>
+                      }
+                    />
+                    <div className="mt-4 rounded-[22px] border border-[#d9a94f]/25 bg-[#050806]/72 p-2 shadow-[inset_0_1px_0_rgba(255,255,255,0.04)] backdrop-blur-sm">
+                      <div className="flex flex-wrap gap-2">
+                        {([
+                          { step: 1 as Step, label: "Wildlife Setup" },
+                          { step: 2 as Step, label: "Engine & Quality" },
+                          { step: 3 as Step, label: "Generate" },
+                        ]).map((s) => (
+                          <button
+                            key={s.step}
+                            type="button"
+                            aria-current={step === s.step ? "step" : undefined}
+                            onClick={() => setStep(s.step)}
+                            className={[
+                              "min-h-11 flex-1 rounded-2xl border px-3 py-2 text-left text-xs font-black transition active:scale-[0.98] sm:min-w-[190px]",
+                              step === s.step
+                                ? "border-[#d9a94f]/55 bg-[#d9a94f] text-[#111207] shadow-[0_12px_30px_rgba(217,169,79,0.2)]"
+                                : step > s.step
+                                  ? "border-emerald-400/35 bg-[#07140c]/85 text-emerald-100 hover:bg-emerald-500/15"
+                                  : "border-[#314428] bg-[#081009]/82 text-[#dce8d1] hover:border-[#d9a94f]/45 hover:text-white",
+                            ].join(" ")}
+                          >
+                            <span className="block text-[10px] uppercase tracking-[0.16em] opacity-70">Step {s.step}</span>
+                            <span className="mt-0.5 block">{s.label}</span>
+                          </button>
+                        ))}
+                      </div>
                     </div>
                   </div>
                 </StudioPanel>
@@ -2918,8 +2940,8 @@ export default function Page() {
                     <div className="overflow-hidden rounded-2xl border border-[#314428] bg-[#071009] shadow-[0_16px_40px_rgba(0,0,0,0.28)]">
                       <div className="relative aspect-[16/7] w-full">
                         <Image
-                          src="/brand-assets/wild-stories-tv-cover-lion.png"
-                          alt="Wild Stories TV lion Facebook cover preview"
+                          src="/brand-assets/clean/build-hero-wildlife-creator-no-text.png"
+                          alt="Clean Build command center brand preview"
                           fill
                           sizes="(min-width: 1536px) 300px, 100vw"
                           className="object-cover"
@@ -2928,37 +2950,37 @@ export default function Page() {
                         <div className="absolute inset-0 bg-gradient-to-t from-[#050806]/45 via-transparent to-transparent" />
                       </div>
                       <div className="border-t border-[#263820] px-3 py-2">
-                        <p className="text-[10px] font-black uppercase tracking-[0.16em] text-[#d9a94f]">Facebook Cover</p>
-                        <p className="mt-0.5 text-xs font-semibold text-[#f7f1df]">Lion banner preview</p>
+                        <p className="text-[10px] font-black uppercase tracking-[0.16em] text-[#d9a94f]">Build Mood</p>
+                        <p className="mt-0.5 text-xs font-semibold text-[#f7f1df]">Clean command-center art</p>
                       </div>
                     </div>
 
                     <div className="grid grid-cols-[82px_minmax(0,1fr)] gap-3 rounded-2xl border border-[#263820] bg-[#071009] p-3">
                       <div className="relative aspect-[3/4] overflow-hidden rounded-xl border border-[#314428] bg-[#101a10]">
                         <Image
-                          src="/brand-assets/creator-poster-04.png"
-                          alt="Wild Stories TV creator identity poster preview"
+                          src="/brand-assets/clean/creator-profile-no-text.png"
+                          alt="Clean Wild Stories TV creator identity preview"
                           fill
                           sizes="82px"
-                          className="object-cover object-top"
+                          className="object-cover object-[50%_18%]"
                         />
                       </div>
                       <div className="min-w-0 self-center">
                         <p className="text-[10px] font-black uppercase tracking-[0.16em] text-[#d9a94f]">Creator Identity</p>
-                        <p className="mt-1 text-sm font-semibold text-[#f7f1df]">Vertical poster preview</p>
-                        <p className="mt-1 text-xs leading-5 text-[#c9d2bd]">Text-heavy artwork remains a preview card until clean portrait assets exist.</p>
+                        <p className="mt-1 text-sm font-semibold text-[#f7f1df]">Clean creator portrait</p>
+                        <p className="mt-1 text-xs leading-5 text-[#c9d2bd]">No baked-in text; safe as a small identity preview with card framing.</p>
                       </div>
                     </div>
 
                     <div className="grid grid-cols-[minmax(0,1fr)_82px] gap-3 rounded-2xl border border-[#263820] bg-[#071009] p-3">
                       <div className="min-w-0 self-center">
-                        <p className="text-[10px] font-black uppercase tracking-[0.16em] text-[#d9a94f]">Wide Creator Strip</p>
-                        <p className="mt-1 text-xs leading-5 text-[#c9d2bd]">Used only as a small reference tile because baked-in text is present.</p>
+                        <p className="text-[10px] font-black uppercase tracking-[0.16em] text-[#d9a94f]">Clean Wide Hero</p>
+                        <p className="mt-1 text-xs leading-5 text-[#c9d2bd]">No-text wide asset, shown as a small overlay-safe reference tile.</p>
                       </div>
                       <div className="relative aspect-[4/3] overflow-hidden rounded-xl border border-[#314428] bg-[#101a10]">
                         <Image
-                          src="/brand-assets/hero-wide-creator-02.png"
-                          alt="Wide creator brand preview tile"
+                          src="/brand-assets/clean/hero-wide-wild-stories-tv-no-text.png"
+                          alt="Clean wide Wild Stories TV hero preview tile"
                           fill
                           sizes="82px"
                           className="object-cover"
