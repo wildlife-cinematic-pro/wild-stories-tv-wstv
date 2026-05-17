@@ -684,7 +684,7 @@ export default function Step1Setup({
         </div>
       </div>
 
-      <div className="grid gap-4 min-[1800px]:grid-cols-[minmax(0,1fr)_380px]">
+      <div className="grid gap-4 xl:grid-cols-[minmax(0,1fr)_340px] 2xl:grid-cols-[minmax(0,1fr)_380px]">
       <div className="space-y-4">
         <CollapsibleControlSection
           title="Saved workflow presets"
