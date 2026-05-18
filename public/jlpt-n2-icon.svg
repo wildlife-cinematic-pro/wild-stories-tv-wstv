@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-label="JLPT N2">
+  <rect width="512" height="512" rx="96" fill="#1d5c3b"/>
+  <path d="M112 122h288c18 0 32 14 32 32v252c0 18-14 32-32 32H112c-18 0-32-14-32-32V154c0-18 14-32 32-32Z" fill="#f7faf8"/>
+  <path d="M126 168h260v44H126z" fill="#d9eadf"/>
+  <path d="M126 246h118v38H126zm0 64h160v38H126zm196-64h64v102h-64z" fill="#1d5c3b"/>
+  <text x="256" y="102" fill="#f7faf8" font-family="Arial, Helvetica, sans-serif" font-size="54" font-weight="800" text-anchor="middle">N2</text>
+  <text x="256" y="407" fill="#1d5c3b" font-family="Arial, Helvetica, sans-serif" font-size="48" font-weight="800" text-anchor="middle">日本語</text>
+</svg>

@@ -19,7 +19,9 @@
     "test:golden": "vitest run tests/golden-prompt-regression.test.ts tests/selected-model-golden-regression.test.ts tests/provider-regression.test.ts tests/local-data-roundtrip.test.ts",
     "e2e": "playwright test",
     "fourshot:photo": "node storyboard_system/four_shot_photo_system/generate_fourshot.mjs",
-    "fourshot:validate": "node storyboard_system/four_shot_photo_system/validate_fourshot.mjs"
+    "fourshot:validate": "node storyboard_system/four_shot_photo_system/validate_fourshot.mjs",
+    "jlpt:n2:validate": "node scripts/jlpt-n2-validate-data.mjs",
+    "jlpt:n2:expand-stage5": "node scripts/jlpt-n2-stage5-expand.mjs"
   },
   "dependencies": {
     "@vercel/blob": "^2.3.3",
