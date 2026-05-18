@@ -563,3 +563,26 @@ html:not([data-theme="light"]) .ui-theme-scope :where(.text-indigo-600, .text-in
   box-shadow: 0 0 0 8px color-mix(in oklab, var(--warning-bg) 72%, transparent), var(--surface-shadow);
   transition: outline-color 180ms ease, box-shadow 180ms ease;
 }
+
+.jlpt-n2-app input,
+.jlpt-n2-app select,
+.jlpt-n2-app textarea {
+  color: #26352b;
+  background: #ffffff;
+  border-color: #c6d2c9;
+}
+
+.jlpt-n2-app input::placeholder,
+.jlpt-n2-app textarea::placeholder {
+  color: #6f7c72;
+}
+
+.jlpt-n2-app input[type="file"]::file-selector-button {
+  margin-right: 0.75rem;
+  border: 0;
+  border-radius: 0.375rem;
+  background: #e9f5ee;
+  color: #1d5c3b;
+  padding: 0.45rem 0.75rem;
+  font-weight: 700;
+}
