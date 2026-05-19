@@ -89,6 +89,10 @@ import {
   normalizeWorkflowPresets,
 } from "@/lib/workflow-presets";
 import { normalizePerformanceTrackerEntry } from "@/lib/performance-tracker";
+import type {
+  ContinuityAppendixEngine,
+  WstvLocalStudioDraftMetadata,
+} from "@/lib/continuity-brain";
 
 // ─────────────────────────────────────────────────────────────
 // KEYS & LIMITS
@@ -106,9 +110,12 @@ const WORKFLOW_PRESET_LIBRARY_SELECTION_KEY =
 const LAST_GENERATED_OUTPUT_KEY = "wildlife_last_generated_output_v1";
 const REAL_GENERATION_EVIDENCE_KEY = "wildlife_real_generation_evidence_v1";
 const MONETIZED_PAGE_PERFORMANCE_KEY = "wildlife_monetized_page_performance_v1";
+export const WSTV_LOCAL_STUDIO_CONTINUITY_DRAFTS_KEY =
+  "wstv.localStudio.continuityDrafts";
 
 export const MAX_HISTORY = 20;
 export const MAX_FAVORITES = 50;
+export const MAX_WSTV_LOCAL_STUDIO_CONTINUITY_DRAFTS = 30;
 
 // ─────────────────────────────────────────────────────────────
 // CORE HELPERS
@@ -987,6 +994,168 @@ export function writePromptVersions(versions: Record<string, PromptVersion[]>): 
   if (typeof window === "undefined") return;
   try {
     localStorage.setItem(VERSIONS_KEY, JSON.stringify(versions));
+  } catch {}
+}
+
+// ─────────────────────────────────────────────────────────────
+// WSTV LOCAL STUDIO CONTINUITY DRAFTS
+// Dedicated local-only key for optional continuity draft saves.
+// ─────────────────────────────────────────────────────────────
+
+const WSTV_CONTINUITY_DRAFT_ENGINES: ContinuityAppendixEngine[] = [
+  "nanoBanana2",
+  "gptImage2",
+  "kling",
+  "runway",
+  "seedance",
+  "all",
+];
+
+function normalizeContinuityDraftEngine(value: unknown): ContinuityAppendixEngine {
+  return WSTV_CONTINUITY_DRAFT_ENGINES.includes(
+    value as ContinuityAppendixEngine
+  )
+    ? (value as ContinuityAppendixEngine)
+    : "all";
+}
+
+function normalizeStringArray(value: unknown): string[] {
+  if (!Array.isArray(value)) return [];
+  return value
+    .map((item) => (typeof item === "string" ? item.trim() : ""))
+    .filter(Boolean);
+}
+
+function normalizeWstvLocalStudioContinuityDraft(
+  value: unknown
+): WstvLocalStudioDraftMetadata | null {
+  if (!isObjectRecord(value)) return null;
+
+  const id = typeof value.id === "string" ? value.id.trim() : "";
+  const createdAt =
+    typeof value.createdAt === "string" ? value.createdAt.trim() : "";
+  const animalA = typeof value.animalA === "string" ? value.animalA.trim() : "";
+  const animalB = typeof value.animalB === "string" ? value.animalB.trim() : "";
+  const environment =
+    typeof value.environment === "string" ? value.environment.trim() : "";
+  const promptPreview =
+    typeof value.promptPreview === "string" ? value.promptPreview : "";
+  const repairedPromptPreview =
+    typeof value.repairedPromptPreview === "string"
+      ? value.repairedPromptPreview
+      : "";
+
+  if (!id || !createdAt || !animalA || !animalB || !environment) return null;
+  if (!promptPreview && !repairedPromptPreview) return null;
+
+  const sourcePromptVersionId =
+    typeof value.sourcePromptVersionId === "string" &&
+    value.sourcePromptVersionId.trim()
+      ? value.sourcePromptVersionId.trim()
+      : undefined;
+
+  return {
+    id,
+    createdAt,
+    animalA,
+    animalB,
+    environment,
+    engine: normalizeContinuityDraftEngine(value.engine),
+    continuityEnabled: value.continuityEnabled === true,
+    repairReasons: normalizeStringArray(value.repairReasons),
+    promptPreview,
+    repairedPromptPreview,
+    sourcePromptVersionId,
+  };
+}
+
+function sortWstvLocalStudioContinuityDrafts(
+  drafts: WstvLocalStudioDraftMetadata[]
+): WstvLocalStudioDraftMetadata[] {
+  return [...drafts].sort(
+    (a, b) =>
+      new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+  );
+}
+
+function cleanWstvLocalStudioContinuityDrafts(
+  drafts: WstvLocalStudioDraftMetadata[]
+): WstvLocalStudioDraftMetadata[] {
+  const seen = new Set<string>();
+  const cleaned: WstvLocalStudioDraftMetadata[] = [];
+
+  for (const draft of sortWstvLocalStudioContinuityDrafts(drafts)) {
+    const normalized = normalizeWstvLocalStudioContinuityDraft(draft);
+    if (!normalized || seen.has(normalized.id)) continue;
+    seen.add(normalized.id);
+    cleaned.push(normalized);
+    if (cleaned.length >= MAX_WSTV_LOCAL_STUDIO_CONTINUITY_DRAFTS) break;
+  }
+
+  return cleaned;
+}
+
+export function readWstvLocalStudioContinuityDrafts(): WstvLocalStudioDraftMetadata[] {
+  if (typeof window === "undefined") return [];
+  try {
+    const raw = localStorage.getItem(WSTV_LOCAL_STUDIO_CONTINUITY_DRAFTS_KEY);
+    if (!raw) return [];
+
+    const parsed = safeJsonParse<unknown>(raw);
+    if (!Array.isArray(parsed)) {
+      localStorage.removeItem(WSTV_LOCAL_STUDIO_CONTINUITY_DRAFTS_KEY);
+      return [];
+    }
+
+    return cleanWstvLocalStudioContinuityDrafts(
+      parsed
+        .map((entry) => normalizeWstvLocalStudioContinuityDraft(entry))
+        .filter((entry): entry is WstvLocalStudioDraftMetadata => Boolean(entry))
+    );
+  } catch {
+    return [];
+  }
+}
+
+export function writeWstvLocalStudioContinuityDrafts(
+  drafts: WstvLocalStudioDraftMetadata[]
+): void {
+  if (typeof window === "undefined") return;
+  try {
+    localStorage.setItem(
+      WSTV_LOCAL_STUDIO_CONTINUITY_DRAFTS_KEY,
+      JSON.stringify(cleanWstvLocalStudioContinuityDrafts(drafts))
+    );
+  } catch {}
+}
+
+export function saveWstvLocalStudioContinuityDraft(
+  draft: WstvLocalStudioDraftMetadata
+): void {
+  const normalized = normalizeWstvLocalStudioContinuityDraft(draft);
+  if (!normalized) return;
+
+  const next = [
+    normalized,
+    ...readWstvLocalStudioContinuityDrafts().filter(
+      (entry) => entry.id !== normalized.id
+    ),
+  ];
+  writeWstvLocalStudioContinuityDrafts(next);
+}
+
+export function removeWstvLocalStudioContinuityDraft(id: string): void {
+  const cleanId = id.trim();
+  if (!cleanId) return;
+  writeWstvLocalStudioContinuityDrafts(
+    readWstvLocalStudioContinuityDrafts().filter((draft) => draft.id !== cleanId)
+  );
+}
+
+export function clearWstvLocalStudioContinuityDrafts(): void {
+  if (typeof window === "undefined") return;
+  try {
+    localStorage.removeItem(WSTV_LOCAL_STUDIO_CONTINUITY_DRAFTS_KEY);
   } catch {}
 }
 

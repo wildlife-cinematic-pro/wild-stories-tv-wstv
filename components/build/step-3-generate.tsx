@@ -49,7 +49,14 @@ import {
   formatContinuityAppendix,
   validateRunwayReferenceTags,
   type ContinuityBrain,
+  type WstvLocalStudioDraftMetadata,
 } from "@/lib/continuity-brain";
+import {
+  clearWstvLocalStudioContinuityDrafts,
+  readWstvLocalStudioContinuityDrafts,
+  removeWstvLocalStudioContinuityDraft,
+  saveWstvLocalStudioContinuityDraft,
+} from "@/lib/storage";
 import {
   COPY_POLISH_PROVIDER_CONFIGS,
   formatCopyPolishFallbackPlan,
@@ -204,6 +211,8 @@ function ContinuityBrainPanel({
 }) {
   const [continuityCopyFeedback, setContinuityCopyFeedback] = useState<string | null>(null);
   const [selectedRepairFailures, setSelectedRepairFailures] = useState<string[]>([]);
+  const [savedDrafts, setSavedDrafts] = useState<WstvLocalStudioDraftMetadata[]>([]);
+  const [draftFeedback, setDraftFeedback] = useState<string | null>(null);
   const previewShots = brain.shots.map((shot) => ({
     label: `Shot ${shot.shotNumber}`,
     role: shot.role,
@@ -235,6 +244,12 @@ function ContinuityBrainPanel({
       : "",
   });
 
+  const canSaveDraft = enabled || selectedRepairFailures.length > 0;
+
+  useEffect(() => {
+    setSavedDrafts(readWstvLocalStudioContinuityDrafts());
+  }, []);
+
   const toggleRepairFailure = (failure: string) => {
     setSelectedRepairFailures((current) =>
       current.includes(failure)
@@ -262,6 +277,49 @@ function ContinuityBrainPanel({
     } catch {
       setContinuityCopyFeedback(null);
     }
+  };
+
+  const showDraftFeedback = (message: string) => {
+    setDraftFeedback(message);
+    window.setTimeout(
+      () => setDraftFeedback((current) => (current === message ? null : current)),
+      1800
+    );
+  };
+
+  const refreshSavedDrafts = () => {
+    setSavedDrafts(readWstvLocalStudioContinuityDrafts());
+  };
+
+  const saveContinuityDraft = () => {
+    if (!canSaveDraft) return;
+
+    saveWstvLocalStudioContinuityDraft(
+      buildWstvLocalStudioDraftMetadata({
+        brain,
+        engine: "all",
+        continuityEnabled: enabled,
+        repairReasons: selectedRepairFailures,
+        promptPreview: appendedPreview,
+        repairedPromptPreview: selectedRepairFailures.length
+          ? repairPrompt.correctedPrompt
+          : "",
+      })
+    );
+    refreshSavedDrafts();
+    showDraftFeedback("Draft saved");
+  };
+
+  const removeSavedDraft = (id: string) => {
+    removeWstvLocalStudioContinuityDraft(id);
+    refreshSavedDrafts();
+    showDraftFeedback("Draft removed");
+  };
+
+  const clearSavedDrafts = () => {
+    clearWstvLocalStudioContinuityDrafts();
+    refreshSavedDrafts();
+    showDraftFeedback("Drafts cleared");
   };
 
   return (
@@ -465,59 +523,138 @@ function ContinuityBrainPanel({
           <div className="flex flex-wrap items-start justify-between gap-3">
             <div>
               <div className="text-[10px] font-extrabold uppercase tracking-[0.14em] text-emerald-200">
-                Local studio gallery shell
+                Local studio gallery
               </div>
               <p className="mt-1 text-[11px] leading-relaxed text-[color:var(--muted)]">
-                Preview-only metadata for future local drafts. No localStorage write happens in this phase.
+                Local-only continuity drafts. Saves happen only when you click; generated outputs, prompt versions, and exports stay unchanged.
               </p>
             </div>
-            <button
-              type="button"
-              disabled
-              title="Preview only — storage wiring is intentionally not enabled yet."
-              className="rounded-xl border border-white/[0.08] bg-white/[0.04] px-3 py-2 text-[10px] font-extrabold uppercase tracking-[0.08em] text-[color:var(--disabled-text)]"
-            >
-              Save Continuity Draft
-            </button>
-          </div>
-          <div className="mt-3 grid gap-2 sm:grid-cols-2 xl:grid-cols-4">
-            {[
-              {
-                title: "Saved Continuity Drafts",
-                value: studioDraftMetadata.continuityEnabled ? "Ready to save later" : "Continuity off",
-                detail: `Draft ID preview: ${studioDraftMetadata.id}`,
-              },
-              {
-                title: "Recent Repair Previews",
-                value: `${studioDraftMetadata.repairReasons.length} selected`,
-                detail: studioDraftMetadata.repairReasons.join(", ") || "No repair reasons selected",
-              },
-              {
-                title: "Favorite Prompt Versions",
-                value: "Existing versions preserved",
-                detail: "Future link only; no prompt-version writes here.",
-              },
-              {
-                title: "Export-ready Prompt Packs",
-                value: "Copy/export unchanged",
-                detail: "OutputCards exports remain the source of truth.",
-              },
-            ].map((card) => (
-              <div
-                key={card.title}
-                className="rounded-xl border border-white/[0.08] bg-black/20 p-3"
+            <div className="flex flex-wrap gap-2">
+              {draftFeedback ? (
+                <span className="rounded-xl border border-emerald-400/30 bg-[color:var(--success-bg)] px-3 py-2 text-[10px] font-bold uppercase tracking-[0.08em] text-[color:var(--success-text)]">
+                  {draftFeedback}
+                </span>
+              ) : null}
+              <button
+                type="button"
+                onClick={saveContinuityDraft}
+                disabled={!canSaveDraft}
+                title={
+                  canSaveDraft
+                    ? "Save this local continuity draft."
+                    : "Turn on continuity or select a repair reason before saving."
+                }
+                className="rounded-xl border border-emerald-400/35 bg-emerald-500/10 px-3 py-2 text-[10px] font-extrabold uppercase tracking-[0.08em] text-emerald-100 transition hover:bg-emerald-500/15 active:scale-[0.98] disabled:cursor-not-allowed disabled:border-white/[0.08] disabled:bg-white/[0.04] disabled:text-[color:var(--disabled-text)] disabled:active:scale-100"
               >
+                Save Continuity Draft
+              </button>
+              <button
+                type="button"
+                onClick={clearSavedDrafts}
+                disabled={!savedDrafts.length}
+                className="rounded-xl border border-white/[0.08] bg-white/[0.04] px-3 py-2 text-[10px] font-extrabold uppercase tracking-[0.08em] text-[color:var(--muted)] transition hover:bg-white/[0.08] active:scale-[0.98] disabled:cursor-not-allowed disabled:text-[color:var(--disabled-text)] disabled:active:scale-100"
+              >
+                Clear Drafts
+              </button>
+            </div>
+          </div>
+          <div className="mt-3 grid gap-2 lg:grid-cols-[minmax(0,1.15fr)_minmax(0,0.85fr)]">
+            <div className="rounded-xl border border-white/[0.08] bg-black/20 p-3">
+              <div className="flex flex-wrap items-center justify-between gap-2">
                 <div className="text-[10px] font-extrabold uppercase tracking-[0.1em] text-[color:var(--muted)]">
-                  {card.title}
+                  Saved Continuity Drafts
                 </div>
-                <div className="mt-1 text-xs font-black text-[color:var(--text)]">
-                  {card.value}
-                </div>
-                <p className="mt-1 text-[10px] leading-relaxed text-[color:var(--muted)]">
-                  {card.detail}
-                </p>
+                <span className="rounded-full border border-white/[0.08] bg-white/[0.04] px-2 py-0.5 text-[9px] font-bold uppercase tracking-[0.08em] text-[color:var(--muted)]">
+                  {savedDrafts.length} local
+                </span>
               </div>
-            ))}
+              {savedDrafts.length ? (
+                <div className="mt-3 grid gap-2">
+                  {savedDrafts.slice(0, 4).map((draft) => (
+                    <div
+                      key={draft.id}
+                      className="rounded-xl border border-white/[0.08] bg-black/25 p-3"
+                    >
+                      <div className="flex flex-wrap items-start justify-between gap-2">
+                        <div className="min-w-0">
+                          <div className="text-xs font-black text-[color:var(--text)]">
+                            {draft.animalA} + {draft.animalB}
+                          </div>
+                          <p className="mt-1 text-[10px] leading-relaxed text-[color:var(--muted)]">
+                            {draft.environment} · {draft.engine} · {draft.repairReasons.length} repairs
+                          </p>
+                        </div>
+                        <span className="rounded-full border border-emerald-400/25 bg-emerald-400/10 px-2 py-0.5 text-[9px] font-bold uppercase tracking-[0.08em] text-emerald-100">
+                          {draft.continuityEnabled ? "Continuity" : "Repair"}
+                        </span>
+                      </div>
+                      <div className="mt-2 flex flex-wrap gap-2">
+                        <button
+                          type="button"
+                          onClick={() => copyContinuityPreview("Saved prompt copied", draft.promptPreview)}
+                          className="rounded-lg border border-cyan-400/25 bg-cyan-400/10 px-2 py-1 text-[9px] font-extrabold uppercase tracking-[0.08em] text-cyan-100 transition hover:bg-cyan-400/15 active:scale-[0.98]"
+                        >
+                          Copy Draft Prompt
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => copyContinuityPreview("Saved repair copied", draft.repairedPromptPreview)}
+                          disabled={!draft.repairedPromptPreview}
+                          className="rounded-lg border border-amber-300/25 bg-amber-300/10 px-2 py-1 text-[9px] font-extrabold uppercase tracking-[0.08em] text-amber-100 transition hover:bg-amber-300/15 active:scale-[0.98] disabled:cursor-not-allowed disabled:border-white/[0.08] disabled:bg-white/[0.04] disabled:text-[color:var(--disabled-text)] disabled:active:scale-100"
+                        >
+                          Copy Repaired Prompt
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => removeSavedDraft(draft.id)}
+                          className="rounded-lg border border-white/[0.08] bg-white/[0.04] px-2 py-1 text-[9px] font-extrabold uppercase tracking-[0.08em] text-[color:var(--muted)] transition hover:bg-white/[0.08] active:scale-[0.98]"
+                        >
+                          Remove
+                        </button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <div className="mt-3 rounded-xl border border-white/[0.08] bg-black/20 px-3 py-2 text-[11px] font-semibold text-[color:var(--muted)]">
+                  No saved continuity drafts yet. Turn on continuity or select a repair reason, then save manually.
+                </div>
+              )}
+            </div>
+            <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-1">
+              {[
+                {
+                  title: "Recent Repair Previews",
+                  value: `${studioDraftMetadata.repairReasons.length} selected`,
+                  detail: studioDraftMetadata.repairReasons.join(", ") || "No repair reasons selected",
+                },
+                {
+                  title: "Favorite Prompt Versions",
+                  value: "Existing versions preserved",
+                  detail: "Future link only; no prompt-version writes here.",
+                },
+                {
+                  title: "Export-ready Prompt Packs",
+                  value: "Copy/export unchanged",
+                  detail: "OutputCards exports remain the source of truth.",
+                },
+              ].map((card) => (
+                <div
+                  key={card.title}
+                  className="rounded-xl border border-white/[0.08] bg-black/20 p-3"
+                >
+                  <div className="text-[10px] font-extrabold uppercase tracking-[0.1em] text-[color:var(--muted)]">
+                    {card.title}
+                  </div>
+                  <div className="mt-1 text-xs font-black text-[color:var(--text)]">
+                    {card.value}
+                  </div>
+                  <p className="mt-1 text-[10px] leading-relaxed text-[color:var(--muted)]">
+                    {card.detail}
+                  </p>
+                </div>
+              ))}
+            </div>
           </div>
         </div>
       </div>

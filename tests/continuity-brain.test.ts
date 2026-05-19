@@ -1,4 +1,4 @@
-import { describe, expect, it } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 
 import {
   CONTINUITY_APPENDIX_HEADER,
@@ -12,7 +12,38 @@ import {
   formatContinuityAppendix,
   validateRunwayReferenceTags,
 } from "@/lib/continuity-brain";
+import {
+  WSTV_LOCAL_STUDIO_CONTINUITY_DRAFTS_KEY,
+  clearWstvLocalStudioContinuityDrafts,
+  readWstvLocalStudioContinuityDrafts,
+  removeWstvLocalStudioContinuityDraft,
+  saveWstvLocalStudioContinuityDraft,
+} from "@/lib/storage";
 import { HabitatRegion, StoryMode, ViolenceLevel } from "@/types";
+
+function installLocalStorageMock() {
+  const store = new Map<string, string>();
+
+  vi.stubGlobal("window", {});
+  vi.stubGlobal("localStorage", {
+    getItem: (key: string) => store.get(key) ?? null,
+    setItem: (key: string, value: string) => {
+      store.set(key, value);
+    },
+    removeItem: (key: string) => {
+      store.delete(key);
+    },
+    clear: () => {
+      store.clear();
+    },
+  });
+
+  return store;
+}
+
+afterEach(() => {
+  vi.unstubAllGlobals();
+});
 
 describe("continuity brain", () => {
   const brain = buildContinuityBrain({
@@ -231,6 +262,91 @@ describe("continuity brain", () => {
     expect(metadata.repairedPromptPreview).toContain("WSTV TARGETED REPAIR PASS");
     expect(metadata.promptPreview).not.toContain("WSTV TARGETED REPAIR PASS");
   });
+  it("saves continuity drafts only to the WSTV local studio key", () => {
+    const store = installLocalStorageMock();
+    store.set("wildlife_versions_v1", "{\"keep\":true}");
+    store.set("wildlife_last_generated_output_v1", "{\"keep\":true}");
+
+    const draft = buildWstvLocalStudioDraftMetadata({
+      id: "draft-save",
+      createdAt: "2026-05-19T02:00:00.000Z",
+      brain,
+      engine: "all",
+      continuityEnabled: true,
+      repairReasons: ["identity drift"],
+      promptPreview: "Base prompt stays separate.",
+      repairedPromptPreview: "Repaired prompt stays separate.",
+    });
+
+    saveWstvLocalStudioContinuityDraft(draft);
+
+    expect(store.has(WSTV_LOCAL_STUDIO_CONTINUITY_DRAFTS_KEY)).toBe(true);
+    expect(store.get("wildlife_versions_v1")).toBe("{\"keep\":true}");
+    expect(store.get("wildlife_last_generated_output_v1")).toBe("{\"keep\":true}");
+    expect(readWstvLocalStudioContinuityDrafts()).toEqual([draft]);
+  });
+
+  it("removes and clears saved continuity drafts without touching existing keys", () => {
+    const store = installLocalStorageMock();
+    store.set("wildlife_favorites_v1", "[]");
+    const first = buildWstvLocalStudioDraftMetadata({
+      id: "draft-first",
+      createdAt: "2026-05-19T02:05:00.000Z",
+      brain,
+      continuityEnabled: true,
+      repairReasons: [],
+      promptPreview: "First prompt",
+    });
+    const second = buildWstvLocalStudioDraftMetadata({
+      id: "draft-second",
+      createdAt: "2026-05-19T02:06:00.000Z",
+      brain,
+      continuityEnabled: true,
+      repairReasons: ["weak motion"],
+      promptPreview: "Second prompt",
+      repairedPromptPreview: "Second repaired prompt",
+    });
+
+    saveWstvLocalStudioContinuityDraft(first);
+    saveWstvLocalStudioContinuityDraft(second);
+    removeWstvLocalStudioContinuityDraft("draft-first");
+
+    expect(readWstvLocalStudioContinuityDrafts().map((draft) => draft.id)).toEqual([
+      "draft-second",
+    ]);
+
+    clearWstvLocalStudioContinuityDrafts();
+
+    expect(readWstvLocalStudioContinuityDrafts()).toEqual([]);
+    expect(store.get("wildlife_favorites_v1")).toBe("[]");
+  });
+
+  it("keeps saved repaired prompts separate from the main prompt output", () => {
+    installLocalStorageMock();
+    const basePrompt = "Main prompt output stays exact.";
+    const repair = buildContinuityRepairPrompt({
+      basePrompt,
+      brain,
+      selectedFailures: ["weak motion"],
+    });
+    const draft = buildWstvLocalStudioDraftMetadata({
+      id: "draft-separate",
+      createdAt: "2026-05-19T02:10:00.000Z",
+      brain,
+      continuityEnabled: true,
+      repairReasons: ["weak motion"],
+      promptPreview: basePrompt,
+      repairedPromptPreview: repair.correctedPrompt,
+    });
+
+    saveWstvLocalStudioContinuityDraft(draft);
+    const [saved] = readWstvLocalStudioContinuityDrafts();
+
+    expect(saved?.promptPreview).toBe(basePrompt);
+    expect(saved?.repairedPromptPreview).toContain("WSTV TARGETED REPAIR PASS");
+    expect(saved?.promptPreview).not.toContain("WSTV TARGETED REPAIR PASS");
+  });
+
   it("creates targeted repair instructions without rewriting unrelated sections", () => {
     const repair = buildContinuityRepairInstruction(
       brain,
