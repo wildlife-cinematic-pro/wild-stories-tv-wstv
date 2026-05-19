@@ -41,6 +41,13 @@ import {
 import { buildRunway2026AssistantPack } from "@/lib/runway-2026-production-assistant";
 import { buildWorkflowQaSummary } from "@/lib/workflow-qa";
 import {
+  REQUIRED_RUNWAY_REFERENCES,
+  appendContinuityBlockToPrompt,
+  buildContinuityBrain,
+  validateRunwayReferenceTags,
+  type ContinuityBrain,
+} from "@/lib/continuity-brain";
+import {
   COPY_POLISH_PROVIDER_CONFIGS,
   formatCopyPolishFallbackPlan,
   type CopyPolishProviderAvailability,
@@ -178,6 +185,161 @@ function FixIssuesPanel({
         </div>
       ) : null}
     </div>
+  );
+}
+
+function ContinuityBrainPanel({
+  brain,
+  enabled,
+  onEnabledChange,
+}: {
+  brain: ContinuityBrain;
+  enabled: boolean;
+  onEnabledChange: (enabled: boolean) => void;
+}) {
+  const previewShots = brain.shots.map((shot) => ({
+    label: `Shot ${shot.shotNumber}`,
+    role: shot.role,
+    goal: shot.continuityGoal,
+  }));
+  const appendedPreview = appendContinuityBlockToPrompt(
+    "Base engine prompt preview remains unchanged unless this toggle is enabled.",
+    brain,
+    enabled
+  );
+  const runwayValidation = validateRunwayReferenceTags(REQUIRED_RUNWAY_REFERENCES.join(" "));
+
+  return (
+    <section className="mt-4 rounded-2xl border border-emerald-400/20 bg-[linear-gradient(135deg,rgba(16,42,31,0.72),rgba(8,15,13,0.92))] p-4 shadow-[inset_0_1px_0_rgba(255,255,255,0.04)]">
+      <div className="flex flex-wrap items-start justify-between gap-3">
+        <div className="min-w-0">
+          <div className="text-[10px] font-extrabold uppercase tracking-[0.18em] text-emerald-300">
+            Continuity Brain
+          </div>
+          <h3 className="mt-1 text-sm font-black text-[color:var(--text)]">
+            4-shot identity, habitat, and motion memory
+          </h3>
+          <p className="mt-1 max-w-3xl text-xs leading-relaxed text-[color:var(--muted)]">
+            Optional Phase 2 preview layer. Existing prompt outputs stay unchanged while this toggle is off.
+          </p>
+        </div>
+        <label className="inline-flex cursor-pointer items-center gap-2 rounded-full border border-emerald-400/30 bg-emerald-500/10 px-3 py-2 text-[11px] font-bold text-emerald-100 transition hover:bg-emerald-500/15">
+          <input
+            type="checkbox"
+            checked={enabled}
+            onChange={(event) => onEnabledChange(event.target.checked)}
+            className="h-4 w-4 accent-emerald-400"
+          />
+          Use Continuity Brain
+        </label>
+      </div>
+
+      <div className="mt-4 grid gap-3 lg:grid-cols-[minmax(0,0.95fr)_minmax(0,1.05fr)]">
+        <div className="grid gap-3 sm:grid-cols-2">
+          {[brain.animalA, brain.animalB].map((animal) => (
+            <div
+              key={animal.id}
+              className="rounded-2xl border border-white/[0.08] bg-black/20 p-3"
+            >
+              <div className="text-[10px] font-bold uppercase tracking-[0.14em] text-cyan-300">
+                @{animal.id}
+              </div>
+              <div className="mt-1 text-sm font-extrabold text-[color:var(--text)]">
+                {animal.label}
+              </div>
+              <p className="mt-1 text-[11px] leading-relaxed text-[color:var(--muted)]">
+                {animal.role} · {animal.placement} placement · {animal.visibilityRule}
+              </p>
+            </div>
+          ))}
+          <div className="rounded-2xl border border-white/[0.08] bg-black/20 p-3 sm:col-span-2">
+            <div className="text-[10px] font-bold uppercase tracking-[0.14em] text-amber-300">
+              Environment Lock
+            </div>
+            <div className="mt-1 text-sm font-extrabold text-[color:var(--text)]">
+              {brain.environment.habitat}
+            </div>
+            <p className="mt-1 text-[11px] leading-relaxed text-[color:var(--muted)]">
+              {brain.environment.season} · {brain.environment.timeOfDay} · {brain.environment.openActionLane}
+            </p>
+          </div>
+        </div>
+
+        <div className="grid gap-2">
+          {previewShots.map((shot) => (
+            <div
+              key={shot.label}
+              className="rounded-xl border border-white/[0.08] bg-black/20 px-3 py-2"
+            >
+              <div className="flex flex-wrap items-center gap-2">
+                <span className="rounded-full border border-amber-300/30 bg-amber-300/10 px-2 py-0.5 text-[9px] font-black uppercase tracking-[0.08em] text-amber-200">
+                  {shot.label}
+                </span>
+                <span className="text-[10px] font-bold uppercase tracking-[0.12em] text-cyan-300">
+                  {shot.role}
+                </span>
+              </div>
+              <p className="mt-1 text-[11px] leading-relaxed text-[color:var(--muted)]">
+                {shot.goal}
+              </p>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      <div className="mt-3 rounded-2xl border border-cyan-400/20 bg-cyan-400/5 p-3">
+        <div className="flex flex-wrap items-center justify-between gap-2">
+          <div>
+            <div className="text-[10px] font-extrabold uppercase tracking-[0.14em] text-cyan-300">
+              Runway 3-reference validation
+            </div>
+            <p className="mt-1 text-[11px] leading-relaxed text-[color:var(--muted)]">
+              {runwayValidation.message}
+            </p>
+          </div>
+          <span className="rounded-full border border-emerald-400/30 bg-[color:var(--success-bg)] px-2.5 py-1 text-[10px] font-bold text-[color:var(--success-text)]">
+            {REQUIRED_RUNWAY_REFERENCES.join(" + ")}
+          </span>
+        </div>
+      </div>
+
+      <div className="mt-3 rounded-2xl border border-amber-300/20 bg-amber-300/5 p-3">
+        <div className="text-[10px] font-extrabold uppercase tracking-[0.14em] text-amber-200">
+          Prompt append preview
+        </div>
+        <p className="mt-1 text-[11px] leading-relaxed text-[color:var(--muted)]">
+          Toggle on to preview the continuity block appended after a base prompt. This does not rewrite generated outputs yet.
+        </p>
+        {enabled ? (
+          <pre className="mt-3 max-h-72 overflow-auto whitespace-pre-wrap rounded-xl border border-white/[0.08] bg-black/30 p-3 text-[11px] leading-relaxed text-[color:var(--text)] [overflow-wrap:anywhere]">
+            {appendedPreview}
+          </pre>
+        ) : (
+          <div className="mt-3 rounded-xl border border-white/[0.08] bg-black/20 px-3 py-2 text-[11px] font-semibold text-[color:var(--muted)]">
+            Continuity append is off. Existing prompt behavior remains unchanged.
+          </div>
+        )}
+      </div>
+
+      <div className="mt-3 rounded-2xl border border-white/[0.08] bg-black/20 p-3">
+        <div className="text-[10px] font-extrabold uppercase tracking-[0.14em] text-[color:var(--muted)]">
+          Repair panel shell · manual selection only
+        </div>
+        <div className="mt-3 flex flex-wrap gap-2">
+          {brain.repairFailureOptions.map((failure) => (
+            <span
+              key={failure}
+              className="rounded-full border border-white/[0.1] bg-white/[0.04] px-2.5 py-1 text-[10px] font-semibold text-[color:var(--text)]"
+            >
+              {failure}
+            </span>
+          ))}
+        </div>
+        <p className="mt-2 text-[11px] leading-relaxed text-[color:var(--muted)]">
+          Automatic prompt rewriting is intentionally not wired in this phase. These are the selectable failure labels for the future repair loop.
+        </p>
+      </div>
+    </section>
   );
 }
 
@@ -468,6 +630,7 @@ export default function Step3Generate({
   onBack,
 }: Step3GenerateProps) {
   const [isQaDetailsOpen, setIsQaDetailsOpen] = useState(false);
+  const [useContinuityBrain, setUseContinuityBrain] = useState(false);
   const [isRecentRunsOpen, setIsRecentRunsOpen] = useState(false);
   const [copyFeedback, setCopyFeedback] = useState<string | null>(null);
   const [cleanupFeedback, setCleanupFeedback] = useState<string | null>(null);
@@ -599,6 +762,37 @@ export default function Step3Generate({
       prey,
       sceneDescription,
       weather,
+    ]
+  );
+  const continuityBrain = useMemo(
+    () =>
+      buildContinuityBrain({
+        storyMode,
+        animalA: subjectA ?? predator,
+        animalB: subjectB ?? prey,
+        habitatRegion,
+        season,
+        timeOfDay,
+        contentLane,
+        actionStyle,
+        cameraAnglePreset,
+        finalEnvironment,
+        violenceLevel,
+      }),
+    [
+      actionStyle,
+      cameraAnglePreset,
+      contentLane,
+      finalEnvironment,
+      habitatRegion,
+      predator,
+      prey,
+      season,
+      storyMode,
+      subjectA,
+      subjectB,
+      timeOfDay,
+      violenceLevel,
     ]
   );
   const workflowQaColor =
@@ -1103,6 +1297,12 @@ export default function Step3Generate({
             actions={setupFixActions}
             feedback={setupFixFeedback}
             onApply={onApplySetupFixAction}
+          />
+
+          <ContinuityBrainPanel
+            brain={continuityBrain}
+            enabled={useContinuityBrain}
+            onEnabledChange={setUseContinuityBrain}
           />
         </section>
 
