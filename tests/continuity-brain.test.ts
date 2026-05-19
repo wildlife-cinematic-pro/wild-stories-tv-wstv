@@ -1,10 +1,13 @@
 import { describe, expect, it } from "vitest";
 
 import {
+  CONTINUITY_APPENDIX_HEADER,
   CONTINUITY_PROMPT_BLOCK_HEADER,
   appendContinuityBlockToPrompt,
   buildContinuityBrain,
+  buildContinuityPromptHistoryMetadata,
   buildContinuityRepairInstruction,
+  formatContinuityAppendix,
   validateRunwayReferenceTags,
 } from "@/lib/continuity-brain";
 import { HabitatRegion, StoryMode, ViolenceLevel } from "@/types";
@@ -48,11 +51,25 @@ describe("continuity brain", () => {
     expect(appendContinuityBlockToPrompt(basePrompt, brain, false)).toBe(basePrompt);
   });
 
-  it("adds a continuity block when the continuity toggle is on", () => {
+  it("formats the continuity appendix with all required lock sections", () => {
+    const appendix = formatContinuityAppendix(brain, { engine: "runway" });
+
+    expect(appendix).toContain(CONTINUITY_APPENDIX_HEADER);
+    expect(appendix).toContain("Animal identity lock:");
+    expect(appendix).toContain("Environment lock:");
+    expect(appendix).toContain("Camera/lens lock:");
+    expect(appendix).toContain("4-shot role lock:");
+    expect(appendix).toContain("Engine-specific lock:");
+    expect(appendix).toContain("Negative constraints:");
+    expect(appendix).toContain("exactly three references: @animalA, @animalB, @environment");
+  });
+
+  it("adds a continuity appendix when the continuity toggle is on", () => {
     const output = appendContinuityBlockToPrompt("Base prompt.", brain, true);
 
     expect(output).toContain("Base prompt.");
     expect(output).toContain(CONTINUITY_PROMPT_BLOCK_HEADER);
+    expect(output).toContain(CONTINUITY_APPENDIX_HEADER);
     expect(output).toContain("Bison mother");
     expect(output).toContain("Wolf pack");
   });
@@ -72,6 +89,26 @@ describe("continuity brain", () => {
       valid: false,
       missing: ["@animalB"],
       duplicate: ["@animalA"],
+    });
+  });
+
+  it("prepares prompt history metadata without writing storage", () => {
+    const metadata = buildContinuityPromptHistoryMetadata(brain, {
+      projectId: "project-1",
+      createdAt: "2026-05-19T00:00:00.000Z",
+      engine: "runway",
+      promptVersionId: "v1",
+    });
+
+    expect(metadata).toEqual({
+      projectId: "project-1",
+      createdAt: "2026-05-19T00:00:00.000Z",
+      animalA: "Bison mother",
+      animalB: "Wolf pack",
+      environment: "Yellowstone meadow with sagebrush and a pine treeline",
+      engine: "runway",
+      continuityEnabled: true,
+      promptVersionId: "v1",
     });
   });
 

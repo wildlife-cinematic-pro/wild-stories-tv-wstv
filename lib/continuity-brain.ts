@@ -58,6 +58,32 @@ export type ContinuityBrain = {
   repairFailureOptions: string[];
 };
 
+export type ContinuityAppendixEngine =
+  | "nanoBanana2"
+  | "gptImage2"
+  | "kling"
+  | "runway"
+  | "seedance"
+  | "all";
+
+export type FormatContinuityAppendixOptions = {
+  engine?: ContinuityAppendixEngine;
+  projectId?: string;
+  createdAt?: string;
+  promptVersionId?: string;
+};
+
+export type ContinuityPromptHistoryMetadata = {
+  projectId: string;
+  createdAt: string;
+  animalA: string;
+  animalB: string;
+  environment: string;
+  engine: ContinuityAppendixEngine;
+  continuityEnabled: boolean;
+  promptVersionId?: string;
+};
+
 export type RunwayReferenceValidation = {
   valid: boolean;
   references: string[];
@@ -82,6 +108,7 @@ export type BuildContinuityBrainInput = {
 };
 
 export const CONTINUITY_PROMPT_BLOCK_HEADER = "WSTV CONTINUITY BRAIN BLOCK";
+export const CONTINUITY_APPENDIX_HEADER = "WSTV CONTINUITY LOCK";
 export const REQUIRED_RUNWAY_REFERENCES = ["@animalA", "@animalB", "@environment"] as const;
 export const CONTINUITY_REPAIR_FAILURE_OPTIONS = [
   "animal not chasing",
@@ -283,19 +310,92 @@ export function buildContinuityBrain(input: BuildContinuityBrainInput): Continui
   };
 }
 
+function formatList(items: string[]): string {
+  return items.map((item) => `  - ${item}`).join("\n");
+}
+
+function formatEngineRules(
+  brain: ContinuityBrain,
+  engine: ContinuityAppendixEngine
+): string {
+  if (engine === "all") {
+    return [
+      `  - Nano Banana 2: ${brain.engineRules.nanoBanana2.join("; ")}`,
+      `  - GPT Image 2: ${brain.engineRules.gptImage2.join("; ")}`,
+      `  - Kling: ${brain.engineRules.kling.join("; ")}`,
+      `  - Runway: ${brain.engineRules.runway.join("; ")}`,
+      `  - Seedance: ${brain.engineRules.seedance.join("; ")}`,
+    ].join("\n");
+  }
+
+  return formatList(brain.engineRules[engine]);
+}
+
+export function buildContinuityPromptHistoryMetadata(
+  brain: ContinuityBrain,
+  options: FormatContinuityAppendixOptions = {}
+): ContinuityPromptHistoryMetadata {
+  return {
+    projectId: options.projectId ?? "local-wstv-project",
+    createdAt: options.createdAt ?? new Date().toISOString(),
+    animalA: brain.animalA.label,
+    animalB: brain.animalB.label,
+    environment: brain.environment.habitat,
+    engine: options.engine ?? "all",
+    continuityEnabled: true,
+    promptVersionId: options.promptVersionId,
+  };
+}
+
+export function formatContinuityAppendix(
+  brain: ContinuityBrain,
+  options: FormatContinuityAppendixOptions = {}
+): string {
+  const engine = options.engine ?? "all";
+
+  return [
+    CONTINUITY_APPENDIX_HEADER,
+    `Summary: ${brain.summary}`,
+    "",
+    "Animal identity lock:",
+    formatList([
+      `@animalA ${brain.animalA.label}: ${brain.animalA.role}; ${brain.animalA.placement} placement; ${brain.animalA.visibilityRule}`,
+      ...brain.animalA.identityLock,
+      `@animalB ${brain.animalB.label}: ${brain.animalB.role}; ${brain.animalB.placement} placement; ${brain.animalB.visibilityRule}`,
+      ...brain.animalB.identityLock,
+    ]),
+    "",
+    "Environment lock:",
+    formatList([
+      `${brain.environment.habitat}; ${brain.environment.season}; ${brain.environment.timeOfDay}`,
+      ...brain.environment.terrainLock,
+      brain.environment.lightingDirection,
+      brain.environment.openActionLane,
+    ]),
+    "",
+    "Camera/lens lock:",
+    formatList(brain.cameraLensLock),
+    "",
+    "4-shot role lock:",
+    formatList(
+      brain.shots.map(
+        (shot) =>
+          `Shot ${shot.shotNumber} ${shot.role}: ${shot.continuityGoal} ${shot.blocking} ${shot.cameraRule} ${shot.motionRule}`
+      )
+    ),
+    "",
+    "Engine-specific lock:",
+    formatEngineRules(brain, engine),
+    "",
+    "Negative constraints:",
+    formatList(brain.globalNegativeRules),
+  ].join("\n");
+}
+
 export function buildContinuityPromptBlock(brain: ContinuityBrain): string {
   return [
     `[${CONTINUITY_PROMPT_BLOCK_HEADER}]`,
-    `Continuity summary: ${brain.summary}`,
-    `@animalA identity: ${brain.animalA.label}; ${brain.animalA.identityLock.join("; ")}; ${brain.animalA.visibilityRule}.`,
-    `@animalB identity: ${brain.animalB.label}; ${brain.animalB.identityLock.join("; ")}; ${brain.animalB.visibilityRule}.`,
-    `@environment lock: ${brain.environment.habitat}; ${brain.environment.season}; ${brain.environment.timeOfDay}; ${brain.environment.terrainLock.join("; ")}; ${brain.environment.lightingDirection}; ${brain.environment.openActionLane}.`,
-    `Camera/lens lock: ${brain.cameraLensLock.join("; ")}.`,
-    `Shot memory: ${brain.shots
-      .map((shot) => `Shot ${shot.shotNumber} ${shot.role}: ${shot.continuityGoal} ${shot.blocking} ${shot.cameraRule} ${shot.motionRule}`)
-      .join(" | ")}`,
-    `Runway reference rule: use exactly three references only: ${REQUIRED_RUNWAY_REFERENCES.join(", ")}. Never add a fourth reference.`,
-    `Global negative rules: ${brain.globalNegativeRules.join("; ")}.`,
+    formatContinuityAppendix(brain, { engine: "all" }),
     `[/${CONTINUITY_PROMPT_BLOCK_HEADER}]`,
   ].join("\n");
 }
@@ -306,7 +406,12 @@ export function appendContinuityBlockToPrompt(
   enabled: boolean
 ): string {
   if (!enabled) return prompt;
-  if (prompt.includes(CONTINUITY_PROMPT_BLOCK_HEADER)) return prompt;
+  if (
+    prompt.includes(CONTINUITY_PROMPT_BLOCK_HEADER) ||
+    prompt.includes(CONTINUITY_APPENDIX_HEADER)
+  ) {
+    return prompt;
+  }
 
   return [prompt.trim(), buildContinuityPromptBlock(brain)].filter(Boolean).join("\n\n");
 }

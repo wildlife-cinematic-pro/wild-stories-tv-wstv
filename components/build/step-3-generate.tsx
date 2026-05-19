@@ -44,6 +44,7 @@ import {
   REQUIRED_RUNWAY_REFERENCES,
   appendContinuityBlockToPrompt,
   buildContinuityBrain,
+  formatContinuityAppendix,
   validateRunwayReferenceTags,
   type ContinuityBrain,
 } from "@/lib/continuity-brain";
@@ -197,17 +198,40 @@ function ContinuityBrainPanel({
   enabled: boolean;
   onEnabledChange: (enabled: boolean) => void;
 }) {
+  const [continuityCopyFeedback, setContinuityCopyFeedback] = useState<string | null>(null);
   const previewShots = brain.shots.map((shot) => ({
     label: `Shot ${shot.shotNumber}`,
     role: shot.role,
     goal: shot.continuityGoal,
   }));
+  const continuityAppendix = formatContinuityAppendix(brain, { engine: "all" });
   const appendedPreview = appendContinuityBlockToPrompt(
     "Base engine prompt preview remains unchanged unless this toggle is enabled.",
     brain,
     enabled
   );
   const runwayValidation = validateRunwayReferenceTags(REQUIRED_RUNWAY_REFERENCES.join(" "));
+
+  const copyContinuityPreview = async (label: string, text: string) => {
+    try {
+      if (!navigator?.clipboard?.writeText) {
+        setContinuityCopyFeedback(null);
+        return;
+      }
+
+      await navigator.clipboard.writeText(text);
+      setContinuityCopyFeedback(label);
+      window.setTimeout(
+        () =>
+          setContinuityCopyFeedback((current) =>
+            current === label ? null : current
+          ),
+        1800
+      );
+    } catch {
+      setContinuityCopyFeedback(null);
+    }
+  };
 
   return (
     <section className="mt-4 rounded-2xl border border-emerald-400/20 bg-[linear-gradient(135deg,rgba(16,42,31,0.72),rgba(8,15,13,0.92))] p-4 shadow-[inset_0_1px_0_rgba(255,255,255,0.04)]">
@@ -310,6 +334,28 @@ function ContinuityBrainPanel({
         <p className="mt-1 text-[11px] leading-relaxed text-[color:var(--muted)]">
           Toggle on to preview the continuity block appended after a base prompt. This does not rewrite generated outputs yet.
         </p>
+        <div className="mt-3 flex flex-wrap gap-2">
+          <button
+            type="button"
+            onClick={() => copyContinuityPreview("Appendix copied", continuityAppendix)}
+            className="rounded-xl border border-emerald-400/35 bg-emerald-500/10 px-3 py-2 text-[10px] font-extrabold uppercase tracking-[0.08em] text-emerald-100 transition hover:bg-emerald-500/15 active:scale-[0.98]"
+          >
+            Copy Appendix
+          </button>
+          <button
+            type="button"
+            onClick={() => copyContinuityPreview("Preview copied", appendedPreview)}
+            disabled={!enabled}
+            className="rounded-xl border border-cyan-400/35 bg-cyan-500/10 px-3 py-2 text-[10px] font-extrabold uppercase tracking-[0.08em] text-cyan-100 transition hover:bg-cyan-500/15 active:scale-[0.98] disabled:cursor-not-allowed disabled:border-white/[0.08] disabled:bg-white/[0.04] disabled:text-[color:var(--disabled-text)] disabled:active:scale-100"
+          >
+            Copy Preview With Continuity
+          </button>
+          {continuityCopyFeedback ? (
+            <span className="rounded-xl border border-emerald-400/30 bg-[color:var(--success-bg)] px-3 py-2 text-[10px] font-bold uppercase tracking-[0.08em] text-[color:var(--success-text)]">
+              {continuityCopyFeedback}
+            </span>
+          ) : null}
+        </div>
         {enabled ? (
           <pre className="mt-3 max-h-72 overflow-auto whitespace-pre-wrap rounded-xl border border-white/[0.08] bg-black/30 p-3 text-[11px] leading-relaxed text-[color:var(--text)] [overflow-wrap:anywhere]">
             {appendedPreview}
