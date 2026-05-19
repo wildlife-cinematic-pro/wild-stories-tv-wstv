@@ -45,6 +45,7 @@ import {
   appendContinuityBlockToPrompt,
   buildContinuityBrain,
   buildContinuityRepairPrompt,
+  buildWstvLocalStudioDraftMetadata,
   formatContinuityAppendix,
   validateRunwayReferenceTags,
   type ContinuityBrain,
@@ -220,6 +221,18 @@ function ContinuityBrainPanel({
     brain,
     selectedFailures: selectedRepairFailures,
     targetEngine: "all",
+  });
+  const studioDraftMetadata = buildWstvLocalStudioDraftMetadata({
+    id: "preview-continuity-draft",
+    createdAt: "preview-only",
+    brain,
+    engine: "all",
+    continuityEnabled: enabled,
+    repairReasons: selectedRepairFailures,
+    promptPreview: appendedPreview,
+    repairedPromptPreview: selectedRepairFailures.length
+      ? repairPrompt.correctedPrompt
+      : "",
   });
 
   const toggleRepairFailure = (failure: string) => {
@@ -447,6 +460,65 @@ function ContinuityBrainPanel({
               Choose one or more failure labels to preview a local repair prompt.
             </div>
           )}
+        </div>
+        <div className="mt-3 rounded-2xl border border-emerald-400/15 bg-emerald-400/[0.04] p-3">
+          <div className="flex flex-wrap items-start justify-between gap-3">
+            <div>
+              <div className="text-[10px] font-extrabold uppercase tracking-[0.14em] text-emerald-200">
+                Local studio gallery shell
+              </div>
+              <p className="mt-1 text-[11px] leading-relaxed text-[color:var(--muted)]">
+                Preview-only metadata for future local drafts. No localStorage write happens in this phase.
+              </p>
+            </div>
+            <button
+              type="button"
+              disabled
+              title="Preview only — storage wiring is intentionally not enabled yet."
+              className="rounded-xl border border-white/[0.08] bg-white/[0.04] px-3 py-2 text-[10px] font-extrabold uppercase tracking-[0.08em] text-[color:var(--disabled-text)]"
+            >
+              Save Continuity Draft
+            </button>
+          </div>
+          <div className="mt-3 grid gap-2 sm:grid-cols-2 xl:grid-cols-4">
+            {[
+              {
+                title: "Saved Continuity Drafts",
+                value: studioDraftMetadata.continuityEnabled ? "Ready to save later" : "Continuity off",
+                detail: `Draft ID preview: ${studioDraftMetadata.id}`,
+              },
+              {
+                title: "Recent Repair Previews",
+                value: `${studioDraftMetadata.repairReasons.length} selected`,
+                detail: studioDraftMetadata.repairReasons.join(", ") || "No repair reasons selected",
+              },
+              {
+                title: "Favorite Prompt Versions",
+                value: "Existing versions preserved",
+                detail: "Future link only; no prompt-version writes here.",
+              },
+              {
+                title: "Export-ready Prompt Packs",
+                value: "Copy/export unchanged",
+                detail: "OutputCards exports remain the source of truth.",
+              },
+            ].map((card) => (
+              <div
+                key={card.title}
+                className="rounded-xl border border-white/[0.08] bg-black/20 p-3"
+              >
+                <div className="text-[10px] font-extrabold uppercase tracking-[0.1em] text-[color:var(--muted)]">
+                  {card.title}
+                </div>
+                <div className="mt-1 text-xs font-black text-[color:var(--text)]">
+                  {card.value}
+                </div>
+                <p className="mt-1 text-[10px] leading-relaxed text-[color:var(--muted)]">
+                  {card.detail}
+                </p>
+              </div>
+            ))}
+          </div>
         </div>
       </div>
     </section>

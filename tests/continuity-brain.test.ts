@@ -8,6 +8,7 @@ import {
   buildContinuityPromptHistoryMetadata,
   buildContinuityRepairInstruction,
   buildContinuityRepairPrompt,
+  buildWstvLocalStudioDraftMetadata,
   formatContinuityAppendix,
   validateRunwayReferenceTags,
 } from "@/lib/continuity-brain";
@@ -162,6 +163,73 @@ describe("continuity brain", () => {
     expect(repair.correctedPrompt).toBe(basePrompt);
     expect(repair.repairSummary).toContain("No repair issues selected");
     expect(repair.appliedFixes).toEqual([]);
+  });
+  it("creates local studio draft metadata without writing storage", () => {
+    const metadata = buildWstvLocalStudioDraftMetadata({
+      id: "draft-1",
+      createdAt: "2026-05-19T01:00:00.000Z",
+      brain,
+      engine: "kling",
+      continuityEnabled: true,
+      repairReasons: ["identity drift", "wrong habitat", "unknown"],
+      promptPreview: "Base prompt preview",
+      repairedPromptPreview: "Repaired prompt preview",
+      sourcePromptVersionId: "version-1",
+    });
+
+    expect(metadata).toEqual({
+      id: "draft-1",
+      createdAt: "2026-05-19T01:00:00.000Z",
+      animalA: "Bison mother",
+      animalB: "Wolf pack",
+      environment: "Yellowstone meadow with sagebrush and a pine treeline",
+      engine: "kling",
+      continuityEnabled: true,
+      repairReasons: ["identity drift", "wrong habitat"],
+      promptPreview: "Base prompt preview",
+      repairedPromptPreview: "Repaired prompt preview",
+      sourcePromptVersionId: "version-1",
+    });
+  });
+
+  it("keeps local studio draft creation as a no-op for prompt text", () => {
+    const promptPreview = "Original prompt preview remains exact.";
+    const repairedPromptPreview = "Original prompt preview remains exact.\n\nWSTV TARGETED REPAIR PASS";
+    const metadata = buildWstvLocalStudioDraftMetadata({
+      id: "draft-no-op",
+      createdAt: "2026-05-19T01:05:00.000Z",
+      brain,
+      continuityEnabled: false,
+      repairReasons: [],
+      promptPreview,
+      repairedPromptPreview,
+    });
+
+    expect(metadata.promptPreview).toBe(promptPreview);
+    expect(metadata.repairedPromptPreview).toBe(repairedPromptPreview);
+    expect(metadata.continuityEnabled).toBe(false);
+  });
+
+  it("keeps continuity repair previews separate from the main prompt", () => {
+    const basePrompt = "Main prompt remains untouched.";
+    const repair = buildContinuityRepairPrompt({
+      basePrompt,
+      brain,
+      selectedFailures: ["weak motion"],
+    });
+    const metadata = buildWstvLocalStudioDraftMetadata({
+      id: "draft-repair",
+      createdAt: "2026-05-19T01:10:00.000Z",
+      brain,
+      continuityEnabled: true,
+      repairReasons: ["weak motion"],
+      promptPreview: basePrompt,
+      repairedPromptPreview: repair.correctedPrompt,
+    });
+
+    expect(metadata.promptPreview).toBe(basePrompt);
+    expect(metadata.repairedPromptPreview).toContain("WSTV TARGETED REPAIR PASS");
+    expect(metadata.promptPreview).not.toContain("WSTV TARGETED REPAIR PASS");
   });
   it("creates targeted repair instructions without rewriting unrelated sections", () => {
     const repair = buildContinuityRepairInstruction(
