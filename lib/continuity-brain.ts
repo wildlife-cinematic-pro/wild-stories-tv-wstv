@@ -97,6 +97,32 @@ export type ContinuityRepairPromptResult = {
   appliedFixes: string[];
 };
 
+export type WstvLocalStudioDraftMetadataInput = {
+  id?: string;
+  createdAt?: string;
+  brain: ContinuityBrain;
+  engine?: ContinuityAppendixEngine;
+  continuityEnabled: boolean;
+  repairReasons?: readonly string[];
+  promptPreview: string;
+  repairedPromptPreview?: string;
+  sourcePromptVersionId?: string;
+};
+
+export type WstvLocalStudioDraftMetadata = {
+  id: string;
+  createdAt: string;
+  animalA: string;
+  animalB: string;
+  environment: string;
+  engine: ContinuityAppendixEngine;
+  continuityEnabled: boolean;
+  repairReasons: string[];
+  promptPreview: string;
+  repairedPromptPreview: string;
+  sourcePromptVersionId?: string;
+};
+
 export type RunwayReferenceValidation = {
   valid: boolean;
   references: string[];
@@ -344,6 +370,37 @@ function formatEngineRules(
   return formatList(brain.engineRules[engine]);
 }
 
+function createLocalDraftId(): string {
+  return `wstv-local-draft-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 8)}`;
+}
+
+export function buildWstvLocalStudioDraftMetadata({
+  id,
+  createdAt,
+  brain,
+  engine = "all",
+  continuityEnabled,
+  repairReasons = [],
+  promptPreview,
+  repairedPromptPreview = "",
+  sourcePromptVersionId,
+}: WstvLocalStudioDraftMetadataInput): WstvLocalStudioDraftMetadata {
+  return {
+    id: id ?? createLocalDraftId(),
+    createdAt: createdAt ?? new Date().toISOString(),
+    animalA: brain.animalA.label,
+    animalB: brain.animalB.label,
+    environment: brain.environment.habitat,
+    engine,
+    continuityEnabled,
+    repairReasons: repairReasons
+      .map((reason) => reason.trim())
+      .filter((reason) => reason && brain.repairFailureOptions.includes(reason)),
+    promptPreview,
+    repairedPromptPreview,
+    sourcePromptVersionId,
+  };
+}
 export function buildContinuityPromptHistoryMetadata(
   brain: ContinuityBrain,
   options: FormatContinuityAppendixOptions = {}
