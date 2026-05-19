@@ -84,6 +84,19 @@ export type ContinuityPromptHistoryMetadata = {
   promptVersionId?: string;
 };
 
+export type ContinuityRepairPromptInput = {
+  basePrompt: string;
+  brain: ContinuityBrain;
+  selectedFailures: readonly string[];
+  targetEngine?: ContinuityAppendixEngine;
+};
+
+export type ContinuityRepairPromptResult = {
+  correctedPrompt: string;
+  repairSummary: string;
+  appliedFixes: string[];
+};
+
 export type RunwayReferenceValidation = {
   valid: boolean;
   references: string[];
@@ -448,6 +461,89 @@ export function validateRunwayReferenceTags(prompt: string): RunwayReferenceVali
   };
 }
 
+function buildFailureFixLine(failure: string, brain: ContinuityBrain): string {
+  switch (failure) {
+    case "animal not chasing":
+      return `Make the pressure relationship readable: ${brain.animalB.label} increases visible pressure toward ${brain.animalA.label} without role swapping or fantasy behavior.`;
+    case "wrong habitat":
+      return `Preserve habitat exactly: ${brain.environment.habitat}; keep the same terrain, background depth, season, and time-of-day continuity.`;
+    case "identity drift":
+      return `Lock identity: keep ${brain.animalA.label} as @animalA and ${brain.animalB.label} as @animalB with the same markings, scale, body shape, coat/feather detail, and silhouette.`;
+    case "extra limbs":
+      return "Stabilize anatomy: correct limb count, grounded feet, clean silhouettes, no fused bodies, no duplicated paws, legs, horns, tails, or distorted joints.";
+    case "bad camera":
+      return `Repair camera: use ${brain.cameraLensLock.join("; ")}; keep one controlled documentary camera move and no chaotic swing.`;
+    case "crop issue":
+      return "Repair framing: both animals stay full-body readable with safe margins around head, feet, tail, horns, paws, and hooves.";
+    case "weak motion":
+      return "Strengthen motion: use one dominant readable movement beat with clear pursuit or escape pressure, grounded weight transfer, and no extra actions.";
+    case "excessive dust":
+      return "Keep air clear: no dust clouds, no dirt spray, no debris burst, and no atmosphere that hides animal bodies or the action lane.";
+    case "wrong spacing":
+      return `Repair spacing: preserve the open action lane; ${brain.animalA.label} remains on the ${brain.animalA.placement} side and ${brain.animalB.label} remains on the ${brain.animalB.placement} side unless the shot memory explicitly moves them.`;
+    case "unreadable framing":
+      return "Repair readability: simplify to one clear action lane, readable silhouettes, grounded bodies, and no overlapping chaos at the frame edge.";
+    default:
+      return `Apply targeted continuity correction for "${failure}" without changing unrelated prompt sections.`;
+  }
+}
+
+export function buildContinuityRepairPrompt({
+  basePrompt,
+  brain,
+  selectedFailures,
+  targetEngine = "all",
+}: ContinuityRepairPromptInput): ContinuityRepairPromptResult {
+  const originalPrompt = String(basePrompt ?? "").trim();
+  const selected = selectedFailures
+    .map((failure) => failure.trim())
+    .filter((failure) => failure && brain.repairFailureOptions.includes(failure));
+
+  if (!selected.length) {
+    return {
+      correctedPrompt: originalPrompt,
+      repairSummary:
+        "No repair issues selected. Original prompt preserved with no continuity repair applied.",
+      appliedFixes: [],
+    };
+  }
+
+  const appliedFixes = selected.map((failure) => buildFailureFixLine(failure, brain));
+  const engineRules = targetEngine === "all"
+    ? [
+        ...brain.engineRules.nanoBanana2,
+        ...brain.engineRules.gptImage2,
+        ...brain.engineRules.kling,
+        ...brain.engineRules.runway,
+        ...brain.engineRules.seedance,
+      ]
+    : brain.engineRules[targetEngine];
+  const repairSummary = `Targeted local repair for: ${selected.join(", ")}. Original prompt remains intact; only corrective constraints are appended.`;
+  const correctedPrompt = [
+    originalPrompt,
+    "",
+    "WSTV TARGETED REPAIR PASS",
+    repairSummary,
+    `Target engine: ${targetEngine}`,
+    "Preserve original scene, animals, habitat, lighting, shot structure, and edit intent.",
+    `Preserve subjects: ${brain.animalA.label} as @animalA; ${brain.animalB.label} as @animalB.`,
+    `Preserve environment: ${brain.environment.habitat}.`,
+    "Applied fixes:",
+    ...appliedFixes.map((fix) => `- ${fix}`),
+    "Engine-specific guardrails:",
+    ...engineRules.map((rule) => `- ${rule}`),
+    "Negative constraints:",
+    ...brain.globalNegativeRules.map((rule) => `- ${rule}`),
+  ]
+    .filter(Boolean)
+    .join("\n");
+
+  return {
+    correctedPrompt,
+    repairSummary,
+    appliedFixes,
+  };
+}
 export function buildContinuityRepairInstruction(
   brain: ContinuityBrain,
   failures: string[],

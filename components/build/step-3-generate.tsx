@@ -44,6 +44,7 @@ import {
   REQUIRED_RUNWAY_REFERENCES,
   appendContinuityBlockToPrompt,
   buildContinuityBrain,
+  buildContinuityRepairPrompt,
   formatContinuityAppendix,
   validateRunwayReferenceTags,
   type ContinuityBrain,
@@ -192,13 +193,16 @@ function FixIssuesPanel({
 function ContinuityBrainPanel({
   brain,
   enabled,
+  repairBasePrompt,
   onEnabledChange,
 }: {
   brain: ContinuityBrain;
   enabled: boolean;
+  repairBasePrompt: string;
   onEnabledChange: (enabled: boolean) => void;
 }) {
   const [continuityCopyFeedback, setContinuityCopyFeedback] = useState<string | null>(null);
+  const [selectedRepairFailures, setSelectedRepairFailures] = useState<string[]>([]);
   const previewShots = brain.shots.map((shot) => ({
     label: `Shot ${shot.shotNumber}`,
     role: shot.role,
@@ -211,6 +215,20 @@ function ContinuityBrainPanel({
     enabled
   );
   const runwayValidation = validateRunwayReferenceTags(REQUIRED_RUNWAY_REFERENCES.join(" "));
+  const repairPrompt = buildContinuityRepairPrompt({
+    basePrompt: repairBasePrompt,
+    brain,
+    selectedFailures: selectedRepairFailures,
+    targetEngine: "all",
+  });
+
+  const toggleRepairFailure = (failure: string) => {
+    setSelectedRepairFailures((current) =>
+      current.includes(failure)
+        ? current.filter((item) => item !== failure)
+        : [...current, failure]
+    );
+  };
 
   const copyContinuityPreview = async (label: string, text: string) => {
     try {
@@ -368,22 +386,68 @@ function ContinuityBrainPanel({
       </div>
 
       <div className="mt-3 rounded-2xl border border-white/[0.08] bg-black/20 p-3">
-        <div className="text-[10px] font-extrabold uppercase tracking-[0.14em] text-[color:var(--muted)]">
-          Repair panel shell · manual selection only
+        <div className="flex flex-wrap items-start justify-between gap-3">
+          <div>
+            <div className="text-[10px] font-extrabold uppercase tracking-[0.14em] text-[color:var(--muted)]">
+              Local prompt repair · copy-only
+            </div>
+            <p className="mt-1 text-[11px] leading-relaxed text-[color:var(--muted)]">
+              Select failure labels to generate a targeted repair addendum. It never replaces the main prompt, never stores automatically, and never calls an API.
+            </p>
+          </div>
+          <button
+            type="button"
+            onClick={() => copyContinuityPreview("Repair copied", repairPrompt.correctedPrompt)}
+            disabled={!selectedRepairFailures.length}
+            className="rounded-xl border border-amber-300/35 bg-amber-300/10 px-3 py-2 text-[10px] font-extrabold uppercase tracking-[0.08em] text-amber-100 transition hover:bg-amber-300/15 active:scale-[0.98] disabled:cursor-not-allowed disabled:border-white/[0.08] disabled:bg-white/[0.04] disabled:text-[color:var(--disabled-text)] disabled:active:scale-100"
+          >
+            Copy Repaired Prompt
+          </button>
         </div>
         <div className="mt-3 flex flex-wrap gap-2">
-          {brain.repairFailureOptions.map((failure) => (
-            <span
-              key={failure}
-              className="rounded-full border border-white/[0.1] bg-white/[0.04] px-2.5 py-1 text-[10px] font-semibold text-[color:var(--text)]"
-            >
-              {failure}
-            </span>
-          ))}
+          {brain.repairFailureOptions.map((failure) => {
+            const isSelected = selectedRepairFailures.includes(failure);
+
+            return (
+              <button
+                key={failure}
+                type="button"
+                aria-pressed={isSelected}
+                onClick={() => toggleRepairFailure(failure)}
+                className={[
+                  "rounded-full border px-2.5 py-1 text-[10px] font-semibold transition active:scale-[0.98]",
+                  isSelected
+                    ? "border-amber-300/45 bg-amber-300/15 text-amber-100"
+                    : "border-white/[0.1] bg-white/[0.04] text-[color:var(--text)] hover:bg-white/[0.08]",
+                ].join(" ")}
+              >
+                {failure}
+              </button>
+            );
+          })}
         </div>
-        <p className="mt-2 text-[11px] leading-relaxed text-[color:var(--muted)]">
-          Automatic prompt rewriting is intentionally not wired in this phase. These are the selectable failure labels for the future repair loop.
-        </p>
+        <div className="mt-3 rounded-xl border border-white/[0.08] bg-black/25 p-3">
+          <div className="flex flex-wrap items-center justify-between gap-2">
+            <div className="text-[10px] font-extrabold uppercase tracking-[0.14em] text-amber-200">
+              Repair preview
+            </div>
+            <span className="rounded-full border border-white/[0.08] bg-white/[0.04] px-2 py-0.5 text-[9px] font-bold uppercase tracking-[0.08em] text-[color:var(--muted)]">
+              {repairPrompt.appliedFixes.length} fixes
+            </span>
+          </div>
+          <p className="mt-1 text-[11px] leading-relaxed text-[color:var(--muted)]">
+            {repairPrompt.repairSummary}
+          </p>
+          {selectedRepairFailures.length ? (
+            <pre className="mt-3 max-h-72 overflow-auto whitespace-pre-wrap rounded-xl border border-white/[0.08] bg-black/35 p-3 text-[11px] leading-relaxed text-[color:var(--text)] [overflow-wrap:anywhere]">
+              {repairPrompt.correctedPrompt}
+            </pre>
+          ) : (
+            <div className="mt-3 rounded-xl border border-white/[0.08] bg-black/20 px-3 py-2 text-[11px] font-semibold text-[color:var(--muted)]">
+              Choose one or more failure labels to preview a local repair prompt.
+            </div>
+          )}
+        </div>
       </div>
     </section>
   );
@@ -1348,6 +1412,11 @@ export default function Step3Generate({
           <ContinuityBrainPanel
             brain={continuityBrain}
             enabled={useContinuityBrain}
+            repairBasePrompt={
+              mainVideoPrompt ||
+              pkg?.imagePrompt ||
+              "Base engine prompt preview remains unchanged unless this toggle is enabled."
+            }
             onEnabledChange={setUseContinuityBrain}
           />
         </section>

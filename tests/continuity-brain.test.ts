@@ -7,6 +7,7 @@ import {
   buildContinuityBrain,
   buildContinuityPromptHistoryMetadata,
   buildContinuityRepairInstruction,
+  buildContinuityRepairPrompt,
   formatContinuityAppendix,
   validateRunwayReferenceTags,
 } from "@/lib/continuity-brain";
@@ -112,6 +113,56 @@ describe("continuity brain", () => {
     });
   });
 
+  it("builds local repair prompts for selected continuity failures", () => {
+    const repair = buildContinuityRepairPrompt({
+      basePrompt: "Base prompt with bison and wolves in Yellowstone.",
+      brain,
+      selectedFailures: ["identity drift", "wrong habitat"],
+      targetEngine: "runway",
+    });
+
+    expect(repair.correctedPrompt).toContain("Base prompt with bison and wolves in Yellowstone.");
+    expect(repair.correctedPrompt).toContain("WSTV TARGETED REPAIR PASS");
+    expect(repair.correctedPrompt).toContain("Lock identity");
+    expect(repair.correctedPrompt).toContain("Preserve habitat exactly");
+    expect(repair.correctedPrompt).toContain("Target engine: runway");
+    expect(repair.appliedFixes).toHaveLength(2);
+  });
+
+  it("adds stronger motion correction for weak motion", () => {
+    const repair = buildContinuityRepairPrompt({
+      basePrompt: "Base motion prompt.",
+      brain,
+      selectedFailures: ["weak motion"],
+    });
+
+    expect(repair.correctedPrompt).toContain("Strengthen motion");
+    expect(repair.correctedPrompt).toContain("one dominant readable movement beat");
+  });
+
+  it("adds clear-air constraints for excessive dust", () => {
+    const repair = buildContinuityRepairPrompt({
+      basePrompt: "Base motion prompt.",
+      brain,
+      selectedFailures: ["excessive dust"],
+    });
+
+    expect(repair.correctedPrompt).toContain("Keep air clear");
+    expect(repair.correctedPrompt).toContain("no dust clouds");
+  });
+
+  it("returns a safe no-op repair message when no issues are selected", () => {
+    const basePrompt = "Base motion prompt stays untouched.";
+    const repair = buildContinuityRepairPrompt({
+      basePrompt,
+      brain,
+      selectedFailures: [],
+    });
+
+    expect(repair.correctedPrompt).toBe(basePrompt);
+    expect(repair.repairSummary).toContain("No repair issues selected");
+    expect(repair.appliedFixes).toEqual([]);
+  });
   it("creates targeted repair instructions without rewriting unrelated sections", () => {
     const repair = buildContinuityRepairInstruction(
       brain,
