@@ -2219,6 +2219,25 @@ export default function Page() {
                     {tab.label}
                   </button>
                 ))}
+                <Link
+                  href="/image"
+                  className="group flex items-center gap-2 rounded-xl border border-transparent px-3.5 py-2 text-xs font-semibold tracking-[0.01em] text-white/50 transition-all hover:bg-white/[0.06] hover:text-white/80"
+                >
+                  Image
+                </Link>
+                <Link
+                  href="/storyboard"
+                  className="group flex items-center gap-2 rounded-xl border border-transparent px-3.5 py-2 text-xs font-semibold tracking-[0.01em] text-white/50 transition-all hover:bg-white/[0.06] hover:text-white/80"
+                >
+                  Storyboard
+                </Link>
+                <Link
+                  href={currentFourShotPhotoHref}
+                  onClick={saveFourShotPhotoHandoff}
+                  className="group flex items-center gap-2 rounded-xl border border-transparent px-3.5 py-2 text-xs font-semibold tracking-[0.01em] text-white/50 transition-all hover:bg-white/[0.06] hover:text-white/80"
+                >
+                  4-Shot Photo
+                </Link>
               </nav>
             </div>
 
@@ -2326,27 +2345,26 @@ export default function Page() {
               </div>
             </div>
 
-            <div className="grid gap-3 lg:grid-cols-[200px_minmax(0,1fr)] xl:grid-cols-[200px_minmax(0,1fr)_260px] xl:items-start 2xl:grid-cols-[220px_minmax(0,1fr)_280px] min-[1800px]:grid-cols-[230px_minmax(0,1fr)_300px]">
+            <div className="grid gap-3 lg:grid-cols-[200px_minmax(0,1fr)] lg:items-start 2xl:grid-cols-[220px_minmax(0,1fr)_280px] min-[1800px]:grid-cols-[230px_minmax(0,1fr)_300px]">
               <aside className="hidden space-y-3 lg:sticky lg:top-[92px] lg:block">
                 <StudioPanel className="p-3" variant="muted">
                   <p className="text-[10px] font-black uppercase tracking-[0.2em] text-[#d9a94f]">Studio navigation</p>
                   <div className="mt-3 space-y-3">
                     <div className="rounded-2xl border border-[#263820] bg-[#071009] p-2.5">
                       <p className="text-[10px] font-black uppercase tracking-[0.16em] text-[#9da892]">Production Steps</p>
-                      <div className="mt-2 grid gap-1.5">
+                      <div role="group" aria-label="Build steps" className="mt-2 grid gap-1.5">
                         {([
-                          { target: 1 as Step, label: "Step 1", title: "Wildlife Setup" },
-                          { target: 2 as Step, label: "Step 2", title: "Engine & Quality" },
-                          { target: 3 as Step, label: "Step 3", title: "Generate" },
-                        ]).map((item) => {
-                          const state = step === item.target ? "active" : step > item.target ? "done" : "idle";
+                          { step: 1 as Step, label: "Step 1", title: "Wildlife Setup" },
+                          { step: 2 as Step, label: "Step 2", title: "Engine & Quality" },
+                          { step: 3 as Step, label: "Step 3", title: "Generate" },
+                        ]).map((s) => {
+                          const state = step === s.step ? "active" : step > s.step ? "done" : "idle";
                           return (
                             <button
-                              key={item.target}
+                              key={s.step}
                               type="button"
-                              onClick={() => setStep(item.target)}
-                              aria-current={state === "active" ? "step" : undefined}
-                              aria-label={`Open ${item.label}: ${item.title}`}
+                              onClick={() => setStep(s.step)}
+                              aria-current={step === s.step ? "step" : undefined}
                               className={[
                                 "group flex items-center gap-2 rounded-xl border px-2.5 py-2 text-left transition active:scale-[0.98]",
                                 state === "active"
@@ -2365,11 +2383,11 @@ export default function Page() {
                                     : "bg-white/5 text-[#9da892] group-hover:text-[#f3c766]",
                               ].join(" ")}
                               >
-                                {state === "done" ? "✓" : item.target}
+                                {state === "done" ? "✓" : s.step}
                               </span>
                               <span className="min-w-0">
-                                <span className="block text-[9px] font-black uppercase tracking-[0.14em] opacity-70">{item.label}</span>
-                                <span className="block truncate text-xs font-black">{item.title}</span>
+                                <span className="block text-[9px] font-black uppercase tracking-[0.14em] opacity-70">{s.label}</span>
+                                <span className="block truncate text-xs font-black">{s.title}</span>
                               </span>
                             </button>
                           );
@@ -2579,7 +2597,7 @@ export default function Page() {
                       type="button"
                       aria-current={step === 1 ? "step" : undefined}
                       aria-expanded={step === 1}
-                      aria-label="Open Step 1 Wildlife Setup panel"
+                      aria-label="Step 1 Wildlife Setup"
                       onClick={() => setStep(1)}
                       className="flex w-full flex-col gap-3 p-4 text-left transition sm:flex-row sm:items-center sm:justify-between sm:p-5"
                     >
@@ -2837,7 +2855,7 @@ export default function Page() {
                       type="button"
                       aria-current={step === 2 ? "step" : undefined}
                       aria-expanded={step === 2}
-                      aria-label="Open Step 2 Engine and Quality panel"
+                      aria-label="Step 2 Engine & Quality"
                       onClick={() => setStep(2)}
                       className="flex w-full flex-col gap-3 p-4 text-left transition sm:flex-row sm:items-center sm:justify-between sm:p-5"
                     >
@@ -2927,7 +2945,7 @@ export default function Page() {
                       type="button"
                       aria-current={step === 3 ? "step" : undefined}
                       aria-expanded={step === 3}
-                      aria-label="Open Step 3 Generate and Locks panel"
+                      aria-label="Step 3 Generate"
                       onClick={() => setStep(3)}
                       className="flex w-full flex-col gap-3 p-4 text-left transition sm:flex-row sm:items-center sm:justify-between sm:p-5"
                     >
@@ -3014,7 +3032,7 @@ export default function Page() {
                 </div>
               </section>
 
-              <aside className="space-y-3 lg:col-span-2 xl:col-span-1 xl:sticky xl:top-[92px]">
+              <aside className="space-y-3 lg:col-span-2 2xl:col-span-1 2xl:sticky 2xl:top-[92px]">
                 <StudioPanel className="p-3" variant="default">
                   <div className="flex flex-wrap items-start justify-between gap-3">
                     <div className="min-w-0">
