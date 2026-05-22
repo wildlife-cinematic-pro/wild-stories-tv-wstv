@@ -2021,16 +2021,6 @@ export default function Page() {
     [predator, prey]
   );
 
-  const detailedStoryboardLinkMetadata = useMemo(
-    () =>
-      buildStoryboardPreviewLinkMetadata({
-        predator,
-        prey,
-        finalEnvironment,
-      }),
-    [finalEnvironment, predator, prey]
-  );
-
   const storyboardHandoffPayload = useMemo(
     () => ({
       source: "build",
@@ -2233,18 +2223,12 @@ export default function Page() {
                   href="/image"
                   className="group flex items-center gap-2 rounded-xl border border-transparent px-3.5 py-2 text-xs font-semibold tracking-[0.01em] text-white/50 transition-all hover:bg-white/[0.06] hover:text-white/80"
                 >
-                  <span className="grid h-5 w-5 place-items-center rounded-full bg-white/[0.06] text-[11px] text-white/70 transition-all group-hover:bg-white/[0.1] group-hover:text-white">
-                    ▧
-                  </span>
                   Image
                 </Link>
                 <Link
                   href="/storyboard"
                   className="group flex items-center gap-2 rounded-xl border border-transparent px-3.5 py-2 text-xs font-semibold tracking-[0.01em] text-white/50 transition-all hover:bg-white/[0.06] hover:text-white/80"
                 >
-                  <span className="grid h-5 w-5 place-items-center rounded-full bg-white/[0.06] text-[11px] text-white/70 transition-all group-hover:bg-white/[0.1] group-hover:text-white">
-                    ▣
-                  </span>
                   Storyboard
                 </Link>
                 <Link
@@ -2252,9 +2236,6 @@ export default function Page() {
                   onClick={saveFourShotPhotoHandoff}
                   className="group flex items-center gap-2 rounded-xl border border-transparent px-3.5 py-2 text-xs font-semibold tracking-[0.01em] text-white/50 transition-all hover:bg-white/[0.06] hover:text-white/80"
                 >
-                  <span className="grid h-5 w-5 place-items-center rounded-full bg-white/[0.06] text-[11px] text-white/70 transition-all group-hover:bg-white/[0.1] group-hover:text-white">
-                    4
-                  </span>
                   4-Shot Photo
                 </Link>
               </nav>
@@ -2265,93 +2246,6 @@ export default function Page() {
             </div>
           </div>
 
-          {activeTab === "build" && (
-            <div className="border-t border-white/[0.06] pb-3 pt-2">
-              <div className="overflow-hidden rounded-[24px] border border-[color:var(--border)] bg-[color:var(--surface-elevated)] shadow-[var(--surface-shadow)] backdrop-blur-xl">
-                <nav
-                  aria-label="Build steps"
-                  className="flex flex-wrap items-center gap-2 px-2 py-2.5 sm:flex-nowrap sm:px-3"
-                >
-                  {([
-                    { step: 1 as Step, label: "Wildlife Setup" },
-                    { step: 2 as Step, label: "Engine & Quality" },
-                    { step: 3 as Step, label: "Generate" },
-                  ]).map((s, i) => (
-                    <div key={s.step} className="flex shrink-0 items-center gap-2">
-                      <button
-                        type="button"
-                        aria-current={step === s.step ? "step" : undefined}
-                        onClick={() => setStep(s.step)}
-                        className={`flex items-center gap-2 rounded-2xl border px-3.5 py-2 text-left text-xs font-semibold transition-all active:scale-[0.98] ${
-                          step === s.step
-                            ? "border-gray-900 bg-gray-900 text-white shadow-sm"
-                            : step > s.step
-                            ? "border-emerald-200 bg-emerald-50 text-emerald-700 hover:bg-emerald-100"
-                            : "border-transparent bg-transparent text-[color:var(--muted)] hover:border-[color:var(--border)] hover:bg-[color:var(--surface-muted)] hover:text-[color:var(--text)]"
-                        }`}
-                      >
-                        <span
-                          className={`grid h-5 w-5 place-items-center rounded-full text-[10px] ${
-                            step === s.step
-                              ? "bg-white/15 text-white"
-                              : step > s.step
-                              ? "bg-emerald-100 text-emerald-700"
-                              : "bg-[color:var(--surface-muted)] text-[color:var(--muted)]"
-                          }`}
-                        >
-                          {step > s.step ? "✓" : s.step}
-                        </span>
-                        <span className="flex flex-col items-start leading-none">
-                          <span className={`text-[9px] uppercase tracking-[0.14em] ${
-                            step === s.step ? "text-white/55" : step > s.step ? "text-emerald-500" : "text-gray-400"
-                          }`}>
-                            Step {s.step}
-                          </span>
-                          <span>{s.label}</span>
-                        </span>
-                      </button>
-                      {i < 2 && (
-                        <span className="hidden shrink-0 rounded-full bg-[color:var(--surface-muted)] px-2 py-1 text-[10px] font-semibold text-[color:var(--muted)] sm:inline-flex">
-                          ›
-                        </span>
-                      )}
-                    </div>
-                  ))}
-                </nav>
-                <div className="border-t border-[color:var(--border)] px-3 py-3">
-                  <div className="flex flex-wrap items-center justify-between gap-3">
-                    <p className="text-xs leading-5 text-[color:var(--muted)]">
-                      Open a read-only storyboard preview generated from the current Build setup.
-                    </p>
-                    <Link
-                      key={compactStoryboardLinkMetadata.key}
-                      href={currentStoryboardHref}
-                      onClick={saveStoryboardHandoff}
-                      aria-label={compactStoryboardLinkMetadata.ariaLabel}
-                      title={compactStoryboardLinkMetadata.title}
-                      className="inline-flex items-center gap-2 rounded-xl border border-cyan-400/30 bg-cyan-500/10 px-3.5 py-2 text-xs font-semibold text-cyan-200 transition hover:border-cyan-300 hover:bg-cyan-500/15"
-                    >
-                      <span className="grid h-5 w-5 place-items-center rounded-full bg-cyan-400/15 text-[11px] text-cyan-200">
-                        ▣
-                      </span>
-                      Open Storyboard for Current Setup
-                    </Link>
-                    <Link
-                      href={currentFourShotPhotoHref}
-                      onClick={saveFourShotPhotoHandoff}
-                      title={currentFourShotPhotoHref}
-                      className="inline-flex items-center gap-2 rounded-xl border border-cyan-400/30 bg-cyan-500/10 px-3.5 py-2 text-xs font-semibold text-cyan-200 transition hover:border-cyan-300 hover:bg-cyan-500/15"
-                    >
-                      <span className="grid h-5 w-5 place-items-center rounded-full bg-cyan-400/15 text-[11px] text-cyan-200">
-                        4
-                      </span>
-                      4-Shot Photo
-                    </Link>
-                  </div>
-                </div>
-              </div>
-            </div>
-          )}
         </div>
       </header>
 
@@ -2395,13 +2289,233 @@ export default function Page() {
       {activeTab === "build" && (
         <div className="overflow-x-hidden bg-[#050806] text-[#f7f1df]">
           <div className="pointer-events-none fixed inset-0 -z-10 bg-[radial-gradient(circle_at_16%_8%,rgba(52,96,61,0.3),transparent_30%),radial-gradient(circle_at_86%_0%,rgba(217,169,79,0.12),transparent_28%),linear-gradient(135deg,#050806_0%,#09120d_44%,#111609_100%)]" />
-          <div className="mx-auto w-full max-w-[2040px] px-3 py-5 sm:px-5 sm:py-7 lg:px-6 xl:px-8">
-            <div className={["grid gap-4 xl:items-start", step === 1 || step === 3 ? "xl:grid-cols-1" : "xl:grid-cols-[minmax(0,1fr)_280px] 2xl:grid-cols-[220px_minmax(0,1fr)_280px] min-[1800px]:grid-cols-[250px_minmax(0,1fr)_300px]"].join(" ")}>
-              <aside className={["space-y-4", step === 1 || step === 3 ? "xl:order-2 xl:grid xl:grid-cols-2 xl:gap-4 xl:space-y-0" : "xl:col-start-2 xl:row-start-1 xl:sticky xl:top-36 2xl:col-start-auto 2xl:row-start-auto"].join(" ")}>
-                <StudioPanel className="p-4" variant="muted">
-                  <p className="text-[11px] font-black uppercase tracking-[0.22em] text-[#d9a94f]">Current setup</p>
-                  <h2 className="mt-2 text-lg font-semibold text-white">{currentGenerateSubjectPairLabel}</h2>
-                  <div className="mt-4 grid gap-2 text-xs">
+          <div className="mx-auto w-full max-w-none px-2 py-5 sm:px-4 sm:py-7 lg:px-5 xl:px-6 2xl:px-8">
+            <div className="sticky top-0 z-30 mb-3 rounded-[22px] border border-[#d9a94f]/20 bg-[#071009]/94 p-3 shadow-[0_18px_70px_rgba(0,0,0,0.34)] backdrop-blur-xl">
+              <div className="grid gap-3 2xl:grid-cols-[minmax(0,1fr)_auto] 2xl:items-center">
+                <div className="grid gap-2 sm:grid-cols-2 xl:grid-cols-4 2xl:min-w-[920px]">
+                  {[
+                    ["Animal Pair", currentGenerateSubjectPairLabel],
+                    ["Story Mode", storyMode.replace(/_/g, " ")],
+                    ["Habitat", `${habitatRegion.replace(/_/g, " ")} · ${season.replace(/_/g, " ")}`],
+                    ["Model / Provider", `${selectedVideoModelId} · ${activeProvider}`],
+                  ].map(([label, value]) => (
+                    <div key={label} className="min-w-0 rounded-2xl border border-[#263820] bg-[#050806]/72 px-3 py-2">
+                      <p className="text-[10px] font-black uppercase tracking-[0.16em] text-[#9da892]">{label}</p>
+                      <p className="mt-1 truncate text-sm font-black text-[#f7f1df]">{value}</p>
+                    </div>
+                  ))}
+                </div>
+                <div className="flex flex-wrap items-center justify-start gap-2 2xl:justify-end">
+                  <Link
+                    key={compactStoryboardLinkMetadata.key}
+                    href={currentStoryboardHref}
+                    onClick={saveStoryboardHandoff}
+                    aria-label={compactStoryboardLinkMetadata.ariaLabel}
+                    title={compactStoryboardLinkMetadata.title}
+                    className="inline-flex min-h-10 items-center rounded-2xl border border-cyan-400/30 bg-cyan-500/10 px-3.5 py-2 text-xs font-black text-cyan-100 transition hover:border-cyan-300/70 hover:bg-cyan-500/15"
+                  >
+                    Storyboard
+                  </Link>
+                  <Link
+                    href={currentFourShotPhotoHref}
+                    onClick={saveFourShotPhotoHandoff}
+                    aria-label="Open 4-Shot Photo for the current Build setup"
+                    title={currentFourShotPhotoHref}
+                    className="inline-flex min-h-10 items-center rounded-2xl border border-cyan-400/30 bg-cyan-500/10 px-3.5 py-2 text-xs font-black text-cyan-100 transition hover:border-cyan-300/70 hover:bg-cyan-500/15"
+                  >
+                    4-Shot Photo
+                  </Link>
+                  <Link
+                    href="/image"
+                    aria-label="Open Image Studio"
+                    className="inline-flex min-h-10 items-center rounded-2xl border border-cyan-400/30 bg-cyan-500/10 px-3.5 py-2 text-xs font-black text-cyan-100 transition hover:border-cyan-300/70 hover:bg-cyan-500/15"
+                  >
+                    Image Studio
+                  </Link>
+                  <button
+                    type="button"
+                    onClick={handleGenerate}
+                    disabled={isGenerating}
+                    aria-label="Generate the current Wild Stories TV package"
+                    className="inline-flex min-h-10 items-center rounded-2xl border border-[#d9a94f]/50 bg-[#d9a94f] px-4 py-2 text-xs font-black uppercase tracking-[0.1em] text-[#151006] shadow-[0_16px_40px_rgba(217,169,79,0.22)] transition hover:bg-[#f3c766] disabled:cursor-not-allowed disabled:opacity-60"
+                  >
+                    {isGenerating ? "Generating..." : "Generate"}
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            <div className="grid gap-3 lg:grid-cols-[200px_minmax(0,1fr)] lg:items-start 2xl:grid-cols-[220px_minmax(0,1fr)_280px] min-[1800px]:grid-cols-[230px_minmax(0,1fr)_300px]">
+              <aside className="hidden space-y-3 lg:sticky lg:top-[92px] lg:block">
+                <StudioPanel className="p-3" variant="muted">
+                  <p className="text-[10px] font-black uppercase tracking-[0.2em] text-[#d9a94f]">Studio navigation</p>
+                  <div className="mt-3 space-y-3">
+                    <div className="rounded-2xl border border-[#263820] bg-[#071009] p-2.5">
+                      <p className="text-[10px] font-black uppercase tracking-[0.16em] text-[#9da892]">Production Steps</p>
+                      <div role="group" aria-label="Build steps" className="mt-2 grid gap-1.5">
+                        {([
+                          { step: 1 as Step, label: "Step 1", title: "Wildlife Setup" },
+                          { step: 2 as Step, label: "Step 2", title: "Engine & Quality" },
+                          { step: 3 as Step, label: "Step 3", title: "Generate" },
+                        ]).map((s) => {
+                          const state = step === s.step ? "active" : step > s.step ? "done" : "idle";
+                          return (
+                            <button
+                              key={s.step}
+                              type="button"
+                              onClick={() => setStep(s.step)}
+                              aria-current={step === s.step ? "step" : undefined}
+                              className={[
+                                "group flex items-center gap-2 rounded-xl border px-2.5 py-2 text-left transition active:scale-[0.98]",
+                                state === "active"
+                                  ? "border-[#d9a94f]/60 bg-[#d9a94f]/18 text-[#f7f1df]"
+                                  : state === "done"
+                                    ? "border-emerald-400/30 bg-emerald-500/10 text-emerald-100"
+                                    : "border-[#263820] bg-[#050806]/55 text-[#c9d2bd] hover:border-[#d9a94f]/35 hover:text-[#f7f1df]",
+                              ].join(" ")}
+                            >
+                              <span className={[
+                                "grid h-6 w-6 shrink-0 place-items-center rounded-lg text-[10px] font-black",
+                                state === "active"
+                                  ? "bg-[#d9a94f] text-[#151006]"
+                                  : state === "done"
+                                    ? "bg-emerald-400/18 text-emerald-100"
+                                    : "bg-white/5 text-[#9da892] group-hover:text-[#f3c766]",
+                              ].join(" ")}
+                              >
+                                {state === "done" ? "✓" : s.step}
+                              </span>
+                              <span className="min-w-0">
+                                <span className="block text-[9px] font-black uppercase tracking-[0.14em] opacity-70">{s.label}</span>
+                                <span className="block truncate text-xs font-black">{s.title}</span>
+                              </span>
+                            </button>
+                          );
+                        })}
+                      </div>
+                    </div>
+
+                    <div className="rounded-2xl border border-[#263820] bg-[#071009] p-2.5">
+                      <p className="text-[10px] font-black uppercase tracking-[0.16em] text-[#9da892]">Routes</p>
+                      <div className="mt-2 grid gap-1.5">
+                        <Link
+                          key={compactStoryboardLinkMetadata.key}
+                          href={currentStoryboardHref}
+                          onClick={saveStoryboardHandoff}
+                          aria-label={compactStoryboardLinkMetadata.ariaLabel}
+                          title={compactStoryboardLinkMetadata.title}
+                          className="rounded-xl border border-cyan-400/25 bg-cyan-500/10 px-3 py-2 text-xs font-black text-cyan-100 transition hover:border-cyan-300/70 hover:bg-cyan-500/15"
+                        >
+                          Storyboard
+                        </Link>
+                        <Link
+                          href={currentFourShotPhotoHref}
+                          onClick={saveFourShotPhotoHandoff}
+                          title={currentFourShotPhotoHref}
+                          className="rounded-xl border border-cyan-400/25 bg-cyan-500/10 px-3 py-2 text-xs font-black text-cyan-100 transition hover:border-cyan-300/70 hover:bg-cyan-500/15"
+                        >
+                          4-Shot Photo
+                        </Link>
+                        <Link
+                          href="/image"
+                          className="rounded-xl border border-cyan-400/25 bg-cyan-500/10 px-3 py-2 text-xs font-black text-cyan-100 transition hover:border-cyan-300/70 hover:bg-cyan-500/15"
+                        >
+                          Image Studio
+                        </Link>
+                        <button
+                          type="button"
+                          onClick={() => setActiveTab("workflows")}
+                          aria-label="Open Workflows tab"
+                          className="rounded-xl border border-[#d9a94f]/25 bg-[#d9a94f]/10 px-3 py-2 text-left text-xs font-black text-[#f3c766] transition hover:border-[#d9a94f]/70 hover:bg-[#d9a94f]/18"
+                        >
+                          Workflows
+                        </button>
+                      </div>
+                    </div>
+
+                    <div className="rounded-2xl border border-[#263820] bg-[#071009] p-2.5">
+                      <p className="text-[10px] font-black uppercase tracking-[0.16em] text-[#9da892]">Presets</p>
+                      <div className="mt-2 grid gap-1.5 text-xs">
+                        {[
+                          ["USA Story Presets", "Step 1"],
+                          ["My Workflow Presets", `${myWorkflowPresets.length} saved`],
+                          ["Preset Packs", `${workflowPresetControls.presetPacks.length} packs`],
+                        ].map(([label, value]) => (
+                          <div key={label} className="flex items-center justify-between gap-2 rounded-xl border border-[#263820] bg-[#050806]/55 px-2.5 py-2">
+                            <span className="font-bold text-[#dce8d1]">{label}</span>
+                            <span className="shrink-0 text-[10px] font-black uppercase tracking-[0.12em] text-[#9da892]">{value}</span>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+
+                    <div className="rounded-2xl border border-[#263820] bg-[#071009] p-2.5">
+                      <div className="flex items-center justify-between gap-2">
+                        <p className="text-[10px] font-black uppercase tracking-[0.16em] text-[#9da892]">Post-Production</p>
+                        <span className="rounded-full border border-[#314428] bg-[#050806]/70 px-2 py-0.5 text-[9px] font-black uppercase tracking-[0.12em] text-[#9da892]">Status</span>
+                      </div>
+                      <div className="mt-2 grid gap-1.5 text-xs">
+                        {[
+                          {
+                            label: "Fix Center",
+                            value: setupFixFeedback ? "Fix noted" : pkg ? "Review" : "Waiting",
+                            detail: setupFixFeedback ? "Last setup fix available" : "Prompt repair and cleanup live in Step 3",
+                            tone: setupFixFeedback || pkg ? "gold" : "idle",
+                          },
+                          {
+                            label: "QA History",
+                            value: String(creatorQaRuns.length) + " runs",
+                            detail: creatorQaRuns.length ? "Creator QA trail captured" : "Runs appear after generation",
+                            tone: creatorQaRuns.length ? "green" : "idle",
+                          },
+                          {
+                            label: "Library",
+                            value: pinnedOutput ? "Pinned" : availableLastGeneratedOutput ? "Last output" : String(myWorkflowPresets.length) + " presets",
+                            detail: pinnedOutput ? "Pinned package ready to restore" : "Local presets and restore state only",
+                            tone: pinnedOutput || availableLastGeneratedOutput ? "cyan" : "idle",
+                          },
+                          {
+                            label: "Social Package",
+                            value: pkg?.hashtags ? String(pkg.hashtags.split(/\s+/).filter(Boolean).length) + " tags" : "Waiting",
+                            detail: pkg?.caption ? "Caption and hashtags ready" : "Facebook copy generated in Step 3",
+                            tone: pkg?.caption && pkg?.hashtags ? "green" : "idle",
+                          },
+                          {
+                            label: "Export",
+                            value: pkg ? "Ready" : "Waiting",
+                            detail: pkg ? "Use Step 3 copy/TXT/JSON controls" : "No generated package yet",
+                            tone: pkg ? "gold" : "idle",
+                          },
+                        ].map((item) => (
+                          <div key={item.label} className="rounded-xl border border-[#263820] bg-[#050806]/55 px-2.5 py-2">
+                            <div className="flex items-center justify-between gap-2">
+                              <span className="font-bold text-[#dce8d1]">{item.label}</span>
+                              <span className={[
+                                "shrink-0 rounded-full border px-2 py-0.5 text-[9px] font-black uppercase tracking-[0.12em]",
+                                item.tone === "green"
+                                  ? "border-emerald-400/30 bg-emerald-500/12 text-emerald-100"
+                                  : item.tone === "gold"
+                                    ? "border-[#d9a94f]/35 bg-[#d9a94f]/12 text-[#f3c766]"
+                                    : item.tone === "cyan"
+                                      ? "border-cyan-400/30 bg-cyan-500/10 text-cyan-100"
+                                      : "border-[#314428] bg-[#071009] text-[#9da892]",
+                              ].join(" ")}
+                              >
+                                {item.value}
+                              </span>
+                            </div>
+                            <p className="mt-1 text-[10px] leading-4 text-[#9da892]">{item.detail}</p>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+                </StudioPanel>
+
+                <StudioPanel className="p-3" variant="muted">
+                  <p className="text-[10px] font-black uppercase tracking-[0.2em] text-[#d9a94f]">Current setup</p>
+                  <h2 className="mt-2 text-base font-semibold leading-snug text-white">{currentGenerateSubjectPairLabel}</h2>
+                  <div className="mt-3 grid gap-1.5 text-xs">
                     {[
                       ["Mode", storyMode.replace(/_/g, " ")],
                       ["Habitat", habitatRegion.replace(/_/g, " ")],
@@ -2409,7 +2523,7 @@ export default function Page() {
                       ["Time", timeOfDay.replace(/_/g, " ")],
                       ["Output", durationLane + " reel"],
                     ].map(([label, value]) => (
-                      <div key={label} className="rounded-2xl border border-[#263820] bg-[#071009] p-3">
+                      <div key={label} className="rounded-xl border border-[#263820] bg-[#071009] p-2.5">
                         <p className="text-[10px] font-black uppercase tracking-[0.14em] text-[#9da892]">{label}</p>
                         <p className="mt-1 font-semibold text-[#f7f1df]">{value}</p>
                       </div>
@@ -2417,8 +2531,8 @@ export default function Page() {
                   </div>
                 </StudioPanel>
 
-                <StudioPanel className="p-4" variant="muted">
-                  <p className="text-[11px] font-black uppercase tracking-[0.22em] text-[#d9a94f]">Provider status</p>
+                <StudioPanel className="p-3" variant="muted">
+                  <p className="text-[10px] font-black uppercase tracking-[0.2em] text-[#d9a94f]">Provider status</p>
                   <div className="mt-3 space-y-2">
                     <div className="flex items-center justify-between gap-3 rounded-2xl border border-[#263820] bg-[#071009] px-3 py-2">
                       <span className="text-xs font-semibold text-[#dce8d1]">{activeProvider === "gemini" ? "Gemini Default" : activeProvider}</span>
@@ -2430,9 +2544,10 @@ export default function Page() {
                     </div>
                   </div>
                 </StudioPanel>
+
               </aside>
 
-              <section className={["min-w-0 space-y-4", step === 1 || step === 3 ? "xl:order-1" : "xl:col-start-1 xl:row-span-3 xl:row-start-1 2xl:col-start-auto 2xl:row-auto 2xl:row-span-auto"].join(" ")}>
+              <section className="min-w-0 space-y-4">
                 <StudioPanel className="relative overflow-hidden p-4 sm:p-5" variant="default">
                   <div className="absolute inset-0">
                     <Image
@@ -2466,61 +2581,40 @@ export default function Page() {
                           <StudioStatusPill tone="cyan">Handoffs preserved</StudioStatusPill>
                         </>
                       }
-                      actions={
-                        <>
-                          <Link
-                            key={detailedStoryboardLinkMetadata.key}
-                            href={currentStoryboardHref}
-                            onClick={saveStoryboardHandoff}
-                            aria-label={detailedStoryboardLinkMetadata.ariaLabel}
-                            title={detailedStoryboardLinkMetadata.title}
-                            className="inline-flex min-h-10 items-center rounded-xl border border-cyan-400/35 bg-[#061315]/80 px-4 py-2 text-sm font-semibold text-cyan-100 shadow-[0_14px_34px_rgba(0,0,0,0.28)] transition hover:border-cyan-300/70 hover:bg-cyan-500/15"
-                          >
-                            Open Storyboard
-                          </Link>
-                          <Link
-                            href={currentFourShotPhotoHref}
-                            onClick={saveFourShotPhotoHandoff}
-                            title={currentFourShotPhotoHref}
-                            className="inline-flex min-h-10 items-center rounded-xl border border-[#d9a94f]/45 bg-[#1d1607]/82 px-4 py-2 text-sm font-semibold text-[#f3c766] shadow-[0_14px_34px_rgba(0,0,0,0.28)] transition hover:border-[#d9a94f]/70 hover:bg-[#d9a94f]/18"
-                          >
-                            4-Shot Photo
-                          </Link>
-                        </>
-                      }
                     />
-                    <div className="mt-4 rounded-[22px] border border-[#d9a94f]/25 bg-[#050806]/72 p-2 shadow-[inset_0_1px_0_rgba(255,255,255,0.04)] backdrop-blur-sm">
-                      <div className="flex flex-wrap gap-2">
-                        {([
-                          { step: 1 as Step, label: "Wildlife Setup" },
-                          { step: 2 as Step, label: "Engine & Quality" },
-                          { step: 3 as Step, label: "Generate" },
-                        ]).map((s) => (
-                          <button
-                            key={s.step}
-                            type="button"
-                            aria-current={step === s.step ? "step" : undefined}
-                            onClick={() => setStep(s.step)}
-                            className={[
-                              "min-h-11 flex-1 rounded-2xl border px-3 py-2 text-left text-xs font-black transition active:scale-[0.98] sm:min-w-[190px]",
-                              step === s.step
-                                ? "border-[#d9a94f]/55 bg-[#d9a94f] text-[#111207] shadow-[0_12px_30px_rgba(217,169,79,0.2)]"
-                                : step > s.step
-                                  ? "border-emerald-400/35 bg-[#07140c]/85 text-emerald-100 hover:bg-emerald-500/15"
-                                  : "border-[#314428] bg-[#081009]/82 text-[#dce8d1] hover:border-[#d9a94f]/45 hover:text-white",
-                            ].join(" ")}
-                          >
-                            <span className="block text-[10px] uppercase tracking-[0.16em] opacity-70">Step {s.step}</span>
-                            <span className="mt-0.5 block">{s.label}</span>
-                          </button>
-                        ))}
-                      </div>
-                    </div>
                   </div>
                 </StudioPanel>
 
-            {step === 1 && (
-              <Step1Setup
+                <div className="space-y-3">
+                  <section className={[
+                    "overflow-hidden rounded-[28px] border shadow-[0_18px_70px_rgba(0,0,0,0.24)] transition",
+                    step === 1
+                      ? "border-[#d9a94f]/45 bg-[#071009]/92"
+                      : "border-[#263820] bg-[#071009]/58 hover:border-[#d9a94f]/25",
+                  ].join(" ")}
+                  >
+                    <button
+                      type="button"
+                      aria-current={step === 1 ? "step" : undefined}
+                      aria-expanded={step === 1}
+                      aria-label="Step 1 Wildlife Setup"
+                      onClick={() => setStep(1)}
+                      className="flex w-full flex-col gap-3 p-4 text-left transition sm:flex-row sm:items-center sm:justify-between sm:p-5"
+                    >
+                      <span className="min-w-0">
+                        <span className="text-[10px] font-black uppercase tracking-[0.22em] text-[#d9a94f]">Step 1 Command Deck</span>
+                        <span className="mt-1 block text-xl font-black text-[#f7f1df]">Wildlife Setup</span>
+                        <span className="mt-1 block text-sm leading-6 text-[#c9d2bd]">Animal pair, story direction, habitat, presets, scene fit, and safe handoffs.</span>
+                      </span>
+                      <span className="flex shrink-0 flex-wrap items-center gap-2">
+                        <StudioStatusPill tone={step === 1 ? "gold" : step > 1 ? "green" : "muted"}>{step === 1 ? "Active" : step > 1 ? "Done" : "Idle"}</StudioStatusPill>
+                        <span className="rounded-full border border-[#263820] bg-[#050806]/70 px-3 py-1 text-[10px] font-black uppercase tracking-[0.14em] text-[#9da892]">Open</span>
+                      </span>
+                    </button>
+
+                    {step === 1 && (
+                      <div className="border-t border-[#263820] bg-[#050806]/34 p-2 sm:p-3">
+                        <Step1Setup
                 predator={predator}
                 prey={prey}
                 storyMode={storyMode}
@@ -2745,11 +2839,40 @@ export default function Page() {
                     driftRisk: preset.driftRisk,
                   })
                 }
-              />
-            )}
+                        />
+                      </div>
+                    )}
+                  </section>
 
-            {step === 2 && (
-              <Step2EngineQuality
+                  <section className={[
+                    "overflow-hidden rounded-[28px] border shadow-[0_18px_70px_rgba(0,0,0,0.24)] transition",
+                    step === 2
+                      ? "border-[#d9a94f]/45 bg-[#071009]/92"
+                      : "border-[#263820] bg-[#071009]/58 hover:border-[#d9a94f]/25",
+                  ].join(" ")}
+                  >
+                    <button
+                      type="button"
+                      aria-current={step === 2 ? "step" : undefined}
+                      aria-expanded={step === 2}
+                      aria-label="Step 2 Engine & Quality"
+                      onClick={() => setStep(2)}
+                      className="flex w-full flex-col gap-3 p-4 text-left transition sm:flex-row sm:items-center sm:justify-between sm:p-5"
+                    >
+                      <span className="min-w-0">
+                        <span className="text-[10px] font-black uppercase tracking-[0.22em] text-[#d9a94f]">Step 2 Engine Bay</span>
+                        <span className="mt-1 block text-xl font-black text-[#f7f1df]">Engine & Quality</span>
+                        <span className="mt-1 block text-sm leading-6 text-[#c9d2bd]">Provider/model selection, video capability, quality locks, media analysis, and scene notes.</span>
+                      </span>
+                      <span className="flex shrink-0 flex-wrap items-center gap-2">
+                        <StudioStatusPill tone={step === 2 ? "gold" : step > 2 ? "green" : "muted"}>{step === 2 ? "Active" : step > 2 ? "Done" : "Idle"}</StudioStatusPill>
+                        <span className="rounded-full border border-[#263820] bg-[#050806]/70 px-3 py-1 text-[10px] font-black uppercase tracking-[0.14em] text-[#9da892]">Open</span>
+                      </span>
+                    </button>
+
+                    {step === 2 && (
+                      <div className="border-t border-[#263820] bg-[#050806]/34 p-2 sm:p-3">
+                        <Step2EngineQuality
                 qualityReco={qualityReco}
                 autoApplyHighDrift={autoApplyHighDrift}
                 hasUndoQuality={Boolean(lastQualityBeforeApply)}
@@ -2806,11 +2929,40 @@ export default function Page() {
                 }
                 onBack={() => setStep(1)}
                 onContinue={() => setStep(3)}
-              />
-            )}
+                        />
+                      </div>
+                    )}
+                  </section>
 
-            {step === 3 && (
-              <Step3Generate
+                  <section className={[
+                    "overflow-hidden rounded-[28px] border shadow-[0_18px_70px_rgba(0,0,0,0.24)] transition",
+                    step === 3
+                      ? "border-[#d9a94f]/45 bg-[#071009]/92"
+                      : "border-[#263820] bg-[#071009]/58 hover:border-[#d9a94f]/25",
+                  ].join(" ")}
+                  >
+                    <button
+                      type="button"
+                      aria-current={step === 3 ? "step" : undefined}
+                      aria-expanded={step === 3}
+                      aria-label="Step 3 Generate"
+                      onClick={() => setStep(3)}
+                      className="flex w-full flex-col gap-3 p-4 text-left transition sm:flex-row sm:items-center sm:justify-between sm:p-5"
+                    >
+                      <span className="min-w-0">
+                        <span className="text-[10px] font-black uppercase tracking-[0.22em] text-[#d9a94f]">Step 3 Output Bench</span>
+                        <span className="mt-1 block text-xl font-black text-[#f7f1df]">Generate & Locks</span>
+                        <span className="mt-1 block text-sm leading-6 text-[#c9d2bd]">Provider readiness, generation, package locks, versions, QA history, output, copy, and export.</span>
+                      </span>
+                      <span className="flex shrink-0 flex-wrap items-center gap-2">
+                        <StudioStatusPill tone={step === 3 ? "gold" : "muted"}>{step === 3 ? "Active" : pkg ? "Ready" : "Idle"}</StudioStatusPill>
+                        <span className="rounded-full border border-[#263820] bg-[#050806]/70 px-3 py-1 text-[10px] font-black uppercase tracking-[0.14em] text-[#9da892]">Open</span>
+                      </span>
+                    </button>
+
+                    {step === 3 && (
+                      <div className="border-t border-[#263820] bg-[#050806]/34 p-2 sm:p-3">
+                        <Step3Generate
                 predator={predator}
                 prey={prey}
                 storyMode={storyMode}
@@ -2873,36 +3025,127 @@ export default function Page() {
                 onClearPinnedOutput={() => setPinnedOutput(null)}
                 onClearCreatorQaRuns={() => setCreatorQaRuns([])}
                 onBack={() => setStep(2)}
-              />
-            )}
+                        />
+                      </div>
+                    )}
+                  </section>
+                </div>
               </section>
 
-              <aside className={["space-y-4", step === 1 || step === 3 ? "xl:order-3 xl:grid xl:grid-cols-3 xl:gap-4 xl:space-y-0" : "xl:col-start-2 xl:row-start-2 xl:sticky xl:top-[420px] 2xl:col-start-auto 2xl:row-start-auto 2xl:top-36"].join(" ")}>
-                <StudioPanel className="p-4" variant="gold">
-                  <p className="text-[11px] font-black uppercase tracking-[0.22em] text-[#d9a94f]">Next actions</p>
-                  <div className="mt-3 grid gap-2">
-                    <Link
-                      key={compactStoryboardLinkMetadata.key}
-                      href={currentStoryboardHref}
-                      onClick={saveStoryboardHandoff}
-                      aria-label={compactStoryboardLinkMetadata.ariaLabel}
-                      title={compactStoryboardLinkMetadata.title}
-                      className="rounded-2xl border border-cyan-400/30 bg-cyan-500/10 px-3 py-2 text-sm font-semibold text-cyan-100 transition hover:border-cyan-300/70 hover:bg-cyan-500/15"
-                    >
-                      Open Storyboard for Current Setup
-                    </Link>
-                    <Link
-                      href={currentFourShotPhotoHref}
-                      onClick={saveFourShotPhotoHandoff}
-                      title={currentFourShotPhotoHref}
-                      className="rounded-2xl border border-[#d9a94f]/40 bg-[#d9a94f]/12 px-3 py-2 text-sm font-semibold text-[#f3c766] transition hover:border-[#d9a94f]/70 hover:bg-[#d9a94f]/18"
-                    >
-                      4-Shot Photo
-                    </Link>
+              <aside className="space-y-3 lg:col-span-2 2xl:col-span-1 2xl:sticky 2xl:top-[92px]">
+                <StudioPanel className="p-3" variant="default">
+                  <div className="flex flex-wrap items-start justify-between gap-3">
+                    <div className="min-w-0">
+                      <p className="text-[11px] font-black uppercase tracking-[0.22em] text-[#d9a94f]">Output Studio</p>
+                      <p className="mt-1 text-xs leading-5 text-[#c9d2bd]">Quick production map. Full copy/export controls remain inside Step 3.</p>
+                    </div>
+                    <StudioStatusPill tone={pkg ? "green" : "muted"}>{pkg ? "Package ready" : "Waiting"}</StudioStatusPill>
                   </div>
-                  <p className="mt-3 text-xs leading-5 text-[#c9d2bd]">
-                    These use the existing query params and localStorage handoff callbacks.
-                  </p>
+
+                  <div className="mt-4 grid grid-cols-2 gap-2 text-xs">
+                    <div className="rounded-2xl border border-[#263820] bg-[#050806]/72 px-3 py-2">
+                      <p className="text-[9px] font-black uppercase tracking-[0.14em] text-[#9da892]">Provider</p>
+                      <p className="mt-1 truncate font-black text-[#f7f1df]">{activeProvider === "gemini" ? "Gemini" : activeProvider}</p>
+                    </div>
+                    <div className="rounded-2xl border border-[#263820] bg-[#050806]/72 px-3 py-2">
+                      <p className="text-[9px] font-black uppercase tracking-[0.14em] text-[#9da892]">Fallback</p>
+                      <p className="mt-1 truncate font-black text-[#f7f1df]">{autoFallback ? "Auto on" : "Manual"}</p>
+                    </div>
+                  </div>
+
+                  <div className="mt-4 grid gap-2">
+                    {[
+                      {
+                        label: "Master Image",
+                        value: pkg?.imagePrompt ? "Ready" : "Pending",
+                        detail: pkg?.gptImage2Prompt ? "GPT Image 2 + master" : pkg?.imagePrompt ? "Master prompt" : "Generate package first",
+                        tone: pkg?.imagePrompt ? "ready" : "idle",
+                      },
+                      {
+                        label: "Storyboard",
+                        value: pkg?.shotImagePlan?.length ? String(pkg.shotImagePlan.length) + " frames" : "Pending",
+                        detail: pkg?.shotImagePlan?.length ? "Clean frame plan available" : "Storyboard prompt waits for output",
+                        tone: pkg?.shotImagePlan?.length ? "ready" : "idle",
+                      },
+                      {
+                        label: "Kling",
+                        value: pkg?.klingShots?.length ? String(pkg.klingShots.length) + " shots" : "Pending",
+                        detail: pkg?.klingNative15s ? "15s native prompt included" : "Motion prompt status",
+                        tone: pkg?.klingShots?.length ? "ready" : "idle",
+                      },
+                      {
+                        label: "Seedance",
+                        value: pkg?.seedanceShots?.length ? String(pkg.seedanceShots.length) + " shots" : "Pending",
+                        detail: pkg?.seedanceMultiShotPrompt ? "Multi-shot prompt included" : "Sequence prompt status",
+                        tone: pkg?.seedanceShots?.length ? "ready" : "idle",
+                      },
+                      {
+                        label: "Runway Fix",
+                        value: pkg?.runwayShots?.length ? String(pkg.runwayShots.length) + " refs" : "Pending",
+                        detail: pkg?.runwayWorkflowPack ? "Workflow pack available" : "I2V / repair path status",
+                        tone: pkg?.runwayShots?.length ? "ready" : "idle",
+                      },
+                      {
+                        label: "Caption + Hashtags",
+                        value: pkg?.hashtags ? String(pkg.hashtags.split(/\s+/).filter(Boolean).length) + " tags" : "Pending",
+                        detail: pkg?.caption ? "Caption ready" : "Facebook copy waits for output",
+                        tone: pkg?.caption && pkg?.hashtags ? "ready" : "idle",
+                      },
+                      {
+                        label: "CapCut Edit",
+                        value: pkg?.capCutPlan ? "Ready" : "Pending",
+                        detail: pkg?.capCutScript ? "Script + edit guide" : "Edit plan status",
+                        tone: pkg?.capCutPlan ? "ready" : "idle",
+                      },
+                      {
+                        label: "Export",
+                        value: pkg ? "Step 3" : "Pending",
+                        detail: pkg ? "Copy/TXT/JSON controls in Step 3" : "No package yet",
+                        tone: pkg ? "ready" : "idle",
+                      },
+                    ].map((item) => (
+                      <div
+                        key={item.label}
+                        className={[
+                          "rounded-2xl border px-3 py-2.5 transition",
+                          item.tone === "ready"
+                            ? "border-emerald-400/25 bg-emerald-500/8"
+                            : "border-[#263820] bg-[#071009]",
+                        ].join(" ")}
+                      >
+                        <div className="flex items-center justify-between gap-3">
+                          <span className="font-black text-[#dce8d1]">{item.label}</span>
+                          <span className={[
+                            "shrink-0 rounded-full border px-2 py-0.5 text-[10px] font-black uppercase tracking-[0.1em]",
+                            item.tone === "ready"
+                              ? "border-emerald-400/30 bg-emerald-500/12 text-emerald-100"
+                              : "border-[#314428] bg-[#050806]/70 text-[#9da892]",
+                          ].join(" ")}
+                          >
+                            {item.value}
+                          </span>
+                        </div>
+                        <p className="mt-1 text-[11px] leading-4 text-[#9da892]">{item.detail}</p>
+                      </div>
+                    ))}
+                  </div>
+
+                  <div className="mt-4 rounded-2xl border border-[#d9a94f]/25 bg-[#1d1607]/45 p-3">
+                    <div className="flex flex-wrap items-center justify-between gap-2">
+                      <div>
+                        <p className="text-[10px] font-black uppercase tracking-[0.16em] text-[#f3c766]">Copy / Export</p>
+                        <p className="mt-1 text-[11px] leading-4 text-[#c9d2bd]">Use the existing Step 3 output workbench so copy/export behavior stays unchanged.</p>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => setStep(3)}
+                        aria-label="Open Step 3 output workbench for copy and export controls"
+                        className="rounded-xl border border-[#d9a94f]/40 bg-[#d9a94f]/14 px-3 py-2 text-[11px] font-black text-[#f3c766] transition hover:border-[#d9a94f]/70 hover:bg-[#d9a94f]/20"
+                      >
+                        Open Step 3
+                      </button>
+                    </div>
+                  </div>
                 </StudioPanel>
 
                 <StudioPanel className="p-4" variant="muted">
@@ -2917,6 +3160,70 @@ export default function Page() {
                       <div key={label} className="flex items-center justify-between gap-3 rounded-2xl border border-[#263820] bg-[#071009] px-3 py-2 text-xs">
                         <span className="font-semibold text-[#9da892]">{label}</span>
                         <span className="font-black text-[#f7f1df]">{value}</span>
+                      </div>
+                    ))}
+                  </div>
+                </StudioPanel>
+
+                <StudioPanel className="p-4" variant="muted">
+                  <div className="flex flex-wrap items-center justify-between gap-3">
+                    <div>
+                      <p className="text-[11px] font-black uppercase tracking-[0.22em] text-[#d9a94f]">Post-Production Pulse</p>
+                      <p className="mt-1 text-xs leading-5 text-[#c9d2bd]">Status-only summary for fixes, QA, library, social packaging, and export readiness.</p>
+                    </div>
+                    <StudioStatusPill tone={pkg ? "gold" : "muted"}>{pkg ? "Review ready" : "Awaiting output"}</StudioStatusPill>
+                  </div>
+                  <div className="mt-4 grid gap-2 text-xs">
+                    {[
+                      {
+                        label: "Fix Center",
+                        value: setupFixFeedback ? "Fix feedback" : pkg ? "Available" : "Waiting",
+                        detail: setupFixFeedback || "Open Step 3 for targeted prompt repair and setup cleanup.",
+                        tone: setupFixFeedback || pkg ? "gold" : "idle",
+                      },
+                      {
+                        label: "QA History",
+                        value: String(creatorQaRuns.length) + " runs",
+                        detail: creatorQaRuns.length ? "Latest QA run is stored in the current browser session." : "QA runs record after package generation.",
+                        tone: creatorQaRuns.length ? "green" : "idle",
+                      },
+                      {
+                        label: "Library",
+                        value: pinnedOutput ? "Pinned output" : availableLastGeneratedOutput ? "Restore ready" : "Local only",
+                        detail: pinnedOutput ? "Pinned package can be restored from Step 3." : "Workflow presets and last-output restore stay unchanged.",
+                        tone: pinnedOutput || availableLastGeneratedOutput ? "cyan" : "idle",
+                      },
+                      {
+                        label: "Social Package",
+                        value: publishFlowSummary?.publishWorthy ? "Publish worthy" : pkg?.caption ? "Draft ready" : "Waiting",
+                        detail: pkg?.caption ? "Caption, CTA, and Facebook hashtag package are in Step 3." : "Generated package will populate social copy.",
+                        tone: publishFlowSummary?.publishWorthy || pkg?.caption ? "green" : "idle",
+                      },
+                      {
+                        label: "Export Readiness",
+                        value: pkg ? "Copy/export ready" : "Pending",
+                        detail: pkg ? "Existing copy, TXT, and JSON actions remain inside Step 3." : "Export unlocks after generation.",
+                        tone: pkg ? "gold" : "idle",
+                      },
+                    ].map((item) => (
+                      <div key={item.label} className="rounded-2xl border border-[#263820] bg-[#071009] px-3 py-2.5">
+                        <div className="flex items-center justify-between gap-3">
+                          <span className="font-black text-[#dce8d1]">{item.label}</span>
+                          <span className={[
+                            "shrink-0 rounded-full border px-2 py-0.5 text-[10px] font-black uppercase tracking-[0.1em]",
+                            item.tone === "green"
+                              ? "border-emerald-400/30 bg-emerald-500/12 text-emerald-100"
+                              : item.tone === "gold"
+                                ? "border-[#d9a94f]/35 bg-[#d9a94f]/12 text-[#f3c766]"
+                                : item.tone === "cyan"
+                                  ? "border-cyan-400/30 bg-cyan-500/10 text-cyan-100"
+                                  : "border-[#314428] bg-[#050806]/70 text-[#9da892]",
+                          ].join(" ")}
+                          >
+                            {item.value}
+                          </span>
+                        </div>
+                        <p className="mt-1 text-[11px] leading-4 text-[#9da892]">{item.detail}</p>
                       </div>
                     ))}
                   </div>
