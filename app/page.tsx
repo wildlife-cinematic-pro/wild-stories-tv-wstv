@@ -2289,10 +2289,10 @@ export default function Page() {
       {activeTab === "build" && (
         <div className="overflow-x-hidden bg-[#050806] text-[#f7f1df]">
           <div className="pointer-events-none fixed inset-0 -z-10 bg-[radial-gradient(circle_at_16%_8%,rgba(52,96,61,0.3),transparent_30%),radial-gradient(circle_at_86%_0%,rgba(217,169,79,0.12),transparent_28%),linear-gradient(135deg,#050806_0%,#09120d_44%,#111609_100%)]" />
-          <div className="mx-auto w-full max-w-none px-2 py-5 sm:px-4 sm:py-7 lg:px-5 xl:px-6 2xl:px-8">
+          <div className="mx-auto w-full max-w-none px-2 py-5 sm:px-4 sm:py-7 lg:px-3 xl:px-4 2xl:px-5">
             <div className="sticky top-0 z-30 mb-3 rounded-[22px] border border-[#d9a94f]/20 bg-[#071009]/94 p-3 shadow-[0_18px_70px_rgba(0,0,0,0.34)] backdrop-blur-xl">
-              <div className="grid gap-3 2xl:grid-cols-[minmax(0,1fr)_auto] 2xl:items-center">
-                <div className="grid gap-2 sm:grid-cols-2 xl:grid-cols-4 2xl:min-w-[920px]">
+              <div className="grid gap-3 xl:grid-cols-[minmax(0,1fr)_auto] xl:items-center">
+                <div className="grid gap-2 sm:grid-cols-2 xl:min-w-[820px] xl:grid-cols-4 2xl:min-w-[900px]">
                   {[
                     ["Animal Pair", currentGenerateSubjectPairLabel],
                     ["Story Mode", storyMode.replace(/_/g, " ")],
@@ -2305,7 +2305,7 @@ export default function Page() {
                     </div>
                   ))}
                 </div>
-                <div className="flex flex-wrap items-center justify-start gap-2 2xl:justify-end">
+                <div className="flex flex-wrap items-center justify-start gap-2 xl:justify-end">
                   <Link
                     key={compactStoryboardLinkMetadata.key}
                     href={currentStoryboardHref}
@@ -2345,7 +2345,7 @@ export default function Page() {
               </div>
             </div>
 
-            <div className="grid gap-3 lg:grid-cols-[200px_minmax(0,1fr)] lg:items-start 2xl:grid-cols-[220px_minmax(0,1fr)_280px] min-[1800px]:grid-cols-[230px_minmax(0,1fr)_300px]">
+            <div className="grid gap-2 lg:grid-cols-[180px_minmax(0,1fr)] lg:items-start xl:grid-cols-[188px_minmax(0,1fr)] xl:gap-3 min-[1900px]:grid-cols-[205px_minmax(0,1fr)_270px]">
               <aside className="hidden space-y-3 lg:sticky lg:top-[92px] lg:block">
                 <StudioPanel className="p-3" variant="muted">
                   <p className="text-[10px] font-black uppercase tracking-[0.2em] text-[#d9a94f]">Studio navigation</p>
@@ -2613,7 +2613,24 @@ export default function Page() {
                     </button>
 
                     {step === 1 && (
-                      <div className="border-t border-[#263820] bg-[#050806]/34 p-2 sm:p-3">
+                      <div className="step-one-production-canvas border-t border-[#263820] bg-[#050806]/34 p-2 sm:p-3">
+                        <style>{`
+                          @media (min-width: 1280px) and (max-width: 1899px) {
+                            .step-one-production-canvas > div > div:nth-child(2) {
+                              grid-template-columns: minmax(0, 1fr) !important;
+                            }
+
+                            .step-one-production-canvas > div > div:nth-child(2) > div:last-child {
+                              display: grid;
+                              grid-template-columns: repeat(2, minmax(0, 1fr));
+                              gap: 1rem;
+                            }
+
+                            .step-one-production-canvas > div > div:nth-child(2) > div:last-child > * {
+                              min-width: 0;
+                            }
+                          }
+                        `}</style>
                         <Step1Setup
                 predator={predator}
                 prey={prey}
@@ -3032,7 +3049,7 @@ export default function Page() {
                 </div>
               </section>
 
-              <aside className="space-y-3 lg:col-span-2 2xl:col-span-1 2xl:sticky 2xl:top-[92px]">
+              <aside className="space-y-3 lg:col-span-2 min-[1900px]:col-span-1 min-[1900px]:sticky min-[1900px]:top-[92px]">
                 <StudioPanel className="p-3" variant="default">
                   <div className="flex flex-wrap items-start justify-between gap-3">
                     <div className="min-w-0">
