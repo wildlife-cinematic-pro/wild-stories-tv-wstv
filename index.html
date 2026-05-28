@@ -800,6 +800,15 @@
       transform: scale(1.035);
     }
 
+    .gallery-card.full-photo-card img {
+      object-fit: contain;
+      background: #080A06;
+    }
+
+    .gallery-card.full-photo-card:hover img {
+      transform: scale(1.015);
+    }
+
     .gallery-card.bison-family img {
       object-position: 50% 50%;
     }
@@ -1372,7 +1381,7 @@
         </div>
 
         <div class="gallery-grid">
-          <figure class="gallery-card featured">
+          <figure class="gallery-card featured full-photo-card">
             <img src="assets/hero-bear-salmon.webp" alt="A bear standing above a waterfall as a salmon leaps through the whitewater" width="1920" height="1080" loading="lazy" decoding="async" />
             <figcaption class="gallery-caption">Falls at the Edge</figcaption>
           </figure>
@@ -1387,7 +1396,7 @@
             <figcaption class="gallery-caption">The Chase</figcaption>
           </figure>
 
-          <figure class="gallery-card elk-trail">
+          <figure class="gallery-card elk-trail full-photo-card">
             <img src="assets/wild-crew-elk-trail.webp" alt="An elk standing near a forest trail with a hiker in the background" width="1600" height="900" loading="lazy" decoding="async" />
             <figcaption class="gallery-caption">Trail Encounter</figcaption>
           </figure>
