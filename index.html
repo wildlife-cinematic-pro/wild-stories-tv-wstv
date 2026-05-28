@@ -1,0 +1,1382 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Wild Stories TV | Cinematic Wildlife-Inspired Stories</title>
+  <meta name="description" content="Wild Stories TV creates cinematic wildlife-inspired storytelling and wildlife entertainment crafted for nature lovers. Follow on Facebook and join the Wild Crew Messenger Channel." />
+  <meta name="theme-color" content="#070906" />
+  <link rel="icon" href="assets/favicon.png" type="image/png" />
+  <link rel="preload" href="assets/hero-bear-salmon.webp" as="image" type="image/webp" />
+
+  <meta property="og:title" content="Wild Stories TV | Cinematic Wildlife-Inspired Stories" />
+  <meta property="og:description" content="Cinematic wildlife-inspired storytelling and wildlife entertainment crafted for nature lovers. Follow Wild Stories TV on Facebook and join the Wild Crew." />
+  <meta property="og:type" content="website" />
+  <meta property="og:url" content="https://your-website-url.com/" />
+  <meta property="og:image" content="https://your-website-url.com/assets/og-wild-stories-tv.webp" />
+  <meta property="og:image:width" content="1200" />
+  <meta property="og:image:height" content="630" />
+  <meta name="twitter:card" content="summary_large_image" />
+
+  <style>
+    :root {
+      color-scheme: dark;
+      --forest: #070906;
+      --forest-2: #0d120d;
+      --forest-3: #141a13;
+      --cream: #f7efd8;
+      --warm: #c9b99a;
+      --muted: #8b806c;
+      --quiet: #5f6854;
+      --gold: #d89125;
+      --gold-light: #f3b65f;
+      --moss: #8a9a69;
+      --line: rgba(255, 255, 255, 0.12);
+      --line-soft: rgba(255, 255, 255, 0.08);
+      --shadow: 0 24px 70px rgba(0, 0, 0, 0.45);
+      --max: 1120px;
+      --radius: 8px;
+      --serif: "Iowan Old Style", "Palatino Linotype", Palatino, Georgia, serif;
+      --sans: Inter, "Avenir Next", "Segoe UI", system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    html {
+      scroll-behavior: smooth;
+    }
+
+    body {
+      margin: 0;
+      background: var(--forest);
+      color: var(--warm);
+      font-family: var(--sans);
+      font-size: 16px;
+      line-height: 1.65;
+      overflow-x: hidden;
+      -webkit-font-smoothing: antialiased;
+      text-rendering: optimizeLegibility;
+    }
+
+    body::before {
+      content: "";
+      position: fixed;
+      inset: 0;
+      z-index: -1;
+      background:
+        linear-gradient(180deg, rgba(216, 145, 37, 0.06), transparent 28rem),
+        linear-gradient(90deg, rgba(138, 154, 105, 0.05), transparent 48rem),
+        var(--forest);
+      pointer-events: none;
+    }
+
+    img {
+      display: block;
+      max-width: 100%;
+    }
+
+    a {
+      color: inherit;
+      text-decoration: none;
+    }
+
+    p {
+      margin: 0;
+    }
+
+    :focus-visible {
+      outline: 2px solid var(--gold-light);
+      outline-offset: 4px;
+    }
+
+    .skip-link {
+      position: fixed;
+      top: 1rem;
+      left: 1rem;
+      z-index: 100;
+      transform: translateY(-180%);
+      padding: 0.75rem 1rem;
+      border-radius: 999px;
+      background: var(--gold-light);
+      color: #121008;
+      font-weight: 800;
+      transition: transform 180ms ease;
+    }
+
+    .skip-link:focus {
+      transform: translateY(0);
+    }
+
+    .container {
+      width: min(100% - 2rem, var(--max));
+      margin-inline: auto;
+    }
+
+    .site-header {
+      position: sticky;
+      top: 0;
+      z-index: 60;
+      border-bottom: 1px solid var(--line-soft);
+      background: rgba(7, 9, 6, 0.78);
+      backdrop-filter: blur(18px);
+      -webkit-backdrop-filter: blur(18px);
+      transition: background 180ms ease, border-color 180ms ease;
+    }
+
+    .site-header.is-scrolled {
+      background: rgba(7, 9, 6, 0.94);
+      border-bottom-color: rgba(255, 255, 255, 0.16);
+    }
+
+    .nav {
+      min-height: 64px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 1rem;
+    }
+
+    .brand {
+      display: inline-flex;
+      align-items: center;
+      min-width: 0;
+      gap: 0.75rem;
+    }
+
+    .brand-mark {
+      width: 38px;
+      height: 38px;
+      flex: 0 0 auto;
+      display: grid;
+      place-items: center;
+      border: 1px solid rgba(243, 182, 95, 0.42);
+      border-radius: 50%;
+      background: linear-gradient(145deg, #f1b45e, #9d5d13);
+      color: #111008;
+      font-family: var(--serif);
+      font-size: 0.82rem;
+      font-weight: 900;
+      letter-spacing: 0;
+      box-shadow: 0 10px 24px rgba(216, 145, 37, 0.22);
+    }
+
+    .brand-copy {
+      display: grid;
+      min-width: 0;
+      gap: 0.08rem;
+    }
+
+    .brand-name {
+      color: var(--cream);
+      font-family: var(--serif);
+      font-size: clamp(1.08rem, 4vw, 1.35rem);
+      font-weight: 800;
+      line-height: 1;
+      white-space: nowrap;
+    }
+
+    .brand-subtitle {
+      color: var(--moss);
+      font-size: 0.67rem;
+      font-weight: 800;
+      letter-spacing: 0.18em;
+      line-height: 1.1;
+      text-transform: uppercase;
+      white-space: nowrap;
+    }
+
+    .nav-links {
+      display: none;
+      align-items: center;
+      gap: 1.15rem;
+      color: rgba(247, 239, 216, 0.72);
+      font-size: 0.88rem;
+      font-weight: 700;
+    }
+
+    .nav-links a {
+      padding: 0.25rem 0;
+      transition: color 160ms ease;
+    }
+
+    .nav-links a:hover {
+      color: var(--cream);
+    }
+
+    .button {
+      min-height: 46px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.48rem;
+      padding: 0.85rem 1.18rem;
+      border: 1px solid transparent;
+      border-radius: 999px;
+      background: var(--gold);
+      color: #111008;
+      font-size: 0.93rem;
+      font-weight: 850;
+      line-height: 1;
+      text-align: center;
+      box-shadow: 0 14px 34px rgba(216, 145, 37, 0.24);
+      transition: transform 160ms ease, background 160ms ease, border-color 160ms ease, color 160ms ease;
+    }
+
+    .button:hover {
+      background: var(--gold-light);
+      transform: translateY(-2px);
+    }
+
+    .button.secondary {
+      background: rgba(247, 239, 216, 0.08);
+      color: var(--cream);
+      border-color: rgba(247, 239, 216, 0.24);
+      box-shadow: none;
+    }
+
+    .button.secondary:hover {
+      border-color: rgba(243, 182, 95, 0.52);
+      color: var(--gold-light);
+    }
+
+    .button.small {
+      min-height: 44px;
+      padding: 0.72rem 0.98rem;
+      font-size: 0.84rem;
+      white-space: nowrap;
+    }
+
+    .mobile-short {
+      display: inline;
+    }
+
+    .desktop-full {
+      display: none;
+    }
+
+    .hero {
+      position: relative;
+      min-height: 80svh;
+      display: grid;
+      align-items: end;
+      overflow: hidden;
+      isolation: isolate;
+      border-bottom: 1px solid var(--line-soft);
+    }
+
+    .hero-media {
+      position: absolute;
+      inset: 0;
+      z-index: -3;
+    }
+
+    .hero-media img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      object-position: center 32%;
+      transform: scale(1.02);
+    }
+
+    .hero::before {
+      content: "";
+      position: absolute;
+      inset: 0;
+      z-index: -2;
+      background:
+        linear-gradient(180deg, rgba(7, 9, 6, 0.32) 0%, rgba(7, 9, 6, 0.42) 36%, rgba(7, 9, 6, 0.92) 100%),
+        linear-gradient(90deg, rgba(7, 9, 6, 0.88) 0%, rgba(7, 9, 6, 0.52) 48%, rgba(7, 9, 6, 0.34) 100%);
+    }
+
+    .hero::after {
+      content: "";
+      position: absolute;
+      inset: 0;
+      z-index: -1;
+      opacity: 0.12;
+      background-image:
+        linear-gradient(rgba(255, 255, 255, 0.10) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255, 255, 255, 0.08) 1px, transparent 1px);
+      background-size: 52px 52px;
+      mask-image: linear-gradient(180deg, transparent, #000 28%, transparent 88%);
+      -webkit-mask-image: linear-gradient(180deg, transparent, #000 28%, transparent 88%);
+    }
+
+    .hero-inner {
+      width: min(100% - 2rem, var(--max));
+      margin-inline: auto;
+      padding: clamp(5rem, 14vw, 8rem) 0 clamp(3rem, 9vw, 5.8rem);
+    }
+
+    .hero-copy {
+      max-width: 680px;
+    }
+
+    .kicker {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.6rem;
+      margin-bottom: 1rem;
+      color: var(--gold-light);
+      font-size: 0.72rem;
+      font-weight: 900;
+      letter-spacing: 0.2em;
+      text-transform: uppercase;
+    }
+
+    .kicker::before {
+      content: "";
+      width: 28px;
+      height: 1px;
+      background: currentColor;
+      opacity: 0.72;
+    }
+
+    h1,
+    h2,
+    h3 {
+      margin: 0;
+      color: var(--cream);
+      font-family: var(--serif);
+      font-weight: 850;
+      letter-spacing: 0;
+    }
+
+    h1 {
+      max-width: 760px;
+      font-size: clamp(3.05rem, 13vw, 7.5rem);
+      line-height: 0.9;
+      text-wrap: balance;
+      text-shadow: 0 16px 46px rgba(0, 0, 0, 0.64);
+    }
+
+    h1 span {
+      color: var(--gold-light);
+      font-style: italic;
+      font-weight: 700;
+    }
+
+    .hero-lede {
+      max-width: 580px;
+      margin-top: 1.2rem;
+      color: rgba(247, 239, 216, 0.88);
+      font-size: clamp(1.02rem, 2.8vw, 1.24rem);
+      line-height: 1.62;
+      text-shadow: 0 8px 28px rgba(0, 0, 0, 0.64);
+    }
+
+    .hero-actions,
+    .section-actions {
+      display: grid;
+      gap: 0.8rem;
+      margin-top: 1.65rem;
+    }
+
+    .hero-trust {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.55rem;
+      margin-top: 1.1rem;
+      color: rgba(247, 239, 216, 0.68);
+      font-size: 0.78rem;
+      font-weight: 800;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+    }
+
+    .hero-trust span {
+      padding: 0.35rem 0.58rem;
+      border: 1px solid rgba(247, 239, 216, 0.16);
+      border-radius: 999px;
+      background: rgba(7, 9, 6, 0.34);
+    }
+
+    section {
+      padding: clamp(4.4rem, 10vw, 7rem) 0;
+    }
+
+    .section-band {
+      border-top: 1px solid var(--line-soft);
+      border-bottom: 1px solid var(--line-soft);
+      background:
+        linear-gradient(180deg, rgba(255, 255, 255, 0.025), rgba(255, 255, 255, 0)),
+        var(--forest-2);
+    }
+
+    .section-head {
+      max-width: 720px;
+      margin-bottom: clamp(2rem, 5vw, 3rem);
+    }
+
+    .section-head.center {
+      margin-inline: auto;
+      text-align: center;
+    }
+
+    h2 {
+      font-size: clamp(2.3rem, 8.5vw, 4.8rem);
+      line-height: 0.96;
+      text-wrap: balance;
+    }
+
+    .section-lede {
+      max-width: 680px;
+      margin-top: 1rem;
+      color: var(--warm);
+      font-size: clamp(1rem, 2.5vw, 1.14rem);
+      line-height: 1.72;
+    }
+
+    .center .section-lede {
+      margin-inline: auto;
+    }
+
+    .about-layout {
+      display: grid;
+      gap: 2rem;
+      align-items: start;
+    }
+
+    .about-copy {
+      display: grid;
+      gap: 1.05rem;
+      max-width: 760px;
+      color: rgba(247, 239, 216, 0.76);
+      font-size: 1.03rem;
+    }
+
+    .trust-list {
+      display: grid;
+      gap: 0.75rem;
+    }
+
+    .trust-item {
+      padding: 1.05rem;
+      border: 1px solid var(--line-soft);
+      border-radius: var(--radius);
+      background: rgba(255, 255, 255, 0.025);
+    }
+
+    .trust-item strong {
+      display: block;
+      color: var(--cream);
+      font-family: var(--serif);
+      font-size: 1.35rem;
+      line-height: 1.05;
+    }
+
+    .trust-item span {
+      display: block;
+      margin-top: 0.28rem;
+      color: var(--muted);
+      font-size: 0.9rem;
+      line-height: 1.5;
+    }
+
+    .reel-grid {
+      display: grid;
+      gap: 1rem;
+    }
+
+    .reel-card {
+      position: relative;
+      min-height: 0;
+      aspect-ratio: 9 / 16;
+      overflow: hidden;
+      border: 1px solid var(--line-soft);
+      border-radius: var(--radius);
+      background: var(--forest-3);
+      box-shadow: var(--shadow);
+      transition: transform 180ms ease, border-color 180ms ease;
+    }
+
+    .reel-card:hover {
+      transform: translateY(-5px);
+      border-color: rgba(243, 182, 95, 0.54);
+    }
+
+    .reel-card img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      transition: transform 420ms ease;
+    }
+
+    .reel-card:hover img {
+      transform: scale(1.04);
+    }
+
+    .reel-card::after,
+    .pillar-card::after,
+    .gallery-card::after {
+      content: "";
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(180deg, transparent 28%, rgba(7, 9, 6, 0.5) 58%, rgba(7, 9, 6, 0.96) 100%);
+      pointer-events: none;
+    }
+
+    .reel-card .play {
+      position: absolute;
+      top: 0.9rem;
+      right: 0.9rem;
+      z-index: 2;
+      width: 42px;
+      height: 42px;
+      display: grid;
+      place-items: center;
+      border: 1px solid rgba(247, 239, 216, 0.28);
+      border-radius: 50%;
+      background: rgba(7, 9, 6, 0.45);
+      color: var(--cream);
+      font-size: 0.82rem;
+      backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
+    }
+
+    .reel-copy {
+      position: absolute;
+      right: 0;
+      bottom: 0;
+      left: 0;
+      z-index: 2;
+      padding: 1rem;
+    }
+
+    h3 {
+      font-size: clamp(1.45rem, 5vw, 1.8rem);
+      line-height: 1.02;
+      text-wrap: balance;
+    }
+
+    .reel-copy p,
+    .pillar-copy p {
+      margin-top: 0.4rem;
+      color: rgba(247, 239, 216, 0.78);
+      font-size: 0.9rem;
+      line-height: 1.5;
+    }
+
+    .text-link {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.35rem;
+      margin-top: 0.8rem;
+      color: var(--gold-light);
+      font-size: 0.86rem;
+      font-weight: 850;
+    }
+
+    .watch-note {
+      margin-top: 1.25rem;
+      color: var(--muted);
+      font-size: 0.88rem;
+      text-align: center;
+    }
+
+    .watch-note a {
+      color: var(--gold-light);
+      font-weight: 850;
+    }
+
+    .pillar-grid {
+      display: grid;
+      gap: 1rem;
+    }
+
+    .pillar-card {
+      position: relative;
+      min-height: 310px;
+      overflow: hidden;
+      border: 1px solid var(--line-soft);
+      border-radius: var(--radius);
+      background: var(--forest-3);
+      box-shadow: var(--shadow);
+    }
+
+    .pillar-card img {
+      width: 100%;
+      height: 100%;
+      min-height: inherit;
+      object-fit: cover;
+    }
+
+    .pillar-card.predator img {
+      object-position: 50% 48%;
+    }
+
+    .pillar-card.bonds img {
+      object-position: 50% 68%;
+    }
+
+    .pillar-card.giants img {
+      object-position: 50% 46%;
+    }
+
+    .pillar-card.survival img {
+      object-position: 48% 46%;
+    }
+
+    .pillar-copy {
+      position: absolute;
+      right: 0;
+      bottom: 0;
+      left: 0;
+      z-index: 2;
+      padding: 1.1rem;
+    }
+
+    .number {
+      display: block;
+      margin-bottom: 0.38rem;
+      color: var(--gold-light);
+      font-size: 0.72rem;
+      font-weight: 900;
+      letter-spacing: 0.2em;
+      text-transform: uppercase;
+    }
+
+    .crew-layout {
+      display: grid;
+      gap: 2rem;
+      align-items: center;
+    }
+
+    .crew-image {
+      position: relative;
+      overflow: hidden;
+      border: 1px solid rgba(243, 182, 95, 0.28);
+      border-radius: var(--radius);
+      background: var(--forest-3);
+      box-shadow: var(--shadow);
+      aspect-ratio: 4 / 5;
+    }
+
+    .crew-image img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      object-position: center 50%;
+    }
+
+    .crew-copy {
+      max-width: 610px;
+    }
+
+    .crew-copy .section-lede {
+      color: rgba(247, 239, 216, 0.78);
+    }
+
+    .crew-points {
+      display: grid;
+      gap: 0.7rem;
+      margin-top: 1.35rem;
+      color: rgba(247, 239, 216, 0.76);
+      font-size: 0.94rem;
+      font-weight: 700;
+    }
+
+    .crew-points span {
+      display: flex;
+      align-items: center;
+      gap: 0.6rem;
+    }
+
+    .crew-points span::before {
+      content: "";
+      width: 0.5rem;
+      height: 0.5rem;
+      flex: 0 0 auto;
+      border-radius: 50%;
+      background: var(--gold-light);
+      box-shadow: 0 0 0 4px rgba(216, 145, 37, 0.14);
+    }
+
+    .gallery-grid {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 0.85rem;
+    }
+
+    .gallery-card {
+      position: relative;
+      overflow: hidden;
+      border: 1px solid var(--line-soft);
+      border-radius: var(--radius);
+      background: var(--forest-3);
+      aspect-ratio: 4 / 3;
+    }
+
+    .gallery-card.tall {
+      aspect-ratio: 9 / 14;
+    }
+
+    .gallery-card img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      transition: transform 360ms ease;
+    }
+
+    .gallery-card:hover img {
+      transform: scale(1.035);
+    }
+
+    .gallery-card.bison-family img {
+      object-position: 50% 50%;
+    }
+
+    .gallery-card.elk-trail img {
+      object-position: 50% 12%;
+    }
+
+    .gallery-card.river img {
+      object-position: 50% 50%;
+    }
+
+    .gallery-card.roadside img,
+    .gallery-card.cooler img {
+      object-position: 50% 50%;
+    }
+
+    .gallery-caption {
+      position: absolute;
+      right: 0;
+      bottom: 0;
+      left: 0;
+      z-index: 2;
+      padding: 1.8rem 0.85rem 0.7rem;
+      background: linear-gradient(180deg, transparent, rgba(7, 9, 6, 0.86));
+      color: rgba(247, 239, 216, 0.9);
+      font-size: 0.82rem;
+      font-weight: 850;
+      line-height: 1.25;
+    }
+
+    .contact-layout {
+      display: grid;
+      gap: 2rem;
+      align-items: start;
+    }
+
+    .contact-links {
+      display: grid;
+      gap: 0.75rem;
+    }
+
+    .contact-link {
+      display: grid;
+      grid-template-columns: 1fr auto;
+      align-items: center;
+      gap: 1rem;
+      min-height: 58px;
+      padding: 0.95rem 1rem;
+      border: 1px solid var(--line-soft);
+      border-radius: var(--radius);
+      background: rgba(255, 255, 255, 0.025);
+      color: var(--cream);
+      font-weight: 800;
+      transition: border-color 160ms ease, background 160ms ease, color 160ms ease;
+    }
+
+    .contact-link:hover {
+      border-color: rgba(243, 182, 95, 0.5);
+      background: rgba(216, 145, 37, 0.07);
+      color: var(--gold-light);
+    }
+
+    .contact-link > span:first-child {
+      min-width: 0;
+      overflow-wrap: anywhere;
+    }
+
+    .contact-link small {
+      display: block;
+      margin-top: 0.12rem;
+      color: var(--muted);
+      font-size: 0.78rem;
+      font-weight: 700;
+      line-height: 1.35;
+    }
+
+    .site-footer {
+      padding: 3.5rem 0 1.5rem;
+      border-top: 1px solid var(--line-soft);
+      background: #050604;
+    }
+
+    .footer-layout {
+      display: grid;
+      gap: 2rem;
+    }
+
+    .footer-brand {
+      color: var(--cream);
+      font-family: var(--serif);
+      font-size: 1.75rem;
+      font-weight: 850;
+      line-height: 1;
+    }
+
+    .footer-tagline {
+      max-width: 330px;
+      margin-top: 0.55rem;
+      color: var(--muted);
+      font-size: 0.92rem;
+      line-height: 1.58;
+    }
+
+    .footer-nav {
+      display: grid;
+      gap: 0.55rem;
+    }
+
+    .footer-nav a {
+      width: fit-content;
+      color: rgba(247, 239, 216, 0.72);
+      font-size: 0.9rem;
+      font-weight: 750;
+    }
+
+    .footer-nav a:hover {
+      color: var(--gold-light);
+    }
+
+    .privacy-note {
+      padding: 1rem;
+      border: 1px solid var(--line-soft);
+      border-radius: var(--radius);
+      background: rgba(255, 255, 255, 0.02);
+      color: var(--muted);
+      font-size: 0.82rem;
+      line-height: 1.6;
+    }
+
+    .privacy-note strong {
+      color: var(--gold-light);
+    }
+
+    .footer-bottom {
+      display: grid;
+      gap: 0.35rem;
+      margin-top: 2rem;
+      padding-top: 1rem;
+      border-top: 1px solid var(--line-soft);
+      color: var(--quiet);
+      font-size: 0.82rem;
+    }
+
+    @media (max-width: 430px) {
+      .container,
+      .hero-inner {
+        width: min(100% - 1.5rem, var(--max));
+      }
+
+      .nav {
+        min-height: 60px;
+      }
+
+      .brand {
+        gap: 0.55rem;
+      }
+
+      .brand-mark {
+        width: 34px;
+        height: 34px;
+        font-size: 0.72rem;
+      }
+
+      .brand-name {
+        font-size: 1.02rem;
+      }
+
+      .brand-subtitle {
+        font-size: 0.58rem;
+        letter-spacing: 0.14em;
+      }
+
+      .button.small {
+        min-height: 44px;
+        padding-inline: 0.8rem;
+      }
+
+      .hero {
+        min-height: 78svh;
+      }
+
+      .hero-media img {
+        object-position: 55% 30%;
+      }
+
+      .hero-actions .button,
+      .section-actions .button {
+        width: 100%;
+      }
+
+      .hero-trust {
+        font-size: 0.7rem;
+      }
+    }
+
+    @media (min-width: 560px) {
+      .mobile-short {
+        display: none;
+      }
+
+      .desktop-full {
+        display: inline;
+      }
+
+      .hero-actions,
+      .section-actions {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+      }
+
+      .gallery-grid {
+        grid-template-columns: repeat(2, 1fr);
+      }
+    }
+
+    @media (min-width: 760px) {
+      .about-layout {
+        grid-template-columns: 1.35fr 0.75fr;
+      }
+
+      .reel-grid {
+        grid-template-columns: repeat(3, 1fr);
+      }
+
+      .pillar-grid {
+        grid-template-columns: repeat(2, 1fr);
+      }
+
+      .crew-layout {
+        grid-template-columns: minmax(250px, 0.82fr) minmax(0, 1fr);
+        gap: clamp(2rem, 6vw, 4rem);
+      }
+
+      .gallery-grid {
+        grid-template-columns: repeat(3, 1fr);
+      }
+
+      .gallery-card.featured {
+        grid-column: span 2;
+        aspect-ratio: 16 / 9;
+      }
+
+      .footer-layout {
+        grid-template-columns: 1fr 0.7fr 1fr;
+      }
+
+      .footer-bottom {
+        grid-template-columns: 1fr auto;
+        align-items: center;
+      }
+    }
+
+    @media (min-width: 880px) {
+      .contact-layout {
+        grid-template-columns: 1.35fr 0.75fr;
+      }
+    }
+
+    @media (min-width: 920px) {
+      .nav-links {
+        display: flex;
+      }
+
+      .hero {
+        min-height: 84svh;
+      }
+
+      .hero::before {
+        background:
+          linear-gradient(180deg, rgba(7, 9, 6, 0.2) 0%, rgba(7, 9, 6, 0.36) 42%, rgba(7, 9, 6, 0.92) 100%),
+          linear-gradient(90deg, rgba(7, 9, 6, 0.92) 0%, rgba(7, 9, 6, 0.62) 43%, rgba(7, 9, 6, 0.16) 100%);
+      }
+
+      .pillar-grid {
+        grid-template-columns: repeat(4, 1fr);
+      }
+
+      .pillar-card {
+        min-height: 360px;
+      }
+
+      .gallery-grid {
+        grid-template-columns: repeat(4, 1fr);
+      }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      html {
+        scroll-behavior: auto;
+      }
+
+      *,
+      *::before,
+      *::after {
+        transition-duration: 0.001ms !important;
+        animation-duration: 0.001ms !important;
+        animation-iteration-count: 1 !important;
+      }
+    }
+  </style>
+</head>
+<body>
+  <a class="skip-link" href="#main">Skip to main content</a>
+
+  <header class="site-header" id="site-header" aria-label="Site header">
+    <div class="container">
+      <nav class="nav" aria-label="Main navigation">
+        <a class="brand" href="#top" aria-label="Wild Stories TV home">
+          <span class="brand-mark" aria-hidden="true">WS</span>
+          <span class="brand-copy">
+            <span class="brand-name">Wild Stories TV</span>
+            <span class="brand-subtitle">Wild Crew</span>
+          </span>
+        </a>
+
+        <div class="nav-links" aria-label="Section links">
+          <a href="#about">About</a>
+          <a href="#watch">Featured</a>
+          <a href="#pillars">Stories</a>
+          <a href="#crew">Wild Crew</a>
+          <a href="#contact">Contact</a>
+        </div>
+
+        <a class="button small" href="https://www.facebook.com/wildstoriestv/" target="_blank" rel="noopener noreferrer" aria-label="Follow Wild Stories TV on Facebook">
+          <span class="desktop-full">Follow on Facebook</span>
+          <span class="mobile-short">Follow</span>
+        </a>
+      </nav>
+    </div>
+  </header>
+
+  <main id="main">
+    <section class="hero" id="top" aria-labelledby="hero-title">
+      <div class="hero-media" aria-hidden="true">
+        <img src="assets/hero-bear-salmon.webp" alt="" width="1920" height="1080" fetchpriority="high" decoding="async" />
+      </div>
+      <div class="hero-inner">
+        <div class="hero-copy">
+          <p class="kicker">Wild Stories TV</p>
+          <h1 id="hero-title">Where the <span>Wild</span> Comes to Life</h1>
+          <p class="hero-lede">
+            Cinematic wildlife-inspired storytelling crafted for nature lovers, built for the emotion and pace of Facebook.
+          </p>
+          <div class="hero-actions" aria-label="Primary actions">
+            <a class="button" href="https://www.facebook.com/wildstoriestv/" target="_blank" rel="noopener noreferrer">Follow Wild Stories TV</a>
+            <a class="button secondary" href="#watch">Watch Featured Stories</a>
+          </div>
+          <div class="hero-trust" aria-label="Brand positioning">
+            <span>Wildlife Entertainment</span>
+            <span>Nature Appreciation</span>
+            <span>Facebook-First</span>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section id="about" aria-labelledby="about-title">
+      <div class="container">
+        <div class="section-head">
+          <p class="kicker">About the Brand</p>
+          <h2 id="about-title">Cinematic nature stories with a careful voice.</h2>
+          <p class="section-lede">
+            Wild Stories TV is made for people who stop scrolling when the natural world feels powerful, emotional, and close.
+          </p>
+        </div>
+
+        <div class="about-layout">
+          <div class="about-copy">
+            <p>
+              Wild Stories TV creates cinematic wildlife-inspired storytelling for Facebook audiences. The page is built around short, memorable wildlife entertainment that celebrates nature, animal behavior, survival, family bonds, and the scale of the wild.
+            </p>
+            <p>
+              The brand is positioned as entertainment, not reporting, archival publishing, or real-time coverage. Each story is crafted with respect for nature lovers and positioned as entertainment inspired by the feeling of the natural world.
+            </p>
+            <p>
+              The Wild Crew community brings fans closer to new story drops, channel updates, and the moments that make wildlife storytelling feel worth sharing.
+            </p>
+          </div>
+
+          <aside class="trust-list" aria-label="Brand promises">
+            <div class="trust-item">
+              <strong>Premium</strong>
+              <span>Dark cinematic styling, strong imagery, and focused story pacing.</span>
+            </div>
+            <div class="trust-item">
+              <strong>Respectful</strong>
+              <span>Safe wording centered on wildlife entertainment and nature appreciation.</span>
+            </div>
+            <div class="trust-item">
+              <strong>Social</strong>
+              <span>Built to send visitors to Facebook and the Wild Crew Messenger Channel.</span>
+            </div>
+          </aside>
+        </div>
+      </div>
+    </section>
+
+    <section class="section-band" id="watch" aria-labelledby="watch-title">
+      <div class="container">
+        <div class="section-head center">
+          <p class="kicker">Featured Stories</p>
+          <h2 id="watch-title">Start with the stories built for the feed.</h2>
+          <p class="section-lede">
+            Three short-form story worlds shaped for suspense, emotion, and the pace of Facebook wildlife fans.
+          </p>
+        </div>
+
+        <div class="reel-grid" aria-label="Featured story cards">
+          <a class="reel-card" href="https://www.facebook.com/wildstoriestv/" target="_blank" rel="noopener noreferrer" aria-label="Watch Bear River Chase on Facebook">
+            <img src="assets/reel-bear-river-chase.webp" alt="Two bears moving through a rushing river in a dramatic wildlife-inspired scene" width="720" height="1280" loading="lazy" decoding="async" />
+            <span class="play" aria-hidden="true">&#9654;</span>
+            <div class="reel-copy">
+              <h3>Bear River Chase</h3>
+              <p>Rain, whitewater, and instinct create a tense river sequence.</p>
+              <span class="text-link">Watch on Facebook &#8594;</span>
+            </div>
+          </a>
+
+          <a class="reel-card" href="https://www.facebook.com/wildstoriestv/" target="_blank" rel="noopener noreferrer" aria-label="Watch Roadside Cub on Facebook">
+            <img src="assets/reel-bear-roadside-cub.webp" alt="A small black bear cub beside a roadside guardrail with traffic in the distance" width="720" height="1280" loading="lazy" decoding="async" />
+            <span class="play" aria-hidden="true">&#9654;</span>
+            <div class="reel-copy">
+              <h3>Roadside Cub</h3>
+              <p>A tiny roadside figure becomes the center of a careful survival story.</p>
+              <span class="text-link">Watch on Facebook &#8594;</span>
+            </div>
+          </a>
+
+          <a class="reel-card" href="https://www.facebook.com/wildstoriestv/" target="_blank" rel="noopener noreferrer" aria-label="Watch Campground Visitors on Facebook">
+            <img src="assets/reel-bear-cooler-cub.webp" alt="A black bear near a cooler while a cub watches from a picnic table in a forest campground" width="720" height="1280" loading="lazy" decoding="async" />
+            <span class="play" aria-hidden="true">&#9654;</span>
+            <div class="reel-copy">
+              <h3>Campground Visitors</h3>
+              <p>A forest setting, a curious cub, and a story shaped around tension.</p>
+              <span class="text-link">Watch on Facebook &#8594;</span>
+            </div>
+          </a>
+        </div>
+
+        <p class="watch-note">
+          Follow <a href="https://www.facebook.com/wildstoriestv/" target="_blank" rel="noopener noreferrer">Wild Stories TV on Facebook</a> for the full story feed.
+        </p>
+      </div>
+    </section>
+
+    <section id="pillars" aria-labelledby="pillars-title">
+      <div class="container">
+        <div class="section-head">
+          <p class="kicker">Story Pillars</p>
+          <h2 id="pillars-title">Four lanes for every wild moment.</h2>
+          <p class="section-lede">
+            Each pillar gives the brand a repeatable editorial shape while keeping the tone cinematic, emotional, and safe.
+          </p>
+        </div>
+
+        <div class="pillar-grid">
+          <article class="pillar-card predator">
+            <img src="assets/pillar-predator-prey.webp" alt="A mountain lion chasing a young deer through dry grass" width="900" height="675" loading="lazy" decoding="async" />
+            <div class="pillar-copy">
+              <span class="number">01</span>
+              <h3>Predator &amp; Prey</h3>
+              <p>Momentum, instinct, and the split-second rhythm of survival.</p>
+            </div>
+          </article>
+
+          <article class="pillar-card bonds">
+            <img src="assets/pillar-wild-bonds-bison.webp" alt="A bison mother walking beside a small calf on an open road" width="900" height="675" loading="lazy" decoding="async" />
+            <div class="pillar-copy">
+              <span class="number">02</span>
+              <h3>Wild Bonds</h3>
+              <p>Family, protection, and the softer emotional side of the wild.</p>
+            </div>
+          </article>
+
+          <article class="pillar-card giants">
+            <img src="assets/pillar-natures-giants-bear.webp" alt="A large bear standing in rushing water near a waterfall" width="900" height="675" loading="lazy" decoding="async" />
+            <div class="pillar-copy">
+              <span class="number">03</span>
+              <h3>Nature's Giants</h3>
+              <p>Scale, power, and the presence of animals that fill the frame.</p>
+            </div>
+          </article>
+
+          <article class="pillar-card survival">
+            <img src="assets/pillar-survival-deer-ice.webp" alt="A deer on a frozen lake with people in the distance guiding a rope" width="900" height="675" loading="lazy" decoding="async" />
+            <div class="pillar-copy">
+              <span class="number">04</span>
+              <h3>Survival Stories</h3>
+              <p>Cold, distance, danger, and the hope that keeps a story moving.</p>
+            </div>
+          </article>
+        </div>
+      </div>
+    </section>
+
+    <section class="section-band" id="crew" aria-labelledby="crew-title">
+      <div class="container">
+        <div class="crew-layout">
+          <figure class="crew-image">
+            <img src="assets/wild-crew-bison-family.webp" alt="A bison and calf facing forward on a golden road with open country behind them" width="950" height="1688" loading="lazy" decoding="async" />
+          </figure>
+
+          <div class="crew-copy">
+            <p class="kicker">Community</p>
+            <h2 id="crew-title">Join the Wild Crew.</h2>
+            <p class="section-lede">
+              Wild Crew is the community side of Wild Stories TV, made for Facebook wildlife fans who want new story drops, channel updates, and a closer connection to the brand.
+            </p>
+            <div class="crew-points" aria-label="Wild Crew highlights">
+              <span>Messenger Channel updates for nature lovers</span>
+              <span>Simple ways to keep up with the Facebook story feed</span>
+              <span>A warm channel for fans who want to follow along</span>
+            </div>
+            <div class="section-actions" aria-label="Wild Crew actions">
+              <a class="button" href="https://www.messenger.com/channel/wildstoriestv" target="_blank" rel="noopener noreferrer">Join the Wild Crew Channel</a>
+              <a class="button secondary" href="https://www.facebook.com/wildstoriestv/" target="_blank" rel="noopener noreferrer">Follow on Facebook</a>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section id="gallery" aria-labelledby="gallery-title">
+      <div class="container">
+        <div class="section-head center">
+          <p class="kicker">Wild Moments</p>
+          <h2 id="gallery-title">A curated look at wild moments.</h2>
+          <p class="section-lede">
+            A tight visual set gives the brand texture, atmosphere, and a clearer sense of the stories Wild Crew members follow.
+          </p>
+        </div>
+
+        <div class="gallery-grid">
+          <figure class="gallery-card featured">
+            <img src="assets/hero-bear-salmon.webp" alt="A bear standing above a waterfall as a salmon leaps through the whitewater" width="1920" height="1080" loading="lazy" decoding="async" />
+            <figcaption class="gallery-caption">Falls at the Edge</figcaption>
+          </figure>
+
+          <figure class="gallery-card tall bison-family">
+            <img src="assets/wild-crew-bison-family.webp" alt="A bison and calf on a sunlit road with a herd in the far background" width="950" height="1688" loading="lazy" decoding="async" />
+            <figcaption class="gallery-caption">Golden Hour Family</figcaption>
+          </figure>
+
+          <figure class="gallery-card">
+            <img src="assets/pillar-predator-prey.webp" alt="A cougar pursuing a young deer through open brush" width="900" height="675" loading="lazy" decoding="async" />
+            <figcaption class="gallery-caption">The Chase</figcaption>
+          </figure>
+
+          <figure class="gallery-card elk-trail">
+            <img src="assets/wild-crew-elk-trail.webp" alt="An elk standing near a forest trail with a hiker in the background" width="1600" height="900" loading="lazy" decoding="async" />
+            <figcaption class="gallery-caption">Trail Encounter</figcaption>
+          </figure>
+
+          <figure class="gallery-card river tall">
+            <img src="assets/reel-bear-river-chase.webp" alt="Two bears moving through a rough river surrounded by dark forest" width="720" height="1280" loading="lazy" decoding="async" />
+            <figcaption class="gallery-caption">River Motion</figcaption>
+          </figure>
+
+          <figure class="gallery-card">
+            <img src="assets/pillar-survival-deer-ice.webp" alt="A deer standing on ice with two people and a rope in the distance" width="900" height="675" loading="lazy" decoding="async" />
+            <figcaption class="gallery-caption">Frozen Crossing</figcaption>
+          </figure>
+
+          <figure class="gallery-card roadside tall">
+            <img src="assets/reel-bear-roadside-cub.webp" alt="A small black bear cub standing beside a highway guardrail" width="720" height="1280" loading="lazy" decoding="async" />
+            <figcaption class="gallery-caption">Roadside Pause</figcaption>
+          </figure>
+
+          <figure class="gallery-card cooler tall">
+            <img src="assets/reel-bear-cooler-cub.webp" alt="A black bear and cub beside a picnic table and cooler in a campground" width="720" height="1280" loading="lazy" decoding="async" />
+            <figcaption class="gallery-caption">Campground Tension</figcaption>
+          </figure>
+        </div>
+      </div>
+    </section>
+
+    <section class="section-band" id="contact" aria-labelledby="contact-title">
+      <div class="container">
+        <div class="contact-layout">
+          <div class="section-head">
+            <p class="kicker">Contact</p>
+            <h2 id="contact-title">For partnerships, media, and collaboration.</h2>
+            <p class="section-lede">
+              Reach Wild Stories TV directly for collaboration, sponsorship, creative partnerships, or brand inquiries.
+            </p>
+          </div>
+
+          <div class="contact-links" aria-label="Contact links">
+            <a class="contact-link" href="mailto:wildstoriestvlive@gmail.com">
+              <span>Email<small>wildstoriestvlive@gmail.com</small></span>
+              <span aria-hidden="true">&#8594;</span>
+            </a>
+            <a class="contact-link" href="https://www.facebook.com/wildstoriestv/" target="_blank" rel="noopener noreferrer">
+              <span>Facebook Page<small>Follow Wild Stories TV</small></span>
+              <span aria-hidden="true">&#8594;</span>
+            </a>
+            <a class="contact-link" href="https://www.messenger.com/channel/wildstoriestv" target="_blank" rel="noopener noreferrer">
+              <span>Messenger Channel<small>Join the Wild Crew</small></span>
+              <span aria-hidden="true">&#8594;</span>
+            </a>
+          </div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <footer class="site-footer" aria-label="Site footer">
+    <div class="container">
+      <div class="footer-layout">
+        <div>
+          <div class="footer-brand">Wild Stories TV</div>
+          <p class="footer-tagline">Cinematic wildlife-inspired storytelling crafted for entertainment, community, and nature appreciation.</p>
+        </div>
+
+        <nav class="footer-nav" aria-label="Footer navigation">
+          <a href="#about">About</a>
+          <a href="#watch">Featured Stories</a>
+          <a href="#pillars">Story Pillars</a>
+          <a href="#crew">Wild Crew</a>
+          <a href="#gallery">Gallery</a>
+          <a href="#contact">Contact</a>
+        </nav>
+
+        <div class="privacy-note" id="privacy">
+          <strong>Privacy note:</strong> This static website does not collect personal information through forms, accounts, payments, or analytics scripts. If you contact Wild Stories TV by email, Facebook, or Messenger, your message is used only to respond to your inquiry. Wild Stories TV uses cinematic storytelling workflows, including AI-assisted production tools, for wildlife entertainment and nature appreciation.
+        </div>
+      </div>
+
+      <div class="footer-bottom">
+        <span>&copy; 2026 Wild Stories TV. All rights reserved.</span>
+        <span><a href="https://www.facebook.com/wildstoriestv/" target="_blank" rel="noopener noreferrer">Facebook</a> &middot; <a href="https://www.messenger.com/channel/wildstoriestv" target="_blank" rel="noopener noreferrer">Wild Crew Channel</a></span>
+      </div>
+    </div>
+  </footer>
+
+  <script>
+    (function () {
+      var header = document.getElementById('site-header');
+      if (!header) return;
+
+      function setHeaderState() {
+        if (window.scrollY > 24) {
+          header.classList.add('is-scrolled');
+        } else {
+          header.classList.remove('is-scrolled');
+        }
+      }
+
+      window.addEventListener('scroll', setHeaderState, { passive: true });
+      setHeaderState();
+    }());
+  </script>
+</body>
+</html>
