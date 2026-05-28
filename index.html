@@ -26,8 +26,8 @@
       --forest-3: #141a13;
       --cream: #f7efd8;
       --warm: #c9b99a;
-      --muted: #8b806c;
-      --quiet: #5f6854;
+      --muted: #a1937c;
+      --quiet: #748164;
       --gold: #d89125;
       --gold-light: #f3b65f;
       --moss: #8a9a69;
@@ -203,6 +203,82 @@
 
     .nav-links a:hover {
       color: var(--cream);
+    }
+
+    .nav-actions {
+      display: inline-flex;
+      align-items: center;
+      justify-content: flex-end;
+      gap: 0.55rem;
+      flex: 0 0 auto;
+    }
+
+    .menu-toggle {
+      width: 44px;
+      height: 44px;
+      display: inline-flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 5px;
+      border: 1px solid rgba(247, 239, 216, 0.18);
+      border-radius: 999px;
+      background: rgba(247, 239, 216, 0.07);
+      color: var(--cream);
+      cursor: pointer;
+      transition: border-color 160ms ease, background 160ms ease;
+    }
+
+    .menu-toggle:hover,
+    .menu-toggle[aria-expanded="true"] {
+      border-color: rgba(243, 182, 95, 0.48);
+      background: rgba(216, 145, 37, 0.12);
+    }
+
+    .menu-toggle span {
+      width: 17px;
+      height: 2px;
+      border-radius: 999px;
+      background: currentColor;
+      transition: transform 160ms ease, opacity 160ms ease;
+    }
+
+    .menu-toggle[aria-expanded="true"] span:nth-child(1) {
+      transform: translateY(7px) rotate(45deg);
+    }
+
+    .menu-toggle[aria-expanded="true"] span:nth-child(2) {
+      opacity: 0;
+    }
+
+    .menu-toggle[aria-expanded="true"] span:nth-child(3) {
+      transform: translateY(-7px) rotate(-45deg);
+    }
+
+    .mobile-menu {
+      display: grid;
+      gap: 0.15rem;
+      padding: 0.4rem 0 0.85rem;
+      border-top: 1px solid var(--line-soft);
+    }
+
+    .mobile-menu[hidden] {
+      display: none;
+    }
+
+    .mobile-menu a {
+      min-height: 44px;
+      display: flex;
+      align-items: center;
+      padding: 0.72rem 0.15rem;
+      color: rgba(247, 239, 216, 0.82);
+      font-size: 0.94rem;
+      font-weight: 800;
+    }
+
+    .mobile-menu a:hover,
+    .mobile-menu a:focus-visible {
+      color: var(--gold-light);
     }
 
     .button {
@@ -658,7 +734,7 @@
       width: 100%;
       height: 100%;
       object-fit: cover;
-      object-position: center 50%;
+      object-position: center 46%;
     }
 
     .crew-copy {
@@ -733,7 +809,7 @@
     }
 
     .gallery-card.river img {
-      object-position: 50% 50%;
+      object-position: 50% 46%;
     }
 
     .gallery-card.roadside img,
@@ -899,7 +975,21 @@
 
       .button.small {
         min-height: 44px;
-        padding-inline: 0.8rem;
+        padding-inline: 0.82rem;
+      }
+
+      .section-lede,
+      .about-copy {
+        color: rgba(247, 239, 216, 0.82);
+      }
+
+      .reel-copy p,
+      .pillar-copy p {
+        font-size: 0.94rem;
+      }
+
+      .gallery-caption {
+        font-size: 0.86rem;
       }
 
       .hero {
@@ -907,7 +997,7 @@
       }
 
       .hero-media img {
-        object-position: 55% 30%;
+        object-position: 54% 34%;
       }
 
       .hero-actions .button,
@@ -989,6 +1079,14 @@
         display: flex;
       }
 
+      .menu-toggle {
+        display: none;
+      }
+
+      .mobile-menu {
+        display: none !important;
+      }
+
       .hero {
         min-height: 84svh;
       }
@@ -1049,10 +1147,25 @@
           <a href="#contact">Contact</a>
         </div>
 
-        <a class="button small" href="https://www.facebook.com/wildstoriestv/" target="_blank" rel="noopener noreferrer" aria-label="Follow Wild Stories TV on Facebook">
-          <span class="desktop-full">Follow on Facebook</span>
-          <span class="mobile-short">Follow</span>
-        </a>
+        <div class="nav-actions">
+          <a class="button small" href="https://www.facebook.com/wildstoriestv/" target="_blank" rel="noopener noreferrer" aria-label="Follow Wild Stories TV on Facebook">
+            <span class="desktop-full">Follow on Facebook</span>
+            <span class="mobile-short">Follow</span>
+          </a>
+          <button class="menu-toggle" type="button" aria-label="Open menu" aria-expanded="false" aria-controls="mobile-menu">
+            <span aria-hidden="true"></span>
+            <span aria-hidden="true"></span>
+            <span aria-hidden="true"></span>
+          </button>
+        </div>
+      </nav>
+      <nav class="mobile-menu" id="mobile-menu" aria-label="Mobile navigation" hidden>
+        <a href="#about">About</a>
+        <a href="#watch">Watch</a>
+        <a href="#pillars">Stories</a>
+        <a href="#crew">Wild Crew</a>
+        <a href="#gallery">Gallery</a>
+        <a href="#contact">Contact</a>
       </nav>
     </div>
   </header>
@@ -1070,8 +1183,8 @@
             Cinematic wildlife-inspired storytelling crafted for nature lovers, built for the emotion and pace of Facebook.
           </p>
           <div class="hero-actions" aria-label="Primary actions">
-            <a class="button" href="https://www.facebook.com/wildstoriestv/" target="_blank" rel="noopener noreferrer">Follow Wild Stories TV</a>
-            <a class="button secondary" href="#watch">Watch Featured Stories</a>
+            <a class="button" href="https://www.messenger.com/channel/wildstoriestv" target="_blank" rel="noopener noreferrer">Join the Wild Crew</a>
+            <a class="button secondary" href="https://www.facebook.com/wildstoriestv/" target="_blank" rel="noopener noreferrer">Follow on Facebook</a>
           </div>
           <div class="hero-trust" aria-label="Brand positioning">
             <span>Wildlife Entertainment</span>
@@ -1364,7 +1477,34 @@
   <script>
     (function () {
       var header = document.getElementById('site-header');
+      var menuButton = document.querySelector('.menu-toggle');
+      var mobileMenu = document.getElementById('mobile-menu');
       if (!header) return;
+
+      function setMenu(open) {
+        if (!menuButton || !mobileMenu) return;
+        menuButton.setAttribute('aria-expanded', open ? 'true' : 'false');
+        menuButton.setAttribute('aria-label', open ? 'Close menu' : 'Open menu');
+        mobileMenu.hidden = !open;
+      }
+
+      if (menuButton && mobileMenu) {
+        menuButton.addEventListener('click', function () {
+          setMenu(menuButton.getAttribute('aria-expanded') !== 'true');
+        });
+
+        mobileMenu.addEventListener('click', function (event) {
+          if (event.target && event.target.tagName === 'A') {
+            setMenu(false);
+          }
+        });
+
+        document.addEventListener('keydown', function (event) {
+          if (event.key === 'Escape') {
+            setMenu(false);
+          }
+        });
+      }
 
       function setHeaderState() {
         if (window.scrollY > 24) {
