@@ -346,17 +346,49 @@
       position: absolute;
       inset: 0;
       z-index: -3;
+      overflow: hidden;
       background: #080A06;
+    }
+
+    .hero-media::before {
+      content: "";
+      position: absolute;
+      inset: -2%;
+      z-index: 0;
+      background:
+        linear-gradient(180deg, rgba(8, 10, 6, 0.12) 0%, rgba(8, 10, 6, 0.44) 76%, rgba(8, 10, 6, 0.86) 100%),
+        url("assets/hero-bear-salmon.webp") center center / cover no-repeat;
+      filter: blur(18px);
+      opacity: 0.58;
+      transform: scale(1.04);
+    }
+
+
+    .hero-media::after {
+      content: "";
+      position: absolute;
+      z-index: 2;
+      top: clamp(4.5rem, 6svh, 5.75rem);
+      left: 50%;
+      width: 100%;
+      height: min(78svh, 820px);
+      max-height: calc(100% - 1rem);
+      background: url("assets/hero-bear-salmon.webp") center center / contain no-repeat;
+      transform: translateX(-50%);
     }
 
     .hero-media img {
       position: absolute;
-      top: 0;
-      left: 0;
+      z-index: 1;
+      top: clamp(4.5rem, 6svh, 5.75rem);
+      left: 50%;
       width: 100%;
-      height: 100%;
-      object-fit: cover;
-      object-position: center 50%;
+      max-width: none;
+      height: min(78svh, 820px);
+      max-height: calc(100% - 1rem);
+      object-fit: contain;
+      object-position: center center;
+      transform: translateX(-50%);
     }
 
     .hero::before {
@@ -1008,9 +1040,20 @@
         min-height: 78svh;
       }
 
-      .hero-media img {
-        height: 72%;
-        object-position: 50% 50%;
+      .hero-media img,
+      .hero-media::after {
+        top: 4.1rem;
+        width: 100%;
+        height: 60svh;
+        background-size: 100% auto;
+        background-position: center top;
+        object-position: center top;
+      }
+
+      .hero::before {
+        background:
+          linear-gradient(180deg, rgba(7, 9, 6, 0.02) 0%, rgba(7, 9, 6, 0.14) 36%, rgba(7, 9, 6, 0.88) 100%),
+          linear-gradient(90deg, rgba(7, 9, 6, 0.5) 0%, rgba(7, 9, 6, 0.34) 54%, rgba(7, 9, 6, 0.14) 100%);
       }
 
       .hero-actions .button,
@@ -1088,9 +1131,11 @@
     }
 
     @media (max-aspect-ratio: 4 / 3) and (min-width: 431px) {
-      .hero-media img {
-        height: 82%;
-        object-position: 50% 50%;
+      .hero-media img,
+      .hero-media::after {
+        top: 4.75rem;
+        height: 68svh;
+        object-position: center center;
       }
     }
 
