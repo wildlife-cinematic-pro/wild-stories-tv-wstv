@@ -332,78 +332,190 @@
       display: none;
     }
 
-    .hero {
+    /* ═══════════════════════════════════════════
+       HERO — Two-layer cinematic split layout
+       ═══════════════════════════════════════════ */
+
+    .wstv-hero {
       position: relative;
-      min-height: 80svh;
-      display: grid;
-      align-items: end;
-      overflow: hidden;
-      isolation: isolate;
-      border-bottom: 1px solid var(--line-soft);
-    }
-
-    .hero-media {
-      position: absolute;
-      inset: 0;
-      z-index: -3;
-      overflow: hidden;
-      background: #080A06;
-    }
-
-    .hero-media::before {
-      content: "";
-      position: absolute;
-      inset: -2%;
-      z-index: 0;
-      background: url("assets/hero-bear-salmon.webp") center center / cover no-repeat;
-      filter: blur(18px);
-      opacity: 0.46;
-      transform: scale(1.04);
-    }
-
-    .hero-media img {
-      position: absolute;
-      z-index: 1;
-      inset: 0;
       width: 100%;
-      max-width: none;
+      min-height: 100svh;
+      padding: 0;
+      overflow: hidden;
+      display: flex;
+      align-items: center;
+      border-bottom: 1px solid var(--line-soft);
+      isolation: isolate;
+    }
+
+    .wstv-hero__backdrop {
+      position: absolute;
+      inset: 0;
+      z-index: 0;
+      background-image: url("assets/hero-bear-salmon.webp");
+      background-size: cover;
+      background-position: center 30%;
+      filter: blur(18px) brightness(0.28) saturate(0.6);
+      transform: scale(1.08);
+    }
+
+    .wstv-hero__backdrop-overlay {
+      position: absolute;
+      inset: 0;
+      z-index: 1;
+      background: linear-gradient(135deg, rgba(7, 9, 6, 0.78) 0%, rgba(7, 9, 6, 0.42) 58%, rgba(7, 9, 6, 0.72) 100%);
+    }
+
+    .wstv-hero__inner {
+      position: relative;
+      z-index: 2;
+      width: min(100% - 2rem, 1200px);
+      margin: 0 auto;
+      padding: clamp(5.5rem, 10vw, 7rem) 0 clamp(3.5rem, 7vw, 5rem);
+      display: grid;
+      grid-template-columns: minmax(0, 1.05fr) minmax(0, 0.95fr);
+      gap: clamp(2rem, 5vw, 3.5rem);
+      align-items: center;
+    }
+
+    .wstv-hero__image-frame {
+      position: relative;
+      overflow: hidden;
+      border: 1px solid rgba(247, 239, 216, 0.12);
+      border-radius: 6px;
+      aspect-ratio: 4 / 3;
+      background: #080A06;
+      box-shadow: 0 28px 80px rgba(0, 0, 0, 0.58), 0 0 0 1px rgba(243, 182, 95, 0.06);
+    }
+
+    .wstv-hero__image-frame img {
+      width: 100%;
       height: 100%;
       object-fit: contain;
-      object-position: center top;
+      display: block;
     }
 
-    .hero::before {
-      content: "";
+    .wstv-hero__frame-vignette {
       position: absolute;
       inset: 0;
-      z-index: -2;
-      background:
-        linear-gradient(180deg, rgba(7, 9, 6, 0.04) 0%, rgba(7, 9, 6, 0.18) 34%, rgba(7, 9, 6, 0.72) 72%, rgba(7, 9, 6, 0.94) 100%),
-        linear-gradient(90deg, rgba(7, 9, 6, 0.82) 0%, rgba(7, 9, 6, 0.44) 48%, rgba(7, 9, 6, 0.12) 100%);
+      pointer-events: none;
+      background: radial-gradient(ellipse at center, transparent 58%, rgba(7, 9, 6, 0.5) 100%);
     }
 
-    .hero::after {
-      content: "";
+    .wstv-hero__frame-badge {
       position: absolute;
-      inset: 0;
-      z-index: -1;
-      opacity: 0.12;
-      background-image:
-        linear-gradient(rgba(255, 255, 255, 0.10) 1px, transparent 1px),
-        linear-gradient(90deg, rgba(255, 255, 255, 0.08) 1px, transparent 1px);
-      background-size: 52px 52px;
-      mask-image: linear-gradient(180deg, transparent, #000 28%, transparent 88%);
-      -webkit-mask-image: linear-gradient(180deg, transparent, #000 28%, transparent 88%);
+      bottom: 14px;
+      left: 14px;
+      color: rgba(247, 239, 216, 0.58);
+      font-family: var(--serif);
+      font-size: 0.76rem;
+      font-style: italic;
+      letter-spacing: 0.06em;
     }
 
-    .hero-inner {
-      width: min(100% - 2rem, var(--max));
-      margin-inline: auto;
-      padding: clamp(5rem, 14vw, 8rem) 0 clamp(3rem, 9vw, 5.8rem);
+    .wstv-hero__text {
+      display: flex;
+      flex-direction: column;
+      gap: 1.35rem;
+      max-width: 520px;
     }
 
-    .hero-copy {
-      max-width: 680px;
+    .wstv-hero__eyebrow {
+      margin: 0;
+      color: rgba(243, 182, 95, 0.82);
+      font-size: 0.78rem;
+      font-weight: 850;
+      letter-spacing: 0.18em;
+      text-transform: uppercase;
+    }
+
+    .wstv-hero__headline {
+      max-width: 560px;
+      color: var(--cream);
+      font-family: var(--serif);
+      font-size: clamp(2.75rem, 6vw, 5.4rem);
+      font-weight: 850;
+      line-height: 0.94;
+      letter-spacing: 0;
+      text-shadow: 0 16px 46px rgba(0, 0, 0, 0.52);
+    }
+
+    .wstv-hero__divider {
+      width: 44px;
+      height: 1px;
+      background: rgba(243, 182, 95, 0.54);
+    }
+
+    .wstv-hero__sub {
+      max-width: 38ch;
+      margin: 0;
+      color: rgba(247, 239, 216, 0.78);
+      font-size: clamp(1rem, 1.6vw, 1.12rem);
+      line-height: 1.7;
+    }
+
+    .wstv-hero__tags {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0;
+      color: rgba(247, 239, 216, 0.52);
+      font-size: 0.72rem;
+      font-style: italic;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+    }
+
+    .wstv-hero__tag + .wstv-hero__tag::before {
+      content: "·";
+      margin: 0 0.55rem;
+      color: rgba(243, 182, 95, 0.36);
+    }
+
+    .wstv-hero__buttons {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.75rem;
+      margin-top: 0.35rem;
+    }
+
+    .wstv-hero__btn-primary,
+    .wstv-hero__btn-secondary {
+      min-height: 48px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      padding: 0.9rem 1.45rem;
+      border-radius: 999px;
+      font-size: 0.93rem;
+      font-weight: 850;
+      line-height: 1;
+      letter-spacing: 0.02em;
+      text-align: center;
+      transition: transform 160ms ease, background 160ms ease, border-color 160ms ease, color 160ms ease;
+    }
+
+    .wstv-hero__btn-primary {
+      border: 1px solid transparent;
+      background: var(--gold);
+      color: #111008;
+      box-shadow: 0 14px 34px rgba(216, 145, 37, 0.24);
+    }
+
+    .wstv-hero__btn-primary:hover {
+      background: var(--gold-light);
+      transform: translateY(-2px);
+    }
+
+    .wstv-hero__btn-secondary {
+      border: 1px solid rgba(247, 239, 216, 0.25);
+      background: rgba(247, 239, 216, 0.08);
+      color: var(--cream);
+    }
+
+    .wstv-hero__btn-secondary:hover {
+      border-color: rgba(243, 182, 95, 0.52);
+      color: var(--gold-light);
+      transform: translateY(-2px);
     }
 
     .kicker {
@@ -450,39 +562,10 @@
       font-weight: 700;
     }
 
-    .hero-lede {
-      max-width: 580px;
-      margin-top: 1.2rem;
-      color: rgba(247, 239, 216, 0.88);
-      font-size: clamp(1.02rem, 2.8vw, 1.24rem);
-      line-height: 1.62;
-      text-shadow: 0 8px 28px rgba(0, 0, 0, 0.64);
-    }
-
-    .hero-actions,
     .section-actions {
       display: grid;
       gap: 0.8rem;
       margin-top: 1.65rem;
-    }
-
-    .hero-trust {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 0.55rem;
-      margin-top: 1.1rem;
-      color: rgba(247, 239, 216, 0.68);
-      font-size: 0.78rem;
-      font-weight: 800;
-      letter-spacing: 0.06em;
-      text-transform: uppercase;
-    }
-
-    .hero-trust span {
-      padding: 0.35rem 0.58rem;
-      border: 1px solid rgba(247, 239, 216, 0.16);
-      border-radius: 999px;
-      background: rgba(7, 9, 6, 0.34);
     }
 
     section {
@@ -970,8 +1053,7 @@
     }
 
     @media (max-width: 430px) {
-      .container,
-      .hero-inner {
+      .container {
         width: min(100% - 1.5rem, var(--max));
       }
 
@@ -1017,27 +1099,58 @@
         font-size: 0.86rem;
       }
 
-      .hero {
-        min-height: 78svh;
+      .wstv-hero__inner {
+        width: min(100% - 1.5rem, 1200px);
+        padding-top: 5.1rem;
+        padding-bottom: 3rem;
       }
 
-      .hero-media img {
-        object-position: center top;
+      .wstv-hero__buttons {
+        display: grid;
+        grid-template-columns: 1fr;
       }
 
-      .hero::before {
-        background:
-          linear-gradient(180deg, rgba(7, 9, 6, 0.03) 0%, rgba(7, 9, 6, 0.1) 26%, rgba(7, 9, 6, 0.68) 56%, rgba(7, 9, 6, 0.94) 100%),
-          linear-gradient(90deg, rgba(7, 9, 6, 0.48) 0%, rgba(7, 9, 6, 0.28) 54%, rgba(7, 9, 6, 0.12) 100%);
-      }
-
-      .hero-actions .button,
+      .wstv-hero__buttons a,
       .section-actions .button {
         width: 100%;
       }
+    }
 
-      .hero-trust {
-        font-size: 0.7rem;
+    @media (max-width: 768px) {
+      .wstv-hero {
+        min-height: auto;
+      }
+
+      .wstv-hero__inner {
+        grid-template-columns: 1fr;
+        gap: 1.55rem;
+        padding: 4.85rem 0 2.6rem;
+      }
+
+      .wstv-hero__image-frame {
+        order: -1;
+        aspect-ratio: 16 / 9;
+      }
+
+      .wstv-hero__text {
+        max-width: none;
+      }
+
+      .wstv-hero__headline {
+        font-size: clamp(2.35rem, 12vw, 4rem);
+      }
+
+      .wstv-hero__sub {
+        max-width: 100%;
+      }
+
+      .wstv-hero__buttons {
+        display: grid;
+        grid-template-columns: 1fr;
+      }
+
+      .wstv-hero__buttons a {
+        width: 100%;
       }
     }
 
@@ -1050,7 +1163,6 @@
         display: inline;
       }
 
-      .hero-actions,
       .section-actions {
         display: flex;
         flex-wrap: wrap;
@@ -1105,12 +1217,6 @@
       }
     }
 
-    @media (max-aspect-ratio: 4 / 3) and (min-width: 431px) {
-      .hero-media img {
-        object-position: center top;
-      }
-    }
-
     @media (min-width: 920px) {
       .nav-links {
         display: flex;
@@ -1122,16 +1228,6 @@
 
       .mobile-menu {
         display: none !important;
-      }
-
-      .hero {
-        min-height: 84svh;
-      }
-
-      .hero::before {
-        background:
-          linear-gradient(180deg, rgba(7, 9, 6, 0.03) 0%, rgba(7, 9, 6, 0.14) 42%, rgba(7, 9, 6, 0.86) 100%),
-          linear-gradient(90deg, rgba(7, 9, 6, 0.86) 0%, rgba(7, 9, 6, 0.48) 43%, rgba(7, 9, 6, 0.08) 100%);
       }
 
       .pillar-grid {
@@ -1208,25 +1304,30 @@
   </header>
 
   <main id="main">
-    <section class="hero" id="top" aria-labelledby="hero-title">
-      <div class="hero-media" aria-hidden="true">
-        <img src="assets/hero-bear-salmon.webp" alt="" width="1920" height="1080" fetchpriority="high" decoding="async" />
-      </div>
-      <div class="hero-inner">
-        <div class="hero-copy">
-          <p class="kicker">Wild Stories TV</p>
-          <h1 id="hero-title">Where the <span>Wild</span> Comes to Life</h1>
-          <p class="hero-lede">
-            Cinematic wildlife-inspired storytelling crafted for nature lovers, built for the emotion and pace of Facebook.
-          </p>
-          <div class="hero-actions" aria-label="Primary actions">
-            <a class="button" href="https://www.messenger.com/channel/wildstoriestv" target="_blank" rel="noopener noreferrer">Join the Wild Crew</a>
-            <a class="button secondary" href="https://www.facebook.com/wildstoriestv/" target="_blank" rel="noopener noreferrer">Follow on Facebook</a>
+    <section class="wstv-hero" id="top" aria-labelledby="hero-title">
+      <div class="wstv-hero__backdrop" aria-hidden="true"></div>
+      <div class="wstv-hero__backdrop-overlay" aria-hidden="true"></div>
+
+      <div class="wstv-hero__inner">
+        <div class="wstv-hero__image-frame">
+          <img src="assets/hero-bear-salmon.webp" alt="A bear standing above a waterfall as a salmon leaps through the whitewater" width="1920" height="1080" loading="eager" fetchpriority="high" decoding="async" />
+          <div class="wstv-hero__frame-vignette" aria-hidden="true"></div>
+          <span class="wstv-hero__frame-badge">Falls at the Edge</span>
+        </div>
+
+        <div class="wstv-hero__text">
+          <p class="wstv-hero__eyebrow">Wild Stories TV</p>
+          <h1 class="wstv-hero__headline" id="hero-title">Where the Wild Comes to Life</h1>
+          <div class="wstv-hero__divider" aria-hidden="true"></div>
+          <p class="wstv-hero__sub">Cinematic wildlife stories crafted for nature lovers. New wildlife stories added regularly on Facebook.</p>
+          <div class="wstv-hero__tags" aria-label="Brand positioning">
+            <span class="wstv-hero__tag">Wildlife Entertainment</span>
+            <span class="wstv-hero__tag">Nature Appreciation</span>
+            <span class="wstv-hero__tag">Facebook-First</span>
           </div>
-          <div class="hero-trust" aria-label="Brand positioning">
-            <span>Wildlife Entertainment</span>
-            <span>Nature Appreciation</span>
-            <span>Facebook-First</span>
+          <div class="wstv-hero__buttons" aria-label="Primary actions">
+            <a class="wstv-hero__btn-primary" href="https://www.messenger.com/channel/wildstoriestv" target="_blank" rel="noopener noreferrer">Join the Wild Crew</a>
+            <a class="wstv-hero__btn-secondary" href="https://www.facebook.com/wildstoriestv/" target="_blank" rel="noopener noreferrer">Follow on Facebook</a>
           </div>
         </div>
       </div>
