@@ -640,14 +640,20 @@
       display: grid;
       gap: 1rem;
       align-items: stretch;
+      min-width: 0;
+      max-width: 100%;
+      box-sizing: border-box;
+      overflow: visible;
     }
 
     .contact-media {
       min-height: 280px;
+      max-width: 100%;
       overflow: hidden;
       border: 1px solid var(--line-warm);
       border-radius: var(--radius);
       box-shadow: var(--shadow);
+      box-sizing: border-box;
     }
 
     .contact-media img {
@@ -658,37 +664,82 @@
     }
 
     .contact-card {
+      width: 100%;
+      max-width: 100%;
+      min-width: 0;
+      overflow: visible;
+      box-sizing: border-box;
       padding: clamp(1.2rem, 4vw, 2rem);
     }
 
     .contact-copy {
       display: grid;
+      grid-template-columns: minmax(0, 1fr);
       gap: 1rem;
+      min-width: 0;
+      max-width: 100%;
+      overflow: visible;
+      box-sizing: border-box;
+    }
+
+    .contact-title {
+      max-width: 100%;
+      font-size: clamp(2.15rem, 5vw, 3.4rem);
+      line-height: 1.02;
+      overflow-wrap: normal;
+    }
+
+    .contact-copy p {
+      max-width: 100%;
+      overflow-wrap: anywhere;
+      word-break: break-word;
     }
 
     .contact-links {
       display: grid;
-      gap: 0.7rem;
+      grid-template-columns: minmax(0, 1fr);
+      gap: 0.75rem;
+      min-width: 0;
+      max-width: 100%;
+      overflow: visible;
+      box-sizing: border-box;
       padding-top: 0.4rem;
     }
 
     .contact-link {
       min-height: 50px;
+      width: 100%;
+      max-width: 100%;
+      min-width: 0;
       display: flex;
+      flex-wrap: wrap;
       align-items: center;
       justify-content: space-between;
-      gap: 0.8rem;
+      gap: 0.5rem 0.8rem;
       border: 1px solid rgba(247, 239, 216, 0.13);
       border-radius: var(--radius);
       padding: 0.82rem 0.9rem;
       background: rgba(255, 255, 255, 0.045);
       color: var(--cream);
       font-weight: 820;
+      overflow: visible;
       overflow-wrap: anywhere;
+      box-sizing: border-box;
+    }
+
+    .contact-link span {
+      min-width: 0;
+      max-width: 100%;
+      overflow-wrap: anywhere;
+      word-break: break-word;
+    }
+
+    .contact-link span:first-child {
+      flex: 1 1 13rem;
     }
 
     .contact-link span:last-child {
-      flex: 0 0 auto;
+      flex: 0 1 auto;
       color: var(--gold-2);
     }
 
@@ -702,12 +753,25 @@
     .footer-inner {
       display: grid;
       gap: 0.8rem;
+      min-width: 0;
+      max-width: 100%;
+    }
+
+    .footer-inner > div {
+      min-width: 0;
+      max-width: 100%;
+    }
+
+    .site-footer p {
+      overflow-wrap: anywhere;
+      word-break: break-word;
     }
 
     .footer-links {
       display: flex;
       flex-wrap: wrap;
       gap: 0.75rem;
+      max-width: 100%;
       color: rgba(247, 239, 216, 0.78);
       font-weight: 760;
     }
@@ -764,8 +828,12 @@
       }
 
       .footer-inner {
-        grid-template-columns: 1fr auto;
-        align-items: center;
+        grid-template-columns: minmax(0, 1fr) auto;
+        align-items: start;
+      }
+
+      .footer-links {
+        justify-content: flex-end;
       }
     }
 
@@ -816,6 +884,11 @@
         width: 100%;
       }
 
+      .contact-link {
+        align-items: flex-start;
+        flex-direction: column;
+      }
+
       .section {
         padding: 3.6rem 0;
       }
@@ -837,10 +910,8 @@
     <div class="container">
       <nav class="nav" aria-label="Primary navigation">
         <a class="brand" href="#top" aria-label="Wild Stories TV home">
-          <span class="brand-mark" aria-hidden="true">WS</span>
           <span class="brand-copy">
             <span class="brand-name">Wild Stories TV</span>
-            <span class="brand-subtitle">Cinematic Wildlife Stories</span>
           </span>
         </a>
 
@@ -880,7 +951,6 @@
       <img class="hero-media" src="assets/images/hero-golden-grizzly.webp" width="2400" height="1030" alt="Golden grizzly bear standing beside a mountain river at sunset" fetchpriority="high" loading="eager" decoding="async" />
       <div class="hero-inner">
         <div class="hero-copy">
-          <p class="eyebrow">Wild Stories TV</p>
           <h1 id="hero-title">Cinematic Wildlife Stories for the Feed</h1>
           <p>Wild Stories TV creates short, emotional wildlife-inspired stories for Facebook Reels, nature lovers, and the Wild Crew community.</p>
           <div class="hero-actions" aria-label="Primary actions">
@@ -902,7 +972,7 @@
           <p class="section-kicker">About</p>
           <h2 id="about-title">Cinematic nature stories with a careful voice.</h2>
           <p>Wild Stories TV creates cinematic wildlife-inspired storytelling for Facebook audiences. The brand celebrates nature, animal behavior, survival, family bonds, and the scale of the wild through short, emotional visual stories.</p>
-          <p class="about-card">This brand is built for wildlife-inspired entertainment and nature appreciation, not live reporting or scientific documentation.</p>
+          <p class="about-card">Wild Stories TV creates cinematic wildlife-inspired stories for nature fans across Facebook. Every sequence celebrates animal behavior, wild landscapes, and the emotional scale of the natural world.</p>
         </div>
         <figure class="media-frame">
           <img src="assets/images/about-landscape-meadow.webp" width="1600" height="900" alt="Sunlit meadow and forest landscape at dawn" loading="lazy" decoding="async" />
@@ -923,7 +993,7 @@
             <span class="story-body">
               <h3>Bear River Chase</h3>
               <p>Rain, whitewater, and instinct create a tense river sequence.</p>
-              <span class="story-cta">Watch on Facebook &rarr;</span>
+              <span class="story-cta">Browse on Facebook &rarr;</span>
             </span>
           </a>
           <a class="story-card" href="https://www.facebook.com/wildstoriestv/" target="_blank" rel="noopener noreferrer" aria-label="Watch Roadside Cub on Facebook">
@@ -931,7 +1001,7 @@
             <span class="story-body">
               <h3>Roadside Cub</h3>
               <p>A tiny roadside figure becomes the center of a careful survival story.</p>
-              <span class="story-cta">Watch on Facebook &rarr;</span>
+              <span class="story-cta">Browse on Facebook &rarr;</span>
             </span>
           </a>
           <a class="story-card" href="https://www.facebook.com/wildstoriestv/" target="_blank" rel="noopener noreferrer" aria-label="Watch Campground Visitors on Facebook">
@@ -939,7 +1009,7 @@
             <span class="story-body">
               <h3>Campground Visitors</h3>
               <p>A forest setting, a curious cub, and a story shaped around tension.</p>
-              <span class="story-cta">Watch on Facebook &rarr;</span>
+              <span class="story-cta">Browse on Facebook &rarr;</span>
             </span>
           </a>
         </div>
@@ -1035,10 +1105,6 @@
             <img src="assets/images/gallery-deer-forest.webp" width="1200" height="900" alt="White-tailed deer standing in dappled forest light" loading="lazy" decoding="async" />
             <figcaption>Forest Stillness</figcaption>
           </figure>
-          <figure class="gallery-card">
-            <img src="assets/images/gallery-mountain-trail.webp" width="1200" height="900" alt="Golden mountain trail through evergreen forest" loading="lazy" decoding="async" />
-            <figcaption>Mountain Trail</figcaption>
-          </figure>
         </div>
       </div>
     </section>
@@ -1051,8 +1117,8 @@
         <div class="contact-card">
           <div class="contact-copy">
             <p class="section-kicker">Collaborate</p>
-            <h2 id="contact-title">For partnerships, media, and collaboration.</h2>
-            <p>Reach Wild Stories TV directly for collaboration, sponsorship, creative partnerships, or brand inquiries.</p>
+            <h2 class="contact-title" id="contact-title">For partnerships, media, and collaboration.</h2>
+            <p>Wild Stories TV reaches wildlife fans across Facebook with short, cinematic nature content. A media overview is available on request.</p>
             <div class="contact-links" aria-label="Contact links">
               <a class="contact-link" href="mailto:wildstoriestvlive@gmail.com">
                 <span>wildstoriestvlive@gmail.com</span>
@@ -1075,11 +1141,16 @@
 
   <footer class="site-footer">
     <div class="container footer-inner">
-      <p>&copy; 2026 Wild Stories TV. Cinematic wildlife-inspired entertainment and nature appreciation.</p>
+      <div>
+        <p>&copy; 2026 Wild Stories TV. Cinematic wildlife-inspired entertainment and nature appreciation.</p>
+        <p>Wild Stories TV produces cinematic wildlife-inspired entertainment. Not live reporting, documentary footage, or scientific documentation.</p>
+      </div>
       <div class="footer-links" aria-label="Footer links">
         <a href="#about">About</a>
         <a href="#featured">Featured</a>
+        <a href="#pillars">Stories</a>
         <a href="#crew">Wild Crew</a>
+        <a href="#gallery">Gallery</a>
         <a href="#contact">Contact</a>
         <a href="https://www.facebook.com/wildstoriestv/" target="_blank" rel="noopener noreferrer">Facebook</a>
       </div>
